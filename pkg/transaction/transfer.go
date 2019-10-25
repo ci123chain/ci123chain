@@ -1,13 +1,27 @@
 package transaction
 
 import (
+	"CI123Chain/pkg/abci/types"
 	"CI123Chain/pkg/util"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/rlp"
-	"CI123Chain/pkg/abci/types"
 )
 
 var emptyAddr common.Address
+
+func NewTransferTx(from, to common.Address, gas, nonce, amount uint64 ) Transaction {
+	tx := &TransferTx{
+		Common: CommonTx{
+			Code: TRANSFER,
+			From: from,
+			Gas:  gas,
+			Nonce:nonce,
+		},
+		To: to,
+		Amount: amount,
+	}
+	return tx
+}
 
 type TransferTx struct {
 	Common CommonTx
@@ -22,6 +36,10 @@ func DecodeTransferTx(b []byte) (*TransferTx, error) {
 
 func isEmptyAddr(addr common.Address) bool {
 	return addr == emptyAddr
+}
+
+func (tx *TransferTx) SetPubKey(pub []byte) {
+	tx.Common.PubKey = pub
 }
 
 func (tx *TransferTx) SetSignature(sig []byte) {

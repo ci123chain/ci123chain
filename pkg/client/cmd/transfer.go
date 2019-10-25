@@ -6,7 +6,6 @@ import (
 	"CI123Chain/pkg/transaction"
 	"CI123Chain/pkg/util"
 	"errors"
-	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -52,21 +51,13 @@ var transferCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		tx := &transaction.TransferTx{
-			Common: transaction.CommonTx{
-				Code: transaction.TRANSFER,
-				From: from,
-				Gas:  uint64(viper.GetInt(flagGas)),
-				Nonce:nonce,
-			},
-			To: tos[0],
-			Amount: uint64(viper.GetInt(flagAmount)),
-		}
-		txid, err := ctx.SignAndBroadcastTx(tx, from)
+		tx := transaction.NewTransferTx(from, tos[0], uint64(viper.GetInt(flagGas)), nonce, uint64(viper.GetInt(flagAmount)))
+
+		res, err := ctx.SignAndBroadcastTx(tx, from)
 		if err != nil {
 			return err
 		}
-		fmt.Println(txid)
+		ctx.PrintOutput(res)
 		return nil
 	},
 }

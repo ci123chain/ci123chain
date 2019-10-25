@@ -20,6 +20,7 @@ type Transaction interface {
 	GetSignBytes() []byte
 	SetSignature([]byte)
 	Bytes() []byte
+	SetPubKey([]byte)
 }
 
 

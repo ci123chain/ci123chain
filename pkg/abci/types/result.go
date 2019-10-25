@@ -3,6 +3,7 @@ package types
 import (
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"strings"
 
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
@@ -107,6 +108,126 @@ func NewResponseResultTx(res *ctypes.ResultTx, tx Tx, timestamp string) TxRespon
 	}
 }
 
+func NewResponseFormatBroadcastTxCommit(res *ctypes.ResultBroadcastTxCommit) TxResponse {
+	if res == nil {
+		return TxResponse{}
+	}
+	if !res.CheckTx.IsOK() {
+		return newTxResponseCheckTx(res)
+	}
+	return newTxResponseDeliverTx(res)
+}
+
+func newTxResponseCheckTx(res *ctypes.ResultBroadcastTxCommit) TxResponse {
+	if res == nil {
+		return TxResponse{}
+	}
+
+	var txHash string
+	if res.Hash != nil {
+		txHash = res.Hash.String()
+	}
+
+	parsedLogs, _ := ParseABCILogs(res.CheckTx.Log)
+
+	return TxResponse{
+		Height:    res.Height,
+		TxHash:    txHash,
+		Code:      res.CheckTx.Code,
+		Data:      strings.ToUpper(hex.EncodeToString(res.CheckTx.Data)),
+		RawLog:    res.CheckTx.Log,
+		Logs:      parsedLogs,
+		Info:      res.CheckTx.Info,
+		GasWanted: res.CheckTx.GasWanted,
+		GasUsed:   res.CheckTx.GasUsed,
+		Events:    StringifyEvents(res.CheckTx.Events),
+		Codespace: res.CheckTx.Codespace,
+	}
+}
+
+
+func newTxResponseDeliverTx(res *ctypes.ResultBroadcastTxCommit) TxResponse {
+	if res == nil {
+		return TxResponse{}
+	}
+
+	var txHash string
+	if res.Hash != nil {
+		txHash = res.Hash.String()
+	}
+
+	parsedLogs, _ := ParseABCILogs(res.DeliverTx.Log)
+
+	return TxResponse{
+		Height:    res.Height,
+		TxHash:    txHash,
+		Code:      res.DeliverTx.Code,
+		Data:      strings.ToUpper(hex.EncodeToString(res.DeliverTx.Data)),
+		RawLog:    res.DeliverTx.Log,
+		Logs:      parsedLogs,
+		Info:      res.DeliverTx.Info,
+		GasWanted: res.DeliverTx.GasWanted,
+		GasUsed:   res.DeliverTx.GasUsed,
+		Events:    StringifyEvents(res.DeliverTx.Events),
+		Codespace: res.DeliverTx.Codespace,
+	}
+}
+
+
+func (r TxResponse) String() string {
+	var sb strings.Builder
+	sb.WriteString("Response:\n")
+
+	if r.Height > 0 {
+		sb.WriteString(fmt.Sprintf("  Height: %d\n", r.Height))
+	}
+
+	if r.TxHash != "" {
+		sb.WriteString(fmt.Sprintf("  TxHash: %s\n", r.TxHash))
+	}
+
+	if r.Code > 0 {
+		sb.WriteString(fmt.Sprintf("  Code: %d\n", r.Code))
+	}
+
+	if r.Data != "" {
+		sb.WriteString(fmt.Sprintf("  Data: %s\n", r.Data))
+	}
+
+	if r.RawLog != "" {
+		sb.WriteString(fmt.Sprintf("  Raw Log: %s\n", r.RawLog))
+	}
+
+	if r.Logs != nil {
+		sb.WriteString(fmt.Sprintf("  Logs: %s\n", r.Logs))
+	}
+
+	if r.Info != "" {
+		sb.WriteString(fmt.Sprintf("  Info: %s\n", r.Info))
+	}
+
+	if r.GasWanted != 0 {
+		sb.WriteString(fmt.Sprintf("  GasWanted: %d\n", r.GasWanted))
+	}
+
+	if r.GasUsed != 0 {
+		sb.WriteString(fmt.Sprintf("  GasUsed: %d\n", r.GasUsed))
+	}
+
+	if r.Codespace != "" {
+		sb.WriteString(fmt.Sprintf("  Codespace: %s\n", r.Codespace))
+	}
+
+	if r.Timestamp != "" {
+		sb.WriteString(fmt.Sprintf("  Timestamp: %s\n", r.Timestamp))
+	}
+
+	if len(r.Events) > 0 {
+		sb.WriteString(fmt.Sprintf("  Events: \n%s\n", r.Events.String()))
+	}
+
+	return strings.TrimSpace(sb.String())
+}
 
 
 // ParseABCILogs attempts to parse a stringified ABCI tx log into a slice of

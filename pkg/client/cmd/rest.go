@@ -29,7 +29,7 @@ const (
 
 func init() {
 	rootCmd.AddCommand(rpcCmd)
-	rpcCmd.Flags().String(FlagListenAddr, "tcp://localhost:1317", "The address for the server to listen on")
+	rpcCmd.Flags().String(FlagListenAddr, "tcp://0.0.0.0:1317", "The address for the server to listen on")
 	rpcCmd.Flags().Uint(FlagMaxOpenConnections, 1000, "The number of maximum open connections")
 	rpcCmd.Flags().Uint(FlagRPCReadTimeout, 10, "The RPC read timeout")
 	rpcCmd.Flags().Uint(FlagRPCWriteTimeout, 10, "The RPC write timeout")

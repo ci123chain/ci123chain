@@ -41,3 +41,4 @@ func (ctx *Context) Sign(msg []byte, addr common.Address) ([]byte, error) {
 	}
 	return ks.SignHashWithPassphrase(acct, passphrase, msg)
 }
+

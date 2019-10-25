@@ -2,13 +2,14 @@ package context
 
 import (
 	"CI123Chain/pkg/abci/codec"
+	sdk "CI123Chain/pkg/abci/types"
+	"CI123Chain/pkg/cryptosuit"
 	"CI123Chain/pkg/transaction"
 	"CI123Chain/pkg/util"
 	"fmt"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 	rpclient "github.com/tendermint/tendermint/rpc/client"
-	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 
 type Context struct {
@@ -19,6 +20,7 @@ type Context struct {
 	Verbose 	bool
 	Height 		int64
 	Cdc 		*codec.Codec
+	CryptoSuit  cryptosuit.SignIdentity
 }
 
 func (ctx *Context) GetNode() (rpclient.Client, error) {
@@ -38,28 +40,7 @@ func (ctx Context) WithHeight(height int64) Context {
 	return ctx
 }
 
-// Broadcast the transaction bytes to Tendermint
-func (ctx *Context) BroadcastTx(tx []byte) (*ctypes.ResultBroadcastTxCommit, error) {
-	node, err := ctx.GetNode()
-	if err != nil {
-		return nil, err
-	}
 
-	res, err := node.BroadcastTxCommit(tx)
-	if err != nil {
-		return res, err
-	}
-
-	if res.CheckTx.Code != uint32(0) {
-		return res, errors.Errorf("CheckTx failed: (%d) %s",
-			res.CheckTx.Code, res.CheckTx.Log)
-	}
-	if res.DeliverTx.Code != uint32(0) {
-		return res, errors.Errorf("DeliverTx failed: (%d) %s",
-			res.DeliverTx.Code, res.DeliverTx.Log)
-	}
-	return res, err
-}
 
 func (ctx *Context) GetInputAddresses() ([]common.Address, error) {
 	return ctx.InputAddressed, nil
@@ -79,21 +60,47 @@ func (ctx *Context) GetBalanceByAddress(addr common.Address) (uint64, error) {
 	return balance, nil
 }
 
-func (ctx *Context) SignAndBroadcastTx(tx transaction.Transaction, addr common.Address) (string, error) {
+// PrintOutput prints output while respecting output and indent flags
+// NOTE: pass in marshalled structs that have been unmarshaled
+// because this function will panic on marshaling errors
+func (ctx Context) PrintOutput(toPrint fmt.Stringer) (err error) {
+	var out []byte
+
+	//switch ctx.OutputFormat {
+	//case "text":
+	//	out, err = yaml.Marshal(&toPrint)
+	//
+	//case "json":
+	//	if ctx.Indent {
+	//		out, err = ctx.Codec.MarshalJSONIndent(toPrint, "", "  ")
+	//	} else {
+			out, err = ctx.Cdc.MarshalJSON(toPrint)
+	//	}
+	//}
+	if err != nil {
+		return
+	}
+
+	fmt.Println(string(out))
+	return
+}
+
+
+func (ctx *Context) SignAndBroadcastTx(tx transaction.Transaction, addr common.Address) (sdk.TxResponse, error) {
 	sig, err := ctx.Sign(tx.GetSignBytes(), addr)
 	if err != nil {
-		return "", err
+		return sdk.TxResponse{}, err
 	}
 	tx.SetSignature(sig)
 	res, err := ctx.BroadcastTx(tx.Bytes())
 
 	if err != nil {
-		return "", err
+		return res, err
 	}
 	if ctx.Verbose {
-		fmt.Printf("txHash=%v BlockHeight=%v\n", res.Hash.String(), res.Height)
+		fmt.Printf("txHash=%v BlockHeight=%v\n", res.TxHash, res.Height)
 	}
-	return res.Hash.String(), nil
+	return res, nil
 }
 
 func (ctx *Context) SignTx(tx transaction.Transaction, addr common.Address) (transaction.Transaction, error) {
@@ -105,13 +112,28 @@ func (ctx *Context) SignTx(tx transaction.Transaction, addr common.Address) (tra
 	return tx, nil
 }
 
-func (ctx *Context) BroadcastSignedData(data []byte) (string, error) {
+func (ctx *Context) BroadcastSignedData(data []byte) (sdk.TxResponse, error) {
 	res, err := ctx.BroadcastTx(data)
 	if err != nil {
-		return "", err
+		return sdk.TxResponse{}, err
 	}
 	if ctx.Verbose {
-		fmt.Printf("txHash=%v BlockHeight=%v\n", res.Hash.String(), res.Height)
+		fmt.Printf("txHash=%v BlockHeight=%v\n", res.TxHash, res.Height)
 	}
-	return res.Hash.String(), nil
+	return res, nil
+}
+
+
+func (ctx *Context) SignTx2(tx transaction.Transaction, priKey string) (transaction.Transaction, error) {
+	pubkey, err := ctx.CryptoSuit.GetPubKey([]byte(priKey))
+	if err != nil {
+		return nil, err
+	}
+	tx.SetPubKey(pubkey)
+	sig, err := ctx.CryptoSuit.Sign(tx.GetSignBytes(), []byte(priKey))
+	if err != nil {
+		return nil, err
+	}
+	tx.SetSignature(sig)
+	return tx, nil
 }

@@ -4,6 +4,7 @@ import (
 	"CI123Chain/pkg/abci/baseapp"
 	"CI123Chain/pkg/account"
 	"CI123Chain/pkg/config"
+	"CI123Chain/pkg/cryptosuit"
 	"CI123Chain/pkg/db"
 	"CI123Chain/pkg/handler"
 	"CI123Chain/pkg/transaction"
@@ -37,6 +38,8 @@ var (
 	MainStoreKey     = sdk.NewKVStoreKey("main")
 	ContractStoreKey = sdk.NewKVStoreKey("contract")
 	TxIndexStoreKey  = sdk.NewTransientStoreKey("tx_index")
+
+	CryptoType = cryptosuit.FabSignType
 )
 
 

@@ -12,7 +12,8 @@ import (
 
 func RegisterTxRoutes(cliCtx context.Context, r *mux.Router)  {
 	r.HandleFunc("/tx/{hash}", QueryTxRequestHandlerFn(cliCtx)).Methods("GET")
-	//r.HandleFunc("/txs", BraodcastTxRequest(cliCtx)).Methods("POST")
+	r.HandleFunc("/tx/sign", SignTxRequestHandler(cliCtx)).Methods("POST")
+	r.HandleFunc("/tx/broadcast", BraodcastTxRequest(cliCtx)).Methods("POST")
 }
 
 func QueryTxRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
