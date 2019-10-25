@@ -1,0 +1,39 @@
+{
+  "genesis_time": "2019-10-25T02:26:00.595322Z",
+  "chain_id": "test-chain-LC9bAy",
+  "consensus_params": {
+    "block": {
+      "max_bytes": "22020096",
+      "max_gas": "-1",
+      "time_iota_ms": "1000"
+    },
+    "evidence": {
+      "max_age": "100000"
+    },
+    "validator": {
+      "pub_key_types": [
+        "secp256k1"
+      ]
+    }
+  },
+  "validators": [
+    {
+      "address": "28CD8DF9595D57FED84992795201041980D86BE8",
+      "pub_key": {
+        "type": "tendermint/PubKeySecp256k1",
+        "value": "Apo4cSJJZdgoTfLemHKQJv717uBC8NPAMXCY6Zfdi979"
+      },
+      "power": "1",
+      "name": ""
+    }
+  ],
+  "app_hash": "",
+  "app_state": {
+    "accounts": [
+      {
+        "Address": "0x204bcc42559faf6dfe1485208f7951aad800b313",
+        "Amount": 100
+      }
+    ]
+  }
+}

@@ -210,7 +210,12 @@ func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initCo
 
 	nodeKey, err := node.LoadNodeKey(c.NodeKeyFile())
 	if err != nil {
-		return
+		pv := validator.GenFilePV(
+			c.PrivValidatorKeyFile(),
+			c.PrivValidatorStateFile(),
+			secp256k1.GenPrivKey(),
+		)
+		nodeKey, err = node.GenNodeKeyByPrivKey(c.NodeKeyFile(), pv.Key.PrivKey)
 	}
 	nodeID = string(nodeKey.ID())
 
