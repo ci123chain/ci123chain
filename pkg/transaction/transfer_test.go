@@ -25,7 +25,7 @@ func TestFabSign(t *testing.T)  {
 
 	froms, _ := helper.ParseAddrs(address)
 	nonce, err := GetNonceByAddress(froms[0])
-	tx := NewTransferTx(froms[0], froms[0], 1, nonce, 10)
+	tx := NewTransferTx(froms[0], froms[0], 1, nonce, 10, true)
 
 	pubByte, err := sid.GetPubKey([]byte(testPrivKey))
 

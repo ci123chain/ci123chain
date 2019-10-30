@@ -6,12 +6,12 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/tendermint/tendermint/node"
-	"github.com/tendermint/tendermint/proxy"
 	abcis "github.com/tendermint/tendermint/abci/server"
 	tcmd "github.com/tendermint/tendermint/cmd/tendermint/commands"
 	cmn "github.com/tendermint/tendermint/libs/common"
+	"github.com/tendermint/tendermint/node"
 	pvm "github.com/tendermint/tendermint/privval"
+	"github.com/tendermint/tendermint/proxy"
 )
 
 const (
@@ -19,6 +19,7 @@ const (
 	flagAddress        = "address"
 	flagTraceStore     = "trace-store"
 	flagPruning        = "pruning"
+
 )
 
 func startCmd(ctx *app.Context, appCreator app.AppCreator) *cobra.Command {

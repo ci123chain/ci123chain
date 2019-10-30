@@ -9,7 +9,9 @@ import (
 
 var emptyAddr common.Address
 
-func NewTransferTx(from, to common.Address, gas, nonce, amount uint64 ) Transaction {
+const TxMode  = "Fabric"
+
+func NewTransferTx(from, to common.Address, gas, nonce, amount uint64, isFabric bool ) Transaction {
 	tx := &TransferTx{
 		Common: CommonTx{
 			Code: TRANSFER,
@@ -17,8 +19,9 @@ func NewTransferTx(from, to common.Address, gas, nonce, amount uint64 ) Transact
 			Gas:  gas,
 			Nonce:nonce,
 		},
-		To: to,
-		Amount: amount,
+		To: 		to,
+		Amount: 	amount,
+		FabricMode: isFabric,
 	}
 	return tx
 }
@@ -27,6 +30,7 @@ type TransferTx struct {
 	Common CommonTx
 	To     common.Address
 	Amount uint64
+	FabricMode bool
 }
 
 func DecodeTransferTx(b []byte) (*TransferTx, error) {
@@ -57,7 +61,7 @@ func (tx *TransferTx) ValidateBasic() types.Error {
 	if isEmptyAddr(tx.To) {
 		return ErrInvalidTransfer(DefaultCodespace, "tx.To == empty")
 	}
-	return tx.Common.VerifySignature(tx.GetSignBytes())
+	return tx.Common.VerifySignature(tx.GetSignBytes(), tx.FabricMode)
 }
 
 func (tx *TransferTx) GetSignBytes() []byte {

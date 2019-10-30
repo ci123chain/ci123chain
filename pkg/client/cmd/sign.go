@@ -2,14 +2,20 @@ package cmd
 
 import (
 	"CI123Chain/pkg/client"
+	"CI123Chain/pkg/client/context"
 	"CI123Chain/pkg/client/helper"
 	"CI123Chain/pkg/transaction"
 	"CI123Chain/pkg/util"
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/ethereum/go-ethereum/accounts"
+	"github.com/ethereum/go-ethereum/accounts/keystore"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"io/ioutil"
 )
 
 
@@ -19,10 +25,12 @@ func init()  {
 	signCmd.Flags().Uint(flagAmount, 0, "Amount tbe spent")
 	signCmd.Flags().Uint(flagGas, 0, "gas for tx")
 	signCmd.Flags().String(helper.FlagAddress, "", "Address to sign with")
+	signCmd.Flags().String(flagPassword, "", "passphrase")
 	util.CheckRequiredFlag(signCmd, flagAmount)
 	util.CheckRequiredFlag(signCmd, flagGas)
 }
 
+const isFabric = false
 
 var signCmd = &cobra.Command{
 	Use: "sign",
@@ -49,19 +57,22 @@ var signCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		tx := &transaction.TransferTx{
-			Common: transaction.CommonTx{
-				Code: transaction.TRANSFER,
-				From: from,
-				Gas:  uint64(viper.GetInt(flagGas)),
-				Nonce:nonce,
-			},
-			To: tos[0],
-			Amount: uint64(viper.GetInt(flagAmount)),
-		}
-		signedtx, err := ctx.SignTx(tx, from)
 
-		txByte := signedtx.Bytes()
+
+
+		tx := transaction.NewTransferTx(from, tos[0], uint64(viper.GetInt(flagGas)), nonce ,uint64(viper.GetInt(flagAmount)), isFabric)
+
+
+		password := viper.GetString(flagPassword)
+		if len(password) < 1 {
+			var err error
+			password, err = getPassword()
+			if err != nil {
+				return err
+			}
+		}
+
+		txByte, err := getSignedDataWithTx(ctx, tx, password, from)
 		if err != nil {
 			return err
 		}
@@ -70,3 +81,25 @@ var signCmd = &cobra.Command{
 	},
 }
 
+func getSignedDataWithTx(ctx context.Context, tx transaction.Transaction, password string, from common.Address) ([]byte, error) {
+	ks := getDefaultKeystore()
+	acc := accounts.Account{
+		Address: from,
+	}
+	acct, err := ks.Find(acc)
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("%s address not found", from.Hex()))
+	}
+	keyjson, err := ioutil.ReadFile(acct.URL.Path)
+
+	pkey, err := keystore.DecryptKey(keyjson, password)
+	privByte := crypto.FromECDSA(pkey.PrivateKey)
+	signedtx, err := ctx.SignWithTx(tx, privByte, isFabric)
+	return signedtx.Bytes(), nil
+}
+
+func getDefaultKeystore() *keystore.KeyStore {
+	dir := viper.GetString(helper.FlagHomeDir)
+	ks := keystore.NewKeyStore(dir, keystore.StandardScryptN, keystore.StandardScryptP)
+	return ks
+}

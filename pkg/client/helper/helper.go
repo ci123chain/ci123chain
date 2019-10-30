@@ -20,6 +20,7 @@ const (
 	FlagNode = "node"
 	FlagAddress = "address"
 	FlagPassword = "password"
+	//FlagWithCrypto 	   = "cryptosuit"
 )
 
 // Allows for reading prompts for stdin

@@ -2,9 +2,9 @@ package app
 
 import (
 	"CI123Chain/pkg/abci/baseapp"
+	sdk "CI123Chain/pkg/abci/types"
 	"CI123Chain/pkg/account"
 	"CI123Chain/pkg/config"
-	"CI123Chain/pkg/cryptosuit"
 	"CI123Chain/pkg/db"
 	"CI123Chain/pkg/handler"
 	"CI123Chain/pkg/transaction"
@@ -17,11 +17,10 @@ import (
 	"github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/types"
-	tmdb "github.com/tendermint/tm-db"
 	tmtypes "github.com/tendermint/tendermint/types"
+	tmdb "github.com/tendermint/tm-db"
 	"io"
 	"os"
-	sdk "CI123Chain/pkg/abci/types"
 )
 
 const (
@@ -38,8 +37,6 @@ var (
 	MainStoreKey     = sdk.NewKVStoreKey("main")
 	ContractStoreKey = sdk.NewKVStoreKey("contract")
 	TxIndexStoreKey  = sdk.NewTransientStoreKey("tx_index")
-
-	CryptoType = cryptosuit.FabSignType
 )
 
 

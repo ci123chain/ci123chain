@@ -25,29 +25,38 @@ func SignTxRequestHandler(cliCtx context.Context) http.HandlerFunc {
 			return
 		}
 		if uint8(code) == transaction.TRANSFER {
-			tx, err := buildTransferTx(request)
+			fabric := request.FormValue("fabric")
+			isFabric, err  := strconv.ParseBool(fabric)
+			if err != nil {
+				isFabric = false
+			}
+			tx, err := buildTransferTx(request, isFabric)
 			if err != nil {
 				rest.WriteErrorResponse(writer, http.StatusNotFound, errors.Wrap(err, "build transfer msg failed").Error())
 				return
 			}
 
-			tx, err = cliCtx.SignTx2(tx, priv)
+			privPub, err := hex.DecodeString(priv)
+			if err != nil {
+				rest.WriteErrorResponse(writer, http.StatusNotFound, errors.Wrap(err, "Decode PrivateKey error").Error())
+			}
+			tx, err = cliCtx.SignWithTx(tx, privPub, isFabric)
 			if err != nil {
 				rest.WriteErrorResponse(writer, http.StatusNotFound, "sign tx error")
 				return
 			}
 			txByte := tx.Bytes()
-			//fmt.Println(txByte)
 			rest.PostProcessResponseBare(writer, cliCtx, hex.EncodeToString(txByte))
 		}
 	}
 }
 
-func buildTransferTx(r *http.Request) (transaction.Transaction, error) {
+func buildTransferTx(r *http.Request, isFabric bool) (transaction.Transaction, error) {
 	from := r.FormValue("from")
 	to := r.FormValue("to")
 	amount := r.FormValue("amount")
 	gas := r.FormValue("gas")
+
 
 	froms, err := helper.ParseAddrs(from)
 	if err != nil {
@@ -67,7 +76,7 @@ func buildTransferTx(r *http.Request) (transaction.Transaction, error) {
 		return nil, err
 	}
 	nonce, err := transaction.GetNonceByAddress(froms[0])
-	tx := transaction.NewTransferTx(froms[0], tos[0], gasI, nonce, amountI)
+	tx := transaction.NewTransferTx(froms[0], tos[0], gasI, nonce, amountI, isFabric)
 
 	return tx, nil
 }

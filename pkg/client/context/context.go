@@ -20,7 +20,6 @@ type Context struct {
 	Verbose 	bool
 	Height 		int64
 	Cdc 		*codec.Codec
-	CryptoSuit  cryptosuit.SignIdentity
 }
 
 func (ctx *Context) GetNode() (rpclient.Client, error) {
@@ -39,8 +38,6 @@ func (ctx Context) WithHeight(height int64) Context {
 	ctx.Height = height
 	return ctx
 }
-
-
 
 func (ctx *Context) GetInputAddresses() ([]common.Address, error) {
 	return ctx.InputAddressed, nil
@@ -64,7 +61,7 @@ func (ctx *Context) GetBalanceByAddress(addr common.Address) (uint64, error) {
 // NOTE: pass in marshalled structs that have been unmarshaled
 // because this function will panic on marshaling errors
 func (ctx Context) PrintOutput(toPrint fmt.Stringer) (err error) {
-	var out []byte
+	//var out []byte
 
 	//switch ctx.OutputFormat {
 	//case "text":
@@ -74,14 +71,14 @@ func (ctx Context) PrintOutput(toPrint fmt.Stringer) (err error) {
 	//	if ctx.Indent {
 	//		out, err = ctx.Codec.MarshalJSONIndent(toPrint, "", "  ")
 	//	} else {
-			out, err = ctx.Cdc.MarshalJSON(toPrint)
+	//		out, err = ctx.Cdc.MarshalJSON(toPrint)
 	//	}
 	//}
-	if err != nil {
-		return
-	}
+	//if err != nil {
+	//	return
+	//}
 
-	fmt.Println(string(out))
+	fmt.Println(toPrint)
 	return
 }
 
@@ -103,12 +100,41 @@ func (ctx *Context) SignAndBroadcastTx(tx transaction.Transaction, addr common.A
 	return res, nil
 }
 
-func (ctx *Context) SignTx(tx transaction.Transaction, addr common.Address) (transaction.Transaction, error) {
-	sig, err := ctx.Sign(tx.GetSignBytes(), addr)
-	if err != nil {
-		return nil, err
+//func (ctx *Context) SignTx(tx transaction.Transaction, addr common.Address) (transaction.Transaction, error) {
+//	sig, err := ctx.Sign(tx.GetSignBytes(), addr)
+//	if err != nil {
+//		return nil, err
+//	}
+//	tx.SetSignature(sig)
+//	return tx, nil
+//}
+
+func (ctx *Context) SignWithTx(tx transaction.Transaction, privKey []byte, fabricMode bool) (transaction.Transaction, error) {
+
+	var signature []byte
+	var err error
+
+	if fabricMode {
+		fab := cryptosuit.NewFabSignIdentity()
+		pubkey, err := fab.GetPubKey(privKey)
+		if err != nil {
+			return nil, err
+		}
+		tx.SetPubKey(pubkey)
+		signature, err = fab.Sign(tx.GetSignBytes(), privKey)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		//cryptosuit.NewETHSignIdentity().Sign(tx.GetSignBytes(), addr)
+		eth := cryptosuit.NewETHSignIdentity()
+		signature, err = eth.Sign(tx.GetSignBytes(), privKey)
+		if err != nil {
+			return nil, err
+		}
 	}
-	tx.SetSignature(sig)
+
+	tx.SetSignature(signature)
 	return tx, nil
 }
 
@@ -124,16 +150,16 @@ func (ctx *Context) BroadcastSignedData(data []byte) (sdk.TxResponse, error) {
 }
 
 
-func (ctx *Context) SignTx2(tx transaction.Transaction, priKey string) (transaction.Transaction, error) {
-	pubkey, err := ctx.CryptoSuit.GetPubKey([]byte(priKey))
-	if err != nil {
-		return nil, err
-	}
-	tx.SetPubKey(pubkey)
-	sig, err := ctx.CryptoSuit.Sign(tx.GetSignBytes(), []byte(priKey))
-	if err != nil {
-		return nil, err
-	}
-	tx.SetSignature(sig)
-	return tx, nil
-}
+//func (ctx *Context) SignTx2(tx transaction.Transaction, priKey string) (transaction.Transaction, error) {
+//	pubkey, err := ctx.CryptoSuit.GetPubKey([]byte(priKey))
+//	if err != nil {
+//		return nil, err
+//	}
+//	tx.SetPubKey(pubkey)
+//	sig, err := ctx.CryptoSuit.Sign(tx.GetSignBytes(), []byte(priKey))
+//	if err != nil {
+//		return nil, err
+//	}
+//	tx.SetSignature(sig)
+//	return tx, nil
+//}

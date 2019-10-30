@@ -57,11 +57,20 @@ func (tx *CommonTx) SetPubKey(pub []byte) {
 //	return nil
 //}
 
-func (tx *CommonTx) VerifySignature(hash []byte) types.Error  {
-	sid := cryptosuit.GetSignIdentity(cryptosuit.FabSignType)// todo
-	valid, err := sid.Verifier(hash, tx.Signature, tx.PubKey, tx.From[:])
-	if !valid || err != nil {
-		return perrors.ErrInvalidSignature(perrors.DefaultCodespace, err.Error())
+func (tx *CommonTx) VerifySignature(hash []byte, fabricMode bool) types.Error  {
+
+	if fabricMode {
+		fab := cryptosuit.NewFabSignIdentity()
+		valid, err := fab.Verifier(hash, tx.Signature, tx.PubKey, tx.From[:])
+		if !valid || err != nil {
+			return perrors.ErrInvalidSignature(perrors.DefaultCodespace, err.Error())
+		}
+	} else {
+		eth := cryptosuit.NewETHSignIdentity()
+		valid, err := eth.Verifier(hash, tx.Signature, nil, tx.From[:])
+		if !valid || err != nil {
+			return perrors.ErrInvalidSignature(perrors.DefaultCodespace, err.Error())
+		}
 	}
 	return nil
 }

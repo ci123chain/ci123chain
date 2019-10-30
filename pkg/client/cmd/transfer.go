@@ -22,6 +22,7 @@ func init()  {
 	transferCmd.Flags().Uint(flagAmount, 0, "Amount tbe spent")
 	transferCmd.Flags().Uint(flagGas, 0, "gas for tx")
 	transferCmd.Flags().String(helper.FlagAddress, "", "Address to sign with")
+	transferCmd.Flags().String(flagPassword, "", "passphrase")
 	util.CheckRequiredFlag(transferCmd, flagAmount)
 	util.CheckRequiredFlag(transferCmd, flagGas)
 }
@@ -51,9 +52,19 @@ var transferCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		tx := transaction.NewTransferTx(from, tos[0], uint64(viper.GetInt(flagGas)), nonce, uint64(viper.GetInt(flagAmount)))
+		tx := transaction.NewTransferTx(from, tos[0], uint64(viper.GetInt(flagGas)), nonce, uint64(viper.GetInt(flagAmount)), false)
 
-		res, err := ctx.SignAndBroadcastTx(tx, from)
+		password := viper.GetString(flagPassword)
+		if len(password) < 1 {
+			var err error
+			password, err = getPassword()
+			if err != nil {
+				return err
+			}
+		}
+
+		signedData, err := getSignedDataWithTx(ctx, tx, password, from)
+		res, err := ctx.BroadcastSignedData(signedData)
 		if err != nil {
 			return err
 		}

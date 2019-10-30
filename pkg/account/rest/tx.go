@@ -31,6 +31,7 @@ func QueryBalancesRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		//params := types.NewQueryBalanceParams(addr)
 		res, err := cliCtx.GetBalanceByAddress(addrBytes[0])
 		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
 			return
 		}
 		rest.PostProcessResponseBare(w, cliCtx, res)

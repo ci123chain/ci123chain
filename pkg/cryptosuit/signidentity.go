@@ -10,7 +10,7 @@ type SignIdentity interface {
 }
 
 const (
-	ETHSignType uint8 = 1 + iota
+	ETHSignType uint8 = 0 + iota
 	FabSignType
 )
 
@@ -19,10 +19,18 @@ var signMap = map[uint8]SignIdentity{
 	FabSignType: fabsignimp{},
 }
 
-
-func GetSignIdentity(t uint8) SignIdentity {
-	if sid, ok := signMap[t]; ok {
-		return sid
-	}
-	panic("unsupported cryptosuite")
+func NewFabSignIdentity() fabsignimp {
+	return fabsignimp{}
 }
+
+func NewETHSignIdentity() ethsignimp {
+	return ethsignimp{}
+}
+
+//
+//func GetSignIdentity(t uint8) SignIdentity {
+//	if sid, ok := signMap[t]; ok {
+//		return sid
+//	}
+//	panic("unsupported cryptosuite")
+//}
