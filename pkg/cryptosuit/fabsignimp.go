@@ -1,7 +1,7 @@
 package cryptosuit
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/client/helper"
+	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/client/helper"
 	"bytes"
 	"crypto/ecdsa"
 	"github.com/pkg/errors"

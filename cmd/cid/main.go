@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/app"
-	"github.com/tanhuiya/ci123chain/pkg/app/cmd"
-	"github.com/tanhuiya/ci123chain/pkg/logger"
+	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/app"
+	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/app/cmd"
+	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/logger"
 	"encoding/json"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

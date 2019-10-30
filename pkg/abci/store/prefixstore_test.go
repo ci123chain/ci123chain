@@ -9,7 +9,7 @@ import (
 	"github.com/tendermint/iavl"
 	dbm "github.com/tendermint/tm-db"
 
-	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
+	sdk "gitlab.oneitfarm.com/blockchain/ci123chain/pkg/abci/types"
 )
 
 type kvpair struct {

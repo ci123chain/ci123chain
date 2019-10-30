@@ -1,10 +1,10 @@
 package cmd
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/client"
-	"github.com/tanhuiya/ci123chain/pkg/client/helper"
-	"github.com/tanhuiya/ci123chain/pkg/transaction"
-	"github.com/tanhuiya/ci123chain/pkg/util"
+	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/client"
+	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/client/helper"
+	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/transaction"
+	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/util"
 	"errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

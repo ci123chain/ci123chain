@@ -2,14 +2,14 @@ package app
 
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/transaction"
+	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/transaction"
 	"bytes"
 	"encoding/json"
 
 	amino "github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
-	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
+	sdk "gitlab.oneitfarm.com/blockchain/ci123chain/pkg/abci/types"
 )
 var cdc *amino.Codec
 

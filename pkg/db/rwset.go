@@ -1,7 +1,7 @@
 package db
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/util"
+	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/util"
 	"errors"
 	"github.com/ethereum/go-ethereum/common"
 )

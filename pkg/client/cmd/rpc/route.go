@@ -1,7 +1,7 @@
 package rpc
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/client/context"
+	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/client/context"
 	"github.com/gorilla/mux"
 )
 

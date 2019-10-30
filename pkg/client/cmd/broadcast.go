@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/client"
-	"github.com/tanhuiya/ci123chain/pkg/util"
+	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/client"
+	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/util"
 	"encoding/hex"
 	"fmt"
 	"github.com/spf13/cobra"

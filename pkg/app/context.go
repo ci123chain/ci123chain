@@ -1,13 +1,13 @@
 package app
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/config"
+	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/config"
 	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/libs/log"
 	tmcli "github.com/tendermint/tendermint/libs/cli"
 	cfg "github.com/tendermint/tendermint/config"
-	"github.com/tanhuiya/ci123chain/pkg/logger"
+	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/logger"
 )
 
 type Context struct {

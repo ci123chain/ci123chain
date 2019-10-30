@@ -1,12 +1,12 @@
 package cmd
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/client/helper"
-	"github.com/tanhuiya/ci123chain/pkg/util"
+	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/client/helper"
+	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/util"
 	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/tanhuiya/ci123chain/pkg/client"
+	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/client"
 )
 
 func init()  {

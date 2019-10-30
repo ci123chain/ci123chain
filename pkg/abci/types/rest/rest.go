@@ -1,8 +1,8 @@
 package rest
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/abci/codec"
-	"github.com/tanhuiya/ci123chain/pkg/client/context"
+	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/abci/codec"
+	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/client/context"
 	"net/http"
 	"strconv"
 )

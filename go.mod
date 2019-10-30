@@ -1,4 +1,4 @@
-module github.com/tanhuiya/ci123chain
+module gitlab.oneitfarm.com/blockchain/ci123chain
 
 go 1.12
 

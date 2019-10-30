@@ -1,6 +1,6 @@
 package transaction
 
-import "github.com/tanhuiya/ci123chain/pkg/abci/types"
+import "gitlab.oneitfarm.com/blockchain/ci123chain/pkg/abci/types"
 
 
 

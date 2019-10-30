@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"io"
 
-	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
+	sdk "gitlab.oneitfarm.com/blockchain/ci123chain/pkg/abci/types"
 )
 
 var _ KVStore = prefixStore{}

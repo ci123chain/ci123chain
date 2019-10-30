@@ -1,11 +1,11 @@
 package context
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/abci/codec"
-	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
-	"github.com/tanhuiya/ci123chain/pkg/cryptosuit"
-	"github.com/tanhuiya/ci123chain/pkg/transaction"
-	"github.com/tanhuiya/ci123chain/pkg/util"
+	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/abci/codec"
+	sdk "gitlab.oneitfarm.com/blockchain/ci123chain/pkg/abci/types"
+	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/cryptosuit"
+	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/transaction"
+	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/util"
 	"fmt"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"

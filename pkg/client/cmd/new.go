@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/client/helper"
-	"github.com/tanhuiya/ci123chain/pkg/wallet"
+	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/client/helper"
+	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/wallet"
 	"fmt"
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/accounts/keystore"

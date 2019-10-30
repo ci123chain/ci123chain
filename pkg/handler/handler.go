@@ -1,10 +1,10 @@
 package handler
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/abci/types"
-	"github.com/tanhuiya/ci123chain/pkg/account"
-	"github.com/tanhuiya/ci123chain/pkg/transaction"
-	"github.com/tanhuiya/ci123chain/pkg/db"
+	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/abci/types"
+	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/account"
+	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/transaction"
+	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/db"
 	"reflect"
 )
 

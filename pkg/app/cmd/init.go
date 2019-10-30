@@ -1,10 +1,10 @@
 package cmd
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/app"
-	"github.com/tanhuiya/ci123chain/pkg/config"
-	"github.com/tanhuiya/ci123chain/pkg/node"
-	"github.com/tanhuiya/ci123chain/pkg/validator"
+	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/app"
+	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/config"
+	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/node"
+	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/validator"
 	"encoding/json"
 	"errors"
 	"fmt"

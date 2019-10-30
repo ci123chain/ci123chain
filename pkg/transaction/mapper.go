@@ -1,7 +1,7 @@
 package transaction
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/abci/types"
+	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/abci/types"
 	"encoding/binary"
 )
 

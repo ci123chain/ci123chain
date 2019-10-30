@@ -1,13 +1,13 @@
 package app
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/abci/baseapp"
-	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
-	"github.com/tanhuiya/ci123chain/pkg/account"
-	"github.com/tanhuiya/ci123chain/pkg/config"
-	"github.com/tanhuiya/ci123chain/pkg/db"
-	"github.com/tanhuiya/ci123chain/pkg/handler"
-	"github.com/tanhuiya/ci123chain/pkg/transaction"
+	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/abci/baseapp"
+	sdk "gitlab.oneitfarm.com/blockchain/ci123chain/pkg/abci/types"
+	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/account"
+	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/config"
+	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/db"
+	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/handler"
+	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/transaction"
 	"encoding/json"
 	"errors"
 	"github.com/spf13/pflag"
