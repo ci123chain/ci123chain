@@ -1,10 +1,10 @@
 package cmd
 
 import (
-	"CI123Chain/pkg/app"
-	"CI123Chain/pkg/config"
-	"CI123Chain/pkg/node"
-	"CI123Chain/pkg/validator"
+	"github.com/tanhuiya/ci123chain/pkg/app"
+	"github.com/tanhuiya/ci123chain/pkg/config"
+	"github.com/tanhuiya/ci123chain/pkg/node"
+	"github.com/tanhuiya/ci123chain/pkg/validator"
 	"encoding/json"
 	"errors"
 	"fmt"

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	sdk "CI123Chain/pkg/abci/types"
+	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
 )

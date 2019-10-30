@@ -11,7 +11,7 @@ import (
 	cmn "github.com/tendermint/tendermint/libs/common"
 	dbm "github.com/tendermint/tm-db"
 
-	sdk "CI123Chain/pkg/abci/types"
+	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 )
 
 var (

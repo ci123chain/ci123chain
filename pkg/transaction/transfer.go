@@ -1,8 +1,8 @@
 package transaction
 
 import (
-	"CI123Chain/pkg/abci/types"
-	"CI123Chain/pkg/util"
+	"github.com/tanhuiya/ci123chain/pkg/abci/types"
+	"github.com/tanhuiya/ci123chain/pkg/util"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/rlp"
 )

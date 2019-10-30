@@ -1,8 +1,8 @@
 package handler
 
 import (
-	"CI123Chain/pkg/abci/types"
-	"CI123Chain/pkg/account"
+	"github.com/tanhuiya/ci123chain/pkg/abci/types"
+	"github.com/tanhuiya/ci123chain/pkg/account"
 )
 
 func NewAnteHandler(am account.AccountMapper) types.AnteHandler {

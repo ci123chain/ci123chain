@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"CI123Chain/pkg/app"
+	"github.com/tanhuiya/ci123chain/pkg/app"
 	"github.com/spf13/cobra"
 	"github.com/tendermint/go-amino"
 )

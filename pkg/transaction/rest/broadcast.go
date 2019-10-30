@@ -1,8 +1,8 @@
 package rest
 
 import (
-	"CI123Chain/pkg/abci/types/rest"
-	"CI123Chain/pkg/client/context"
+	"github.com/tanhuiya/ci123chain/pkg/abci/types/rest"
+	"github.com/tanhuiya/ci123chain/pkg/client/context"
 	"encoding/hex"
 	"net/http"
 )

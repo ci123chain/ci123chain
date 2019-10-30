@@ -1,13 +1,13 @@
 package app
 
 import (
-	"CI123Chain/pkg/abci/baseapp"
-	sdk "CI123Chain/pkg/abci/types"
-	"CI123Chain/pkg/account"
-	"CI123Chain/pkg/config"
-	"CI123Chain/pkg/db"
-	"CI123Chain/pkg/handler"
-	"CI123Chain/pkg/transaction"
+	"github.com/tanhuiya/ci123chain/pkg/abci/baseapp"
+	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
+	"github.com/tanhuiya/ci123chain/pkg/account"
+	"github.com/tanhuiya/ci123chain/pkg/config"
+	"github.com/tanhuiya/ci123chain/pkg/db"
+	"github.com/tanhuiya/ci123chain/pkg/handler"
+	"github.com/tanhuiya/ci123chain/pkg/transaction"
 	"encoding/json"
 	"errors"
 	"github.com/spf13/pflag"

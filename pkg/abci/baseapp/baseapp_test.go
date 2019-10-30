@@ -14,8 +14,8 @@ import (
 	dbm "github.com/tendermint/tm-db"
 	"github.com/tendermint/tendermint/libs/log"
 
-	"CI123Chain/pkg/abci/codec"
-	sdk "CI123Chain/pkg/abci/types"
+	"github.com/tanhuiya/ci123chain/pkg/abci/codec"
+	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 )
 
 var (

@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	"CI123Chain/pkg/app"
-	hnode "CI123Chain/pkg/node"
+	"github.com/tanhuiya/ci123chain/pkg/app"
+	hnode "github.com/tanhuiya/ci123chain/pkg/node"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

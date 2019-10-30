@@ -1,11 +1,11 @@
 package transaction
 
 import (
-	"CI123Chain/pkg/cryptosuit"
+	"github.com/tanhuiya/ci123chain/pkg/cryptosuit"
 	"io"
 
-	"CI123Chain/pkg/abci/types"
-	perrors "CI123Chain/pkg/error"
+	"github.com/tanhuiya/ci123chain/pkg/abci/types"
+	perrors "github.com/tanhuiya/ci123chain/pkg/error"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/rlp"
 )

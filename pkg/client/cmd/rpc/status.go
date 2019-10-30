@@ -1,9 +1,9 @@
 package rpc
 
 import (
-	"CI123Chain/pkg/abci/types/rest"
-	"CI123Chain/pkg/abci/version"
-	"CI123Chain/pkg/client/context"
+	"github.com/tanhuiya/ci123chain/pkg/abci/types/rest"
+	"github.com/tanhuiya/ci123chain/pkg/abci/version"
+	"github.com/tanhuiya/ci123chain/pkg/client/context"
 	"github.com/tendermint/tendermint/p2p"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	"net/http"

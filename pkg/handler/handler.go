@@ -1,10 +1,10 @@
 package handler
 
 import (
-	"CI123Chain/pkg/abci/types"
-	"CI123Chain/pkg/account"
-	"CI123Chain/pkg/transaction"
-	"CI123Chain/pkg/db"
+	"github.com/tanhuiya/ci123chain/pkg/abci/types"
+	"github.com/tanhuiya/ci123chain/pkg/account"
+	"github.com/tanhuiya/ci123chain/pkg/transaction"
+	"github.com/tanhuiya/ci123chain/pkg/db"
 	"reflect"
 )
 

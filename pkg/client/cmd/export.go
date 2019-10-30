@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"CI123Chain/pkg/client/helper"
+	"github.com/tanhuiya/ci123chain/pkg/client/helper"
 	"encoding/hex"
 	"fmt"
 	"github.com/ethereum/go-ethereum/accounts"

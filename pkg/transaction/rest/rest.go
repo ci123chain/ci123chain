@@ -1,9 +1,9 @@
 package rest
 
 import (
-	"CI123Chain/pkg/abci/types/rest"
-	"CI123Chain/pkg/client/context"
-	"CI123Chain/pkg/transaction/rest/utils"
+	"github.com/tanhuiya/ci123chain/pkg/abci/types/rest"
+	"github.com/tanhuiya/ci123chain/pkg/client/context"
+	"github.com/tanhuiya/ci123chain/pkg/transaction/rest/utils"
 	"fmt"
 	"github.com/gorilla/mux"
 	"net/http"

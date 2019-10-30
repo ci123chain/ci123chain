@@ -1,4 +1,4 @@
-module CI123Chain
+module github.com/tanhuiya/ci123chain
 
 go 1.12
 

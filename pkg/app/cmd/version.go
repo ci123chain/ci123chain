@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"CI123Chain/pkg/consts"
+	"github.com/tanhuiya/ci123chain/pkg/consts"
 	"fmt"
 	"github.com/spf13/cobra"
 )

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"CI123Chain/pkg/abci/codec"
+	"github.com/tanhuiya/ci123chain/pkg/abci/codec"
 	cmn "github.com/tendermint/tendermint/libs/common"
 
 	abci "github.com/tendermint/tendermint/abci/types"

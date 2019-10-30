@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	"CI123Chain/pkg/app"
-	"CI123Chain/pkg/client/helper"
+	"github.com/tanhuiya/ci123chain/pkg/app"
+	"github.com/tanhuiya/ci123chain/pkg/client/helper"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"os"

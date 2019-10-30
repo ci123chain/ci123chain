@@ -1,8 +1,8 @@
 package transaction
 
 import (
-	"CI123Chain/pkg/client/helper"
-	"CI123Chain/pkg/cryptosuit"
+	"github.com/tanhuiya/ci123chain/pkg/client/helper"
+	"github.com/tanhuiya/ci123chain/pkg/cryptosuit"
 	"fmt"
 	"github.com/magiconair/properties/assert"
 	"github.com/tanhuiya/fabric-crypto/cryptosuite"

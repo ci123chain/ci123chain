@@ -257,6 +257,7 @@ github.com/tanhuiya/fabric-crypto v0.0.0-20191029110418-70efed8cf61e h1:EI29KTzC
 github.com/tanhuiya/fabric-crypto v0.0.0-20191029110418-70efed8cf61e/go.mod h1:7y4p9aqmKrjifT7RePUCxLtFQwCDmCnTcTFdiyjSv0A=
 github.com/tanhuiya/fabric-crypto v0.0.0-20191030084450-278106813756 h1:luU+K5Qi9sUg1ZD0HCXN2XpeqROhNU8P80jOlbt139Q=
 github.com/tanhuiya/fabric-crypto v0.0.0-20191030084450-278106813756/go.mod h1:7y4p9aqmKrjifT7RePUCxLtFQwCDmCnTcTFdiyjSv0A=
+github.com/tanhuiya/fabric-crypto v0.0.0-20191030100130-3c34491783c6 h1:7YbJI7735HLDlZGghIZL3JH7Vj2uOOfxmI6JWhq1vQ4=
 github.com/templexxx/cpufeat v0.0.0-20180724012125-cef66df7f161/go.mod h1:wM7WEvslTq+iOEAMDLSzhVuOt5BRZ05WirO+b09GHQU=
 github.com/templexxx/xor v0.0.0-20181023030647-4e92f724b73b/go.mod h1:5XA7W9S6mni3h5uvOC75dA3m9CCCaS83lltmc0ukdi4=
 github.com/tendermint/go-amino v0.14.1 h1:o2WudxNfdLNBwMyl2dqOJxiro5rfrEaU0Ugs6offJMk=

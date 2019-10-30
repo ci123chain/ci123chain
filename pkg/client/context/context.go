@@ -1,11 +1,11 @@
 package context
 
 import (
-	"CI123Chain/pkg/abci/codec"
-	sdk "CI123Chain/pkg/abci/types"
-	"CI123Chain/pkg/cryptosuit"
-	"CI123Chain/pkg/transaction"
-	"CI123Chain/pkg/util"
+	"github.com/tanhuiya/ci123chain/pkg/abci/codec"
+	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
+	"github.com/tanhuiya/ci123chain/pkg/cryptosuit"
+	"github.com/tanhuiya/ci123chain/pkg/transaction"
+	"github.com/tanhuiya/ci123chain/pkg/util"
 	"fmt"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"

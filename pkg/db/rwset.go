@@ -1,7 +1,7 @@
 package db
 
 import (
-	"CI123Chain/pkg/util"
+	"github.com/tanhuiya/ci123chain/pkg/util"
 	"errors"
 	"github.com/ethereum/go-ethereum/common"
 )

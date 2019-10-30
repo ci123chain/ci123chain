@@ -1,10 +1,10 @@
 package cmd
 
 import (
-	"CI123Chain/pkg/client"
-	"CI123Chain/pkg/client/helper"
-	"CI123Chain/pkg/transaction"
-	"CI123Chain/pkg/util"
+	"github.com/tanhuiya/ci123chain/pkg/client"
+	"github.com/tanhuiya/ci123chain/pkg/client/helper"
+	"github.com/tanhuiya/ci123chain/pkg/transaction"
+	"github.com/tanhuiya/ci123chain/pkg/util"
 	"errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

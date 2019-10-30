@@ -1,8 +1,8 @@
 package sdk
 
 import (
-	"CI123Chain/pkg/client/helper"
-	"CI123Chain/pkg/cryptosuit"
+	"github.com/tanhuiya/ci123chain/pkg/client/helper"
+	"github.com/tanhuiya/ci123chain/pkg/cryptosuit"
 	"encoding/hex"
 	"fmt"
 	"github.com/stretchr/testify/assert"

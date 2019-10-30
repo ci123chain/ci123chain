@@ -1,9 +1,9 @@
 package sdk
 
 import (
-	"CI123Chain/pkg/client/helper"
-	"CI123Chain/pkg/cryptosuit"
-	"CI123Chain/pkg/transaction"
+	"github.com/tanhuiya/ci123chain/pkg/client/helper"
+	"github.com/tanhuiya/ci123chain/pkg/cryptosuit"
+	"github.com/tanhuiya/ci123chain/pkg/transaction"
 )
 
 func SignTx(from, to string, amount, gas uint64, priv []byte, isFabric bool) ([]byte, error) {

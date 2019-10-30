@@ -1,12 +1,12 @@
 package cmd
 
 import (
-	"CI123Chain/pkg/client"
-	"CI123Chain/pkg/client/cmd/rpc"
-	accountRpc "CI123Chain/pkg/account/rest"
-	txRpc "CI123Chain/pkg/transaction/rest"
-	"CI123Chain/pkg/client/context"
-	"CI123Chain/pkg/util"
+	"github.com/tanhuiya/ci123chain/pkg/client"
+	"github.com/tanhuiya/ci123chain/pkg/client/cmd/rpc"
+	accountRpc "github.com/tanhuiya/ci123chain/pkg/account/rest"
+	txRpc "github.com/tanhuiya/ci123chain/pkg/transaction/rest"
+	"github.com/tanhuiya/ci123chain/pkg/client/context"
+	"github.com/tanhuiya/ci123chain/pkg/util"
 	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
