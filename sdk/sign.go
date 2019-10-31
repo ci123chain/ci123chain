@@ -13,6 +13,11 @@ func SignTx(from, to string, amount, gas uint64, priv []byte, isFabric bool) ([]
 	}
 
 	sid := cryptosuit.NewFabSignIdentity()
+	pub, err  := sid.GetPubKey(priv)
+	if err != nil {
+		return nil, err
+	}
+	tx.SetPubKey(pub)
 	signature, err := sid.Sign(tx.GetSignBytes(), priv)
 	tx.SetSignature(signature)
 	return tx.Bytes(), err
