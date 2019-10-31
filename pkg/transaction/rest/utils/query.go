@@ -1,12 +1,12 @@
 package utils
 
 import (
-	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/abci/codec"
-	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/client/context"
+	"github.com/tanhuiya/ci123chain/pkg/abci/codec"
+	"github.com/tanhuiya/ci123chain/pkg/client/context"
 	"encoding/hex"
 	"time"
 
-	sdk "gitlab.oneitfarm.com/blockchain/ci123chain/pkg/abci/types"
+	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 

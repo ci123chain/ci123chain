@@ -1,7 +1,7 @@
 package baseapp
 
 import (
-	sdk "gitlab.oneitfarm.com/blockchain/ci123chain/pkg/abci/types"
+	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 )
 
 // QueryRouter provides queryables for each query path.

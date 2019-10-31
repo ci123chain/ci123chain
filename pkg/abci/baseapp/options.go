@@ -4,8 +4,8 @@ package baseapp
 import (
 	"fmt"
 
-	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/abci/store"
-	sdk "gitlab.oneitfarm.com/blockchain/ci123chain/pkg/abci/types"
+	"github.com/tanhuiya/ci123chain/pkg/abci/store"
+	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 	dbm "github.com/tendermint/tm-db"
 )
 

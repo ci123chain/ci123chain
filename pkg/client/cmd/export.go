@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/client/helper"
+	"github.com/tanhuiya/ci123chain/pkg/client/helper"
 	"encoding/hex"
 	"fmt"
 	"github.com/ethereum/go-ethereum/accounts"

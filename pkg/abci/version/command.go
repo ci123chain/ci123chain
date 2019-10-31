@@ -3,7 +3,7 @@ package version
 import (
 	"fmt"
 
-	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/consts"
+	"github.com/tanhuiya/ci123chain/pkg/consts"
 	"github.com/spf13/cobra"
 )
 

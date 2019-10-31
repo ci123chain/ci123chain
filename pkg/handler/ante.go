@@ -1,8 +1,8 @@
 package handler
 
 import (
-	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/abci/types"
-	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/account"
+	"github.com/tanhuiya/ci123chain/pkg/abci/types"
+	"github.com/tanhuiya/ci123chain/pkg/account"
 )
 
 func NewAnteHandler(am account.AccountMapper) types.AnteHandler {

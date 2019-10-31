@@ -1,11 +1,11 @@
 package transaction
 
 import (
-	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/cryptosuit"
+	"github.com/tanhuiya/ci123chain/pkg/cryptosuit"
 	"io"
 
-	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/abci/types"
-	perrors "gitlab.oneitfarm.com/blockchain/ci123chain/pkg/error"
+	"github.com/tanhuiya/ci123chain/pkg/abci/types"
+	perrors "github.com/tanhuiya/ci123chain/pkg/error"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/rlp"
 )

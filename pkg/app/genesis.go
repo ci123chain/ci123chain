@@ -1,13 +1,13 @@
 package app
 
 import (
-	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/abci/types"
+	"github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"encoding/json"
 	"fmt"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 	"github.com/tendermint/go-amino"
-	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/account"
+	"github.com/tanhuiya/ci123chain/pkg/account"
 	abci "github.com/tendermint/tendermint/abci/types"
 )
 

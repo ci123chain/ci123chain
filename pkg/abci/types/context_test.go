@@ -8,8 +8,8 @@ import (
 	dbm "github.com/tendermint/tm-db"
 	"github.com/tendermint/tendermint/libs/log"
 
-	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/abci/store"
-	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/abci/types"
+	"github.com/tanhuiya/ci123chain/pkg/abci/store"
+	"github.com/tanhuiya/ci123chain/pkg/abci/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 )
 

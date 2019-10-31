@@ -1,8 +1,8 @@
 package rest
 
 import (
-	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/abci/types/rest"
-	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/client/context"
+	"github.com/tanhuiya/ci123chain/pkg/abci/types/rest"
+	"github.com/tanhuiya/ci123chain/pkg/client/context"
 	"encoding/hex"
 	"net/http"
 )

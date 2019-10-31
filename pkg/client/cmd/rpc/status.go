@@ -1,9 +1,9 @@
 package rpc
 
 import (
-	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/abci/types/rest"
-	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/abci/version"
-	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/client/context"
+	"github.com/tanhuiya/ci123chain/pkg/abci/types/rest"
+	"github.com/tanhuiya/ci123chain/pkg/abci/version"
+	"github.com/tanhuiya/ci123chain/pkg/client/context"
 	"github.com/tendermint/tendermint/p2p"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	"net/http"

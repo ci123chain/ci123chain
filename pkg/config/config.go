@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/viper"
 	cfg "github.com/tendermint/tendermint/config"
 
-	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/util"
+	"github.com/tanhuiya/ci123chain/pkg/util"
 )
 
 var ErrConfigNotFound = errors.New("config not found")

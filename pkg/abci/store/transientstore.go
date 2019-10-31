@@ -1,7 +1,7 @@
 package store
 
 import (
-	sdk "gitlab.oneitfarm.com/blockchain/ci123chain/pkg/abci/types"
+	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 	dbm "github.com/tendermint/tm-db"
 )
 

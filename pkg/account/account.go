@@ -1,8 +1,8 @@
 package account
 
 import (
-	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/abci/types"
-	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/util"
+	"github.com/tanhuiya/ci123chain/pkg/abci/types"
+	"github.com/tanhuiya/ci123chain/pkg/util"
 	"github.com/ethereum/go-ethereum/common"
 )
 

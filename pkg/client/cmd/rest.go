@@ -1,12 +1,12 @@
 package cmd
 
 import (
-	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/client"
-	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/client/cmd/rpc"
-	accountRpc "gitlab.oneitfarm.com/blockchain/ci123chain/pkg/account/rest"
-	txRpc "gitlab.oneitfarm.com/blockchain/ci123chain/pkg/transaction/rest"
-	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/client/context"
-	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/util"
+	"github.com/tanhuiya/ci123chain/pkg/client"
+	"github.com/tanhuiya/ci123chain/pkg/client/cmd/rpc"
+	accountRpc "github.com/tanhuiya/ci123chain/pkg/account/rest"
+	txRpc "github.com/tanhuiya/ci123chain/pkg/transaction/rest"
+	"github.com/tanhuiya/ci123chain/pkg/client/context"
+	"github.com/tanhuiya/ci123chain/pkg/util"
 	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

@@ -1,11 +1,11 @@
 package cmd
 
 import (
-	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/client"
-	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/client/context"
-	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/client/helper"
-	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/transaction"
-	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/util"
+	"github.com/tanhuiya/ci123chain/pkg/client"
+	"github.com/tanhuiya/ci123chain/pkg/client/context"
+	"github.com/tanhuiya/ci123chain/pkg/client/helper"
+	"github.com/tanhuiya/ci123chain/pkg/transaction"
+	"github.com/tanhuiya/ci123chain/pkg/util"
 	"encoding/hex"
 	"errors"
 	"fmt"

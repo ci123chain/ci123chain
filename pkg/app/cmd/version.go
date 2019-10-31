@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/consts"
+	"github.com/tanhuiya/ci123chain/pkg/consts"
 	"fmt"
 	"github.com/spf13/cobra"
 )

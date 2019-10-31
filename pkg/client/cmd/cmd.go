@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/app"
-	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/client/helper"
+	"github.com/tanhuiya/ci123chain/pkg/app"
+	"github.com/tanhuiya/ci123chain/pkg/client/helper"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"os"

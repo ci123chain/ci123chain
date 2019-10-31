@@ -1,7 +1,7 @@
 package transaction
 
 import (
-	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/abci/types"
+	"github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"bytes"
 	"fmt"
 	"github.com/ethereum/go-ethereum/rlp"

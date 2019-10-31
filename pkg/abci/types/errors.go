@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/abci/codec"
+	"github.com/tanhuiya/ci123chain/pkg/abci/codec"
 	cmn "github.com/tendermint/tendermint/libs/common"
 
 	abci "github.com/tendermint/tendermint/abci/types"

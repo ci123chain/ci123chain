@@ -1,7 +1,7 @@
 package store
 
 import (
-	"gitlab.oneitfarm.com/blockchain/ci123chain/pkg/abci/types"
+	"github.com/tanhuiya/ci123chain/pkg/abci/types"
 )
 
 // Import cosmos-sdk/types/store.go for convenience.
