@@ -38,6 +38,6 @@ func buildTransferTx(from, to string, gas, amount uint64, isFabric bool) (transa
 		return nil, err
 	}
 	nonce, err := transaction.GetNonceByAddress(fromAddr)
-	tx := transaction.NewTransferTx(fromAddr, toAddr, gas, nonce, amount, true)
+	tx := transaction.NewTransferTx(fromAddr, toAddr, gas, nonce, amount, isFabric)
 	return tx, nil
 }
