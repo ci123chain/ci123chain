@@ -231,32 +231,37 @@ func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initCo
 	}
 
 	var appGenTxs []json.RawMessage
-	var validators []tmtypes.GenesisValidator
-	var persistentPeers string
+	//var validators []tmtypes.GenesisValidator
+	//var persistentPeers string
 
-	if initConfig.GenTxs {
-		validators, appGenTxs, persistentPeers, err = processGenTxs(initConfig.GenTxsDir, cdc)
-		if err != nil {
-			return
-		}
-		c.P2P.PersistentPeers = persistentPeers
-		config.SaveConfig(c)
-	} else {
-		genTxConfig := config.GenTx{
-			viper.GetString(FlagName),
-			viper.GetString(FlagClientHome),
-			viper.GetBool(FlagOWK),
-			"127.0.0.1",
-		}
+	//if initConfig.GenTxs {
+	//	validators, appGenTxs, persistentPeers, err = processGenTxs(initConfig.GenTxsDir, cdc)
+	//	if err != nil {
+	//		return
+	//	}
+	//	c.P2P.PersistentPeers = persistentPeers
+	//	config.SaveConfig(c)
+	//} else {
+		//genTxConfig := config.GenTx{
+		//	viper.GetString(FlagName),
+		//	viper.GetString(FlagClientHome),
+		//	viper.GetBool(FlagOWK),
+		//	"127.0.0.1",
+		//}
 
-		appGenTx, am, validator, err := appInit.AppGenTx(cdc, nodeKey.PubKey(), genTxConfig)
-		appMessage = am
-		if err != nil {
-			return "", "", nil, err
-		}
-		validators = []tmtypes.GenesisValidator{validator}
-		appGenTxs = []json.RawMessage{appGenTx}
-	}
+		//appGenTx, am, validator, err := appInit.AppGenTx(cdc, nodeKey.PubKey(), genTxConfig)
+		//appMessage = am
+		//if err != nil {
+		//	return "", "", nil, err
+		//}
+		//validators = []tmtypes.GenesisValidator{validator}
+		//appGenTxs = []json.RawMessage{appGenTx}
+	//}
+
+	validator := appInit.GetValidator(nodeKey.PubKey(), viper.GetString(FlagName))
+	validators := []tmtypes.GenesisValidator{validator}
+
+
 	appState, err := appInit.AppGenState(cdc, appGenTxs)
 	if err != nil {
 		return

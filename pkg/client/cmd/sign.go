@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/client"
 	"github.com/tanhuiya/ci123chain/pkg/client/context"
 	"github.com/tanhuiya/ci123chain/pkg/client/helper"
@@ -11,7 +12,6 @@ import (
 	"fmt"
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -81,10 +81,10 @@ var signCmd = &cobra.Command{
 	},
 }
 
-func getSignedDataWithTx(ctx context.Context, tx transaction.Transaction, password string, from common.Address) ([]byte, error) {
+func getSignedDataWithTx(ctx context.Context, tx transaction.Transaction, password string, from types.AccAddress) ([]byte, error) {
 	ks := getDefaultKeystore()
 	acc := accounts.Account{
-		Address: from,
+		Address: from.Address,
 	}
 	acct, err := ks.Find(acc)
 	if err != nil {

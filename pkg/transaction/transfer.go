@@ -3,15 +3,13 @@ package transaction
 import (
 	"github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/util"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/rlp"
 )
 
-var emptyAddr common.Address
+var emptyAddr types.AccAddress
 
-const TxMode  = "Fabric"
 
-func NewTransferTx(from, to common.Address, gas, nonce, amount uint64, isFabric bool ) Transaction {
+func NewTransferTx(from, to types.AccAddress, gas, nonce, amount uint64, isFabric bool ) Transaction {
 	tx := &TransferTx{
 		Common: CommonTx{
 			Code: TRANSFER,
@@ -28,7 +26,7 @@ func NewTransferTx(from, to common.Address, gas, nonce, amount uint64, isFabric 
 
 type TransferTx struct {
 	Common CommonTx
-	To     common.Address
+	To     types.AccAddress
 	Amount uint64
 	FabricMode bool
 }
@@ -38,7 +36,7 @@ func DecodeTransferTx(b []byte) (*TransferTx, error) {
 	return tx, rlp.DecodeBytes(b, tx)
 }
 
-func isEmptyAddr(addr common.Address) bool {
+func isEmptyAddr(addr types.AccAddress) bool {
 	return addr == emptyAddr
 }
 

@@ -7,6 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/bgentry/speakeasy"
 	isatty "github.com/mattn/go-isatty"
+	"github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"os"
 	"strings"
 )
@@ -81,8 +82,8 @@ func readLineFromBuf(buf *bufio.Reader) (string, error) {
 }
 
 
-func ParseAddrs(addrStr string) ([]common.Address, error) {
-	var addrs []common.Address
+func ParseAddrs(addrStr string) ([]types.AccAddress, error) {
+	var addrs []types.AccAddress
 	as := strings.Split(addrStr, ",")
 	for _, a := range as {
 		a = strings.TrimSpace(a)
@@ -98,9 +99,9 @@ func ParseAddrs(addrStr string) ([]common.Address, error) {
 	return addrs, nil
 }
 
-func StrToAddress(addrStr string) (common.Address, error) {
+func StrToAddress(addrStr string) (types.AccAddress, error) {
 	if !common.IsHexAddress(strings.TrimSpace(addrStr)) {
-		return common.Address{}, errors.New("invalid address provided, please use hex format")
+		return types.AccAddress{}, errors.New("invalid address provided, please use hex format")
 	}
-	return common.HexToAddress(addrStr), nil
+	return types.HexToAddress(addrStr), nil
 }

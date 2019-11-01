@@ -117,6 +117,9 @@ type AppInit struct {
 	// AppGenState creates the core parameters initialization. It takes in a
 	// pubkey meant to represent the pubkey of the validator of this machine.
 	AppGenState func(cdc *amino.Codec, appGenTxs []json.RawMessage) (appState json.RawMessage, err error)
+
+
+	GetValidator func(pk crypto.PubKey, name string) types.GenesisValidator
 }
 
 
@@ -132,6 +135,7 @@ func NewAppInit() AppInit {
 		FlagsAppGenTx:    fsAppGenTx,
 		AppGenTx:         CreateAppGenTx,
 		AppGenState:      AppGenStateJSON,
+		GetValidator:     AppGetValidator,
 	}
 }
 
@@ -147,6 +151,15 @@ type GenesisTx struct {
 type AppGenTx struct {
 	// currently takes address as string because unmarshaling Ether address fails
 	Address string `json:"address"`
+}
+
+func AppGetValidator(pk crypto.PubKey, name string) types.GenesisValidator {
+	validator := types.GenesisValidator{
+		PubKey: pk,
+		Power:  1,
+		Name:   name,
+	}
+	return validator
 }
 
 // Generate a genesis transaction with flags

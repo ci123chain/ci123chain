@@ -47,7 +47,7 @@ func (fab fabsignimp)Verifier(msg []byte, signature []byte, pub []byte, address 
 		if err != nil {
 			return false, err
 		}
-		if !bytes.Equal(addrByte[:], address) {
+		if !bytes.Equal(addrByte.Bytes(), address) {
 			return false, errors.Wrap(err, "address and privateKey not match")
 		}
 	}

@@ -1,21 +1,20 @@
 package context
 
 import (
+	"fmt"
+	"github.com/pkg/errors"
 	"github.com/tanhuiya/ci123chain/pkg/abci/codec"
-	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
+	"github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/cryptosuit"
 	"github.com/tanhuiya/ci123chain/pkg/transaction"
 	"github.com/tanhuiya/ci123chain/pkg/util"
-	"fmt"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/pkg/errors"
 	rpclient "github.com/tendermint/tendermint/rpc/client"
 )
 
 type Context struct {
 	HomeDir 	string
 	NodeURI 	string
-	InputAddressed []common.Address
+	InputAddressed []types.AccAddress
 	Client 		rpclient.Client
 	Verbose 	bool
 	Height 		int64
@@ -39,11 +38,11 @@ func (ctx Context) WithHeight(height int64) Context {
 	return ctx
 }
 
-func (ctx *Context) GetInputAddresses() ([]common.Address, error) {
+func (ctx *Context) GetInputAddresses() ([]types.AccAddress, error) {
 	return ctx.InputAddressed, nil
 }
 
-func (ctx *Context) GetBalanceByAddress(addr common.Address) (uint64, error) {
+func (ctx *Context) GetBalanceByAddress(addr types.AccAddress) (uint64, error) {
 	res, _, err := ctx.query("/store/main/key", addr.Bytes())
 
 	if err != nil {
@@ -83,10 +82,10 @@ func (ctx Context) PrintOutput(toPrint fmt.Stringer) (err error) {
 }
 
 
-func (ctx *Context) SignAndBroadcastTx(tx transaction.Transaction, addr common.Address) (sdk.TxResponse, error) {
+func (ctx *Context) SignAndBroadcastTx(tx transaction.Transaction, addr types.AccAddress) (types.TxResponse, error) {
 	sig, err := ctx.Sign(tx.GetSignBytes(), addr)
 	if err != nil {
-		return sdk.TxResponse{}, err
+		return types.TxResponse{}, err
 	}
 	tx.SetSignature(sig)
 	res, err := ctx.BroadcastTx(tx.Bytes())
@@ -100,7 +99,7 @@ func (ctx *Context) SignAndBroadcastTx(tx transaction.Transaction, addr common.A
 	return res, nil
 }
 
-//func (ctx *Context) SignTx(tx transaction.Transaction, addr common.Address) (transaction.Transaction, error) {
+//func (ctx *Context) SignTx(tx transaction.Transaction, addr types.AccAddress) (transaction.Transaction, error) {
 //	sig, err := ctx.Sign(tx.GetSignBytes(), addr)
 //	if err != nil {
 //		return nil, err
@@ -138,10 +137,10 @@ func (ctx *Context) SignWithTx(tx transaction.Transaction, privKey []byte, fabri
 	return tx, nil
 }
 
-func (ctx *Context) BroadcastSignedData(data []byte) (sdk.TxResponse, error) {
+func (ctx *Context) BroadcastSignedData(data []byte) (types.TxResponse, error) {
 	res, err := ctx.BroadcastTx(data)
 	if err != nil {
-		return sdk.TxResponse{}, err
+		return types.TxResponse{}, err
 	}
 	if ctx.Verbose {
 		fmt.Printf("txHash=%v BlockHeight=%v\n", res.TxHash, res.Height)

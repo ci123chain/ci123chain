@@ -1,9 +1,9 @@
 package db
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/util"
 	"errors"
-	"github.com/ethereum/go-ethereum/common"
+	"github.com/tanhuiya/ci123chain/pkg/abci/types"
+	"github.com/tanhuiya/ci123chain/pkg/util"
 )
 
 type Read struct {
@@ -22,7 +22,7 @@ type RWSetItems struct {
 }
 
 type RWSet struct {
-	Address 	common.Address
+	Address 	types.AccAddress
 	Items 		*RWSetItems
 }
 

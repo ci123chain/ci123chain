@@ -1,9 +1,11 @@
 package utils
 
 import (
+	"encoding/hex"
+	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/tanhuiya/ci123chain/pkg/abci/codec"
 	"github.com/tanhuiya/ci123chain/pkg/client/context"
-	"encoding/hex"
+	"github.com/tanhuiya/ci123chain/pkg/transaction"
 	"time"
 
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
@@ -39,7 +41,6 @@ func QueryTx(cliCtx context.Context, hashHexStr string) (sdk.TxResponse, error) 
 }
 
 
-
 func getBlocksForTxResults(cliCtx context.Context, resTxs []*ctypes.ResultTx) (map[int64]*ctypes.ResultBlock, error) {
 	node, err := cliCtx.GetNode()
 	if err != nil {
@@ -63,23 +64,25 @@ func getBlocksForTxResults(cliCtx context.Context, resTxs []*ctypes.ResultTx) (m
 
 
 func formatTxResult(cdc *codec.Codec, resTx *ctypes.ResultTx, resBlock *ctypes.ResultBlock) (sdk.TxResponse, error) {
-	//tx, err := parseTx(cdc, resTx.Tx)
-	//if err != nil {
-	//	return sdk.TxResponse{}, err
-	//}
-	//fmt.Println(resTx.Tx)
-	return sdk.NewResponseResultTx(resTx, nil, resBlock.Block.Time.Format(time.RFC3339)), nil
+	tx, err := parseTx(cdc, resTx.Tx)
+	if err != nil {
+		return sdk.TxResponse{}, err
+	}
+	return sdk.NewResponseResultTx(resTx, tx, resBlock.Block.Time.Format(time.RFC3339)), nil
 }
 
 
-//func parseTx(cdc *codec.Codec, txBytes []byte) (sdk.Tx, error) {
-	//var tx types.StdTx
-	//
+func parseTx(cdc *codec.Codec, txBytes []byte) (sdk.Tx, error) {
+
+	// todo: only TransferTx implement
+
+	tx := new(transaction.TransferTx)
+	rlp.DecodeBytes(txBytes, &tx)
 	//err := cdc.UnmarshalBinaryLengthPrefixed(txBytes, &tx)
 	//if err != nil {
 	//	return nil, err
 	//}
-	//
-	//return tx, nil
-//}
+
+	return tx, nil
+}
 

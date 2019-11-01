@@ -1,10 +1,10 @@
 package transaction
 
 import (
-	"github.com/ethereum/go-ethereum/common"
+	"github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"time"
 )
 
-func GetNonceByAddress(add common.Address) (uint64, error) {
+func GetNonceByAddress(add types.AccAddress) (uint64, error) {
 	return uint64(time.Now().UnixNano()), nil
 }

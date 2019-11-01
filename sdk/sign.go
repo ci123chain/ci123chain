@@ -6,6 +6,8 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/transaction"
 )
 
+// 签名消息
+// 返回 []byte, 需要 转为 hex 类型后广播
 func SignTx(from, to string, amount, gas uint64, priv []byte, isFabric bool) ([]byte, error) {
 	tx, err := buildTransferTx(from, to, gas, amount, isFabric)
 	if err != nil {

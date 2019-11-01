@@ -6,13 +6,12 @@ import (
 
 	"github.com/tanhuiya/ci123chain/pkg/abci/types"
 	perrors "github.com/tanhuiya/ci123chain/pkg/error"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/rlp"
 )
 
 type CommonTx struct {
 	Code      uint8
-	From      common.Address
+	From      types.AccAddress
 	Nonce     uint64
 	Gas       uint64
 	PubKey 	  []byte
@@ -20,7 +19,7 @@ type CommonTx struct {
 }
 
 
-func (tx *CommonTx) ValidateBasic() types.Error {
+func (tx CommonTx) ValidateBasic() types.Error {
 	if isEmptyAddr(tx.From) {
 		return ErrInvalidTx(DefaultCodespace, "tx.From == nil")
 	}
@@ -41,48 +40,25 @@ func (tx *CommonTx) SetSignature(sig []byte) {
 func (tx *CommonTx) SetPubKey(pub []byte) {
 	tx.PubKey = pub
 }
-//func (tx *CommonTx) verifySignature(hash []byte) error {
-//	rawPub, err := crypto.Ecrecover(hash, tx.Signature)
-//	if err != nil {
-//		return errors.Wrap(err, "crypto.Ecrecover")
-//	}
-//	pub, err := crypto.UnmarshalPubkey(rawPub)
-//	if err != nil {
-//		return errors.Wrap(err, "crypto.DecompressPubkey")
-//	}
-//	signer := crypto.PubkeyToAddress(*pub)
-//	if signer != tx.From {
-//		return fmt.Errorf("signer mismatch: %v != %v", signer.Hex(), tx.From.Hex())
-//	}
-//	return nil
-//}
+
 
 func (tx *CommonTx) VerifySignature(hash []byte, fabricMode bool) types.Error  {
 
 	if fabricMode {
 		fab := cryptosuit.NewFabSignIdentity()
-		valid, err := fab.Verifier(hash, tx.Signature, tx.PubKey, tx.From[:])
+		valid, err := fab.Verifier(hash, tx.Signature, tx.PubKey, tx.From.Bytes())
 		if !valid || err != nil {
 			return perrors.ErrInvalidSignature(perrors.DefaultCodespace, err.Error())
 		}
 	} else {
 		eth := cryptosuit.NewETHSignIdentity()
-		valid, err := eth.Verifier(hash, tx.Signature, nil, tx.From[:])
+		valid, err := eth.Verifier(hash, tx.Signature, nil, tx.From.Bytes())
 		if !valid || err != nil {
 			return perrors.ErrInvalidSignature(perrors.DefaultCodespace, err.Error())
 		}
 	}
 	return nil
 }
-
-
-//func (tx *CommonTx) VerifySignature(hash []byte) types.Error {
-//	err := tx.verifySignature(hash)
-//	if err == nil {
-//		return nil
-//	}
-//	return perrors.ErrInvalidSignature(perrors.DefaultCodespace, err.Error())
-//}
 
 
 func (tx CommonTx) EncodeRLP(w io.Writer) error {
