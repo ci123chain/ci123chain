@@ -8,7 +8,7 @@ import (
 // GenesisAccount is a struct for account initialization used exclusively during genesis
 type GenesisAccount struct {
 	Address       	types.AccAddress `json:"address" yaml:"address"`
-	Coin        	uint64         `json:"coin" yaml:"coin"`
+	Coin        	types.Coin         `json:"coin" yaml:"coin"`
 	Sequence      	uint64         `json:"sequence_number" yaml:"sequence_number"`
 	AccountNumber 	uint64         `json:"account_number" yaml:"account_number"`
 }
@@ -16,7 +16,7 @@ type GenesisAccount struct {
 // GenesisAccounts defines a set of genesis account
 type GenesisAccounts []GenesisAccount
 
-func NewGenesisAccountRaw(address types.AccAddress, coin uint64) GenesisAccount {
+func NewGenesisAccountRaw(address types.AccAddress, coin types.Coin) GenesisAccount {
 	return GenesisAccount{
 		Address: address,
 		Coin:    coin,
@@ -27,6 +27,11 @@ func NewGenesisAccountRaw(address types.AccAddress, coin uint64) GenesisAccount 
 
 func (ga GenesisAccount) Validate() error {
 	return nil
+}
+
+func (ga GenesisAccount) ToAccount() BaseAccount {
+	bacc := NewBaseAccount(ga.Address, ga.Coin, nil, ga.AccountNumber, ga.Sequence)
+	return *bacc
 }
 
 func (gaccs GenesisAccounts) Contains(acc types.AccAddress) bool {

@@ -4,6 +4,7 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/abci/baseapp"
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/account"
+	"github.com/tanhuiya/ci123chain/pkg/account/keeper"
 	"github.com/tanhuiya/ci123chain/pkg/config"
 	"github.com/tanhuiya/ci123chain/pkg/db"
 	"github.com/tanhuiya/ci123chain/pkg/handler"
@@ -50,6 +51,8 @@ type Chain struct {
 	capKeyMainStore *sdk.KVStoreKey
 	contractStore   *sdk.KVStoreKey
 	txIndexStore    *sdk.TransientStoreKey
+
+	accModule 		*account.AppModule
 }
 
 func NewChain(logger log.Logger, tmdb tmdb.DB, traceStore io.Writer) *Chain {
@@ -66,9 +69,15 @@ func NewChain(logger log.Logger, tmdb tmdb.DB, traceStore io.Writer) *Chain {
 	txm := transaction.NewTxIndexMapper(c.txIndexStore)
 	sm := db.NewStateManager(c.contractStore)
 
+	// 设置module
+	// todo mainkey?
+	accKeeper := keeper.NewAccountKeeper(cdc, c.capKeyMainStore)
+	c.accModule = &account.AppModule{ accKeeper}
+
+
 	c.SetHandler(handler.NewHandler(txm, am, sm))
 	c.SetAnteHandler(handler.NewAnteHandler(am))
-	c.SetInitChainer(GetInitChainer(am))
+	c.SetInitChainer(GetInitChainer(*c.accModule))
 
 	err := c.mountStores()
 	if err != nil {

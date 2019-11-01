@@ -9,6 +9,9 @@ const (
 var (
 	SetGenesisStateInAppState 	= types.SetGenesisStateInAppState
 	NewGenesisAccountRaw 		= types.NewGenesisAccountRaw
+
+	ModuleCdc 					= types.ModuleCdc
+
 )
 
 type (
