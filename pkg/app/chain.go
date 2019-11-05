@@ -3,9 +3,11 @@ package app
 import (
 	"github.com/tanhuiya/ci123chain/pkg/abci/baseapp"
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
+	"github.com/tanhuiya/ci123chain/pkg/abci/types/module"
 	"github.com/tanhuiya/ci123chain/pkg/account"
 	"github.com/tanhuiya/ci123chain/pkg/account/keeper"
 	acc_types "github.com/tanhuiya/ci123chain/pkg/account/types"
+	"github.com/tanhuiya/ci123chain/pkg/auth"
 	"github.com/tanhuiya/ci123chain/pkg/config"
 	"github.com/tanhuiya/ci123chain/pkg/db"
 	"github.com/tanhuiya/ci123chain/pkg/handler"
@@ -39,6 +41,11 @@ var (
 	MainStoreKey     = sdk.NewKVStoreKey("main")
 	ContractStoreKey = sdk.NewKVStoreKey("contract")
 	TxIndexStoreKey  = sdk.NewTransientStoreKey("tx_index")
+
+	ModuleBasics = module.NewBasicManager(
+		account.AppModuleBasic{},
+		auth.AppModuleBasic{},
+		)
 )
 
 
@@ -53,7 +60,8 @@ type Chain struct {
 	contractStore   *sdk.KVStoreKey
 	txIndexStore    *sdk.TransientStoreKey
 
-	accModule 		*account.AppModule
+	// the module manager
+	mm *module.AppManager
 }
 
 func NewChain(logger log.Logger, tmdb tmdb.DB, traceStore io.Writer) *Chain {
@@ -75,12 +83,15 @@ func NewChain(logger log.Logger, tmdb tmdb.DB, traceStore io.Writer) *Chain {
 	// 设置module
 	// todo mainkey?
 	accKeeper := keeper.NewAccountKeeper(cdc, c.capKeyMainStore, acc_types.ProtoBaseAccount)
-	c.accModule = &account.AppModule{ accKeeper}
 
+	c.mm = module.NewManager(
+		auth.AppModule{},
+		account.AppModule{AccountKeeper: accKeeper},
+		)
 
 	c.SetHandler(handler.NewHandler(txm, accKeeper, sm))
 	c.SetAnteHandler(handler.NewAnteHandler(accKeeper))
-	c.SetInitChainer(GetInitChainer(*c.accModule))
+	c.SetInitChainer(c.InitChainer)
 
 	err := c.mountStores()
 	if err != nil {
@@ -128,7 +139,7 @@ type AppInit struct {
 
 	// AppGenState creates the core parameters initialization. It takes in a
 	// pubkey meant to represent the pubkey of the validator of this machine.
-	AppGenState func(cdc *amino.Codec, appGenTxs []json.RawMessage) (appState json.RawMessage, err error)
+	AppGenState func() (appState json.RawMessage, err error)
 
 
 	GetValidator func(pk crypto.PubKey, name string) types.GenesisValidator

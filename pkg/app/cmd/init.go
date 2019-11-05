@@ -1,15 +1,15 @@
 package cmd
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/app"
-	"github.com/tanhuiya/ci123chain/pkg/config"
-	"github.com/tanhuiya/ci123chain/pkg/node"
-	"github.com/tanhuiya/ci123chain/pkg/validator"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/tanhuiya/ci123chain/pkg/app"
+	"github.com/tanhuiya/ci123chain/pkg/config"
+	"github.com/tanhuiya/ci123chain/pkg/node"
+	"github.com/tanhuiya/ci123chain/pkg/validator"
 	"github.com/tendermint/go-amino"
 	cfg "github.com/tendermint/tendermint/config"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
@@ -17,12 +17,8 @@ import (
 	cmn "github.com/tendermint/tendermint/libs/common"
 	tmtypes "github.com/tendermint/tendermint/types"
 	tmtime "github.com/tendermint/tendermint/types/time"
-	"io/ioutil"
 	"net"
-	"os"
-	"path"
 	"path/filepath"
-	"sort"
 	"time"
 )
 
@@ -230,38 +226,11 @@ func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initCo
 		return
 	}
 
-	var appGenTxs []json.RawMessage
-	//var validators []tmtypes.GenesisValidator
-	//var persistentPeers string
-
-	//if initConfig.GenTxs {
-	//	validators, appGenTxs, persistentPeers, err = processGenTxs(initConfig.GenTxsDir, cdc)
-	//	if err != nil {
-	//		return
-	//	}
-	//	c.P2P.PersistentPeers = persistentPeers
-	//	config.SaveConfig(c)
-	//} else {
-		//genTxConfig := config.GenTx{
-		//	viper.GetString(FlagName),
-		//	viper.GetString(FlagClientHome),
-		//	viper.GetBool(FlagOWK),
-		//	"127.0.0.1",
-		//}
-
-		//appGenTx, am, validator, err := appInit.AppGenTx(cdc, nodeKey.PubKey(), genTxConfig)
-		//appMessage = am
-		//if err != nil {
-		//	return "", "", nil, err
-		//}
-		//validators = []tmtypes.GenesisValidator{validator}
-		//appGenTxs = []json.RawMessage{appGenTx}
-	//}
-
 	validator := appInit.GetValidator(nodeKey.PubKey(), viper.GetString(FlagName))
 	validators := []tmtypes.GenesisValidator{validator}
 
-	appState, err := appInit.AppGenState(cdc, appGenTxs)
+	appState, err := appInit.AppGenState()
+
 	if err != nil {
 		return
 	}
@@ -272,52 +241,6 @@ func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initCo
 	return
 }
 
-func processGenTxs(genTxsDir string, cdc *amino.Codec) (
-	validators []tmtypes.GenesisValidator, appGenTxs []json.RawMessage, persistentPeers string, err error) {
-
-	var fos []os.FileInfo
-	fos, err = ioutil.ReadDir(genTxsDir)
-	if err != nil {
-		return
-	}
-
-	genTxs := make(map[string]GenesisTx)
-	var nodeIDS []string
-	for _, fo := range fos {
-		filename := path.Join(genTxsDir, fo.Name())
-		if !fo.IsDir() && (path.Ext(filename) != ".json" ) {
-			continue
-		}
-
-		var bz []byte
-		bz, err = ioutil.ReadFile(filename)
-		if err != nil {
-			return
-		}
-		var genTx GenesisTx
-		err = cdc.UnmarshalJSON(bz, &genTx)
-		if err != nil {
-			return
-		}
-		genTxs[genTx.NodeID] = genTx
-		nodeIDS = append(nodeIDS, genTx.NodeID)
-	}
-	sort.Strings(nodeIDS)
-
-	for _, nodeID := range nodeIDS {
-		genTx := genTxs[nodeID]
-
-		validators = append(validators, genTx.Validator)
-		appGenTxs = append(appGenTxs, genTx.AppGenTx)
-
-		comma := ","
-		if len(persistentPeers) == 0 {
-			comma = ""
-		}
-		persistentPeers += fmt.Sprintf("%s%s@%s:26656", comma, genTx.NodeID, genTx.IP)
-	}
-	return
-}
 
 func writeGenesisFile(cdc *amino.Codec, genesisFile string, chainID string,
 	validators []tmtypes.GenesisValidator, appState json.RawMessage, genesisTime time.Time) error {

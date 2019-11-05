@@ -6,9 +6,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/tanhuiya/ci123chain/pkg/abci/codec"
 	"github.com/tanhuiya/ci123chain/pkg/abci/types"
-	"github.com/tanhuiya/ci123chain/pkg/account"
-	"github.com/tanhuiya/ci123chain/pkg/auth"
-	"github.com/tendermint/go-amino"
 	abci "github.com/tendermint/tendermint/abci/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 )
@@ -18,10 +15,8 @@ const (
 )
 
 
-func AppGenStateJSON(cdc *amino.Codec, appGenTxs []json.RawMessage) (json.RawMessage, error) {
-	appState := make(map[string]json.RawMessage)
-
-	AppGenstateAuth(cdc, appState)
+func AppGenStateJSON() (json.RawMessage, error) {
+	appState := ModuleBasics.DefaultGenesis()
 
 	stateBytes, err := json.Marshal(appState)
 	if err != nil {
@@ -30,29 +25,14 @@ func AppGenStateJSON(cdc *amino.Codec, appGenTxs []json.RawMessage) (json.RawMes
 	return stateBytes, nil
 }
 
-func AppGenstateAuth(cdc *amino.Codec, appState map[string]json.RawMessage)  {
-	m := auth.AppModuleBasic{}
-	appState[m.Name()] = m.DefaultGenesis()
-}
 
+type GenesisState map[string]json.RawMessage
 
-type GenesisState map[string]json.RawMessage 
+func (c *Chain)InitChainer (ctx types.Context, req abci.RequestInitChain) abci.ResponseInitChain {
 
-func GetInitChainer(accModule account.AppModule) func(types.Context, abci.RequestInitChain) abci.ResponseInitChain {
-	return func(ctx types.Context, req abci.RequestInitChain) abci.ResponseInitChain {
-
-		stateJSON := req.AppStateBytes
-		var genesisState GenesisState
-		err := json.Unmarshal(stateJSON, &genesisState)
-		if err != nil {
-			panic(err)
-			// return sdk.ErrGenesisParse("").TraceCause(err, "")
-		}
-
-		// 单独设置 account module
-		accModule.InitGenesis(ctx, genesisState[account.ModuleName])
-		return abci.ResponseInitChain{}
-	}
+	var genesisState GenesisState
+	c.cdc.MustUnmarshalJSON(req.AppStateBytes, &genesisState)
+	return c.mm.InitGenesis(ctx, genesisState)
 }
 
 func GenesisStateFromGenFile(cdc *codec.Codec, genFile string) (genesisState map[string]json.RawMessage, genDoc *tmtypes.GenesisDoc, err error)  {

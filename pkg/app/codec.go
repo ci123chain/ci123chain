@@ -4,12 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/tanhuiya/ci123chain/pkg/abci/codec"
-	"github.com/tanhuiya/ci123chain/pkg/transaction"
-	"github.com/tendermint/tendermint/crypto/encoding/amino"
-
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
-	acc_types "github.com/tanhuiya/ci123chain/pkg/account/types"
+	"github.com/tanhuiya/ci123chain/pkg/transaction"
 	"github.com/tendermint/go-amino"
+	"github.com/tendermint/tendermint/crypto/encoding/amino"
 )
 
 // attempt to make some pretty json
@@ -33,7 +31,9 @@ func  MakeCodec() *codec.Codec {
 	//cdc.RegisterInterface((*crypto.PrivKey)(nil), nil)
 	sdk.RegisterCodec(cdc)
 	transaction.RegisterCodec(cdc)
-	acc_types.RegisterCodec(cdc)
+
+	ModuleBasics.RegisterCodec(cdc)
+	//acc_types.RegisterCodec(cdc)
 	//cdc.RegisterConcrete(secp256k1.PubKeySecp256k1{},
 	//	secp256k1.PubKeyAminoName, nil)
 	//cdc.RegisterConcrete(secp256k1.PrivKeySecp256k1{},
