@@ -2,15 +2,15 @@ package handler
 
 import (
 	"github.com/tanhuiya/ci123chain/pkg/abci/types"
-	"github.com/tanhuiya/ci123chain/pkg/account"
-	"github.com/tanhuiya/ci123chain/pkg/transaction"
+	"github.com/tanhuiya/ci123chain/pkg/account/keeper"
 	"github.com/tanhuiya/ci123chain/pkg/db"
+	"github.com/tanhuiya/ci123chain/pkg/transaction"
 	"reflect"
 )
 
 func NewHandler(
 	txm transaction.TxIndexMapper,
-	am account.AccountMapper,
+	am keeper.AccountKeeper,
 	sm *db.StateManager) types.Handler {
 	return func(ctx types.Context, tx types.Tx) types.Result{
 		ctx = ctx.WithTxIndex(txm.Get(ctx))
@@ -29,8 +29,8 @@ func NewHandler(
 	}
 }
 
-func handlerTransferTx(ctx types.Context, am account.AccountMapper, tx *transaction.TransferTx) types.Result {
-	if err := am.Transfer(ctx, tx.Common.From, tx.Amount, tx.To); err != nil {
+func handlerTransferTx(ctx types.Context, am keeper.AccountKeeper, tx *transaction.TransferTx) types.Result {
+	if err := am.Transfer(ctx, tx.Common.From, tx.To, tx.Amount); err != nil {
 		return transaction.ErrFailTransfer(transaction.DefaultCodespace, err.Error()).Result()
 	}
 	return types.Result{}

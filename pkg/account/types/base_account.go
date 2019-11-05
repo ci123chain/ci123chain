@@ -1,9 +1,19 @@
 package types
 
 import (
+	"fmt"
+	"github.com/pkg/errors"
 	"github.com/tanhuiya/ci123chain/pkg/abci/types"
+	"github.com/tanhuiya/ci123chain/pkg/account/exported"
 	"github.com/tendermint/tendermint/crypto"
+	"time"
 )
+
+var _ exported.Account = (*BaseAccount)(nil)
+
+func ProtoBaseAccount() exported.Account  {
+	return &BaseAccount{}
+}
 
 type BaseAccount struct {
 	Address       	types.AccAddress `json:"address" yaml:"address"`
@@ -33,8 +43,8 @@ func (acc BaseAccount) GetAddress() types.AccAddress {
 
 // SetAddress - Implements sdk.Account.
 func (acc *BaseAccount) SetAddress(addr types.AccAddress) error {
-	if err := addr.Validate(); err != nil {
-		return err
+	if !acc.Address.Empty(){
+		return errors.New("cannot override BaseAccount address")
 	}
 	acc.Address = addr
 	return nil
@@ -85,3 +95,19 @@ func (acc *BaseAccount) SetSequence(seq uint64) error {
 	return nil
 }
 
+// SpendableCoins returns the total set of spendable coins. For a base account,
+// this is simply the base coins.
+func (acc *BaseAccount) SpendableCoins(_ time.Time) types.Coin{
+	return acc.GetCoin()
+}
+
+func (acc *BaseAccount) String() string {
+	return fmt.Sprintf(`Vesting Account:
+  Address:          %s
+  Pubkey:           %s
+  Coins:            %s
+  AccountNumber:    %d
+  Sequence:         %d`,
+		acc.Address, acc.PubKey, acc.Coin, acc.AccountNumber, acc.Sequence,
+	)
+}

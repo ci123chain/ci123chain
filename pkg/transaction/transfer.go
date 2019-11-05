@@ -9,7 +9,7 @@ import (
 var emptyAddr types.AccAddress
 
 
-func NewTransferTx(from, to types.AccAddress, gas, nonce, amount uint64, isFabric bool ) Transaction {
+func NewTransferTx(from, to types.AccAddress, gas, nonce uint64, amount types.Coin, isFabric bool ) Transaction {
 	tx := &TransferTx{
 		Common: CommonTx{
 			Code: TRANSFER,
@@ -27,7 +27,7 @@ func NewTransferTx(from, to types.AccAddress, gas, nonce, amount uint64, isFabri
 type TransferTx struct {
 	Common CommonTx
 	To     types.AccAddress
-	Amount uint64
+	Amount types.Coin
 	FabricMode bool
 }
 

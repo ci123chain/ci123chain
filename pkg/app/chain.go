@@ -5,6 +5,7 @@ import (
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/account"
 	"github.com/tanhuiya/ci123chain/pkg/account/keeper"
+	acc_types "github.com/tanhuiya/ci123chain/pkg/account/types"
 	"github.com/tanhuiya/ci123chain/pkg/config"
 	"github.com/tanhuiya/ci123chain/pkg/db"
 	"github.com/tanhuiya/ci123chain/pkg/handler"
@@ -57,6 +58,9 @@ type Chain struct {
 
 func NewChain(logger log.Logger, tmdb tmdb.DB, traceStore io.Writer) *Chain {
 	app := baseapp.NewBaseApp("ci123", logger, tmdb, transaction.DecodeTx)
+
+	cdc := MakeCodec()
+
 	c := &Chain{
 		BaseApp: 			app,
 		cdc: 				cdc,
@@ -64,19 +68,18 @@ func NewChain(logger log.Logger, tmdb tmdb.DB, traceStore io.Writer) *Chain {
 		contractStore: 		ContractStoreKey,
 		txIndexStore: 		TxIndexStoreKey,
 	}
-	am := account.NewAccountMapper(c.capKeyMainStore)
 
 	txm := transaction.NewTxIndexMapper(c.txIndexStore)
 	sm := db.NewStateManager(c.contractStore)
 
 	// 设置module
 	// todo mainkey?
-	accKeeper := keeper.NewAccountKeeper(cdc, c.capKeyMainStore)
+	accKeeper := keeper.NewAccountKeeper(cdc, c.capKeyMainStore, acc_types.ProtoBaseAccount)
 	c.accModule = &account.AppModule{ accKeeper}
 
 
-	c.SetHandler(handler.NewHandler(txm, am, sm))
-	c.SetAnteHandler(handler.NewAnteHandler(am))
+	c.SetHandler(handler.NewHandler(txm, accKeeper, sm))
+	c.SetAnteHandler(handler.NewAnteHandler(accKeeper))
 	c.SetInitChainer(GetInitChainer(*c.accModule))
 
 	err := c.mountStores()

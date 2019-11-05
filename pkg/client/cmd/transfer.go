@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/client"
 	"github.com/tanhuiya/ci123chain/pkg/client/helper"
 	"github.com/tanhuiya/ci123chain/pkg/transaction"
@@ -52,7 +53,9 @@ var transferCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		tx := transaction.NewTransferTx(from, tos[0], uint64(viper.GetInt(flagGas)), nonce, uint64(viper.GetInt(flagAmount)), false)
+
+		ucoin := uint64(viper.GetInt(flagAmount))
+		tx := transaction.NewTransferTx(from, tos[0], uint64(viper.GetInt(flagGas)), nonce, types.Coin(ucoin), false)
 
 		password := viper.GetString(flagPassword)
 		if len(password) < 1 {

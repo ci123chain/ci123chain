@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/abci/types/rest"
 	"github.com/tanhuiya/ci123chain/pkg/client/context"
 	"github.com/tanhuiya/ci123chain/pkg/client/helper"
@@ -76,7 +77,7 @@ func buildTransferTx(r *http.Request, isFabric bool) (transaction.Transaction, e
 		return nil, err
 	}
 	nonce, err := transaction.GetNonceByAddress(froms[0])
-	tx := transaction.NewTransferTx(froms[0], tos[0], gasI, nonce, amountI, isFabric)
+	tx := transaction.NewTransferTx(froms[0], tos[0], gasI, nonce, types.Coin(amountI), isFabric)
 
 	return tx, nil
 }

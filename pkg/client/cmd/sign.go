@@ -58,9 +58,9 @@ var signCmd = &cobra.Command{
 			return err
 		}
 
+		ucoin := uint64(viper.GetInt(flagAmount))
 
-
-		tx := transaction.NewTransferTx(from, tos[0], uint64(viper.GetInt(flagGas)), nonce ,uint64(viper.GetInt(flagAmount)), isFabric)
+		tx := transaction.NewTransferTx(from, tos[0], uint64(viper.GetInt(flagGas)), nonce , types.Coin(ucoin), isFabric)
 
 
 		password := viper.GetString(flagPassword)

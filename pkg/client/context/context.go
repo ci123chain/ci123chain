@@ -5,6 +5,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/tanhuiya/ci123chain/pkg/abci/codec"
 	"github.com/tanhuiya/ci123chain/pkg/abci/types"
+	"github.com/tanhuiya/ci123chain/pkg/account/exported"
 	acc_types "github.com/tanhuiya/ci123chain/pkg/account/types"
 	"github.com/tanhuiya/ci123chain/pkg/cryptosuit"
 	"github.com/tanhuiya/ci123chain/pkg/transaction"
@@ -45,12 +46,12 @@ func (ctx *Context) GetInputAddresses() ([]types.AccAddress, error) {
 func (ctx *Context) GetBalanceByAddress(addr types.AccAddress) (uint64, error) {
 	addrByte := acc_types.AddressStoreKey(addr)
 	res, _, err := ctx.query("/store/main/key", addrByte)
-	acc := acc_types.BaseAccount{}
-	err = ctx.Cdc.UnmarshalBinaryBare(res, &acc)
+	var acc exported.Account
+	err = ctx.Cdc.UnmarshalBinaryLengthPrefixed(res, &acc)
 	if err != nil {
-		return 0, err
+		return 0, nil
 	}
-	balance := uint64(acc.Coin)
+	balance := uint64(acc.GetCoin())
 	if err != nil && balance == 0 {
 		return 0, nil
 	}

@@ -16,5 +16,4 @@ func (am AppModule) InitGenesis(ctx types.Context, data json.RawMessage)  {
 	ModuleCdc.MustUnmarshalJSON(data, &genesisState)
 
 	InitGenesis(ctx, ModuleCdc, am.AccountKeeper, genesisState)
-
 }

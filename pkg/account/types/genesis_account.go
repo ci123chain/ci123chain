@@ -3,6 +3,7 @@ package types
 import (
 	"bytes"
 	"github.com/tanhuiya/ci123chain/pkg/abci/types"
+	"github.com/tanhuiya/ci123chain/pkg/account/exported"
 )
 
 // GenesisAccount is a struct for account initialization used exclusively during genesis
@@ -29,9 +30,9 @@ func (ga GenesisAccount) Validate() error {
 	return nil
 }
 
-func (ga GenesisAccount) ToAccount() BaseAccount {
+func (ga GenesisAccount) ToAccount() exported.Account {
 	bacc := NewBaseAccount(ga.Address, ga.Coin, nil, ga.AccountNumber, ga.Sequence)
-	return *bacc
+	return bacc
 }
 
 func (gaccs GenesisAccounts) Contains(acc types.AccAddress) bool {

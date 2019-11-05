@@ -2,21 +2,17 @@ package account
 
 import (
 	"github.com/tanhuiya/ci123chain/pkg/abci/types"
-	"github.com/tanhuiya/ci123chain/pkg/util"
 )
 
 
-type Account struct {
-	Address types.AccAddress
-	Amount  uint64
+type AccountMapper interface {
+	//GetBalance(types.Context, types.AccAddress) (uint64, error)
+	AddBalance(types.Context, types.AccAddress, types.Coin) (types.Coin, error)
+	SubBalance(types.Context, types.AccAddress, types.Coin) (types.Coin, error)
+	Transfer(types.Context, types.AccAddress, types.Coin, types.AccAddress) error
 }
 
-type AccountMapper interface {
-	GetBalance(types.Context, types.AccAddress) (uint64, error)
-	AddBalance(types.Context, types.AccAddress, uint64) (uint64, error)
-	SubBalance(types.Context, types.AccAddress, uint64) (uint64, error)
-	Transfer(types.Context, types.AccAddress, uint64, types.AccAddress) error
-}
+/*
 
 type accountMapper struct {
 	storeKey types.StoreKey
@@ -90,3 +86,5 @@ func setBalance(kvs types.KVStore, addr types.AccAddress, amount uint64) error {
 	kvs.Set(addr.Bytes(), util.Uint64ToBytes(amount))
 	return nil
 }
+
+*/

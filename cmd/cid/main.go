@@ -35,7 +35,7 @@ func main()  {
 	rootCmd.PersistentFlags().String("log_level", "debug", "log level")
 	cmd.AddServerCommands(
 		ctx,
-		app.GetCodec(),
+		app.MakeCodec(),
 		rootCmd,
 		app.NewAppInit(),
 		app.ConstructAppCreator(newApp, appName),

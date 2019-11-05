@@ -3,7 +3,6 @@ package types
 import (
 	"encoding/json"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/pkg/errors"
 )
 
 type AccAddress struct {
@@ -16,16 +15,20 @@ func HexToAddress(addres string) AccAddress {
 	}
 }
 
+func (aa AccAddress) Empty() bool {
+	return aa.Address == common.Address{}
+}
+
 func (aa AccAddress) Marshal() ([]byte, error) {
 	return aa.Address.Bytes(), nil
 }
 
-func (aa AccAddress) Validate() (error) {
-	if len(aa.Address) != 0 {
-		return errors.New("cannot override BaseAccount address")
-	}
-	return nil
-}
+//func (aa AccAddress) Validate() (error) {
+//	if len(aa.Address) != 0 {
+//		return errors.New("cannot override BaseAccount address")
+//	}
+//	return nil
+//}
 
 func (aa AccAddress) String() string {
 	return aa.Address.Hex()
