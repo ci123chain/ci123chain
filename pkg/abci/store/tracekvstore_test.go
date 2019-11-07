@@ -42,17 +42,17 @@ func TestTraceKVStoreGet(t *testing.T) {
 		{
 			key:           []byte{},
 			expectedValue: nil,
-			expectedOut:   "{\"operation\":\"read\",\"key\":\"\",\"value\":\"\",\"metadata\":{\"blockHeight\":64}}\n",
+			expectedOut:   "{\"operation\":\"read\",\"types\":\"\",\"value\":\"\",\"metadata\":{\"blockHeight\":64}}\n",
 		},
 		{
 			key:           kvPairs[0].Key,
 			expectedValue: kvPairs[0].Value,
-			expectedOut:   "{\"operation\":\"read\",\"key\":\"a2V5MDAwMDAwMDE=\",\"value\":\"dmFsdWUwMDAwMDAwMQ==\",\"metadata\":{\"blockHeight\":64}}\n",
+			expectedOut:   "{\"operation\":\"read\",\"types\":\"a2V5MDAwMDAwMDE=\",\"value\":\"dmFsdWUwMDAwMDAwMQ==\",\"metadata\":{\"blockHeight\":64}}\n",
 		},
 		{
 			key:           []byte("does-not-exist"),
 			expectedValue: nil,
-			expectedOut:   "{\"operation\":\"read\",\"key\":\"ZG9lcy1ub3QtZXhpc3Q=\",\"value\":\"\",\"metadata\":{\"blockHeight\":64}}\n",
+			expectedOut:   "{\"operation\":\"read\",\"types\":\"ZG9lcy1ub3QtZXhpc3Q=\",\"value\":\"\",\"metadata\":{\"blockHeight\":64}}\n",
 		},
 	}
 
@@ -77,12 +77,12 @@ func TestTraceKVStoreSet(t *testing.T) {
 		{
 			key:         []byte{},
 			value:       nil,
-			expectedOut: "{\"operation\":\"write\",\"key\":\"\",\"value\":\"\",\"metadata\":{\"blockHeight\":64}}\n",
+			expectedOut: "{\"operation\":\"write\",\"types\":\"\",\"value\":\"\",\"metadata\":{\"blockHeight\":64}}\n",
 		},
 		{
 			key:         kvPairs[0].Key,
 			value:       kvPairs[0].Value,
-			expectedOut: "{\"operation\":\"write\",\"key\":\"a2V5MDAwMDAwMDE=\",\"value\":\"dmFsdWUwMDAwMDAwMQ==\",\"metadata\":{\"blockHeight\":64}}\n",
+			expectedOut: "{\"operation\":\"write\",\"types\":\"a2V5MDAwMDAwMDE=\",\"value\":\"dmFsdWUwMDAwMDAwMQ==\",\"metadata\":{\"blockHeight\":64}}\n",
 		},
 	}
 
@@ -104,11 +104,11 @@ func TestTraceKVStoreDelete(t *testing.T) {
 	}{
 		{
 			key:         []byte{},
-			expectedOut: "{\"operation\":\"delete\",\"key\":\"\",\"value\":\"\",\"metadata\":{\"blockHeight\":64}}\n",
+			expectedOut: "{\"operation\":\"delete\",\"types\":\"\",\"value\":\"\",\"metadata\":{\"blockHeight\":64}}\n",
 		},
 		{
 			key:         kvPairs[0].Key,
-			expectedOut: "{\"operation\":\"delete\",\"key\":\"a2V5MDAwMDAwMDE=\",\"value\":\"\",\"metadata\":{\"blockHeight\":64}}\n",
+			expectedOut: "{\"operation\":\"delete\",\"types\":\"a2V5MDAwMDAwMDE=\",\"value\":\"\",\"metadata\":{\"blockHeight\":64}}\n",
 		},
 	}
 
@@ -168,20 +168,20 @@ func TestTestTraceKVStoreIterator(t *testing.T) {
 		{
 			expectedKey:      kvPairs[0].Key,
 			expectedValue:    kvPairs[0].Value,
-			expectedKeyOut:   "{\"operation\":\"iterKey\",\"key\":\"a2V5MDAwMDAwMDE=\",\"value\":\"\",\"metadata\":{\"blockHeight\":64}}\n",
-			expectedvalueOut: "{\"operation\":\"iterValue\",\"key\":\"\",\"value\":\"dmFsdWUwMDAwMDAwMQ==\",\"metadata\":{\"blockHeight\":64}}\n",
+			expectedKeyOut:   "{\"operation\":\"iterKey\",\"types\":\"a2V5MDAwMDAwMDE=\",\"value\":\"\",\"metadata\":{\"blockHeight\":64}}\n",
+			expectedvalueOut: "{\"operation\":\"iterValue\",\"types\":\"\",\"value\":\"dmFsdWUwMDAwMDAwMQ==\",\"metadata\":{\"blockHeight\":64}}\n",
 		},
 		{
 			expectedKey:      kvPairs[1].Key,
 			expectedValue:    kvPairs[1].Value,
-			expectedKeyOut:   "{\"operation\":\"iterKey\",\"key\":\"a2V5MDAwMDAwMDI=\",\"value\":\"\",\"metadata\":{\"blockHeight\":64}}\n",
-			expectedvalueOut: "{\"operation\":\"iterValue\",\"key\":\"\",\"value\":\"dmFsdWUwMDAwMDAwMg==\",\"metadata\":{\"blockHeight\":64}}\n",
+			expectedKeyOut:   "{\"operation\":\"iterKey\",\"types\":\"a2V5MDAwMDAwMDI=\",\"value\":\"\",\"metadata\":{\"blockHeight\":64}}\n",
+			expectedvalueOut: "{\"operation\":\"iterValue\",\"types\":\"\",\"value\":\"dmFsdWUwMDAwMDAwMg==\",\"metadata\":{\"blockHeight\":64}}\n",
 		},
 		{
 			expectedKey:      kvPairs[2].Key,
 			expectedValue:    kvPairs[2].Value,
-			expectedKeyOut:   "{\"operation\":\"iterKey\",\"key\":\"a2V5MDAwMDAwMDM=\",\"value\":\"\",\"metadata\":{\"blockHeight\":64}}\n",
-			expectedvalueOut: "{\"operation\":\"iterValue\",\"key\":\"\",\"value\":\"dmFsdWUwMDAwMDAwMw==\",\"metadata\":{\"blockHeight\":64}}\n",
+			expectedKeyOut:   "{\"operation\":\"iterKey\",\"types\":\"a2V5MDAwMDAwMDM=\",\"value\":\"\",\"metadata\":{\"blockHeight\":64}}\n",
+			expectedvalueOut: "{\"operation\":\"iterValue\",\"types\":\"\",\"value\":\"dmFsdWUwMDAwMDAwMw==\",\"metadata\":{\"blockHeight\":64}}\n",
 		},
 	}
 
@@ -224,20 +224,20 @@ func TestTestTraceKVStoreReverseIterator(t *testing.T) {
 		{
 			expectedKey:      kvPairs[2].Key,
 			expectedValue:    kvPairs[2].Value,
-			expectedKeyOut:   "{\"operation\":\"iterKey\",\"key\":\"a2V5MDAwMDAwMDM=\",\"value\":\"\",\"metadata\":{\"blockHeight\":64}}\n",
-			expectedvalueOut: "{\"operation\":\"iterValue\",\"key\":\"\",\"value\":\"dmFsdWUwMDAwMDAwMw==\",\"metadata\":{\"blockHeight\":64}}\n",
+			expectedKeyOut:   "{\"operation\":\"iterKey\",\"types\":\"a2V5MDAwMDAwMDM=\",\"value\":\"\",\"metadata\":{\"blockHeight\":64}}\n",
+			expectedvalueOut: "{\"operation\":\"iterValue\",\"types\":\"\",\"value\":\"dmFsdWUwMDAwMDAwMw==\",\"metadata\":{\"blockHeight\":64}}\n",
 		},
 		{
 			expectedKey:      kvPairs[1].Key,
 			expectedValue:    kvPairs[1].Value,
-			expectedKeyOut:   "{\"operation\":\"iterKey\",\"key\":\"a2V5MDAwMDAwMDI=\",\"value\":\"\",\"metadata\":{\"blockHeight\":64}}\n",
-			expectedvalueOut: "{\"operation\":\"iterValue\",\"key\":\"\",\"value\":\"dmFsdWUwMDAwMDAwMg==\",\"metadata\":{\"blockHeight\":64}}\n",
+			expectedKeyOut:   "{\"operation\":\"iterKey\",\"types\":\"a2V5MDAwMDAwMDI=\",\"value\":\"\",\"metadata\":{\"blockHeight\":64}}\n",
+			expectedvalueOut: "{\"operation\":\"iterValue\",\"types\":\"\",\"value\":\"dmFsdWUwMDAwMDAwMg==\",\"metadata\":{\"blockHeight\":64}}\n",
 		},
 		{
 			expectedKey:      kvPairs[0].Key,
 			expectedValue:    kvPairs[0].Value,
-			expectedKeyOut:   "{\"operation\":\"iterKey\",\"key\":\"a2V5MDAwMDAwMDE=\",\"value\":\"\",\"metadata\":{\"blockHeight\":64}}\n",
-			expectedvalueOut: "{\"operation\":\"iterValue\",\"key\":\"\",\"value\":\"dmFsdWUwMDAwMDAwMQ==\",\"metadata\":{\"blockHeight\":64}}\n",
+			expectedKeyOut:   "{\"operation\":\"iterKey\",\"types\":\"a2V5MDAwMDAwMDE=\",\"value\":\"\",\"metadata\":{\"blockHeight\":64}}\n",
+			expectedvalueOut: "{\"operation\":\"iterValue\",\"types\":\"\",\"value\":\"dmFsdWUwMDAwMDAwMQ==\",\"metadata\":{\"blockHeight\":64}}\n",
 		},
 	}
 

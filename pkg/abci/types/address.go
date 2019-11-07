@@ -9,6 +9,12 @@ type AccAddress struct {
 	common.Address
 }
 
+func ToAccAddress(addr []byte) AccAddress {
+	return AccAddress{
+		Address: common.BytesToAddress(addr),
+	}
+}
+
 func HexToAddress(addres string) AccAddress {
 	return AccAddress{
 		common.HexToAddress(addres),

@@ -36,7 +36,7 @@ type (
 	// traceOperation implements a traced KVStore operation
 	traceOperation struct {
 		Operation operation              `json:"operation"`
-		Key       string                 `json:"key"`
+		Key       string                 `json:"types"`
 		Value     string                 `json:"value"`
 		Metadata  map[string]interface{} `json:"metadata"`
 	}
@@ -178,7 +178,7 @@ func (tkv *TraceKVStore) CacheWrapWithTrace(_ io.Writer, _ TraceContext) CacheWr
 }
 
 // writeOperation writes a KVStore operation to the underlying io.Writer as
-// JSON-encoded data where the key/value pair is base64 encoded.
+// JSON-encoded data where the types/value pair is base64 encoded.
 // nolint: errcheck
 func writeOperation(w io.Writer, op operation, tc TraceContext, key, value []byte) {
 	traceOp := traceOperation{

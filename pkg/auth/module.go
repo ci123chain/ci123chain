@@ -28,10 +28,14 @@ func (AppModuleBasic) DefaultGenesis() json.RawMessage {
 	return types.ModuleCdc.MustMarshalJSON(types.DefaultGenesisState())
 }
 
-func (AppModuleBasic) InitGenesis(ctx abci_types.Context, data json.RawMessage) {
-
+func (am AppModule) InitGenesis(ctx abci_types.Context, data json.RawMessage) {
+	var genesisState GenesisState
+	types.ModuleCdc.MustUnmarshalJSON(data, &genesisState)
+	InitGenesis(ctx, am.AuthKeeper, genesisState)
 }
 
 type AppModule struct {
 	AppModuleBasic
+
+	AuthKeeper AuthKeeper
 }

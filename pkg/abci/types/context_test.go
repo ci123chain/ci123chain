@@ -65,7 +65,7 @@ func TestCacheContext(t *testing.T) {
 	key := types.NewKVStoreKey(t.Name())
 	k1 := []byte("hello")
 	v1 := []byte("world")
-	k2 := []byte("key")
+	k2 := []byte("types")
 	v2 := []byte("value")
 
 	ctx := defaultContext(key)

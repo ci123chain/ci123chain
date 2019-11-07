@@ -20,7 +20,7 @@ func TestVerifyIAVLStoreQueryProof(t *testing.T) {
 
 	// Get Proof
 	res := store.Query(abci.RequestQuery{
-		Path:  "/key", // required path to get key/value+proof
+		Path:  "/types", // required path to get types/value+proof
 		Data:  []byte("MYKEY"),
 		Prove: true,
 	})
@@ -67,7 +67,7 @@ func TestVerifyMultiStoreQueryProof(t *testing.T) {
 
 	// Get Proof
 	res := store.Query(abci.RequestQuery{
-		Path:  "/iavlStoreKey/key", // required path to get key/value+proof
+		Path:  "/iavlStoreKey/types", // required path to get types/value+proof
 		Data:  []byte("MYKEY"),
 		Prove: true,
 	})
@@ -119,7 +119,7 @@ func TestVerifyMultiStoreQueryProofEmptyStore(t *testing.T) {
 
 	// Get Proof
 	res := store.Query(abci.RequestQuery{
-		Path:  "/iavlStoreKey/key", // required path to get key/value+proof
+		Path:  "/iavlStoreKey/types", // required path to get types/value+proof
 		Data:  []byte("MYKEY"),
 		Prove: true,
 	})
@@ -151,7 +151,7 @@ func TestVerifyMultiStoreQueryProofAbsence(t *testing.T) {
 
 	// Get Proof
 	res := store.Query(abci.RequestQuery{
-		Path:  "/iavlStoreKey/key", // required path to get key/value+proof
+		Path:  "/iavlStoreKey/types", // required path to get types/value+proof
 		Data:  []byte("MYABSENTKEY"),
 		Prove: true,
 	})

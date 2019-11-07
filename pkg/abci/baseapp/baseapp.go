@@ -45,7 +45,9 @@ type BaseApp struct {
 	db          dbm.DB               // common DB backend
 	cms         sdk.CommitMultiStore // Main (uncached) state
 	queryRouter QueryRouter          // router for redirecting query calls
-	handler     sdk.Handler
+	//handler     sdk.Handler
+	router 		Router
+
 	txDecoder   sdk.TxDecoder // unmarshal []byte into sdk.Tx
 
 	anteHandler sdk.AnteHandler // ante handler for fee and auth
@@ -55,7 +57,7 @@ type BaseApp struct {
 	beginBlocker     sdk.BeginBlocker // logic to run before any txs
 	endBlocker       sdk.EndBlocker   // logic to run after all txs, and to determine valset changes
 	addrPeerFilter   sdk.PeerFilter   // filter peers by address and port
-	pubkeyPeerFilter sdk.PeerFilter   // filter peers by public key
+	pubkeyPeerFilter sdk.PeerFilter   // filter peers by public types
 
 	//--------------------
 	// Volatile
@@ -88,6 +90,7 @@ func NewBaseApp(name string, logger log.Logger, db dbm.DB, txDecoder sdk.TxDecod
 		db:          db,
 		cms:         store.NewCommitMultiStore(db),
 		queryRouter: NewQueryRouter(),
+		router: 	 NewRouter(),
 		txDecoder:   txDecoder,
 	}
 
@@ -122,12 +125,12 @@ func (app *BaseApp) MountStoresTransient(keys ...*sdk.TransientStoreKey) {
 	}
 }
 
-// Mount a store to the provided key in the BaseApp multistore, using a specified DB
+// Mount a store to the provided types in the BaseApp multistore, using a specified DB
 func (app *BaseApp) MountStoreWithDB(key sdk.StoreKey, typ sdk.StoreType, db dbm.DB) {
 	app.cms.MountStoreWithDB(key, typ, db)
 }
 
-// Mount a store to the provided key in the BaseApp multistore, using the default DB
+// Mount a store to the provided types in the BaseApp multistore, using the default DB
 func (app *BaseApp) MountStore(key sdk.StoreKey, typ sdk.StoreType) {
 	app.cms.MountStoreWithDB(key, typ, nil)
 }
@@ -161,9 +164,9 @@ func (app *BaseApp) LastBlockHeight() int64 {
 }
 
 // SetHandler sets tx handler
-func (app *BaseApp) SetHandler(h sdk.Handler) {
-	app.handler = h
-}
+//func (app *BaseApp) SetHandler(h sdk.Handler) {
+//	app.handler = h
+//}
 
 // initializes the remaining logic from app.cms
 func (app *BaseApp) initFromStore(mainKey sdk.StoreKey) error {
@@ -264,7 +267,7 @@ func (app *BaseApp) FilterPeerByAddrPort(info string) abci.ResponseQuery {
 	return abci.ResponseQuery{}
 }
 
-// Filter peers by public key
+// Filter peers by public types
 func (app *BaseApp) FilterPeerByPubKey(info string) abci.ResponseQuery {
 	if app.pubkeyPeerFilter != nil {
 		return app.pubkeyPeerFilter(info)
@@ -449,7 +452,6 @@ func (app *BaseApp) CheckTx(req abci.RequestCheckTx) (res abci.ResponseCheckTx) 
 	} else {
 		result = app.runTx(runTxModeCheck, req.Tx, tx)
 	}
-
 	return abci.ResponseCheckTx{
 		Code:      uint32(result.Code),
 		Data:      result.Data,
@@ -491,6 +493,35 @@ func (app *BaseApp) getContextForTx(mode runTxMode, txBytes []byte) (ctx sdk.Con
 		ctx, _ = ctx.CacheContext()
 	}
 	return
+}
+
+func (app *BaseApp) runMsgs(ctx sdk.Context, tx sdk.Tx, mode runTxMode) (result sdk.Result) {
+	var code      sdk.CodeType
+	var codespace sdk.CodespaceType
+
+	txRoute := tx.Route()
+	handler := app.router.Route(txRoute)
+
+	if handler == nil {
+		return sdk.ErrUnknownRequest("Unrecognized Msg type: " + txRoute).Result()
+	}
+	var msgResult sdk.Result
+
+	// check 不实际执行
+	if mode != runTxModeCheck {
+		msgResult = handler(ctx, tx)
+	}
+
+	if !msgResult.IsOK() {
+		code = msgResult.Code
+		codespace = msgResult.Codespace
+	}
+	return sdk.Result{
+		Code: code,
+		Codespace: codespace,
+		GasUsed:   ctx.GasMeter().GasConsumed(),
+	}
+	return result
 }
 
 // Returns the applicantion's deliverState if app is in runTxModeDeliver,
@@ -548,7 +579,6 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 				result = sdk.ErrInternal(log).Result()
 			}
 		}
-
 		result.GasWanted = gasWanted
 		result.GasUsed = ctx.GasMeter().GasConsumed()
 	}()
@@ -572,6 +602,7 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 
 		newCtx, result, abort := app.anteHandler(anteCtx, tx, (mode == runTxModeSimulate))
 		if abort {
+			ctx = newCtx
 			return result
 		}
 		if !newCtx.IsZero() {
@@ -589,7 +620,7 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 	// multi-store in case message processing fails.
 	runMsgCtx, msCache := app.cacheTxContext(ctx, txBytes)
 
-	result = app.handler(runMsgCtx, tx)
+	result = app.runMsgs(runMsgCtx, tx, mode)
 	result.GasWanted = gasWanted
 
 	if mode == runTxModeSimulate || mode == runTxModeCheck { // XXX

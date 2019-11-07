@@ -14,7 +14,7 @@ func newCacheKVStore() CacheKVStore {
 	return NewCacheKVStore(mem)
 }
 
-func keyFmt(i int) []byte { return bz(fmt.Sprintf("key%0.8d", i)) }
+func keyFmt(i int) []byte { return bz(fmt.Sprintf("types%0.8d", i)) }
 func valFmt(i int) []byte { return bz(fmt.Sprintf("value%0.8d", i)) }
 
 func TestCacheKVStore(t *testing.T) {
@@ -183,7 +183,7 @@ func TestCacheKVMergeIteratorBasics(t *testing.T) {
 	st.Write()
 	assertIterateDomain(t, st, 1)
 
-	// delete the other key in cache and asserts its empty
+	// delete the other types in cache and asserts its empty
 	st.Delete(k)
 	assertIterateDomain(t, st, 0)
 }
@@ -386,7 +386,7 @@ func assertIterateDomainCheck(t *testing.T, st KVStore, mem dbm.DB, r []keyRange
 		require.True(t, itr.Valid())
 		require.True(t, itr2.Valid())
 
-		// check the key/val matches the ground truth
+		// check the types/val matches the ground truth
 		k, v := itr.Key(), itr.Value()
 		k2, v2 := itr2.Key(), itr2.Value()
 		require.Equal(t, k, k2)

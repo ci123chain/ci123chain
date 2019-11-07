@@ -8,6 +8,7 @@ import (
 
 var emptyAddr types.AccAddress
 
+const RouteKey = "Transfer"
 
 func NewTransferTx(from, to types.AccAddress, gas, nonce uint64, amount types.Coin, isFabric bool ) Transaction {
 	tx := &TransferTx{
@@ -60,6 +61,10 @@ func (tx *TransferTx) ValidateBasic() types.Error {
 		return ErrInvalidTransfer(DefaultCodespace, "tx.To == empty")
 	}
 	return tx.Common.VerifySignature(tx.GetSignBytes(), tx.FabricMode)
+}
+
+func (tx *TransferTx) Route() string {
+	return RouteKey
 }
 
 func (tx *TransferTx) GetSignBytes() []byte {

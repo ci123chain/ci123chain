@@ -98,10 +98,10 @@ type CommitMultiStore interface {
 	// If db == nil, the new store will use the CommitMultiStore db.
 	MountStoreWithDB(key StoreKey, typ StoreType, db dbm.DB)
 
-	// Panics on a nil key.
+	// Panics on a nil types.
 	GetCommitStore(key StoreKey) CommitStore
 
-	// Panics on a nil key.
+	// Panics on a nil types.
 	GetCommitKVStore(key StoreKey) CommitKVStore
 
 	// Load the latest persisted version.  Called once after all
@@ -122,16 +122,16 @@ type CommitMultiStore interface {
 type KVStore interface {
 	Store
 
-	// Get returns nil iff key doesn't exist. Panics on nil key.
+	// Get returns nil iff types doesn't exist. Panics on nil types.
 	Get(key []byte) []byte
 
-	// Has checks if a key exists. Panics on nil key.
+	// Has checks if a types exists. Panics on nil types.
 	Has(key []byte) bool
 
-	// Set sets the key. Panics on nil key or value.
+	// Set sets the types. Panics on nil types or value.
 	Set(key, value []byte)
 
-	// Delete deletes the key. Panics on nil key.
+	// Delete deletes the types. Panics on nil types.
 	Delete(key []byte)
 
 	// Iterator over a domain of keys in ascending order. End is exclusive.
@@ -148,10 +148,10 @@ type KVStore interface {
 	ReverseIterator(start, end []byte) Iterator
 
 	// TODO Not yet implemented.
-	// CreateSubKVStore(key *storeKey) (KVStore, error)
+	// CreateSubKVStore(types *storeKey) (KVStore, error)
 
 	// TODO Not yet implemented.
-	// GetSubKVStore(key *storeKey) KVStore
+	// GetSubKVStore(types *storeKey) KVStore
 
 	// Prefix applied keys with the argument
 	// CONTRACT: when Prefix is called on a KVStore more than once,
@@ -177,7 +177,7 @@ func KVStoreReversePrefixIterator(kvs KVStore, prefix []byte) Iterator {
 	return kvs.ReverseIterator(prefix, PrefixEndBytes(prefix))
 }
 
-// Compare two KVstores, return either the first key/value pair
+// Compare two KVstores, return either the first types/value pair
 // at which they differ and whether or not they are equal, skipping
 // value comparison for a set of provided prefixes
 func DiffKVStores(a KVStore, b KVStore, prefixesToSkip [][]byte) (kvA cmn.KVPair, kvB cmn.KVPair, count int64, equal bool) {
@@ -291,14 +291,14 @@ const (
 //----------------------------------------
 // Keys for accessing substores
 
-// StoreKey is a key used to index stores in a MultiStore.
+// StoreKey is a types used to index stores in a MultiStore.
 type StoreKey interface {
 	Name() string
 	String() string
 }
 
 // KVStoreKey is used for accessing substores.
-// Only the pointer value should ever be used - it functions as a capabilities key.
+// Only the pointer value should ever be used - it functions as a capabilities types.
 type KVStoreKey struct {
 	name string
 }
@@ -377,7 +377,7 @@ func (key *TransientStoreKey) String() string {
 
 //----------------------------------------
 
-// key-value result for iterator queries
+// types-value result for iterator queries
 type KVPair cmn.KVPair
 
 //----------------------------------------

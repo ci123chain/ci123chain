@@ -233,8 +233,8 @@ func TestPrefixStoreReverseIteratorEdgeCase(t *testing.T) {
 func mockStoreWithStuff() sdk.KVStore {
 	db := dbm.NewMemDB()
 	store := dbStoreAdapter{db}
-	// Under "key" prefix
-	store.Set(bz("key"), bz("value"))
+	// Under "types" prefix
+	store.Set(bz("types"), bz("value"))
 	store.Set(bz("key1"), bz("value1"))
 	store.Set(bz("key2"), bz("value2"))
 	store.Set(bz("key3"), bz("value3"))
@@ -294,9 +294,9 @@ func checkNextPanics(t *testing.T, itr sdk.Iterator) {
 
 func TestPrefixDBSimple(t *testing.T) {
 	store := mockStoreWithStuff()
-	pstore := store.Prefix(bz("key"))
+	pstore := store.Prefix(bz("types"))
 
-	checkValue(t, pstore, bz("key"), nil)
+	checkValue(t, pstore, bz("types"), nil)
 	checkValue(t, pstore, bz(""), bz("value"))
 	checkValue(t, pstore, bz("key1"), nil)
 	checkValue(t, pstore, bz("1"), bz("value1"))
@@ -312,7 +312,7 @@ func TestPrefixDBSimple(t *testing.T) {
 
 func TestPrefixDBIterator1(t *testing.T) {
 	store := mockStoreWithStuff()
-	pstore := store.Prefix(bz("key"))
+	pstore := store.Prefix(bz("types"))
 
 	itr := pstore.Iterator(nil, nil)
 	checkDomain(t, itr, nil, nil)
@@ -330,7 +330,7 @@ func TestPrefixDBIterator1(t *testing.T) {
 
 func TestPrefixDBIterator2(t *testing.T) {
 	store := mockStoreWithStuff()
-	pstore := store.Prefix(bz("key"))
+	pstore := store.Prefix(bz("types"))
 
 	itr := pstore.Iterator(nil, bz(""))
 	checkDomain(t, itr, nil, bz(""))
@@ -340,7 +340,7 @@ func TestPrefixDBIterator2(t *testing.T) {
 
 func TestPrefixDBIterator3(t *testing.T) {
 	store := mockStoreWithStuff()
-	pstore := store.Prefix(bz("key"))
+	pstore := store.Prefix(bz("types"))
 
 	itr := pstore.Iterator(bz(""), nil)
 	checkDomain(t, itr, bz(""), nil)
@@ -358,7 +358,7 @@ func TestPrefixDBIterator3(t *testing.T) {
 
 func TestPrefixDBIterator4(t *testing.T) {
 	store := mockStoreWithStuff()
-	pstore := store.Prefix(bz("key"))
+	pstore := store.Prefix(bz("types"))
 
 	itr := pstore.Iterator(bz(""), bz(""))
 	checkDomain(t, itr, bz(""), bz(""))
@@ -368,7 +368,7 @@ func TestPrefixDBIterator4(t *testing.T) {
 
 func TestPrefixDBReverseIterator1(t *testing.T) {
 	store := mockStoreWithStuff()
-	pstore := store.Prefix(bz("key"))
+	pstore := store.Prefix(bz("types"))
 
 	itr := pstore.ReverseIterator(nil, nil)
 	checkDomain(t, itr, nil, nil)
@@ -386,7 +386,7 @@ func TestPrefixDBReverseIterator1(t *testing.T) {
 
 func TestPrefixDBReverseIterator2(t *testing.T) {
 	store := mockStoreWithStuff()
-	pstore := store.Prefix(bz("key"))
+	pstore := store.Prefix(bz("types"))
 
 	itr := pstore.ReverseIterator(bz(""), nil)
 	checkDomain(t, itr, bz(""), nil)
@@ -404,7 +404,7 @@ func TestPrefixDBReverseIterator2(t *testing.T) {
 
 func TestPrefixDBReverseIterator3(t *testing.T) {
 	store := mockStoreWithStuff()
-	pstore := store.Prefix(bz("key"))
+	pstore := store.Prefix(bz("types"))
 
 	itr := pstore.ReverseIterator(nil, bz(""))
 	checkDomain(t, itr, nil, bz(""))
@@ -414,7 +414,7 @@ func TestPrefixDBReverseIterator3(t *testing.T) {
 
 func TestPrefixDBReverseIterator4(t *testing.T) {
 	store := mockStoreWithStuff()
-	pstore := store.Prefix(bz("key"))
+	pstore := store.Prefix(bz("types"))
 
 	itr := pstore.ReverseIterator(bz(""), bz(""))
 	checkInvalid(t, itr)

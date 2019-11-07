@@ -384,7 +384,7 @@ func TestIAVLStoreQuery(t *testing.T) {
 	k2, v2 := []byte("key2"), []byte("val2")
 	v3 := []byte("val3")
 
-	ksub := []byte("key")
+	ksub := []byte("types")
 	KVs0 := []KVPair{}
 	KVs1 := []KVPair{
 		{Key: k1, Value: v1},
@@ -400,7 +400,7 @@ func TestIAVLStoreQuery(t *testing.T) {
 
 	cid := iavlStore.Commit()
 	ver := cid.Version
-	query := abci.RequestQuery{Path: "/key", Data: k1, Height: ver}
+	query := abci.RequestQuery{Path: "/types", Data: k1, Height: ver}
 	querySub := abci.RequestQuery{Path: "/subspace", Data: ksub, Height: ver}
 
 	// query subspace before anything set
@@ -448,7 +448,7 @@ func TestIAVLStoreQuery(t *testing.T) {
 	qres = iavlStore.Query(query)
 	require.Equal(t, uint32(sdk.CodeOK), qres.Code)
 	require.Equal(t, v3, qres.Value)
-	query2 := abci.RequestQuery{Path: "/key", Data: k2, Height: cid.Version}
+	query2 := abci.RequestQuery{Path: "/types", Data: k2, Height: cid.Version}
 
 	qres = iavlStore.Query(query2)
 	require.Equal(t, uint32(sdk.CodeOK), qres.Code)
@@ -459,7 +459,7 @@ func TestIAVLStoreQuery(t *testing.T) {
 	require.Equal(t, valExpSub2, qres.Value)
 
 	// default (height 0) will show latest -1
-	query0 := abci.RequestQuery{Path: "/key", Data: k1}
+	query0 := abci.RequestQuery{Path: "/types", Data: k1}
 	qres = iavlStore.Query(query0)
 	require.Equal(t, uint32(sdk.CodeOK), qres.Code)
 	require.Equal(t, v1, qres.Value)

@@ -97,6 +97,10 @@ func (app *BaseApp) QueryRouter() QueryRouter {
 	return app.queryRouter
 }
 
+func (app *BaseApp) Router() Router {
+	return app.router
+}
+
 func (app *BaseApp) Seal()          { app.sealed = true }
 func (app *BaseApp) IsSealed() bool { return app.sealed }
 func (app *BaseApp) enforceSeal() {

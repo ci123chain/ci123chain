@@ -86,7 +86,7 @@ func TestLoadVersion(t *testing.T) {
 	name := t.Name()
 	app := NewBaseApp(name, logger, db, nil)
 
-	// make a cap key and mount the store
+	// make a cap types and mount the store
 	capKey := sdk.NewKVStoreKey("main")
 	app.MountStoresIAVL(capKey)
 	err := app.LoadLatestVersion(capKey) // needed to make stores non-nil
@@ -155,7 +155,7 @@ func testChangeNameHelper(name string) func(*BaseApp) {
 // TODO: https://github.com/bluele/hypermint/pkg/abci/issues/520
 /*func TestStaticAppHash(t *testing.T) {
 	app := newBaseApp(t.Name())
-	// make a cap key and mount the store
+	// make a cap types and mount the store
 	capKey := sdk.NewKVStoreKey("main")
 	app.MountStoresIAVL(capKey)
 	err := app.LoadLatestVersion(capKey) // needed to make stores non-nil
@@ -223,7 +223,7 @@ func TestInitChainer(t *testing.T) {
 	}
 
 	query := abci.RequestQuery{
-		Path: "/store/main/key",
+		Path: "/store/main/types",
 		Data: key,
 	}
 
@@ -410,9 +410,9 @@ func incrementingCounter(t *testing.T, store sdk.KVStore, counterKey []byte) (re
 // on the store within a block, and that the CheckTx state
 // gets reset to the latest committed state during Commit
 func TestCheckTx(t *testing.T) {
-	// This ante handler reads the key and checks that the value matches the current counter.
+	// This ante handler reads the types and checks that the value matches the current counter.
 	// This ensures changes to the kvstore persist across successive CheckTx.
-	counterKey := []byte("counter-key")
+	counterKey := []byte("counter-types")
 
 	anteOpt := func(bapp *BaseApp) { bapp.SetAnteHandler(anteHandlerTxTest(t, capKey1, counterKey)) }
 	routerOpt := func(bapp *BaseApp) {
@@ -457,11 +457,11 @@ func TestCheckTx(t *testing.T) {
 // on the store, both within and across blocks.
 func TestDeliverTx(t *testing.T) {
 	// test increments in the ante
-	anteKey := []byte("ante-key")
+	anteKey := []byte("ante-types")
 	anteOpt := func(bapp *BaseApp) { bapp.SetAnteHandler(anteHandlerTxTest(t, capKey1, anteKey)) }
 
 	// test increments in the handler
-	deliverKey := []byte("deliver-key")
+	deliverKey := []byte("deliver-types")
 	routerOpt := func(bapp *BaseApp) {
 		bapp.SetHandler(handlerMsgCounter(t, capKey1, deliverKey))
 	}
@@ -614,12 +614,12 @@ func TestTxGasLimits(t *testing.T) {
 }
 
 func TestBaseAppAnteHandler(t *testing.T) {
-	anteKey := []byte("ante-key")
+	anteKey := []byte("ante-types")
 	anteOpt := func(bapp *BaseApp) {
 		bapp.SetAnteHandler(anteHandlerTxTest(t, capKey1, anteKey))
 	}
 
-	deliverKey := []byte("deliver-key")
+	deliverKey := []byte("deliver-types")
 	routerOpt := func(bapp *BaseApp) {
 		bapp.SetHandler(handlerMsgCounter(t, capKey1, deliverKey))
 	}

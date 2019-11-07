@@ -7,6 +7,8 @@ type Tx interface {
 	// ValidateBasic does a simple and lightweight validation check that doesn't
 	// require access to any other information.
 	ValidateBasic() Error
+
+	Route() string
 }
 
 //__________________________________________________________

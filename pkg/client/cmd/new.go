@@ -64,7 +64,7 @@ func getPassword() (string, error) {
 	pass := viper.GetString(flagPassword)
 	if pass == "" {
 		buf := helper.BufferStdin()
-		pass, err = helper.GetCheckPassword("Enter a passphrase for your key:", "Repeat the passphrase:", buf)
+		pass, err = helper.GetCheckPassword("Enter a passphrase for your types:", "Repeat the passphrase:", buf)
 		if err != nil {
 			return "", err
 		}

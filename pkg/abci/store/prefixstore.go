@@ -12,6 +12,12 @@ var _ KVStore = prefixStore{}
 // prefixStore is similar with tendermint/tendermint/libs/db/prefix_db
 // both gives access only to the limited subset of the store
 // for convinience or safety
+func NewPrefixStore(parent KVStore, prefix []byte) prefixStore {
+	return prefixStore{
+		parent: parent,
+		prefix: prefix,
+	}
+}
 
 type prefixStore struct {
 	parent KVStore
@@ -27,7 +33,7 @@ func cloneAppend(bz []byte, tail []byte) (res []byte) {
 
 func (s prefixStore) key(key []byte) (res []byte) {
 	if key == nil {
-		panic("nil key on prefixStore")
+		panic("nil types on prefixStore")
 	}
 	res = cloneAppend(s.prefix, key)
 	return

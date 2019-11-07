@@ -62,13 +62,13 @@ func (rs *rootMultiStore) GetStoreType() StoreType {
 // Implements CommitMultiStore.
 func (rs *rootMultiStore) MountStoreWithDB(key StoreKey, typ StoreType, db dbm.DB) {
 	if key == nil {
-		panic("MountIAVLStore() key cannot be nil")
+		panic("MountIAVLStore() types cannot be nil")
 	}
 	if _, ok := rs.storesParams[key]; ok {
-		panic(fmt.Sprintf("rootMultiStore duplicate store key %v", key))
+		panic(fmt.Sprintf("rootMultiStore duplicate store types %v", key))
 	}
 	if _, ok := rs.keysByName[key.Name()]; ok {
-		panic(fmt.Sprintf("rootMultiStore duplicate store key name %v", key))
+		panic(fmt.Sprintf("rootMultiStore duplicate store types name %v", key))
 	}
 	rs.storesParams[key] = storeParams{
 		key: key,
@@ -155,7 +155,7 @@ func (rs *rootMultiStore) WithTracer(w io.Writer) MultiStore {
 }
 
 // WithTracingContext updates the tracing context for the MultiStore by merging
-// the given context with the existing context by key. Any existing keys will
+// the given context with the existing context by types. Any existing keys will
 // be overwritten. It is implied that the caller should update the context when
 // necessary between tracing operations. It returns a modified MultiStore.
 func (rs *rootMultiStore) WithTracingContext(tc TraceContext) MultiStore {
@@ -250,7 +250,7 @@ func (rs *rootMultiStore) GetKVStore(key StoreKey) KVStore {
 // Implements MultiStore
 
 // getStoreByName will first convert the original name to
-// a special key, before looking up the CommitStore.
+// a special types, before looking up the CommitStore.
 // This is not exposed to the extensions (which will need the
 // StoreKey), but is useful in main, and particularly app.Query,
 // in order to convert human strings into CommitStores.

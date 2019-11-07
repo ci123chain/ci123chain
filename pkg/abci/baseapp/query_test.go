@@ -33,10 +33,10 @@ func TestQuery(t *testing.T) {
 	app.InitChain(abci.RequestInitChain{})
 
 	// NOTE: "/store/key1" tells us KVStore
-	// and the final "/key" says to use the data as the
-	// key in the given KVStore ...
+	// and the final "/types" says to use the data as the
+	// types in the given KVStore ...
 	query := abci.RequestQuery{
-		Path: "/store/key1/key",
+		Path: "/store/key1/types",
 		Data: key,
 	}
 	tx := newTxCounter()

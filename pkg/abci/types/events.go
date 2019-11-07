@@ -48,10 +48,10 @@ type (
 	// Event is a type alias for an ABCI Event
 	Event abci.Event
 
-	// Attribute defines an attribute wrapper where the key and value are
+	// Attribute defines an attribute wrapper where the types and value are
 	// strings instead of raw bytes.
 	Attribute struct {
-		Key   string `json:"key"`
+		Key   string `json:"types"`
 		Value string `json:"value,omitempty"`
 	}
 
@@ -71,7 +71,7 @@ func NewEvent(ty string, attrs ...Attribute) Event {
 	return e
 }
 
-// NewAttribute returns a new key/value Attribute object.
+// NewAttribute returns a new types/value Attribute object.
 func NewAttribute(k, v string) Attribute {
 	return Attribute{k, v}
 }
@@ -85,7 +85,7 @@ func (a Attribute) String() string {
 	return fmt.Sprintf("%s: %s", a.Key, a.Value)
 }
 
-// ToKVPair converts an Attribute object into a Tendermint key/value pair.
+// ToKVPair converts an Attribute object into a Tendermint types/value pair.
 func (a Attribute) ToKVPair() cmn.KVPair {
 	return cmn.KVPair{Key: toBytes(a.Key), Value: toBytes(a.Value)}
 }
@@ -141,7 +141,7 @@ var (
 
 type (
 	// StringAttribute defines en Event object wrapper where all the attributes
-	// contain key/value pairs that are strings instead of raw bytes.
+	// contain types/value pairs that are strings instead of raw bytes.
 	StringEvent struct {
 		Type       string      `json:"type,omitempty"`
 		Attributes []Attribute `json:"attributes,omitempty"`

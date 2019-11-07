@@ -11,6 +11,9 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/config"
 	"github.com/tanhuiya/ci123chain/pkg/db"
 	"github.com/tanhuiya/ci123chain/pkg/handler"
+	"github.com/tanhuiya/ci123chain/pkg/mortgage"
+	"github.com/tanhuiya/ci123chain/pkg/params"
+	"github.com/tanhuiya/ci123chain/pkg/supply"
 	"github.com/tanhuiya/ci123chain/pkg/transaction"
 	"encoding/json"
 	"errors"
@@ -41,11 +44,20 @@ var (
 	MainStoreKey     = sdk.NewKVStoreKey("main")
 	ContractStoreKey = sdk.NewKVStoreKey("contract")
 	TxIndexStoreKey  = sdk.NewTransientStoreKey("tx_index")
+	ParamStoreKey  	 = sdk.NewKVStoreKey(params.StoreKey)
+	ParamTransStoreKey  = sdk.NewTransientStoreKey(params.TStoreKey)
+	AuthStoreKey 	 = sdk.NewKVStoreKey(auth.StoreKey)
+	SupplyStoreKey   = sdk.NewKVStoreKey(supply.StoreKey)
+	MortgageStoreKey   = sdk.NewKVStoreKey(mortgage.StoreKey)
 
 	ModuleBasics = module.NewBasicManager(
 		account.AppModuleBasic{},
 		auth.AppModuleBasic{},
 		)
+
+	maccPerms = map[string][]string{
+		mortgage.ModuleName: nil,
+	}
 )
 
 
@@ -59,6 +71,8 @@ type Chain struct {
 	capKeyMainStore *sdk.KVStoreKey
 	contractStore   *sdk.KVStoreKey
 	txIndexStore    *sdk.TransientStoreKey
+
+	authKeeper 		auth.AuthKeeper
 
 	// the module manager
 	mm *module.AppManager
@@ -80,17 +94,29 @@ func NewChain(logger log.Logger, tmdb tmdb.DB, traceStore io.Writer) *Chain {
 	txm := transaction.NewTxIndexMapper(c.txIndexStore)
 	sm := db.NewStateManager(c.contractStore)
 
-	// 设置module
 	// todo mainkey?
 	accKeeper := keeper.NewAccountKeeper(cdc, c.capKeyMainStore, acc_types.ProtoBaseAccount)
 
+	paramsKeeper := params.NewKeeper(cdc, ParamStoreKey, ParamTransStoreKey, params.DefaultCodespace)
+
+	supplyKeeper := supply.NewKeeper(cdc, SupplyStoreKey, accKeeper, maccPerms)
+
+	mortgageKeeper := mortgage.NewKeeper(MortgageStoreKey, supplyKeeper)
+
+	authSubspace := paramsKeeper.Subspace(auth.DefaultCodespace)
+	c.authKeeper = auth.NewAuthKeeper(cdc, AuthStoreKey, authSubspace)
+
+	// 设置module
+
 	c.mm = module.NewManager(
-		auth.AppModule{},
+		auth.AppModule{AuthKeeper: c.authKeeper},
 		account.AppModule{AccountKeeper: accKeeper},
 		)
 
-	c.SetHandler(handler.NewHandler(txm, accKeeper, sm))
-	c.SetAnteHandler(handler.NewAnteHandler(accKeeper))
+	c.Router().AddRoute(transaction.RouteKey, handler.NewHandler(txm, accKeeper, sm))
+	c.Router().AddRoute(mortgage.RouterKey, mortgage.NewHandler(mortgageKeeper))
+
+	c.SetAnteHandler(handler.NewAnteHandler(c.authKeeper))
 	c.SetInitChainer(c.InitChainer)
 
 	err := c.mountStores()
@@ -103,11 +129,14 @@ func NewChain(logger log.Logger, tmdb tmdb.DB, traceStore io.Writer) *Chain {
 
 func (c *Chain) mountStores() error {
 	keys := []*sdk.KVStoreKey{
-		c.capKeyMainStore, c.contractStore,
+		c.capKeyMainStore,
+		c.contractStore,
+		ParamStoreKey,
+		AuthStoreKey,
 	}
-
 	c.MountStoresIAVL(keys...)
-	c.MountStoresTransient(c.txIndexStore)
+
+	c.MountStoresTransient(c.txIndexStore, ParamTransStoreKey)
 
 	for _, key := range keys {
 		if err := c.LoadLatestVersion(key); err != nil {
@@ -151,7 +180,7 @@ func NewAppInit() AppInit {
 	fsAppGenTx := pflag.NewFlagSet("", pflag.ContinueOnError)
 	fsAppGenTx.String(flagAddress, "", "address, required")
 	fsAppGenTx.String(flagClientHome, DefaultCLIHome,
-		"home directory for the client, used for key generation")
+		"home directory for the client, used for types generation")
 
 	return AppInit{
 		FlagsAppGenState: fsAppGenState,

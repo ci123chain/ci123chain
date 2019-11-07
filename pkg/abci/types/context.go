@@ -19,7 +19,7 @@ next decorator or handler. For example,
 
  func MsgHandler(ctx Context, tx Tx) Result {
  	...
- 	ctx = ctx.WithValue(key, value)
+ 	ctx = ctx.WithValue(types, value)
  	...
  }
 */
@@ -58,7 +58,7 @@ func (c Context) IsZero() bool {
 //----------------------------------------
 // Getting a value
 
-// context value for the provided key
+// context value for the provided types
 func (c Context) Value(key interface{}) interface{} {
 	value := c.Context.Value(key)
 	if cloner, ok := value.(cloner); ok {
@@ -124,7 +124,7 @@ func (c Context) withValue(key interface{}, value interface{}) Context {
 }
 
 //----------------------------------------
-// Values that require no key.
+// Values that require no types.
 
 type contextKey int // local to the context module
 

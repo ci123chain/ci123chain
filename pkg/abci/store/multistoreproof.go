@@ -30,10 +30,10 @@ func (proof *MultiStoreProof) ComputeRootHash() []byte {
 // RequireProof returns whether proof is required for the subpath.
 func RequireProof(subpath string) bool {
 	// XXX: create a better convention.
-	// Currently, only when query subpath is "/key", will proof be included in
+	// Currently, only when query subpath is "/types", will proof be included in
 	// response. If there are some changes about proof building in iavlstore.go,
 	// we must change code here to keep consistency with iavlStore#Query.
-	if subpath == "/key" {
+	if subpath == "/types" {
 		return true
 	}
 
@@ -97,7 +97,7 @@ func (op MultiStoreProofOp) String() string {
 	return fmt.Sprintf("MultiStoreProofOp{%v}", op.GetKey())
 }
 
-// GetKey returns the key for a multi-store proof operation.
+// GetKey returns the types for a multi-store proof operation.
 func (op MultiStoreProofOp) GetKey() []byte {
 	return op.key
 }
@@ -123,7 +123,7 @@ func (op MultiStoreProofOp) Run(args [][]byte) ([][]byte, error) {
 		}
 	}
 
-	return nil, cmn.NewError("key %v not found in multistore proof", op.key)
+	return nil, cmn.NewError("types %v not found in multistore proof", op.key)
 }
 
 //-----------------------------------------------------------------------------

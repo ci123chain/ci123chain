@@ -35,6 +35,12 @@ func NewBaseAccount(address types.AccAddress, coin types.Coin,
 		Sequence:      sequence,
 	}
 }
+// NewBaseAccountWithAddress - returns a new base account with a given address
+func NewBaseAccountWithAddress(addr types.AccAddress) BaseAccount {
+	return BaseAccount{
+		Address: addr,
+	}
+}
 
 // GetAddress - Implements sdk.Account.
 func (acc BaseAccount) GetAddress() types.AccAddress {

@@ -10,14 +10,8 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
-const (
-	genesisBalance = 100
-)
-
-
 func AppGenStateJSON() (json.RawMessage, error) {
 	appState := ModuleBasics.DefaultGenesis()
-
 	stateBytes, err := json.Marshal(appState)
 	if err != nil {
 		return nil, err

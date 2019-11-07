@@ -1,11 +1,23 @@
 package types
 
+import "github.com/tanhuiya/ci123chain/pkg/params/subspace"
+
 const (
 	DefaultMaxMemoCharacters 	uint64 = 256
 	DefaultTxSizeCostPerByte 	uint64 = 10
 	DefaultSigVerifyCostED25519 uint64 = 590
 	DefaultSigVerifyCostSecp256k1 uint64 = 1000
 )
+
+// Parameter keys
+var (
+	KeyMaxMemoCharacters      = []byte("MaxMemoCharacters")
+	KeyTxSizeCostPerByte      = []byte("TxSizeCostPerByte")
+	KeySigVerifyCostED25519   = []byte("SigVerifyCostED25519")
+	KeySigVerifyCostSecp256k1 = []byte("SigVerifyCostSecp256k1")
+	//KeyTxSigLimit             = []byte("TxSigLimit")
+)
+
 
 type Params struct {
 	MaxMemoCharacters		uint64 	`json:"max_memo_characters" yaml:"max_memo_characters"`
@@ -33,4 +45,17 @@ func NewGenesisState(params Params) GenesisState {
 
 func DefaultGenesisState() GenesisState {
 	return NewGenesisState(DefaultParams())
+}
+
+func ParamKeyTable() subspace.KeyTable {
+	return subspace.NewKeyTable().RegisterParamSet(&Params{})
+}
+
+func (p *Params) ParamSetPairs() subspace.ParamSetPairs {
+	return subspace.ParamSetPairs{
+		{KeyMaxMemoCharacters, &p.MaxMemoCharacters},
+		{KeyTxSizeCostPerByte, &p.TxSizeCostPerByte},
+		{KeySigVerifyCostED25519,  &p.SigVerifyCostED25519},
+		{KeySigVerifyCostSecp256k1, &p.SigVerifyCostSecp256k1},
+	}
 }

@@ -71,7 +71,7 @@ func (cms cacheMultiStore) WithTracer(w io.Writer) MultiStore {
 }
 
 // WithTracingContext updates the tracing context for the MultiStore by merging
-// the given context with the existing context by key. Any existing keys will
+// the given context with the existing context by types. Any existing keys will
 // be overwritten. It is implied that the caller should update the context when
 // necessary between tracing operations. It returns a modified MultiStore.
 func (cms cacheMultiStore) WithTracingContext(tc TraceContext) MultiStore {

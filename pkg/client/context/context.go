@@ -45,7 +45,7 @@ func (ctx *Context) GetInputAddresses() ([]types.AccAddress, error) {
 
 func (ctx *Context) GetBalanceByAddress(addr types.AccAddress) (uint64, error) {
 	addrByte := acc_types.AddressStoreKey(addr)
-	res, _, err := ctx.query("/store/main/key", addrByte)
+	res, _, err := ctx.query("/store/main/types", addrByte)
 	var acc exported.Account
 	err = ctx.Cdc.UnmarshalBinaryLengthPrefixed(res, &acc)
 	if err != nil {

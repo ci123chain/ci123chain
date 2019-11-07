@@ -1,6 +1,9 @@
 package account
 
-import "github.com/tanhuiya/ci123chain/pkg/account/types"
+import (
+	"github.com/tanhuiya/ci123chain/pkg/account/keeper"
+	"github.com/tanhuiya/ci123chain/pkg/account/types"
+)
 
 const (
 	ModuleName = types.ModuleName
@@ -12,8 +15,12 @@ var (
 
 	ModuleCdc 					= types.ModuleCdc
 
+
 )
 
 type (
 	GenesisState 	= types.GenesisState
+	BaseAccount 	= types.BaseAccount
+	AccountKeeper 	= keeper.AccountKeeper
+
 )

@@ -75,12 +75,12 @@ func testGasKVStoreWrap(t *testing.T, store KVStore) {
 	store = store.Gas(meter, sdk.GasConfig{HasCost: 10})
 	require.Equal(t, uint64(0), meter.GasConsumed())
 
-	store.Has([]byte("key"))
+	store.Has([]byte("types"))
 	require.Equal(t, uint64(10), meter.GasConsumed())
 
 	store = store.Gas(meter, sdk.GasConfig{HasCost: 20})
 
-	store.Has([]byte("key"))
+	store.Has([]byte("types"))
 	require.Equal(t, uint64(40), meter.GasConsumed())
 }
 

@@ -11,7 +11,7 @@ const (
 	VersionSize = 8
 )
 var (
-	ErrKeyNotFound = errors.New("key not found")
+	ErrKeyNotFound = errors.New("types not found")
 )
 
 var _ StateDB = new(VersionedDB)

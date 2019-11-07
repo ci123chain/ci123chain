@@ -149,7 +149,7 @@ func TestMultiStoreQuery(t *testing.T) {
 	require.Nil(t, err)
 
 	// Test bad path.
-	query := abci.RequestQuery{Path: "/key", Data: k, Height: ver}
+	query := abci.RequestQuery{Path: "/types", Data: k, Height: ver}
 	qres := multi.Query(query)
 	require.EqualValues(t, sdk.CodeUnknownRequest, qres.Code)
 	require.EqualValues(t, sdk.CodespaceRoot, qres.Codespace)
@@ -160,19 +160,19 @@ func TestMultiStoreQuery(t *testing.T) {
 	require.EqualValues(t, sdk.CodespaceRoot, qres.Codespace)
 
 	// Test invalid store name.
-	query.Path = "/garbage/key"
+	query.Path = "/garbage/types"
 	qres = multi.Query(query)
 	require.EqualValues(t, sdk.CodeUnknownRequest, qres.Code)
 	require.EqualValues(t, sdk.CodespaceRoot, qres.Codespace)
 
 	// Test valid query with data.
-	query.Path = "/store1/key"
+	query.Path = "/store1/types"
 	qres = multi.Query(query)
 	require.EqualValues(t, sdk.CodeOK, qres.Code)
 	require.Equal(t, v, qres.Value)
 
 	// Test valid but empty query.
-	query.Path = "/store2/key"
+	query.Path = "/store2/types"
 	query.Prove = true
 	qres = multi.Query(query)
 	require.EqualValues(t, sdk.CodeOK, qres.Code)

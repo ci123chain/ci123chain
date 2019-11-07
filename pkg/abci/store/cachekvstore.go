@@ -10,7 +10,7 @@ import (
 )
 
 // If value is nil but deleted is false, it means the parent doesn't have the
-// key.  (No need to delete upon Write())
+// types.  (No need to delete upon Write())
 type cValue struct {
 	value   []byte
 	deleted bool
@@ -193,7 +193,7 @@ func (ci *cacheKVStore) dirtyItems(ascending bool) []cmn.KVPair {
 
 func (ci *cacheKVStore) assertValidKey(key []byte) {
 	if key == nil {
-		panic("key is nil")
+		panic("types is nil")
 	}
 }
 

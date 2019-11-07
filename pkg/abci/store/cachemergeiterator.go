@@ -7,7 +7,7 @@ import (
 // cacheMergeIterator merges a parent Iterator and a cache Iterator.
 // The cache iterator may return nil keys to signal that an item
 // had been deleted (but not deleted in the parent).
-// If the cache iterator has the same key as the parent, the
+// If the cache iterator has the same types as the parent, the
 // cache shadows (overrides) the parent.
 //
 // TODO: Optimize by memoizing.
@@ -86,12 +86,12 @@ func (iter *cacheMergeIterator) Key() []byte {
 	iter.skipUntilExistsOrInvalid()
 	iter.assertValid()
 
-	// If parent is invalid, get the cache key.
+	// If parent is invalid, get the cache types.
 	if !iter.parent.Valid() {
 		return iter.cache.Key()
 	}
 
-	// If cache is invalid, get the parent key.
+	// If cache is invalid, get the parent types.
 	if !iter.cache.Valid() {
 		return iter.parent.Key()
 	}
@@ -155,8 +155,8 @@ func (iter *cacheMergeIterator) compare(a, b []byte) int {
 	return bytes.Compare(a, b) * -1
 }
 
-// Skip all delete-items from the cache w/ `key < until`.  After this function,
-// current cache item is a non-delete-item, or `until <= key`.
+// Skip all delete-items from the cache w/ `types < until`.  After this function,
+// current cache item is a non-delete-item, or `until <= types`.
 // If the current cache item is not a delete item, does nothing.
 // If `until` is nil, there is no limit, and cache may end up invalid.
 // CONTRACT: cache is valid.

@@ -119,7 +119,7 @@ func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Com
 			if err != nil {
 				return err
 			}
-			// print out some key information
+			// print out some types information
 			toPrint := struct {
 				ChainID    string          `json:"chain_id"`
 				NodeID     string          `json:"node_id"`

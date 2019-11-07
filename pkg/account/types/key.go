@@ -11,7 +11,7 @@ var (
 	GlobalAccountNumberKey = []byte("globalAccountNumber")
 )
 
-// AddressStoreKey turn an address to key used to get it from the account store
+// AddressStoreKey turn an address to types used to get it from the account store
 func AddressStoreKey(addr types.AccAddress) []byte {
 	return append(AddressStoreKeyPrefix, addr.Bytes()...)
 }
