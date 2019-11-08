@@ -9,7 +9,7 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/transaction"
 )
 
-// Mortgage
+// 生成 Mortgage 消息，抵押coin
 func SignMortgage(from, to string, amount, gas uint64, uniqueID string, priv []byte) ([]byte, error) {
 	tx, err := buildMortgageTx(from, to, amount, gas, uniqueID)
 	if err != nil {
@@ -39,8 +39,7 @@ func buildMortgageTx (from, to string, amount, gas uint64, uniqueID string) (*ty
 	return mort, nil
 }
 
-// MortgageDone
-
+// 生成 MortgageDone 完成交易
 func SignMortgageDone(from string, gas uint64, uniqueID string, priv []byte) ([]byte, error) {
 	tx, err := buildMortgageDoneTx(from, gas, uniqueID)
 	if err != nil {
@@ -73,7 +72,7 @@ func buildMortgageDoneTx (from string, gas uint64, uniqueID string) (*types2.Msg
 
 
 // MortgageCancel
-
+// 取消 交易，将 coin 返还
 func SignMortgageCancel(from string, gas uint64, uniqueID string, priv []byte) ([]byte, error) {
 	tx, err := buildMortgageCancelTx(from, gas, uniqueID)
 	if err != nil {
