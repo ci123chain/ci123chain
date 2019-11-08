@@ -4,9 +4,9 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/bgentry/speakeasy"
-	isatty "github.com/mattn/go-isatty"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/mattn/go-isatty"
 	"github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"os"
 	"strings"
@@ -28,6 +28,17 @@ const (
 func BufferStdin() *bufio.Reader {
 	return bufio.NewReader(os.Stdin)
 }
+
+func GetPasswordFromStd() (string, error) {
+	var err error
+	buf := BufferStdin()
+	pass, err := GetCheckPassword("Enter a passphrase for your types:", "Repeat the passphrase:", buf)
+	if err != nil {
+		return "", err
+	}
+	return pass, nil
+}
+
 
 // Prompts for a password twice to verify they match
 func GetCheckPassword(prompt, prompt2 string, buf *bufio.Reader) (string, error) {

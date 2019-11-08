@@ -15,4 +15,6 @@ var (
 	NewKeeper 	  =  keeper.NewMortgageKeeper
 
 	RouterKey 	  = types.RouterKey
+
+	NewMortgageMsg = types.NewMsgMortgage
 )

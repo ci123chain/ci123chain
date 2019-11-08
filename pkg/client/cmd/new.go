@@ -39,7 +39,7 @@ var newAccountCmd = &cobra.Command{
 		ks := keystore.NewKeyStore(dir, keystore.StandardScryptN, keystore.StandardScryptP)
 		mnemonic := viper.GetString(flagMnemonic)
 		hdPath := viper.GetString(flagHDWPath)
-		password, err := getPassword()
+		password, err := helper.GetPasswordFromStd()
 
 		if err != nil {
 			return err
@@ -59,18 +59,6 @@ var newAccountCmd = &cobra.Command{
 	},
 }
 
-func getPassword() (string, error) {
-	var err error
-	pass := viper.GetString(flagPassword)
-	if pass == "" {
-		buf := helper.BufferStdin()
-		pass, err = helper.GetCheckPassword("Enter a passphrase for your types:", "Repeat the passphrase:", buf)
-		if err != nil {
-			return "", err
-		}
-	}
-	return pass, nil
-}
 
 
 func createAccountWithPassword(ks *keystore.KeyStore, password string) (*accounts.Account, error) {

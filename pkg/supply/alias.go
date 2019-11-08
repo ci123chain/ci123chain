@@ -12,4 +12,8 @@ type (
 var (
 	NewKeeper = keeper.NewKeeper
 	StoreKey  = types.ModuleName
+
+	ModuleName = types.ModuleName
+
+	RegisterCodec = types.RegisterCodec
 )

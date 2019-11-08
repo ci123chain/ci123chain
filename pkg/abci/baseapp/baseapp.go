@@ -520,6 +520,8 @@ func (app *BaseApp) runMsgs(ctx sdk.Context, tx sdk.Tx, mode runTxMode) (result 
 		Code: code,
 		Codespace: codespace,
 		GasUsed:   ctx.GasMeter().GasConsumed(),
+		Log: 	strings.TrimSpace(msgResult.Log),
+		Data: 		msgResult.Data,
 	}
 	return result
 }

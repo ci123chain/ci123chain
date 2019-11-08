@@ -34,7 +34,7 @@ var exportCmd = &cobra.Command{
 		password := viper.GetString(flagPassword)
 		if len(password) < 1 {
 			var err error
-			password, err = getPassword()
+			password, err = helper.GetPasswordFromStd()
 			if err != nil {
 				return err
 			}

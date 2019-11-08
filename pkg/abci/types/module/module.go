@@ -43,7 +43,9 @@ func (bm BasicManager)RegisterCodec(cdc *codec.Codec)  {
 func (bm BasicManager) DefaultGenesis() map[string]json.RawMessage {
 	genesis := make(map[string]json.RawMessage)
 	for _, b := range bm {
-		genesis[b.Name()] = b.DefaultGenesis()
+		if b.DefaultGenesis() != nil {
+			genesis[b.Name()] = b.DefaultGenesis()
+		}
 	}
 	return genesis
 }

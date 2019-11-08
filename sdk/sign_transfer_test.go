@@ -69,7 +69,7 @@ func TestVerifier(t *testing.T)  {
 	assert.Equal(t, "04f2153d2fa175fb700e0f3ed36cb5695e693a708ef6d2277fad3064c6ebb7fe4dd09f0f1598329418c4b944f1591b1332960f0098bc365130a0907efd84acdbdb", hex.EncodeToString(cryptoutil.MarshalPubkey(pubkey)))
 	signature, _ = hex.DecodeString(hex.EncodeToString(signature))
 
-	valid, err := Verifier(tx.GetSignBytes(), signature , cryptoutil.MarshalPubkey(pubkey), addrbyte[:])
+	valid, err := Verifier(tx.GetSignBytes(), signature , cryptoutil.MarshalPubkey(pubkey), addrbyte.Address[:])
 	assert.NoError(t, err)
 	assert.Equal(t, true, valid)
 }

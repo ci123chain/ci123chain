@@ -3,7 +3,6 @@ package transaction
 import (
 	"github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/util"
-	"github.com/ethereum/go-ethereum/rlp"
 )
 
 var emptyAddr types.AccAddress
@@ -32,10 +31,17 @@ type TransferTx struct {
 	FabricMode bool
 }
 
-func DecodeTransferTx(b []byte) (*TransferTx, error) {
-	tx := new(TransferTx)
-	return tx, rlp.DecodeBytes(b, tx)
-}
+//func DecodeTransferTx(b []byte) (*TransferTx, error) {
+//	var transfer TransferTx
+//	err := transferCdc.UnmarshalBinaryLengthPrefixed(b, &transfer)
+//	if err != nil {
+//		return nil, err
+//	}
+//	return &transfer, nil
+//
+//	//tx := new(TransferTx)
+//	//return tx, rlp.DecodeBytes(b, tx)
+//}
 
 func isEmptyAddr(addr types.AccAddress) bool {
 	return addr == emptyAddr
@@ -74,9 +80,17 @@ func (tx *TransferTx) GetSignBytes() []byte {
 }
 
 func (tx *TransferTx) Bytes() []byte {
-	b, err := rlp.EncodeToBytes(tx)
+
+	bytes, err := transferCdc.MarshalBinaryLengthPrefixed(tx)
 	if err != nil {
 		panic(err)
 	}
-	return b
+
+	return bytes
+
+	//b, err := rlp.EncodeToBytes(tx)
+	//if err != nil {
+	//	panic(err)
+	//}
+	//return b
 }

@@ -53,6 +53,7 @@ var (
 	ModuleBasics = module.NewBasicManager(
 		account.AppModuleBasic{},
 		auth.AppModuleBasic{},
+		supply.AppModuleBasic{},
 		)
 
 	maccPerms = map[string][]string{
@@ -79,9 +80,8 @@ type Chain struct {
 }
 
 func NewChain(logger log.Logger, tmdb tmdb.DB, traceStore io.Writer) *Chain {
-	app := baseapp.NewBaseApp("ci123", logger, tmdb, transaction.DecodeTx)
-
 	cdc := MakeCodec()
+	app := baseapp.NewBaseApp("ci123", logger, tmdb, transaction.DefaultTxDecoder(cdc))
 
 	c := &Chain{
 		BaseApp: 			app,
@@ -133,6 +133,7 @@ func (c *Chain) mountStores() error {
 		c.contractStore,
 		ParamStoreKey,
 		AuthStoreKey,
+		MortgageStoreKey,
 	}
 	c.MountStoresIAVL(keys...)
 

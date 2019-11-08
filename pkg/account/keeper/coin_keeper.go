@@ -56,6 +56,8 @@ func (ak AccountKeeper) SubBalance(ctx types.Context, addr types.AccAddress, amt
 	if acc != nil {
 		oldCoins = acc.GetCoin()
 		spendableCoins = acc.SpendableCoins(ctx.BlockHeader().Time)
+	} else {
+		return types.NewCoin(), types.ErrInternal(fmt.Sprintf("account not exist %s", addr.Hex()))
 	}
 	_, valid := spendableCoins.SafeSub(amt)
 	if !valid {

@@ -1,11 +1,8 @@
 package transaction
 
 import (
+	"github.com/tanhuiya/ci123chain/pkg/abci/codec"
 	"github.com/tanhuiya/ci123chain/pkg/abci/types"
-	"bytes"
-	"fmt"
-	"github.com/ethereum/go-ethereum/rlp"
-	"github.com/pkg/errors"
 )
 
 // Transaction code
@@ -34,31 +31,41 @@ func DecodeTx(bs []byte) (types.Tx, types.Error) {
 	return tx, nil
 }
 
+// DefaultTxDecoder logic for standard transaction decoding
+func DefaultTxDecoder(cdc *codec.Codec) types.TxDecoder {
+	return func(txBytes []byte) (types.Tx, types.Error) {
+		var transfer Transaction
+		err := cdc.UnmarshalBinaryLengthPrefixed(txBytes, &transfer)
+		if err != nil {
+			return nil, types.ErrTxDecode("decode msg failed").TraceSDK(err.Error())
+		}
+		return transfer, nil
+	}
+}
 
 func decodeTx(bs []byte) (types.Tx, error) {
-	code, err := FetchCodeValue(bs)
+
+	var transfer Transaction
+	err := transferCdc.UnmarshalBinaryLengthPrefixed(bs, &transfer)
 	if err != nil {
-		return nil, errors.New("fail to fetch tx code")
+		return nil, err
 	}
-	switch code {
-	case TRANSFER:
-		return DecodeTransferTx(bs)
+	return transfer, nil
+
+
+	//return DecodeTransferTx(bs)
+	//code, err := FetchCodeValue(bs)
+	//if err != nil {
+	//	return nil, errors.New("fail to fetch tx code")
+	//}
+	//switch code {
+	//case TRANSFER:
+	//	return DecodeTransferTx(bs)
 	//case CONTRACT_CALL:
 	//	return DecodeContractCallTx(bs)
 	//case CONTRACT_DEPLOY:
 	//	return DecodeContractDeployTx(bs)
-	default:
-		return nil, fmt.Errorf("unknown code '%v'", code)
-	}
-}
-
-// FetchCodeValue returns code from rlp bytes
-func FetchCodeValue(bs []byte) (byte, error) {
-	r := bytes.NewReader(bs)
-	s := rlp.NewStream(r, uint64(len(bs)))
-	if _, err := s.List(); err != nil {
-		return 0, err
-	}
-	var code byte
-	return code, s.Decode(&code)
+	//default:
+	//	return nil, fmt.Errorf("unknown code '%v'", code)
+	//}
 }

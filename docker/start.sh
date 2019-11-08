@@ -1,7 +1,9 @@
 #!/bin/bash
 
 if [ ! -d "$HOME/.ci123" ]; then
-    ./cid-linux init --address=0x204bCC42559Faf6DFE1485208F7951aaD800B313
+    ./cid-linux init
+    ./cid-linux add-genesis-account 0x204bCC42559Faf6DFE1485208F7951aaD800B313 100000
+    ./cid-linux add-genesis-account 0xD1a14962627fAc768Fe885Eeb9FF072706B54c19 100000
 fi
 
 nohup ./cid-linux start > cid-output 2>&1 &

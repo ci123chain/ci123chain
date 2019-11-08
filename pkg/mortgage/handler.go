@@ -10,12 +10,12 @@ import (
 func NewHandler(k MortgageKeeper) sdk.Handler {
 	return func(ctx sdk.Context, tx sdk.Tx) sdk.Result {
 		switch tx := tx.(type) {
-		case types.MsgMortgage:
-			return handleMsgMortgage(ctx, k, tx)
-		case types.MsgMortgageDone:
-			return handleMsgMortgageSuccess(ctx, k, tx)
-		case types.MsgMortgageCancel:
-			return handleMsgMortgageCancel(ctx, k, tx)
+		case *types.MsgMortgage:
+			return handleMsgMortgage(ctx, k, *tx)
+		case *types.MsgMortgageDone:
+			return handleMsgMortgageSuccess(ctx, k, *tx)
+		case *types.MsgMortgageCancel:
+			return handleMsgMortgageCancel(ctx, k, *tx)
 		default:
 			errMsg := fmt.Sprintf("unrecognized supply message type: %T", tx)
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -31,10 +31,9 @@ func handleMsgMortgage(ctx sdk.Context, k MortgageKeeper, tx types.MsgMortgage) 
 		return sdk.ErrInternal("uniqueID is exist").Result()
 	}
 
-	if err := k.SupplyKeeper.SendCoinsFromAccountToModule(ctx, tx.FromAddress, types.ModuleName, tx.Coin); err != nil {
+	if err := k.SupplyKeeper.SendCoinsFromAccountToModule(ctx, tx.CommonTx.From, types.ModuleName, tx.Coin); err != nil {
 		return err.Result()
 	}
-
 	setMortgage(ctx, k.StoreKey, types.Mortgage{
 		MsgMortgage: tx,
 		State:  types.StateMortgaged,
@@ -50,7 +49,7 @@ func handleMsgMortgageCancel (ctx sdk.Context, k MortgageKeeper, tx types.MsgMor
 		return sdk.ErrInternal(fmt.Sprintf("mortgage record not exist :uniqueID = %s", hex.EncodeToString(tx.UniqueID))).Result()
 	}
 
-	if err := k.SupplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, mort.FromAddress, mort.Coin); err != nil {
+	if err := k.SupplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, mort.CommonTx.From, mort.Coin); err != nil {
 		return err.Result()
 	}
 	if mort.State == types.StateMortgaged {
@@ -78,18 +77,28 @@ func handleMsgMortgageSuccess (ctx sdk.Context, k MortgageKeeper, tx types.MsgMo
 	return sdk.Result{}
 }
 
-func getMortgage(ctx sdk.Context, key sdk.StoreKey, uniqueID []byte) (mort *types.Mortgage) {
+func getMortgage(ctx sdk.Context, key sdk.StoreKey, uniqueID []byte) (*types.Mortgage) {
 	store := ctx.KVStore(key)
 	mortbz := store.Get(uniqueID)
 	if len(mortbz) < 1 {
 		return nil
 	}
-	types.MortgageCdc.MustUnmarshalJSON(mortbz, mort)
-	return
+	var mort types.Mortgage
+	err := types.MortgageCdc.UnmarshalBinaryLengthPrefixed(mortbz, &mort)
+	if err != nil {
+		panic(err)
+	}
+	return &mort
 }
 
 func setMortgage(ctx sdk.Context, key sdk.StoreKey, tx types.Mortgage)  {
-	jsonbz := types.MortgageCdc.MustMarshalJSON(tx)
+	jsonbz, err := types.MortgageCdc.MarshalBinaryLengthPrefixed(tx)
 	store := ctx.KVStore(key)
 	store.Set(tx.UniqueID, jsonbz)
+
+	var mort types.Mortgage
+	err = types.MortgageCdc.UnmarshalBinaryLengthPrefixed(jsonbz, &mort)
+	if err != nil {
+		panic(err)
+	}
 }

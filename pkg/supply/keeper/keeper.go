@@ -90,7 +90,6 @@ func (k Keeper) SendCoinsFromAccountToModule(ctx sdk.Context, senderAddr sdk.Acc
 	if recipientAcc == nil {
 		panic(fmt.Sprintf("module account %s isn't able to be created", recipientModule))
 	}
-
 	return k.ak.Transfer(ctx, senderAddr, recipientAcc.GetAddress(), amt)
 }
 
