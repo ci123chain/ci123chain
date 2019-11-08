@@ -21,6 +21,10 @@ func HexToAddress(addres string) AccAddress {
 	}
 }
 
+func (aa AccAddress)Equal(aa2 AccAddress) bool {
+	return aa.Address == aa2.Address
+}
+
 func (aa AccAddress) Empty() bool {
 	return aa.Address == common.Address{}
 }

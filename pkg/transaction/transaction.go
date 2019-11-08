@@ -21,16 +21,6 @@ type Transaction interface {
 }
 
 
-
-// DecodeTx function is called by tendermint when node receives tx
-func DecodeTx(bs []byte) (types.Tx, types.Error) {
-	tx, err := decodeTx(bs)
-	if err != nil {
-		return nil, types.ErrTxDecode(err.Error())
-	}
-	return tx, nil
-}
-
 // DefaultTxDecoder logic for standard transaction decoding
 func DefaultTxDecoder(cdc *codec.Codec) types.TxDecoder {
 	return func(txBytes []byte) (types.Tx, types.Error) {
@@ -43,29 +33,3 @@ func DefaultTxDecoder(cdc *codec.Codec) types.TxDecoder {
 	}
 }
 
-func decodeTx(bs []byte) (types.Tx, error) {
-
-	var transfer Transaction
-	err := transferCdc.UnmarshalBinaryLengthPrefixed(bs, &transfer)
-	if err != nil {
-		return nil, err
-	}
-	return transfer, nil
-
-
-	//return DecodeTransferTx(bs)
-	//code, err := FetchCodeValue(bs)
-	//if err != nil {
-	//	return nil, errors.New("fail to fetch tx code")
-	//}
-	//switch code {
-	//case TRANSFER:
-	//	return DecodeTransferTx(bs)
-	//case CONTRACT_CALL:
-	//	return DecodeContractCallTx(bs)
-	//case CONTRACT_DEPLOY:
-	//	return DecodeContractDeployTx(bs)
-	//default:
-	//	return nil, fmt.Errorf("unknown code '%v'", code)
-	//}
-}

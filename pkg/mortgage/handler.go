@@ -48,6 +48,9 @@ func handleMsgMortgageCancel (ctx sdk.Context, k MortgageKeeper, tx types.MsgMor
 	if mort == nil {
 		return sdk.ErrInternal(fmt.Sprintf("mortgage record not exist :uniqueID = %s", hex.EncodeToString(tx.UniqueID))).Result()
 	}
+	if !mort.From.Equal(tx.From) {
+		return sdk.ErrUnknownRequest("Invalid tx, from address error").Result()
+	}
 
 	if err := k.SupplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, mort.CommonTx.From, mort.Coin); err != nil {
 		return err.Result()
@@ -67,6 +70,10 @@ func handleMsgMortgageSuccess (ctx sdk.Context, k MortgageKeeper, tx types.MsgMo
 	mort := getMortgage(ctx, k.StoreKey, tx.UniqueID)
 	if mort == nil {
 		return sdk.ErrInternal(fmt.Sprintf("mortgage record not exist :uniqueID = %s", hex.EncodeToString(tx.UniqueID))).Result()
+	}
+
+	if !mort.From.Equal(tx.From) {
+		return sdk.ErrUnknownRequest("Invalid tx, from address error").Result()
 	}
 
 	if err := k.SupplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, mort.ToAddress, mort.Coin); err != nil {
