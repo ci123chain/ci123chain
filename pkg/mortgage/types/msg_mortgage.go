@@ -31,6 +31,19 @@ func (msg MsgMortgage) ValidateBasic() sdk.Error {
 	return nil
 }
 
+func NewMsgMortgage(from, to sdk.AccAddress, coin sdk.Coin, uniqueID []byte) *MsgMortgage {
+	msg := &MsgMortgage{
+		FromAddress: from,
+		ToAddress: 	to,
+		UniqueID: 	uniqueID,
+		Coin: 		coin,
+	}
+	if err := msg.ValidateBasic(); err != nil {
+		return nil
+	}
+	return msg
+}
+
 func (MsgMortgage) Route() string {
 	return RouterKey
 }
