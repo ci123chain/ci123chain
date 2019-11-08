@@ -17,4 +17,6 @@ var (
 	RouterKey 	  = types.RouterKey
 
 	NewMortgageMsg = types.NewMsgMortgage
+	NewMsgMortgageCancel = types.NewMsgMortgageCancel
+	NewMsgMortgageDone  = types.NewMsgMortgageDone
 )

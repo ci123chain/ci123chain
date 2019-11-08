@@ -54,6 +54,8 @@ func handleMsgMortgageCancel (ctx sdk.Context, k MortgageKeeper, tx types.MsgMor
 	}
 	if mort.State == types.StateMortgaged {
 		mort.State = types.StateCancel
+	} else {
+		return sdk.ErrUnknownRequest("mortgage record state have done or canceled").Result()
 	}
 	setMortgage(ctx, k.StoreKey, *mort)
 	return sdk.Result{}
@@ -72,6 +74,8 @@ func handleMsgMortgageSuccess (ctx sdk.Context, k MortgageKeeper, tx types.MsgMo
 	}
 	if mort.State == types.StateMortgaged {
 		mort.State = types.StateSuccess
+	} else {
+		return sdk.ErrUnknownRequest("mortgage record state have done or canceled").Result()
 	}
 	setMortgage(ctx, k.StoreKey, *mort)
 	return sdk.Result{}

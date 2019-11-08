@@ -68,8 +68,6 @@ func (msg *MsgMortgage)Bytes() []byte {
 		panic(err)
 	}
 
-	//var t MsgMortgage
-	//_ = MortgageCdc.UnmarshalBinaryLengthPrefixed(bytes, &t)
 	return bytes
 }
 
