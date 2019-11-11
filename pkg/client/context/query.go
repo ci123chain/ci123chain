@@ -6,7 +6,7 @@ import (
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
 )
 
-func (ctx Context) query(path string, key common.HexBytes) (res []byte, height int64, err error) {
+func (ctx Context) Query(path string, key common.HexBytes) (res []byte, height int64, err error) {
 	node, err := ctx.GetNode()
 	if err != nil {
 		return res, height, err

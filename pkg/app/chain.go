@@ -8,9 +8,11 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/account/keeper"
 	acc_types "github.com/tanhuiya/ci123chain/pkg/account/types"
 	"github.com/tanhuiya/ci123chain/pkg/auth"
+	"github.com/tanhuiya/ci123chain/pkg/auth/ante"
 	"github.com/tanhuiya/ci123chain/pkg/config"
 	"github.com/tanhuiya/ci123chain/pkg/db"
-	"github.com/tanhuiya/ci123chain/pkg/handler"
+	"github.com/tanhuiya/ci123chain/pkg/ibc"
+	"github.com/tanhuiya/ci123chain/pkg/transaction/handler"
 	"github.com/tanhuiya/ci123chain/pkg/mortgage"
 	"github.com/tanhuiya/ci123chain/pkg/params"
 	"github.com/tanhuiya/ci123chain/pkg/supply"
@@ -48,7 +50,8 @@ var (
 	ParamTransStoreKey  = sdk.NewTransientStoreKey(params.TStoreKey)
 	AuthStoreKey 	 = sdk.NewKVStoreKey(auth.StoreKey)
 	SupplyStoreKey   = sdk.NewKVStoreKey(supply.StoreKey)
-	MortgageStoreKey   = sdk.NewKVStoreKey(mortgage.StoreKey)
+	MortgageStoreKey = sdk.NewKVStoreKey(mortgage.StoreKey)
+	IBCStoreKey 	 = sdk.NewKVStoreKey(ibc.StoreKey)
 
 	ModuleBasics = module.NewBasicManager(
 		account.AppModuleBasic{},
@@ -106,6 +109,8 @@ func NewChain(logger log.Logger, tmdb tmdb.DB, traceStore io.Writer) *Chain {
 	authSubspace := paramsKeeper.Subspace(auth.DefaultCodespace)
 	c.authKeeper = auth.NewAuthKeeper(cdc, AuthStoreKey, authSubspace)
 
+	ibcKeeper := ibc.NewKeeper(IBCStoreKey, supplyKeeper)
+
 	// 设置module
 
 	c.mm = module.NewManager(
@@ -115,8 +120,9 @@ func NewChain(logger log.Logger, tmdb tmdb.DB, traceStore io.Writer) *Chain {
 
 	c.Router().AddRoute(transaction.RouteKey, handler.NewHandler(txm, accKeeper, sm))
 	c.Router().AddRoute(mortgage.RouterKey, mortgage.NewHandler(mortgageKeeper))
+	c.Router().AddRoute(ibc.RouterKey, ibc.NewHandler(ibcKeeper))
 
-	c.SetAnteHandler(handler.NewAnteHandler(c.authKeeper))
+	c.SetAnteHandler(ante.NewAnteHandler(c.authKeeper))
 	c.SetInitChainer(c.InitChainer)
 
 	err := c.mountStores()
@@ -134,6 +140,7 @@ func (c *Chain) mountStores() error {
 		ParamStoreKey,
 		AuthStoreKey,
 		MortgageStoreKey,
+		IBCStoreKey,
 	}
 	c.MountStoresIAVL(keys...)
 

@@ -523,7 +523,6 @@ func (app *BaseApp) runMsgs(ctx sdk.Context, tx sdk.Tx, mode runTxMode) (result 
 		Log: 	strings.TrimSpace(msgResult.Log),
 		Data: 		msgResult.Data,
 	}
-	return result
 }
 
 // Returns the applicantion's deliverState if app is in runTxModeDeliver,

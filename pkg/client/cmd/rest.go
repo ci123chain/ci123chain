@@ -4,6 +4,7 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/client"
 	"github.com/tanhuiya/ci123chain/pkg/client/cmd/rpc"
 	accountRpc "github.com/tanhuiya/ci123chain/pkg/account/rest"
+	"github.com/tanhuiya/ci123chain/pkg/ibc"
 	txRpc "github.com/tanhuiya/ci123chain/pkg/transaction/rest"
 	"github.com/tanhuiya/ci123chain/pkg/client/context"
 	"github.com/tanhuiya/ci123chain/pkg/util"
@@ -70,6 +71,7 @@ func NewRestServer() *RestServer {
 	rpc.RegisterRoutes(cliCtx, r)
 	accountRpc.RegisterRoutes(cliCtx, r)
 	txRpc.RegisterTxRoutes(cliCtx, r)
+	ibc.RegisterRoutes(cliCtx, r)
 	return &RestServer{
 		Mux: r,
 		CliCtx: cliCtx,

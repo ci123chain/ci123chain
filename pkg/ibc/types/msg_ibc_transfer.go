@@ -6,31 +6,31 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/util"
 )
 
-const (
-	StateMortgaged = "StateMortgaged"
-	StateSuccess = "StateSuccess"
-	StateCancel = "StateCancel"
-)
-
-var _ transaction.Transaction = (*MsgMortgage)(nil)
-
-type MsgMortgage struct {
+type IBCTransfer struct {
 	transaction.CommonTx
-	//FromAddress  sdk.AccAddress `json:"from_address"`
 	ToAddress 	 sdk.AccAddress `json:"to_address"`
 	UniqueID 	 []byte 		`json:"unique_id"`
 	Coin 	 sdk.Coin			`json:"coin"`
 }
 
-func (msg *MsgMortgage) ValidateBasic() sdk.Error {
+func NewIBCTransferMsg(from, to sdk.AccAddress, amout sdk.Coin, gas uint64, nonce uint64) *IBCTransfer {
+	return &IBCTransfer{
+		CommonTx:transaction.CommonTx{
+			From:  from,
+			Gas: 	gas,
+			Nonce: nonce,
+		},
+		ToAddress: to,
+		Coin: amout,
+	}
+}
+
+func (msg *IBCTransfer) ValidateBasic() sdk.Error {
 	if err := msg.CommonTx.ValidateBasic(); err != nil {
 		return err
 	}
 	if msg.ToAddress.Empty() {
 		return sdk.ErrInvalidAddress("missing sender address")
-	}
-	if len(msg.UniqueID) < 1 {
-		return sdk.ErrInternal("param mortgageRecord missing")
 	}
 	if !msg.Coin.IsValid() {
 		return sdk.ErrInvalidCoins("coin is invalid" + msg.Coin.String())
@@ -38,8 +38,8 @@ func (msg *MsgMortgage) ValidateBasic() sdk.Error {
 	return msg.CommonTx.VerifySignature(msg.GetSignBytes(), true)
 }
 
-func NewMsgMortgage(from, to sdk.AccAddress, gas, nonce uint64, coin sdk.Coin, uniqueID []byte) *MsgMortgage {
-	msg := &MsgMortgage{
+func NewIBCTransfer(from, to sdk.AccAddress, gas, nonce uint64, coin sdk.Coin, uniqueID []byte) *IBCTransfer {
+	msg := &IBCTransfer{
 		CommonTx: transaction.CommonTx{
 			From: from,
 			Nonce: nonce,
@@ -51,19 +51,20 @@ func NewMsgMortgage(from, to sdk.AccAddress, gas, nonce uint64, coin sdk.Coin, u
 	}
 	return msg
 }
-func (msg *MsgMortgage)GetSignBytes() []byte {
+
+func (msg *IBCTransfer)GetSignBytes() []byte {
 	ntx := *msg
 	ntx.SetSignature(nil)
 	return util.TxHash(ntx.Bytes())
 }
 
 
-func (msg *MsgMortgage)SetSignature(sig []byte) {
+func (msg *IBCTransfer)SetSignature(sig []byte) {
 	msg.CommonTx.SetSignature(sig)
 }
 
-func (msg *MsgMortgage)Bytes() []byte {
-	bytes, err := MortgageCdc.MarshalBinaryLengthPrefixed(msg)
+func (msg *IBCTransfer)Bytes() []byte {
+	bytes, err := IbcCdc.MarshalBinaryLengthPrefixed(msg)
 	if err != nil {
 		panic(err)
 	}
@@ -71,17 +72,10 @@ func (msg *MsgMortgage)Bytes() []byte {
 	return bytes
 }
 
-func (msg *MsgMortgage)SetPubKey(pub []byte) {
+func (msg *IBCTransfer)SetPubKey(pub []byte) {
 	msg.CommonTx.PubKey = pub
 }
 
-func (msg *MsgMortgage) Route() string {
+func (msg *IBCTransfer) Route() string {
 	return RouterKey
-}
-
-
-type Mortgage struct {
-	MsgMortgage
-
-	State  string `json:"state"`
 }

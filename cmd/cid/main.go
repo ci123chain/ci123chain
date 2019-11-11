@@ -23,7 +23,7 @@ const (
 
 func main()  {
 	cobra.EnableCommandSorting = false
-	ctx := new(app.Context)
+	ctx := app.NewDefaultContext()
 	rootCmd := &cobra.Command{
 		Use: 	"ci123",
 		Short:  "ci123 node",
@@ -32,7 +32,7 @@ func main()  {
 		},
 	}
 
-	rootCmd.PersistentFlags().String("log_level", "debug", "log level")
+	rootCmd.PersistentFlags().String("log_level", ctx.Config.LogLevel, "log level")
 	cmd.AddServerCommands(
 		ctx,
 		app.MakeCodec(),

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"github.com/tanhuiya/ci123chain/pkg/abci/codec"
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
+	"github.com/tanhuiya/ci123chain/pkg/ibc"
 	"github.com/tanhuiya/ci123chain/pkg/mortgage"
 	"github.com/tanhuiya/ci123chain/pkg/transaction"
 	"github.com/tendermint/go-amino"
@@ -34,6 +35,7 @@ func  MakeCodec() *codec.Codec {
 	transaction.RegisterCodec(cdc)
 	mortgage.RegisterCodec(cdc)
 	ModuleBasics.RegisterCodec(cdc)
+	ibc.RegisterCodec(cdc)
 	//acc_types.RegisterCodec(cdc)
 	//cdc.RegisterConcrete(secp256k1.PubKeySecp256k1{},
 	//	secp256k1.PubKeyAminoName, nil)

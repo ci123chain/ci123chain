@@ -8,11 +8,24 @@ import (
 	tmcli "github.com/tendermint/tendermint/libs/cli"
 	cfg "github.com/tendermint/tendermint/config"
 	"github.com/tanhuiya/ci123chain/pkg/logger"
+	"os"
 )
 
 type Context struct {
 	Config *cfg.Config
 	Logger log.Logger
+}
+
+
+func NewDefaultContext() *Context {
+	return NewContext(
+		cfg.DefaultConfig(),
+		log.NewTMLogger(log.NewSyncWriter(os.Stdout)),
+	)
+}
+
+func NewContext(config *cfg.Config, logger log.Logger) *Context {
+	return &Context{config, logger}
 }
 
 func SetupContext(ctx *Context) error {
