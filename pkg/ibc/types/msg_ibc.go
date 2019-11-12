@@ -31,15 +31,13 @@ type IBCMsg struct {
 	// 银行地址
 	BankAddress sdk.AccAddress	`json:"bank_address"`
 	// 跨链交易ID
-	UniqueID []byte		`json:"unique_id"`
-
-	ObserverID []byte	`json:"observer_id"`
-
-	ApplyTime 			time.Time
-
-	State 	 string 	`json:"state"`
-
-	IBCTransfer
+	UniqueID 	[]byte			`json:"unique_id"`
+	ObserverID 	[]byte			`json:"observer_id"`
+	ApplyTime 	time.Time		`json:"apply_time"`
+	State 	 	string 			`json:"state"`
+	FromAddress sdk.AccAddress 	`json:"from_address"`
+	ToAddress 	sdk.AccAddress 	`json:"to_address"`
+	Amount 	    sdk.Coin   		`json:"amount"`
 }
 
 
@@ -47,7 +45,7 @@ type IBCMsg struct {
 func (aa *IBCMsg) MarshalJSON() ([]byte, error) {
 	type Alias IBCMsg
 	return json.Marshal(&struct {
-		UniqueID 	string			`json:"unique_id"`
+		UniqueID 	string		`json:"unique_id"`
 		ObserverID 	string		`json:"observer_id"`
 		*Alias
 	}{
@@ -60,7 +58,7 @@ func (aa *IBCMsg) MarshalJSON() ([]byte, error) {
 func (aa *IBCMsg) UnmarshalJSON(data []byte) error {
 	type Alias IBCMsg
 	aux := &struct {
-		UniqueID 	string			`json:"unique_id"`
+		UniqueID 	string		`json:"unique_id"`
 		ObserverID 	string		`json:"observer_id"`
 		*Alias
 	}{

@@ -48,7 +48,9 @@ func handleMsgIBCTransfer(ctx sdk.Context, k keeper.IBCKeeper, tx types.IBCTrans
 func makeIBCMsg(uuidBz []byte, tx types.IBCTransfer) (types.IBCMsg, error) {
 	ibcMsg := types.IBCMsg{
 		UniqueID: 		uuidBz,
-		IBCTransfer: 	tx,
+		FromAddress: 	tx.From,
+		ToAddress: 		tx.ToAddress,
+		Amount: 		tx.Coin,
 		State: 			types.StateReady,
 	}
 	return ibcMsg, nil
