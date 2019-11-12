@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"encoding/hex"
+	"github.com/pkg/errors"
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/ibc/types"
 	"github.com/tanhuiya/ci123chain/pkg/supply"
@@ -14,6 +15,15 @@ const (
 	StateProcessing = "processing"
 	StateDone = "done"
 )
+
+func ValidateState(state string) error {
+	if state == StateReady ||
+		state == StateProcessing ||
+		state == StateDone {
+			return nil
+	}
+	return errors.New("unknown state type")
+}
 
 type IBCKeeper struct {
 	SupplyKeeper supply.Keeper

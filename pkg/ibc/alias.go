@@ -10,6 +10,7 @@ import (
 var (
 	StoreKey  = types.StoreKey
 	RouterKey  = types.RouterKey
+	ModuleName = types.ModuleName
 
 	NewHandler = handler.NewHandler
 	NewKeeper = keeper.NewIBCKeeper
@@ -19,6 +20,8 @@ var (
 	RegisterCodec = types.RegisterCodec
 
 	RegisterRoutes = rest.RegisterTxRoutes
+
+	NewQuerier = keeper.NewQuerier
 )
 
 type IBCMsg types.IBCMsg 

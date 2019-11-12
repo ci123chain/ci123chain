@@ -122,6 +122,8 @@ func NewChain(logger log.Logger, tmdb tmdb.DB, traceStore io.Writer) *Chain {
 	c.Router().AddRoute(mortgage.RouterKey, mortgage.NewHandler(mortgageKeeper))
 	c.Router().AddRoute(ibc.RouterKey, ibc.NewHandler(ibcKeeper))
 
+	c.QueryRouter().AddRoute(ibc.ModuleName, ibc.NewQuerier(ibcKeeper))
+
 	c.SetAnteHandler(ante.NewAnteHandler(c.authKeeper))
 	c.SetInitChainer(c.InitChainer)
 
