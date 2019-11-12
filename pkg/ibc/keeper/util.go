@@ -1,12 +1,13 @@
 package keeper
 
 import (
-	"github.com/satori/go.uuid"
+	"crypto/md5"
+	"encoding/hex"
 	"strings"
 )
 
-func GenerateUniqueID() string {
-	u1 := uuid.NewV4()
-	//fmt.Printf("UUIDv4: %s\n", u1)
-	return strings.ReplaceAll(u1.String(), "-", "")
+func GenerateUniqueID(b []byte) string {
+	hSum := md5.Sum([]byte(b))
+	hexString := hex.EncodeToString(hSum[:])
+	return strings.ToUpper(hexString)
 }

@@ -38,20 +38,6 @@ func (msg *IBCTransfer) ValidateBasic() sdk.Error {
 	return msg.CommonTx.VerifySignature(msg.GetSignBytes(), true)
 }
 
-func NewIBCTransfer(from, to sdk.AccAddress, gas, nonce uint64, coin sdk.Coin, uniqueID []byte) *IBCTransfer {
-	msg := &IBCTransfer{
-		CommonTx: transaction.CommonTx{
-			From: from,
-			Nonce: nonce,
-			Gas:  gas,
-		},
-		ToAddress: 	to,
-		UniqueID: 	uniqueID,
-		Coin: 		coin,
-	}
-	return msg
-}
-
 func (msg *IBCTransfer)GetSignBytes() []byte {
 	ntx := *msg
 	ntx.SetSignature(nil)

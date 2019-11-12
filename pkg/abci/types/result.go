@@ -67,6 +67,7 @@ type TxResponse struct {
 	Height    int64           `json:"height"`
 	TxHash    string          `json:"txhash"`
 	Code      uint32          `json:"code,omitempty"`
+	HexData	  string		  `json:"hex_data,omitempty"`
 	Data      string          `json:"data,omitempty"`
 	RawLog    string          `json:"raw_log,omitempty"`
 	Logs      ABCIMessageLogs `json:"logs,omitempty"`
@@ -135,6 +136,7 @@ func newTxResponseCheckTx(res *ctypes.ResultBroadcastTxCommit) TxResponse {
 		TxHash:    txHash,
 		Code:      res.CheckTx.Code,
 		Data:      strings.ToUpper(hex.EncodeToString(res.CheckTx.Data)),
+		HexData:   string(res.CheckTx.Data),
 		RawLog:    res.CheckTx.Log,
 		Logs:      parsedLogs,
 		Info:      res.CheckTx.Info,
@@ -162,7 +164,8 @@ func newTxResponseDeliverTx(res *ctypes.ResultBroadcastTxCommit) TxResponse {
 		Height:    res.Height,
 		TxHash:    txHash,
 		Code:      res.DeliverTx.Code,
-		Data:      strings.ToUpper(hex.EncodeToString(res.DeliverTx.Data)),
+		HexData:   strings.ToUpper(hex.EncodeToString(res.DeliverTx.Data)),
+		Data:      string(res.DeliverTx.Data),
 		RawLog:    res.DeliverTx.Log,
 		Logs:      parsedLogs,
 		Info:      res.DeliverTx.Info,
@@ -192,6 +195,10 @@ func (r TxResponse) String() string {
 
 	if r.Data != "" {
 		sb.WriteString(fmt.Sprintf("  Data: %s\n", r.Data))
+	}
+
+	if r.HexData != "" {
+		sb.WriteString(fmt.Sprintf("  HexData: %s\n", r.HexData))
 	}
 
 	if r.RawLog != "" {

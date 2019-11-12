@@ -25,13 +25,16 @@ func NewQuerier(keeper IBCKeeper) sdk.Querier {
 
 // nolint: unparam
 func queryResolve(ctx sdk.Context, path []string, req abci.RequestQuery, keeper IBCKeeper) ([]byte, sdk.Error) {
-	if path[0] != StateReady {
+	if path[0] != types.StateReady {
 		return nil, sdk.ErrUnknownRequest("Parameter State Error")
 	}
 
-	value := *keeper.GetFirstReadyIBCMsg(ctx)
+	value := keeper.GetFirstReadyIBCMsg(ctx)
+	if value == nil {
+		return nil, sdk.ErrUnknownRequest("No ready ibc tx found")
+	}
 
-	retbz, err := types.IbcCdc.MarshalBinaryLengthPrefixed(value)
+	retbz, err := types.IbcCdc.MarshalBinaryLengthPrefixed(*value)
 	if err != nil {
 		return nil, sdk.ErrUnknownRequest(err.Error())
 	}

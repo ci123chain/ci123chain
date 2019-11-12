@@ -7,10 +7,8 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/tanhuiya/ci123chain/pkg/abci/types/rest"
 	"github.com/tanhuiya/ci123chain/pkg/client/context"
-	"github.com/tanhuiya/ci123chain/pkg/ibc/keeper"
 	"github.com/tanhuiya/ci123chain/pkg/ibc/types"
 	"net/http"
-	"strings"
 )
 
 
@@ -25,7 +23,7 @@ func QueryTxByStateRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		vars := mux.Vars(request)
 		ibcState := vars["ibcstate"]
 
-		if err := keeper.ValidateState(ibcState); err != nil {
+		if err := types.ValidateState(ibcState); err != nil {
 			rest.WriteErrorResponse(writer, http.StatusBadRequest, err.Error())
 		}
 
@@ -37,13 +35,15 @@ func QueryTxByStateRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		res, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/state/" + ibcState, nil)
 		if len(res) < 1 {
 			rest.WriteErrorResponse(writer, http.StatusNotFound, "no ready ibc tx found " )
+			return
 		}
 		var ibcMsg types.IBCMsg
 		err = cliCtx.Cdc.UnmarshalBinaryLengthPrefixed(res, &ibcMsg)
 		if err != nil {
 			rest.WriteErrorResponse(writer, http.StatusNotFound, err.Error())
+			return
 		}
-		rest.PostProcessResponseBare(writer, cliCtx, strings.ToUpper(hex.EncodeToString(ibcMsg.UniqueID)))
+		rest.PostProcessResponseBare(writer, cliCtx, string(ibcMsg.UniqueID))
 	}
 }
 
@@ -59,21 +59,22 @@ func QueryTxByUniqueIDRequestHandlerFn(cliCtx context.Context) http.HandlerFunc 
 		if !ok {
 			return
 		}
-		uniqueBz , err := hex.DecodeString(uniqueidStr)
-		if err != nil {
-			rest.WriteErrorResponse(writer, http.StatusNotFound, err.Error())
-		}
+		uniqueBz := []byte(uniqueidStr)
+
 		res, _, err := cliCtx.Query("/store/" + types.StoreKey + "/types", uniqueBz)
 		if len(res) < 1 {
 			rest.WriteErrorResponse(writer, http.StatusNotFound, "no ibc tx found with uniqueid " + uniqueidStr)
+			return
 		}
 		var ibcMsg types.IBCMsg
 		err = cliCtx.Cdc.UnmarshalBinaryLengthPrefixed(res, &ibcMsg)
 		if err != nil {
 			rest.WriteErrorResponse(writer, http.StatusNotFound, err.Error())
+			return
 		}
 		if !bytes.Equal(uniqueBz, ibcMsg.UniqueID) {
 			rest.WriteErrorResponse(writer, http.StatusNotFound, fmt.Sprintf("different uniqueid get %s, expected %s", hex.EncodeToString(ibcMsg.UniqueID), uniqueidStr))
+			return
 		}
 		rest.PostProcessResponseBare(writer, cliCtx, ibcMsg.State)
 	}

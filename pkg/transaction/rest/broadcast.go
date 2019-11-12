@@ -11,7 +11,6 @@ func BraodcastTxRequest(cliCtx context.Context) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		data := request.FormValue("data")
 		txByte, err := hex.DecodeString(data)
-		//fmt.Println(txByte)
 		if err != nil {
 			rest.WriteErrorResponse(writer, http.StatusNotFound, "invalid data")
 			return

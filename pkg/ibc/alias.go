@@ -16,6 +16,7 @@ var (
 	NewKeeper = keeper.NewIBCKeeper
 
 	NewIBCTransfer = types.NewIBCTransferMsg
+	NewApplyIBCTx = types.NewApplyIBCTx
 
 	RegisterCodec = types.RegisterCodec
 
