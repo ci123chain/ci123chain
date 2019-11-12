@@ -46,14 +46,10 @@ func handleMsgIBCTransfer(ctx sdk.Context, k keeper.IBCKeeper, tx types.IBCTrans
 }
 
 func makeIBCMsg(uuidBz []byte, tx types.IBCTransfer) (types.IBCMsg, error) {
-	txbz, err := types.IbcCdc.MarshalJSON(tx)
-	if err != nil {
-		return types.IBCMsg{}, err
-	}
 	ibcMsg := types.IBCMsg{
-		UniqueID: 	uuidBz,
-		Raw: 		txbz,
-		State: 		types.StateReady,
+		UniqueID: 		uuidBz,
+		IBCTransfer: 	tx,
+		State: 			types.StateReady,
 	}
 	return ibcMsg, nil
 }

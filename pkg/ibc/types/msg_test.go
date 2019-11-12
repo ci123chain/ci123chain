@@ -31,16 +31,14 @@ func TestUnmarshalSignedTx(t *testing.T)  {
 	err := json.Unmarshal(b, &obj)
 	assert.NoError(t, err)
 	jsonStr := string(obj.IBCMsgBytes)
+	fmt.Println(jsonStr)
 
 	var ibcMsg IBCMsg
-	err = json.Unmarshal([]byte(jsonStr), &ibcMsg)
+	err = json.Unmarshal(obj.IBCMsgBytes, &ibcMsg)
 	assert.NoError(t, err)
 	fmt.Println(ibcMsg.UniqueID)
 
-
-
 	sid := cryptosuit.NewFabSignIdentity()
-
 	pubkey, _ := cryptoutil.DecodePub([]byte(testCert))
 	pubketBz := cryptoutil.MarshalPubkey(pubkey)
 	valid, err := sid.Verifier(obj.GetSignBytes(), obj.Signature, pubketBz, nil)

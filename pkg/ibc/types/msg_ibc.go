@@ -34,11 +34,12 @@ type IBCMsg struct {
 	UniqueID []byte		`json:"unique_id"`
 
 	ObserverID []byte	`json:"observer_id"`
-	
+
 	ApplyTime 			time.Time
 
-	Raw 	[]byte		`json:"raw"`
 	State 	 string 	`json:"state"`
+
+	IBCTransfer
 }
 
 
