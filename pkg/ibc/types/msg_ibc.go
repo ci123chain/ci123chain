@@ -34,7 +34,7 @@ type IBCMsg struct {
 	UniqueID []byte		`json:"unique_id"`
 
 	ObserverID []byte	`json:"observer_id"`
-
+	
 	ApplyTime 			time.Time
 
 	Raw 	[]byte		`json:"raw"`
@@ -43,34 +43,35 @@ type IBCMsg struct {
 
 
 
-func (aa IBCMsg) MarshalJSON() ([]byte, error) {
+func (aa *IBCMsg) MarshalJSON() ([]byte, error) {
+	type Alias IBCMsg
 	return json.Marshal(&struct {
-		Bank		sdk.AccAddress 	`json:"bank"`
 		UniqueID 	string			`json:"unique_id"`
 		ObserverID 	string		`json:"observer_id"`
-		Applytime  	time.Time	`json:"applytime"`
-		State 		string		`json:"state"`
+		*Alias
 	}{
-		Bank: aa.BankAddress,
 		UniqueID: string(aa.UniqueID),
 		ObserverID: string(aa.ObserverID),
-		Applytime: aa.ApplyTime,
-		State: aa.State,
+		Alias: (*Alias)(aa),
 	})
 }
 
-//func (aa *IBCMsg) UnmarshalJSON(data []byte) error {
-//	var s string
-//	err := json.Unmarshal(data, &s)
-//	if err != nil {
-//		return err
-//	}
-//	addr2 := common.HexToAddress(s)
-//	*aa = IBCMsg{
-//		addr2,
-//	}
-//	return nil
-//}
+func (aa *IBCMsg) UnmarshalJSON(data []byte) error {
+	type Alias IBCMsg
+	aux := &struct {
+		UniqueID 	string			`json:"unique_id"`
+		ObserverID 	string		`json:"observer_id"`
+		*Alias
+	}{
+		Alias: (*Alias)(aa),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	aa.UniqueID = []byte(aux.UniqueID)
+	aa.ObserverID = []byte(aux.ObserverID)
+	return nil
+}
 
 
 func (msg IBCMsg) CanProcess() bool {

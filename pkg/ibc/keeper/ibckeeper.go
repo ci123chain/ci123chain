@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
@@ -60,7 +61,7 @@ func (k IBCKeeper) ApplyIBCMsg(ctx sdk.Context, uniqueID []byte, observerID []by
 	ibcMsg.ApplyTime = time.Now()
 	ibcMsg.ObserverID = observerID
 
-	ibcMsgJson, err := types.IbcCdc.MarshalJSON(*ibcMsg)
+	ibcMsgJson, err := json.Marshal(ibcMsg)
 	if err != nil {
 		return nil, err
 	}

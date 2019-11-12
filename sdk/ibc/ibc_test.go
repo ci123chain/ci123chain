@@ -14,6 +14,7 @@ MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgp4qKKB0WCEfx7XiB
 J3+tMGTG67f+TdCfDxWYMpQYxLlE8VkbEzKWDwCYvDZRMKCQfv2ErNvb
 -----END PRIVATE KEY-----`
 
+// 生成 跨链 交易
 func TestIBCMsg(t *testing.T)  {
 	// 将pem 格式私钥转化为 十六机制 字符串
 	priKey, err := cryptoutil.DecodePriv([]byte(testPrivKey))
