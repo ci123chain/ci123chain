@@ -164,7 +164,16 @@ func (k IBCKeeper) ReceiveReceipt(ctx sdk.Context, receipt types.BankReceipt) (e
 	}
 	// 更新跨链交易状态
 	ibcMsg.State = types.StateDone
-	err := k.SetIBCMsg(ctx, *ibcMsg)
+
+	err := k.AccountKeeper.Transfer(ctx, ibcMsg.FromAddress, ibcMsg.BankAddress, ibcMsg.Amount)
+	if err != nil {
+		return err
+	}
+
+	err2 := k.SetIBCMsg(ctx, *ibcMsg)
+	if err2 != nil {
+		return err2
+	}
 	return err
 }
 

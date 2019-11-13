@@ -65,13 +65,6 @@ func handleMsgIBCBankSendTx(ctx sdk.Context, k keeper.IBCKeeper, tx types.IBCMsg
 	//if ibc != nil {
 	//	return sdk.ErrUnknownRequest("ibcTx already exist with uniqueID " + string(ibc.UniqueID)).Result()
 	//}
-
-	// todo bank action
-	err = k.BankSend(ctx, *ibcMsg)
-	if err != nil {
-		return sdk.ErrInsufficientCoins(err.Error()).Result()
-	}
-
 	receipt, err := k.MakeBankReceipt(ctx, *ibcMsg)
 	if err != nil {
 		return sdk.ErrUnknownRequest("Get bank receipt error").TraceSDK(err.Error()).Result()
@@ -83,6 +76,13 @@ func handleMsgIBCBankSendTx(ctx sdk.Context, k keeper.IBCKeeper, tx types.IBCMsg
 		return sdk.ErrUnknownRequest("Save ibcMsg error").TraceSDK(err.Error()).Result()
 	}
 	receiptBz, _ := json.Marshal(receipt)
+
+	// todo bank action
+	err = k.BankSend(ctx, *ibcMsg)
+	if err != nil {
+		return sdk.ErrInsufficientCoins(err.Error()).Result()
+	}
+
 	return sdk.Result{Data: receiptBz}
 }
 

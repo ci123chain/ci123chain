@@ -81,6 +81,8 @@ func TestReceiptMsg(t *testing.T)  {
 	httpPost(hex.EncodeToString(signdata))
 }
 
+const FromAddr  = "0x204bCC42559Faf6DFE1485208F7951aaD800B313"
+const ToAddr  = "0xD1a14962627fAc768Fe885Eeb9FF072706B54c19"
 func TestAll(t *testing.T)  {
 	// 将pem 格式私钥转化为 十六机制 字符串
 	priKey, err := cryptoutil.DecodePriv([]byte(testPrivKey))
@@ -88,15 +90,15 @@ func TestAll(t *testing.T)  {
 	privByte := cryptoutil.MarshalPrivateKey(priKey)
 
 	fmt.Println("---发送跨链消息")
-	signdata, err := SignIBCTransferMsg("0x204bCC42559Faf6DFE1485208F7951aaD800B313",
-		"0xD1a14962627fAc768Fe885Eeb9FF072706B54c19", 10, 1, privByte)
+	signdata, err := SignIBCTransferMsg(FromAddr,
+		ToAddr, 10, 1, privByte)
 	registRet := httpPost(hex.EncodeToString(signdata))
 	fmt.Println("发送跨链消息完成：UniqueID = " + registRet.Data)
 	fmt.Println()
 
 	fmt.Println("---申请处理该跨链消息")
 	uid := []byte(registRet.Data)
-	signdata, err = SignApplyIBCMsg("0x204bCC42559Faf6DFE1485208F7951aaD800B313", uid, []byte(ObserverID), 1, privByte)
+	signdata, err = SignApplyIBCMsg(FromAddr, uid, []byte(ObserverID), 1, privByte)
 	applyRet := httpPost(hex.EncodeToString(signdata))
 	assert.True(t, len(applyRet.RawLog) < 1)
 	fmt.Println("申请处理该跨链消息结束")
@@ -104,7 +106,7 @@ func TestAll(t *testing.T)  {
 
 	fmt.Println("---第二个申请处理该跨链消息")
 	ObserverID2 := "12313213213213124321"
-	signdata, err = SignApplyIBCMsg("0x204bCC42559Faf6DFE1485208F7951aaD800B313", uid, []byte(ObserverID2), 1, privByte)
+	signdata, err = SignApplyIBCMsg(FromAddr, uid, []byte(ObserverID2), 1, privByte)
 	applyRetErr := httpPost(hex.EncodeToString(signdata))
 	assert.True(t, len(applyRetErr.RawLog) > 0)
 	fmt.Println("申请处理该跨链消息结束失败")
@@ -113,7 +115,7 @@ func TestAll(t *testing.T)  {
 	// bank转账，该交易参数应该是observer 从 fabric 获得，此处是模拟
 	fmt.Println("---向对方转账")
 	pkg := applyRet.Data
-	signdata, err = SignIBCBankSendMsg("0x204bCC42559Faf6DFE1485208F7951aaD800B313", []byte(pkg), 1, privByte)
+	signdata, err = SignIBCBankSendMsg(FromAddr, []byte(pkg), 1, privByte)
 	receiptRet := httpPost(hex.EncodeToString(signdata))
 	assert.True(t, len(receiptRet.RawLog) < 1)
 	fmt.Println("向对方转账成功")
@@ -122,7 +124,7 @@ func TestAll(t *testing.T)  {
 	//发送回执
 	fmt.Println("---发送回执")
 	receivepkg := receiptRet.Data
-	signdata, err = SignIBCReceiptMsg("0x204bCC42559Faf6DFE1485208F7951aaD800B313", []byte(receivepkg), 1, privByte)
+	signdata, err = SignIBCReceiptMsg(FromAddr, []byte(receivepkg), 1, privByte)
 	ret := httpPost(hex.EncodeToString(signdata))
 	assert.True(t, len(ret.RawLog) < 1)
 	fmt.Println("发送回执成功")
