@@ -59,7 +59,8 @@ func handleMsgIBCBankSendTx(ctx sdk.Context, k keeper.IBCKeeper, tx types.IBCMsg
 	if err != nil {
 		return sdk.ErrUnknownRequest("Bank pkg invalid").TraceSDK(err.Error()).Result()
 	}
-	// 去重
+
+	// todo warning
 	//ibc := k.GetIBCByUniqueID(ctx, ibcMsg.UniqueID)
 	//if ibc != nil {
 	//	return sdk.ErrUnknownRequest("ibcTx already exist with uniqueID " + string(ibc.UniqueID)).Result()
