@@ -25,5 +25,4 @@ var (
 	NewQuerier = keeper.NewQuerier
 )
 
-type IBCMsg types.IBCMsg 
 

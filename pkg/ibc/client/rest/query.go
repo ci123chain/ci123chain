@@ -37,7 +37,7 @@ func QueryTxByStateRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			rest.WriteErrorResponse(writer, http.StatusNotFound, "no ready ibc tx found " )
 			return
 		}
-		var ibcMsg types.IBCMsg
+		var ibcMsg types.IBCInfo
 		err = cliCtx.Cdc.UnmarshalBinaryLengthPrefixed(res, &ibcMsg)
 		if err != nil {
 			rest.WriteErrorResponse(writer, http.StatusNotFound, err.Error())
@@ -66,7 +66,7 @@ func QueryTxByUniqueIDRequestHandlerFn(cliCtx context.Context) http.HandlerFunc 
 			rest.WriteErrorResponse(writer, http.StatusNotFound, "no ibc tx found with uniqueid " + uniqueidStr)
 			return
 		}
-		var ibcMsg types.IBCMsg
+		var ibcMsg types.IBCInfo
 		err = cliCtx.Cdc.UnmarshalBinaryLengthPrefixed(res, &ibcMsg)
 		if err != nil {
 			rest.WriteErrorResponse(writer, http.StatusNotFound, err.Error())

@@ -27,7 +27,8 @@ func ValidateState(state string) error {
 	return errors.New("unknown state type")
 }
 
-type IBCMsg struct {
+// 链上保存的跨链交易信息
+type IBCInfo struct {
 	// 银行地址
 	BankAddress sdk.AccAddress	`json:"bank_address"`
 	// 跨链交易ID
@@ -42,8 +43,8 @@ type IBCMsg struct {
 
 
 
-func (aa *IBCMsg) MarshalJSON() ([]byte, error) {
-	type Alias IBCMsg
+func (aa *IBCInfo) MarshalJSON() ([]byte, error) {
+	type Alias IBCInfo
 	return json.Marshal(&struct {
 		UniqueID 	string		`json:"unique_id"`
 		ObserverID 	string		`json:"observer_id"`
@@ -55,8 +56,8 @@ func (aa *IBCMsg) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (aa *IBCMsg) UnmarshalJSON(data []byte) error {
-	type Alias IBCMsg
+func (aa *IBCInfo) UnmarshalJSON(data []byte) error {
+	type Alias IBCInfo
 	aux := &struct {
 		UniqueID 	string		`json:"unique_id"`
 		ObserverID 	string		`json:"observer_id"`
@@ -73,7 +74,7 @@ func (aa *IBCMsg) UnmarshalJSON(data []byte) error {
 }
 
 
-func (msg IBCMsg) CanProcess() bool {
+func (msg IBCInfo) CanProcess() bool {
 	if msg.State == StateReady {
 		return true
 	}
@@ -85,12 +86,13 @@ func (msg IBCMsg) CanProcess() bool {
 	return false
 }
 
-type SignedIBCMsg struct {
+// 调用 Apply 返回的签名信息
+type ApplyReceipt struct {
 	Signature 	[]byte 	`json:"signature"`
 	IBCMsgBytes []byte	`json:"ibc_msg_bytes"`
 }
 
-func (sim SignedIBCMsg) Sign(priv []byte) (SignedIBCMsg, error) {
+func (sim ApplyReceipt) Sign(priv []byte) (ApplyReceipt, error) {
 	signBytes := sim.GetSignBytes()
 
 	sid := cryptosuit.NewFabSignIdentity()
@@ -105,7 +107,7 @@ func (sim SignedIBCMsg) Sign(priv []byte) (SignedIBCMsg, error) {
 	return sim, nil
 }
 
-func (msg *SignedIBCMsg)Bytes() []byte {
+func (msg *ApplyReceipt)Bytes() []byte {
 	bytes, err := IbcCdc.MarshalJSON(msg)
 	if err != nil {
 		panic(err)
@@ -114,7 +116,7 @@ func (msg *SignedIBCMsg)Bytes() []byte {
 }
 
 
-func (sim *SignedIBCMsg) GetSignBytes() []byte {
+func (sim *ApplyReceipt) GetSignBytes() []byte {
 	tsim := *sim
 	tsim.Signature = nil
 	signBytes, err := IbcCdc.MarshalJSON(tsim)

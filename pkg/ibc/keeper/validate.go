@@ -9,8 +9,9 @@ import (
 	"github.com/tanhuiya/fabric-crypto/cryptoutil"
 )
 
-func ValidateRawIBCMessage(tx types.IBCMsgBankSend) (*types.IBCMsg, error) {
-	var signObj types.SignedIBCMsg
+// 验证 apply 消息
+func ValidateRawIBCMessage(tx types.IBCMsgBankSend) (*types.IBCInfo, error) {
+	var signObj types.ApplyReceipt
 	// 反序列化
 	err := json.Unmarshal(tx.RawMessage, &signObj)
 	if err != nil {
@@ -27,7 +28,7 @@ func ValidateRawIBCMessage(tx types.IBCMsgBankSend) (*types.IBCMsg, error) {
 		return nil, errors.New("pkg invalid signature; " + err.Error())
 	}
 
-	var ibcMsg types.IBCMsg
+	var ibcMsg types.IBCInfo
 	err = json.Unmarshal(signObj.IBCMsgBytes, &ibcMsg)
 	if err != nil {
 		return nil, err
@@ -35,6 +36,8 @@ func ValidateRawIBCMessage(tx types.IBCMsgBankSend) (*types.IBCMsg, error) {
 	return &ibcMsg, nil
 }
 
+
+// 验证 回执 消息
 func ValidateRawReceiptMessage(tx types.IBCReceiveReceiptMsg) (*types.BankReceipt, error) {
 	var receiveObj types.BankReceipt
 	// 反序列化

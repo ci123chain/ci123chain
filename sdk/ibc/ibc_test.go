@@ -110,7 +110,7 @@ func TestAll(t *testing.T)  {
 	fmt.Println("申请处理该跨链消息结束失败")
 	fmt.Println()
 
-	// bank转账，该交易参数应该是fabric 获得，此处是模拟
+	// bank转账，该交易参数应该是observer 从 fabric 获得，此处是模拟
 	fmt.Println("---向对方转账")
 	pkg := applyRet.Data
 	signdata, err = SignIBCBankSendMsg("0x204bCC42559Faf6DFE1485208F7951aaD800B313", []byte(pkg), 1, privByte)

@@ -33,11 +33,11 @@ func NewIBCKeeper(key sdk.StoreKey, AccountKeeper account.AccountKeeper) IBCKeep
 }
 
 // 获取一个 ibcmsg
-func (k IBCKeeper) GetFirstReadyIBCMsg(ctx sdk.Context) *types.IBCMsg {
+func (k IBCKeeper) GetFirstReadyIBCMsg(ctx sdk.Context) *types.IBCInfo {
 	store := k.getStore(ctx)
 	itr := sdk.KVStorePrefixIterator(store, []byte(types.StateKey + types.StateReady))
 	defer itr.Close()
-	var ibc_msg *types.IBCMsg
+	var ibc_msg *types.IBCInfo
 	for {
 		if !itr.Valid() {
 			break
@@ -50,7 +50,7 @@ func (k IBCKeeper) GetFirstReadyIBCMsg(ctx sdk.Context) *types.IBCMsg {
 }
 
 // 申请处理某笔交易
-func (k IBCKeeper) ApplyIBCMsg(ctx sdk.Context, uniqueID []byte, observerID []byte) (*types.SignedIBCMsg, error) {
+func (k IBCKeeper) ApplyIBCMsg(ctx sdk.Context, uniqueID []byte, observerID []byte) (*types.ApplyReceipt, error) {
 	ibcMsg := k.GetIBCByUniqueID(ctx, uniqueID)
 	if ibcMsg == nil {
 		return nil, errors.New(fmt.Sprintf("ibc tx not found with uniqueID = %s", hex.EncodeToString(uniqueID)))
@@ -75,7 +75,7 @@ func (k IBCKeeper) ApplyIBCMsg(ctx sdk.Context, uniqueID []byte, observerID []by
 	if err != nil {
 		return nil, err
 	}
-	signedIbcMsg := types.SignedIBCMsg{
+	signedIbcMsg := types.ApplyReceipt{
 		IBCMsgBytes:  ibcMsgJson,
 	}
 	priv, err := getPrivateKey()
@@ -96,14 +96,14 @@ func (k IBCKeeper) ApplyIBCMsg(ctx sdk.Context, uniqueID []byte, observerID []by
 }
 
 // 根据 uniqueID 获取 消息
-func (k IBCKeeper) GetIBCByUniqueID(ctx sdk.Context,uniqueID []byte) *types.IBCMsg {
+func (k IBCKeeper) GetIBCByUniqueID(ctx sdk.Context,uniqueID []byte) *types.IBCInfo {
 	store := k.getStore(ctx)
 	bz := store.Get(uniqueID)
 	if len(bz) < 1 {
 		return nil
 	}
 
-	var ibcMsg types.IBCMsg
+	var ibcMsg types.IBCInfo
 	err := types.IbcCdc.UnmarshalBinaryLengthPrefixed(bz, &ibcMsg)
 	if err != nil {
 		panic(err)
@@ -112,7 +112,7 @@ func (k IBCKeeper) GetIBCByUniqueID(ctx sdk.Context,uniqueID []byte) *types.IBCM
 }
 
 // 保存 ibcmsg
-func (k IBCKeeper) SetIBCMsg(ctx sdk.Context,ibcMsg types.IBCMsg) error {
+func (k IBCKeeper) SetIBCMsg(ctx sdk.Context,ibcMsg types.IBCInfo) error {
 	bz, err := types.IbcCdc.MarshalBinaryLengthPrefixed(ibcMsg)
 	if err != nil {
 		return err
@@ -128,7 +128,7 @@ func (k IBCKeeper) SetIBCMsg(ctx sdk.Context,ibcMsg types.IBCMsg) error {
 }
 
 // 银行 转账到个人账户
-func (k IBCKeeper) BankSend(ctx sdk.Context, ibcMsg types.IBCMsg) error {
+func (k IBCKeeper) BankSend(ctx sdk.Context, ibcMsg types.IBCInfo) error {
 	err := k.AccountKeeper.Transfer(ctx, ibcMsg.BankAddress, ibcMsg.ToAddress, ibcMsg.Amount)
 	if err != nil {
 		return err
@@ -137,7 +137,7 @@ func (k IBCKeeper) BankSend(ctx sdk.Context, ibcMsg types.IBCMsg) error {
 }
 
 // 生成转账回执
-func (k IBCKeeper) MakeBankReceipt(ctx sdk.Context, ibcMsg types.IBCMsg) (*types.BankReceipt, error) {
+func (k IBCKeeper) MakeBankReceipt(ctx sdk.Context, ibcMsg types.IBCInfo) (*types.BankReceipt, error) {
 	bReceipt := types.NewBankReceipt(string(ibcMsg.UniqueID), string(ibcMsg.ObserverID))
 
 	priv, err := getPrivateKey()
@@ -151,6 +151,7 @@ func (k IBCKeeper) MakeBankReceipt(ctx sdk.Context, ibcMsg types.IBCMsg) (*types
 	return bReceipt, nil
 }
 
+// 处理 回执
 func (k IBCKeeper) ReceiveReceipt(ctx sdk.Context, receipt types.BankReceipt) (error) {
 	uniqueID := receipt.UniqueID
 	// todo uniqueID type

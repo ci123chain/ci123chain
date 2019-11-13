@@ -16,7 +16,7 @@ func NewHandler(k keeper.IBCKeeper) sdk.Handler {
 		case *types.ApplyIBCTx:
 			return handleMsgApplyIBCTx(ctx, k, *tx)
 		case *types.IBCMsgBankSend:
-			return handleMsgIBCSendTx(ctx, k, *tx)
+			return handleMsgIBCBankSendTx(ctx, k, *tx)
 		case *types.IBCReceiveReceiptMsg:
 			return handleMsgReceiveReceipt(ctx, k, *tx)
 		default:
@@ -26,8 +26,35 @@ func NewHandler(k keeper.IBCKeeper) sdk.Handler {
 	}
 }
 
-// 跨链交易第二步 (fabric -> ci)
-func handleMsgIBCSendTx(ctx sdk.Context, k keeper.IBCKeeper, tx types.IBCMsgBankSend) sdk.Result {
+
+
+// 新增跨链消息
+func handleMsgIBCTransfer(ctx sdk.Context, k keeper.IBCKeeper, tx types.IBCTransfer) sdk.Result {
+	uuidStr := keeper.GenerateUniqueID(tx.Bytes())
+
+	retbz := []byte(uuidStr)
+	ibcMsg, err := makeIBCMsg([]byte(uuidStr), tx)
+	if err != nil {
+		return sdk.ErrInternal("make ibc msg failed").TraceSDK(err.Error()).Result()
+	}
+	k.SetIBCMsg(ctx, ibcMsg)
+	return sdk.Result{Data: retbz}
+}
+
+// 第一步: 申请处理跨链交易
+func handleMsgApplyIBCTx(ctx sdk.Context, k keeper.IBCKeeper, tx types.ApplyIBCTx) sdk.Result {
+	signedIBCMsg, err := k.ApplyIBCMsg(ctx, tx.UniqueID, tx.ObserverID)
+	if err != nil {
+		return sdk.ErrInternal(err.Error()).Result()
+	}
+	signedIBCMsgBz, _ := json.Marshal(signedIBCMsg)
+
+	return sdk.Result{Data: signedIBCMsgBz}
+}
+
+
+// 第二步: 跨链交易 bank 转账 (fabric -> ci)
+func handleMsgIBCBankSendTx(ctx sdk.Context, k keeper.IBCKeeper, tx types.IBCMsgBankSend) sdk.Result {
 	ibcMsg, err := keeper.ValidateRawIBCMessage(tx)
 	if err != nil {
 		return sdk.ErrUnknownRequest("Bank pkg invalid").TraceSDK(err.Error()).Result()
@@ -59,30 +86,6 @@ func handleMsgIBCSendTx(ctx sdk.Context, k keeper.IBCKeeper, tx types.IBCMsgBank
 }
 
 
-func handleMsgApplyIBCTx(ctx sdk.Context, k keeper.IBCKeeper, tx types.ApplyIBCTx) sdk.Result {
-	signedIBCMsg, err := k.ApplyIBCMsg(ctx, tx.UniqueID, tx.ObserverID)
-	if err != nil {
-		return sdk.ErrInternal(err.Error()).Result()
-	}
-	signedIBCMsgBz, _ := json.Marshal(signedIBCMsg)
-
-	return sdk.Result{Data: signedIBCMsgBz}
-}
-
-
-// 跨链消息
-func handleMsgIBCTransfer(ctx sdk.Context, k keeper.IBCKeeper, tx types.IBCTransfer) sdk.Result {
-	uuidStr := keeper.GenerateUniqueID(tx.Bytes())
-
-	retbz := []byte(uuidStr)
-	ibcMsg, err := makeIBCMsg([]byte(uuidStr), tx)
-	if err != nil {
-		return sdk.ErrInternal("make ibc msg failed").TraceSDK(err.Error()).Result()
-	}
-	k.SetIBCMsg(ctx, ibcMsg)
-	return sdk.Result{Data: retbz}
-}
-
 // 接收到回执消息
 func handleMsgReceiveReceipt(ctx sdk.Context, k keeper.IBCKeeper, tx types.IBCReceiveReceiptMsg) sdk.Result  {
 	receiveObj, err := keeper.ValidateRawReceiptMessage(tx)
@@ -96,8 +99,9 @@ func handleMsgReceiveReceipt(ctx sdk.Context, k keeper.IBCKeeper, tx types.IBCRe
 	return sdk.Result{Data: []byte(receiveObj.UniqueID)}
 }
 
-func makeIBCMsg(uuidBz []byte, tx types.IBCTransfer) (types.IBCMsg, error) {
-	ibcMsg := types.IBCMsg{
+// 生成 IbcInfo
+func makeIBCMsg(uuidBz []byte, tx types.IBCTransfer) (types.IBCInfo, error) {
+	ibcMsg := types.IBCInfo{
 		UniqueID: 		uuidBz,
 		FromAddress: 	tx.From,
 		ToAddress: 		tx.ToAddress,
