@@ -17,11 +17,11 @@ var (
 
 	NewIBCTransfer = types.NewIBCTransferMsg
 	NewApplyIBCTx = types.NewApplyIBCTx
+	NewIBCMsgBankSendMsg = types.NewIBCMsgBankSendMsg
+	NewIBCReceiveReceiptMsg = types.NewIBCReceiveReceiptMsg
 
 	RegisterCodec = types.RegisterCodec
-
 	RegisterRoutes = rest.RegisterTxRoutes
-
 	NewQuerier = keeper.NewQuerier
 )
 

@@ -1,33 +1,34 @@
 package keeper
 
 import (
+	"bytes"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
+	"github.com/tanhuiya/ci123chain/pkg/account"
 	"github.com/tanhuiya/ci123chain/pkg/ibc/types"
-	"github.com/tanhuiya/ci123chain/pkg/supply"
-	"github.com/tanhuiya/fabric-crypto/cryptoutil"
 	"time"
 )
 
 const Priv = `-----BEGIN PRIVATE KEY-----
-MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgp4qKKB0WCEfx7XiB
-5Ul+GpjM1P5rqc6RhjD5OkTgl5OhRANCAATyFT0voXX7cA4PPtNstWleaTpwjvbS
-J3+tMGTG67f+TdCfDxWYMpQYxLlE8VkbEzKWDwCYvDZRMKCQfv2ErNvb
+MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgO+x/1pjgqImlzWe+
+fQj0E0ml/ajNet3lqenPtyvEwB+hRANCAASbLWrcFumBm7tzZKpCiPl/gzmVm1GI
+2vwHa6qRkVdEjMpLIL7weErc1C+/ww81NBRgDGyNxiHq6ndBUNHxv9M3
 -----END PRIVATE KEY-----`
+// address: 0x505A74675dc9C71eF3CB5DF309256952917E801e
 
 
 type IBCKeeper struct {
-	SupplyKeeper supply.Keeper
+	AccountKeeper account.AccountKeeper
 	StoreKey 	 sdk.StoreKey
 }
 
-func NewIBCKeeper(key sdk.StoreKey, supplyKeeper supply.Keeper) IBCKeeper {
+func NewIBCKeeper(key sdk.StoreKey, AccountKeeper account.AccountKeeper) IBCKeeper {
 	return IBCKeeper{
 		StoreKey:	key,
-		SupplyKeeper:supplyKeeper,
+		AccountKeeper:AccountKeeper,
 	}
 }
 
@@ -60,13 +61,20 @@ func (k IBCKeeper) ApplyIBCMsg(ctx sdk.Context, uniqueID []byte, observerID []by
 	// 修改处理人状态，以及时间
 	ibcMsg.ApplyTime = time.Now()
 	ibcMsg.ObserverID = observerID
+	bankAddr, err := getBankAddress()
+	if err != nil {
+		return nil, err
+	}
+	ibcMsg.BankAddress = bankAddr
+
+	// 修改状态
+	ibcMsg.State = types.StateProcessing
+
 
 	ibcMsgJson, err := json.Marshal(ibcMsg)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(string(ibcMsgJson))
-
 	signedIbcMsg := types.SignedIBCMsg{
 		IBCMsgBytes:  ibcMsgJson,
 	}
@@ -75,7 +83,16 @@ func (k IBCKeeper) ApplyIBCMsg(ctx sdk.Context, uniqueID []byte, observerID []by
 		return nil, err
 	}
 	signedIbcMsg, err = signedIbcMsg.Sign(priv)
-	return &signedIbcMsg, err
+	if err != nil {
+		return nil, err
+	}
+
+	// 保存状态
+	err = k.SetIBCMsg(ctx, *ibcMsg)
+	if err != nil {
+		return nil, err
+	}
+	return &signedIbcMsg, nil
 }
 
 // 根据 uniqueID 获取 消息
@@ -110,15 +127,46 @@ func (k IBCKeeper) SetIBCMsg(ctx sdk.Context,ibcMsg types.IBCMsg) error {
 	return nil
 }
 
-func (k IBCKeeper) getStore(ctx sdk.Context) sdk.KVStore {
-	return ctx.KVStore(k.StoreKey)
+// 银行 转账到个人账户
+func (k IBCKeeper) BankSend(ctx sdk.Context, ibcMsg types.IBCMsg) error {
+	err := k.AccountKeeper.Transfer(ctx, ibcMsg.BankAddress, ibcMsg.ToAddress, ibcMsg.Amount)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
-func getPrivateKey() ([]byte, error) {
-	priKey, err := cryptoutil.DecodePriv([]byte(Priv))
+// 生成转账回执
+func (k IBCKeeper) MakeBankReceipt(ctx sdk.Context, ibcMsg types.IBCMsg) (*types.BankReceipt, error) {
+	bReceipt := types.NewBankReceipt(string(ibcMsg.UniqueID), string(ibcMsg.ObserverID))
+
+	priv, err := getPrivateKey()
 	if err != nil {
 		return nil, err
 	}
-	priBz := cryptoutil.MarshalPrivateKey(priKey)
-	return priBz, nil
+	bReceipt, err = bReceipt.Sign(priv)
+	if err != nil {
+		return nil, err
+	}
+	return bReceipt, nil
+}
+
+func (k IBCKeeper) ReceiveReceipt(ctx sdk.Context, receipt types.BankReceipt) (error) {
+	uniqueID := receipt.UniqueID
+	// todo uniqueID type
+	ibcMsg := k.GetIBCByUniqueID(ctx, []byte(uniqueID))
+	if ibcMsg == nil {
+		return errors.New("IbcTx not found with uniqueID " + receipt.UniqueID)
+	}
+	if !bytes.Equal(ibcMsg.ObserverID, []byte(receipt.ObserverID)) {
+		return errors.New("Got different observerID, expected same")
+	}
+	// 更新跨链交易状态
+	ibcMsg.State = types.StateDone
+	err := k.SetIBCMsg(ctx, *ibcMsg)
+	return err
+}
+
+func (k IBCKeeper) getStore(ctx sdk.Context) sdk.KVStore {
+	return ctx.KVStore(k.StoreKey)
 }

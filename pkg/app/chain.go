@@ -109,7 +109,7 @@ func NewChain(logger log.Logger, tmdb tmdb.DB, traceStore io.Writer) *Chain {
 	authSubspace := paramsKeeper.Subspace(auth.DefaultCodespace)
 	c.authKeeper = auth.NewAuthKeeper(cdc, AuthStoreKey, authSubspace)
 
-	ibcKeeper := ibc.NewKeeper(IBCStoreKey, supplyKeeper)
+	ibcKeeper := ibc.NewKeeper(IBCStoreKey, accKeeper)
 
 	// 设置module
 

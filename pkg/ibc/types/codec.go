@@ -13,6 +13,8 @@ func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterConcrete(&IBCMsg{}, "ci123chain/IBCMsg", nil)
 	cdc.RegisterConcrete(&ApplyIBCTx{}, "ci123chain/ApplyIBCTx", nil)
 	cdc.RegisterConcrete(&SignedIBCMsg{}, "ci123chain/SignedIBCMsg", nil)
+	cdc.RegisterConcrete(&IBCMsgBankSend{}, "ci123chain/IBCMsgBankSend", nil)
+	cdc.RegisterConcrete(&IBCReceiveReceiptMsg{}, "ci123chain/IBCReceiveReceiptMsg", nil)
 }
 
 func init()  {

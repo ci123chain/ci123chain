@@ -123,3 +123,47 @@ func (sim *SignedIBCMsg) GetSignBytes() []byte {
 	}
 	return signBytes
 }
+
+
+// ci 给 fabric 的转账回执
+type BankReceipt struct {
+	UniqueID 	string	`json:"unique_id"`
+	ObserverID 	string	`json:"observer_id"`
+	Signature 	[]byte	`json:"signature"`
+}
+
+func (br *BankReceipt) GetSignBytes() []byte {
+	tsim := *br
+	tsim.Signature = nil
+	signBytes := tsim.Bytes()
+	return signBytes
+}
+
+func (br *BankReceipt) Bytes() []byte {
+	bytes, err := IbcCdc.MarshalJSON(br)
+	if err != nil {
+		panic(err)
+	}
+	return bytes
+}
+
+func NewBankReceipt(uniqueID, observerID string) *BankReceipt {
+	return &BankReceipt{
+		UniqueID: uniqueID,
+		ObserverID: observerID,
+	}
+}
+
+func (br *BankReceipt)Sign(priv []byte) (*BankReceipt, error) {
+	signBytes := br.GetSignBytes()
+	sid := cryptosuit.NewFabSignIdentity()
+	signature, err := sid.Sign(signBytes, priv)
+	if err != nil {
+		return br, err
+	}
+	if len(signature) < 1 {
+		return br, errors.New("signature error")
+	}
+	br.Signature = signature
+	return br, nil
+}
