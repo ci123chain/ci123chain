@@ -501,7 +501,7 @@ func TestConcurrentCheckDeliver(t *testing.T) {
 	// TODO
 }
 
-// Simulate a transaction that uses gas to compute the gas.
+// Simulate a transfer that uses gas to compute the gas.
 // Simulate() and Query("/app/simulate", txBytes) should give
 // the same results.
 func TestSimulateTx(t *testing.T) {

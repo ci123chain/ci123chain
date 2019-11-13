@@ -5,6 +5,7 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/cryptosuit"
 	"github.com/tanhuiya/ci123chain/pkg/ibc"
 	"github.com/tanhuiya/ci123chain/pkg/transaction"
+	"github.com/tanhuiya/ci123chain/pkg/transfer"
 )
 
 // 生成 MortgageDone 完成交易
@@ -30,7 +31,7 @@ func buildIBCBankSendMsg (from string, raw []byte, gas uint64) (transaction.Tran
 		return nil, err
 	}
 
-	nonce, err := transaction.GetNonceByAddress(fromAddr)
+	nonce, err := transfer.GetNonceByAddress(fromAddr)
 	ibcMsg := ibc.NewIBCMsgBankSendMsg(fromAddr, raw, gas, nonce)
 	return ibcMsg, nil
 }

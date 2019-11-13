@@ -4,7 +4,7 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/client"
 	"github.com/tanhuiya/ci123chain/pkg/client/helper"
-	"github.com/tanhuiya/ci123chain/pkg/transaction"
+	"github.com/tanhuiya/ci123chain/pkg/transfer"
 	"github.com/tanhuiya/ci123chain/pkg/util"
 	"errors"
 	"github.com/spf13/cobra"
@@ -30,7 +30,7 @@ func init()  {
 
 var transferCmd = &cobra.Command{
 	Use: "transfer",
-	Short: "Build, Sign, and send transaction",
+	Short: "Build, Sign, and send transfer",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		viper.BindPFlags(cmd.Flags())
 		ctx, err := client.NewClientContextFromViper()
@@ -49,13 +49,13 @@ var transferCmd = &cobra.Command{
 		if len(tos) == 0 {
 			return errors.New("must provide an address to send to")
 		}
-		nonce, err := transaction.GetNonceByAddress(from)
+		nonce, err := transfer.GetNonceByAddress(from)
 		if err != nil {
 			return err
 		}
 
 		ucoin := uint64(viper.GetInt(flagAmount))
-		tx := transaction.NewTransferTx(from, tos[0], uint64(viper.GetInt(flagGas)), nonce, types.Coin(ucoin), false)
+		tx := transfer.NewTransferTx(from, tos[0], uint64(viper.GetInt(flagGas)), nonce, types.Coin(ucoin), false)
 
 		password := viper.GetString(flagPassword)
 		if len(password) < 1 {

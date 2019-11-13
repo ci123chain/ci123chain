@@ -19,8 +19,7 @@ func RegisterCodec(cdc *codec.Codec) {
 
 func init()  {
 	IbcCdc = codec.New()
-	IbcCdc.RegisterInterface((*transaction.Transaction)(nil), nil)
-	IbcCdc.RegisterConcrete(&transaction.CommonTx{}, "ci123chain/commontx", nil)
+	transaction.RegisterCodec(IbcCdc)
 	RegisterCodec(IbcCdc)
 	IbcCdc.Seal()
 }

@@ -15,7 +15,7 @@ type IBCMsgBankSend struct {
 
 func NewIBCMsgBankSendMsg(from sdk.AccAddress, raw []byte, gas uint64, nonce uint64) *IBCMsgBankSend {
 	return &IBCMsgBankSend{
-		CommonTx:transaction.CommonTx{
+		CommonTx: transaction.CommonTx{
 			From:  from,
 			Gas: 	gas,
 			Nonce: nonce,

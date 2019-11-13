@@ -1,4 +1,4 @@
-package transaction
+package transfer
 
 import (
 	"github.com/tanhuiya/ci123chain/pkg/abci/types"

@@ -21,7 +21,7 @@ type Transaction interface {
 }
 
 
-// DefaultTxDecoder logic for standard transaction decoding
+// DefaultTxDecoder logic for standard transfer decoding
 func DefaultTxDecoder(cdc *codec.Codec) types.TxDecoder {
 	return func(txBytes []byte) (types.Tx, types.Error) {
 		var transfer Transaction

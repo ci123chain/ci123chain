@@ -6,13 +6,13 @@ import (
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 )
 
-// Router provides handlers for each transaction type.
+// Router provides handlers for each transfer type.
 type Router interface {
 	AddRoute(r string, h sdk.Handler) (rtr Router)
 	Route(path string) (h sdk.Handler)
 }
 
-// map a transaction type to a handler and an initgenesis function
+// map a transfer type to a handler and an initgenesis function
 type route struct {
 	r string
 	h sdk.Handler

@@ -8,6 +8,7 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/ibc"
 	"github.com/tanhuiya/ci123chain/pkg/mortgage"
 	"github.com/tanhuiya/ci123chain/pkg/transaction"
+	"github.com/tanhuiya/ci123chain/pkg/transfer"
 	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/crypto/encoding/amino"
 )
@@ -33,6 +34,7 @@ func  MakeCodec() *codec.Codec {
 	//cdc.RegisterInterface((*crypto.PrivKey)(nil), nil)
 	sdk.RegisterCodec(cdc)
 	transaction.RegisterCodec(cdc)
+	transfer.RegisterCodec(cdc)
 	mortgage.RegisterCodec(cdc)
 	ModuleBasics.RegisterCodec(cdc)
 	ibc.RegisterCodec(cdc)

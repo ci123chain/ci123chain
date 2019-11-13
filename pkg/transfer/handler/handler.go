@@ -5,6 +5,7 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/account/keeper"
 	"github.com/tanhuiya/ci123chain/pkg/db"
 	"github.com/tanhuiya/ci123chain/pkg/transaction"
+	"github.com/tanhuiya/ci123chain/pkg/transfer"
 	"reflect"
 )
 
@@ -18,7 +19,7 @@ func NewHandler(
 			txm.Incr(ctx)
 		}()
 		switch tx := tx.(type) {
-		case *transaction.TransferTx:
+		case *transfer.TransferTx:
 			return handlerTransferTx(ctx, am, tx)
 		// todo
 
@@ -29,9 +30,9 @@ func NewHandler(
 	}
 }
 
-func handlerTransferTx(ctx types.Context, am keeper.AccountKeeper, tx *transaction.TransferTx) types.Result {
+func handlerTransferTx(ctx types.Context, am keeper.AccountKeeper, tx *transfer.TransferTx) types.Result {
 	if err := am.Transfer(ctx, tx.Common.From, tx.To, tx.Amount); err != nil {
-		return transaction.ErrFailTransfer(transaction.DefaultCodespace, err.Error()).Result()
+		return err.Result()
 	}
 	return types.Result{}
 }

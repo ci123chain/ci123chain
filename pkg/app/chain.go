@@ -12,11 +12,12 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/config"
 	"github.com/tanhuiya/ci123chain/pkg/db"
 	"github.com/tanhuiya/ci123chain/pkg/ibc"
-	"github.com/tanhuiya/ci123chain/pkg/transaction/handler"
+	"github.com/tanhuiya/ci123chain/pkg/transaction"
+	"github.com/tanhuiya/ci123chain/pkg/transfer/handler"
 	"github.com/tanhuiya/ci123chain/pkg/mortgage"
 	"github.com/tanhuiya/ci123chain/pkg/params"
 	"github.com/tanhuiya/ci123chain/pkg/supply"
-	"github.com/tanhuiya/ci123chain/pkg/transaction"
+	"github.com/tanhuiya/ci123chain/pkg/transfer"
 	"encoding/json"
 	"errors"
 	"github.com/spf13/pflag"
@@ -118,7 +119,7 @@ func NewChain(logger log.Logger, tmdb tmdb.DB, traceStore io.Writer) *Chain {
 		account.AppModule{AccountKeeper: accKeeper},
 		)
 
-	c.Router().AddRoute(transaction.RouteKey, handler.NewHandler(txm, accKeeper, sm))
+	c.Router().AddRoute(transfer.RouteKey, handler.NewHandler(txm, accKeeper, sm))
 	c.Router().AddRoute(mortgage.RouterKey, mortgage.NewHandler(mortgageKeeper))
 	c.Router().AddRoute(ibc.RouterKey, ibc.NewHandler(ibcKeeper))
 
@@ -224,7 +225,7 @@ func AppGetValidator(pk crypto.PubKey, name string) types.GenesisValidator {
 	return validator
 }
 
-// Generate a genesis transaction with flags
+// Generate a genesis transfer with flags
 // pk: publickey of validator
 func CreateAppGenTx(cdc *amino.Codec, pk crypto.PubKey, gentTxConfig config.GenTx) (
 	appGenTx, cliPrint json.RawMessage, validator types.GenesisValidator, err error) {
@@ -239,7 +240,7 @@ func CreateAppGenTx(cdc *amino.Codec, pk crypto.PubKey, gentTxConfig config.GenT
 	return
 }
 
-// Generate a genesis transaction without flags
+// Generate a genesis transfer without flags
 func CreateAppGenTxNF(cdc *amino.Codec, pk crypto.PubKey, addr string, gentTxConfig config.GenTx) (
 	appGenTx, cliPrint json.RawMessage, validator types.GenesisValidator, err error) {
 

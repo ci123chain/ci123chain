@@ -6,6 +6,7 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/client/context"
 	"github.com/tanhuiya/ci123chain/pkg/client/helper"
 	"github.com/tanhuiya/ci123chain/pkg/transaction"
+	"github.com/tanhuiya/ci123chain/pkg/transfer"
 	"github.com/tanhuiya/ci123chain/pkg/util"
 	"encoding/hex"
 	"errors"
@@ -34,7 +35,7 @@ const isFabric = false
 
 var signCmd = &cobra.Command{
 	Use: "sign",
-	Short: "Build, Sign transaction",
+	Short: "Build, Sign transfer",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		viper.BindPFlags(cmd.Flags())
 		ctx, err := client.NewClientContextFromViper()
@@ -53,14 +54,14 @@ var signCmd = &cobra.Command{
 		if len(tos) == 0 {
 			return errors.New("must provide an address to send to")
 		}
-		nonce, err := transaction.GetNonceByAddress(from)
+		nonce, err := transfer.GetNonceByAddress(from)
 		if err != nil {
 			return err
 		}
 
 		ucoin := uint64(viper.GetInt(flagAmount))
 
-		tx := transaction.NewTransferTx(from, tos[0], uint64(viper.GetInt(flagGas)), nonce , types.Coin(ucoin), isFabric)
+		tx := transfer.NewTransferTx(from, tos[0], uint64(viper.GetInt(flagGas)), nonce , types.Coin(ucoin), isFabric)
 
 
 		password := viper.GetString(flagPassword)

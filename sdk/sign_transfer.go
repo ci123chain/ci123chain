@@ -4,7 +4,7 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/client/helper"
 	"github.com/tanhuiya/ci123chain/pkg/cryptosuit"
-	"github.com/tanhuiya/ci123chain/pkg/transaction"
+	"github.com/tanhuiya/ci123chain/pkg/transfer"
 )
 
 // 签名消息
@@ -31,7 +31,7 @@ func Verifier(digest, signature, pubKey []byte, addr []byte) (bool, error) {
 	return sid.Verifier(digest, signature, pubKey, addr)
 }
 
-func buildTransferTx(from, to string, gas, amount uint64, isFabric bool) (transaction.Transaction, error) {
+func buildTransferTx(from, to string, gas, amount uint64, isFabric bool) (transfer.Transaction, error) {
 	fromAddr, err := helper.StrToAddress(from)
 	if err != nil {
 		return nil, err
@@ -40,7 +40,7 @@ func buildTransferTx(from, to string, gas, amount uint64, isFabric bool) (transa
 	if err != nil {
 		return nil, err
 	}
-	nonce, err := transaction.GetNonceByAddress(fromAddr)
-	tx := transaction.NewTransferTx(fromAddr, toAddr, gas, nonce, types.Coin(amount), isFabric)
+	nonce, err := transfer.GetNonceByAddress(fromAddr)
+	tx := transfer.NewTransferTx(fromAddr, toAddr, gas, nonce, types.Coin(amount), isFabric)
 	return tx, nil
 }

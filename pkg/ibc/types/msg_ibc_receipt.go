@@ -15,7 +15,7 @@ type IBCReceiveReceiptMsg struct {
 
 func NewIBCReceiveReceiptMsg(from sdk.AccAddress, raw []byte, gas uint64, nonce uint64) *IBCReceiveReceiptMsg {
 	return &IBCReceiveReceiptMsg{
-		CommonTx:transaction.CommonTx{
+		CommonTx: transaction.CommonTx{
 			From:  from,
 			Gas: 	gas,
 			Nonce: nonce,

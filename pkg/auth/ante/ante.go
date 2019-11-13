@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/auth"
-	"github.com/tanhuiya/ci123chain/pkg/transaction"
+	"github.com/tanhuiya/ci123chain/pkg/transfer"
 )
 
 func NewAnteHandler( authKeeper auth.AuthKeeper) types.AnteHandler {
@@ -12,10 +12,10 @@ func NewAnteHandler( authKeeper auth.AuthKeeper) types.AnteHandler {
 
 		return newCtx, types.Result{}, false
 
-		commonTx, ok := tx.(*transaction.TransferTx)
+		commonTx, ok := tx.(*transfer.TransferTx)
 		if !ok {
 			newCtx := ctx.WithGasMeter(types.NewGasMeter(0))
-			return newCtx, types.ErrInternal("undefined transaction Type ").Result(), true
+			return newCtx, types.ErrInternal("undefined transfer Type ").Result(), true
 		}
 
 		params := authKeeper.GetParams(ctx)

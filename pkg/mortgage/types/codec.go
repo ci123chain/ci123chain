@@ -17,8 +17,7 @@ func RegisterCodec(cdc *codec.Codec) {
 
 func init()  {
 	MortgageCdc = codec.New()
-	MortgageCdc.RegisterInterface((*transaction.Transaction)(nil), nil)
-	MortgageCdc.RegisterConcrete(&transaction.CommonTx{}, "ci123chain/commontx", nil)
+	transaction.RegisterCodec(MortgageCdc)
 	RegisterCodec(MortgageCdc)
 	MortgageCdc.Seal()
 }

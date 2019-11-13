@@ -5,7 +5,7 @@ import (
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 )
 
-// Broadcast the transaction bytes to Tendermint
+// Broadcast the transfer bytes to Tendermint
 func (ctx *Context) BroadcastTx(tx []byte) (sdk.TxResponse, error) {
 	node, err := ctx.GetNode()
 	if err != nil {

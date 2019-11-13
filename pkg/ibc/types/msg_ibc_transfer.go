@@ -15,7 +15,7 @@ type IBCTransfer struct {
 
 func NewIBCTransferMsg(from, to sdk.AccAddress, amout sdk.Coin, gas uint64, nonce uint64) *IBCTransfer {
 	return &IBCTransfer{
-		CommonTx:transaction.CommonTx{
+		CommonTx: transaction.CommonTx{
 			From:  from,
 			Gas: 	gas,
 			Nonce: nonce,

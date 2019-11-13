@@ -5,7 +5,7 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/client/cmd/rpc"
 	accountRpc "github.com/tanhuiya/ci123chain/pkg/account/rest"
 	"github.com/tanhuiya/ci123chain/pkg/ibc"
-	txRpc "github.com/tanhuiya/ci123chain/pkg/transaction/rest"
+	txRpc "github.com/tanhuiya/ci123chain/pkg/transfer/rest"
 	"github.com/tanhuiya/ci123chain/pkg/client/context"
 	"github.com/tanhuiya/ci123chain/pkg/util"
 	"fmt"

@@ -3,7 +3,7 @@ package rest
 import (
 	"github.com/tanhuiya/ci123chain/pkg/abci/types/rest"
 	"github.com/tanhuiya/ci123chain/pkg/client/context"
-	"github.com/tanhuiya/ci123chain/pkg/transaction/rest/utils"
+	"github.com/tanhuiya/ci123chain/pkg/transfer/rest/utils"
 	"fmt"
 	"github.com/gorilla/mux"
 	"net/http"
@@ -12,7 +12,7 @@ import (
 
 func RegisterTxRoutes(cliCtx context.Context, r *mux.Router)  {
 	r.HandleFunc("/tx/{hash}", QueryTxRequestHandlerFn(cliCtx)).Methods("GET")
-	r.HandleFunc("/tx/sign", SignTxRequestHandler(cliCtx)).Methods("POST")
+	r.HandleFunc("/tx/sign/transfer", SignTxRequestHandler(cliCtx)).Methods("POST")
 	r.HandleFunc("/tx/broadcast", BraodcastTxRequest(cliCtx)).Methods("POST")
 }
 
@@ -36,7 +36,7 @@ func QueryTxRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			return
 		}
 		if output.Empty() {
-			rest.WriteErrorResponse(writer, http.StatusNotFound, fmt.Sprintf("no transaction found with hash %s", hashHexStr))
+			rest.WriteErrorResponse(writer, http.StatusNotFound, fmt.Sprintf("no transfer found with hash %s", hashHexStr))
 		}
 		rest.PostProcessResponseBare(writer, cliCtx, output)
 	}

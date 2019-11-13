@@ -5,7 +5,7 @@ import (
 	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/tanhuiya/ci123chain/pkg/abci/codec"
 	"github.com/tanhuiya/ci123chain/pkg/client/context"
-	"github.com/tanhuiya/ci123chain/pkg/transaction"
+	"github.com/tanhuiya/ci123chain/pkg/transfer"
 	"time"
 
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
@@ -76,7 +76,7 @@ func parseTx(cdc *codec.Codec, txBytes []byte) (sdk.Tx, error) {
 
 	// todo: only TransferTx implement
 
-	tx := new(transaction.TransferTx)
+	tx := new(transfer.TransferTx)
 	rlp.DecodeBytes(txBytes, &tx)
 	//err := cdc.UnmarshalBinaryLengthPrefixed(txBytes, &tx)
 	//if err != nil {

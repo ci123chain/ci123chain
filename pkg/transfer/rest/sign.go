@@ -6,6 +6,7 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/client/context"
 	"github.com/tanhuiya/ci123chain/pkg/client/helper"
 	"github.com/tanhuiya/ci123chain/pkg/transaction"
+	"github.com/tanhuiya/ci123chain/pkg/transfer"
 	"encoding/hex"
 	"github.com/pkg/errors"
 	"net/http"
@@ -14,41 +15,35 @@ import (
 
 func SignTxRequestHandler(cliCtx context.Context) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
-		txType := request.FormValue("code")
-		code, err := strconv.Atoi(txType)
-		if err != nil {
-			rest.WriteErrorResponse(writer, http.StatusNotFound, "param code not found")
-			return
-		}
+
 		priv := request.FormValue("privateKey")
 		if len(priv) < 1 {
 			rest.WriteErrorResponse(writer, http.StatusNotFound, "param privateKey not found")
 			return
 		}
-		if uint8(code) == transaction.TRANSFER {
-			fabric := request.FormValue("fabric")
-			isFabric, err  := strconv.ParseBool(fabric)
-			if err != nil {
-				isFabric = false
-			}
-			tx, err := buildTransferTx(request, isFabric)
-			if err != nil {
-				rest.WriteErrorResponse(writer, http.StatusNotFound, errors.Wrap(err, "build transfer msg failed").Error())
-				return
-			}
 
-			privPub, err := hex.DecodeString(priv)
-			if err != nil {
-				rest.WriteErrorResponse(writer, http.StatusNotFound, errors.Wrap(err, "Decode PrivateKey error").Error())
-			}
-			tx, err = cliCtx.SignWithTx(tx, privPub, isFabric)
-			if err != nil {
-				rest.WriteErrorResponse(writer, http.StatusNotFound, "sign tx error")
-				return
-			}
-			txByte := tx.Bytes()
-			rest.PostProcessResponseBare(writer, cliCtx, hex.EncodeToString(txByte))
+		fabric := request.FormValue("fabric")
+		isFabric, err  := strconv.ParseBool(fabric)
+		if err != nil {
+			isFabric = false
 		}
+		tx, err := buildTransferTx(request, isFabric)
+		if err != nil {
+			rest.WriteErrorResponse(writer, http.StatusNotFound, errors.Wrap(err, "build transfer msg failed").Error())
+			return
+		}
+
+		privPub, err := hex.DecodeString(priv)
+		if err != nil {
+			rest.WriteErrorResponse(writer, http.StatusNotFound, errors.Wrap(err, "Decode PrivateKey error").Error())
+		}
+		tx, err = cliCtx.SignWithTx(tx, privPub, isFabric)
+		if err != nil {
+			rest.WriteErrorResponse(writer, http.StatusNotFound, "sign tx error")
+			return
+		}
+		txByte := tx.Bytes()
+		rest.PostProcessResponseBare(writer, cliCtx, hex.EncodeToString(txByte))
 	}
 }
 
@@ -76,8 +71,8 @@ func buildTransferTx(r *http.Request, isFabric bool) (transaction.Transaction, e
 	if err != nil {
 		return nil, err
 	}
-	nonce, err := transaction.GetNonceByAddress(froms[0])
-	tx := transaction.NewTransferTx(froms[0], tos[0], gasI, nonce, types.Coin(amountI), isFabric)
+	nonce, err := transfer.GetNonceByAddress(froms[0])
+	tx := transfer.NewTransferTx(froms[0], tos[0], gasI, nonce, types.Coin(amountI), isFabric)
 
 	return tx, nil
 }

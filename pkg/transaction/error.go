@@ -1,57 +1,33 @@
 package transaction
 
-import "github.com/tanhuiya/ci123chain/pkg/abci/types"
+import (
+	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
+)
 
 
+type CodeType = sdk.CodeType
 
 // Bank errors reserve 100 ~ 199.
 const (
-	DefaultCodespace 	types.CodespaceType = "2"
-
-	CodeInvalidTx       types.CodeType = 101
-	CodeInvalidTransfer types.CodeType = 102
-	CodeFailTransfer    types.CodeType = 103
-	CodeInvalidDeploy   types.CodeType = 104
-	CodeInvalidCall     types.CodeType = 105
+	DefaultCodespace 	sdk.CodespaceType = "transaction"
+	CodeInvalidTx       CodeType = 101
+	CodeInvalidTransfer CodeType = 102
+	CodeInvalidSignature CodeType = 103
+	CodeInvalidDeploy   CodeType = 104
+	CodeInvalidCall     CodeType = 105
 )
 
 //----------------------------------------
 // Error constructors
 
-func ErrInvalidTx(codespace types.CodespaceType, msg string) types.Error {
-	return newError(codespace, CodeInvalidTx, msg)
+func ErrInvalidTx(codespace sdk.CodespaceType) sdk.Error {
+	return sdk.NewError(codespace, CodeInvalidTx, "tx invalid")
 }
 
-
-func ErrInvalidTransfer(codespace types.CodespaceType, msg string) types.Error {
-	return newError(codespace, CodeInvalidTransfer, msg)
+func ErrInvalidTransfer(codespace sdk.CodespaceType) sdk.Error {
+	return sdk.NewError(codespace, CodeInvalidTransfer, "transfer parameter error")
 }
 
-func ErrFailTransfer(codespace types.CodespaceType, msg string) types.Error {
-	return newError(codespace, CodeFailTransfer, msg)
-}
-
-//----------------------------------------
-
-func msgOrDefaultMsg(msg string, code types.CodeType) string {
-	if msg != "" {
-		return msg
-	}
-	return codeToDefaultMsg(code)
-}
-
-// NOTE: Don't stringer this, we'll put better messages in later.
-func codeToDefaultMsg(code types.CodeType) string {
-	switch code {
-	case CodeInvalidTransfer:
-		return "invalid transfer"
-	default:
-		return types.CodeToDefaultMsg(code)
-	}
-}
-
-
-func newError(codespace types.CodespaceType, code types.CodeType, msg string) types.Error {
-	msg = msgOrDefaultMsg(msg, code)
-	return types.NewError(codespace, code, msg)
+func ErrInvalidSignature(codespace sdk.CodespaceType) sdk.Error {
+	return sdk.NewError(codespace, CodeInvalidSignature, "signature error")
 }

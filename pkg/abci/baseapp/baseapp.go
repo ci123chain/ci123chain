@@ -29,11 +29,11 @@ var dbHeaderKey = []byte("header")
 type runTxMode uint8
 
 const (
-	// Check a transaction
+	// Check a transfer
 	runTxModeCheck runTxMode = iota
-	// Simulate a transaction
+	// Simulate a transfer
 	runTxModeSimulate runTxMode = iota
-	// Deliver a transaction
+	// Deliver a transfer
 	runTxModeDeliver runTxMode = iota
 )
 
@@ -438,7 +438,7 @@ func (app *BaseApp) BeginBlock(req abci.RequestBeginBlock) (res abci.ResponseBeg
 }
 
 // CheckTx implements the ABCI interface. It runs the "basic checks" to see
-// whether or not a transaction can possibly be executed, first decoding, then
+// whether or not a transfer can possibly be executed, first decoding, then
 // the ante handler (which checks signatures/fees/ValidateBasic), then finally
 // the route match to see whether a handler exists.
 //
@@ -556,9 +556,9 @@ func (app *BaseApp) cacheTxContext(ctx sdk.Context, txBytes []byte) (
 	return ctx.WithMultiStore(msCache), msCache
 }
 
-// runTx processes a transaction. The transactions is proccessed via an
+// runTx processes a transfer. The transactions is proccessed via an
 // anteHandler. The provided txBytes may be nil in some cases, eg. in tests. For
-// further details on transaction execution, reference the BaseApp SDK
+// further details on transfer execution, reference the BaseApp SDK
 // documentation.
 func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk.Result) {
 	// NOTE: GasWanted should be returned by the AnteHandler. GasUsed is

@@ -54,7 +54,7 @@ type InitConfig struct{
 func GenTxCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "gen-tx",
-		Short: "Create genesis transaction file (under [--home]/config/gentx/gentx-[nodeID].json)",
+		Short: "Create genesis transfer file (under [--home]/config/gentx/gentx-[nodeID].json)",
 		Args:  cobra.NoArgs,
 		RunE: func(_ *cobra.Command, args []string) error {
 			c := ctx.Config

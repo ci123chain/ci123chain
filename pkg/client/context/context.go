@@ -101,7 +101,7 @@ func (ctx *Context) SignAndBroadcastTx(tx transaction.Transaction, addr types.Ac
 	return res, nil
 }
 
-//func (ctx *Context) SignTx(tx transaction.Transaction, addr types.AccAddress) (transaction.Transaction, error) {
+//func (ctx *Context) SignTx(tx transfer.Transaction, addr types.AccAddress) (transfer.Transaction, error) {
 //	sig, err := ctx.Sign(tx.GetSignBytes(), addr)
 //	if err != nil {
 //		return nil, err
@@ -151,7 +151,7 @@ func (ctx *Context) BroadcastSignedData(data []byte) (types.TxResponse, error) {
 }
 
 
-//func (ctx *Context) SignTx2(tx transaction.Transaction, priKey string) (transaction.Transaction, error) {
+//func (ctx *Context) SignTx2(tx transfer.Transaction, priKey string) (transfer.Transaction, error) {
 //	pubkey, err := ctx.CryptoSuit.GetPubKey([]byte(priKey))
 //	if err != nil {
 //		return nil, err
