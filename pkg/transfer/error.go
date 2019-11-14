@@ -8,7 +8,7 @@ type CodeType = sdk.CodeType
 
 // Bank errors reserve 100 ~ 199.
 const (
-	DefaultCodespace 	sdk.CodespaceType = "transfer"
+	DefaultCodespace 		sdk.CodespaceType = "transfer"
 	CodeInvalidAmount       CodeType = 201
 	CodeInvalidReceiver     CodeType = 202
 )

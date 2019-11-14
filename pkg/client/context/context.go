@@ -83,23 +83,23 @@ func (ctx Context) PrintOutput(toPrint fmt.Stringer) (err error) {
 	return
 }
 
-
-func (ctx *Context) SignAndBroadcastTx(tx transaction.Transaction, addr types.AccAddress) (types.TxResponse, error) {
-	sig, err := ctx.Sign(tx.GetSignBytes(), addr)
-	if err != nil {
-		return types.TxResponse{}, err
-	}
-	tx.SetSignature(sig)
-	res, err := ctx.BroadcastTx(tx.Bytes())
-
-	if err != nil {
-		return res, err
-	}
-	if ctx.Verbose {
-		fmt.Printf("txHash=%v BlockHeight=%v\n", res.TxHash, res.Height)
-	}
-	return res, nil
-}
+//
+//func (ctx *Context) SignAndBroadcastTx(tx transaction.Transaction, addr types.AccAddress) (types.TxResponse, error) {
+//	sig, err := ctx.Sign(tx.GetSignBytes(), addr)
+//	if err != nil {
+//		return types.TxResponse{}, err
+//	}
+//	tx.SetSignature(sig)
+//	res, err := ctx.BroadcastTx(tx.Bytes())
+//
+//	if err != nil {
+//		return res, err
+//	}
+//	if ctx.Verbose {
+//		fmt.Printf("txHash=%v BlockHeight=%v\n", res.TxHash, res.Height)
+//	}
+//	return res, nil
+//}
 
 //func (ctx *Context) SignTx(tx transfer.Transaction, addr types.AccAddress) (transfer.Transaction, error) {
 //	sig, err := ctx.Sign(tx.GetSignBytes(), addr)

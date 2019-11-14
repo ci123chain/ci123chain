@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/client/helper"
 	"encoding/hex"
 	"fmt"
@@ -10,6 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/tanhuiya/ci123chain/pkg/util"
 	"io/ioutil"
 )
 
@@ -20,6 +22,7 @@ func init()  {
 	rootCmd.AddCommand(exportCmd)
 	exportCmd.Flags().String(flagPassword, "", "passphrase")
 	exportCmd.Flags().String(helper.FlagAddress, "", "Address to export")
+	util.CheckRequiredFlag(exportCmd, helper.FlagAddress)
 }
 
 
@@ -32,14 +35,16 @@ var exportCmd = &cobra.Command{
 		dir := viper.GetString(helper.FlagHomeDir)
 		addr := viper.GetString(helper.FlagAddress)
 		password := viper.GetString(flagPassword)
+
 		if len(password) < 1 {
 			var err error
-			password, err = helper.GetPasswordFromStd()
+			password, err = helper.GetPassphrase(types.AccAddress{common.HexToAddress(addr)})
 			if err != nil {
 				return err
 			}
 		}
 		ks := keystore.NewKeyStore(dir, keystore.StandardScryptN, keystore.StandardScryptP)
+
 		acc := accounts.Account{
 			Address: common.HexToAddress(addr),
 		}

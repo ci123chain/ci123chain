@@ -22,7 +22,7 @@ func AddServerCommands(
 		Short: "Tendermint subcommands",
 	}
 	tendermintCmd.AddCommand(
-		//showNodeIDCmd(ctx),
+		showNodeIDCmd(ctx),
 		//showValidatorCmd(ctx),
 		//showAddressCmd(ctx),
 		//validatorCmd(ctx),
