@@ -7,6 +7,7 @@ import (
 	"github.com/bgentry/speakeasy"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/mattn/go-isatty"
+	"github.com/spf13/viper"
 	"github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"os"
 	"strings"
@@ -23,6 +24,21 @@ const (
 	FlagPassword = "password"
 	//FlagWithCrypto 	   = "cryptosuit"
 )
+
+func GetPassphrase(addr types.AccAddress) (string, error) {
+	pass := viper.GetString(FlagPassword)
+	if pass == "" {
+		return getPassphraseFromStdin(addr)
+	}
+	return pass, nil
+}
+
+// Get passphrase from std input
+func getPassphraseFromStdin(addr types.AccAddress) (string, error) {
+	buf := BufferStdin()
+	prompt := fmt.Sprintf("Enter password for address: '%s'", addr.Hex())
+	return GetPassword(prompt, buf)
+}
 
 // Allows for reading prompts for stdin
 func BufferStdin() *bufio.Reader {

@@ -25,7 +25,7 @@ require (
 	github.com/steakknife/bloomfilter v0.0.0-20180922174646-6819c0d2a570 // indirect
 	github.com/steakknife/hamming v0.0.0-20180906055917-c99c65617cd3 // indirect
 	github.com/stretchr/testify v1.4.0
-	github.com/tanhuiya/fabric-crypto v0.0.0-20191030084450-278106813756
+	github.com/tanhuiya/fabric-crypto v0.0.0-20191112131655-4900327b3258
 	github.com/tendermint/go-amino v0.14.1
 	github.com/tendermint/iavl v0.12.4
 	github.com/tendermint/tendermint v0.32.3

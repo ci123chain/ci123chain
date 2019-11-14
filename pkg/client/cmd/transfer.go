@@ -60,7 +60,7 @@ var transferCmd = &cobra.Command{
 		password := viper.GetString(flagPassword)
 		if len(password) < 1 {
 			var err error
-			password, err = helper.GetPasswordFromStd()
+			password, err = helper.GetPassphrase(from)
 			if err != nil {
 				return err
 			}
