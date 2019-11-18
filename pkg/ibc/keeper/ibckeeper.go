@@ -60,7 +60,7 @@ func (k IBCKeeper) GetFirstReadyIBCMsg(ctx sdk.Context) *types.IBCInfo {
 			}
 			uniqueID := itr.Value()
 			item := k.GetIBCByUniqueID(ctx, uniqueID)
-			if time.Now().Unix() - item.ApplyTime.Unix() > types.TimeoutProcessing {
+			if item.CanProcess() {
 				// timeout
 				ibc_msg = item
 				break
@@ -150,12 +150,12 @@ func (k IBCKeeper) GetIBCByUniqueID(ctx sdk.Context, uniqueID []byte) *types.IBC
 
 // 保存 ibcmsg
 func (k IBCKeeper) SetIBCMsg(ctx sdk.Context,ibcMsg types.IBCInfo) error {
-
 	store := k.getStore(ctx)
 	// 删除旧的索引
 	oldIbcMsg := k.GetIBCByUniqueID(ctx, ibcMsg.UniqueID)
 	if oldIbcMsg != nil {
-		idxkey := types.StateKey + oldIbcMsg.State + types.TimestampKey + strconv.FormatInt(oldIbcMsg.ApplyTime.Unix(), 10) + types.UniqueKey + string(oldIbcMsg.UniqueID)
+		idxkey := types.StateKey + oldIbcMsg.State + types.TimestampKey + strconv.FormatInt(oldIbcMsg.ApplyTime.Unix(), 10) +
+			types.UniqueKey + string(oldIbcMsg.UniqueID)
 		store.Delete([]byte(idxkey))
 	}
 
@@ -168,8 +168,8 @@ func (k IBCKeeper) SetIBCMsg(ctx sdk.Context,ibcMsg types.IBCInfo) error {
 
 	// 保存索引结构
 	//uniqueID := string(ibcMsg.UniqueID)
-
-	idxkey := types.StateKey + ibcMsg.State + types.TimestampKey + strconv.FormatInt(ibcMsg.ApplyTime.Unix(), 10) + types.UniqueKey + string(ibcMsg.UniqueID)
+	idxkey := types.StateKey + ibcMsg.State + types.TimestampKey + strconv.FormatInt(ibcMsg.ApplyTime.Unix(), 10) +
+		types.UniqueKey + string(ibcMsg.UniqueID)
 	Logger(ctx).Debug(idxkey)
 	store.Set([]byte(idxkey), ibcMsg.UniqueID)
 	return nil
