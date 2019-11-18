@@ -225,7 +225,7 @@ func (k IBCKeeper) ReceiveReceipt(ctx sdk.Context, receipt types.BankReceipt) (e
 	if !valid {
 		return errors.New("Infficient balance of module account: " + macc.GetAddress().Hex())
 	}
-	if err1 := k.SupplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, ibcMsg.ToAddress, ibcMsg.Amount); err1 != nil {
+	if err1 := k.SupplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, ibcMsg.BankAddress, ibcMsg.Amount); err1 != nil {
 		return errors.New(err1.Error())
 	}
 
