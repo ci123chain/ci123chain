@@ -17,7 +17,7 @@ const (
 	StateDone = "done"
 	StateCancel = "cancel"
 
-	TimeoutProcessing = 10
+	TimeoutProcessing = 30
 )
 
 func ValidateState(state string) error {

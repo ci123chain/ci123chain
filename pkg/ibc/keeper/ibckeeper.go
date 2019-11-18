@@ -133,7 +133,7 @@ func (k IBCKeeper) ApplyIBCMsg(ctx sdk.Context, uniqueID []byte, observerID []by
 }
 
 // 根据 uniqueID 获取 消息
-func (k IBCKeeper) GetIBCByUniqueID(ctx sdk.Context,uniqueID []byte) *types.IBCInfo {
+func (k IBCKeeper) GetIBCByUniqueID(ctx sdk.Context, uniqueID []byte) *types.IBCInfo {
 	store := k.getStore(ctx)
 	bz := store.Get(uniqueID)
 	if len(bz) < 1 {
