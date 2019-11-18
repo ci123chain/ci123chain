@@ -57,7 +57,7 @@ func handleMsgApplyIBCTx(ctx sdk.Context, k keeper.IBCKeeper, tx types.ApplyIBCT
 func handleMsgIBCBankSendTx(ctx sdk.Context, k keeper.IBCKeeper, tx types.IBCMsgBankSend) sdk.Result {
 	ibcMsg, err := keeper.ValidateRawIBCMessage(tx)
 	if err != nil {
-		return sdk.ErrUnknownRequest("Bank pkg invalid").TraceSDK(err.Error()).Result()
+		return err.Result()
 	}
 
 	// todo warning
@@ -65,22 +65,25 @@ func handleMsgIBCBankSendTx(ctx sdk.Context, k keeper.IBCKeeper, tx types.IBCMsg
 	//if ibc != nil {
 	//	return sdk.ErrUnknownRequest("ibcTx already exist with uniqueID " + string(ibc.UniqueID)).Result()
 	//}
-	receipt, err := k.MakeBankReceipt(ctx, *ibcMsg)
-	if err != nil {
+	bz, _ := json.Marshal(ibcMsg)
+	fmt.Println(bz)
+
+	receipt, err2 := k.MakeBankReceipt(ctx, *ibcMsg)
+	if err2 != nil {
 		return sdk.ErrUnknownRequest("Get bank receipt error").TraceSDK(err.Error()).Result()
 	}
 
 	// 保存该交易
-	err = k.SetIBCMsg(ctx, *ibcMsg)
-	if err != nil {
+	err2 = k.SetIBCMsg(ctx, *ibcMsg)
+	if err2 != nil {
 		return sdk.ErrUnknownRequest("Save ibcMsg error").TraceSDK(err.Error()).Result()
 	}
-	receiptBz, _ := json.Marshal(receipt)
+	receiptBz, _ := json.Marshal(*receipt)
 
 	// todo bank action
-	err = k.BankSend(ctx, *ibcMsg)
-	if err != nil {
-		return sdk.ErrInsufficientCoins(err.Error()).Result()
+	err2 = k.BankSend(ctx, *ibcMsg)
+	if err2 != nil {
+		return sdk.ErrInsufficientCoins(err2.Error()).Result()
 	}
 
 	return sdk.Result{Data: receiptBz}
@@ -91,11 +94,11 @@ func handleMsgIBCBankSendTx(ctx sdk.Context, k keeper.IBCKeeper, tx types.IBCMsg
 func handleMsgReceiveReceipt(ctx sdk.Context, k keeper.IBCKeeper, tx types.IBCReceiveReceiptMsg) sdk.Result  {
 	receiveObj, err := keeper.ValidateRawReceiptMessage(tx)
 	if err != nil {
-		return sdk.ErrUnknownRequest("Receipt pkg invalid").TraceSDK(err.Error()).Result()
+		return err.Result()
 	}
-	err = k.ReceiveReceipt(ctx, *receiveObj)
-	if err != nil {
-		return sdk.ErrUnknownRequest(err.Error()).Result()
+	err2 := k.ReceiveReceipt(ctx, *receiveObj)
+	if err2 != nil {
+		return sdk.ErrUnknownRequest(err2.Error()).Result()
 	}
 	return sdk.Result{Data: []byte(receiveObj.UniqueID)}
 }

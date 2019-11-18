@@ -1,6 +1,9 @@
 package app
 
 import (
+	"encoding/json"
+	"errors"
+	"github.com/spf13/viper"
 	"github.com/tanhuiya/ci123chain/pkg/abci/baseapp"
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/abci/types/module"
@@ -12,16 +15,12 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/config"
 	"github.com/tanhuiya/ci123chain/pkg/db"
 	"github.com/tanhuiya/ci123chain/pkg/ibc"
-	"github.com/tanhuiya/ci123chain/pkg/transaction"
-	"github.com/tanhuiya/ci123chain/pkg/transfer/handler"
 	"github.com/tanhuiya/ci123chain/pkg/mortgage"
 	"github.com/tanhuiya/ci123chain/pkg/params"
 	"github.com/tanhuiya/ci123chain/pkg/supply"
+	"github.com/tanhuiya/ci123chain/pkg/transaction"
 	"github.com/tanhuiya/ci123chain/pkg/transfer"
-	"encoding/json"
-	"errors"
-	"github.com/spf13/pflag"
-	"github.com/spf13/viper"
+	"github.com/tanhuiya/ci123chain/pkg/transfer/handler"
 	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/libs/common"
@@ -61,7 +60,8 @@ var (
 		)
 
 	maccPerms = map[string][]string{
-		mortgage.ModuleName: nil,
+		//mortgage.ModuleName: nil,
+		ibc.ModuleName: nil,
 	}
 )
 
@@ -105,12 +105,12 @@ func NewChain(logger log.Logger, tmdb tmdb.DB, traceStore io.Writer) *Chain {
 
 	supplyKeeper := supply.NewKeeper(cdc, SupplyStoreKey, accKeeper, maccPerms)
 
-	mortgageKeeper := mortgage.NewKeeper(MortgageStoreKey, supplyKeeper)
+	//mortgageKeeper := mortgage.NewKeeper(MortgageStoreKey, supplyKeeper)
 
 	authSubspace := paramsKeeper.Subspace(auth.DefaultCodespace)
 	c.authKeeper = auth.NewAuthKeeper(cdc, AuthStoreKey, authSubspace)
 
-	ibcKeeper := ibc.NewKeeper(IBCStoreKey, accKeeper)
+	ibcKeeper := ibc.NewKeeper(IBCStoreKey, accKeeper, supplyKeeper)
 
 	// 设置module
 
@@ -120,7 +120,7 @@ func NewChain(logger log.Logger, tmdb tmdb.DB, traceStore io.Writer) *Chain {
 		)
 
 	c.Router().AddRoute(transfer.RouteKey, handler.NewHandler(txm, accKeeper, sm))
-	c.Router().AddRoute(mortgage.RouterKey, mortgage.NewHandler(mortgageKeeper))
+	//c.Router().AddRoute(mortgage.RouterKey, mortgage.NewHandler(mortgageKeeper))
 	c.Router().AddRoute(ibc.RouterKey, ibc.NewHandler(ibcKeeper))
 
 	c.QueryRouter().AddRoute(ibc.ModuleName, ibc.NewQuerier(ibcKeeper))
@@ -170,8 +170,8 @@ func (c *Chain) ExportAppStateJSON() (json.RawMessage, []types.GenesisValidator,
 type AppInit struct {
 
 	// flags required for application init functions
-	FlagsAppGenState *pflag.FlagSet
-	FlagsAppGenTx    *pflag.FlagSet
+	//FlagsAppGenState *pflag.FlagSet
+	//FlagsAppGenTx    *pflag.FlagSet
 
 	// create the application genesis tx
 	AppGenTx func(cdc *amino.Codec, pk crypto.PubKey, genTxConfig config.GenTx) (
@@ -187,15 +187,15 @@ type AppInit struct {
 
 
 func NewAppInit() AppInit {
-	fsAppGenState := pflag.NewFlagSet("", pflag.ContinueOnError)
-	fsAppGenTx := pflag.NewFlagSet("", pflag.ContinueOnError)
-	fsAppGenTx.String(flagAddress, "", "address, required")
-	fsAppGenTx.String(flagClientHome, DefaultCLIHome,
-		"home directory for the client, used for types generation")
+	//fsAppGenState := pflag.NewFlagSet("", pflag.ContinueOnError)
+	//fsAppGenTx := pflag.NewFlagSet("", pflag.ContinueOnError)
+	//fsAppGenTx.String(flagAddress, "", "address, required")
+	//fsAppGenTx.String(flagClientHome, DefaultCLIHome,
+	//	"home directory for the client, used for types generation")
 
 	return AppInit{
-		FlagsAppGenState: fsAppGenState,
-		FlagsAppGenTx:    fsAppGenTx,
+		//FlagsAppGenState: fsAppGenState,
+		//FlagsAppGenTx:    fsAppGenTx,
 		AppGenTx:         CreateAppGenTx,
 		AppGenState:      AppGenStateJSON,
 		GetValidator:     AppGetValidator,

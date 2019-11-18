@@ -1,6 +1,7 @@
 package ibc
 
 import (
+	"crypto/ecdsa"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -34,8 +35,8 @@ func TestIBCMsg(t *testing.T)  {
 
 
 // 生成 apply 签名交易
-const UniqueID = "8A37BA6B8013ABE59F278EFE33D5B188"
-const ObserverID = "1234567812345678"
+const UniqueID = "61849E3829B6B42616BC2736FA44CBBE"
+const ObserverID = "1234567812345679"
 func TestApplyIBCMsg(t *testing.T)  {
 	// 将pem 格式私钥转化为 十六机制 字符串
 	priKey, err := cryptoutil.DecodePriv([]byte(testPrivKey))
@@ -60,8 +61,9 @@ func TestBankSendMsg(t *testing.T)  {
 	priKey, err := cryptoutil.DecodePriv([]byte(testPrivKey))
 	assert.NoError(t, err)
 	privByte := cryptoutil.MarshalPrivateKey(priKey)
-
-	signdata, err := SignIBCBankSendMsg("0x204bCC42559Faf6DFE1485208F7951aaD800B313", []byte(pkg), 1, privByte)
+	pub := priKey.Public().(*ecdsa.PublicKey)
+	addr, _  := cryptoutil.PublicKeyToAddress(pub)
+	signdata, err := SignIBCBankSendMsg(addr, []byte(pkg), 1, privByte)
 
 	assert.NoError(t, err)
 	httpPost(hex.EncodeToString(signdata))
@@ -116,6 +118,7 @@ func TestAll(t *testing.T)  {
 	fmt.Println("---向对方转账")
 	pkg := applyRet.Data
 	signdata, err = SignIBCBankSendMsg(FromAddr, []byte(pkg), 1, privByte)
+	fmt.Println(hex.EncodeToString(signdata))
 	receiptRet := httpPost(hex.EncodeToString(signdata))
 	assert.True(t, len(receiptRet.RawLog) < 1)
 	fmt.Println("向对方转账成功")

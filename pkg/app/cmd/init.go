@@ -16,7 +16,6 @@ import (
 	tmcli "github.com/tendermint/tendermint/libs/cli"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	tmtypes "github.com/tendermint/tendermint/types"
-	tmtime "github.com/tendermint/tendermint/types/time"
 	"net"
 	"path/filepath"
 	"time"
@@ -50,53 +49,53 @@ type InitConfig struct{
 	Overwrite 	bool
 	GenesisTime time.Time
 }
-
-func GenTxCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "gen-tx",
-		Short: "Create genesis transfer file (under [--home]/config/gentx/gentx-[nodeID].json)",
-		Args:  cobra.NoArgs,
-		RunE: func(_ *cobra.Command, args []string) error {
-			c := ctx.Config
-			c.SetRoot(viper.GetString(tmcli.HomeFlag))
-
-			ip := viper.GetString(FlagIP)
-			if len(ip) == 0 {
-				eip, err := externalIP()
-				if err != nil {
-					return err
-				}
-				ip = eip
-			}
-			genTxConfig := config.GenTx{
-				viper.GetString(FlagName),
-				viper.GetString(FlagClientHome),
-				viper.GetBool(FlagOWK),
-				ip,
-			}
-			cliPrint, genTxFile, err := gentxWithConfig(cdc, appInit, c, genTxConfig)
-			if err != nil {
-				return err
-			}
-			toPrint := struct {
-				AppMessage 	json.RawMessage `json:"app_message"`
-				GenTxFile 	json.RawMessage `json:"gen_tx_file"`
-			}{
-				cliPrint,
-				genTxFile,
-			}
-			out, err := app.MarshalJSONIndent(cdc, toPrint)
-			if err != nil {
-				return err
-			}
-			fmt.Println(string(out))
-			return nil
-		},
-	}
-	cmd.Flags().String(FlagIP, "", "external facing IP to use if left blank IP will be retrieved from this machine")
-	cmd.Flags().AddFlagSet(appInit.FlagsAppGenTx)
-	return cmd
-}
+//
+//func GenTxCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Command {
+//	cmd := &cobra.Command{
+//		Use:   "gen-tx",
+//		Short: "Create genesis transfer file (under [--home]/config/gentx/gentx-[nodeID].json)",
+//		Args:  cobra.NoArgs,
+//		RunE: func(_ *cobra.Command, args []string) error {
+//			c := ctx.Config
+//			c.SetRoot(viper.GetString(tmcli.HomeFlag))
+//
+//			ip := viper.GetString(FlagIP)
+//			if len(ip) == 0 {
+//				eip, err := externalIP()
+//				if err != nil {
+//					return err
+//				}
+//				ip = eip
+//			}
+//			genTxConfig := config.GenTx{
+//				viper.GetString(FlagName),
+//				viper.GetString(FlagClientHome),
+//				viper.GetBool(FlagOWK),
+//				ip,
+//			}
+//			cliPrint, genTxFile, err := gentxWithConfig(cdc, appInit, c, genTxConfig)
+//			if err != nil {
+//				return err
+//			}
+//			toPrint := struct {
+//				AppMessage 	json.RawMessage `json:"app_message"`
+//				GenTxFile 	json.RawMessage `json:"gen_tx_file"`
+//			}{
+//				cliPrint,
+//				genTxFile,
+//			}
+//			out, err := app.MarshalJSONIndent(cdc, toPrint)
+//			if err != nil {
+//				return err
+//			}
+//			fmt.Println(string(out))
+//			return nil
+//		},
+//	}
+//	cmd.Flags().String(FlagIP, "", "external facing IP to use if left blank IP will be retrieved from this machine")
+//	cmd.Flags().AddFlagSet(appInit.FlagsAppGenTx)
+//	return cmd
+//}
 
 func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Command {
 	cmd := &cobra.Command{
@@ -108,11 +107,11 @@ func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Com
 			config.SetRoot(viper.GetString(tmcli.HomeFlag))
 
 			initConfig := InitConfig{
-				viper.GetString(FlagChainID),
-				viper.GetBool(FlagWithTxs),
-				filepath.Join(config.RootDir, "config", "gentx"),
-				viper.GetBool(FlagOverwrite),
-				tmtime.Now(),
+				ChainID: viper.GetString(FlagChainID),
+				//viper.GetBool(FlagWithTxs),
+				//filepath.Join(config.RootDir, "config", "gentx"),
+				Overwrite: viper.GetBool(FlagOverwrite),
+				//tmtime.Now(),
 			}
 
 			chainID, nodeID, appMessage, err := InitWithConfig(cdc, appInit, config, initConfig)
@@ -139,10 +138,10 @@ func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Com
 	}
 	cmd.Flags().BoolP(FlagOverwrite, "o", false, "overwrite the genesis.json file")
 	cmd.Flags().String(FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")
-	cmd.Flags().Bool(FlagWithTxs, false, "apply existing genesis transactions from [--home]/config/gentx/")
-	cmd.Flags().AddFlagSet(appInit.FlagsAppGenState)
-	cmd.Flags().AddFlagSet(appInit.FlagsAppGenTx) // need to add this flagset for when no GenTx's provided
-	cmd.AddCommand(GenTxCmd(ctx, cdc, appInit))
+	//cmd.Flags().Bool(FlagWithTxs, false, "apply existing genesis transactions from [--home]/config/gentx/")
+	//cmd.Flags().AddFlagSet(appInit.FlagsAppGenState)
+	//cmd.Flags().AddFlagSet(appInit.FlagsAppGenTx) // need to add this flagset for when no GenTx's provided
+	//cmd.AddCommand(GenTxCmd(ctx, cdc, appInit))
 	return cmd
 }
 

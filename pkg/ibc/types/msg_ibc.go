@@ -11,9 +11,11 @@ import (
 const (
 	StateKey = ".state="
 	UniqueKey = ".uniqueid="
+	TimestampKey = ".timestamp="
 	StateReady = "ready"
 	StateProcessing = "processing"
 	StateDone = "done"
+	StateCancel = "cancel"
 
 	TimeoutProcessing = 10
 )
@@ -42,36 +44,37 @@ type IBCInfo struct {
 }
 
 
-
-func (aa *IBCInfo) MarshalJSON() ([]byte, error) {
-	type Alias IBCInfo
-	return json.Marshal(&struct {
-		UniqueID 	string		`json:"unique_id"`
-		ObserverID 	string		`json:"observer_id"`
-		*Alias
-	}{
-		UniqueID: string(aa.UniqueID),
-		ObserverID: string(aa.ObserverID),
-		Alias: (*Alias)(aa),
-	})
-}
-
-func (aa *IBCInfo) UnmarshalJSON(data []byte) error {
-	type Alias IBCInfo
-	aux := &struct {
-		UniqueID 	string		`json:"unique_id"`
-		ObserverID 	string		`json:"observer_id"`
-		*Alias
-	}{
-		Alias: (*Alias)(aa),
-	}
-	if err := json.Unmarshal(data, &aux); err != nil {
-		return err
-	}
-	aa.UniqueID = []byte(aux.UniqueID)
-	aa.ObserverID = []byte(aux.ObserverID)
-	return nil
-}
+//
+//func (aa *IBCInfo) MarshalJSON() ([]byte, error) {
+//	type Alias IBCInfo
+//	return json.Marshal(&struct {
+//		UniqueID 	string		`json:"unique_id"`
+//		ObserverID 	string		`json:"observer_id"`
+//		*Alias
+//	}{
+//		UniqueID: string(aa.UniqueID),
+//		ObserverID: string(aa.ObserverID),
+//		Alias: (*Alias)(aa),
+//	})
+//}
+//
+//func (aa *IBCInfo) UnmarshalJSON(data []byte) error {
+//	type Alias IBCInfo
+//	aux := &struct {
+//		UniqueID 	string		`json:"unique_id"`
+//		ObserverID 	string		`json:"observer_id"`
+//		*Alias
+//	}{
+//		Alias: (*Alias)(aa),
+//	}
+//	if err := json.Unmarshal(data, &aux); err != nil {
+//		return err
+//	}
+//	fmt.Println(aux.UniqueID)
+//	aa.UniqueID = []byte(aux.UniqueID)
+//	aa.ObserverID = []byte(aux.ObserverID)
+//	return nil
+//}
 
 
 func (msg IBCInfo) CanProcess() bool {
@@ -108,7 +111,7 @@ func (sim ApplyReceipt) Sign(priv []byte) (ApplyReceipt, error) {
 }
 
 func (msg *ApplyReceipt)Bytes() []byte {
-	bytes, err := IbcCdc.MarshalJSON(msg)
+	bytes, err := json.Marshal(msg)
 	if err != nil {
 		panic(err)
 	}
@@ -119,10 +122,7 @@ func (msg *ApplyReceipt)Bytes() []byte {
 func (sim *ApplyReceipt) GetSignBytes() []byte {
 	tsim := *sim
 	tsim.Signature = nil
-	signBytes, err := IbcCdc.MarshalJSON(tsim)
-	if err != nil {
-		panic(err)
-	}
+	signBytes := tsim.Bytes()
 	return signBytes
 }
 
@@ -142,7 +142,7 @@ func (br *BankReceipt) GetSignBytes() []byte {
 }
 
 func (br *BankReceipt) Bytes() []byte {
-	bytes, err := IbcCdc.MarshalJSON(br)
+	bytes, err := json.Marshal(*br)
 	if err != nil {
 		panic(err)
 	}
