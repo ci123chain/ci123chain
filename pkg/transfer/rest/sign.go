@@ -62,6 +62,14 @@ func buildTransferTx(r *http.Request, isFabric bool) (transaction.Transaction, e
 	if err != nil {
 		return nil, err
 	}
+
+	if len(froms) != 1 {
+		return nil, errors.New("Param from invalid")
+	}
+	if len(tos) != 1 {
+		return nil, errors.New("Param to invalid")
+	}
+
 	gasI, err := strconv.ParseUint(gas, 10, 64)
 	if err != nil {
 		return nil, err

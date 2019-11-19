@@ -77,12 +77,12 @@ type IBCInfo struct {
 //}
 
 
-func (msg IBCInfo) CanProcess() bool {
+func (msg IBCInfo) CanProcess(now time.Time) bool {
 	if msg.State == StateReady {
 		return true
 	}
 	if msg.State == StateProcessing {
-		if time.Now().Unix() - msg.ApplyTime.Unix() > TimeoutProcessing {
+		if now.Unix() - msg.ApplyTime.Unix() > TimeoutProcessing {
 			return true
 		}
 	}

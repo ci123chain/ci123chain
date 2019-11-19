@@ -10,7 +10,6 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/ibc/types"
 	"github.com/tanhuiya/ci123chain/pkg/supply"
 	"strconv"
-	"time"
 )
 
 const Priv = `-----BEGIN PRIVATE KEY-----
@@ -60,7 +59,7 @@ func (k IBCKeeper) GetFirstReadyIBCMsg(ctx sdk.Context) *types.IBCInfo {
 			}
 			uniqueID := itr.Value()
 			item := k.GetIBCByUniqueID(ctx, uniqueID)
-			if item.CanProcess() {
+			if item.CanProcess(ctx.BlockHeader().Time) {
 				// timeout
 				ibc_msg = item
 				break
@@ -76,11 +75,12 @@ func (k IBCKeeper) ApplyIBCMsg(ctx sdk.Context, uniqueID []byte, observerID []by
 	if ibcMsg == nil {
 		return nil, errors.New(fmt.Sprintf("ibc tx not found with uniqueID = %s", string(uniqueID)))
 	}
-	if !ibcMsg.CanProcess() {
+	if !ibcMsg.CanProcess(ctx.BlockHeader().Time) {
 		return nil, errors.New(fmt.Sprintf("ibc tx not avaliable with uniqueID = %s, state = %s", string(uniqueID), ibcMsg.State))
 	}
 	// 修改处理人状态，以及时间
-	ibcMsg.ApplyTime = time.Now()
+	// 获取当前时间
+	ibcMsg.ApplyTime = ctx.BlockHeader().Time
 	ibcMsg.ObserverID = observerID
 	bankAddr, err := getBankAddress()
 	if err != nil {
