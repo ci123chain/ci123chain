@@ -75,12 +75,13 @@ func (k IBCKeeper) ApplyIBCMsg(ctx sdk.Context, uniqueID []byte, observerID []by
 	if ibcMsg == nil {
 		return nil, errors.New(fmt.Sprintf("ibc tx not found with uniqueID = %s", string(uniqueID)))
 	}
-	if !ibcMsg.CanProcess(ctx.BlockHeader().Time) {
+	timeNow := ctx.BlockHeader().Time
+	if !ibcMsg.CanProcess(timeNow) {
 		return nil, errors.New(fmt.Sprintf("ibc tx not avaliable with uniqueID = %s, state = %s", string(uniqueID), ibcMsg.State))
 	}
 	// 修改处理人状态，以及时间
 	// 获取当前时间
-	ibcMsg.ApplyTime = ctx.BlockHeader().Time
+	ibcMsg.ApplyTime = timeNow
 	ibcMsg.ObserverID = observerID
 	bankAddr, err := getBankAddress()
 	if err != nil {
