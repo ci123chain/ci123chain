@@ -65,12 +65,28 @@ func handleMsgIBCBankSendTx(ctx sdk.Context, k keeper.IBCKeeper, tx types.IBCMsg
 	//if ibc != nil {
 	//	return sdk.ErrUnknownRequest("ibcTx already exist with uniqueID " + string(ibc.UniqueID)).Result()
 	//}
-	bz, _ := json.Marshal(ibcMsg)
-	fmt.Println(bz)
+	old_ibcMsg := k.GetIBCByUniqueID(ctx, ibcMsg.UniqueID)
+	if old_ibcMsg != nil && old_ibcMsg.State == types.StateDone {
+		receipt, err := k.MakeBankReceipt(ctx, *ibcMsg)
+		if err != nil {
+			return sdk.ErrUnknownRequest("Get bank receipt error").TraceSDK(err.Error()).Result()
+		}
+
+		receiptBz, _ := json.Marshal(*receipt)
+		return sdk.Result{Data: receiptBz}
+	}
+
+	ibcMsg.State = types.StateDone
 
 	receipt, err2 := k.MakeBankReceipt(ctx, *ibcMsg)
 	if err2 != nil {
 		return sdk.ErrUnknownRequest("Get bank receipt error").TraceSDK(err.Error()).Result()
+	}
+
+	// todo bank action
+	err2 = k.BankSend(ctx, *ibcMsg)
+	if err2 != nil {
+		return sdk.ErrInsufficientCoins(err2.Error()).Result()
 	}
 
 	// 保存该交易
@@ -79,12 +95,6 @@ func handleMsgIBCBankSendTx(ctx sdk.Context, k keeper.IBCKeeper, tx types.IBCMsg
 		return sdk.ErrUnknownRequest("Save ibcMsg error").TraceSDK(err.Error()).Result()
 	}
 	receiptBz, _ := json.Marshal(*receipt)
-
-	// todo bank action
-	err2 = k.BankSend(ctx, *ibcMsg)
-	if err2 != nil {
-		return sdk.ErrInsufficientCoins(err2.Error()).Result()
-	}
 
 	return sdk.Result{Data: receiptBz}
 }
