@@ -18,7 +18,7 @@ import (
 
 const (
 	appName = "ci123"
-	confDir = "$HOME/.ci123"
+	DefaultConfDir = "$HOME/.ci123"
 )
 
 func main()  {
@@ -43,8 +43,11 @@ func main()  {
 		)
 
 	viper.BindPFlags(rootCmd.Flags())
-	rootDir := os.ExpandEnv(confDir)
-	exector := cli.PrepareBaseCmd(rootCmd, "PC", rootDir)
+	rootDir := os.ExpandEnv(DefaultConfDir)
+	if len(viper.GetString(cli.HomeFlag)) > 0 {
+		rootDir = os.ExpandEnv(viper.GetString(cli.HomeFlag))
+	}
+	exector := cli.PrepareBaseCmd(rootCmd, "CORE", rootDir)
 	exector.Execute()
 }
 
