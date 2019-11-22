@@ -58,6 +58,21 @@ func (ctx *Context) GetBalanceByAddress(addr types.AccAddress) (uint64, error) {
 	return balance, nil
 }
 
+func (ctx *Context) GetNonceByAddress(addr types.AccAddress) (uint64, error) {
+	addrByte := acc_types.AddressStoreKey(addr)
+	res, _, err := ctx.Query("/store/main/types", addrByte)
+	var acc exported.Account
+	err = ctx.Cdc.UnmarshalBinaryLengthPrefixed(res, &acc)
+	if err != nil {
+		return 0, nil
+	}
+	nonce := acc.GetSequence()
+	if err != nil {
+		return 0, err
+	}
+	return nonce, nil
+}
+
 // PrintOutput prints output while respecting output and indent flags
 // NOTE: pass in marshalled structs that have been unmarshaled
 // because this function will panic on marshaling errors

@@ -49,7 +49,8 @@ var transferCmd = &cobra.Command{
 		if len(tos) == 0 {
 			return errors.New("must provide an address to send to")
 		}
-		nonce, err := transfer.GetNonceByAddress(from)
+		//直接getNonce
+		nonce, err := ctx.GetNonceByAddress(from)
 		if err != nil {
 			return err
 		}

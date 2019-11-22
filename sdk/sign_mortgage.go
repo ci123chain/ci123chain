@@ -2,11 +2,11 @@ package sdk
 
 import (
 	"github.com/tanhuiya/ci123chain/pkg/abci/types"
+	"github.com/tanhuiya/ci123chain/pkg/client"
 	"github.com/tanhuiya/ci123chain/pkg/client/helper"
 	"github.com/tanhuiya/ci123chain/pkg/cryptosuit"
 	"github.com/tanhuiya/ci123chain/pkg/mortgage"
 	types2 "github.com/tanhuiya/ci123chain/pkg/mortgage/types"
-	"github.com/tanhuiya/ci123chain/pkg/transfer"
 )
 
 // 生成 Mortgage 消息，抵押coin
@@ -34,7 +34,11 @@ func buildMortgageTx (from, to string, amount, gas uint64, uniqueID string) (*ty
 	if err != nil {
 		return nil, err
 	}
-	nonce, err := transfer.GetNonceByAddress(fromAddr)
+	ctx, err := client.NewClientContextFromViper()
+	if err != nil {
+		return nil,err
+	}
+	nonce, err := ctx.GetNonceByAddress(fromAddr)
 	mort := mortgage.NewMortgageMsg(fromAddr, toAddr, gas, nonce, types.Coin(amount), []byte(uniqueID))
 	return mort, nil
 }
@@ -65,7 +69,11 @@ func buildMortgageDoneTx (from string, gas uint64, uniqueID string) (*types2.Msg
 	if err != nil {
 		return nil, err
 	}
-	nonce, err := transfer.GetNonceByAddress(fromAddr)
+	ctx, err := client.NewClientContextFromViper()
+	if err != nil {
+		return nil,err
+	}
+	nonce, err := ctx.GetNonceByAddress(fromAddr)
 	mort := mortgage.NewMsgMortgageDone(fromAddr, gas, nonce, []byte(uniqueID))
 	return mort, nil
 }
@@ -96,7 +104,12 @@ func buildMortgageCancelTx (from string, gas uint64, uniqueID string) (*types2.M
 	if err != nil {
 		return nil, err
 	}
-	nonce, err := transfer.GetNonceByAddress(fromAddr)
+	ctx, err := client.NewClientContextFromViper()
+	if err != nil {
+		return nil,err
+	}
+
+	nonce, err := ctx.GetNonceByAddress(fromAddr)
 	mort := mortgage.NewMsgMortgageCancel(fromAddr, gas, nonce, []byte(uniqueID))
 	return mort, nil
 }

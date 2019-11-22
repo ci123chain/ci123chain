@@ -1,12 +1,14 @@
 package ibc
 
 import (
+	"fmt"
+	"github.com/spf13/viper"
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
+	"github.com/tanhuiya/ci123chain/pkg/client"
 	"github.com/tanhuiya/ci123chain/pkg/client/helper"
 	"github.com/tanhuiya/ci123chain/pkg/cryptosuit"
 	"github.com/tanhuiya/ci123chain/pkg/ibc"
 	"github.com/tanhuiya/ci123chain/pkg/transaction"
-	"github.com/tanhuiya/ci123chain/pkg/transfer"
 )
 
 // 生成 MortgageDone 完成交易
@@ -35,7 +37,17 @@ func buildIBCTransferMsg (from, to string, amount, gas uint64) (transaction.Tran
 	if err != nil {
 		return nil, err
 	}
-	nonce, err := transfer.GetNonceByAddress(fromAddr)
+	//viper.BindPFlags()
+	viper.Set("node", "tcp://localhost:26657")
+	viper.Set("address", fromAddr)
+	ctx, err := client.NewClientContextFromViper()
+	if err != nil {
+		return nil,err
+	}
+	balance, err := ctx.GetBalanceByAddress(fromAddr)
+	fmt.Print(balance)
+
+	nonce, err := ctx.GetNonceByAddress(fromAddr)
 	ibcMsg := ibc.NewIBCTransfer(fromAddr, toAddr, sdk.Coin(amount),  gas, nonce)
 	return ibcMsg, nil
 }

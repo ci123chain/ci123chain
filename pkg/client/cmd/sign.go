@@ -1,13 +1,6 @@
 package cmd
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/abci/types"
-	"github.com/tanhuiya/ci123chain/pkg/client"
-	"github.com/tanhuiya/ci123chain/pkg/client/context"
-	"github.com/tanhuiya/ci123chain/pkg/client/helper"
-	"github.com/tanhuiya/ci123chain/pkg/transaction"
-	"github.com/tanhuiya/ci123chain/pkg/transfer"
-	"github.com/tanhuiya/ci123chain/pkg/util"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -16,7 +9,15 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/tanhuiya/ci123chain/pkg/abci/types"
+	"github.com/tanhuiya/ci123chain/pkg/client"
+	"github.com/tanhuiya/ci123chain/pkg/client/context"
+	"github.com/tanhuiya/ci123chain/pkg/client/helper"
+	"github.com/tanhuiya/ci123chain/pkg/transaction"
+	"github.com/tanhuiya/ci123chain/pkg/transfer"
+	"github.com/tanhuiya/ci123chain/pkg/util"
 	"io/ioutil"
+	//ac "github.com/tanhuiya/ci123chain/pkg/account/keeper"
 )
 
 
@@ -54,11 +55,11 @@ var signCmd = &cobra.Command{
 		if len(tos) == 0 {
 			return errors.New("must provide an address to send to")
 		}
-		nonce, err := transfer.GetNonceByAddress(from)
+		//直接getNonce
+		nonce, err := ctx.GetNonceByAddress(from)
 		if err != nil {
 			return err
 		}
-
 		ucoin := uint64(viper.GetInt(flagAmount))
 
 		tx := transfer.NewTransferTx(from, tos[0], uint64(viper.GetInt(flagGas)), nonce , types.Coin(ucoin), isFabric)

@@ -37,7 +37,7 @@ func main()  {
 		ctx,
 		app.MakeCodec(),
 		rootCmd,
-		app.NewAppInit(),
+			app.NewAppInit(),
 		app.ConstructAppCreator(newApp, appName),
 		app.ConstructAppExporter(exportAppState, appName),
 		)

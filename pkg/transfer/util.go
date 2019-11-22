@@ -6,5 +6,7 @@ import (
 )
 
 func GetNonceByAddress(add types.AccAddress) (uint64, error) {
+
+
 	return uint64(time.Now().UnixNano()), nil
 }

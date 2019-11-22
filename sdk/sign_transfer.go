@@ -2,6 +2,7 @@ package sdk
 
 import (
 	"github.com/tanhuiya/ci123chain/pkg/abci/types"
+	"github.com/tanhuiya/ci123chain/pkg/client"
 	"github.com/tanhuiya/ci123chain/pkg/client/helper"
 	"github.com/tanhuiya/ci123chain/pkg/cryptosuit"
 	"github.com/tanhuiya/ci123chain/pkg/transaction"
@@ -41,7 +42,11 @@ func buildTransferTx(from, to string, gas, amount uint64, isFabric bool) (transa
 	if err != nil {
 		return nil, err
 	}
-	nonce, err := transfer.GetNonceByAddress(fromAddr)
+	ctx, err := client.NewClientContextFromViper()
+	if err != nil {
+		return nil,err
+	}
+	nonce, err := ctx.GetNonceByAddress(fromAddr)
 	tx := transfer.NewTransferTx(fromAddr, toAddr, gas, nonce, types.Coin(amount), isFabric)
 	return tx, nil
 }

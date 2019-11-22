@@ -40,3 +40,7 @@ func queryResolve(ctx sdk.Context, path []string, req abci.RequestQuery, keeper 
 	}
 	return retbz, nil
 }
+
+//func queryAccountNonce(ctx sdk.Context, path []string, req abci.RequestQuery, keeper IBCKeeper) (uint64, sdk.Error) {
+//	value := keeper.AccountKeeper.GetAccount(ctx,).SetSequence()
+//}

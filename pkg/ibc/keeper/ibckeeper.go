@@ -8,6 +8,7 @@ import (
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/account"
 	"github.com/tanhuiya/ci123chain/pkg/ibc/types"
+	n "github.com/tanhuiya/ci123chain/pkg/nonce"
 	"github.com/tanhuiya/ci123chain/pkg/supply"
 	"strconv"
 )
@@ -70,11 +71,21 @@ func (k IBCKeeper) GetFirstReadyIBCMsg(ctx sdk.Context) *types.IBCInfo {
 }
 
 // 申请处理某笔交易
-func (k IBCKeeper) ApplyIBCMsg(ctx sdk.Context, uniqueID []byte, observerID []byte) (*types.ApplyReceipt, error) {
+func (k IBCKeeper) ApplyIBCMsg(ctx sdk.Context, uniqueID []byte, observerID []byte, nonce uint64) (*types.ApplyReceipt, error) {
+
 	ibcMsg := k.GetIBCByUniqueID(ctx, uniqueID)
 	if ibcMsg == nil {
 		return nil, errors.New(fmt.Sprintf("ibc tx not found with uniqueID = %s", string(uniqueID)))
 	}
+
+	//检查nonce
+	savedSequence := k.AccountKeeper.GetAccount(ctx, ibcMsg.FromAddress).GetSequence()
+	checkResult := n.CheckIBCNonce(ctx, savedSequence, nonce)
+	if checkResult != true {
+		return nil, errors.New(fmt.Sprintf("Unexpected nonce with uniqueID = %s", string(uniqueID)))
+	}
+	//
+
 	timeNow := ctx.BlockHeader().Time
 	if !ibcMsg.CanProcess(timeNow) {
 		return nil, errors.New(fmt.Sprintf("ibc tx not avaliable with uniqueID = %s, state = %s", string(uniqueID), ibcMsg.State))
@@ -97,11 +108,26 @@ func (k IBCKeeper) ApplyIBCMsg(ctx sdk.Context, uniqueID []byte, observerID []by
 		if !valid {
 			ibcMsg.State = types.StateCancel
 			err = k.SetIBCMsg(ctx, *ibcMsg)
+
+			//抵押失败，nonce+1
+			 err = k.AccountKeeper.GetAccount(ctx, ibcMsg.FromAddress).SetSequence(nonce + 1)
+			 if err != nil {
+			 	return nil, errors.New("Failed to set nonce of account: "+ ibcMsg.FromAddress.Hex() )
+			 }
+			//
 			return nil, errors.New("Infficient balance of account: " + ibcMsg.FromAddress.Hex())
 		}
 		if err1 := k.SupplyKeeper.SendCoinsFromAccountToModule(ctx, ibcMsg.FromAddress, types.ModuleName, ibcMsg.Amount); err1 != nil {
 			ibcMsg.State = types.StateCancel
 			err = k.SetIBCMsg(ctx, *ibcMsg)
+
+			//转账失败，nonce+1
+			saveErr := k.AccountKeeper.GetAccount(ctx, ibcMsg.FromAddress).SetSequence(nonce + 1)
+			if saveErr != nil {
+				return nil, errors.New("Failed to set nonce of account: "+ ibcMsg.FromAddress.Hex() )
+			}
+			//
+
 			return nil, errors.New(err1.Error())
 		}
 	}
