@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/tanhuiya/ci123chain/pkg/app"
+	"github.com/tanhuiya/ci123chain/pkg/config"
 	"github.com/tanhuiya/ci123chain/pkg/node"
 	"github.com/tanhuiya/ci123chain/pkg/validator"
 	"github.com/tendermint/go-amino"
@@ -107,6 +108,7 @@ func testnetGenWithConfig(c *cfg.Config, cdc *amino.Codec, appInit app.AppInit) 
 
 	var genFilePath string
 	var validators []types.GenesisValidator
+	var persistentPeers string
 	//生成chainID和rootDir
 	if chainID == "" {
 		chainID = "chain-" + cmn.RandStr(6)
@@ -130,6 +132,16 @@ func testnetGenWithConfig(c *cfg.Config, cdc *amino.Codec, appInit app.AppInit) 
 		if err != nil {
 			return err
 		}
+		nodeKey, err := node.LoadNodeKey(c.NodeKeyFile())
+		if err != nil {
+			return err
+		}
+		nodeID := string(nodeKey.ID())
+		comma := ","
+		if len(persistentPeers) == 0 {
+			comma = ""
+		}
+		persistentPeers += fmt.Sprintf("%s%s@%s:26656", comma, nodeID, nodeDirName + ".example.com")
 	}
 
 	genTime := tmtime.Now()
@@ -145,7 +157,8 @@ func testnetGenWithConfig(c *cfg.Config, cdc *amino.Codec, appInit app.AppInit) 
 		}
 		c.Moniker = di.DirName()
 		c.SetRoot(di.NodeDir())
-
+		c.P2P.PersistentPeers = persistentPeers
+		config.SaveConfig(c)
 		validator, appState, err := getValidator(cdc, c, appInit)
 		if err != nil{
 			return err
@@ -168,7 +181,8 @@ func testnetGenWithConfig(c *cfg.Config, cdc *amino.Codec, appInit app.AppInit) 
 		c.Moniker = di.DirName()
 		c.SetRoot(di.NodeDir())
 		cfg.EnsureRoot(di.NodeDir())
-
+		c.P2P.PersistentPeers = persistentPeers
+		config.SaveConfig(c)
 		if err := CopyFile(genFilePath, filepath.Join(c.RootDir, "config/genesis.json")); err != nil {
 			return err
 		}
@@ -206,8 +220,16 @@ func testnetAddNode(c *cfg.Config, cdc *amino.Codec, appInit app.AppInit) error{
 	if err != nil {
 		return err
 	}
+	configFilePath := filepath.Join(rootDir, "node"+ string(nodeNum) +"/cid/config/config.toml")
+	err = os.Remove(configFilePath)
+	if err != nil{
+		return err
+	}
 	genFilePath := filepath.Join(rootDir, "node0/cid/config/genesis.json")
 	if err := CopyFile(genFilePath, filepath.Join(c.RootDir, "config/genesis.json")); err != nil {
+		return err
+	}
+	if err := CopyFile(filepath.Join(rootDir, "node0/cid/config/config.toml"), configFilePath); err != nil {
 		return err
 	}
 	fmt.Printf("Successfully add node%d directories \n", nodeNum)
