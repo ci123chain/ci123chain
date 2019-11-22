@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -15,6 +16,7 @@ import (
 	"github.com/tendermint/tendermint/types"
 	tmtime "github.com/tendermint/tendermint/types/time"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 )
@@ -176,6 +178,39 @@ func testnetGenWithConfig(c *cfg.Config, cdc *amino.Codec, appInit app.AppInit) 
 }
 
 func testnetAddNode(c *cfg.Config, cdc *amino.Codec, appInit app.AppInit) error{
+	outDir := viper.GetString(outputDir)
+	if chainID == "" {
+		return errors.New("chainID cannot be nil")
+	}
+	rootDir := filepath.Join(outDir, "."+chainID)
+	_, err := os.Stat(rootDir)
+	if err != nil {
+		return err
+	}
+	nodeNum, err := getNodeNum(rootDir)
+	if err != nil {
+		return err
+	}
+
+	id := nodeNum
+	di := getDirsInfo(rootDir, id)
+	c.Moniker = di.DirName()
+	c.SetRoot(di.NodeDir())
+	cfg.EnsureRoot(di.NodeDir())
+	pv := validator.GenFilePV(
+		c.PrivValidatorKeyFile(),
+		c.PrivValidatorStateFile(),
+		secp256k1.GenPrivKey(),
+	)
+	_, err = node.GenNodeKeyByPrivKey(c.NodeKeyFile(), pv.Key.PrivKey)
+	if err != nil {
+		return err
+	}
+	genFilePath := filepath.Join(rootDir, "node0/cid/config/genesis.json")
+	if err := CopyFile(genFilePath, filepath.Join(c.RootDir, "config/genesis.json")); err != nil {
+		return err
+	}
+	fmt.Printf("Successfully add node%d directories \n", nodeNum)
 	return nil
 }
 
@@ -249,4 +284,14 @@ func getValidator(cdc *amino.Codec, c *cfg.Config, appInit app.AppInit) (*types.
 		return  nil, nil, err
 	}
 	return &validator, &appState, nil
+}
+
+func getNodeNum(rootDir string) (nodeNum int, dir_err error) {
+	files, dir_err := ioutil.ReadDir(rootDir)
+	for i := 0; i < len(files); i++ {
+		if files[i].IsDir() {
+			nodeNum++
+		}
+	}
+	return nodeNum, dir_err
 }
