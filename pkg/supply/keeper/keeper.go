@@ -102,5 +102,15 @@ func (k Keeper) SendCoinsFromModuleToAccount(ctx sdk.Context, senderModule strin
 		return sdk.ErrUnknownAddress(fmt.Sprintf("module account %s does not exist", senderModule))
 	}
 
+
 	return k.ak.Transfer(ctx, senderAddr, recipientAddr, amt)
 }
+
+///-------------
+
+//func (k Keeper) SetAccountSequence(ctx sdk.Context, addr sdk.AccAddress, nonce uint64) sdk.Error {
+//	k.ak.SetSequence(ctx, addr, nonce)
+//	return nil
+//}
+
+///-------------

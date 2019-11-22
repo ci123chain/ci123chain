@@ -109,11 +109,14 @@ func (k IBCKeeper) ApplyIBCMsg(ctx sdk.Context, uniqueID []byte, observerID []by
 			ibcMsg.State = types.StateCancel
 			err = k.SetIBCMsg(ctx, *ibcMsg)
 
+			//-----------------
 			//抵押失败，nonce+1
-			 err = k.AccountKeeper.GetAccount(ctx, ibcMsg.FromAddress).SetSequence(nonce + 1)
+			account := k.AccountKeeper.GetAccount(ctx, ibcMsg.FromAddress)
+			 err = account.SetSequence(nonce + 1)
 			 if err != nil {
 			 	return nil, errors.New("Failed to set nonce of account: "+ ibcMsg.FromAddress.Hex() )
 			 }
+			k.AccountKeeper.SetAccount(ctx, account)
 			//
 			return nil, errors.New("Infficient balance of account: " + ibcMsg.FromAddress.Hex())
 		}
@@ -122,10 +125,12 @@ func (k IBCKeeper) ApplyIBCMsg(ctx sdk.Context, uniqueID []byte, observerID []by
 			err = k.SetIBCMsg(ctx, *ibcMsg)
 
 			//转账失败，nonce+1
-			saveErr := k.AccountKeeper.GetAccount(ctx, ibcMsg.FromAddress).SetSequence(nonce + 1)
+			account := k.AccountKeeper.GetAccount(ctx, ibcMsg.FromAddress)
+			saveErr := account.SetSequence(nonce + 1)
 			if saveErr != nil {
 				return nil, errors.New("Failed to set nonce of account: "+ ibcMsg.FromAddress.Hex() )
 			}
+			k.AccountKeeper.SetAccount(ctx, account)
 			//
 
 			return nil, errors.New(err1.Error())

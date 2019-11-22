@@ -46,7 +46,8 @@ func NewAnteHandler( authKeeper auth.AuthKeeper) types.AnteHandler {
 		if err := tx.ValidateBasic(); err != nil {
 			return newCtx, err.Result(), true
 		}
-
+										//10 * len(TxBytes())   每bit消耗的 * 交易的大小
+										//覆盖 comsumed, <= limit.
 		newCtx.GasMeter().ConsumeGas( uint64(params.TxSizeCostPerByte) * types.Gas(len(newCtx.TxBytes())), "txsize")
 
 		return newCtx, types.Result{GasWanted: commonTx.Common.Gas}, false

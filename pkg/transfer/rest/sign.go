@@ -3,6 +3,7 @@ package rest
 import (
 	"github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/abci/types/rest"
+	"github.com/tanhuiya/ci123chain/pkg/app"
 	"github.com/tanhuiya/ci123chain/pkg/client"
 	"github.com/tanhuiya/ci123chain/pkg/client/context"
 	"github.com/tanhuiya/ci123chain/pkg/client/helper"
@@ -13,6 +14,8 @@ import (
 	"net/http"
 	"strconv"
 )
+
+var cdc = app.MakeCodec()
 
 func SignTxRequestHandler(cliCtx context.Context) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
@@ -80,7 +83,7 @@ func buildTransferTx(r *http.Request, isFabric bool) (transaction.Transaction, e
 	if err != nil {
 		return nil, err
 	}
-	ctx, err := client.NewClientContextFromViper()
+	ctx, err := client.NewClientContextFromViper(cdc)
 	if err != nil {
 		return nil,err
 	}

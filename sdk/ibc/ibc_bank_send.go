@@ -1,6 +1,7 @@
 package ibc
 
 import (
+	"github.com/spf13/viper"
 	"github.com/tanhuiya/ci123chain/pkg/client"
 	"github.com/tanhuiya/ci123chain/pkg/client/helper"
 	"github.com/tanhuiya/ci123chain/pkg/cryptosuit"
@@ -30,8 +31,10 @@ func buildIBCBankSendMsg (from string, raw []byte, gas uint64) (transaction.Tran
 	if err != nil {
 		return nil, err
 	}
+	viper.Set("node", "tcp://localhost:26657")
+	viper.Set("address", from)
 
-	ctx, err := client.NewClientContextFromViper()
+	ctx, err := client.NewClientContextFromViper(cdc)
 	if err != nil {
 		return nil,err
 	}

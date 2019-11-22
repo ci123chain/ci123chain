@@ -66,10 +66,11 @@ func (ctx *Context) GetNonceByAddress(addr types.AccAddress) (uint64, error) {
 	if err != nil {
 		return 0, nil
 	}
-	nonce := acc.GetSequence()
+	//err = acc.SetSequence(100)
 	if err != nil {
-		return 0, err
+		return 0, nil
 	}
+	nonce := acc.GetSequence()
 	return nonce, nil
 }
 

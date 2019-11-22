@@ -99,3 +99,12 @@ func (am *AccountKeeper) getBalance(ctx types.Context, addr types.AccAddress) ty
 	return acc.GetCoin()
 
 }
+
+
+//func (ak *AccountKeeper) SetSequence(ctx types.Context, addr types.AccAddress, nonce uint64) types.Error {
+//	//err := ak.SetSequence(ctx, addr, nonce)
+//	//if err != nil {
+//	//	return err
+//	//}
+//	return nil
+//}

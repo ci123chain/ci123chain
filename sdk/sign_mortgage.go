@@ -2,13 +2,14 @@ package sdk
 
 import (
 	"github.com/tanhuiya/ci123chain/pkg/abci/types"
+	"github.com/tanhuiya/ci123chain/pkg/app"
 	"github.com/tanhuiya/ci123chain/pkg/client"
 	"github.com/tanhuiya/ci123chain/pkg/client/helper"
 	"github.com/tanhuiya/ci123chain/pkg/cryptosuit"
 	"github.com/tanhuiya/ci123chain/pkg/mortgage"
 	types2 "github.com/tanhuiya/ci123chain/pkg/mortgage/types"
 )
-
+var cdc = app.MakeCodec()
 // 生成 Mortgage 消息，抵押coin
 func SignMortgage(from, to string, amount, gas uint64, uniqueID string, priv []byte) ([]byte, error) {
 	tx, err := buildMortgageTx(from, to, amount, gas, uniqueID)
@@ -34,7 +35,7 @@ func buildMortgageTx (from, to string, amount, gas uint64, uniqueID string) (*ty
 	if err != nil {
 		return nil, err
 	}
-	ctx, err := client.NewClientContextFromViper()
+	ctx, err := client.NewClientContextFromViper(cdc)
 	if err != nil {
 		return nil,err
 	}
@@ -69,7 +70,7 @@ func buildMortgageDoneTx (from string, gas uint64, uniqueID string) (*types2.Msg
 	if err != nil {
 		return nil, err
 	}
-	ctx, err := client.NewClientContextFromViper()
+	ctx, err := client.NewClientContextFromViper(cdc)
 	if err != nil {
 		return nil,err
 	}
@@ -104,7 +105,7 @@ func buildMortgageCancelTx (from string, gas uint64, uniqueID string) (*types2.M
 	if err != nil {
 		return nil, err
 	}
-	ctx, err := client.NewClientContextFromViper()
+	ctx, err := client.NewClientContextFromViper(cdc)
 	if err != nil {
 		return nil,err
 	}

@@ -1,6 +1,7 @@
 package ibc
 
 import (
+	"github.com/spf13/viper"
 	"github.com/tanhuiya/ci123chain/pkg/client"
 	"github.com/tanhuiya/ci123chain/pkg/client/helper"
 	"github.com/tanhuiya/ci123chain/pkg/cryptosuit"
@@ -30,7 +31,9 @@ func buildApplyIBCMsg (from string, uniqueID, observerID []byte, gas uint64) (tr
 	if err != nil {
 		return nil, err
 	}
-	ctx, err := client.NewClientContextFromViper()
+	viper.Set("node", "tcp://localhost:26657")
+	viper.Set("address", from)
+	ctx, err := client.NewClientContextFromViper(cdc)
 	if err != nil {
 		return nil,err
 	}

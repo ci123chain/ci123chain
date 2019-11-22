@@ -1,24 +1,29 @@
 package main
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/app"
-	"github.com/tanhuiya/ci123chain/pkg/app/cmd"
-	"github.com/tanhuiya/ci123chain/pkg/logger"
 	"encoding/json"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/tanhuiya/ci123chain/pkg/app"
+	"github.com/tanhuiya/ci123chain/pkg/app/cmd"
+	"github.com/tanhuiya/ci123chain/pkg/logger"
+	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/cli"
+	"github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/types"
 	"github.com/tendermint/tm-db"
-	"github.com/tendermint/tendermint/libs/log"
-	abci "github.com/tendermint/tendermint/abci/types"
 	"io"
 	"os"
 )
 
 const (
 	appName = "ci123"
-	confDir = "$HOME/.ci123"
+	DefaultConfDir = "$HOME/.ci123"
+	flagLogLevel       = "log_level"
+	logDEBUG     = "main:debug,state:debug,*:debug"
+	logINFO      = "main:info,state:info,*:info"
+	logERROR     = "main:error,state:error,*:error"
+	logNONE      = "main:none,state:none,*:none"
 )
 
 func main()  {
@@ -28,10 +33,20 @@ func main()  {
 		Use: 	"ci123",
 		Short:  "ci123 node",
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			return app.SetupContext(ctx)
+			switch viper.GetString(flagLogLevel) {
+			case "debug":
+				return app.SetupContext(ctx, logDEBUG)
+			case "info":
+				return app.SetupContext(ctx, logINFO)
+			case "error":
+				return app.SetupContext(ctx, logERROR)
+			case "none":
+				return app.SetupContext(ctx, logNONE)
+			}
+			return app.SetupContext(ctx, logINFO)
 		},
 	}
-
+	rootCmd.Flags().String(flagLogLevel, "info", "Run abci app with different log level")
 	rootCmd.PersistentFlags().String("log_level", ctx.Config.LogLevel, "log level")
 	cmd.AddServerCommands(
 		ctx,
@@ -43,8 +58,11 @@ func main()  {
 		)
 
 	viper.BindPFlags(rootCmd.Flags())
-	rootDir := os.ExpandEnv(confDir)
-	exector := cli.PrepareBaseCmd(rootCmd, "PC", rootDir)
+	rootDir := os.ExpandEnv(DefaultConfDir)
+	if len(viper.GetString(cli.HomeFlag)) > 0 {
+		rootDir = os.ExpandEnv(viper.GetString(cli.HomeFlag))
+	}
+	exector := cli.PrepareBaseCmd(rootCmd, "CORE", rootDir)
 	exector.Execute()
 }
 

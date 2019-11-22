@@ -28,7 +28,7 @@ func NewContext(config *cfg.Config, logger log.Logger) *Context {
 	return &Context{config, logger}
 }
 
-func SetupContext(ctx *Context) error {
+func SetupContext(ctx *Context, level string) error {
 	root := viper.GetString(tmcli.HomeFlag)
 	c, err := config.GetConfig(root)
 	if err == config.ErrConfigNotFound {
@@ -42,7 +42,7 @@ func SetupContext(ctx *Context) error {
 		return err
 	}
 	c.SetRoot(root)
-	lg := logger.GetDefaultLogger(c.LogLevel)
+	lg := logger.GetDefaultLogger(level)
 	ctx.Config = c
 	ctx.Logger = lg
 	return nil

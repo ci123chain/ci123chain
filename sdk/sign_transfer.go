@@ -42,7 +42,7 @@ func buildTransferTx(from, to string, gas, amount uint64, isFabric bool) (transa
 	if err != nil {
 		return nil, err
 	}
-	ctx, err := client.NewClientContextFromViper()
+	ctx, err := client.NewClientContextFromViper(cdc)
 	if err != nil {
 		return nil,err
 	}
