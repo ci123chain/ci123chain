@@ -62,11 +62,10 @@ type RestServer struct {
 
 func NewRestServer() *RestServer {
 	r := mux.NewRouter()
-	cliCtx, err := client.NewClientContextFromViper()
+	cliCtx, err := client.NewClientContextFromViper(cdc)
 	if err != nil {
 		return nil
 	}
-	cliCtx = cliCtx.WithCodec(cdc)
 
 	rpc.RegisterRoutes(cliCtx, r)
 	accountRpc.RegisterRoutes(cliCtx, r)

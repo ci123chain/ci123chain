@@ -20,3 +20,4 @@ var (
 	NewMsgMortgageCancel = types.NewMsgMortgageCancel
 	NewMsgMortgageDone  = types.NewMsgMortgageDone
 )
+

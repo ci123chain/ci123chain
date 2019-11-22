@@ -1,6 +1,7 @@
 package client
 
 import (
+	"github.com/tanhuiya/ci123chain/pkg/abci/codec"
 	"github.com/tanhuiya/ci123chain/pkg/client/context"
 	"github.com/tanhuiya/ci123chain/pkg/client/helper"
 	"github.com/spf13/viper"
@@ -8,7 +9,7 @@ import (
 	"os"
 )
 
-func NewClientContextFromViper() (context.Context, error) {
+func NewClientContextFromViper(cdc *codec.Codec) (context.Context, error) {
 	nodeURI := viper.GetString(helper.FlagNode)
 
 	var rpc client.Client
@@ -27,6 +28,6 @@ func NewClientContextFromViper() (context.Context, error) {
 		InputAddressed: addrs,
 		NodeURI: nodeURI,
 		Client: rpc,
-		//CryptoSuit: cryptosuit.GetSignIdentity(uint8(cryptoType)),
+		Cdc: 	cdc,
 	}, nil
 }

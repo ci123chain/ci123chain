@@ -20,7 +20,7 @@ var balanceCmd = &cobra.Command{
 	Short: "",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		viper.BindPFlags(cmd.Flags())
-		ctx, err := client.NewClientContextFromViper()
+		ctx, err := client.NewClientContextFromViper(cdc)
 		if err != nil {
 			return  err
 		}
