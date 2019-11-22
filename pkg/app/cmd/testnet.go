@@ -111,7 +111,7 @@ func testnetGenWithConfig(c *cfg.Config, cdc *amino.Codec, appInit app.AppInit) 
 	if chainID == "" {
 		chainID = "chain-" + cmn.RandStr(6)
 	}
-	rootDir := filepath.Join(outDir, "."+chainID)
+	rootDir := filepath.Join(outDir, chainID)
 
 	//生成nodedir和Key和config
 	for i := 0; i < numValidators+numNonValidators; i++ {
@@ -182,7 +182,7 @@ func testnetAddNode(c *cfg.Config, cdc *amino.Codec, appInit app.AppInit) error{
 	if chainID == "" {
 		return errors.New("chainID cannot be nil")
 	}
-	rootDir := filepath.Join(outDir, "."+chainID)
+	rootDir := filepath.Join(outDir, chainID)
 	_, err := os.Stat(rootDir)
 	if err != nil {
 		return err
