@@ -6,7 +6,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/tanhuiya/ci123chain/pkg/app"
-	"github.com/tanhuiya/ci123chain/pkg/config"
 	"github.com/tanhuiya/ci123chain/pkg/node"
 	"github.com/tanhuiya/ci123chain/pkg/validator"
 	"github.com/tendermint/go-amino"
@@ -104,8 +103,7 @@ func testnetGenWithConfig(c *cfg.Config, cdc *amino.Codec, appInit app.AppInit) 
 	numValidators := viper.GetInt(nValidators)
 	numNonValidators := viper.GetInt(nNonValidators)
 
-	var genesisFilePath string
-	var genFile string
+	var genFilePath string
 	var validators []types.GenesisValidator
 	//生成chainID和rootDir
 	if chainID == "" {
@@ -146,17 +144,16 @@ func testnetGenWithConfig(c *cfg.Config, cdc *amino.Codec, appInit app.AppInit) 
 		c.Moniker = di.DirName()
 		c.SetRoot(di.NodeDir())
 
-		genfile, validator, appState, err := getValidator(cdc, c, appInit)
+		validator, appState, err := getValidator(cdc, c, appInit)
 		if err != nil{
 			return err
 		}
 		validators = append(validators, *validator)
 		if i == 0{
-			genFile = genfile
-			genesisFilePath = c.GenesisFile()
+			genFilePath = c.GenesisFile()
 		}
 		if i == numValidators-1 {
-			err := writeGenesisFile(cdc, genFile, initConfig.ChainID, validators, *appState, initConfig.GenesisTime)
+			err := writeGenesisFile(cdc, genFilePath, initConfig.ChainID, validators, *appState, initConfig.GenesisTime)
 			if err != nil {
 				return err
 			}
@@ -170,7 +167,7 @@ func testnetGenWithConfig(c *cfg.Config, cdc *amino.Codec, appInit app.AppInit) 
 		c.SetRoot(di.NodeDir())
 		cfg.EnsureRoot(di.NodeDir())
 
-		if err := CopyFile(genesisFilePath, filepath.Join(c.RootDir, "config/genesis.json")); err != nil {
+		if err := CopyFile(genFilePath, filepath.Join(c.RootDir, "config/genesis.json")); err != nil {
 			return err
 		}
 	}
@@ -240,31 +237,16 @@ func CopyFile(src, dst string) error {
 	return out.Close()
 }
 
-func getValidator(cdc *amino.Codec, c *cfg.Config, appInit app.AppInit) (string, *types.GenesisValidator, *json.RawMessage, error){
-	genTxConfig := config.GenTx{
-		viper.GetString(FlagName),
-		viper.GetString(FlagClientHome),
-		viper.GetBool(FlagOWK),
-		"127.0.0.1",
-	}
-	genFile := c.GenesisFile()
-	// Write updated config with moniker
-	// c.Moniker = genTxConfig.Name
-	// config.SaveConfig(c)
+func getValidator(cdc *amino.Codec, c *cfg.Config, appInit app.AppInit) (*types.GenesisValidator, *json.RawMessage, error){
 	nodeKey, err := node.LoadNodeKey(c.NodeKeyFile())
 	if err != nil {
-		return "", nil, nil, err
+		return  nil, nil, err
 	}
 
-	_, _, validator, err := appInit.AppGenTx(cdc, nodeKey.PubKey(), genTxConfig)
-	if err != nil {
-		return "", nil, nil, err
-	}
-	//validators := []types.GenesisValidator{validator}
-	//appGenTxs := []json.RawMessage{appGenTx}
+	validator := appInit.GetValidator(nodeKey.PubKey(), viper.GetString(FlagName))
 	appState, err := appInit.AppGenState()
 	if err != nil {
-		return "", nil, nil, err
+		return  nil, nil, err
 	}
-	return genFile, &validator, &appState, nil
+	return &validator, &appState, nil
 }
