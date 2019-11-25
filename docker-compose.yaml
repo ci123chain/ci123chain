@@ -1,0 +1,38 @@
+version: '3.7'
+services:
+  node0.example.com:
+    image: cichain:v0.0.1
+    container_name: node0.example.com
+    volumes:
+      - ~/ci123/node0/cid/config:/root/.ci123/config
+      - ~/ci123/node0/cid/data:/root/.ci123/data
+    ports:
+      - '1319:1317'
+    networks:
+      cichain:
+  node1.example.com:
+    image: cichain:v0.0.1
+    container_name: node1.example.com
+    volumes:
+      - ~/ci123/node1/cid/config:/root/.ci123/config
+      - ~/ci123/node1/cid/data:/root/.ci123/data
+    networks:
+      cichain:
+  node2.example.com:
+    image: cichain:v0.0.1
+    container_name: node2.example.com
+    volumes:
+      - ~/ci123/node2/cid/config:/root/.ci123/config
+      - ~/ci123/node2/cid/data:/root/.ci123/data
+    networks:
+      cichain:
+  node3.example.com:
+    image: cichain:v0.0.1
+    container_name: node3.example.com
+    volumes:
+      - ~/ci123/node3/cid/config:/root/.ci123/config
+      - ~/ci123/node3/cid/data:/root/.ci123/data
+    networks:
+      cichain:
+networks:
+  cichain:

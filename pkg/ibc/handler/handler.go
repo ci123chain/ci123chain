@@ -63,7 +63,6 @@ func handleMsgApplyIBCTx(ctx sdk.Context, k keeper.IBCKeeper, tx types.ApplyIBCT
 	return sdk.Result{Data: signedIBCMsgBz}
 }
 
-
 // 第二步: 跨链交易 bank 转账 (fabric -> ci)
 func handleMsgIBCBankSendTx(ctx sdk.Context, k keeper.IBCKeeper, tx types.IBCMsgBankSend) sdk.Result {
 

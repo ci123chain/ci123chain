@@ -42,3 +42,8 @@ docker-stop:
 
 docker-restart:
 	docker ps -a | grep "ci123-container-" | awk '{print $$1}' | xargs docker start
+
+.PHONY: build-doc
+build-doc: build-linux build-img
+build-img:
+    docker build -t cichain:v0.0.1 .
