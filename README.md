@@ -1,1 +1,4 @@
-# 中台模板 blockchain端 hyperledger-go框架
+# 中台 ci123chain
+
+# 启动
+make release
