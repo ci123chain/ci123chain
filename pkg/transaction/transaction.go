@@ -18,6 +18,9 @@ type Transaction interface {
 	SetSignature([]byte)
 	Bytes() []byte
 	SetPubKey([]byte)
+	GetGas() uint64
+	GetNonce() uint64
+	GetFromAddress() types.AccAddress
 }
 
 

@@ -13,8 +13,8 @@ import (
 var cdc = app.MakeCodec()
 
 // 生成 MortgageDone 完成交易
-func SignIBCTransferMsg(from string, to string, amount, gas uint64, priv []byte) ([]byte, error) {
-	tx, err := buildIBCTransferMsg(from, to, amount, gas)
+func SignIBCTransferMsg(from string, to string, amount, gas uint64, priv []byte, node string) ([]byte, error) {
+	tx, err := buildIBCTransferMsg(from, to, amount, gas, node)
 	if err != nil {
 		return nil, err
 	}
@@ -29,7 +29,7 @@ func SignIBCTransferMsg(from string, to string, amount, gas uint64, priv []byte)
 }
 
 
-func buildIBCTransferMsg (from, to string, amount, gas uint64) (transaction.Transaction, error) {
+func buildIBCTransferMsg (from, to string, amount, gas uint64, node string) (transaction.Transaction, error) {
 	fromAddr, err := helper.StrToAddress(from)
 	if err != nil {
 		return nil, err
@@ -38,7 +38,7 @@ func buildIBCTransferMsg (from, to string, amount, gas uint64) (transaction.Tran
 	if err != nil {
 		return nil, err
 	}
-	viper.Set("node", "tcp://localhost:26657")
+	viper.Set("node", "tcp://" + node)
 	viper.Set("address", fromAddr)
 	ctx, err := client.NewClientContextFromViper(cdc)
 	if err != nil {

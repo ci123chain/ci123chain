@@ -79,6 +79,17 @@ func (msg *MsgMortgage) Route() string {
 	return RouterKey
 }
 
+func (msg *MsgMortgage) GetGas() uint64 {
+	return msg.CommonTx.Gas
+}
+
+func (msg *MsgMortgage) GetNonce() uint64 {
+	return msg.CommonTx.Nonce
+}
+
+func (msg *MsgMortgage) GetFromAddress() sdk.AccAddress {
+	return msg.CommonTx.From
+}
 
 type Mortgage struct {
 	MsgMortgage

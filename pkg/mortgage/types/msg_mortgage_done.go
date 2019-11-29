@@ -26,6 +26,7 @@ func NewMsgMortgageDone(from sdk.AccAddress, gas, nonce uint64, uniqueID []byte)
 func (msg *MsgMortgageDone) Route() string {
 	return RouterKey
 }
+
 func (msg *MsgMortgageDone) ValidateBasic() sdk.Error {
 	if msg.CommonTx.From.Empty() {
 		return sdk.ErrInvalidAddress("missing sender address")
@@ -58,4 +59,16 @@ func (msg *MsgMortgageDone)Bytes() []byte {
 
 func (msg *MsgMortgageDone)SetPubKey(pub []byte) {
 	msg.CommonTx.PubKey = pub
+}
+
+func (msg *MsgMortgageDone) GetGas() uint64 {
+	return msg.CommonTx.Gas
+}
+
+func (msg *MsgMortgageDone) GetNonce() uint64 {
+	return msg.CommonTx.Nonce
+}
+
+func (msg *MsgMortgageDone) GetFromAddress() sdk.AccAddress {
+	return msg.CommonTx.From
 }

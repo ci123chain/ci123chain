@@ -14,6 +14,9 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/auth/ante"
 	"github.com/tanhuiya/ci123chain/pkg/config"
 	"github.com/tanhuiya/ci123chain/pkg/db"
+	disrt "github.com/tanhuiya/ci123chain/pkg/distribution"
+	distr "github.com/tanhuiya/ci123chain/pkg/distribution"
+	"github.com/tanhuiya/ci123chain/pkg/fc"
 	"github.com/tanhuiya/ci123chain/pkg/ibc"
 	"github.com/tanhuiya/ci123chain/pkg/mortgage"
 	"github.com/tanhuiya/ci123chain/pkg/params"
@@ -52,6 +55,9 @@ var (
 	SupplyStoreKey   = sdk.NewKVStoreKey(supply.StoreKey)
 	MortgageStoreKey = sdk.NewKVStoreKey(mortgage.StoreKey)
 	IBCStoreKey 	 = sdk.NewKVStoreKey(ibc.StoreKey)
+
+	fcStoreKey       = sdk.NewKVStoreKey(fc.FcStoreKey)
+	disrtStoreKey         = sdk.NewKVStoreKey(distr.DisrtKey)
 
 	ModuleBasics = module.NewBasicManager(
 		account.AppModuleBasic{},
@@ -112,6 +118,9 @@ func NewChain(logger log.Logger, tmdb tmdb.DB, traceStore io.Writer) *Chain {
 
 	ibcKeeper := ibc.NewKeeper(IBCStoreKey, accKeeper, supplyKeeper)
 
+	fcKeeper := fc.NewFcKeeper(cdc, fcStoreKey, accKeeper)
+	distrKeeper := disrt.NewKeeper(cdc, disrtStoreKey, fcKeeper, accKeeper)
+
 	// 设置module
 
 	c.mm = module.NewManager(
@@ -125,7 +134,8 @@ func NewChain(logger log.Logger, tmdb tmdb.DB, traceStore io.Writer) *Chain {
 
 	c.QueryRouter().AddRoute(ibc.ModuleName, ibc.NewQuerier(ibcKeeper))
 
-	c.SetAnteHandler(ante.NewAnteHandler(c.authKeeper))
+	c.SetAnteHandler(ante.NewAnteHandler(c.authKeeper, accKeeper, fcKeeper))
+	c.SetBeginBlocker(disrt.BeginBlocker(accKeeper, distrKeeper))
 	c.SetInitChainer(c.InitChainer)
 
 	err := c.mountStores()
@@ -144,6 +154,8 @@ func (c *Chain) mountStores() error {
 		AuthStoreKey,
 		MortgageStoreKey,
 		IBCStoreKey,
+		fcStoreKey,
+		disrtStoreKey,
 	}
 	c.MountStoresIAVL(keys...)
 
