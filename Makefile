@@ -8,29 +8,36 @@ CLI?=$(BUILD_DIR)/cli
 
 GO_BUILD_CMD=$(GO_BIN) build
 
+MOD?=vendor
+
+PROXY=https://goproxy.io
+
 .PHONY: build
 build: server cli
 
 server:
-	$(GO_BUILD_CMD) -o $(CID) ./cmd/cid
+	GOPROXY=$(PROXY) $(GO_BUILD_CMD) -mod=$(MOD) -o $(CID) ./cmd/cid
 
 cli:
-	$(GO_BUILD_CMD) -o $(CLI) ./cmd/cicli
+	GOPROXY=$(PROXY) $(GO_BUILD_CMD) -mod=$(MOD) -o $(CLI) ./cmd/cicli
 
 
 .PHONY: build-linux
 build-linux: server-linux client-linux
 server-linux:
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GO_BUILD_CMD) -o $(CID)-linux ./cmd/cid
+	GOPROXY=$(PROXY) CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GO_BUILD_CMD) -mod=$(MOD) -o $(CID)-linux ./cmd/cid
 client-linux: 
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GO_BUILD_CMD) -o $(CLI)-linux ./cmd/cicli
+	GOPROXY=$(PROXY) CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GO_BUILD_CMD) -mod=$(MOD) -o $(CLI)-linux ./cmd/cicli
 
-
+build-image:
+	docker build -t cichain:v0.0.1 .
 
 .PHONY: build-docker
 build-docker: build-linux build-image
-build-image:
-	docker build -t cichain:v0.0.1 .
+
+.PHONY: docker-start
+docker-start: build-docker start
+start:
 	docker run --name ci123-container-v1 -p 1318:1317 -d cichain:v0.0.1
 
 docker-clean:
@@ -43,7 +50,6 @@ docker-stop:
 docker-restart:
 	docker ps -a | grep "ci123-container-" | awk '{print $$1}' | xargs docker start
 
-.PHONY: build-doc
-build-doc: build-linux build-img
-build-img:
-    docker build -t cichain:v0.0.1 .
+.PHONY:release
+release: build-linux
+

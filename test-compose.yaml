@@ -1,0 +1,1 @@
+docker run --name test-golang -v ../ci123chain /opt -d golang:latest
