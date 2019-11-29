@@ -8,6 +8,7 @@ services:
       - ~/ci123/node0/cid/data:/root/.ci123/data
     ports:
       - '1319:1317'
+      - '26657:26657'
     networks:
       cichain:
   node1.example.com:

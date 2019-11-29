@@ -46,4 +46,4 @@ docker-restart:
 .PHONY: build-doc
 build-doc: build-linux build-img
 build-img:
-    docker build -t cichain:v0.0.1 .
+	docker build -t cichain:v0.0.1 .
