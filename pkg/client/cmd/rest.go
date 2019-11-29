@@ -4,6 +4,7 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/client"
 	"github.com/tanhuiya/ci123chain/pkg/client/cmd/rpc"
 	accountRpc "github.com/tanhuiya/ci123chain/pkg/account/rest"
+	"github.com/tanhuiya/ci123chain/pkg/client/helper"
 	"github.com/tanhuiya/ci123chain/pkg/ibc"
 	txRpc "github.com/tanhuiya/ci123chain/pkg/transfer/rest"
 	"github.com/tanhuiya/ci123chain/pkg/client/context"
@@ -14,7 +15,9 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/rpc/lib/server"
 	"net"
+	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -67,6 +70,8 @@ func NewRestServer() *RestServer {
 		return nil
 	}
 
+	r.NotFoundHandler = Handle404()
+
 	rpc.RegisterRoutes(cliCtx, r)
 	accountRpc.RegisterRoutes(cliCtx, r)
 	txRpc.RegisterTxRoutes(cliCtx, r)
@@ -77,7 +82,20 @@ func NewRestServer() *RestServer {
 	}
 }
 
-
+const CorePrefix = "/core"
+func Handle404() http.Handler {
+	return http.HandlerFunc(func (w http.ResponseWriter, req *http.Request) {
+		nodeUri := req.RequestURI
+		if strings.HasPrefix(nodeUri, CorePrefix) {
+			arr := strings.SplitAfter(nodeUri, CorePrefix)
+			arr = arr[1:]
+			newPath := strings.Join(arr, "")
+			whole := viper.GetString(helper.FlagNode) + newPath
+			whole = strings.ReplaceAll(whole, "tcp", "http")
+			http.Redirect(w, req, whole, http.StatusPermanentRedirect)
+		}
+	})
+}
 
 func (rs *RestServer) Start(listenAddr string, maxOpen int, readTimeout, writeTimeout uint) (err error) {
 	util.TrapSignal(func() {
