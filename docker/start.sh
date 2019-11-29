@@ -11,7 +11,7 @@ fi
 # start
 nohup ./cid-linux start > cid-output 2>&1 &
 
-./cli-linux rest-server > rest-output 2>&1
+./cli-linux rest-server --laddr=tcp://0.0.0.0:80 > rest-output 2>&1
 
 
 
