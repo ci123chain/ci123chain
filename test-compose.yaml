@@ -1,1 +1,1 @@
-docker run --name test-golang -v ../ci123chain /opt -d golang:latest
+docker run --name test-golang -v /Users/tanhui/Documents/Work/BlockChain/ci123chain:/opt -it golang:latest

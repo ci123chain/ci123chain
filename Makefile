@@ -16,18 +16,18 @@ PROXY=https://goproxy.io
 build: server cli
 
 server:
-	GOPROXY=$(PROXY) $(GO_BUILD_CMD) -mod=$(MOD) -o $(CID) ./cmd/cid
+	GOPROXY=$(PROXY) $(GO_BUILD_CMD) -o $(CID) ./cmd/cid
 
 cli:
-	GOPROXY=$(PROXY) $(GO_BUILD_CMD) -mod=$(MOD) -o $(CLI) ./cmd/cicli
+	GOPROXY=$(PROXY) $(GO_BUILD_CMD) -o $(CLI) ./cmd/cicli
 
 
 .PHONY: build-linux
 build-linux: server-linux client-linux
 server-linux:
-	GOPROXY=$(PROXY) CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GO_BUILD_CMD) -mod=$(MOD) -o $(CID)-linux ./cmd/cid
+	GOPROXY=$(PROXY) CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GO_BUILD_CMD) -o $(CID)-linux ./cmd/cid
 client-linux: 
-	GOPROXY=$(PROXY) CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GO_BUILD_CMD) -mod=$(MOD) -o $(CLI)-linux ./cmd/cicli
+	GOPROXY=$(PROXY) CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GO_BUILD_CMD) -o $(CLI)-linux ./cmd/cicli
 
 build-image:
 	docker build -t cichain:v0.0.1 .
