@@ -1,4 +1,4 @@
-From golang
+From ubuntu
 
 COPY ./build/cli-linux /opt
 COPY ./build/cid-linux /opt

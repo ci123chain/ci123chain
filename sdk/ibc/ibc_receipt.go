@@ -10,8 +10,8 @@ import (
 )
 
 // 生成 MortgageDone 完成交易
-func SignIBCReceiptMsg(from string, raw []byte, gas uint64, priv []byte) ([]byte, error) {
-	tx, err := buildIBCReceiptMsg(from, raw, gas)
+func SignIBCReceiptMsg(from string, raw []byte, gas uint64, priv []byte, node string) ([]byte, error) {
+	tx, err := buildIBCReceiptMsg(from, raw, gas, node)
 	if err != nil {
 		return nil, err
 	}
@@ -26,12 +26,12 @@ func SignIBCReceiptMsg(from string, raw []byte, gas uint64, priv []byte) ([]byte
 }
 
 
-func buildIBCReceiptMsg (from string, raw []byte, gas uint64) (transaction.Transaction, error) {
+func buildIBCReceiptMsg (from string, raw []byte, gas uint64, node string) (transaction.Transaction, error) {
 	fromAddr, err := helper.StrToAddress(from)
 	if err != nil {
 		return nil, err
 	}
-	viper.Set("node", "tcp://localhost:26657")
+	viper.Set("node", "tcp://" + node)
 	viper.Set("address", from)
 	ctx, err := client.NewClientContextFromViper(cdc)
 	if err != nil {

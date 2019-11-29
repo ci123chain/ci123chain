@@ -33,7 +33,6 @@ func startCmd(ctx *app.Context, appCreator app.AppCreator) *cobra.Command {
 				return startStandAlone(ctx, appCreator)
 			}
 			ctx.Logger.Info("Starting ABCI with Tendermint")
-
 			_, err := StartInProcess(ctx, appCreator)
 			if err != nil {
 				return err

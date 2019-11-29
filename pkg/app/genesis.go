@@ -29,6 +29,7 @@ func (c *Chain)InitChainer (ctx types.Context, req abci.RequestInitChain) abci.R
 	return c.mm.InitGenesis(ctx, genesisState)
 }
 
+
 func GenesisStateFromGenFile(cdc *codec.Codec, genFile string) (genesisState map[string]json.RawMessage, genDoc *tmtypes.GenesisDoc, err error)  {
 	if !common.FileExist(genFile) {
 		return genesisState, genDoc, fmt.Errorf("%s does not exist, run `init` first", genFile)

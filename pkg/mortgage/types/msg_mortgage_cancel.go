@@ -62,3 +62,15 @@ func (msg *MsgMortgageCancel)Bytes() []byte {
 func (msg *MsgMortgageCancel)SetPubKey(pub []byte) {
 	msg.CommonTx.PubKey = pub
 }
+
+func (msg *MsgMortgageCancel) GetGas() uint64 {
+	return msg.CommonTx.Gas
+}
+
+func (msg *MsgMortgageCancel) GetNonce() uint64 {
+	return msg.CommonTx.Nonce
+}
+
+func (msg *MsgMortgageCancel) GetFromAddress() sdk.AccAddress {
+	return msg.CommonTx.From
+}

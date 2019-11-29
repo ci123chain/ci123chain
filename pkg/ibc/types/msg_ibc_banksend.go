@@ -13,6 +13,7 @@ type IBCMsgBankSend struct {
 }
 
 
+
 func NewIBCMsgBankSendMsg(from sdk.AccAddress, raw []byte, gas uint64, nonce uint64) *IBCMsgBankSend {
 	return &IBCMsgBankSend{
 		CommonTx: transaction.CommonTx{
@@ -59,4 +60,16 @@ func (msg *IBCMsgBankSend)SetPubKey(pub []byte) {
 
 func (msg *IBCMsgBankSend) Route() string {
 	return RouterKey
+}
+
+func (msg *IBCMsgBankSend) GetGas() uint64 {
+	return msg.CommonTx.Gas
+}
+
+func (msg *IBCMsgBankSend) GetNonce() uint64 {
+	return msg.CommonTx.Nonce
+}
+
+func (msg *IBCMsgBankSend) GetFromAddress() sdk.AccAddress {
+	return msg.CommonTx.From
 }
