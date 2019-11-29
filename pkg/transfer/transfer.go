@@ -82,3 +82,15 @@ func (tx *TransferTx) Bytes() []byte {
 
 	return bytes
 }
+
+func (tx *TransferTx) GetGas() uint64 {
+	return tx.Common.Gas
+}
+
+func (tx *TransferTx) GetNonce() uint64 {
+	return tx.Common.Nonce
+}
+
+func (tx *TransferTx) GetFromAddress() types.AccAddress {
+	return tx.Common.From
+}

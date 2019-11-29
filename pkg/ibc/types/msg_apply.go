@@ -67,3 +67,15 @@ func (msg *ApplyIBCTx) SetPubKey(pub []byte) {
 func (msg *ApplyIBCTx) Route() string {
 	return RouterKey
 }
+
+func (msg *ApplyIBCTx) GetGas() uint64 {
+	return msg.CommonTx.Gas
+}
+
+func (msg *ApplyIBCTx) GetNonce() uint64 {
+	return msg.CommonTx.Nonce
+}
+
+func (msg *ApplyIBCTx) GetFromAddress() sdk.AccAddress {
+	return msg.CommonTx.From
+}

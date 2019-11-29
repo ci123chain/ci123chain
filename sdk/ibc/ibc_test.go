@@ -27,7 +27,7 @@ func TestIBCMsg(t *testing.T)  {
 	privByte := cryptoutil.MarshalPrivateKey(priKey)
 
 	signdata, err := SignIBCTransferMsg("0x204bCC42559Faf6DFE1485208F7951aaD800B313",
-		"0xD1a14962627fAc768Fe885Eeb9FF072706B54c19", 4, 1, privByte)
+		"0xD1a14962627fAc768Fe885Eeb9FF072706B54c19", 1, 20000, privByte)
 
 	assert.NoError(t, err)
 	httpPost(hex.EncodeToString(signdata))
@@ -63,7 +63,7 @@ func TestBankSendMsg(t *testing.T)  {
 	privByte := cryptoutil.MarshalPrivateKey(priKey)
 	pub := priKey.Public().(*ecdsa.PublicKey)
 	addr, _  := cryptoutil.PublicKeyToAddress(pub)
-	signdata, err := SignIBCBankSendMsg(addr, []byte(pkg), 1, privByte)
+	signdata, err := SignIBCBankSendMsg(addr, []byte(pkg), 1000000, privByte)
 
 	assert.NoError(t, err)
 	httpPost(hex.EncodeToString(signdata))
@@ -93,7 +93,7 @@ func TestAll(t *testing.T)  {
 
 	fmt.Println("---发送跨链消息")
 	signdata, err := SignIBCTransferMsg(FromAddr,
-		ToAddr, 4, 1, privByte)
+		ToAddr, 11, 1, privByte)
 	registRet := httpPost(hex.EncodeToString(signdata))
 	fmt.Println("发送跨链消息完成：UniqueID = " + registRet.Data)
 	fmt.Println()

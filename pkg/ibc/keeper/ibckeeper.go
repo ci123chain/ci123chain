@@ -8,7 +8,6 @@ import (
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/account"
 	"github.com/tanhuiya/ci123chain/pkg/ibc/types"
-	n "github.com/tanhuiya/ci123chain/pkg/nonce"
 	"github.com/tanhuiya/ci123chain/pkg/supply"
 	"strconv"
 )
@@ -77,14 +76,6 @@ func (k IBCKeeper) ApplyIBCMsg(ctx sdk.Context, uniqueID []byte, observerID []by
 	if ibcMsg == nil {
 		return nil, errors.New(fmt.Sprintf("ibc tx not found with uniqueID = %s", string(uniqueID)))
 	}
-
-	//检查nonce
-	savedSequence := k.AccountKeeper.GetAccount(ctx, ibcMsg.FromAddress).GetSequence()
-	checkResult := n.CheckIBCNonce(ctx, savedSequence, nonce)
-	if checkResult != true {
-		return nil, errors.New(fmt.Sprintf("Unexpected nonce with uniqueID = %s", string(uniqueID)))
-	}
-	//
 
 	timeNow := ctx.BlockHeader().Time
 	if !ibcMsg.CanProcess(timeNow) {

@@ -113,7 +113,6 @@ func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Com
 				Overwrite: viper.GetBool(FlagOverwrite),
 				//tmtime.Now(),
 			}
-
 			chainID, nodeID, appMessage, err := InitWithConfig(cdc, appInit, config, initConfig)
 			if err != nil {
 				return err

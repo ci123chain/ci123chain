@@ -5,7 +5,6 @@ import (
 	"fmt"
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/ibc/keeper"
-	n "github.com/tanhuiya/ci123chain/pkg/nonce"
 	"github.com/tanhuiya/ci123chain/pkg/ibc/types"
 )
 
@@ -31,15 +30,6 @@ func NewHandler(k keeper.IBCKeeper) sdk.Handler {
 
 // 新增跨链消息
 func handleMsgIBCTransfer(ctx sdk.Context, k keeper.IBCKeeper, tx types.IBCTransfer) sdk.Result {
-	//----------
-	//对transaction.CommonTx的处理
-	savedSequence := k.AccountKeeper.GetAccount(ctx, tx.From).GetSequence()
-	checkResult := n.CheckIBCNonce(ctx, savedSequence, tx.Nonce)
-	if checkResult != true {
-		errData := []byte("Unexpected nonce")
-		return sdk.Result{Data:errData}
-	}
-	//----------
 	uuidStr := keeper.GenerateUniqueID(tx.Bytes())
 
 	retbz := []byte(uuidStr)
@@ -48,6 +38,7 @@ func handleMsgIBCTransfer(ctx sdk.Context, k keeper.IBCKeeper, tx types.IBCTrans
 		return sdk.ErrInternal("make ibc msg failed").TraceSDK(err.Error()).Result()
 	}
 	k.SetIBCMsg(ctx, ibcMsg)
+	ctx.Logger().Info("Create IBCTransaction successed")
 
 	return sdk.Result{Data: retbz}
 }
@@ -59,23 +50,13 @@ func handleMsgApplyIBCTx(ctx sdk.Context, k keeper.IBCKeeper, tx types.ApplyIBCT
 		return sdk.ErrInternal(err.Error()).Result()
 	}
 	signedIBCMsgBz, _ := json.Marshal(signedIBCMsg)
-
+	ctx.Logger().Info("Apply IBCTransaction successed")
 	return sdk.Result{Data: signedIBCMsgBz}
 }
 
 
 // 第二步: 跨链交易 bank 转账 (fabric -> ci)
 func handleMsgIBCBankSendTx(ctx sdk.Context, k keeper.IBCKeeper, tx types.IBCMsgBankSend) sdk.Result {
-
-	//----------
-	//对transaction.CommonTx的处理
-	savedSequence := k.AccountKeeper.GetAccount(ctx, tx.From).GetSequence()
-	checkResult := n.CheckIBCNonce(ctx, savedSequence, tx.Nonce)
-	if checkResult != true {
-		errData := []byte("Unexpected nonce")
-		return sdk.Result{Data:errData}
-	}
-	//----------
 
 	ibcMsg, err := keeper.ValidateRawIBCMessage(tx)
 	if err != nil {
@@ -117,6 +98,7 @@ func handleMsgIBCBankSendTx(ctx sdk.Context, k keeper.IBCKeeper, tx types.IBCMsg
 		return sdk.ErrUnknownRequest("Save ibcMsg error").TraceSDK(err.Error()).Result()
 	}
 	receiptBz, _ := json.Marshal(*receipt)
+	ctx.Logger().Info("Handle IBCTransaction successed")
 
 	return sdk.Result{Data: receiptBz}
 }
@@ -124,15 +106,6 @@ func handleMsgIBCBankSendTx(ctx sdk.Context, k keeper.IBCKeeper, tx types.IBCMsg
 
 // 接收到回执消息
 func handleMsgReceiveReceipt(ctx sdk.Context, k keeper.IBCKeeper, tx types.IBCReceiveReceiptMsg) sdk.Result  {
-	//----------
-	//对transaction.CommonTx的处理
-	savedSequence := k.AccountKeeper.GetAccount(ctx, tx.From).GetSequence()
-	checkResult := n.CheckIBCNonce(ctx, savedSequence, tx.Nonce)
-	if checkResult != true {
-		errData := []byte("Unexpected nonce")
-		return sdk.Result{Data:errData}
-	}
-	//----------
 
 	receiveObj, err := keeper.ValidateRawReceiptMessage(tx)
 	if err != nil {
@@ -150,6 +123,8 @@ func handleMsgReceiveReceipt(ctx sdk.Context, k keeper.IBCKeeper, tx types.IBCRe
 		return sdk.ErrInvalidSequence("Unexpected nonce of transaction").Result()
 	}
 	k.AccountKeeper.SetAccount(ctx, account)
+	//
+	ctx.Logger().Info("Handle receipt successed")
 
 	return sdk.Result{Data: []byte(receiveObj.UniqueID)}
 }
