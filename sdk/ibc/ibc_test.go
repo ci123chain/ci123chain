@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strconv"
 	"testing"
 )
 
@@ -19,6 +20,7 @@ MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgp4qKKB0WCEfx7XiB
 J3+tMGTG67f+TdCfDxWYMpQYxLlE8VkbEzKWDwCYvDZRMKCQfv2ErNvb
 -----END PRIVATE KEY-----`
 
+const errUint64 = 0
 // 生成 跨链 交易
 func TestIBCMsg(t *testing.T)  {
 	// 将pem 格式私钥转化为 十六机制 字符串
@@ -26,8 +28,13 @@ func TestIBCMsg(t *testing.T)  {
 	assert.NoError(t, err)
 	privByte := cryptoutil.MarshalPrivateKey(priKey)
 
+	nonce, err := getNonce("0x204bCC42559Faf6DFE1485208F7951aaD800B313")
+	if err != nil{
+		panic(err)
+	}
+
 	signdata, err := SignIBCTransferMsg("0x204bCC42559Faf6DFE1485208F7951aaD800B313",
-		"0xD1a14962627fAc768Fe885Eeb9FF072706B54c19", 1, 20000, privByte)
+		"0xD1a14962627fAc768Fe885Eeb9FF072706B54c19", 1, 20000, privByte, nonce)
 
 	assert.NoError(t, err)
 	httpPost(hex.EncodeToString(signdata))
@@ -43,8 +50,13 @@ func TestApplyIBCMsg(t *testing.T)  {
 	assert.NoError(t, err)
 	privByte := cryptoutil.MarshalPrivateKey(priKey)
 
+	nonce, err := getNonce("0x204bCC42559Faf6DFE1485208F7951aaD800B313")
+	if err != nil{
+		panic(err)
+	}
+
 	uid := []byte(UniqueID)
-	signdata, err := SignApplyIBCMsg("0x204bCC42559Faf6DFE1485208F7951aaD800B313", uid, []byte(ObserverID), 1, privByte)
+	signdata, err := SignApplyIBCMsg("0x204bCC42559Faf6DFE1485208F7951aaD800B313", uid, []byte(ObserverID), 1, privByte, nonce)
 
 	assert.NoError(t, err)
 	//fmt.Println(hex.EncodeToString(signdata))
@@ -63,7 +75,13 @@ func TestBankSendMsg(t *testing.T)  {
 	privByte := cryptoutil.MarshalPrivateKey(priKey)
 	pub := priKey.Public().(*ecdsa.PublicKey)
 	addr, _  := cryptoutil.PublicKeyToAddress(pub)
-	signdata, err := SignIBCBankSendMsg(addr, []byte(pkg), 1000000, privByte)
+
+	nonce, err := getNonce("0x204bCC42559Faf6DFE1485208F7951aaD800B313")
+	if err != nil{
+		panic(err)
+	}
+
+	signdata, err := SignIBCBankSendMsg(addr, []byte(pkg), 1000000, privByte, nonce)
 
 	assert.NoError(t, err)
 	httpPost(hex.EncodeToString(signdata))
@@ -78,7 +96,12 @@ func TestReceiptMsg(t *testing.T)  {
 	assert.NoError(t, err)
 	privByte := cryptoutil.MarshalPrivateKey(priKey)
 
-	signdata, err := SignIBCReceiptMsg("0x204bCC42559Faf6DFE1485208F7951aaD800B313", []byte(pkgReceipt), 1, privByte)
+	nonce, err := getNonce("0x204bCC42559Faf6DFE1485208F7951aaD800B313")
+	if err != nil{
+		panic(err)
+	}
+
+	signdata, err := SignIBCReceiptMsg("0x204bCC42559Faf6DFE1485208F7951aaD800B313", []byte(pkgReceipt), 1, privByte, nonce)
 	assert.NoError(t, err)
 	httpPost(hex.EncodeToString(signdata))
 }
@@ -91,49 +114,71 @@ func TestAll(t *testing.T)  {
 	assert.NoError(t, err)
 	privByte := cryptoutil.MarshalPrivateKey(priKey)
 
+	nonce, err := getNonce("0x204bCC42559Faf6DFE1485208F7951aaD800B313")
+	if err != nil{
+		panic(err)
+	}
+
+
 	fmt.Println("---发送跨链消息")
 	signdata, err := SignIBCTransferMsg(FromAddr,
-		ToAddr, 11, 1, privByte)
+		ToAddr, 11, 1, privByte, nonce)
 	registRet := httpPost(hex.EncodeToString(signdata))
 	fmt.Println("发送跨链消息完成：UniqueID = " + registRet.Data)
 	fmt.Println()
 
+
+	nonce, err = getNonce("0x204bCC42559Faf6DFE1485208F7951aaD800B313")
+	if err != nil{
+		panic(err)
+	}
+
 	fmt.Println("---申请处理该跨链消息")
 	uid := []byte(registRet.Data)
-	signdata, err = SignApplyIBCMsg(FromAddr, uid, []byte(ObserverID), 1, privByte)
+	signdata, err = SignApplyIBCMsg(FromAddr, uid, []byte(ObserverID), 1, privByte, nonce)
 	applyRet := httpPost(hex.EncodeToString(signdata))
 	assert.True(t, len(applyRet.RawLog) < 1)
 	fmt.Println("申请处理该跨链消息结束")
 	fmt.Println()
 
+	nonce, err = getNonce("0x204bCC42559Faf6DFE1485208F7951aaD800B313")
+	if err != nil{
+		panic(err)
+	}
 	fmt.Println("---第二个申请处理该跨链消息")
 	ObserverID2 := "12313213213213124321"
-	signdata, err = SignApplyIBCMsg(FromAddr, uid, []byte(ObserverID2), 1, privByte)
+	signdata, err = SignApplyIBCMsg(FromAddr, uid, []byte(ObserverID2), 1, privByte, nonce)
 	applyRetErr := httpPost(hex.EncodeToString(signdata))
 	assert.True(t, len(applyRetErr.RawLog) > 0)
 	fmt.Println("申请处理该跨链消息结束失败")
 	fmt.Println()
 
+	nonce, err = getNonce("0x204bCC42559Faf6DFE1485208F7951aaD800B313")
+	if err != nil{
+		panic(err)
+	}
 	// bank转账，该交易参数应该是observer 从 fabric 获得，此处是模拟
 	fmt.Println("---向对方转账")
 	pkg := applyRet.Data
-	signdata, err = SignIBCBankSendMsg(FromAddr, []byte(pkg), 1, privByte)
+	signdata, err = SignIBCBankSendMsg(FromAddr, []byte(pkg), 1, privByte, nonce)
 	fmt.Println(hex.EncodeToString(signdata))
 	receiptRet := httpPost(hex.EncodeToString(signdata))
 	assert.True(t, len(receiptRet.RawLog) < 1)
 	fmt.Println("向对方转账成功")
 	fmt.Println()
 
+	nonce, err = getNonce("0x204bCC42559Faf6DFE1485208F7951aaD800B313")
+	if err != nil{
+		panic(err)
+	}
 	//发送回执
 	fmt.Println("---发送回执")
 	receivepkg := receiptRet.Data
-	signdata, err = SignIBCReceiptMsg(FromAddr, []byte(receivepkg), 1, privByte)
+	signdata, err = SignIBCReceiptMsg(FromAddr, []byte(receivepkg), 1, privByte, nonce)
 	ret := httpPost(hex.EncodeToString(signdata))
 	assert.True(t, len(ret.RawLog) < 1)
 	fmt.Println("发送回执成功")
 }
-
-
 
 func httpPost(param string) retData {
 	resp, err := http.PostForm("http://localhost:1317/tx/broadcast",
@@ -165,4 +210,25 @@ func httpPost(param string) retData {
 type retData struct {
 	Data string `json:"data"`
 	RawLog  string `json:"raw_log"`
+}
+
+func getNonce(address string) (uint64, error){
+	resP, err := http.Get("http://localhost:1317/bank/nonce/" + address)
+	if err != nil{
+		return errUint64, err
+	}
+	defer resP.Body.Close()
+
+	res, err := ioutil.ReadAll(resP.Body)
+	if err != nil{
+		return errUint64, err
+	}
+
+	Str := string(res)
+	Str1 :=  Str[1:len(Str)-1]
+	uint, err := strconv.ParseUint(Str1, 10, 64)
+	if err != nil{
+		return errUint64, err
+	}
+	return uint, nil
 }
