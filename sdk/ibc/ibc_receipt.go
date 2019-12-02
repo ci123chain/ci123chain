@@ -1,8 +1,6 @@
 package ibc
 
 import (
-	"github.com/spf13/viper"
-	"github.com/tanhuiya/ci123chain/pkg/client"
 	"github.com/tanhuiya/ci123chain/pkg/client/helper"
 	"github.com/tanhuiya/ci123chain/pkg/cryptosuit"
 	"github.com/tanhuiya/ci123chain/pkg/ibc"
@@ -10,8 +8,10 @@ import (
 )
 
 // 生成 MortgageDone 完成交易
-func SignIBCReceiptMsg(from string, raw []byte, gas uint64, priv []byte, node string) ([]byte, error) {
-	tx, err := buildIBCReceiptMsg(from, raw, gas, node)
+
+func SignIBCReceiptMsg(from string, raw []byte, gas, nonce uint64, priv []byte) ([]byte, error) {
+
+	tx, err := buildIBCReceiptMsg(from, raw, gas, nonce)
 	if err != nil {
 		return nil, err
 	}
@@ -26,20 +26,13 @@ func SignIBCReceiptMsg(from string, raw []byte, gas uint64, priv []byte, node st
 }
 
 
-func buildIBCReceiptMsg (from string, raw []byte, gas uint64, node string) (transaction.Transaction, error) {
+
+func buildIBCReceiptMsg (from string, raw []byte, gas, nonce uint64) (transaction.Transaction, error) {
+
 	fromAddr, err := helper.StrToAddress(from)
 	if err != nil {
 		return nil, err
 	}
-	viper.Set("node", "tcp://" + node)
-	viper.Set("address", from)
-	ctx, err := client.NewClientContextFromViper(cdc)
-	if err != nil {
-		return nil,err
-	}
-
-
-	nonce, err := ctx.GetNonceByAddress(fromAddr)
 	ibcMsg := ibc.NewIBCReceiveReceiptMsg(fromAddr, raw, gas, nonce)
 	return ibcMsg, nil
 }
