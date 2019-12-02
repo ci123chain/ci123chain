@@ -8,7 +8,9 @@ import (
 )
 
 // 生成 MortgageDone 完成交易
+
 func SignIBCBankSendMsg(from string, raw []byte, gas, nonce uint64, priv []byte) ([]byte, error) {
+
 	tx, err := buildIBCBankSendMsg(from, raw, gas, nonce)
 	if err != nil {
 		return nil, err
@@ -24,7 +26,9 @@ func SignIBCBankSendMsg(from string, raw []byte, gas, nonce uint64, priv []byte)
 }
 
 
+
 func buildIBCBankSendMsg (from string, raw []byte, gas, nonce uint64) (transaction.Transaction, error) {
+
 	fromAddr, err := helper.StrToAddress(from)
 	if err != nil {
 		return nil, err

@@ -8,7 +8,9 @@ import (
 )
 
 // 生成 MortgageDone 完成交易
+
 func SignApplyIBCMsg(from string, uniqueID, observerID []byte, gas, nonce uint64, priv []byte) ([]byte, error) {
+
 	tx, err := buildApplyIBCMsg(from, uniqueID, observerID, gas, nonce)
 	if err != nil {
 		return nil, err
@@ -22,6 +24,7 @@ func SignApplyIBCMsg(from string, uniqueID, observerID []byte, gas, nonce uint64
 	tx.SetSignature(signature)
 	return tx.Bytes(), nil
 }
+
 
 
 func buildApplyIBCMsg (from string, uniqueID, observerID []byte, gas, nonce uint64) (transaction.Transaction, error) {

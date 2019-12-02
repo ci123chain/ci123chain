@@ -12,6 +12,7 @@ import (
 func RegisterRoutes(cliCtx context.Context, r *mux.Router) {
 	//r.HandleFunc("/bank/accounts/{address}/transfers", SendRequestHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/bank/balances/{address}", QueryBalancesRequestHandlerFn(cliCtx)).Methods("GET")
+	r.HandleFunc("/bank/nonce/{address}", QueryNonceRequestHandlerFn(cliCtx)).Methods("GET")
 }
 
 func QueryBalancesRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
@@ -30,6 +31,30 @@ func QueryBalancesRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		}
 		//params := types.NewQueryBalanceParams(addr)
 		res, err := cliCtx.GetBalanceByAddress(addrBytes[0])
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
+			return
+		}
+		rest.PostProcessResponseBare(w, cliCtx, res)
+	}
+}
+
+func QueryNonceRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
+	return func(w http.ResponseWriter, request *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		vars := mux.Vars(request)
+		addr := vars["address"]
+
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, request)
+		if !ok {
+			return
+		}
+		addrBytes, err := helper.ParseAddrs(addr)
+		if len(addrBytes) < 1 || err != nil {
+			return
+		}
+		//params := types.NewQueryBalanceParams(addr)
+		res, err := cliCtx.GetNonceByAddress(addrBytes[0])
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
 			return

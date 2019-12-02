@@ -11,6 +11,7 @@ import (
 var cdc = app.MakeCodec()
 
 // 生成 MortgageDone 完成交易
+
 func SignIBCTransferMsg(from string, to string, amount, gas, nonce uint64, priv []byte) ([]byte, error) {
 	tx, err := buildIBCTransferMsg(from, to, amount, gas, nonce)
 	if err != nil {
@@ -25,6 +26,7 @@ func SignIBCTransferMsg(from string, to string, amount, gas, nonce uint64, priv 
 	tx.SetSignature(signature)
 	return tx.Bytes(), nil
 }
+
 
 
 func buildIBCTransferMsg (from, to string, amount, gas, nonce uint64) (transaction.Transaction, error) {

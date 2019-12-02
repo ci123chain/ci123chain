@@ -22,17 +22,18 @@ J3+tMGTG67f+TdCfDxWYMpQYxLlE8VkbEzKWDwCYvDZRMKCQfv2ErNvb
 
 var ip = "192.168.1.114"
 var port = "1317"
+
 // 生成 跨链 交易
 func TestIBCMsg(t *testing.T)  {
 	// 将pem 格式私钥转化为 十六机制 字符串
 
 	//获取nonce，地址， 端口
-	rep := httpQuery(ip, port, FromAddr)
-	ret, err := strconv.ParseInt(rep, 10, 64)
-	nonce := uint64(ret)
+	nonce := httpQuery(ip, port, FromAddr)
+
 	priKey, err := cryptoutil.DecodePriv([]byte(testPrivKey))
 	assert.NoError(t, err)
 	privByte := cryptoutil.MarshalPrivateKey(priKey)
+
 
 	signdata, err := SignIBCTransferMsg("0x204bCC42559Faf6DFE1485208F7951aaD800B313",
 		"0xD1a14962627fAc768Fe885Eeb9FF072706B54c19", 1, 20000, nonce, privByte)
@@ -46,9 +47,8 @@ func TestIBCMsg(t *testing.T)  {
 const UniqueID = "61849E3829B6B42616BC2736FA44CBBE"
 const ObserverID = "1234567812345679"
 func TestApplyIBCMsg(t *testing.T)  {
-	rep := httpQuery(ip, port, FromAddr)
-	ret, err := strconv.ParseInt(rep, 10, 64)
-	nonce := uint64(ret)
+	nonce := httpQuery(ip, port, FromAddr)
+
 	// 将pem 格式私钥转化为 十六机制 字符串
 	priKey, err := cryptoutil.DecodePriv([]byte(testPrivKey))
 	assert.NoError(t, err)
@@ -68,16 +68,17 @@ const pkg =
 `{"signature":"MEQCIF8Lp+L1p3p0WV5tf68QdN7Mf04mLMLIx9j0FSOefhE1AiBEcPxKCIu7y0B09R5IUHmy5tXeiX5rhPWTXXFyd2Tljw==","ibc_msg_bytes":"eyJ1bmlxdWVfaWQiOiI4QTM3QkE2QjgwMTNBQkU1OUYyNzhFRkUzM0Q1QjE4OCIsIm9ic2VydmVyX2lkIjoiMTIzNDU2NzgxMjM0NTY3OCIsImJhbmtfYWRkcmVzcyI6IjB4NTA1QTc0Njc1ZGM5QzcxZUYzQ0I1REYzMDkyNTY5NTI5MTdFODAxZSIsImFwcGx5X3RpbWUiOiIyMDE5LTExLTEzVDE2OjU4OjMyLjAwNzkyKzA4OjAwIiwic3RhdGUiOiJwcm9jZXNzaW5nIiwiZnJvbV9hZGRyZXNzIjoiMHgyMDRiQ0M0MjU1OUZhZjZERkUxNDg1MjA4Rjc5NTFhYUQ4MDBCMzEzIiwidG9fYWRkcmVzcyI6IjB4RDFhMTQ5NjI2MjdmQWM3NjhGZTg4NUVlYjlGRjA3MjcwNkI1NGMxOSIsImFtb3VudCI6MTB9"}`
 
 func TestBankSendMsg(t *testing.T)  {
-	rep := httpQuery(ip, port, FromAddr)
-	ret, err := strconv.ParseInt(rep, 10, 64)
-	nonce := uint64(ret)
+	nonce := httpQuery(ip, port, FromAddr)
+
 	// 将pem 格式私钥转化为 十六机制 字符串
 	priKey, err := cryptoutil.DecodePriv([]byte(testPrivKey))
 	assert.NoError(t, err)
 	privByte := cryptoutil.MarshalPrivateKey(priKey)
 	pub := priKey.Public().(*ecdsa.PublicKey)
 	addr, _  := cryptoutil.PublicKeyToAddress(pub)
+
 	signdata, err := SignIBCBankSendMsg(addr, []byte(pkg), 1000000, nonce, privByte)
+
 
 	assert.NoError(t, err)
 	httpPost(hex.EncodeToString(signdata))
@@ -87,9 +88,8 @@ const pkgReceipt =
 `{"unique_id":"8A37BA6B8013ABE59F278EFE33D5B188","observer_id":"1234567812345678","signature":"MEQCIHNGnWa/xk4n+WOERiXphkytHN+iOIfQiwJTozixLBXnAiBPyZbtpUHwbp4ATUg90Tmye/iNZ9sc7Q3jO0RsZ1Jfag=="}`
 
 func TestReceiptMsg(t *testing.T)  {
-	rep := httpQuery(ip, port, FromAddr)
-	ret, err := strconv.ParseInt(rep, 10, 64)
-	nonce := uint64(ret)
+	nonce := httpQuery(ip, port, FromAddr)
+
 	// 将pem 格式私钥转化为 十六机制 字符串
 	priKey, err := cryptoutil.DecodePriv([]byte(testPrivKey))
 	assert.NoError(t, err)
@@ -104,9 +104,7 @@ const FromAddr  = "0x204bCC42559Faf6DFE1485208F7951aaD800B313"
 const ToAddr  = "0xD1a14962627fAc768Fe885Eeb9FF072706B54c19"
 func TestAll(t *testing.T)  {
 
-	rep := httpQuery(ip, port, FromAddr)
-	reps, err := strconv.ParseInt(rep, 10, 64)
-	nonce := uint64(reps)
+	nonce := httpQuery(ip, port, FromAddr)
 	// 将pem 格式私钥转化为 十六机制 字符串
 	priKey, err := cryptoutil.DecodePriv([]byte(testPrivKey))
 	assert.NoError(t, err)
@@ -130,6 +128,7 @@ func TestAll(t *testing.T)  {
 	fmt.Println("---第二个申请处理该跨链消息")
 	ObserverID2 := "12313213213213124321"
 	signdata, err = SignApplyIBCMsg(FromAddr, uid, []byte(ObserverID2), 50000, nonce, privByte)
+
 	applyRetErr := httpPost(hex.EncodeToString(signdata))
 	assert.True(t, len(applyRetErr.RawLog) > 0)
 	fmt.Println("申请处理该跨链消息结束失败")
@@ -154,7 +153,7 @@ func TestAll(t *testing.T)  {
 	fmt.Println("发送回执成功")
 }
 
-func httpQuery(ip, port, param string) string {
+func httpQuery(ip, port, param string) uint64 {
 	url := "http://" + ip + ":" + port + "/ibctx/nonce/" + param
 	resp, err := http.Get(url)
 	if err != nil {
@@ -167,11 +166,11 @@ func httpQuery(ip, port, param string) string {
 	}
 	var ret string
 	err = json.Unmarshal(body, &ret)
+	reps, err := strconv.ParseInt(ret, 10, 64)
+	nonce := uint64(reps)
 
-	return ret
+	return nonce
 }
-
-
 func httpPost(param string) retData {
 	resp, err := http.PostForm("http://localhost:1317/tx/broadcast",
 		url.Values{"data": {param}})
