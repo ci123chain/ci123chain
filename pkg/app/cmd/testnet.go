@@ -157,7 +157,7 @@ func testnetGenWithConfig(c *cfg.Config, cdc *amino.Codec, appInit app.AppInit) 
 		}
 		c.Moniker = di.DirName()
 		c.SetRoot(di.NodeDir())
-		c.P2P.PersistentPeers = persistentPeers
+		//c.P2P.PersistentPeers = persistentPeers
 		c.RPC.Unsafe = true
 		config.SaveConfig(c)
 		validator, appState, err := getValidator(cdc, c, appInit)
