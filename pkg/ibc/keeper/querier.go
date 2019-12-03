@@ -9,6 +9,7 @@ import (
 // query endpoints supported by the nameservice Querier
 const (
 	QueryState = "state"
+	QueryNonce = "nonce"
 )
 
 // NewQuerier is the module level router for state queries
@@ -17,6 +18,8 @@ func NewQuerier(keeper IBCKeeper) sdk.Querier {
 		switch path[0] {
 		case QueryState:
 			return queryResolve(ctx, path[1:], req, keeper)
+		case QueryNonce:
+			return queryAccountNonce(ctx, path[1:], req, keeper)
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown nameservice query endpoint")
 		}
@@ -41,6 +44,13 @@ func queryResolve(ctx sdk.Context, path []string, req abci.RequestQuery, keeper 
 	return retbz, nil
 }
 
-//func queryAccountNonce(ctx sdk.Context, path []string, req abci.RequestQuery, keeper IBCKeeper) (uint64, sdk.Error) {
-//	value := keeper.AccountKeeper.GetAccount(ctx,).SetSequence()
-//}
+func queryAccountNonce(ctx sdk.Context, path []string, req abci.RequestQuery, keeper IBCKeeper) ([]byte, sdk.Error) {
+	accountAddr := path[0]
+	address := sdk.HexToAddress(accountAddr)
+	nonce := keeper.AccountKeeper.GetAccount(ctx, address).GetSequence()
+	retbz, err := types.IbcCdc.MarshalBinaryLengthPrefixed(nonce)
+	if err != nil {
+		return nil, sdk.ErrUnknownRequest(err.Error())
+	}
+	return retbz, nil
+}

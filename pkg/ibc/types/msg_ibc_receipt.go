@@ -60,3 +60,15 @@ func (msg *IBCReceiveReceiptMsg)SetPubKey(pub []byte) {
 func (msg *IBCReceiveReceiptMsg) Route() string {
 	return RouterKey
 }
+
+func (msg *IBCReceiveReceiptMsg) GetGas() uint64 {
+	return msg.CommonTx.Gas
+}
+
+func (msg *IBCReceiveReceiptMsg) GetNonce() uint64 {
+	return msg.CommonTx.Nonce
+}
+
+func (msg *IBCReceiveReceiptMsg) GetFromAddress() sdk.AccAddress {
+	return msg.CommonTx.From
+}

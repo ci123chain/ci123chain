@@ -9,12 +9,14 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/client/context"
 	"github.com/tanhuiya/ci123chain/pkg/ibc/types"
 	"net/http"
+	"strconv"
 )
 
 
 func RegisterTxRoutes(cliCtx context.Context, r *mux.Router)  {
 	r.HandleFunc("/ibctx/{uniqueid}", QueryTxByUniqueIDRequestHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc("/ibctx/state/{ibcstate}", QueryTxByStateRequestHandlerFn(cliCtx)).Methods("GET")
+	r.HandleFunc("/ibctx/nonce/{accountaddress}", QueryAccountNonceRequestHandlerFn(cliCtx)).Methods("GET")
 
 }
 
@@ -79,3 +81,31 @@ func QueryTxByUniqueIDRequestHandlerFn(cliCtx context.Context) http.HandlerFunc 
 		rest.PostProcessResponseBare(writer, cliCtx, ibcMsg.State)
 	}
 }
+
+func QueryAccountNonceRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		vars := mux.Vars(request)
+		accountAddress := vars["accountaddress"]
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(writer, cliCtx, request)
+		if !ok {
+			rest.WriteErrorResponse(writer, http.StatusBadRequest, "Build context error")
+		}
+
+		res, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/nonce/" + accountAddress, nil)
+		if len(res) < 1 {
+			rest.WriteErrorResponse(writer, http.StatusNotFound, "no account " )
+			return
+		}
+		var nonce uint64
+		err = cliCtx.Cdc.UnmarshalBinaryLengthPrefixed(res, &nonce)
+		if err != nil {
+			rest.WriteErrorResponse(writer, http.StatusNotFound, err.Error())
+			return
+		}
+		rest.PostProcessResponseBare(writer, cliCtx, strconv.Itoa(int(nonce)))
+	}
+
+}
+ type ne struct {
+ 	Nonce uint64 `json:"nonce"`
+ }

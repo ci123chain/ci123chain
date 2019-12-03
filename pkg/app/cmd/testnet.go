@@ -41,7 +41,7 @@ necessary files (private validator, genesis, config, etc.).
 Note, strict routability for addresses is turned off in the config file.
 
 Example:
-	cid gen-net --chain-id=xxxx --validator-num=4 --non-validator=3 --output=./output
+	cid gen-net --chain-id=xxxx --validators-num=4 --non-validators-num=3 --output-dir=./output
 	`,
 		RunE: func(_ *cobra.Command, _ []string) error {
 			config := ctx.Config
@@ -157,7 +157,8 @@ func testnetGenWithConfig(c *cfg.Config, cdc *amino.Codec, appInit app.AppInit) 
 		}
 		c.Moniker = di.DirName()
 		c.SetRoot(di.NodeDir())
-		c.P2P.PersistentPeers = persistentPeers
+		//c.P2P.PersistentPeers = persistentPeers
+		c.RPC.Unsafe = true
 		config.SaveConfig(c)
 		validator, appState, err := getValidator(cdc, c, appInit)
 		if err != nil{
@@ -182,6 +183,7 @@ func testnetGenWithConfig(c *cfg.Config, cdc *amino.Codec, appInit app.AppInit) 
 		c.SetRoot(di.NodeDir())
 		cfg.EnsureRoot(di.NodeDir())
 		c.P2P.PersistentPeers = persistentPeers
+		c.RPC.Unsafe = true
 		config.SaveConfig(c)
 		if err := CopyFile(genFilePath, filepath.Join(c.RootDir, "config/genesis.json")); err != nil {
 			return err

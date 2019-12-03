@@ -38,7 +38,7 @@ build-docker: build-linux build-image
 .PHONY: docker-start
 docker-start: build-docker start
 start:
-	docker run --name ci123-container-v1 -p 1318:1317 -d cichain:v0.0.1
+	docker run --name ci123-container-v1 -p 1318:1317 -e CI123_HOME=/opt -d cichain:v0.0.1
 
 docker-clean:
 	docker ps -a | grep "ci123-container-" | awk '{print $$1}' | xargs docker rm -f
