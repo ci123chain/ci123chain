@@ -1,0 +1,51 @@
+{
+  "genesis_time": "2019-12-04T03:36:52.726694Z",
+  "chain_id": "ci123",
+  "consensus_params": {
+    "block": {
+      "max_bytes": "22020096",
+      "max_gas": "-1",
+      "time_iota_ms": "1000"
+    },
+    "evidence": {
+      "max_age": "100000"
+    },
+    "validator": {
+      "pub_key_types": [
+        "secp256k1"
+      ]
+    }
+  },
+  "validators": [
+    {
+      "address": "B10C467A5657AED95D9CDD14508A426DA4C5EDB3",
+      "pub_key": {
+        "type": "tendermint/PubKeySecp256k1",
+        "value": "AsHUu+NExPSYQkwvnftE1gdrPsOvolEexs21fGbjbhT7"
+      },
+      "power": "1",
+      "name": ""
+    },
+    {
+      "address": "BAF735AA9A4506657CFEB0B9671AA297484102A7",
+      "pub_key": {
+        "type": "tendermint/PubKeySecp256k1",
+        "value": "AxBG5eG1IgyrNQ3szZm5t+yz/9j1x8dx3NepKQpwilCY"
+      },
+      "power": "1",
+      "name": ""
+    }
+  ],
+  "app_hash": "",
+  "app_state": {
+    "accounts": [],
+    "auth": {
+      "params": {
+        "max_memo_characters": "256",
+        "tx_size_cost_per_byte": "10",
+        "sig_verify_cost_ed_25519": "590",
+        "sig_verify_cost_secp_256_k_1": "1000"
+      }
+    }
+  }
+}

@@ -25,7 +25,7 @@ func Execute()  {
 func init()  {
 	rootCmd.PersistentFlags().StringP(helper.FlagHomeDir, "", homeDir, "directory for keystore")
 	rootCmd.PersistentFlags().BoolP(helper.FlagVerbose, "v", false, "enable verbose output")
-	rootCmd.PersistentFlags().String(helper.FlagNode, "tcp://127.0.0.1:26657", "<host>:<port> to tendermint rpc interface for this chain")
+	rootCmd.PersistentFlags().String(helper.FlagNode, "tcp://localhost:26657", "<host>:<port> to tendermint rpc interface for this chain")
 	rootCmd.PersistentFlags().StringP(helper.FlagPassword, "p", "", "password for signing tx")
 	rootCmd.PersistentFlags().Int64(helper.FlagHeight, 0, "Use a special height to query state at (this can error if node is pruning state)")
 	viper.BindPFlags(rootCmd.Flags())

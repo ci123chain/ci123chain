@@ -1,21 +1,23 @@
 package cmd
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/client"
-	"github.com/tanhuiya/ci123chain/pkg/client/cmd/rpc"
-	accountRpc "github.com/tanhuiya/ci123chain/pkg/account/rest"
-	"github.com/tanhuiya/ci123chain/pkg/client/helper"
-	"github.com/tanhuiya/ci123chain/pkg/ibc"
-	txRpc "github.com/tanhuiya/ci123chain/pkg/transfer/rest"
-	"github.com/tanhuiya/ci123chain/pkg/client/context"
-	"github.com/tanhuiya/ci123chain/pkg/util"
 	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	accountRpc "github.com/tanhuiya/ci123chain/pkg/account/rest"
+	"github.com/tanhuiya/ci123chain/pkg/client"
+	"github.com/tanhuiya/ci123chain/pkg/client/cmd/rpc"
+	"github.com/tanhuiya/ci123chain/pkg/client/context"
+	"github.com/tanhuiya/ci123chain/pkg/client/helper"
+	"github.com/tanhuiya/ci123chain/pkg/ibc"
+	txRpc "github.com/tanhuiya/ci123chain/pkg/transfer/rest"
+	"github.com/tanhuiya/ci123chain/pkg/util"
 	"github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/rpc/lib/server"
 	"net"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -85,14 +87,22 @@ func NewRestServer() *RestServer {
 const CorePrefix = "/core"
 func Handle404() http.Handler {
 	return http.HandlerFunc(func (w http.ResponseWriter, req *http.Request) {
+
 		nodeUri := req.RequestURI
 		if strings.HasPrefix(nodeUri, CorePrefix) {
 			arr := strings.SplitAfter(nodeUri, CorePrefix)
 			arr = arr[1:]
 			newPath := strings.Join(arr, "")
-			whole := viper.GetString(helper.FlagNode) + newPath
-			whole = strings.ReplaceAll(whole, "tcp", "http")
-			http.Redirect(w, req, whole, http.StatusPermanentRedirect)
+			dest := viper.GetString(helper.FlagNode)
+			dest = strings.ReplaceAll(dest, "tcp", "http")
+
+			url, _ := url.Parse(dest)
+			proxy := httputil.NewSingleHostReverseProxy(url)
+			req.URL.Host = url.Host
+			req.URL.Path = newPath
+			req.RequestURI = newPath
+			// Note that ServeHttp is non blocking and uses a go routine under the hood
+			proxy.ServeHTTP(w, req)
 		}
 	})
 }

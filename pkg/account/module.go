@@ -20,7 +20,6 @@ type AppModule struct {
 func (am AppModule) InitGenesis(ctx types.Context, data json.RawMessage)  {
 	var genesisState GenesisState
 	ModuleCdc.MustUnmarshalJSON(data, &genesisState)
-
 	InitGenesis(ctx, ModuleCdc, am.AccountKeeper, genesisState)
 }
 

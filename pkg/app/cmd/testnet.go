@@ -182,7 +182,7 @@ func testnetGenWithConfig(c *cfg.Config, cdc *amino.Codec, appInit app.AppInit) 
 		c.Moniker = di.DirName()
 		c.SetRoot(di.NodeDir())
 		cfg.EnsureRoot(di.NodeDir())
-		c.P2P.PersistentPeers = persistentPeers
+		//c.P2P.PersistentPeers = persistentPeers
 		c.RPC.Unsafe = true
 		config.SaveConfig(c)
 		if err := CopyFile(genFilePath, filepath.Join(c.RootDir, "config/genesis.json")); err != nil {
