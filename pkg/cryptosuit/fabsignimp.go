@@ -3,9 +3,7 @@ package cryptosuit
 import (
 	"bytes"
 	"crypto/ecdsa"
-	"fmt"
 	"github.com/pkg/errors"
-	"github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/client/helper"
 	"github.com/tanhuiya/fabric-crypto/cryptoutil"
 )
@@ -41,8 +39,6 @@ func (fab fabsignimp)Verifier(msg []byte, signature []byte, pub []byte, address 
 	}
 
 	if len(address) > 0{
-		oriAddr := types.ToAccAddress(address).Hex()
-		fmt.Println(oriAddr)
 		pubaddress, err := cryptoutil.PublicKeyToAddress(pubKey)
 		if err != nil {
 			return false, err

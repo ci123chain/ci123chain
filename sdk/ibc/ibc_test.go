@@ -111,13 +111,15 @@ func TestAll(t *testing.T)  {
 	privByte := cryptoutil.MarshalPrivateKey(priKey)
 
 	fmt.Println("---发送跨链消息")
+	nonce = httpQuery(ip, port, FromAddr)
 	signdata, err := SignIBCTransferMsg(FromAddr,
-		ToAddr, 1, 50000, nonce, privByte)
+		ToAddr, 20, 50000, nonce, privByte)
 	registRet := httpPost(hex.EncodeToString(signdata))
 	fmt.Println("发送跨链消息完成：UniqueID = " + registRet.Data)
 	fmt.Println()
 
 	fmt.Println("---申请处理该跨链消息")
+	nonce = httpQuery(ip, port, FromAddr)
 	uid := []byte(registRet.Data)
 	signdata, err = SignApplyIBCMsg(FromAddr, uid, []byte(ObserverID), 50000, nonce, privByte)
 	applyRet := httpPost(hex.EncodeToString(signdata))
@@ -125,7 +127,9 @@ func TestAll(t *testing.T)  {
 	fmt.Println("申请处理该跨链消息结束")
 	fmt.Println()
 
+
 	fmt.Println("---第二个申请处理该跨链消息")
+	nonce = httpQuery(ip, port, FromAddr)
 	ObserverID2 := "12313213213213124321"
 	signdata, err = SignApplyIBCMsg(FromAddr, uid, []byte(ObserverID2), 50000, nonce, privByte)
 
@@ -134,8 +138,10 @@ func TestAll(t *testing.T)  {
 	fmt.Println("申请处理该跨链消息结束失败")
 	fmt.Println()
 
+
 	// bank转账，该交易参数应该是observer 从 fabric 获得，此处是模拟
 	fmt.Println("---向对方转账")
+	nonce = httpQuery(ip, port, FromAddr)
 	pkg := applyRet.Data
 	signdata, err = SignIBCBankSendMsg(FromAddr, []byte(pkg), 50000, nonce, privByte)
 	fmt.Println(hex.EncodeToString(signdata))
@@ -146,6 +152,7 @@ func TestAll(t *testing.T)  {
 
 	//发送回执
 	fmt.Println("---发送回执")
+	nonce = httpQuery(ip, port, FromAddr)
 	receivepkg := receiptRet.Data
 	signdata, err = SignIBCReceiptMsg(FromAddr, []byte(receivepkg), 50000, nonce, privByte)
 	ret := httpPost(hex.EncodeToString(signdata))
@@ -202,4 +209,27 @@ func httpPost(param string) retData {
 type retData struct {
 	Data string `json:"data"`
 	RawLog  string `json:"raw_log"`
+}
+var testKey = `-----BEGIN PRIVATE KEY-----
+MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgp4qKKB0WCEfx7XiB
+5Ul+GpjM1P5rqc6RhjD5OkTgl5OhRANCAATyFT0voXX7cA4PPtNstWleaTpwjvbS
+J3+tMGTG67f+TdCfDxWYMpQYxLlE8VkbEzKWDwCYvDZRMKCQfv2ErNvb
+-----END PRIVATE KEY-----`
+
+func Test1(t *testing.T) {
+
+	priKey, err := cryptoutil.DecodePriv([]byte(testKey))
+	if err != nil {
+
+	}
+	privByte := cryptoutil.MarshalPrivateKey(priKey)
+	priv, err := cryptoutil.UnMarshalPrivateKey(privByte)
+	if err != nil {
+
+	}
+	pub := priv.Public().(*ecdsa.PublicKey)
+	address, err := cryptoutil.PublicKeyToAddress(pub)
+	if err != nil {
+	}
+	fmt.Println(address)
 }

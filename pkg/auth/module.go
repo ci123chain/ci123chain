@@ -6,6 +6,7 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/auth/types"
 	"github.com/tanhuiya/ci123chain/pkg/abci/codec"
 	abci_types "github.com/tanhuiya/ci123chain/pkg/abci/types"
+	abci "github.com/tendermint/tendermint/abci/types"
 )
 
 var (
@@ -39,3 +40,8 @@ type AppModule struct {
 
 	AuthKeeper AuthKeeper
 }
+
+func (am AppModule) BeginBlocker(ctx abci_types.Context, req abci.RequestBeginBlock) {
+	//do you want to do
+}
+

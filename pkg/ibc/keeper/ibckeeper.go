@@ -70,21 +70,21 @@ func (k IBCKeeper) GetFirstReadyIBCMsg(ctx sdk.Context) *types.IBCInfo {
 }
 
 // 申请处理某笔交易
-func (k IBCKeeper) ApplyIBCMsg(ctx sdk.Context, uniqueID []byte, observerID []byte, nonce uint64) (*types.ApplyReceipt, error) {
+func (k IBCKeeper) ApplyIBCMsg(ctx sdk.Context, tx types.ApplyIBCTx) (*types.ApplyReceipt, error) {
 
-	ibcMsg := k.GetIBCByUniqueID(ctx, uniqueID)
+	ibcMsg := k.GetIBCByUniqueID(ctx, tx.UniqueID)
 	if ibcMsg == nil {
-		return nil, errors.New(fmt.Sprintf("ibc tx not found with uniqueID = %s", string(uniqueID)))
+		return nil, errors.New(fmt.Sprintf("ibc tx not found with uniqueID = %s", string(tx.UniqueID)))
 	}
 
 	timeNow := ctx.BlockHeader().Time
 	if !ibcMsg.CanProcess(timeNow) {
-		return nil, errors.New(fmt.Sprintf("ibc tx not avaliable with uniqueID = %s, state = %s", string(uniqueID), ibcMsg.State))
+		return nil, errors.New(fmt.Sprintf("ibc tx not avaliable with uniqueID = %s, state = %s", string(tx.UniqueID), ibcMsg.State))
 	}
 	// 修改处理人状态，以及时间
 	// 获取当前时间
 	ibcMsg.ApplyTime = timeNow
-	ibcMsg.ObserverID = observerID
+	ibcMsg.ObserverID = tx.ObserverID
 	bankAddr, err := getBankAddress()
 	if err != nil {
 		return nil, err
@@ -101,28 +101,43 @@ func (k IBCKeeper) ApplyIBCMsg(ctx sdk.Context, uniqueID []byte, observerID []by
 			err = k.SetIBCMsg(ctx, *ibcMsg)
 
 			//-----------------
-			//抵押失败，nonce+1
-			account := k.AccountKeeper.GetAccount(ctx, ibcMsg.FromAddress)
-			 err = account.SetSequence(nonce + 1)
+			//余额不足，from 账户 nonce+1
+			fromAccount := k.AccountKeeper.GetAccount(ctx, ibcMsg.FromAddress)
+			 err = fromAccount.SetSequence(fromAccount.GetSequence() + 1)
 			 if err != nil {
-			 	return nil, errors.New("Failed to set nonce of account: "+ ibcMsg.FromAddress.Hex() )
+			 	return nil, errors.New("Failed to set sequence of from account: "+ ibcMsg.FromAddress.Hex() )
 			 }
-			k.AccountKeeper.SetAccount(ctx, account)
-			//
+			 //observer nonce+1
+			observerAccount := k.AccountKeeper.GetAccount(ctx, tx.From)
+			saveErr := observerAccount.SetSequence(observerAccount.GetSequence() + 1)
+			if saveErr != nil {
+				return nil,errors.New("Failed to set sequence of observer account")
+			}
+			k.AccountKeeper.SetAccount(ctx, fromAccount)
+			k.AccountKeeper.SetAccount(ctx, observerAccount)
+			//----------------
 			return nil, errors.New("Infficient balance of account: " + ibcMsg.FromAddress.Hex())
 		}
 		if err1 := k.SupplyKeeper.SendCoinsFromAccountToModule(ctx, ibcMsg.FromAddress, types.ModuleName, ibcMsg.Amount); err1 != nil {
 			ibcMsg.State = types.StateCancel
 			err = k.SetIBCMsg(ctx, *ibcMsg)
 
-			//转账失败，nonce+1
-			account := k.AccountKeeper.GetAccount(ctx, ibcMsg.FromAddress)
-			saveErr := account.SetSequence(nonce + 1)
+			//------------------------
+			//转账失败，from 账户 nonce+1
+			fromAccount := k.AccountKeeper.GetAccount(ctx, ibcMsg.FromAddress)
+			saveErr := fromAccount.SetSequence(fromAccount.GetSequence() + 1)
 			if saveErr != nil {
 				return nil, errors.New("Failed to set nonce of account: "+ ibcMsg.FromAddress.Hex() )
 			}
-			k.AccountKeeper.SetAccount(ctx, account)
-			//
+			//observer nonce+1
+			observerAccount := k.AccountKeeper.GetAccount(ctx, tx.From)
+			saveErr = observerAccount.SetSequence(observerAccount.GetSequence() + 1)
+			if saveErr != nil {
+				return nil,errors.New("Failed to set sequence of observer account")
+			}
+			k.AccountKeeper.SetAccount(ctx, fromAccount)
+			k.AccountKeeper.SetAccount(ctx, observerAccount)
+			//--------------------------
 
 			return nil, errors.New(err1.Error())
 		}
@@ -152,6 +167,15 @@ func (k IBCKeeper) ApplyIBCMsg(ctx sdk.Context, uniqueID []byte, observerID []by
 	if err != nil {
 		return nil, err
 	}
+	//-------------------
+	//apply成功 observer nonce+1，证明observer确实apply
+	observerAccount := k.AccountKeeper.GetAccount(ctx, tx.From)
+	saveErr := observerAccount.SetSequence(observerAccount.GetSequence() + 1)
+	if saveErr != nil {
+		return nil,errors.New("Failed to set sequence of observer account")
+	}
+	k.AccountKeeper.SetAccount(ctx, observerAccount)
+	//--------------------------
 	return &signedIbcMsg, nil
 }
 
@@ -253,7 +277,20 @@ func (k IBCKeeper) ReceiveReceipt(ctx sdk.Context, receipt types.BankReceipt) (e
 	}
 
 	err := k.SetIBCMsg(ctx, *ibcMsg)
-	return err
+	if err != nil {
+		return errors.New(err.Error())
+	}
+
+	//交易成功，from 账户 nonce+1
+	account := k.AccountKeeper.GetAccount(ctx, ibcMsg.FromAddress)
+	saveErr := account.SetSequence(account.GetSequence() + 1)
+	if saveErr != nil {
+		return errors.New("Failed to set sequence")
+	}
+	k.AccountKeeper.SetAccount(ctx, account)
+	//
+
+	return nil
 }
 
 func (k IBCKeeper) getStore(ctx sdk.Context) sdk.KVStore {

@@ -1,30 +1,25 @@
-package account
+package distribution
 
 import (
 	"encoding/json"
 	"github.com/tanhuiya/ci123chain/pkg/abci/codec"
 	"github.com/tanhuiya/ci123chain/pkg/abci/types"
-	"github.com/tanhuiya/ci123chain/pkg/account/keeper"
-	acc_types "github.com/tanhuiya/ci123chain/pkg/account/types"
+	acc_types "github.com/tanhuiya/ci123chain/pkg/distribution/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 )
-
 
 type AppModule struct {
 	AppModuleBasic
 
-	AccountKeeper	keeper.AccountKeeper
+	DistributionKeeper  DistrKeeper
 }
 
 func (am AppModule) BeginBlocker(ctx types.Context, req abci.RequestBeginBlock) {
-	//do you want to do
+	BeginBlock(ctx, req, am.DistributionKeeper)
 }
 
 func (am AppModule) InitGenesis(ctx types.Context, data json.RawMessage)  {
-	var genesisState GenesisState
-	ModuleCdc.MustUnmarshalJSON(data, &genesisState)
-
-	InitGenesis(ctx, ModuleCdc, am.AccountKeeper, genesisState)
+	//do something
 }
 
 

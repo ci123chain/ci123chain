@@ -12,7 +12,6 @@ import (
 const price uint64 = 1
 func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, fck fc.FcKeeper) types.AnteHandler {
 	return func(ctx types.Context, tx types.Tx, simulate bool) (newCtx types.Context, res types.Result, abort bool) {
-
 		stdTx, ok := tx.(transaction.Transaction)
 		if !ok {
 			// Set a gas meter with limit 0 as to prevent an infinite gas meter attack
@@ -44,7 +43,6 @@ func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, fck f
 			}
 		}
 		gas := stdTx.GetGas()//用户期望的gas值 g.limit
-
 		newCtx = SetGasMeter(simulate, ctx, gas)//设置为GasMeter的gasLimit,成为用户可承受的gas上限.
 		//pms.TxSizeCostPerByte*types.Gas(len(newCtx.TxBytes()))
 		var sg uint64 = 1
@@ -54,9 +52,9 @@ func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, fck f
 		gasPrice := 2*price
 		fee := newCtx.GasMeter().GasConsumed() * gasPrice
 		getFee := types.Coin(fee)
+		fmt.Println(getFee)
 
 		newCtx = SetGasMeter(simulate, ctx, gas)
-
 		// AnteHandlers must have their own defer/recover in order for the BaseApp
 		// to know how much gas was used! This is because the GasMeter is created in
 		// the AnteHandler, but if it panics the context won't be set properly in
@@ -79,65 +77,19 @@ func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, fck f
 				}
 			}
 		}()
-
 		if err := tx.ValidateBasic(); err != nil {
 			return newCtx, err.Result(), true
 		}
-
 		newCtx.GasMeter().ConsumeGas(params.TxSizeCostPerByte*types.Gas(len(newCtx.TxBytes())), "txSize")
 
-		//if res := ValidateMemo(stdTx, params); !res.IsOK() {
-		//	return newCtx, res, true
-		//}
+		res = DeductFees(acc, getFee, ak, ctx)
 
-		// stdSigs contains the sequence number, account number, and signatures.
-		// When simulating, this would just be a 0-length slice.
-		//signerAddrs := stdTx.GetSigners()
-		//signerAccs := make([]Account, len(signerAddrs))
-		//isGenesis := ctx.BlockHeight() == 0
-
-		// fetch first signer, who's going to pay the fees
-		//signerAccs[0], res = GetSignerAcc(newCtx, ak, signerAddrs[0])
-		//if !res.IsOK() {
-		//	return newCtx, res, true
-		//}
-		res = DeductFees(acc, getFee)
-
-		//signerAccs[0], res = DeductFees(ctx.BlockHeader().Time, signerAccs[0], stdTx.Fee)
 		if !res.IsOK() {
 			return newCtx, res, true
 		}
 		//存储奖励金
 
 		fck.AddCollectedFees(newCtx, getFee)
-		//g := fck.GetCollectedFees(newCtx)
-		//fmt.Println(g)
-
-		//给验证者的账户sequence+1
-		//processSig(newCtx, acc, simulate, params)
-		// stdSigs contains the sequence number, account number, and signatures.
-		// When simulating, this would just be a 0-length slice.
-		//stdSigs := stdTx.GetSignatures()
-
-		//for i := 0; i < len(stdSigs); i++ {
-		//	// skip the fee payer, account is cached and fees were deducted already
-		//	if i != 0 {
-		//		signerAccs[i], res = GetSignerAcc(newCtx, ak, signerAddrs[i])
-		//		if !res.IsOK() {
-		//			return newCtx, res, true
-		//		}
-		//	}
-		//
-		//	// check signature, return account with incremented nonce
-		//	signBytes := GetSignBytes(newCtx.ChainID(), stdTx, signerAccs[i], isGenesis)
-		//	signerAccs[i], res = processSig(newCtx, signerAccs[i], stdSigs[i], signBytes, simulate, params)
-		//	if !res.IsOK() {
-		//		return newCtx, res, true
-		//	}
-		//
-		//	ak.SetAccount(newCtx, signerAccs[i])
-		//}
-
 
 		return newCtx, types.Result{GasWanted:gas,GasUsed:fee}, false
 	}
@@ -175,7 +127,7 @@ func EnsureSufficientMempoolFees() types.Result {
 	return types.Result{}
 }
 
-func DeductFees(acc exported.Account, fee types.Coin) (types.Result) {
+func DeductFees(acc exported.Account, fee types.Coin, ak account.AccountKeeper, ctx types.Context) (types.Result) {
 	coin := acc.GetCoin()
 	newCoins, ok := coin.SafeSub(fee)
 	if !ok {
@@ -184,18 +136,10 @@ func DeductFees(acc exported.Account, fee types.Coin) (types.Result) {
 		).Result()
 	}
 
-	// Validate the account has enough "spendable" coins as this will cover cases
-	// such as vesting accounts.
-	//spendableCoins := acc.SpendableCoins(blockTime)
-	//if _, hasNeg := spendableCoins.SafeSub(feeAmount); hasNeg {
-	//	return nil, sdk.ErrInsufficientFunds(
-	//		fmt.Sprintf("insufficient funds to pay for fees; %s < %s", spendableCoins, feeAmount),
-	//	).Result()
-	//}
-
 	if err := acc.SetCoin(newCoins); err != nil {
 		return types.ErrInternal(err.Error()).Result()
 	}
+	ak.SetAccount(ctx, acc)
 
 	return types.Result{}
 }

@@ -12,6 +12,7 @@ type AppModuleGenesis interface {
 
 	// 根据 genesis 配置初始化
 	InitGenesis(ctx types.Context, data json.RawMessage)
+	BeginBlocker(ctx types.Context, req abci.RequestBeginBlock)
 }
 
 type AppModuleBasic interface {
@@ -78,4 +79,12 @@ func (am AppManager) InitGenesis(ctx types.Context, data map[string]json.RawMess
 	return abci.ResponseInitChain{
 		Validators: validatorUpdates,
 	}
+}
+
+func (am AppManager) BeginBlocker(ctx types.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
+
+	for _, m := range am.Modules {
+		m.BeginBlocker(ctx, req)
+	}
+	return abci.ResponseBeginBlock{}
 }

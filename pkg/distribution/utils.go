@@ -3,18 +3,12 @@ package distribution
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/tanhuiya/ci123chain/pkg/abci/types"
-	"github.com/tanhuiya/ci123chain/pkg/account"
 	"github.com/tendermint/tendermint/libs/bech32"
 	"strings"
 	"sync"
-
-	//"github.com/tanhuiya/ci123chain/pkg/app/cmd"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	abci "github.com/tendermint/tendermint/abci/types"
 )
 
-
+/*
 func BeginBlocker(ak account.AccountKeeper, distr DistrKeeper) types.BeginBlocker{
 	return func(ctx types.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock{
 
@@ -58,7 +52,7 @@ func BeginBlocker(ak account.AccountKeeper, distr DistrKeeper) types.BeginBlocke
 		return abci.ResponseBeginBlock{}
 	}
 }
-
+*/
 type Ca []byte
 func (ca Ca) Empty() bool {
 	if ca == nil {

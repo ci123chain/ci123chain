@@ -45,11 +45,12 @@ func handleMsgIBCTransfer(ctx sdk.Context, k keeper.IBCKeeper, tx types.IBCTrans
 
 // 第一步: 申请处理跨链交易
 func handleMsgApplyIBCTx(ctx sdk.Context, k keeper.IBCKeeper, tx types.ApplyIBCTx) sdk.Result {
-	signedIBCMsg, err := k.ApplyIBCMsg(ctx, tx.UniqueID, tx.ObserverID, tx.CommonTx.Nonce)
+	signedIBCMsg, err := k.ApplyIBCMsg(ctx, tx)
 	if err != nil {
 		return sdk.ErrInternal(err.Error()).Result()
 	}
 	signedIBCMsgBz, _ := json.Marshal(signedIBCMsg)
+
 	ctx.Logger().Info("Apply IBCTransaction successed")
 	return sdk.Result{Data: signedIBCMsgBz}
 }
@@ -97,6 +98,16 @@ func handleMsgIBCBankSendTx(ctx sdk.Context, k keeper.IBCKeeper, tx types.IBCMsg
 		return sdk.ErrUnknownRequest("Save ibcMsg error").TraceSDK(err.Error()).Result()
 	}
 	receiptBz, _ := json.Marshal(*receipt)
+
+	//bank转账成功，observer nonce+1
+	account := k.AccountKeeper.GetAccount(ctx, tx.From)
+	saveErr := account.SetSequence(account.GetSequence() + 1)
+	if saveErr != nil {
+		return sdk.ErrInternal("Failed to set sequence").Result()
+	}
+	k.AccountKeeper.SetAccount(ctx, account)
+	//
+
 	ctx.Logger().Info("Handle IBCTransaction successed")
 
 	return sdk.Result{Data: receiptBz}
@@ -114,12 +125,11 @@ func handleMsgReceiveReceipt(ctx sdk.Context, k keeper.IBCKeeper, tx types.IBCRe
 	if err2 != nil {
 		return sdk.ErrUnknownRequest(err2.Error()).Result()
 	}
-
-	//交易成功，nonce+1
+	//交易成功，observer nonce+1
 	account := k.AccountKeeper.GetAccount(ctx, tx.From)
-	saveErr := account.SetSequence(tx.Nonce + 1)
+	saveErr := account.SetSequence(account.GetSequence() + 1)
 	if saveErr != nil {
-		return sdk.ErrInvalidSequence("Unexpected nonce of transaction").Result()
+		return sdk.ErrInternal("Failed to set sequence").Result()
 	}
 	k.AccountKeeper.SetAccount(ctx, account)
 	//

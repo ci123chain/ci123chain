@@ -126,6 +126,7 @@ func NewChain(logger log.Logger, tmdb tmdb.DB, traceStore io.Writer) *Chain {
 	c.mm = module.NewManager(
 		auth.AppModule{AuthKeeper: c.authKeeper},
 		account.AppModule{AccountKeeper: accKeeper},
+		distr.AppModule{DistributionKeeper: distrKeeper},
 		)
 
 	c.Router().AddRoute(transfer.RouteKey, handler.NewHandler(txm, accKeeper, sm))
@@ -135,7 +136,7 @@ func NewChain(logger log.Logger, tmdb tmdb.DB, traceStore io.Writer) *Chain {
 	c.QueryRouter().AddRoute(ibc.ModuleName, ibc.NewQuerier(ibcKeeper))
 
 	c.SetAnteHandler(ante.NewAnteHandler(c.authKeeper, accKeeper, fcKeeper))
-	c.SetBeginBlocker(disrt.BeginBlocker(accKeeper, distrKeeper))
+	c.SetBeginBlocker(c.BeginBlocker)
 	c.SetInitChainer(c.InitChainer)
 
 	err := c.mountStores()
