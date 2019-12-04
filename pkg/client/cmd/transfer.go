@@ -1,12 +1,12 @@
 package cmd
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/abci/types"
+	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/client"
 	"github.com/tanhuiya/ci123chain/pkg/client/helper"
+	"github.com/tanhuiya/ci123chain/pkg/client/types"
 	"github.com/tanhuiya/ci123chain/pkg/transfer"
 	"github.com/tanhuiya/ci123chain/pkg/util"
-	"errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -44,33 +44,37 @@ var transferCmd = &cobra.Command{
 		from := addrs[0]
 		tos, err := helper.ParseAddrs(viper.GetString(flagTo))
 		if err != nil {
-			return err
+			return types.ErrParseAddr(types.DefaultCodespace, err)
 		}
 		if len(tos) == 0 {
-			return errors.New("must provide an address to send to")
+			return types.ErrNoAddr(types.DefaultCodespace, err)
 		}
 		//直接getNonce
+		//todo err
 		nonce, err := ctx.GetNonceByAddress(from)
 		if err != nil {
 			return err
 		}
 
 		ucoin := uint64(viper.GetInt(flagAmount))
-		tx := transfer.NewTransferTx(from, tos[0], uint64(viper.GetInt(flagGas)), nonce, types.Coin(ucoin), false)
+		tx := transfer.NewTransferTx(from, tos[0], uint64(viper.GetInt(flagGas)), nonce, sdk.Coin(ucoin), false)
 
 		password := viper.GetString(flagPassword)
 		if len(password) < 1 {
 			var err error
 			password, err = helper.GetPassphrase(from)
 			if err != nil {
-				return err
+				return types.ErrGetPassPhrase(types.DefaultCodespace, err)
 			}
 		}
 
 		signedData, err := getSignedDataWithTx(ctx, tx, password, from)
+		if err != nil {
+			return types.ErrGetSignData(types.DefaultCodespace, err)
+		}
 		res, err := ctx.BroadcastSignedData(signedData)
 		if err != nil {
-			return err
+			return types.ErrBroadcast(types.DefaultCodespace, err)
 		}
 		ctx.PrintOutput(res)
 		return nil

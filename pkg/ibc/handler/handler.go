@@ -6,6 +6,7 @@ import (
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/ibc/keeper"
 	"github.com/tanhuiya/ci123chain/pkg/ibc/types"
+	"github.com/tanhuiya/ci123chain/pkg/transaction"
 )
 
 func NewHandler(k keeper.IBCKeeper) sdk.Handler {
@@ -35,9 +36,12 @@ func handleMsgIBCTransfer(ctx sdk.Context, k keeper.IBCKeeper, tx types.IBCTrans
 	retbz := []byte(uuidStr)
 	ibcMsg, err := makeIBCMsg([]byte(uuidStr), tx)
 	if err != nil {
-		return sdk.ErrInternal("make ibc msg failed").TraceSDK(err.Error()).Result()
+		return types.ErrMakeIBCMsg(types.DefaultCodespace, err).Result()
 	}
-	k.SetIBCMsg(ctx, ibcMsg)
+	err = k.SetIBCMsg(ctx, ibcMsg)
+	if err != nil {
+		return types.ErrSetIBCMsg(types.DefaultCodespace, err).Result()
+	}
 	ctx.Logger().Info("Create IBCTransaction successed")
 
 	return sdk.Result{Data: retbz}
@@ -47,7 +51,7 @@ func handleMsgIBCTransfer(ctx sdk.Context, k keeper.IBCKeeper, tx types.IBCTrans
 func handleMsgApplyIBCTx(ctx sdk.Context, k keeper.IBCKeeper, tx types.ApplyIBCTx) sdk.Result {
 	signedIBCMsg, err := k.ApplyIBCMsg(ctx, tx)
 	if err != nil {
-		return sdk.ErrInternal(err.Error()).Result()
+		return types.ErrApplyIBCMsg(types.DefaultCodespace, err).Result()
 	}
 	signedIBCMsgBz, _ := json.Marshal(signedIBCMsg)
 
@@ -72,7 +76,7 @@ func handleMsgIBCBankSendTx(ctx sdk.Context, k keeper.IBCKeeper, tx types.IBCMsg
 	if old_ibcMsg != nil && old_ibcMsg.State == types.StateDone {
 		receipt, err := k.MakeBankReceipt(ctx, *ibcMsg)
 		if err != nil {
-			return sdk.ErrUnknownRequest("Get bank receipt error").TraceSDK(err.Error()).Result()
+			return types.ErrMakeBankReceipt(types.DefaultCodespace, err).Result()
 		}
 
 		receiptBz, _ := json.Marshal(*receipt)
@@ -83,19 +87,19 @@ func handleMsgIBCBankSendTx(ctx sdk.Context, k keeper.IBCKeeper, tx types.IBCMsg
 
 	receipt, err2 := k.MakeBankReceipt(ctx, *ibcMsg)
 	if err2 != nil {
-		return sdk.ErrUnknownRequest("Get bank receipt error").TraceSDK(err.Error()).Result()
+		return types.ErrMakeBankReceipt(types.DefaultCodespace, err2).Result()
 	}
 
 	// todo bank action
 	err2 = k.BankSend(ctx, *ibcMsg)
 	if err2 != nil {
-		return sdk.ErrInsufficientCoins(err2.Error()).Result()
+		return types.ErrBankSend(types.DefaultCodespace, err2).Result()
 	}
 
 	// 保存该交易
 	err2 = k.SetIBCMsg(ctx, *ibcMsg)
 	if err2 != nil {
-		return sdk.ErrUnknownRequest("Save ibcMsg error").TraceSDK(err.Error()).Result()
+		return types.ErrSetIBCMsg(types.DefaultCodespace, err2).Result()
 	}
 	receiptBz, _ := json.Marshal(*receipt)
 
@@ -123,13 +127,13 @@ func handleMsgReceiveReceipt(ctx sdk.Context, k keeper.IBCKeeper, tx types.IBCRe
 	}
 	err2 := k.ReceiveReceipt(ctx, *receiveObj)
 	if err2 != nil {
-		return sdk.ErrUnknownRequest(err2.Error()).Result()
+		return types.ErrReceiveReceipt(types.DefaultCodespace, err2).Result()
 	}
 	//交易成功，observer nonce+1
 	account := k.AccountKeeper.GetAccount(ctx, tx.From)
 	saveErr := account.SetSequence(account.GetSequence() + 1)
 	if saveErr != nil {
-		return sdk.ErrInternal("Failed to set sequence").Result()
+		return transaction.ErrSetSequence(types.DefaultCodespace, saveErr.Error()).Result()
 	}
 	k.AccountKeeper.SetAccount(ctx, account)
 	//

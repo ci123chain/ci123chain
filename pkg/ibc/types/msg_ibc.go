@@ -2,9 +2,10 @@ package types
 
 import (
 	"encoding/json"
-	"github.com/pkg/errors"
+	"errors"
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/cryptosuit"
+	"github.com/tanhuiya/ci123chain/pkg/transaction"
 	"time"
 )
 
@@ -20,13 +21,13 @@ const (
 	TimeoutProcessing = 30
 )
 
-func ValidateState(state string) error {
+func ValidateState(state string) sdk.Error {
 	if state == StateReady ||
 		state == StateProcessing ||
 		state == StateDone {
 		return nil
 	}
-	return errors.New("unknown state type")
+	return ErrState(DefaultCodespace, errors.New("state not ready processing or done"))
 }
 
 // 链上保存的跨链交易信息
@@ -101,10 +102,10 @@ func (sim ApplyReceipt) Sign(priv []byte) (ApplyReceipt, error) {
 	sid := cryptosuit.NewFabSignIdentity()
 	signature, err := sid.Sign(signBytes, priv)
 	if err != nil {
-		return sim, err
+		return sim, transaction.ErrSignature(DefaultCodespace, err)
 	}
 	if len(signature) < 1 {
-		return sim, errors.New("signature error")
+		return sim, transaction.ErrSignature(DefaultCodespace, errors.New("len signature less than 1"))
 	}
 	sim.Signature = signature
 	return sim, nil
@@ -156,15 +157,15 @@ func NewBankReceipt(uniqueID, observerID string) *BankReceipt {
 	}
 }
 
-func (br *BankReceipt)Sign(priv []byte) (*BankReceipt, error) {
+func (br *BankReceipt) Sign(priv []byte) (*BankReceipt, error) {
 	signBytes := br.GetSignBytes()
 	sid := cryptosuit.NewFabSignIdentity()
 	signature, err := sid.Sign(signBytes, priv)
 	if err != nil {
-		return br, err
+		return br, transaction.ErrSignature(DefaultCodespace, err)
 	}
 	if len(signature) < 1 {
-		return br, errors.New("signature error")
+		return br, transaction.ErrSignature(DefaultCodespace, errors.New("len signature less than 1"))
 	}
 	br.Signature = signature
 	return br, nil

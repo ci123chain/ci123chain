@@ -14,6 +14,8 @@ import (
 
 var ErrConfigNotFound = errors.New("config not found")
 
+var ErrGetConfig = errors.New("config not found")
+
 //_____________________________________________________________________
 
 // Configuration structure for command functions that share configuration.

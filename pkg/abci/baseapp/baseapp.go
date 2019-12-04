@@ -676,7 +676,6 @@ func (app *BaseApp) Commit() (res abci.ResponseCommit) {
 
 	// Empty the Deliver state
 	app.deliverState = nil
-
 	return abci.ResponseCommit{
 		Data: commitID.Hash,
 	}

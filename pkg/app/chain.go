@@ -121,19 +121,17 @@ func NewChain(logger log.Logger, tmdb tmdb.DB, traceStore io.Writer) *Chain {
 	fcKeeper := fc.NewFcKeeper(cdc, fcStoreKey, accKeeper)
 	distrKeeper := disrt.NewKeeper(cdc, disrtStoreKey, fcKeeper, accKeeper)
 
-	// 设置module
-
+	// 设置modules
 	c.mm = module.NewManager(
 		auth.AppModule{AuthKeeper: c.authKeeper},
 		account.AppModule{AccountKeeper: accKeeper},
 		distr.AppModule{DistributionKeeper: distrKeeper},
 		)
-
+	// invoke router
 	c.Router().AddRoute(transfer.RouteKey, handler.NewHandler(txm, accKeeper, sm))
-	//c.Router().AddRoute(mortgage.RouterKey, mortgage.NewHandler(mortgageKeeper))
 	c.Router().AddRoute(ibc.RouterKey, ibc.NewHandler(ibcKeeper))
-
-	c.QueryRouter().AddRoute(ibc.ModuleName, ibc.NewQuerier(ibcKeeper))
+	// query router
+	c.QueryRouter().AddRoute(ibc.RouterKey, ibc.NewQuerier(ibcKeeper))
 
 	c.SetAnteHandler(ante.NewAnteHandler(c.authKeeper, accKeeper, fcKeeper))
 	c.SetBeginBlocker(c.BeginBlocker)

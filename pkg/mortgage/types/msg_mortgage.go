@@ -3,6 +3,7 @@ package types
 import (
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/transaction"
+	"github.com/tanhuiya/ci123chain/pkg/transfer"
 	"github.com/tanhuiya/ci123chain/pkg/util"
 )
 
@@ -27,13 +28,13 @@ func (msg *MsgMortgage) ValidateBasic() sdk.Error {
 		return err
 	}
 	if msg.ToAddress.Empty() {
-		return sdk.ErrInvalidAddress("missing sender address")
+		return transfer.ErrCheckParams(DefaultCodespace, "missing sender address")
 	}
 	if len(msg.UniqueID) < 1 {
-		return sdk.ErrInternal("param mortgageRecord missing")
+		return transfer.ErrCheckParams(DefaultCodespace, "param mortgageRecord missing")
 	}
 	if !msg.Coin.IsValid() {
-		return sdk.ErrInvalidCoins("coin is invalid" + msg.Coin.String())
+		return transfer.ErrCheckParams(DefaultCodespace, "coin is invalid" + msg.Coin.String())
 	}
 	return msg.CommonTx.VerifySignature(msg.GetSignBytes(), true)
 }

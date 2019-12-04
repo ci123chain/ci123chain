@@ -9,6 +9,7 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/account"
 	"github.com/tanhuiya/ci123chain/pkg/ibc/types"
 	"github.com/tanhuiya/ci123chain/pkg/supply"
+	"github.com/tanhuiya/ci123chain/pkg/transaction"
 	"strconv"
 )
 
@@ -87,7 +88,7 @@ func (k IBCKeeper) ApplyIBCMsg(ctx sdk.Context, tx types.ApplyIBCTx) (*types.App
 	ibcMsg.ObserverID = tx.ObserverID
 	bankAddr, err := getBankAddress()
 	if err != nil {
-		return nil, err
+		return nil, types.ErrGetBankAddr(types.DefaultCodespace, err)
 	}
 	ibcMsg.BankAddress = bankAddr
 
@@ -117,17 +118,18 @@ func (k IBCKeeper) ApplyIBCMsg(ctx sdk.Context, tx types.ApplyIBCTx) (*types.App
 			k.AccountKeeper.SetAccount(ctx, observerAccount)
 			//----------------
 			return nil, errors.New("Infficient balance of account: " + ibcMsg.FromAddress.Hex())
+
 		}
 		if err1 := k.SupplyKeeper.SendCoinsFromAccountToModule(ctx, ibcMsg.FromAddress, types.ModuleName, ibcMsg.Amount); err1 != nil {
 			ibcMsg.State = types.StateCancel
 			err = k.SetIBCMsg(ctx, *ibcMsg)
-
 			//------------------------
 			//转账失败，from 账户 nonce+1
 			fromAccount := k.AccountKeeper.GetAccount(ctx, ibcMsg.FromAddress)
 			saveErr := fromAccount.SetSequence(fromAccount.GetSequence() + 1)
 			if saveErr != nil {
 				return nil, errors.New("Failed to set nonce of account: "+ ibcMsg.FromAddress.Hex() )
+
 			}
 			//observer nonce+1
 			observerAccount := k.AccountKeeper.GetAccount(ctx, tx.From)
@@ -139,7 +141,7 @@ func (k IBCKeeper) ApplyIBCMsg(ctx sdk.Context, tx types.ApplyIBCTx) (*types.App
 			k.AccountKeeper.SetAccount(ctx, observerAccount)
 			//--------------------------
 
-			return nil, errors.New(err1.Error())
+			return nil, transaction.ErrSendCoin(types.DefaultCodespace, err1)
 		}
 	}
 
@@ -148,24 +150,24 @@ func (k IBCKeeper) ApplyIBCMsg(ctx sdk.Context, tx types.ApplyIBCTx) (*types.App
 
 	ibcMsgJson, err := json.Marshal(*ibcMsg)
 	if err != nil {
-		return nil, err
+		return nil, types.ErrFailedMarshal(types.DefaultCodespace, err.Error())
 	}
 	signedIbcMsg := types.ApplyReceipt{
 		IBCMsgBytes:  ibcMsgJson,
 	}
 	priv, err := getPrivateKey()
 	if err != nil {
-		return nil, err
+		return nil, transaction.ErrBadPrivkey(types.DefaultCodespace, err)
 	}
 	signedIbcMsg, err = signedIbcMsg.Sign(priv)
 	if err != nil {
-		return nil, err
+		return nil, transaction.ErrSignature(types.DefaultCodespace, err)
 	}
 
 	// 保存状态
 	err = k.SetIBCMsg(ctx, *ibcMsg)
 	if err != nil {
-		return nil, err
+		return nil, types.ErrSetIBCMsg(types.DefaultCodespace, err)
 	}
 	//-------------------
 	//apply成功 observer nonce+1，证明observer确实apply

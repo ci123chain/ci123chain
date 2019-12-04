@@ -3,10 +3,12 @@ package keeper
 import (
 	"crypto/ecdsa"
 	"encoding/json"
+	"errors"
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/cryptosuit"
 	"github.com/tanhuiya/ci123chain/pkg/ibc/types"
 	"github.com/tanhuiya/fabric-crypto/cryptoutil"
+	"github.com/tanhuiya/ci123chain/pkg/transaction"
 )
 
 // 验证 apply 消息
@@ -19,7 +21,7 @@ func ValidateRawIBCMessage(tx types.IBCMsgBankSend) (*types.IBCInfo, sdk.Error) 
 		return nil, types.ErrFailedUnmarshal(types.DefaultCodespace, err.Error())
 	}
 	if len(signObj.Signature) < 1 || len(signObj.IBCMsgBytes) < 1 {
-		return nil, types.ErrBadBankSignature(types.DefaultCodespace)
+		return nil, types.ErrBadBankSignature(types.DefaultCodespace, errors.New("signature or ibcMsgBytes len less than 1"))
 	}
 
 	sid := cryptosuit.NewFabSignIdentity()
@@ -29,7 +31,7 @@ func ValidateRawIBCMessage(tx types.IBCMsgBankSend) (*types.IBCInfo, sdk.Error) 
 	pubketBz := cryptoutil.MarshalPubkey(pubKey)
 	valid, err := sid.Verifier(signObj.GetSignBytes(), signObj.Signature, pubketBz, nil)
 	if !valid  {
-		return nil, types.ErrBadBankSignature(types.DefaultCodespace)
+		return nil, types.ErrBadBankSignature(types.DefaultCodespace, err)
 	}
 
 	var ibcMsg types.IBCInfo
@@ -54,12 +56,12 @@ func ValidateRawReceiptMessage(tx types.IBCReceiveReceiptMsg) (*types.BankReceip
 	sid := cryptosuit.NewFabSignIdentity()
 	pubBz, err := getPublicKey()
 	if err != nil {
-		return nil, types.ErrDecodePubkey(types.DefaultCodespace)
+		return nil, transaction.ErrBadPubkey(types.DefaultCodespace, err)
 	}
 
 	valid, err := sid.Verifier(receiveObj.GetSignBytes(), receiveObj.Signature, pubBz, nil)
 	if !valid || err != nil {
-		return nil, types.ErrBadReceiptSignature(types.DefaultCodespace)
+		return nil, types.ErrBadReceiptSignature(types.DefaultCodespace, err)
 	}
 	return &receiveObj, nil
 }

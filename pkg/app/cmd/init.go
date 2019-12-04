@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/tanhuiya/ci123chain/pkg/abci"
 	"github.com/tanhuiya/ci123chain/pkg/app"
+	"github.com/tanhuiya/ci123chain/pkg/app/types"
 	"github.com/tanhuiya/ci123chain/pkg/config"
 	"github.com/tanhuiya/ci123chain/pkg/node"
 	"github.com/tanhuiya/ci123chain/pkg/validator"
@@ -115,7 +117,7 @@ func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Com
 			}
 			chainID, nodeID, appMessage, err := InitWithConfig(cdc, appInit, config, initConfig)
 			if err != nil {
-				return err
+				return types.ErrInitWithCfg(types.DefaultCodespace, err)
 			}
 			// print out some types information
 			toPrint := struct {
@@ -129,7 +131,7 @@ func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Com
 			}
 			out, err := app.MarshalJSONIndent(cdc, toPrint)
 			if err != nil {
-				return err
+				return abci.ErrInternal("Marshal failed")
 			}
 			fmt.Println(string(out))
 			return nil

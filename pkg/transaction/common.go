@@ -1,13 +1,15 @@
 package transaction
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/abci/types"
+	"errors"
+	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/cryptosuit"
+	"github.com/tanhuiya/ci123chain/pkg/transaction/types"
 )
 
 type CommonTx struct {
 	Code      uint8
-	From      types.AccAddress
+	From      sdk.AccAddress
 	Nonce     uint64
 	Gas       uint64
 	PubKey 	  []byte
@@ -15,16 +17,16 @@ type CommonTx struct {
 }
 
 
-func (tx CommonTx) ValidateBasic() types.Error {
+func (tx CommonTx) ValidateBasic() sdk.Error {
 	if EmptyAddr(tx.From) {
-		return ErrInvalidTransfer(DefaultCodespace)
+		return types.ErrInvalidTransfer(types.DefaultCodespace, errors.New("empty from address"))
 	}
 	// TODO Currently we don't support a gas system.
 	// if tx.Gas == 0 {
 	// 	return ErrInvalidTx(DefaultCodespace, "tx.Gas == 0")
 	// }
 	if len(tx.Signature) == 0 {
-		return ErrInvalidSignature(DefaultCodespace)
+		return types.ErrSignature(types.DefaultCodespace, errors.New("no signature"))
 	}
 	return nil
 }
@@ -38,26 +40,24 @@ func (tx *CommonTx) SetPubKey(pub []byte) {
 }
 
 
-func (tx *CommonTx) VerifySignature(hash []byte, fabricMode bool) types.Error  {
+func (tx *CommonTx) VerifySignature(hash []byte, fabricMode bool) sdk.Error  {
 
 	if fabricMode {
 		fab := cryptosuit.NewFabSignIdentity()
 		valid, err := fab.Verifier(hash, tx.Signature, tx.PubKey, tx.From.Bytes())
 		if !valid || err != nil {
-			return ErrInvalidSignature(DefaultCodespace)
+			return types.ErrSignature(types.DefaultCodespace, errors.New("verifier failed"))
 		}
 	} else {
 		eth := cryptosuit.NewETHSignIdentity()
 		valid, err := eth.Verifier(hash, tx.Signature, nil, tx.From.Bytes())
 		if !valid || err != nil {
-			return ErrInvalidSignature(DefaultCodespace)
+			return types.ErrSignature(types.DefaultCodespace, errors.New("verifier failed"))
 		}
 	}
 	return nil
 }
 
-
-
-func EmptyAddr(addr types.AccAddress) bool {
-	return addr == types.AccAddress{}
+func EmptyAddr(addr sdk.AccAddress) bool {
+	return addr == sdk.AccAddress{}
 }

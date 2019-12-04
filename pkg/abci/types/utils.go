@@ -18,11 +18,11 @@ func SortJSON(toSortJSON []byte) ([]byte, error) {
 	var c interface{}
 	err := json.Unmarshal(toSortJSON, &c)
 	if err != nil {
-		return nil, err
+		return nil, ErrInternal("Unmarshal failed")
 	}
 	js, err := json.Marshal(c)
 	if err != nil {
-		return nil, err
+		return nil, ErrInternal("Marshal failed")
 	}
 	return js, nil
 }

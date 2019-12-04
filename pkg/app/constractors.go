@@ -2,9 +2,11 @@ package app
 
 import (
 	"encoding/json"
+	"github.com/tanhuiya/ci123chain/pkg/abci"
+	"github.com/tanhuiya/ci123chain/pkg/app/types"
 	"github.com/tendermint/tendermint/libs/log"
 	tmtypes "github.com/tendermint/tendermint/types"
-	abci "github.com/tendermint/tendermint/abci/types"
+	sdk "github.com/tendermint/tendermint/abci/types"
 	dbm "github.com/tendermint/tm-db"
 	"io"
 	"os"
@@ -12,22 +14,22 @@ import (
 )
 
 type (
-	AppCreator func(home string, logger log.Logger, traceStore string) (abci.Application, error)
+	AppCreator func(home string, logger log.Logger, traceStore string) (sdk.Application, error)
 
 	AppExporter func(home string, logger log.Logger, traceStore string) (json.RawMessage, []tmtypes.GenesisValidator, error)
 
-	AppCreatorInit func(logger log.Logger, db dbm.DB, writer io.Writer) abci.Application
+	AppCreatorInit func(logger log.Logger, db dbm.DB, writer io.Writer) sdk.Application
 
 	AppExporterInit func(logger log.Logger, db dbm.DB, writer io.Writer) (json.RawMessage, []tmtypes.GenesisValidator, error)
 )
 
 func ConstructAppCreator(appFn AppCreatorInit, name string) AppCreator {
-	return func(rootDir string, logger log.Logger, traceStore string) (abci.Application, error) {
+	return func(rootDir string, logger log.Logger, traceStore string) (sdk.Application, error) {
 		dataDir := filepath.Join(rootDir, "data")
 
 		db, err := dbm.NewGoLevelDB(name, dataDir)
 		if err != nil {
-			return nil, err
+			return nil, types.ErrNewDB(types.DefaultCodespace, err)
 		}
 		var traceStoreWriter io.Writer
 		if traceStore != "" {
@@ -37,7 +39,7 @@ func ConstructAppCreator(appFn AppCreatorInit, name string) AppCreator {
 				0666,
 				)
 			if err != nil {
-				return nil, err
+				return nil, abci.ErrInternal("Open file failed")
 			}
 		}
 		app := appFn(logger, db, traceStoreWriter)
@@ -51,7 +53,7 @@ func ConstructAppExporter(appFn AppExporterInit, name string) AppExporter {
 
 		db, err := dbm.NewGoLevelDB(name, dataDir)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, types.ErrNewDB(types.DefaultCodespace, err)
 		}
 		var traceStoreWriter io.Writer
 		if traceStore != "" {
@@ -61,7 +63,7 @@ func ConstructAppExporter(appFn AppExporterInit, name string) AppExporter {
 				0666,
 				)
 			if err != nil {
-				return nil, nil, err
+				return nil, nil, abci.ErrInternal("Open file failed")
 			}
 		}
 		return appFn(logger, db, traceStoreWriter)

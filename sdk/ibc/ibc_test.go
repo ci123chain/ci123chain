@@ -20,7 +20,7 @@ MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgp4qKKB0WCEfx7XiB
 J3+tMGTG67f+TdCfDxWYMpQYxLlE8VkbEzKWDwCYvDZRMKCQfv2ErNvb
 -----END PRIVATE KEY-----`
 
-var ip = "192.168.1.114"
+var ip = "127.0.0.1"
 var port = "1317"
 
 // 生成 跨链 交易
@@ -36,10 +36,11 @@ func TestIBCMsg(t *testing.T)  {
 
 
 	signdata, err := SignIBCTransferMsg("0x204bCC42559Faf6DFE1485208F7951aaD800B313",
-		"0xD1a14962627fAc768Fe885Eeb9FF072706B54c19", 1, 20000, nonce, privByte)
+		"0xD1a14962627fAc768Fe885Eeb9FF072706B54c19", 5, 20000, nonce, privByte)
+	fmt.Println(hex.EncodeToString(signdata))
 
-	assert.NoError(t, err)
-	httpPost(hex.EncodeToString(signdata))
+	//assert.NoError(t, err)
+	//httpPost(hex.EncodeToString(signdata))
 }
 
 
@@ -179,7 +180,7 @@ func httpQuery(ip, port, param string) uint64 {
 	return nonce
 }
 func httpPost(param string) retData {
-	resp, err := http.PostForm("http://localhost:1317/tx/broadcast",
+	resp, err := http.PostForm("http://127.0.0.1:1317/tx/broadcast",
 		url.Values{"data": {param}})
 	if err != nil {
 		fmt.Println(err)
@@ -191,8 +192,10 @@ func httpPost(param string) retData {
 		fmt.Println(err)
 	}
 
+	fmt.Println(body)
 	var ret retData
 	err = json.Unmarshal(body, &ret)
+
 	if err != nil {
 		fmt.Println(string(body))
 	}

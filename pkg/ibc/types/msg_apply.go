@@ -3,6 +3,7 @@ package types
 import (
 	"encoding/hex"
 	"github.com/tanhuiya/ci123chain/pkg/transaction"
+	"github.com/tanhuiya/ci123chain/pkg/transfer"
 	"github.com/tanhuiya/ci123chain/pkg/util"
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 )
@@ -31,10 +32,10 @@ func (msg *ApplyIBCTx) ValidateBasic() sdk.Error {
 		return err
 	}
 	if len(msg.UniqueID) < 1 {
-		return sdk.ErrInvalidCoins("UniqueID is invalid " + hex.EncodeToString(msg.UniqueID))
+		return transfer.ErrCheckParams(DefaultCodespace, "UniqueID is invalid " + hex.EncodeToString(msg.UniqueID))
 	}
 	if len(msg.ObserverID) < 1 {
-		return sdk.ErrInvalidCoins("ObserverID is invalid " + hex.EncodeToString(msg.ObserverID))
+		return transfer.ErrCheckParams(DefaultCodespace, "ObserverID is invalid " + hex.EncodeToString(msg.ObserverID))
 	}
 	return msg.CommonTx.VerifySignature(msg.GetSignBytes(), true)
 }

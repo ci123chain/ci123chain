@@ -1,11 +1,21 @@
 package rest
 
 import (
+	"encoding/json"
 	"github.com/tanhuiya/ci123chain/pkg/abci/codec"
+	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/client/context"
+	"github.com/tanhuiya/ci123chain/pkg/transfer"
+	cmn "github.com/tendermint/tendermint/libs/common"
 	"net/http"
 	"strconv"
 )
+
+type Response struct {
+	Ret 	uint32 	`json:"ret"`
+	Data 	string	`json:"data"`
+	Message	string	`json:"message"`
+}
 
 // ErrorResponse defines the attributes of a JSON error response.
 type ErrorResponse struct {
@@ -13,12 +23,10 @@ type ErrorResponse struct {
 	Error string `json:"error"`
 }
 
-
 // NewErrorResponse creates a new ErrorResponse instance.
-func NewErrorResponse(code int, err string) ErrorResponse {
-	return ErrorResponse{Code: code, Error: err}
+func NewErrorResponse(code int ,err string) ErrorResponse {
+	return ErrorResponse{Code:code, Error:err}
 }
-
 
 // WriteErrorResponse prepares and writes a HTTP error
 // given a status code and an error message.
@@ -28,35 +36,40 @@ func WriteErrorResponse(w http.ResponseWriter, status int, err string) {
 	_, _ = w.Write(codec.Cdc.MustMarshalJSON(NewErrorResponse(0, err)))
 }
 
-func PostProcessResponseBare(w http.ResponseWriter, ctx context.Context, body interface{}) {
-	var (
-		resp []byte
-		err  error
-	)
-
-	switch body.(type) {
-	case []byte:
-		resp = body.([]byte)
-	default:
-		resp, err = ctx.Cdc.MarshalJSONIndent(body, "", "  ")
-		if err != nil {
-			WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
-		}
+func NewErrorRes(err sdk.Error) Response {
+	return Response{
+		Ret:		uint32(err.Code()),
+		Data:		err.Data().(cmn.FmtError).Error(),
+		Message:	err.Data().(cmn.FmtError).Format(),
 	}
+}
+
+func WriteErrorRes(w http.ResponseWriter, err sdk.Error) {
+	w.Header().Set("Content-Type", "application/json")
+	_, _ = w.Write(codec.Cdc.MustMarshalJSON(NewErrorRes(err)))
+}
+
+func PostProcessResponseBare(w http.ResponseWriter, ctx context.Context, body interface{}) {
+	dataJson, _ := json.Marshal(body)
+	res := Response{
+		Ret:     0,
+		Data:    string(dataJson),
+		Message: "",
+	}
+	resp, _ := json.Marshal(res)
 	w.Header().Set("Content-Type", "application/json")
 	_, _ = w.Write(resp)
 }
 
-func ParseQueryHeightOrReturnBadRequest(w http.ResponseWriter, cliCtx context.Context, r *http.Request) (context.Context, bool) {
+func ParseQueryHeightOrReturnBadRequest(w http.ResponseWriter, cliCtx context.Context, r *http.Request) (context.Context, bool, sdk.Error) {
 	heightStr := r.FormValue("height")
 	if heightStr != "" {
 		height, err := strconv.ParseInt(heightStr, 10, 64)
 		if err != nil {
-			WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return cliCtx, false , transfer.ErrCheckParams(sdk.CodespaceRoot, "height error")
 		}
 		if height < 0 {
-			WriteErrorResponse(w, http.StatusBadRequest, "height must be equal or greater than zero")
-			return cliCtx, false
+			return cliCtx, false , transfer.ErrCheckParams(sdk.CodespaceRoot, "height error")
 		}
 		if height > 0 {
 			cliCtx = cliCtx.WithHeight(height)
@@ -64,5 +77,5 @@ func ParseQueryHeightOrReturnBadRequest(w http.ResponseWriter, cliCtx context.Co
 	} else {
 		cliCtx = cliCtx.WithHeight(0)
 	}
-	return cliCtx, true
+	return cliCtx, true , nil
 }

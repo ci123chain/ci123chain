@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/tanhuiya/ci123chain/pkg/abci/codec"
-	"github.com/tanhuiya/ci123chain/pkg/abci/types"
+	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/account/exported"
 	acc_types "github.com/tanhuiya/ci123chain/pkg/account/types"
 	"github.com/tanhuiya/ci123chain/pkg/cryptosuit"
@@ -15,7 +15,7 @@ import (
 type Context struct {
 	HomeDir 	string
 	NodeURI 	string
-	InputAddressed []types.AccAddress
+	InputAddressed []sdk.AccAddress
 	Client 		rpclient.Client
 	Verbose 	bool
 	Height 		int64
@@ -39,32 +39,41 @@ func (ctx Context) WithHeight(height int64) Context {
 	return ctx
 }
 
-func (ctx *Context) GetInputAddresses() ([]types.AccAddress, error) {
+func (ctx *Context) GetInputAddresses() ([]sdk.AccAddress, error) {
 	return ctx.InputAddressed, nil
 }
 
-func (ctx *Context) GetBalanceByAddress(addr types.AccAddress) (uint64, error) {
+func (ctx *Context) GetBalanceByAddress(addr sdk.AccAddress) (uint64, error) {
 	addrByte := acc_types.AddressStoreKey(addr)
 	res, _, err := ctx.Query("/store/main/types", addrByte)
-	var acc exported.Account
-	err = ctx.Cdc.UnmarshalBinaryLengthPrefixed(res, &acc)
+	if res == nil{
+		return 0, errors.New("account error")
+	}
 	if err != nil {
-		return 0, nil
+		return 0, err
+	}
+	var acc exported.Account
+	err2 := ctx.Cdc.UnmarshalBinaryLengthPrefixed(res, &acc)
+	if err2 != nil {
+		return 0, err2
 	}
 	balance := uint64(acc.GetCoin())
-	if err != nil && balance == 0 {
-		return 0, nil
-	}
 	return balance, nil
 }
 
-func (ctx *Context) GetNonceByAddress(addr types.AccAddress) (uint64, error) {
+func (ctx *Context) GetNonceByAddress(addr sdk.AccAddress) (uint64, error) {
 	addrByte := acc_types.AddressStoreKey(addr)
 	res, _, err := ctx.Query("/store/main/types", addrByte)
-	var acc exported.Account
-	err = ctx.Cdc.UnmarshalBinaryLengthPrefixed(res, &acc)
+	if res == nil{
+		return 0, errors.New("account error")
+	}
 	if err != nil {
-		return 0, nil
+		return 0, err
+	}
+	var acc exported.Account
+	err2 := ctx.Cdc.UnmarshalBinaryLengthPrefixed(res, &acc)
+	if err2 != nil {
+		return 0, err2
 	}
 	nonce := acc.GetSequence()
 	return nonce, nil
@@ -151,10 +160,10 @@ func (ctx *Context) SignWithTx(tx transaction.Transaction, privKey []byte, fabri
 	return tx, nil
 }
 
-func (ctx *Context) BroadcastSignedData(data []byte) (types.TxResponse, error) {
+func (ctx *Context) BroadcastSignedData(data []byte) (sdk.TxResponse, error) {
 	res, err := ctx.BroadcastTx(data)
 	if err != nil {
-		return types.TxResponse{}, err
+		return sdk.TxResponse{}, err
 	}
 	if ctx.Verbose {
 		fmt.Printf("txHash=%v BlockHeight=%v\n", res.TxHash, res.Height)
