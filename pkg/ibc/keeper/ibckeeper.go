@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
+	"github.com/tanhuiya/ci123chain/pkg/abci"
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/account"
 	"github.com/tanhuiya/ci123chain/pkg/ibc/types"
 	"github.com/tanhuiya/ci123chain/pkg/supply"
+	"github.com/tanhuiya/ci123chain/pkg/transaction"
 	"strconv"
 )
 
@@ -87,7 +89,7 @@ func (k IBCKeeper) ApplyIBCMsg(ctx sdk.Context, uniqueID []byte, observerID []by
 	ibcMsg.ObserverID = observerID
 	bankAddr, err := getBankAddress()
 	if err != nil {
-		return nil, err
+		return nil, types.ErrGetBankAddr(types.DefaultCodespace, err)
 	}
 	ibcMsg.BankAddress = bankAddr
 
@@ -103,13 +105,13 @@ func (k IBCKeeper) ApplyIBCMsg(ctx sdk.Context, uniqueID []byte, observerID []by
 			//-----------------
 			//抵押失败，nonce+1
 			account := k.AccountKeeper.GetAccount(ctx, ibcMsg.FromAddress)
-			 err = account.SetSequence(nonce + 1)
-			 if err != nil {
-			 	return nil, errors.New("Failed to set nonce of account: "+ ibcMsg.FromAddress.Hex() )
-			 }
+			err = account.SetSequence(nonce + 1)
+			if err != nil {
+				return nil, transaction.ErrSetSequence(types.DefaultCodespace,"Set sequence err of account: " + ibcMsg.FromAddress.Hex())
+			}
 			k.AccountKeeper.SetAccount(ctx, account)
 			//
-			return nil, errors.New("Infficient balance of account: " + ibcMsg.FromAddress.Hex())
+			return nil, abci.ErrInsufficientFunds("Infficient balance of account: " + ibcMsg.FromAddress.Hex())
 		}
 		if err1 := k.SupplyKeeper.SendCoinsFromAccountToModule(ctx, ibcMsg.FromAddress, types.ModuleName, ibcMsg.Amount); err1 != nil {
 			ibcMsg.State = types.StateCancel
@@ -117,14 +119,14 @@ func (k IBCKeeper) ApplyIBCMsg(ctx sdk.Context, uniqueID []byte, observerID []by
 
 			//转账失败，nonce+1
 			account := k.AccountKeeper.GetAccount(ctx, ibcMsg.FromAddress)
-			saveErr := account.SetSequence(nonce + 1)
-			if saveErr != nil {
-				return nil, errors.New("Failed to set nonce of account: "+ ibcMsg.FromAddress.Hex() )
+			err = account.SetSequence(nonce + 1)
+			if err != nil {
+				return nil, transaction.ErrSetSequence(types.DefaultCodespace,"Set sequence err of account: " + ibcMsg.FromAddress.Hex())
 			}
 			k.AccountKeeper.SetAccount(ctx, account)
 			//
 
-			return nil, errors.New(err1.Error())
+			return nil, transaction.ErrSendCoin(types.DefaultCodespace, err1)
 		}
 	}
 
@@ -133,24 +135,24 @@ func (k IBCKeeper) ApplyIBCMsg(ctx sdk.Context, uniqueID []byte, observerID []by
 
 	ibcMsgJson, err := json.Marshal(*ibcMsg)
 	if err != nil {
-		return nil, err
+		return nil, types.ErrFailedMarshal(types.DefaultCodespace, err.Error())
 	}
 	signedIbcMsg := types.ApplyReceipt{
 		IBCMsgBytes:  ibcMsgJson,
 	}
 	priv, err := getPrivateKey()
 	if err != nil {
-		return nil, err
+		return nil, transaction.ErrBadPrivkey(types.DefaultCodespace, err)
 	}
 	signedIbcMsg, err = signedIbcMsg.Sign(priv)
 	if err != nil {
-		return nil, err
+		return nil, transaction.ErrSignature(types.DefaultCodespace, err)
 	}
 
 	// 保存状态
 	err = k.SetIBCMsg(ctx, *ibcMsg)
 	if err != nil {
-		return nil, err
+		return nil, types.ErrSetIBCMsg(types.DefaultCodespace, err)
 	}
 	return &signedIbcMsg, nil
 }

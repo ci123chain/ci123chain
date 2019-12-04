@@ -1,14 +1,16 @@
 package transfer
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/abci/types"
+	"errors"
+	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/transaction"
+	"github.com/tanhuiya/ci123chain/pkg/transfer/types"
 	"github.com/tanhuiya/ci123chain/pkg/util"
 )
 
 const RouteKey = "Transfer"
 
-func NewTransferTx(from, to types.AccAddress, gas, nonce uint64, amount types.Coin, isFabric bool ) transaction.Transaction {
+func NewTransferTx(from, to sdk.AccAddress, gas, nonce uint64, amount sdk.Coin, isFabric bool ) transaction.Transaction {
 	tx := &TransferTx{
 		Common: transaction.CommonTx{
 			From: from,
@@ -24,8 +26,8 @@ func NewTransferTx(from, to types.AccAddress, gas, nonce uint64, amount types.Co
 
 type TransferTx struct {
 	Common transaction.CommonTx
-	To     types.AccAddress
-	Amount types.Coin
+	To     sdk.AccAddress
+	Amount sdk.Coin
 	FabricMode bool
 }
 
@@ -50,15 +52,15 @@ func (tx *TransferTx) SetSignature(sig []byte) {
 }
 
 
-func (tx *TransferTx) ValidateBasic() types.Error {
+func (tx *TransferTx) ValidateBasic() sdk.Error {
 	if err := tx.Common.ValidateBasic(); err != nil {
 		return err
 	}
 	if tx.Amount == 0 {
-		return ErrBadAmount(DefaultCodespace)
+		return types.ErrBadAmount(types.DefaultCodespace, errors.New("amount = 0"))
 	}
 	if transaction.EmptyAddr(tx.To) {
-		return ErrBadReceiver(DefaultCodespace)
+		return types.ErrBadReceiver(types.DefaultCodespace, errors.New("empty to address"))
 	}
 	return tx.Common.VerifySignature(tx.GetSignBytes(), tx.FabricMode)
 }
@@ -91,6 +93,6 @@ func (tx *TransferTx) GetNonce() uint64 {
 	return tx.Common.Nonce
 }
 
-func (tx *TransferTx) GetFromAddress() types.AccAddress {
+func (tx *TransferTx) GetFromAddress() sdk.AccAddress {
 	return tx.Common.From
 }

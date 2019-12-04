@@ -4,6 +4,7 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/abci/types/rest"
 	"github.com/tanhuiya/ci123chain/pkg/abci/version"
 	"github.com/tanhuiya/ci123chain/pkg/client/context"
+	"github.com/tanhuiya/ci123chain/pkg/client/types"
 	"github.com/tendermint/tendermint/p2p"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	"net/http"
@@ -19,7 +20,7 @@ func NodeInfoRequestHandlerFn(ctx context.Context) http.HandlerFunc  {
 	return func(w http.ResponseWriter, request *http.Request) {
 		status, err := getNodeStatus(ctx)
 		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			rest.WriteErrorRes(w, types.ErrNode(types.DefaultCodespace, err))
 			return
 		}
 		resp := NodeInfoResponse{

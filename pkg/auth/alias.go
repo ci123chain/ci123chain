@@ -11,6 +11,7 @@ const (
 )
 
 var (
+	ErrTxValidateBasic = types.ErrTxValidateBasic
 	NewAuthKeeper = keeper.NewAuthKeeper
 )
 

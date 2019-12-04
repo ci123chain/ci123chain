@@ -2,23 +2,25 @@ package keeper
 
 import (
 	"fmt"
-	"github.com/tanhuiya/ci123chain/pkg/abci/types"
+	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
+	"github.com/tanhuiya/ci123chain/pkg/account/types"
+	"github.com/tanhuiya/ci123chain/pkg/transaction"
 )
 
-func (ak AccountKeeper) GetBalance(ctx types.Context, addr types.AccAddress) types.Coin {
+func (ak AccountKeeper) GetBalance(ctx sdk.Context, addr sdk.AccAddress) sdk.Coin {
 	coin := ak.getBalance(ctx, addr)
 	return coin
 }
 
-func (ak AccountKeeper) AddBalance(ctx types.Context, addr types.AccAddress, amount types.Coin) (types.Coin, types.Error) {
+func (ak AccountKeeper) AddBalance(ctx sdk.Context, addr sdk.AccAddress, amount sdk.Coin) (sdk.Coin, sdk.Error) {
 	if !amount.IsValid() {
-		return types.NewCoin(), types.ErrInvalidCoins(amount.String())
+		return sdk.NewCoin(), sdk.ErrInvalidCoins(amount.String())
 	}
 	oldCoin := ak.GetBalance(ctx, addr)
 	newCoin := oldCoin.Add(amount)
 
 	if newCoin.IsAnyNegative() {
-		return amount, types.ErrInsufficientCoins(
+		return amount, sdk.ErrInsufficientCoins(
 			fmt.Sprintf("insufficient account funds: %s < %s", oldCoin, amount),
 		)
 	}
@@ -26,9 +28,9 @@ func (ak AccountKeeper) AddBalance(ctx types.Context, addr types.AccAddress, amo
 	return newCoin, err
 }
 
-func (ak AccountKeeper) SetCoin(ctx types.Context, addr types.AccAddress, amt types.Coin) types.Error {
+func (ak AccountKeeper) SetCoin(ctx sdk.Context, addr sdk.AccAddress, amt sdk.Coin) sdk.Error {
 	if !amt.IsValid() {
-		return types.ErrInvalidCoins(amt.String())
+		return sdk.ErrInvalidCoins(amt.String())
 	}
 
 	acc := ak.GetAccount(ctx, addr)
@@ -45,23 +47,23 @@ func (ak AccountKeeper) SetCoin(ctx types.Context, addr types.AccAddress, amt ty
 	return nil
 }
 
-func (ak AccountKeeper) SubBalance(ctx types.Context, addr types.AccAddress, amt types.Coin) (types.Coin, types.Error) {
+func (ak AccountKeeper) SubBalance(ctx sdk.Context, addr sdk.AccAddress, amt sdk.Coin) (sdk.Coin, sdk.Error) {
 	if !amt.IsValid() {
-		return types.NewCoin(), types.ErrInvalidCoins(amt.String())
+		return sdk.NewCoin(), sdk.ErrInvalidCoins(amt.String())
 	}
 
-	oldCoins, spendableCoins := types.NewCoin(), types.NewCoin()
+	oldCoins, spendableCoins := sdk.NewCoin(), sdk.NewCoin()
 
 	acc := ak.GetAccount(ctx, addr)
 	if acc != nil {
 		oldCoins = acc.GetCoin()
 		spendableCoins = acc.SpendableCoins(ctx.BlockHeader().Time)
 	} else {
-		return types.NewCoin(), types.ErrInternal(fmt.Sprintf("account not exist %s", addr.Hex()))
+		return sdk.NewCoin(), transaction.ErrInvalidTx(types.DefaultCodespace, fmt.Sprintf("account not exist %s", addr.Hex()))
 	}
 	_, valid := spendableCoins.SafeSub(amt)
 	if !valid {
-		return amt, types.ErrInsufficientCoins(
+		return amt, sdk.ErrInsufficientCoins(
 			fmt.Sprintf("insufficient accounts funds; %s < %s", spendableCoins, amt),
 		)
 	}
@@ -72,36 +74,36 @@ func (ak AccountKeeper) SubBalance(ctx types.Context, addr types.AccAddress, amt
 }
 
 
-func (ak AccountKeeper) Transfer(ctx types.Context, fromAddr types.AccAddress, toAddr types.AccAddress, coin types.Coin) types.Error {
+func (ak AccountKeeper) Transfer(ctx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, coin sdk.Coin) sdk.Error {
 	_, err := ak.SubBalance(ctx, fromAddr, coin)
 	if err != nil {
-		return err
+		return types.ErrSetAccount(types.DefaultCodespace, err)
 	}
 
 	_, err = ak.AddBalance(ctx, toAddr, coin)
 	if err != nil {
-		return err
+		return types.ErrSetAccount(types.DefaultCodespace, err)
 	}
 
 	return nil
 }
 
-func (ak *AccountKeeper) getStore(ctx types.Context) types.KVStore {
+func (ak *AccountKeeper) getStore(ctx sdk.Context) sdk.KVStore {
 	return ctx.KVStore(ak.key)
 }
 
 
-func (am *AccountKeeper) getBalance(ctx types.Context, addr types.AccAddress) types.Coin {
+func (am *AccountKeeper) getBalance(ctx sdk.Context, addr sdk.AccAddress) sdk.Coin {
 	acc := am.GetAccount(ctx, addr)
 	if acc == nil {
-		return types.NewCoin()
+		return sdk.NewCoin()
 	}
 	return acc.GetCoin()
 
 }
 
 
-//func (ak *AccountKeeper) SetSequence(ctx types.Context, addr types.AccAddress, nonce uint64) types.Error {
+//func (ak *AccountKeeper) SetSequence(ctx sdk.Context, addr sdk.AccAddress, nonce uint64) sdk.Error {
 //	//err := ak.SetSequence(ctx, addr, nonce)
 //	//if err != nil {
 //	//	return err

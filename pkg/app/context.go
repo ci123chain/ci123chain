@@ -34,12 +34,12 @@ func SetupContext(ctx *Context, level string) error {
 	if err == config.ErrConfigNotFound {
 		c, err = config.CreateConfig(common.RandStr(8), root)
 		if err != nil {
-			return err
+			return config.ErrGetConfig
 		}
 		config.SaveConfig(c)
 	}
 	if err != nil {
-		return err
+		return config.ErrGetConfig
 	}
 	c.SetRoot(root)
 	lg := logger.GetDefaultLogger(level)

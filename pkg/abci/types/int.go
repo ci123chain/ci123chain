@@ -56,7 +56,7 @@ func unmarshalAmino(i *big.Int, text string) (err error) {
 func marshalJSON(i *big.Int) ([]byte, error) {
 	text, err := i.MarshalText()
 	if err != nil {
-		return nil, err
+		return nil, ErrInternal("Marshal failed")
 	}
 	return json.Marshal(string(text))
 }
@@ -67,7 +67,7 @@ func unmarshalJSON(i *big.Int, bz []byte) error {
 	var text string
 	err := json.Unmarshal(bz, &text)
 	if err != nil {
-		return err
+		return ErrInternal("Unmarshal failed")
 	}
 	return i.UnmarshalText([]byte(text))
 }

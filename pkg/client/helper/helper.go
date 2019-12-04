@@ -8,7 +8,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/mattn/go-isatty"
 	"github.com/spf13/viper"
-	"github.com/tanhuiya/ci123chain/pkg/abci/types"
+	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
+	"github.com/tanhuiya/ci123chain/pkg/client/types"
 	"os"
 	"strings"
 )
@@ -25,7 +26,7 @@ const (
 	//FlagWithCrypto 	   = "cryptosuit"
 )
 
-func GetPassphrase(addr types.AccAddress) (string, error) {
+func GetPassphrase(addr sdk.AccAddress) (string, error) {
 	pass := viper.GetString(FlagPassword)
 	if pass == "" {
 		return getPassphraseFromStdin(addr)
@@ -34,7 +35,7 @@ func GetPassphrase(addr types.AccAddress) (string, error) {
 }
 
 // Get passphrase from std input
-func getPassphraseFromStdin(addr types.AccAddress) (string, error) {
+func getPassphraseFromStdin(addr sdk.AccAddress) (string, error) {
 	buf := BufferStdin()
 	prompt := fmt.Sprintf("Enter password for address: '%s'", addr.Hex())
 	return GetPassword(prompt, buf)
@@ -50,11 +51,10 @@ func GetPasswordFromStd() (string, error) {
 	buf := BufferStdin()
 	pass, err := GetCheckPassword("Enter a passphrase for your types:", "Repeat the passphrase:", buf)
 	if err != nil {
-		return "", err
+		return "", types.ErrGetCheckPassword(types.DefaultCodespace, err)
 	}
 	return pass, nil
 }
-
 
 // Prompts for a password twice to verify they match
 func GetCheckPassword(prompt, prompt2 string, buf *bufio.Reader) (string, error) {
@@ -64,14 +64,14 @@ func GetCheckPassword(prompt, prompt2 string, buf *bufio.Reader) (string, error)
 
 	pass, err := GetPassword(prompt, buf)
 	if err != nil {
-		return "", err
+		return "", types.ErrGetPassword(types.DefaultCodespace, err)
 	}
 	pass2, err := GetPassword(prompt2, buf)
 	if err != nil {
-		return "", err
+		return "", types.ErrGetPassword(types.DefaultCodespace, err)
 	}
 	if pass != pass2 {
-		return "", errors.New("Passphrases did not match")
+		return "", types.ErrPhrasesNotMatch(types.DefaultCodespace, err)
 	}
 	return pass, nil
 }
@@ -109,8 +109,8 @@ func readLineFromBuf(buf *bufio.Reader) (string, error) {
 }
 
 
-func ParseAddrs(addrStr string) ([]types.AccAddress, error) {
-	var addrs []types.AccAddress
+func ParseAddrs(addrStr string) ([]sdk.AccAddress, error) {
+	var addrs []sdk.AccAddress
 	as := strings.Split(addrStr, ",")
 	for _, a := range as {
 		a = strings.TrimSpace(a)
@@ -126,9 +126,9 @@ func ParseAddrs(addrStr string) ([]types.AccAddress, error) {
 	return addrs, nil
 }
 
-func StrToAddress(addrStr string) (types.AccAddress, error) {
+func StrToAddress(addrStr string) (sdk.AccAddress, error) {
 	if !common.IsHexAddress(strings.TrimSpace(addrStr)) {
-		return types.AccAddress{}, errors.New("invalid address provided, please use hex format")
+		return sdk.AccAddress{}, errors.New("invalid address provided, please use hex format")
 	}
-	return types.HexToAddress(addrStr), nil
+	return sdk.HexToAddress(addrStr), nil
 }

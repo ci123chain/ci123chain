@@ -3,6 +3,7 @@ package keeper
 import (
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/ibc/types"
+	"github.com/tanhuiya/ci123chain/pkg/transfer"
 	abci "github.com/tendermint/tendermint/abci/types"
 )
 
@@ -29,17 +30,17 @@ func NewQuerier(keeper IBCKeeper) sdk.Querier {
 // nolint: unparam
 func queryResolve(ctx sdk.Context, path []string, req abci.RequestQuery, keeper IBCKeeper) ([]byte, sdk.Error) {
 	if path[0] != types.StateReady {
-		return nil, sdk.ErrUnknownRequest("Parameter State Error")
+		return nil, transfer.ErrCheckParams(types.DefaultCodespace, "Parameter State Error")
 	}
 
 	value := keeper.GetFirstReadyIBCMsg(ctx)
 	if value == nil {
-		return nil, sdk.ErrUnknownRequest("No ready ibc tx found")
+		return nil, transfer.ErrQueryTx(types.DefaultCodespace, "No ready ibc tx found")
 	}
 
 	retbz, err := types.IbcCdc.MarshalBinaryLengthPrefixed(*value)
 	if err != nil {
-		return nil, sdk.ErrUnknownRequest(err.Error())
+		return nil, types.ErrFailedMarshal(types.DefaultCodespace, err.Error())
 	}
 	return retbz, nil
 }
@@ -47,10 +48,14 @@ func queryResolve(ctx sdk.Context, path []string, req abci.RequestQuery, keeper 
 func queryAccountNonce(ctx sdk.Context, path []string, req abci.RequestQuery, keeper IBCKeeper) ([]byte, sdk.Error) {
 	accountAddr := path[0]
 	address := sdk.HexToAddress(accountAddr)
-	nonce := keeper.AccountKeeper.GetAccount(ctx, address).GetSequence()
+	account := keeper.AccountKeeper.GetAccount(ctx, address)
+	if account == nil {
+		return nil, transfer.ErrQueryTx(types.DefaultCodespace, "account is not exist")
+	}
+	nonce := account.GetSequence()
 	retbz, err := types.IbcCdc.MarshalBinaryLengthPrefixed(nonce)
 	if err != nil {
-		return nil, sdk.ErrUnknownRequest(err.Error())
+		return nil, types.ErrFailedMarshal(types.DefaultCodespace, err.Error())
 	}
 	return retbz, nil
 }

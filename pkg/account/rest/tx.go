@@ -1,10 +1,13 @@
 package rest
 
 import (
+	"github.com/gorilla/mux"
 	"github.com/tanhuiya/ci123chain/pkg/abci/types/rest"
+	"github.com/tanhuiya/ci123chain/pkg/account/types"
+	"github.com/tanhuiya/ci123chain/pkg/client"
 	"github.com/tanhuiya/ci123chain/pkg/client/context"
 	"github.com/tanhuiya/ci123chain/pkg/client/helper"
-	"github.com/gorilla/mux"
+	"github.com/tanhuiya/ci123chain/pkg/transfer"
 	"net/http"
 )
 
@@ -12,53 +15,34 @@ import (
 func RegisterRoutes(cliCtx context.Context, r *mux.Router) {
 	//r.HandleFunc("/bank/accounts/{address}/transfers", SendRequestHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/bank/balances/{address}", QueryBalancesRequestHandlerFn(cliCtx)).Methods("GET")
-	r.HandleFunc("/bank/nonce/{address}", QueryNonceRequestHandlerFn(cliCtx)).Methods("GET")
 }
 
+type BalanceData struct {
+	Balance uint64 `json:"balance"`
+}
 func QueryBalancesRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, request *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		vars := mux.Vars(request)
 		addr := vars["address"]
 
-		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, request)
+		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, request)
 		if !ok {
+			rest.WriteErrorRes(w, err)
 			return
 		}
-		addrBytes, err := helper.ParseAddrs(addr)
-		if len(addrBytes) < 1 || err != nil {
+		addrBytes, err2 := helper.ParseAddrs(addr)
+		if len(addrBytes) < 1 || err2 != nil {
+			rest.WriteErrorRes(w, client.ErrParseAddr(types.DefaultCodespace, err2))
 			return
 		}
 		//params := types.NewQueryBalanceParams(addr)
-		res, err := cliCtx.GetBalanceByAddress(addrBytes[0])
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
+		res, err2 := cliCtx.GetBalanceByAddress(addrBytes[0])
+		if err2 != nil {
+			rest.WriteErrorRes(w, transfer.ErrQueryTx(types.DefaultCodespace, err2.Error()))
 			return
 		}
-		rest.PostProcessResponseBare(w, cliCtx, res)
-	}
-}
-
-func QueryNonceRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
-	return func(w http.ResponseWriter, request *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		vars := mux.Vars(request)
-		addr := vars["address"]
-
-		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, request)
-		if !ok {
-			return
-		}
-		addrBytes, err := helper.ParseAddrs(addr)
-		if len(addrBytes) < 1 || err != nil {
-			return
-		}
-		//params := types.NewQueryBalanceParams(addr)
-		res, err := cliCtx.GetNonceByAddress(addrBytes[0])
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
-			return
-		}
-		rest.PostProcessResponseBare(w, cliCtx, res)
+		resp := BalanceData{Balance:res}
+		rest.PostProcessResponseBare(w, cliCtx, resp)
 	}
 }

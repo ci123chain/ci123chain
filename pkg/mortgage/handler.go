@@ -5,6 +5,7 @@ import (
 	"fmt"
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/mortgage/types"
+	"github.com/tanhuiya/ci123chain/pkg/transaction"
 )
 
 func NewHandler(k MortgageKeeper) sdk.Handler {
@@ -28,7 +29,7 @@ func handleMsgMortgage(ctx sdk.Context, k MortgageKeeper, tx types.MsgMortgage) 
 
 	mort := getMortgage(ctx, k.StoreKey, tx.UniqueID)
 	if mort != nil {
-		return sdk.ErrInternal("uniqueID is exist").Result()
+		return transaction.ErrInvalidTx(types.DefaultCodespace,"uniqueID is exist").Result()
 	}
 
 	if err := k.SupplyKeeper.SendCoinsFromAccountToModule(ctx, tx.CommonTx.From, types.ModuleName, tx.Coin); err != nil {
@@ -46,10 +47,10 @@ func handleMsgMortgageCancel (ctx sdk.Context, k MortgageKeeper, tx types.MsgMor
 
 	mort := getMortgage(ctx, k.StoreKey, tx.UniqueID)
 	if mort == nil {
-		return sdk.ErrInternal(fmt.Sprintf("mortgage record not exist :uniqueID = %s", hex.EncodeToString(tx.UniqueID))).Result()
+		return transaction.ErrInvalidTx(types.DefaultCodespace, fmt.Sprintf("mortgage record not exist :uniqueID = %s", hex.EncodeToString(tx.UniqueID))).Result()
 	}
 	if !mort.From.Equal(tx.From) {
-		return sdk.ErrUnknownRequest("Invalid tx, from address error").Result()
+		return transaction.ErrInvalidTx(types.DefaultCodespace, "from address error").Result()
 	}
 
 	if err := k.SupplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, mort.CommonTx.From, mort.Coin); err != nil {
@@ -58,7 +59,7 @@ func handleMsgMortgageCancel (ctx sdk.Context, k MortgageKeeper, tx types.MsgMor
 	if mort.State == types.StateMortgaged {
 		mort.State = types.StateCancel
 	} else {
-		return sdk.ErrUnknownRequest("mortgage record state have done or canceled").Result()
+		return transaction.ErrInvalidTx(types.DefaultCodespace, "mortgage record state have done or canceled").Result()
 	}
 	setMortgage(ctx, k.StoreKey, *mort)
 	return sdk.Result{}
@@ -69,20 +70,20 @@ func handleMsgMortgageSuccess (ctx sdk.Context, k MortgageKeeper, tx types.MsgMo
 
 	mort := getMortgage(ctx, k.StoreKey, tx.UniqueID)
 	if mort == nil {
-		return sdk.ErrInternal(fmt.Sprintf("mortgage record not exist :uniqueID = %s", hex.EncodeToString(tx.UniqueID))).Result()
+		return transaction.ErrInvalidTx(types.DefaultCodespace, fmt.Sprintf("mortgage record not exist :uniqueID = %s", hex.EncodeToString(tx.UniqueID))).Result()
 	}
 
 	if !mort.From.Equal(tx.From) {
-		return sdk.ErrUnknownRequest("Invalid tx, from address error").Result()
+		return transaction.ErrInvalidTx(types.DefaultCodespace, "from address error").Result()
 	}
 
 	if err := k.SupplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, mort.ToAddress, mort.Coin); err != nil {
-		return err.Result()
+		return transaction.ErrSendCoin(types.DefaultCodespace, err).Result()
 	}
 	if mort.State == types.StateMortgaged {
 		mort.State = types.StateSuccess
 	} else {
-		return sdk.ErrUnknownRequest("mortgage record state have done or canceled").Result()
+		return transaction.ErrInvalidTx(types.DefaultCodespace, "mortgage record state have done or canceled").Result()
 	}
 	setMortgage(ctx, k.StoreKey, *mort)
 	return sdk.Result{}

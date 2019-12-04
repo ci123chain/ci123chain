@@ -53,7 +53,7 @@ func (aa *AccAddress) UnmarshalJSON(data []byte) error {
 	var s string
 	err := json.Unmarshal(data, &s)
 	if err != nil {
-		return err
+		return ErrInternal("Unmarshal failed")
 	}
 	addr2 := common.HexToAddress(s)
 	*aa = AccAddress{

@@ -6,35 +6,36 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/abci/codec"
 	"github.com/tanhuiya/ci123chain/pkg/client/context"
 	"github.com/tanhuiya/ci123chain/pkg/transfer"
+	"github.com/tanhuiya/ci123chain/pkg/transfer/types"
 	"time"
 
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 
-func QueryTx(cliCtx context.Context, hashHexStr string) (sdk.TxResponse, error) {
+func QueryTx(cliCtx context.Context, hashHexStr string) (sdk.TxResponse, sdk.Error) {
 	hash, err := hex.DecodeString(hashHexStr)
 	if err != nil {
-		return sdk.TxResponse{}, err
+		return sdk.TxResponse{}, types.ErrQueryTx(types.DefaultCodespace, err.Error())
 	}
 
 	node, err := cliCtx.GetNode()
 	if err != nil {
-		return sdk.TxResponse{}, err
+		return sdk.TxResponse{}, types.ErrQueryTx(types.DefaultCodespace, err.Error())
 	}
 
 	resTx, err := node.Tx(hash, true)
 	if err != nil {
-		return sdk.TxResponse{}, err
+		return sdk.TxResponse{}, types.ErrQueryTx(types.DefaultCodespace, err.Error())
 	}
 
 	resBlocks, err := getBlocksForTxResults(cliCtx, []*ctypes.ResultTx{resTx})
 	if err != nil {
-		return sdk.TxResponse{}, err
+		return sdk.TxResponse{}, types.ErrQueryTx(types.DefaultCodespace, err.Error())
 	}
 	out, err := formatTxResult(cliCtx.Cdc, resTx, resBlocks[resTx.Height])
 	if err != nil {
-		return out, err
+		return out, types.ErrQueryTx(types.DefaultCodespace, err.Error())
 	}
 
 	return out, nil

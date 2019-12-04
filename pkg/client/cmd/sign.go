@@ -9,10 +9,11 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/tanhuiya/ci123chain/pkg/abci/types"
+	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/client"
 	"github.com/tanhuiya/ci123chain/pkg/client/context"
 	"github.com/tanhuiya/ci123chain/pkg/client/helper"
+	"github.com/tanhuiya/ci123chain/pkg/client/types"
 	"github.com/tanhuiya/ci123chain/pkg/transaction"
 	"github.com/tanhuiya/ci123chain/pkg/transfer"
 	"github.com/tanhuiya/ci123chain/pkg/util"
@@ -41,49 +42,48 @@ var signCmd = &cobra.Command{
 		viper.BindPFlags(cmd.Flags())
 		ctx, err := client.NewClientContextFromViper(cdc)
 		if err != nil {
-			return err
+			return types.ErrNewClientCtx(types.DefaultCodespace, err)
 		}
 		addrs, err := ctx.GetInputAddresses()
 		if err != nil {
-			return nil
+			return types.ErrGetInputAddrCtx(types.DefaultCodespace, err)
 		}
 		from := addrs[0]
 		tos, err := helper.ParseAddrs(viper.GetString(flagTo))
 		if err != nil {
-			return err
+			return types.ErrParseAddr(types.DefaultCodespace, err)
 		}
 		if len(tos) == 0 {
-			return errors.New("must provide an address to send to")
+			return types.ErrNoAddr(types.DefaultCodespace, err)
 		}
 		//直接getNonce
+		// todo err
 		nonce, err := ctx.GetNonceByAddress(from)
 		if err != nil {
 			return err
 		}
 		ucoin := uint64(viper.GetInt(flagAmount))
 
-		tx := transfer.NewTransferTx(from, tos[0], uint64(viper.GetInt(flagGas)), nonce , types.Coin(ucoin), isFabric)
-
-
+		tx := transfer.NewTransferTx(from, tos[0], uint64(viper.GetInt(flagGas)), nonce , sdk.Coin(ucoin), isFabric)
 		password := viper.GetString(flagPassword)
 		if len(password) < 1 {
 			var err error
 			password, err = helper.GetPassphrase(from)
 			if err != nil {
-				return err
+				return types.ErrGetPassPhrase(types.DefaultCodespace, err)
 			}
 		}
 
 		txByte, err := getSignedDataWithTx(ctx, tx, password, from)
 		if err != nil {
-			return err
+			return types.ErrGetSignData(types.DefaultCodespace, err)
 		}
 		fmt.Println(hex.EncodeToString(txByte))
 		return nil
 	},
 }
 
-func getSignedDataWithTx(ctx context.Context, tx transaction.Transaction, password string, from types.AccAddress) ([]byte, error) {
+func getSignedDataWithTx(ctx context.Context, tx transaction.Transaction, password string, from sdk.AccAddress) ([]byte, error) {
 	ks := getDefaultKeystore()
 	acc := accounts.Account{
 		Address: from.Address,

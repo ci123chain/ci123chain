@@ -1,7 +1,9 @@
 package rest
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/abci/types"
+	"encoding/hex"
+	"github.com/pkg/errors"
+	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/abci/types/rest"
 	"github.com/tanhuiya/ci123chain/pkg/app"
 	"github.com/tanhuiya/ci123chain/pkg/client"
@@ -9,20 +11,22 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/client/helper"
 	"github.com/tanhuiya/ci123chain/pkg/transaction"
 	"github.com/tanhuiya/ci123chain/pkg/transfer"
-	"encoding/hex"
-	"github.com/pkg/errors"
+	"github.com/tanhuiya/ci123chain/pkg/transfer/types"
 	"net/http"
 	"strconv"
 )
 
 var cdc = app.MakeCodec()
 
+type Tx struct {
+	SignedTx	string `json:"signedtx"`
+}
 func SignTxRequestHandler(cliCtx context.Context) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 
 		priv := request.FormValue("privateKey")
 		if len(priv) < 1 {
-			rest.WriteErrorResponse(writer, http.StatusNotFound, "param privateKey not found")
+			rest.WriteErrorRes(writer, transaction.ErrBadPrivkey(types.DefaultCodespace, errors.New("param privateKey not found")) )
 			return
 		}
 
@@ -33,21 +37,22 @@ func SignTxRequestHandler(cliCtx context.Context) http.HandlerFunc {
 		}
 		tx, err := buildTransferTx(request, isFabric)
 		if err != nil {
-			rest.WriteErrorResponse(writer, http.StatusNotFound, errors.Wrap(err, "build transfer msg failed").Error())
+			rest.WriteErrorRes(writer, err.(sdk.Error))
 			return
 		}
 
 		privPub, err := hex.DecodeString(priv)
 		if err != nil {
-			rest.WriteErrorResponse(writer, http.StatusNotFound, errors.Wrap(err, "Decode PrivateKey error").Error())
+			rest.WriteErrorRes(writer, transaction.ErrBadPrivkey(types.DefaultCodespace, err))
 		}
 		tx, err = cliCtx.SignWithTx(tx, privPub, isFabric)
 		if err != nil {
-			rest.WriteErrorResponse(writer, http.StatusNotFound, "sign tx error")
+			rest.WriteErrorRes(writer, transaction.ErrSignature(types.DefaultCodespace, errors.New("sign with tx error")))
 			return
 		}
 		txByte := tx.Bytes()
-		rest.PostProcessResponseBare(writer, cliCtx, hex.EncodeToString(txByte))
+		resp := &Tx{SignedTx:hex.EncodeToString(txByte)}
+		rest.PostProcessResponseBare(writer, cliCtx, resp)
 	}
 }
 
@@ -60,35 +65,35 @@ func buildTransferTx(r *http.Request, isFabric bool) (transaction.Transaction, e
 
 	froms, err := helper.ParseAddrs(from)
 	if err != nil {
-		return nil, err
+		return nil, client.ErrParseAddr(types.DefaultCodespace, err)
 	}
 	tos, err := helper.ParseAddrs(to)
 	if err != nil {
-		return nil, err
+		return nil, client.ErrParseAddr(types.DefaultCodespace, err)
 	}
 
 	if len(froms) != 1 {
-		return nil, errors.New("Param from invalid")
+		return nil, types.ErrCheckParams(types.DefaultCodespace, "from error")
 	}
 	if len(tos) != 1 {
-		return nil, errors.New("Param to invalid")
+		return nil, types.ErrCheckParams(types.DefaultCodespace, "to error")
 	}
 
 	gasI, err := strconv.ParseUint(gas, 10, 64)
 	if err != nil {
-		return nil, err
+		return nil, types.ErrCheckParams(types.DefaultCodespace, "gas error")
 	}
 
 	amountI, err := strconv.ParseUint(amount, 10, 64)
 	if err != nil {
-		return nil, err
+		return nil, types.ErrCheckParams(types.DefaultCodespace, "amount error")
 	}
 	ctx, err := client.NewClientContextFromViper(cdc)
 	if err != nil {
-		return nil,err
+		return nil, client.ErrNewClientCtx(types.DefaultCodespace, err)
 	}
 	nonce, err := ctx.GetNonceByAddress(froms[0])
-	tx := transfer.NewTransferTx(froms[0], tos[0], gasI, nonce, types.Coin(amountI), isFabric)
+	tx := transfer.NewTransferTx(froms[0], tos[0], gasI, nonce, sdk.Coin(amountI), isFabric)
 
 	return tx, nil
 }
