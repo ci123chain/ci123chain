@@ -36,10 +36,12 @@ func handlerTransferTx(ctx types.Context, am keeper.AccountKeeper, tx *transfer.
 	}
 
 	//交易成功，nonce+1
-	saveErr := am.GetAccount(ctx, tx.Common.From).SetSequence(tx.Common.Nonce + 1)
+	account := am.GetAccount(ctx, tx.Common.From)
+	saveErr := account.SetSequence(account.GetSequence() + 1)
 	if saveErr != nil {
 		return types.ErrInvalidSequence("Unexpected nonce of transaction").Result()
 	}
+	am.SetAccount(ctx, account)
 	//
 	return types.Result{}
 }

@@ -3,7 +3,6 @@ module github.com/tanhuiya/ci123chain
 go 1.12
 
 require (
-	github.com/Workiva/go-datastructures v1.0.50 // indirect
 	github.com/allegro/bigcache v1.2.1 // indirect
 	github.com/aristanetworks/goarista v0.0.0-20191015010157-ce4ff66f8dba // indirect
 	github.com/bgentry/speakeasy v0.1.0
