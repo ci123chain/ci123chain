@@ -32,7 +32,7 @@ func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, fck f
 		txNonce := stdTx.GetNonce()
 		if txNonce != accountSequence {
 			newCtx := ctx.WithGasMeter(sdk.NewGasMeter(0))
-			return newCtx, transaction.ErrInvalidTx(types.DefaultCodespace, "Undefined transfer Type ").Result(), true
+			return newCtx, transaction.ErrInvalidTx(types.DefaultCodespace, "Unexpected nonce ").Result(), true
 		}
 
 		params := authKeeper.GetParams(ctx)

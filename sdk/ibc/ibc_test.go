@@ -36,11 +36,11 @@ func TestIBCMsg(t *testing.T)  {
 
 
 	signdata, err := SignIBCTransferMsg("0x204bCC42559Faf6DFE1485208F7951aaD800B313",
-		"0xD1a14962627fAc768Fe885Eeb9FF072706B54c19", 5, 20000, nonce, privByte)
+		"0xD1a14962627fAc768Fe885Eeb9FF072706B54c19", 6, 20000, nonce, privByte)
 	fmt.Println(hex.EncodeToString(signdata))
 
 	//assert.NoError(t, err)
-	//httpPost(hex.EncodeToString(signdata))
+	httpPost(hex.EncodeToString(signdata))
 }
 
 
@@ -103,6 +103,14 @@ func TestReceiptMsg(t *testing.T)  {
 
 const FromAddr  = "0x204bCC42559Faf6DFE1485208F7951aaD800B313"
 const ToAddr  = "0xD1a14962627fAc768Fe885Eeb9FF072706B54c19"
+
+
+type ciRes struct{
+	Ret 	uint32 	`json:"ret"`
+	Data 	string	`json:"data"`
+	Message	string	`json:"message"`
+}
+
 func TestAll(t *testing.T)  {
 
 	nonce := httpQuery(ip, port, FromAddr)
@@ -116,6 +124,8 @@ func TestAll(t *testing.T)  {
 	signdata, err := SignIBCTransferMsg(FromAddr,
 		ToAddr, 20, 50000, nonce, privByte)
 	registRet := httpPost(hex.EncodeToString(signdata))
+
+
 	fmt.Println("发送跨链消息完成：UniqueID = " + registRet.Data)
 	fmt.Println()
 
@@ -194,11 +204,16 @@ func httpPost(param string) retData {
 
 	fmt.Println(body)
 	var ret retData
-	err = json.Unmarshal(body, &ret)
+	var ty ciRes
+	err = json.Unmarshal(body, &ty)
+	fmt.Println(ty.Data)
+	d := []byte(ty.Data)
+	err = json.Unmarshal(d, &ret)
 
 	if err != nil {
 		fmt.Println(string(body))
 	}
+
 	if len(ret.Data) > 0 {
 		fmt.Println(ret.Data)
 	}

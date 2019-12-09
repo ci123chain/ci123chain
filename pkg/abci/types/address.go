@@ -62,8 +62,4 @@ func (aa *AccAddress) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-//type HexByte []byte
-//
-//func (HexByte) MarshalJSON {
-//
-//}
+type AccAddr []byte

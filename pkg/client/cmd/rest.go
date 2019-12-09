@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	distr "github.com/tanhuiya/ci123chain/pkg/distribution"
 )
 
 const (
@@ -78,6 +79,7 @@ func NewRestServer() *RestServer {
 	accountRpc.RegisterRoutes(cliCtx, r)
 	txRpc.RegisterTxRoutes(cliCtx, r)
 	ibc.RegisterRoutes(cliCtx, r)
+	distr.RegisterRoutes(cliCtx, r)
 	return &RestServer{
 		Mux: r,
 		CliCtx: cliCtx,
