@@ -1,16 +1,40 @@
 global:
   scrape_interval:     30s
   evaluation_interval: 30s
- 
+
 scrape_configs:
   - job_name: prometheus
     static_configs:
       - targets: ['localhost:9090']
         labels:
           instance: prometheus
- 
-  - job_name: ci123chain
+
+  - job_name: ci123chain_node0
     static_configs:
-      - targets: ['192.168.2.89:26660']
+      - targets: ['ci0:26660']
         labels:
-          instance: ci123chain
+          instance: ci123chain_node0
+
+  - job_name: ci123chain_node1
+    static_configs:
+      - targets: ['ci1:26660']
+        labels:
+          instance: ci123chain_node1
+
+  - job_name: ci123chain_node2
+    static_configs:
+      - targets: ['ci2:26660']
+        labels:
+          instance: ci123chain_node2
+
+  - job_name: ci123chain_node3
+    static_configs:
+      - targets: ['ci3:26660']
+        labels:
+          instance: ci123chain_node3
+
+  - job_name: ci123chain_node4
+    static_configs:
+      - targets: ['ci4:26660']
+        labels:
+          instance: ci123chain_node4

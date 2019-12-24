@@ -28,12 +28,12 @@ func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, fck f
 			newCtx := ctx.WithGasMeter(sdk.NewGasMeter(0))
 			return newCtx, transaction.ErrInvalidTx(types.DefaultCodespace, "Invalid account").Result(), true
 		}
-		accountSequence := acc.GetSequence()
+		/*accountSequence := acc.GetSequence()
 		txNonce := stdTx.GetNonce()
 		if txNonce != accountSequence {
 			newCtx := ctx.WithGasMeter(sdk.NewGasMeter(0))
 			return newCtx, transaction.ErrInvalidTx(types.DefaultCodespace, "Unexpected nonce ").Result(), true
-		}
+		}*/
 
 		params := authKeeper.GetParams(ctx)
 		// Ensure that the provided fees meet a minimum threshold for the validator,

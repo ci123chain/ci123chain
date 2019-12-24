@@ -171,6 +171,14 @@ func (ctx *Context) BroadcastSignedData(data []byte) (sdk.TxResponse, error) {
 	return res, nil
 }
 
+func (ctx *Context) BroadcastSignedDataAsync(data []byte) (sdk.TxResponse, error) {
+	res, err := ctx.BroadcastTxAsync(data)
+	if err != nil {
+		return sdk.TxResponse{}, err
+	}
+	return res, nil
+}
+
 
 //func (ctx *Context) SignTx2(tx transfer.Transaction, priKey string) (transfer.Transaction, error) {
 //	pubkey, err := ctx.CryptoSuit.GetPubKey([]byte(priKey))
