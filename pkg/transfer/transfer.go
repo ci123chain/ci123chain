@@ -3,6 +3,8 @@ package transfer
 import (
 	"errors"
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
+	"github.com/tanhuiya/ci123chain/pkg/client/helper"
+	"github.com/tanhuiya/ci123chain/pkg/cryptosuit"
 	"github.com/tanhuiya/ci123chain/pkg/transaction"
 	"github.com/tanhuiya/ci123chain/pkg/transfer/types"
 	"github.com/tanhuiya/ci123chain/pkg/util"
@@ -23,6 +25,27 @@ func NewTransferTx(from, to sdk.AccAddress, gas, nonce uint64, amount sdk.Coin, 
 	}
 	return tx
 }
+
+func SignTransferTx(from string, to string, amount, gas, nonce uint64, priv []byte) ([]byte, error) {
+	fromAddr, err := helper.StrToAddress(from)
+	if err != nil {
+		return nil, err
+	}
+	toAddr, err := helper.StrToAddress(to)
+	if err != nil {
+		return nil, err
+	}
+	tx := NewTransferTx(fromAddr, toAddr, gas, nonce, sdk.Coin(amount), true)
+	sid := cryptosuit.NewFabSignIdentity()
+	pub, err  := sid.GetPubKey(priv)
+
+	tx.SetPubKey(pub)
+	signbyte := tx.GetSignBytes()
+	signature, err := sid.Sign(signbyte, priv)
+	tx.SetSignature(signature)
+	return tx.Bytes(), nil
+}
+
 
 type TransferTx struct {
 	Common transaction.CommonTx

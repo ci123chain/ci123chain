@@ -1,0 +1,99 @@
+version: "3"
+services:
+  web: # 服务的名称
+    image: nginx
+    volumes: # 文件夹映射
+      - ./nginx/Documents/www:/usr/share/nginx/html:ro # 宿主:docker:只读  ,www目录
+      - ./nginx/config/web.conf:/etc/nginx/nginx.conf:ro # nginx配置文件
+    ports: # 端口转发 宿主:docker
+      - "8080:80"
+      - "8081:81"
+    networks: ## 定义网络
+      couchDB: ## 加入的网络的名称
+
+  ci0:
+    image: cichain:v0.0.1
+    container_name: ci0
+    hostname: ci0
+    ports:
+      - 26606:26656
+      - 1310:80
+    volumes:
+      - ./node0:/root/cid
+    networks:
+      couchDB:
+
+  ci1:
+    image: cichain:v0.0.1
+    container_name: ci1
+    hostname: ci1
+    ports:
+      - 26616:26656
+      - 1311:80
+    volumes:
+      - ./node1:/root/cid
+    networks:
+      couchDB:
+
+  ci2:
+    image: cichain:v0.0.1
+    container_name: ci2
+    hostname: ci2
+    ports:
+      - 26626:26656
+      - 1312:80
+    volumes:
+      - ./node2:/root/cid
+    networks:
+      couchDB:
+
+  ci3:
+    image: cichain:v0.0.1
+    container_name: ci3
+    hostname: ci3
+    ports:
+      - 26636:26656
+      - 1313:80
+    volumes:
+      - ./node3:/root/cid
+    networks:
+      couchDB:
+
+  ci4:
+    image: cichain:v0.0.1
+    container_name: ci4
+    hostname: ci4
+    ports:
+      - 26646:26656
+      - 1314:80
+    volumes:
+      - ./node4:/root/cid
+    networks:
+      couchDB:
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    hostname: prometheus
+    restart: always
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - 9090:9090
+    networks:
+      couchDB:
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    hostname: grafana
+    restart: always
+    volumes:
+      - ./grafana-storage:/var/lib/grafana
+    ports:
+      - 3000:3000
+    networks:
+      couchDB:
+
+networks: ##定义网络组
+  couchDB: ## 网络组名称

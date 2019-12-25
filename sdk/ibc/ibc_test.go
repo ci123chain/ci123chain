@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	"github.com/tanhuiya/ci123chain/pkg/transfer"
 	"github.com/tanhuiya/fabric-crypto/cryptoutil"
 	"io/ioutil"
 	"net/http"
@@ -250,4 +251,68 @@ func Test1(t *testing.T) {
 	if err != nil {
 	}
 	fmt.Println(address)
+}
+
+
+
+func Test3(t *testing.T) {
+	// 将pem 格式私钥转化为 十六机制 字符串
+
+	//获取nonce，地址， 端口
+	//nonce := httpQuery(ip, port, FromAddr)
+
+	priKey, err := cryptoutil.DecodePriv([]byte(testPrivKey))
+	assert.NoError(t, err)
+	privByte := cryptoutil.MarshalPrivateKey(priKey)
+
+	var signdata []byte
+	for i := 1; i <= 10000; i++ {
+		nonce := uint64(i)
+		signdata, err = transfer.SignTransferTx("0x204bCC42559Faf6DFE1485208F7951aaD800B313",
+			"0xD1a14962627fAc768Fe885Eeb9FF072706B54c19", 2, 20000, nonce, privByte)
+
+		assert.NoError(t, err)
+		httpPostReq(hex.EncodeToString(signdata))
+	}
+
+	/*signdata, err := transfer.SignTransferTx("0x204bCC42559Faf6DFE1485208F7951aaD800B313",
+		"0xD1a14962627fAc768Fe885Eeb9FF072706B54c19", 1, 20000, 0, privByte)
+	fmt.Println(hex.EncodeToString(signdata))
+
+	assert.NoError(t, err)
+	httpPostReq(hex.EncodeToString(signdata))*/
+}
+
+func httpPostReq(param string) retData{
+
+	resp, err := http.PostForm("http://127.0.0.1:8080/tx/broadcast_async",
+		url.Values{"data": {param}})
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	fmt.Println(body)
+	var ret retData
+	var ty ciRes
+	err = json.Unmarshal(body, &ty)
+	d := []byte(ty.Data)
+	err = json.Unmarshal(d, &ret)
+
+	if err != nil {
+		fmt.Println(string(body))
+	}
+
+	if len(ret.Data) > 0 {
+		fmt.Println(ret.Data)
+	}
+	if len(ret.RawLog) > 0 {
+		fmt.Println(ret.RawLog)
+	}
+	return ret
 }

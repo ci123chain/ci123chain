@@ -39,7 +39,10 @@ func queryRewards(ctx sdk.Context, path []string, req abci.RequestQuery, keeper 
 	key := accountAddress + height
 	address := []byte(key)
 	addr := sdk.AccAddr(address)
-	rewards := keeper.GetProCurrentRewards(ctx, addr)
+	rewards, err := keeper.GetValCurrentRewards(ctx, addr)
+	if err != nil {
+		return nil, types.ErrBadHeight(types.DefaultCodespace, err)
+	}
 
 	amount := uint64(rewards)
 	retbz, err := types.DistributionCdc.MarshalBinaryLengthPrefixed(amount)

@@ -26,3 +26,21 @@ func BroadcastTxRequest(cliCtx context.Context) http.HandlerFunc {
 		rest.PostProcessResponseBare(writer, cliCtx, res)
 	}
 }
+
+func BroadcastTxRequestAsync(cliCtx context.Context) http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		data := request.FormValue("data")
+		txByte, err := hex.DecodeString(data)
+		if err != nil {
+			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"data error"))
+			return
+		}
+
+		res, err := cliCtx.BroadcastSignedDataAsync(txByte)
+		if err != nil {
+			rest.WriteErrorRes(writer, client.ErrBroadcast(types.DefaultCodespace, err))
+			return
+		}
+		rest.PostProcessResponseBare(writer, cliCtx, res)
+	}
+}

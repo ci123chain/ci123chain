@@ -27,6 +27,7 @@ func QueryValidatorRewardsRequestHandlerFn(cliCtx context.Context) http.HandlerF
 		vars := mux.Vars(request)
 		accountAddress := vars["accountAddress"]
 		height := vars["height"]
+
 		if height == "now" {
 		}else {
 			_, Err := strconv.ParseInt(height, 10 , 64)

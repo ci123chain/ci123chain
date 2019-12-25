@@ -24,3 +24,20 @@ func (ctx *Context) BroadcastTx(tx []byte) (sdk.TxResponse, error) {
 
 	return sdk.NewResponseFormatBroadcastTxCommit(res), nil
 }
+
+func (ctx *Context) BroadcastTxAsync(tx []byte) (sdk.TxResponse, error) {
+	node, err := ctx.GetNode()
+	if err != nil {
+		return sdk.TxResponse{}, err
+	}
+	res, err := node.BroadcastTxAsync(tx)
+	if err != nil {
+		return sdk.TxResponse{Info:"something error", Code:res.Code}, err
+	}
+
+	if res.Code != uint32(0) {
+		return sdk.TxResponse{Info:"error code", Code:res.Code}, err
+	}
+
+	return sdk.TxResponse{Info:"success",Code:res.Code}, nil
+}
