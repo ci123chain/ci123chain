@@ -45,3 +45,6 @@ func (am AppModule) BeginBlocker(ctx abci_types.Context, req abci.RequestBeginBl
 	//do you want to do
 }
 
+func (am AppModule) Committer(ctx abci_types.Context) {
+
+}

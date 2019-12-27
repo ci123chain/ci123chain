@@ -72,6 +72,13 @@ func (app *BaseApp) SetEndBlocker(endBlocker sdk.EndBlocker) {
 	app.endBlocker = endBlocker
 }
 
+func (app *BaseApp) SetCommitter(committer Committer) {
+	if app.sealed {
+		panic("SetCommitter() on sealed BaseApp")
+	}
+	app.committer = committer
+}
+
 func (app *BaseApp) SetAnteHandler(ah sdk.AnteHandler) {
 	if app.sealed {
 		panic("SetAnteHandler() on sealed BaseApp")

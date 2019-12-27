@@ -42,3 +42,7 @@ func (am AppModuleBasic) DefaultGenesis() json.RawMessage {
 func (am AppModuleBasic) Name() string {
 	return ModuleName
 }
+
+func (am AppModule) Committer(ctx types.Context) {
+
+}

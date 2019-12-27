@@ -246,6 +246,9 @@ func (mBatch *goCouchDBBatch) Set(key, value []byte) {
 func (mBatch *goCouchDBBatch) Delete(key []byte) {
 	id := hex.EncodeToString(key)
 	rev := mBatch.cdb.GetRev(key)
+	if rev == "" {
+		return
+	}
 	err := mBatch.batch.Delete(id, rev)
 	if err != nil {
 		panic(err)
@@ -254,6 +257,9 @@ func (mBatch *goCouchDBBatch) Delete(key []byte) {
 
 // Implements Batch.
 func (mBatch *goCouchDBBatch) Write() {
+	if mBatch.batch.docs == nil {
+		return
+	}
 	_, err := mBatch.batch.Commit()
 	if err != nil {
 		panic(err)
@@ -277,7 +283,7 @@ func nonNilBytes(bz []byte) []byte {
 	return bz
 }
 
-func (cdb *GoCouchDB) GetRev(key []byte) string{
+func (cdb *GoCouchDB) GetRev(key []byte) string {
 	id := hex.EncodeToString(key)
 	// read oldDoc & now rev
 	rev, err := cdb.db.Read(id, nil, nil)
@@ -291,4 +297,40 @@ func (cdb *GoCouchDB) GetRev(key []byte) string{
 	return rev
 }
 
+func (cdb *GoCouchDB) SetRev(key, value []byte, rev string) (string, error) {
+	key = nonNilBytes(key)
+	value = nonNilBytes(value)
+	id := hex.EncodeToString(key)
+	var newDoc KVWrite
+	newDoc = KVWrite{
+		Value:	hex.EncodeToString(value),
+	}
+	// save newDoc
+	rev, err := cdb.db.Save(newDoc, id, rev)
+	if err != nil {
+		return "",err
+	}
+	return rev, nil
+}
 
+// Implements DB.
+func (cdb *GoCouchDB) GetRevAndValue(key []byte) (string, []byte) {
+	key = nonNilBytes(key)
+	var doc KVRead
+	rev, err := cdb.db.Read(hex.EncodeToString(key), &doc,nil)
+	if err != nil {
+		er := err.(*Error)
+		if er.ErrorCode == "not_found" {
+			return "", nil
+		}
+		panic(err)
+	}
+	res, err := hex.DecodeString(doc.Value)
+	if err != nil {
+		panic(err)
+	}
+	if len(res) == 0 {
+		return "", nil
+	}
+	return rev, res
+}

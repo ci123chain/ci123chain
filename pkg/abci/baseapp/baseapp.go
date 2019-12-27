@@ -37,6 +37,8 @@ const (
 	runTxModeDeliver runTxMode = iota
 )
 
+type Committer func(ctx sdk.Context) abci.ResponseCommit
+
 // BaseApp reflects the ABCI application implementation.
 type BaseApp struct {
 	// initialized on creation
@@ -58,7 +60,7 @@ type BaseApp struct {
 	endBlocker       sdk.EndBlocker   // logic to run after all txs, and to determine valset changes
 	addrPeerFilter   sdk.PeerFilter   // filter peers by address and port
 	pubkeyPeerFilter sdk.PeerFilter   // filter peers by public types
-
+	committer 		 Committer
 	//--------------------
 	// Volatile
 	// checkState is set on initialization and reset on Commit.
@@ -660,10 +662,12 @@ func (app *BaseApp) Commit() (res abci.ResponseCommit) {
 			}
 			app.db.SetSync(dbHeaderKey, headerBytes)
 	*/
-
 	// Write the Deliver state and commit the MultiStore
 	app.deliverState.ms.Write()
 	commitID := app.cms.Commit()
+	if app.committer != nil {
+		app.committer(app.deliverState.ctx)
+	}
 	// TODO: this is missing a module identifier and dumps byte array
 	app.Logger.Debug("Commit synced",
 		"commit", commitID,

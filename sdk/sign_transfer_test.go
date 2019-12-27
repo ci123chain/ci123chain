@@ -39,8 +39,8 @@ func TestSignTx(t *testing.T) {
 
 	signedData, err := SignTx("0x204bCC42559Faf6DFE1485208F7951aaD800B313",
 		"0x204bCC42559Faf6DFE1485208F7951aaD800B313",
-		1,
-		1,
+		2,
+		10000,
 		privByte,
 		true)
 

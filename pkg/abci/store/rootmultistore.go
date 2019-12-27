@@ -2,20 +2,15 @@ package store
 
 import (
 	"fmt"
+	"github.com/tanhuiya/ci123chain/pkg/app"
 	"io"
 	"strings"
-
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/merkle"
 	"github.com/tendermint/tendermint/crypto/tmhash"
 	dbm "github.com/tendermint/tm-db"
 
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
-)
-
-const (
-	latestVersionKey = "s/latest"
-	commitInfoKeyFmt = "s/%d" // s/<version>
 )
 
 // rootMultiStore is composed of many CommitStores. Name contrasts with
@@ -191,17 +186,21 @@ func (rs *rootMultiStore) LastCommitID() CommitID {
 
 // Implements Committer/CommitStore.
 func (rs *rootMultiStore) Commit() CommitID {
-
-	// Commit stores.
+	var commitInfo commitInfo
 	version := rs.lastCommitID.Version + 1
-	commitInfo := commitStores(version, rs.stores)
-
-	// Need to update atomically.
-	batch := rs.db.NewBatch()
-	setCommitInfo(batch, version, commitInfo)
-	setLatestVersion(batch, version)
-	batch.Write()
-
+	cInfoKey := fmt.Sprintf(app.CommitInfoKeyFmt, version)
+	cInfoBytes := rs.db.Get([]byte(cInfoKey))
+	if cInfoBytes == nil {
+		// Commit stores.
+		commitInfo = commitStores(version, rs.stores)
+		// Need to update atomically.
+		batch := rs.db.NewBatch()
+		setCommitInfo(batch, version, commitInfo)
+		setLatestVersion(batch, version)
+		batch.Write()
+	}else{
+		cdc.MustUnmarshalBinaryLengthPrefixed(cInfoBytes, &commitInfo)
+	}
 	// Prepare for next version.
 	commitID := CommitID{
 		Version: version,
@@ -453,7 +452,7 @@ func (si storeInfo) Hash() []byte {
 
 func getLatestVersion(db dbm.DB) int64 {
 	var latest int64
-	latestBytes := db.Get([]byte(latestVersionKey))
+	latestBytes := db.Get([]byte(app.LatestVersionKey))
 	if latestBytes == nil {
 		return 0
 	}
@@ -469,7 +468,7 @@ func getLatestVersion(db dbm.DB) int64 {
 // Set the latest version.
 func setLatestVersion(batch dbm.Batch, version int64) {
 	latestBytes, _ := cdc.MarshalBinaryLengthPrefixed(version)
-	batch.Set([]byte(latestVersionKey), latestBytes)
+	batch.Set([]byte(app.LatestVersionKey), latestBytes)
 }
 
 // Commits each store and returns a new commitInfo.
@@ -503,7 +502,7 @@ func commitStores(version int64, storeMap map[StoreKey]CommitStore) commitInfo {
 func getCommitInfo(db dbm.DB, ver int64) (commitInfo, error) {
 
 	// Get from DB.
-	cInfoKey := fmt.Sprintf(commitInfoKeyFmt, ver)
+	cInfoKey := fmt.Sprintf(app.CommitInfoKeyFmt, ver)
 	cInfoBytes := db.Get([]byte(cInfoKey))
 	if cInfoBytes == nil {
 		return commitInfo{}, fmt.Errorf("failed to get rootMultiStore: no data")
@@ -522,6 +521,6 @@ func getCommitInfo(db dbm.DB, ver int64) (commitInfo, error) {
 // Set a commitInfo for given version.
 func setCommitInfo(batch dbm.Batch, version int64, cInfo commitInfo) {
 	cInfoBytes := cdc.MustMarshalBinaryLengthPrefixed(cInfo)
-	cInfoKey := fmt.Sprintf(commitInfoKeyFmt, version)
+	cInfoKey := fmt.Sprintf(app.CommitInfoKeyFmt, version)
 	batch.Set([]byte(cInfoKey), cInfoBytes)
 }

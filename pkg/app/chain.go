@@ -13,12 +13,14 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/auth"
 	"github.com/tanhuiya/ci123chain/pkg/auth/ante"
 	"github.com/tanhuiya/ci123chain/pkg/config"
+	"github.com/tanhuiya/ci123chain/pkg/couchdb"
 	"github.com/tanhuiya/ci123chain/pkg/db"
 	distr "github.com/tanhuiya/ci123chain/pkg/distribution"
 	k "github.com/tanhuiya/ci123chain/pkg/distribution/keeper"
 	"github.com/tanhuiya/ci123chain/pkg/fc"
 	"github.com/tanhuiya/ci123chain/pkg/ibc"
 	"github.com/tanhuiya/ci123chain/pkg/mortgage"
+	"github.com/tanhuiya/ci123chain/pkg/order"
 	"github.com/tanhuiya/ci123chain/pkg/params"
 	"github.com/tanhuiya/ci123chain/pkg/supply"
 	"github.com/tanhuiya/ci123chain/pkg/transaction"
@@ -69,6 +71,9 @@ var (
 		//mortgage.ModuleName: nil,
 		ibc.ModuleName: nil,
 	}
+
+	CommitInfoKeyFmt string
+	LatestVersionKey string
 )
 
 
@@ -104,6 +109,10 @@ func NewChain(logger log.Logger, tmdb tmdb.DB, traceStore io.Writer) *Chain {
 	txm := transaction.NewTxIndexMapper(c.txIndexStore)
 	sm := db.NewStateManager(c.contractStore)
 
+	shardID := viper.GetString("shardID")
+	CommitInfoKeyFmt = shardID + "s/%d"
+	LatestVersionKey = shardID + "s/latest"
+
 	// todo mainkey?
 	accKeeper := keeper.NewAccountKeeper(cdc, c.capKeyMainStore, acc_types.ProtoBaseAccount)
 
@@ -121,11 +130,15 @@ func NewChain(logger log.Logger, tmdb tmdb.DB, traceStore io.Writer) *Chain {
 	fcKeeper := fc.NewFcKeeper(cdc, fcStoreKey, accKeeper)
 	distrKeeper := k.NewKeeper(cdc, disrtStoreKey, fcKeeper, accKeeper)
 
+	cdb := tmdb.(*couchdb.GoCouchDB)
+	orderKeeper := order.NewKeeper(cdb)
+
 	// 设置modules
 	c.mm = module.NewManager(
 		auth.AppModule{AuthKeeper: c.authKeeper},
 		account.AppModule{AccountKeeper: accKeeper},
 		distr.AppModule{DistributionKeeper: distrKeeper},
+		order.AppModule{OrderKeeper: &orderKeeper},
 		)
 	// invoke router
 	c.Router().AddRoute(transfer.RouteKey, handler.NewHandler(txm, accKeeper, sm))
@@ -137,6 +150,7 @@ func NewChain(logger log.Logger, tmdb tmdb.DB, traceStore io.Writer) *Chain {
 
 	c.SetAnteHandler(ante.NewAnteHandler(c.authKeeper, accKeeper, fcKeeper))
 	c.SetBeginBlocker(c.BeginBlocker)
+	c.SetCommitter(c.Committer)
 	c.SetInitChainer(c.InitChainer)
 
 	err := c.mountStores()
