@@ -10,6 +10,7 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/account"
 	"github.com/tanhuiya/ci123chain/pkg/account/keeper"
 	acc_types "github.com/tanhuiya/ci123chain/pkg/account/types"
+	app_types "github.com/tanhuiya/ci123chain/pkg/app/types"
 	"github.com/tanhuiya/ci123chain/pkg/auth"
 	"github.com/tanhuiya/ci123chain/pkg/auth/ante"
 	"github.com/tanhuiya/ci123chain/pkg/config"
@@ -65,15 +66,13 @@ var (
 		account.AppModuleBasic{},
 		auth.AppModuleBasic{},
 		supply.AppModuleBasic{},
+		order.AppModuleBasic{},
 		)
 
 	maccPerms = map[string][]string{
 		//mortgage.ModuleName: nil,
 		ibc.ModuleName: nil,
 	}
-
-	CommitInfoKeyFmt string
-	LatestVersionKey string
 )
 
 
@@ -108,10 +107,6 @@ func NewChain(logger log.Logger, tmdb tmdb.DB, traceStore io.Writer) *Chain {
 
 	txm := transaction.NewTxIndexMapper(c.txIndexStore)
 	sm := db.NewStateManager(c.contractStore)
-
-	shardID := viper.GetString("shardID")
-	CommitInfoKeyFmt = shardID + "s/%d"
-	LatestVersionKey = shardID + "s/latest"
 
 	// todo mainkey?
 	accKeeper := keeper.NewAccountKeeper(cdc, c.capKeyMainStore, acc_types.ProtoBaseAccount)
@@ -152,6 +147,9 @@ func NewChain(logger log.Logger, tmdb tmdb.DB, traceStore io.Writer) *Chain {
 	c.SetBeginBlocker(c.BeginBlocker)
 	c.SetCommitter(c.Committer)
 	c.SetInitChainer(c.InitChainer)
+	shardID := viper.GetString("ShardID")
+	app_types.CommitInfoKeyFmt = shardID + "s/%d"
+	app_types.LatestVersionKey = shardID + "s/latest"
 
 	err := c.mountStores()
 	if err != nil {

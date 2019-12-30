@@ -2,10 +2,11 @@ package order
 
 import (
 	"encoding/json"
-	"github.com/tanhuiya/ci123chain/pkg/abci/types"
-	"github.com/tanhuiya/ci123chain/pkg/order/keeper"
-	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/abci/codec"
+	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
+	"github.com/tanhuiya/ci123chain/pkg/order/keeper"
+	"github.com/tanhuiya/ci123chain/pkg/order/types"
+	abci "github.com/tendermint/tendermint/abci/types"
 )
 
 var OrderCdc *codec.Codec
@@ -18,16 +19,16 @@ type AppModule struct {
 	OrderKeeper	*keeper.OrderKeeper
 }
 
-func (am AppModule) BeginBlocker(ctx types.Context, req abci.RequestBeginBlock) {
+func (am AppModule) BeginBlocker(ctx  sdk.Context, req abci.RequestBeginBlock) {
 	//do you want to do
 	am.OrderKeeper.WaitForReady(ctx.ChainID(),ctx.BlockHeight())
 }
 
-func (am AppModule) Committer(ctx types.Context) {
+func (am AppModule) Committer(ctx sdk.Context) {
 	//do you want to do
 	if am.OrderKeeper.IsDeal {
 		rev, orderBook := am.OrderKeeper.GetOrderBook()
-		err := am.OrderKeeper.UpdateOrderBook(orderBook.TotalShards, rev, orderBook.ShardNow, orderBook.HeightNow, keeper.StateDone)
+		err := am.OrderKeeper.UpdateOrderBook(orderBook, rev, orderBook.Turns[orderBook.Current.Index].Name, orderBook.Turns[orderBook.Current.Index].Height, keeper.StateDone)
 		if err != nil {
 			panic(err)
 		}
@@ -44,7 +45,7 @@ func (am AppModuleBasic) RegisterCodec(codec *codec.Codec) {
 }
 
 func (am AppModuleBasic) DefaultGenesis() json.RawMessage {
-	return nil
+	return ModuleCdc.MustMarshalJSON(types.DefaultGenesisState())
 }
 
 func (am AppModuleBasic) Name() string {
@@ -56,12 +57,17 @@ func RegisterCodec(cdc *codec.Codec)  {
 }
 
 func init()  {
-	OrderCdc = codec.New()
-	RegisterCodec(OrderCdc)
-	codec.RegisterCrypto(OrderCdc)
-	OrderCdc.Seal()
+	ModuleCdc = codec.New()
+	RegisterCodec(ModuleCdc)
+	codec.RegisterCrypto(ModuleCdc)
 }
 
-func (am AppModule) InitGenesis(ctx types.Context, data json.RawMessage)  {
-	//do something
+func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage)  {
+	var genesisState types.GenesisState
+	ModuleCdc.MustUnmarshalJSON(data, &genesisState)
+	InitGenesis(ctx, am.OrderKeeper, genesisState)
+}
+
+func InitGenesis(ctx sdk.Context, ok *keeper.OrderKeeper, data types.GenesisState) {
+	ok.SetOrderBook(data.Params.OrderBook)
 }

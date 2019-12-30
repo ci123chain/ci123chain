@@ -62,8 +62,6 @@ func main()  {
 	if len(viper.GetString(cli.HomeFlag)) > 0 {
 		rootDir = os.ExpandEnv(viper.GetString(cli.HomeFlag))
 	}
-	shardID := ctx.Config.ChainID()
-	viper.Set("ShardID", shardID)
 	exector := cli.PrepareBaseCmd(rootCmd, "CORE", rootDir)
 	exector.Execute()
 }

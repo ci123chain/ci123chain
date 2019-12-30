@@ -2,13 +2,13 @@ package store
 
 import (
 	"fmt"
-	"github.com/tanhuiya/ci123chain/pkg/app"
-	"io"
-	"strings"
+	"github.com/tanhuiya/ci123chain/pkg/app/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/merkle"
 	"github.com/tendermint/tendermint/crypto/tmhash"
 	dbm "github.com/tendermint/tm-db"
+	"io"
+	"strings"
 
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 )
@@ -188,7 +188,7 @@ func (rs *rootMultiStore) LastCommitID() CommitID {
 func (rs *rootMultiStore) Commit() CommitID {
 	var commitInfo commitInfo
 	version := rs.lastCommitID.Version + 1
-	cInfoKey := fmt.Sprintf(app.CommitInfoKeyFmt, version)
+	cInfoKey := fmt.Sprintf(types.CommitInfoKeyFmt, version)
 	cInfoBytes := rs.db.Get([]byte(cInfoKey))
 	if cInfoBytes == nil {
 		// Commit stores.
@@ -452,7 +452,7 @@ func (si storeInfo) Hash() []byte {
 
 func getLatestVersion(db dbm.DB) int64 {
 	var latest int64
-	latestBytes := db.Get([]byte(app.LatestVersionKey))
+	latestBytes := db.Get([]byte(types.LatestVersionKey))
 	if latestBytes == nil {
 		return 0
 	}
@@ -468,7 +468,7 @@ func getLatestVersion(db dbm.DB) int64 {
 // Set the latest version.
 func setLatestVersion(batch dbm.Batch, version int64) {
 	latestBytes, _ := cdc.MarshalBinaryLengthPrefixed(version)
-	batch.Set([]byte(app.LatestVersionKey), latestBytes)
+	batch.Set([]byte(types.LatestVersionKey), latestBytes)
 }
 
 // Commits each store and returns a new commitInfo.
@@ -502,7 +502,7 @@ func commitStores(version int64, storeMap map[StoreKey]CommitStore) commitInfo {
 func getCommitInfo(db dbm.DB, ver int64) (commitInfo, error) {
 
 	// Get from DB.
-	cInfoKey := fmt.Sprintf(app.CommitInfoKeyFmt, ver)
+	cInfoKey := fmt.Sprintf(types.CommitInfoKeyFmt, ver)
 	cInfoBytes := db.Get([]byte(cInfoKey))
 	if cInfoBytes == nil {
 		return commitInfo{}, fmt.Errorf("failed to get rootMultiStore: no data")
@@ -521,6 +521,6 @@ func getCommitInfo(db dbm.DB, ver int64) (commitInfo, error) {
 // Set a commitInfo for given version.
 func setCommitInfo(batch dbm.Batch, version int64, cInfo commitInfo) {
 	cInfoBytes := cdc.MustMarshalBinaryLengthPrefixed(cInfo)
-	cInfoKey := fmt.Sprintf(app.CommitInfoKeyFmt, version)
+	cInfoKey := fmt.Sprintf(types.CommitInfoKeyFmt, version)
 	batch.Set([]byte(cInfoKey), cInfoBytes)
 }

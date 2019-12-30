@@ -1,17 +1,18 @@
 package cmd
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/app"
-	hnode "github.com/tanhuiya/ci123chain/pkg/node"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/tanhuiya/ci123chain/pkg/app"
+	hnode "github.com/tanhuiya/ci123chain/pkg/node"
 	abcis "github.com/tendermint/tendermint/abci/server"
 	tcmd "github.com/tendermint/tendermint/cmd/tendermint/commands"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/node"
 	pvm "github.com/tendermint/tendermint/privval"
 	"github.com/tendermint/tendermint/proxy"
+	"github.com/tendermint/tendermint/types"
 )
 
 const (
@@ -83,10 +84,13 @@ func StartInProcess(ctx *app.Context, appCreator app.AppCreator) (*node.Node, er
 	home := cfg.RootDir
 	traceStore := viper.GetString(flagTraceStore)
 
+	gendoc, _ := types.GenesisDocFromFile(cfg.GenesisFile())
+	viper.Set("ShardID", gendoc.ChainID)
 	app, err := appCreator(home, ctx.Logger, traceStore)
 	if err != nil {
 		return nil, err
 	}
+
 	nodeKey, err := hnode.LoadNodeKey(cfg.NodeKeyFile())
 	if err != nil {
 		return nil, err
@@ -116,6 +120,7 @@ func StartInProcess(ctx *app.Context, appCreator app.AppCreator) (*node.Node, er
 	cmn.TrapSignal(ctx.Logger, func() {
 		tmNode.Stop()
 	})
+
 
 	return tmNode, nil
 }
