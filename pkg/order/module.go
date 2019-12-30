@@ -28,7 +28,7 @@ func (am AppModule) Committer(ctx sdk.Context) {
 	//do you want to do
 	if am.OrderKeeper.IsDeal {
 		rev, orderBook := am.OrderKeeper.GetOrderBook()
-		err := am.OrderKeeper.UpdateOrderBook(orderBook, rev, orderBook.Turns[orderBook.Current.Index].Name, orderBook.Turns[orderBook.Current.Index].Height, keeper.StateDone)
+		err := am.OrderKeeper.UpdateOrderBook(orderBook, rev, orderBook.Lists[orderBook.Current.Index].Name, orderBook.Lists[orderBook.Current.Index].Height, keeper.StateDone)
 		if err != nil {
 			panic(err)
 		}

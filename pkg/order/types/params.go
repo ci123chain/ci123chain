@@ -14,28 +14,28 @@ type Params struct {
 }
 
 func DefaultParams() Params {
-	var turns []keeper.Turns
-	turn1 := &keeper.Turns{
+	var lists []keeper.Lists
+	p1 := &keeper.Lists{
 		Name:   "Shard1",
 		Height: 0,
 	}
-	turn2 := &keeper.Turns{
+	p2 := &keeper.Lists{
 		Name:   "Shard2",
 		Height: 0,
 	}
-	turns = append(turns, *turn1, *turn2)
-	//turns = append(turns, *turn1)
+	lists = append(lists, *p1, *p2)
+	//Lists = append(Lists, *turn1)
 
 	current := keeper.Current{
 		Index: 0,
 		State: keeper.StateInit,
 	}
 
-	var event []keeper.Events
+	var actions []keeper.Actions
 	orderbook := keeper.OrderBook{
-		Turns: turns,
+		Lists: lists,
 		Current: current,
-		Events: event,
+		Actions: actions,
 	}
 	return Params{
 		OrderBook:  orderbook,

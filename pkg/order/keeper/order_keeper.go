@@ -2,6 +2,8 @@ package keeper
 
 import (
 	"encoding/json"
+	"fmt"
+	"github.com/tanhuiya/ci123chain/pkg/app/types"
 	"github.com/tanhuiya/ci123chain/pkg/couchdb"
 	"github.com/tanhuiya/ci123chain/pkg/params/subspace"
 	"strconv"
@@ -20,14 +22,14 @@ type OrderKeeper struct {
 }
 
 type OrderBook struct {
-	Turns 	[]Turns 	`json:"turns"`
+	Lists 	[]Lists 	`json:"lists"`
 
 	Current	Current 	`json:"current"`
 
-	Events	[]Events 	`json:"events"`
+	Actions	[]Actions 	`json:"actions"`
 }
 
-type Turns struct {
+type Lists struct {
 	Name 	string 	`json:"name"`
 	Height	int64	`json:"height"`
 }
@@ -37,7 +39,7 @@ type Current struct {
 	State	string	`json:"state"`
 }
 
-type Events struct {
+type Actions struct {
 	Type	string	`json:"type"`
 	Name	string	`json:"name"`
 }
@@ -56,7 +58,7 @@ func (ok *OrderKeeper) WaitForReady(shardID string, height int64) {
 			if err != nil {  // other peer is processing, wait
 				er := err.(*couchdb.Error)
 				if er.Reason == "Document update conflict." {
-					ok.waitOtherPeer(orderbook, shardID, height)
+					ok.waitOtherPeer(shardID, height)
 					return
 				} else {
 					panic(err)
@@ -72,9 +74,9 @@ func (ok *OrderKeeper) WaitForReady(shardID string, height int64) {
 
 func (ok *OrderKeeper) UpdateOrderBook(orderBook OrderBook, rev, shardID string, height int64, state string) error {
 
-	for i := 0; i < len(orderBook.Turns); i++ {
-		if orderBook.Turns[i].Name == shardID{
-			orderBook.Turns[i].Height = height
+	for i := 0; i < len(orderBook.Lists); i++ {
+		if orderBook.Lists[i].Name == shardID{
+			orderBook.Lists[i].Height = height
 			orderBook.Current.Index = i
 			orderBook.Current.State = state
 			break
@@ -126,30 +128,27 @@ func (ok *OrderKeeper) isReady(orderbook OrderBook, shardID string, height int64
 		}
 	}
 	var nextIndex int
-	if orderbook.Current.Index == len(orderbook.Turns) - 1 {
+	if orderbook.Current.Index == len(orderbook.Lists) - 1 {
 		nextIndex = 0
 	} else {
 		nextIndex = orderbook.Current.Index + 1
 	}
-	if orderbook.Turns[nextIndex].Height + 1 == height &&
+	if orderbook.Lists[nextIndex].Height + 1 == height &&
 		orderbook.Current.State == StateDone &&
-		orderbook.Turns[nextIndex].Name == shardID {
+		orderbook.Lists[nextIndex].Name == shardID {
 		return true
 	}else {
 		return false
 	}
 }
 
-func (ok *OrderKeeper) waitOtherPeer(orderBook OrderBook, shardID string, height int64) {
+func (ok *OrderKeeper) waitOtherPeer(shardID string, height int64) {
 	for {
-		_, orderBook1 := ok.GetOrderBook()
-		if orderBook1.Turns[orderBook.Current.Index].Name == shardID &&
-			orderBook1.Turns[orderBook.Current.Index].Height == height &&
-			orderBook1.Current.State == StateProcessing {
-			time.Sleep(SleepTime)
-			continue
+		key := fmt.Sprintf(types.CommitInfoKeyFmt, height)
+		commitID := ok.cdb.Get([]byte(key))
+		if commitID != nil {
+			ok.IsDeal = false
+			return
 		}
-		ok.IsDeal = false
-		return
 	}
 }
