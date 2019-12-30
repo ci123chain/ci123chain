@@ -51,11 +51,11 @@ func (am AppModuleBasic) DefaultGenesis() json.RawMessage {
 func (am AppModuleBasic) Name() string {
 	return ModuleName
 }
-
+/*
 func RegisterCodec(cdc *codec.Codec)  {
 
 }
-
+*/
 func init()  {
 	ModuleCdc = codec.New()
 	RegisterCodec(ModuleCdc)

@@ -41,6 +41,7 @@ type Current struct {
 
 type Actions struct {
 	Type	string	`json:"type"`
+	Height   int64  `json:"height"`
 	Name	string	`json:"name"`
 }
 

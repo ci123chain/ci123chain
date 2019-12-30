@@ -24,6 +24,7 @@ import (
 
 	"github.com/gorilla/mux"
 	distr "github.com/tanhuiya/ci123chain/pkg/distribution"
+	order "github.com/tanhuiya/ci123chain/pkg/order/rest"
 )
 
 const (
@@ -80,6 +81,8 @@ func NewRestServer() *RestServer {
 	txRpc.RegisterTxRoutes(cliCtx, r)
 	ibc.RegisterRoutes(cliCtx, r)
 	distr.RegisterRoutes(cliCtx, r)
+	order.RegisterTxRoutes(cliCtx, r)
+
 	return &RestServer{
 		Mux: r,
 		CliCtx: cliCtx,
