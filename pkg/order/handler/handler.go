@@ -29,7 +29,7 @@ func handlerUpgradeTx(ctx types.Context,k keeper.OrderKeeper, tx *order.UpgradeT
 	action.Type = tx.Type
 	orderBook.Actions = append(orderBook.Actions, action)
 
-	k.SetOrderBook(orderBook)
+	k.SetEventBook(orderBook)
 
 	return types.Result{}
 }

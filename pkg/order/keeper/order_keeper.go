@@ -105,6 +105,14 @@ func (ok *OrderKeeper) GetOrderBook() (string, OrderBook) {
 	return rev, ob
 }
 
+func (ok *OrderKeeper) SetEventBook(orderBook OrderBook) {
+	orderBytes, err := json.Marshal(orderBook)
+	if err != nil {
+		panic(err)
+	}
+	ok.cdb.Set([]byte(OrderBookKey), orderBytes)
+}
+
 func (ok *OrderKeeper) SetOrderBook(orderBook OrderBook) {
 	orderBytes, err := json.Marshal(orderBook)
 	if err != nil {
