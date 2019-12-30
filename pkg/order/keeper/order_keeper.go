@@ -6,7 +6,6 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/app/types"
 	"github.com/tanhuiya/ci123chain/pkg/couchdb"
 	"github.com/tanhuiya/ci123chain/pkg/params/subspace"
-	"strconv"
 	"time"
 )
 
@@ -41,7 +40,7 @@ type Current struct {
 
 type Actions struct {
 	Type	string	`json:"type"`
-	Height   int64  `json:"height"`
+	Height	int64	`json:"height"`
 	Name	string	`json:"name"`
 }
 
@@ -73,6 +72,14 @@ func (ok *OrderKeeper) WaitForReady(shardID string, height int64) {
 	}
 }
 
+func (ok *OrderKeeper) SetEventBook(orderBook OrderBook) {
+	orderBytes, err := json.Marshal(orderBook)
+	if err != nil {
+		panic(err)
+	}
+	ok.cdb.Set([]byte(OrderBookKey), orderBytes)
+}
+
 func (ok *OrderKeeper) UpdateOrderBook(orderBook OrderBook, rev, shardID string, height int64, state string) error {
 
 	for i := 0; i < len(orderBook.Lists); i++ {
@@ -82,6 +89,27 @@ func (ok *OrderKeeper) UpdateOrderBook(orderBook OrderBook, rev, shardID string,
 			orderBook.Current.State = state
 			break
 		}
+	}
+	//handler actions
+	if orderBook.Current.Index == 0 && orderBook.Actions != nil {
+		var actions []Actions
+		for k, v := range orderBook.Actions {
+			if v.Type == "ADD" && height == v.Height {
+				list := Lists{
+					Name:   v.Name,
+					Height: 0,
+				}
+				orderBook.Lists = append(orderBook.Lists, list)
+				length := len(orderBook.Actions)
+				if length - 1 > k {
+					orderBook.Actions = orderBook.Actions[k+1:]
+				} else {
+					orderBook.Actions = actions
+				}
+			}
+		}
+
+
 	}
 
 	obBytes, err := json.Marshal(orderBook)
@@ -105,32 +133,20 @@ func (ok *OrderKeeper) GetOrderBook() (string, OrderBook) {
 	return rev, ob
 }
 
-func (ok *OrderKeeper) SetEventBook(orderBook OrderBook) {
-	orderBytes, err := json.Marshal(orderBook)
-	if err != nil {
-		panic(err)
-	}
-	ok.cdb.Set([]byte(OrderBookKey), orderBytes)
-}
-
 func (ok *OrderKeeper) SetOrderBook(orderBook OrderBook) {
 	orderBytes, err := json.Marshal(orderBook)
 	if err != nil {
 		panic(err)
 	}
 	rev := ok.cdb.GetRev([]byte(OrderBookKey))
-	if rev == "" || rev[0:1] == "1-"{
+	if rev == "" {
 		ok.cdb.Set([]byte(OrderBookKey), orderBytes)
 	}
 }
 
 func (ok *OrderKeeper) isReady(orderbook OrderBook, shardID string, height int64) bool {
-	ID, err := strconv.Atoi(shardID[5:])
-	if err != nil {
-		panic(err)
-	}
 	if orderbook.Current.State == StateInit {
-		if ID == 1 {
+		if orderbook.Lists[0].Name == shardID {
 			return true
 		} else {
 			return false
