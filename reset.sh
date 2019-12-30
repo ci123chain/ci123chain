@@ -2,7 +2,7 @@
 
 rm -rf ~/.ci123*
 
-./build/cid init
+./build/cid init --chain-id Shard1
 
 ./build/cid add-genesis-account 0xD1a14962627fAc768Fe885Eeb9FF072706B54c19 100000
 

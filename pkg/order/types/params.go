@@ -19,12 +19,12 @@ func DefaultParams() Params {
 		Name:   "Shard1",
 		Height: 0,
 	}
-	p2 := &keeper.Lists{
-		Name:   "Shard2",
-		Height: 0,
-	}
-	lists = append(lists, *p1, *p2)
-	//Lists = append(Lists, *turn1)
+	//p2 := &keeper.Lists{
+	//	Name:   "Shard2",
+	//	Height: 0,
+	//}
+	//lists = append(lists, *p1, *p2)
+	lists = append(lists, *p1)
 
 	current := keeper.Current{
 		Index: 0,
