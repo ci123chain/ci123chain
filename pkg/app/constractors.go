@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/tanhuiya/ci123chain/pkg/abci"
 	"github.com/tanhuiya/ci123chain/pkg/app/types"
+	"github.com/tanhuiya/ci123chain/pkg/couchdb"
 	sdk "github.com/tendermint/tendermint/abci/types"
 	//"github.com/tanhuiya/ci123chain/pkg/couchdb"
 	"github.com/tendermint/tendermint/libs/log"
@@ -26,10 +27,10 @@ type (
 
 func ConstructAppCreator(appFn AppCreatorInit, name string) AppCreator {
 	return func(rootDir string, logger log.Logger, traceStore string) (sdk.Application, error) {
-		dataDir := filepath.Join(rootDir, "data")
+		//dataDir := filepath.Join(rootDir, "data")
 
-		//db, err := couchdb.NewGoCouchDB(name, "127.0.0.1", 5984, &couchdb.BasicAuth{Username: "adminuser", Password: "password"})
-		db, err := dbm.NewGoLevelDB(name, dataDir)
+		db, err := couchdb.NewGoCouchDB(name, "127.0.0.1", 5984, &couchdb.BasicAuth{Username: "adminuser", Password: "password"})
+		//db, err := dbm.NewGoLevelDB(name, dataDir)
 		if err != nil {
 			return nil, types.ErrNewDB(types.DefaultCodespace, err)
 		}

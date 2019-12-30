@@ -21,15 +21,15 @@ func NewHandler(keeper keeper.OrderKeeper) types.Handler {
 
 func handlerUpgradeTx(ctx types.Context,k keeper.OrderKeeper, tx *order.UpgradeTx) types.Result {
 	///扩展容量交易的处理
-	_, orderBook := k.GetOrderBook()
-	//现在是新添加一个分片
-	var action keeper.Actions
-	action.Name = tx.Name
-	action.Height = tx.Height
-	action.Type = tx.Type
-	orderBook.Actions = append(orderBook.Actions, action)
-
-	k.SetEventBook(orderBook)
-
+	if k.IsDeal {
+		_, orderBook := k.GetOrderBook()
+		//现在是新添加一个分片
+		var action keeper.Actions
+		action.Name = tx.Name
+		action.Height = tx.Height
+		action.Type = tx.Type
+		orderBook.Actions = append(orderBook.Actions, action)
+		k.SetEventBook(orderBook)
+	}
 	return types.Result{}
 }
