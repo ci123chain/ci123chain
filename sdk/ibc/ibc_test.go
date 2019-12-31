@@ -244,7 +244,7 @@ func TestUpgradeTx(t *testing.T) {
 
 
 	signdata, err := order.SignUpgradeTx("0x204bCC42559Faf6DFE1485208F7951aaD800B313",
-		20000, 1, "ADD", "asdjqj", 20, privByte)
+		20000, 1, "ADD", "asdjqj", 35, privByte)
 
 	assert.NoError(t, err)
 	httpPostUpgradeTx(hex.EncodeToString(signdata))

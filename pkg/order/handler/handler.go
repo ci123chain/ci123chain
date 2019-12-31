@@ -7,11 +7,11 @@ import (
 	"reflect"
 )
 
-func NewHandler(keeper keeper.OrderKeeper) types.Handler {
+func NewHandler(keeper *keeper.OrderKeeper) types.Handler {
 	return func(ctx types.Context, tx types.Tx) types.Result {
 		switch tx := tx.(type) {
 		case *order.UpgradeTx:
-			return handlerUpgradeTx(ctx,keeper, tx)
+			return handlerUpgradeTx(ctx, keeper, tx)
 		default:
 			errMsg := "Unrecognized Tx type: " + reflect.TypeOf(tx).Name()
 			return types.ErrUnknownRequest(errMsg).Result()
@@ -19,7 +19,7 @@ func NewHandler(keeper keeper.OrderKeeper) types.Handler {
 	}
 }
 
-func handlerUpgradeTx(ctx types.Context,k keeper.OrderKeeper, tx *order.UpgradeTx) types.Result {
+func handlerUpgradeTx(ctx types.Context,k *keeper.OrderKeeper, tx *order.UpgradeTx) types.Result {
 	///扩展容量交易的处理
 	if k.IsDeal {
 		_, orderBook := k.GetOrderBook()

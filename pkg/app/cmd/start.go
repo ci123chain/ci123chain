@@ -84,7 +84,10 @@ func StartInProcess(ctx *app.Context, appCreator app.AppCreator) (*node.Node, er
 	home := cfg.RootDir
 	traceStore := viper.GetString(flagTraceStore)
 
-	gendoc, _ := types.GenesisDocFromFile(cfg.GenesisFile())
+	gendoc, err := types.GenesisDocFromFile(cfg.GenesisFile())
+	if err != nil {
+		panic(err)
+	}
 	viper.Set("ShardID", gendoc.ChainID)
 	app, err := appCreator(home, ctx.Logger, traceStore)
 	if err != nil {

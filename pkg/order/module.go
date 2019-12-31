@@ -69,5 +69,9 @@ func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage)  {
 }
 
 func InitGenesis(ctx sdk.Context, ok *keeper.OrderKeeper, data types.GenesisState) {
+	shardID := ctx.ChainID()
+	if data.Params.OrderBook.Lists != nil && data.Params.OrderBook.Lists[0].Name == ""{
+		data.Params.OrderBook.Lists[0].Name = shardID
+	}
 	ok.SetOrderBook(data.Params.OrderBook)
 }
