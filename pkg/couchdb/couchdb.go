@@ -26,20 +26,22 @@ type Database struct {
 
 //Creates a regular http connection.
 //Timeout sets the timeout for the http Client
-func NewConnection(address string, port int,
+func NewConnection(address string,
 	timeout time.Duration) (*Connection, error) {
-
-	url := "http://" + address + ":" + strconv.Itoa(port)
-	return createConnection(url, timeout)
+	if ! strings.HasPrefix(address, "http://")  {
+		address = "http://" + address
+	}
+	return createConnection(address, timeout)
 }
 
 //Creates an https connection.
 //Timeout sets the timeout for the http Client
 func NewSSLConnection(address string, port int,
 	timeout time.Duration) (*Connection, error) {
-
-	url := "https://" + address + ":" + strconv.Itoa(port)
-	return createConnection(url, timeout)
+	if ! strings.HasPrefix(address, "https://")  {
+		address = "https://" + address
+	}
+	return createConnection(address, timeout)
 }
 
 func createConnection(rawUrl string, timeout time.Duration) (*Connection, error) {

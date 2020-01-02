@@ -21,7 +21,7 @@ const (
 	flagTraceStore     = "trace-store"
 	flagPruning        = "pruning"
 	//flagLogLevel       = "log-level"
-
+	flagStateDB 	   = "statedb" // couchdb@localhost:6389 or leveldb
 )
 
 func startCmd(ctx *app.Context, appCreator app.AppCreator) *cobra.Command {
@@ -45,6 +45,7 @@ func startCmd(ctx *app.Context, appCreator app.AppCreator) *cobra.Command {
 	cmd.Flags().String(flagAddress, "tcp://0.0.0.0:26658", "Listen address")
 	cmd.Flags().String(flagTraceStore, "", "Enable KVStore tracing to an output file")
 	cmd.Flags().String(flagPruning, "syncable", "Pruning strategy: syncable, nothing, everything")
+	cmd.Flags().String(flagStateDB, "leveldb", "db of abci persistent")
 	//cmd.Flags().String(flagLogLevel, "debug", "Run abci app with different log level")
 	tcmd.AddNodeFlags(cmd)
 	return cmd
@@ -54,8 +55,9 @@ func startStandAlone(ctx *app.Context, appCreator app.AppCreator) error {
 	addr := viper.GetString(flagAddress)
 	home := viper.GetString("home")
 	traceStore := viper.GetString(flagTraceStore)
+	stateDB := viper.GetString(flagStateDB)
 
-	app, err := appCreator(home, ctx.Logger, traceStore)
+	app, err := appCreator(home, ctx.Logger, stateDB, traceStore)
 	if err != nil {
 		return err
 	}
@@ -83,13 +85,15 @@ func StartInProcess(ctx *app.Context, appCreator app.AppCreator) (*node.Node, er
 	cfg := ctx.Config
 	home := cfg.RootDir
 	traceStore := viper.GetString(flagTraceStore)
+	stateDB := viper.GetString(flagStateDB)
 
 	gendoc, err := types.GenesisDocFromFile(cfg.GenesisFile())
 	if err != nil {
 		panic(err)
 	}
 	viper.Set("ShardID", gendoc.ChainID)
-	app, err := appCreator(home, ctx.Logger, traceStore)
+
+	app, err := appCreator(home, ctx.Logger, stateDB, traceStore)
 	if err != nil {
 		return nil, err
 	}

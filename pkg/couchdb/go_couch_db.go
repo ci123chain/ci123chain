@@ -19,8 +19,8 @@ type KVWrite struct {
 	Value 	string
 }
 
-func NewGoCouchDB(name, address string, port int, auth Auth) (*GoCouchDB, error) {
-	conn, err := NewConnection(address, port, DefaultTimeout)
+func NewGoCouchDB(name, address string, auth Auth) (*GoCouchDB, error) {
+	conn, err := NewConnection(address, DefaultTimeout)
 	if err != nil {
 		return nil, err
 	}
