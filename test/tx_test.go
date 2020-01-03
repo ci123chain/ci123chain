@@ -33,6 +33,7 @@ var Client1 = client.NewHTTP("127.0.0.1:26617", "/http")
 var Client2 = client.NewHTTP("127.0.0.1:26627", "/http")
 
 
+
 func makePrivateKey() []byte {
 	priKey, _ := cryptoutil.DecodePriv([]byte(testPrivKey))
 	privByte := cryptoutil.MarshalPrivateKey(priKey)
@@ -56,6 +57,7 @@ func MakeParams(i int, pri []byte) string{
 func myFunc(i interface{}, ph string) {
 	n := i.(int)
 	fmt.Println(n)
+<<<<<<< HEAD:cmd/test/tx_test.go
 	//ph := "0"
 	//http.PostForm("http://127.0.0.1:131" + ph + "/tx/broadcast_async",
 		//url.Values{"data": {TxRequestParam[n]}})
@@ -84,6 +86,10 @@ func myFunc2(i interface{}, ph string) {
 
 	param,_ := hex.DecodeString(TxRequestParam[n])
 	Client2.BroadcastTxAsync(param)
+=======
+	http.PostForm("http://192.168.1.114:131" + ph + "/tx/broadcast_async",
+		url.Values{"data": {TxRequestParam[n]}})
+>>>>>>> f8009c628cdfaf787ee13fb9d3d85f6dea448aae:test/tx_test.go
 }
 
 func TestProcess(t *testing.T) {

@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ci123chain-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ci123chain
+
+  template:
+    metadata:
+      labels:
+        app: ci123chain
+    spec:
+      containers:
+      - name: ci123chain
+        image: cichain:v0.0.1
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - mountPath: /home
+          name: chain-volume
+      volumes:
+      - name: chain-volume
+        hostPath:
+          path: /Users/tanhui/Documents/Work/BlockChain/ci123chain/k8s/data
+          type: Directory
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ci123chain-master
+  labels:
+    app: ci123chain
+spec:
+  type: NodePort
+  ports:
+  - port: 80
+    targetPort: 80
+    nodePort: 30302
+  selector:
+    app: ci123chain
