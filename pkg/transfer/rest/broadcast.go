@@ -36,11 +36,14 @@ func BroadcastTxRequestAsync(cliCtx context.Context) http.HandlerFunc {
 			return
 		}
 
+		cliCtx.BroadcastSignedDataAsync(txByte)
+		/*
 		res, err := cliCtx.BroadcastSignedDataAsync(txByte)
 		if err != nil {
 			rest.WriteErrorRes(writer, client.ErrBroadcast(types.DefaultCodespace, err))
 			return
 		}
 		rest.PostProcessResponseBare(writer, cliCtx, res)
+		*/
 	}
 }

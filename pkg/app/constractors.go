@@ -29,6 +29,7 @@ type (
 )
 
 func ConstructAppCreator(appFn AppCreatorInit, name string) AppCreator {
+
 	return func(rootDir string, logger log.Logger, statedb, traceStore string) (sdk.Application, error) {
 		dataDir := filepath.Join(rootDir, "data")
 		db, err := getStateDB(name, dataDir, statedb)
