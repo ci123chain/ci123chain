@@ -9,6 +9,7 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/order"
 	"github.com/tanhuiya/ci123chain/pkg/transfer"
 	"github.com/tanhuiya/fabric-crypto/cryptoutil"
+	"github.com/tendermint/tendermint/rpc/client"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -25,7 +26,11 @@ J3+tMGTG67f+TdCfDxWYMpQYxLlE8VkbEzKWDwCYvDZRMKCQfv2ErNvb
 
 var TxRequestParam = make(map[int]string, 800000)
 var Start = 1
-var End = 300
+var End = 30000
+
+var Client = client.NewHTTP("127.0.0.1:26607", "/http")
+var Client1 = client.NewHTTP("127.0.0.1:26617", "/http")
+var Client2 = client.NewHTTP("127.0.0.1:26627", "/http")
 
 
 func makePrivateKey() []byte {
@@ -51,13 +56,39 @@ func MakeParams(i int, pri []byte) string{
 func myFunc(i interface{}, ph string) {
 	n := i.(int)
 	fmt.Println(n)
-	http.PostForm("http://127.0.0.1:131" + ph + "/tx/broadcast_async",
-		url.Values{"data": {TxRequestParam[n]}})
+	//ph := "0"
+	//http.PostForm("http://127.0.0.1:131" + ph + "/tx/broadcast_async",
+		//url.Values{"data": {TxRequestParam[n]}})
+
+	param,_ := hex.DecodeString(TxRequestParam[n])
+	Client.BroadcastTxAsync(param)
+}
+
+func myFunc1(i interface{}, ph string) {
+	n := i.(int)
+	fmt.Println(n)
+	//ph := "0"
+	//http.PostForm("http://127.0.0.1:131" + ph + "/tx/broadcast_async",
+	//url.Values{"data": {TxRequestParam[n]}})
+
+	param,_ := hex.DecodeString(TxRequestParam[n])
+	Client1.BroadcastTxAsync(param)
+}
+
+func myFunc2(i interface{}, ph string) {
+	n := i.(int)
+	fmt.Println(n)
+	//ph := "0"
+	//http.PostForm("http://127.0.0.1:131" + ph + "/tx/broadcast_async",
+	//url.Values{"data": {TxRequestParam[n]}})
+
+	param,_ := hex.DecodeString(TxRequestParam[n])
+	Client2.BroadcastTxAsync(param)
 }
 
 func TestProcess(t *testing.T) {
-	var ph = "0"
 	var wg sync.WaitGroup
+	var ph = "0"
 	privateKey := makePrivateKey()
 	for j := Start; j <= End; j++ {
 		TxRequestParam[j] = MakeParams(j, privateKey)
@@ -78,16 +109,16 @@ func TestProcess(t *testing.T) {
 	wg.Wait()
 }
 
-
 func TestProcessOne(t *testing.T) {
-	var ph = "1"
+
 	var wg sync.WaitGroup
+	var ph = "1"
 	privateKey := makePrivateKey()
 	for j := Start; j <= End; j++ {
 		TxRequestParam[j] = MakeParams(j, privateKey)
 	}
 	p1, _ := ants.NewPoolWithFunc(100, func(i interface{}) {
-		myFunc(i, ph)
+		myFunc1(i, ph)
 		wg.Done()
 	})
 	defer p1.Release()
@@ -103,14 +134,14 @@ func TestProcessOne(t *testing.T) {
 }
 
 func TestProcessTwo(t *testing.T) {
-	var ph = "2"
 	var wg sync.WaitGroup
+	var ph = "2"
 	privateKey := makePrivateKey()
 	for j := Start; j <= End; j++ {
 		TxRequestParam[j] = MakeParams(j, privateKey)
 	}
 	p1, _ := ants.NewPoolWithFunc(100, func(i interface{}) {
-		myFunc(i, ph)
+		myFunc2(i, ph)
 		wg.Done()
 	})
 	defer p1.Release()
@@ -126,8 +157,8 @@ func TestProcessTwo(t *testing.T) {
 }
 
 func TestProcessThree(t *testing.T) {
-	var ph = "3"
 	var wg sync.WaitGroup
+	var ph = "3"
 	privateKey := makePrivateKey()
 	for j := Start; j <= End; j++ {
 		TxRequestParam[j] = MakeParams(j, privateKey)
@@ -149,8 +180,8 @@ func TestProcessThree(t *testing.T) {
 }
 
 func TestProcessFour(t *testing.T) {
-	var ph = "4"
 	var wg sync.WaitGroup
+	var ph = "4"
 	privateKey := makePrivateKey()
 	for j := Start; j <= End; j++ {
 		TxRequestParam[j] = MakeParams(j, privateKey)
@@ -179,7 +210,7 @@ func TestAddShard(t *testing.T) {
 
 
 	signdata, err := order.SignUpgradeTx("0x204bCC42559Faf6DFE1485208F7951aaD800B313",
-		20000, 1, "ADD", "test-chain-tL56l9", 29, privByte)
+		20000, 1, "ADD", "test-chain-Wicb26", 16, privByte)
 
 	assert.NoError(t, err)
 	httpPostUpgradeTx(hex.EncodeToString(signdata))

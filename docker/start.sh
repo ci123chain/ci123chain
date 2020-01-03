@@ -17,6 +17,6 @@ if [ ! -f ${CID_HOME}/config/genesis.json ]; then
 fi
 
 # start
-nohup ./cid-linux start --home=$CID_HOME > cid-output 2>&1 &
+nohup ./cid-linux start --home=$CID_HOME --statedb=couchdb@192.168.1.114:5984 > cid-output 2>&1 &
 
 ./cli-linux rest-server --laddr=tcp://0.0.0.0:80 --home=$CLI_HOME > rest-output 2>&1

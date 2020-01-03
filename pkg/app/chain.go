@@ -12,7 +12,6 @@ import (
 	acc_types "github.com/tanhuiya/ci123chain/pkg/account/types"
 	app_types "github.com/tanhuiya/ci123chain/pkg/app/types"
 	"github.com/tanhuiya/ci123chain/pkg/auth"
-	"github.com/tanhuiya/ci123chain/pkg/auth/ante"
 	"github.com/tanhuiya/ci123chain/pkg/config"
 	"github.com/tanhuiya/ci123chain/pkg/couchdb"
 	"github.com/tanhuiya/ci123chain/pkg/db"
@@ -22,6 +21,7 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/ibc"
 	"github.com/tanhuiya/ci123chain/pkg/mortgage"
 	"github.com/tanhuiya/ci123chain/pkg/order"
+	orhandler "github.com/tanhuiya/ci123chain/pkg/order/handler"
 	"github.com/tanhuiya/ci123chain/pkg/params"
 	"github.com/tanhuiya/ci123chain/pkg/supply"
 	"github.com/tanhuiya/ci123chain/pkg/transaction"
@@ -36,7 +36,6 @@ import (
 	tmdb "github.com/tendermint/tm-db"
 	"io"
 	"os"
-	orhandler "github.com/tanhuiya/ci123chain/pkg/order/handler"
 )
 
 const (
@@ -145,7 +144,7 @@ func NewChain(logger log.Logger, tmdb tmdb.DB, traceStore io.Writer) *Chain {
 
 	c.QueryRouter().AddRoute(distr.RouteKey, distr.NewQuerier(distrKeeper))
 
-	c.SetAnteHandler(ante.NewAnteHandler(c.authKeeper, accKeeper, fcKeeper))
+	//c.SetAnteHandler(ante.NewAnteHandler(c.authKeeper, accKeeper, fcKeeper))
 	c.SetBeginBlocker(c.BeginBlocker)
 	c.SetCommitter(c.Committer)
 	c.SetInitChainer(c.InitChainer)
