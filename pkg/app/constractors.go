@@ -91,7 +91,7 @@ func getStateDB(name, path, statedb string) (db dbm.DB, err error) {
 		auths := strings.Split(s[1], "@")
 
 		if len(auths) < 2 {
-			db, err = couchdb.NewGoCouchDB(name, auths[1],nil)
+			db, err = couchdb.NewGoCouchDB(name, auths[0],nil)
 		} else {
 			info := auths[0]
 			userpass := strings.Split(info, ":")
