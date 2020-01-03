@@ -80,14 +80,27 @@ func getStateDB(name, path, statedb string) (db dbm.DB, err error) {
 		db, err = dbm.NewGoLevelDB(name, path)
 		return
 	} else {
-		s := strings.Split(statedb, "@")
+		// couchdb://admin:password@192.168.2.89:5984
+		s := strings.Split(statedb, "://")
 		if len(s) < 2 {
 			return nil, errors.New("statedb format error")
 		}
 		if s[0] != "couchdb" {
 			return nil, errors.New("statedb format error")
 		}
-		db, err = couchdb.NewGoCouchDB(name, s[1],nil)
+		auths := strings.Split(s[1], "@")
+
+		if len(auths) < 2 {
+			db, err = couchdb.NewGoCouchDB(name, auths[1],nil)
+		} else {
+			info := auths[0]
+			userpass := strings.Split(info, ":")
+			if len(userpass) < 2 {
+				db, err = couchdb.NewGoCouchDB(name, auths[1],nil)
+			}
+			auth := &couchdb.BasicAuth{Username: userpass[0], Password: userpass[1]}
+			db, err = couchdb.NewGoCouchDB(name, auths[1], auth)
+		}
 		return
 	}
 	return nil, errors.New("statedb format error")

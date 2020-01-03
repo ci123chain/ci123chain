@@ -21,7 +21,7 @@ const (
 	flagTraceStore     = "trace-store"
 	flagPruning        = "pruning"
 	//flagLogLevel       = "log-level"
-	flagStateDB 	   = "statedb" // couchdb@localhost:6389 or leveldb
+	flagStateDB 	   = "statedb" // couchdb://admin:password@192.168.2.89:5984
 )
 
 func startCmd(ctx *app.Context, appCreator app.AppCreator) *cobra.Command {
