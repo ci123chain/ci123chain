@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/tanhuiya/ci123chain/pkg/app/types"
 	"github.com/tanhuiya/ci123chain/pkg/couchdb"
+	"github.com/tanhuiya/ci123chain/pkg/logger"
 	"github.com/tanhuiya/ci123chain/pkg/params/subspace"
 	"time"
 )
@@ -53,6 +54,7 @@ func NewOrderKeeper(cdb *couchdb.GoCouchDB) OrderKeeper {
 func (ok *OrderKeeper) WaitForReady(shardID string, height int64) {
 	for {
 		rev, orderbook := ok.GetOrderBook()
+		logger.GetLogger().Info(fmt.Sprintf("waiting for minute %v", orderbook))
 		if ok.isReady(orderbook, shardID, height) {
 			err := ok.UpdateOrderBook(orderbook, rev, shardID, height, StateProcessing) //change state to processing
 			if err != nil {  // other peer is processing, wait
