@@ -19,3 +19,18 @@ spec:
           imagePullPolicy: IfNotPresent
           ports:
           - containerPort: 5984
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: couchdb-master
+  labels:
+    app: couchdb
+spec:
+  type: NodePort
+  ports:
+  - port: 5984
+    targetPort: 5984
+    nodePort: 30301
+  selector:
+    app: couchdb
