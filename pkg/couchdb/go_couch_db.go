@@ -93,7 +93,10 @@ func (cdb *GoCouchDB) Delete(key []byte) {
 	rev := cdb.GetRev(key)
 	rev, err := cdb.db.Delete(id, rev)
 	if err != nil {
-		panic(err)
+		er := err.(*Error)
+		if er.ErrorCode != "not_found"{
+			panic(er)
+		}
 	}
 }
 

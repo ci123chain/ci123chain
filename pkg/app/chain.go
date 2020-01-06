@@ -176,6 +176,7 @@ func (c *Chain) mountStores() error {
 
 	c.MountStoresTransient(c.txIndexStore, ParamTransStoreKey)
 
+
 	for _, key := range keys {
 		if err := c.LoadLatestVersion(key); err != nil {
 			return err

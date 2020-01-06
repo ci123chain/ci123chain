@@ -500,19 +500,21 @@ func commitStores(version int64, storeMap map[StoreKey]CommitStore) commitInfo {
 
 // Gets commitInfo from disk.
 func getCommitInfo(db dbm.DB, ver int64) (commitInfo, error) {
-
+	if ver == 0 {
+		return commitInfo{}, nil
+	}
 	// Get from DB.
 	cInfoKey := fmt.Sprintf(types.CommitInfoKeyFmt, ver)
 	cInfoBytes := db.Get([]byte(cInfoKey))
 	if cInfoBytes == nil {
-		return commitInfo{}, fmt.Errorf("failed to get rootMultiStore: no data")
+		return commitInfo{}, fmt.Errorf("failed to get MultiStore: no data")
 	}
 
 	var cInfo commitInfo
 
 	err := cdc.UnmarshalBinaryLengthPrefixed(cInfoBytes, &cInfo)
 	if err != nil {
-		return commitInfo{}, fmt.Errorf("failed to get rootMultiStore: %v", err)
+		return commitInfo{}, fmt.Errorf("failed to get MultiStore: %v", err)
 	}
 
 	return cInfo, nil

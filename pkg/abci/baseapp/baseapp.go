@@ -90,7 +90,8 @@ func NewBaseApp(name string, logger log.Logger, db dbm.DB, txDecoder sdk.TxDecod
 		Logger:      logger,
 		name:        name,
 		db:          db,
-		cms:         store.NewCommitMultiStore(db),
+		//cms:         store.NewCommitMultiStore(db),
+		cms:         store.NewBaseMultiStore(db),
 		queryRouter: NewQueryRouter(),
 		router: 	 NewRouter(),
 		txDecoder:   txDecoder,
@@ -663,7 +664,7 @@ func (app *BaseApp) Commit() (res abci.ResponseCommit) {
 			app.db.SetSync(dbHeaderKey, headerBytes)
 	*/
 	// Write the Deliver state and commit the MultiStore
-	app.deliverState.ms.Write()
+	//app.deliverState.ms.Write()
 	commitID := app.cms.Commit()
 	if app.committer != nil {
 		app.committer(app.deliverState.ctx)
