@@ -7,6 +7,7 @@ import (
 
 var (
 	KeyOrderBook	= []byte("OrderBook")
+	StoreKey		= "order"
 )
 
 type Params struct {

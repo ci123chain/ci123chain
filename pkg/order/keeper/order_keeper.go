@@ -1,14 +1,15 @@
 package keeper
 
 import (
-	"encoding/json"
-	"fmt"
-	"github.com/tanhuiya/ci123chain/pkg/app/types"
+	"github.com/tanhuiya/ci123chain/pkg/abci/baseapp"
+	"github.com/tanhuiya/ci123chain/pkg/abci/codec"
+	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/couchdb"
 	"github.com/tanhuiya/ci123chain/pkg/params/subspace"
 	"time"
 )
 
+var ModuleCdc *codec.Codec
 const SleepTime = 1 * time.Second
 const StateProcessing = "Processing"
 const StateDone = "Done"
@@ -16,8 +17,9 @@ const StateInit = "Init"
 const OrderBookKey = "OrderBook"
 type OrderKeeper struct {
 	cdb 		*couchdb.GoCouchDB
+	StoreKey	sdk.StoreKey
 	paramSubspace subspace.Subspace
-	IsDeal		bool
+	*baseapp.BaseApp
 }
 
 type OrderBook struct {
@@ -44,104 +46,74 @@ type Actions struct {
 	Name	string	`json:"name"`
 }
 
-func NewOrderKeeper(cdb *couchdb.GoCouchDB) OrderKeeper {
+func NewOrderKeeper(cdb *couchdb.GoCouchDB, key sdk.StoreKey, app *baseapp.BaseApp) OrderKeeper {
 	return OrderKeeper{
 		cdb:		cdb,
+		StoreKey:	key,
+		BaseApp:	app,
 	}
 }
 
-func (ok *OrderKeeper) WaitForReady(shardID string, height int64) {
+func (ok *OrderKeeper) WaitForReady(ctx sdk.Context) {
 	for {
-		rev, orderbook := ok.GetOrderBook()
-		if ok.isReady(orderbook, shardID, height) {
-			err := ok.UpdateOrderBook(orderbook, rev, shardID, height, StateProcessing) //change state to processing
-			if err != nil {  // other peer is processing, wait
-				er := err.(*couchdb.Error)
-				if er.Reason == "Document update conflict." {
-					ok.waitOtherPeer(shardID, height)
-					return
-				} else {
-					panic(err)
-				}
-			} else { // our turn
-				ok.IsDeal = true
-				return
-			}
+		store := ctx.KVStore(ok.StoreKey)
+		var orderbook OrderBook
+		bz := store.Get([]byte(OrderBookKey))
+		err := ModuleCdc.UnmarshalBinaryLengthPrefixed(bz, &orderbook)
+		if err != nil {
+			panic(err)
+		}
+		if ok.isReady(orderbook, ctx.ChainID(), ctx.BlockHeight()) {
+			ok.UpdateOrderBook(ctx, orderbook, nil)
+			return
 		}
 		time.Sleep(SleepTime)
+		err = ok.BaseApp.LoadLatestVersion(ok.StoreKey)
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 
-func (ok *OrderKeeper) SetEventBook(orderBook OrderBook) {
-	orderBytes, err := json.Marshal(orderBook)
-	if err != nil {
-		panic(err)
+func (ok *OrderKeeper) UpdateOrderBook(ctx sdk.Context, orderbook OrderBook, actions *Actions) {
+	if actions != nil {
+		orderbook.Actions = append(orderbook.Actions, *actions)
 	}
-	ok.cdb.Set([]byte(OrderBookKey), orderBytes)
-}
 
-func (ok *OrderKeeper) UpdateOrderBook(orderBook OrderBook, rev, shardID string, height int64, state string) error {
-
-	for i := 0; i < len(orderBook.Lists); i++ {
-		if orderBook.Lists[i].Name == shardID{
-			orderBook.Lists[i].Height = height
-			orderBook.Current.Index = i
-			orderBook.Current.State = state
+	for i := 0; i < len(orderbook.Lists); i++ {
+		if orderbook.Lists[i].Name == ctx.ChainID(){
+			orderbook.Lists[i].Height = ctx.BlockHeight()
+			orderbook.Current.Index = i
+			orderbook.Current.State = StateDone
 			break
 		}
 	}
 	//handler actions
-	if orderBook.Current.Index == 0 && orderBook.Actions != nil {
+	if orderbook.Current.Index == 0 && orderbook.Actions != nil {
 		var actions []Actions
-		for k, v := range orderBook.Actions {
-			if v.Type == "ADD" && height == v.Height {
+		for k, v := range orderbook.Actions {
+			if v.Type == "ADD" && ctx.BlockHeight() == v.Height {
 				list := Lists{
 					Name:   v.Name,
 					Height: 0,
 				}
-				orderBook.Lists = append(orderBook.Lists, list)
-				length := len(orderBook.Actions)
+				orderbook.Lists = append(orderbook.Lists, list)
+				length := len(orderbook.Actions)
 				if length - 1 > k {
-					orderBook.Actions = orderBook.Actions[k+1:]
+					orderbook.Actions = orderbook.Actions[k+1:]
 				} else {
-					orderBook.Actions = actions
+					orderbook.Actions = actions
 				}
 			}
 		}
-
-
 	}
-
-	obBytes, err := json.Marshal(orderBook)
-	if err != nil {
-		return err
-	}
-	_, err = ok.cdb.SetRev([]byte(OrderBookKey), obBytes, rev)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (ok *OrderKeeper) GetOrderBook() (string, OrderBook) {
-	var ob OrderBook
-	rev, obBytes := ok.cdb.GetRevAndValue([]byte(OrderBookKey))
-	err := json.Unmarshal(obBytes, &ob)
+	store := ctx.KVStore(ok.StoreKey)
+	bz, err := ModuleCdc.MarshalBinaryLengthPrefixed(orderbook)
 	if err != nil {
 		panic(err)
 	}
-	return rev, ob
-}
-
-func (ok *OrderKeeper) SetOrderBook(orderBook OrderBook) {
-	orderBytes, err := json.Marshal(orderBook)
-	if err != nil {
-		panic(err)
-	}
-	rev := ok.cdb.GetRev([]byte(OrderBookKey))
-	if rev == "" {
-		ok.cdb.Set([]byte(OrderBookKey), orderBytes)
-	}
+	store.Set([]byte(OrderBookKey), bz)
+	return
 }
 
 func (ok *OrderKeeper) isReady(orderbook OrderBook, shardID string, height int64) bool {
@@ -164,16 +136,5 @@ func (ok *OrderKeeper) isReady(orderbook OrderBook, shardID string, height int64
 		return true
 	}else {
 		return false
-	}
-}
-
-func (ok *OrderKeeper) waitOtherPeer(shardID string, height int64) {
-	for {
-		key := fmt.Sprintf(types.CommitInfoKeyFmt, height)
-		commitID := ok.cdb.Get([]byte(key))
-		if commitID != nil {
-			ok.IsDeal = false
-			return
-		}
 	}
 }

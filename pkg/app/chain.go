@@ -59,6 +59,7 @@ var (
 	SupplyStoreKey   = sdk.NewKVStoreKey(supply.StoreKey)
 	MortgageStoreKey = sdk.NewKVStoreKey(mortgage.StoreKey)
 	IBCStoreKey 	 = sdk.NewKVStoreKey(ibc.StoreKey)
+	OrderStoreKey	 = sdk.NewKVStoreKey(order.StoreKey)
 
 	fcStoreKey       = sdk.NewKVStoreKey(fc.FcStoreKey)
 	disrtStoreKey         = sdk.NewKVStoreKey(k.DisrtKey)
@@ -127,7 +128,7 @@ func NewChain(logger log.Logger, tmdb tmdb.DB, traceStore io.Writer) *Chain {
 	distrKeeper := k.NewKeeper(cdc, disrtStoreKey, fcKeeper, accKeeper)
 
 	cdb := tmdb.(*couchdb.GoCouchDB)
-	orderKeeper := order.NewKeeper(cdb)
+	orderKeeper := order.NewKeeper(cdb, OrderStoreKey, c.BaseApp)
 
 	// 设置modules
 	c.mm = module.NewManager(
@@ -171,6 +172,7 @@ func (c *Chain) mountStores() error {
 		IBCStoreKey,
 		fcStoreKey,
 		disrtStoreKey,
+		OrderStoreKey,
 	}
 	c.MountStoresIAVL(keys...)
 

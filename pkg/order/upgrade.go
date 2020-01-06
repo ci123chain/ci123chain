@@ -5,6 +5,7 @@ import (
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/client/helper"
 	"github.com/tanhuiya/ci123chain/pkg/cryptosuit"
+	"github.com/tanhuiya/ci123chain/pkg/order/keeper"
 	"github.com/tanhuiya/ci123chain/pkg/transaction"
 	"github.com/tanhuiya/ci123chain/pkg/util"
 )
@@ -72,7 +73,7 @@ func (msg *UpgradeTx) GetSignBytes() []byte{
 }
 
 func (msg *UpgradeTx)Bytes() []byte {
-	bytes, err := OrCdc.MarshalBinaryLengthPrefixed(msg)
+	bytes, err := keeper.ModuleCdc.MarshalBinaryLengthPrefixed(msg)
 	if err != nil {
 		panic(err)
 	}

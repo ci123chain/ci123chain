@@ -45,6 +45,16 @@ func (ci *cacheKVStore) Get(key []byte) (value []byte) {
 	defer ci.mtx.Unlock()
 	ci.assertValidKey(key)
 
+	var OrderBookKey = "OrderBook"
+	if bytes.Equal(key, []byte(OrderBookKey)) {
+		value = ci.parent.Get(key)
+		if value == nil {
+			cacheValue, _ := ci.cache[string(key)]
+			value = cacheValue.value
+		}
+		return value
+	}
+
 	cacheValue, ok := ci.cache[string(key)]
 	if !ok {
 		value = ci.parent.Get(key)

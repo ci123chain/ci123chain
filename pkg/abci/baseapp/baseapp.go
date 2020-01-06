@@ -176,7 +176,7 @@ func (app *BaseApp) initFromStore(mainKey sdk.StoreKey) error {
 	// main store should exist.
 	// TODO: we don't actually need the main store here
 	main := app.cms.GetKVStore(mainKey)
-	if main == nil {
+		if main == nil {
 		return errors.New("baseapp expects MultiStore with 'main' KVStore")
 	}
 	// Needed for `gaiad export`, which inits from store but never calls initchain
@@ -648,7 +648,9 @@ func (app *BaseApp) EndBlock(req abci.RequestEndBlock) (res abci.ResponseEndBloc
 	if app.endBlocker != nil {
 		res = app.endBlocker(app.deliverState.ctx, req)
 	}
-
+	if app.committer != nil {
+		app.committer(app.deliverState.ctx)
+	}
 	return
 }
 
@@ -666,9 +668,7 @@ func (app *BaseApp) Commit() (res abci.ResponseCommit) {
 	// Write the Deliver state and commit the MultiStore
 	//app.deliverState.ms.Write()
 	commitID := app.cms.Commit()
-	if app.committer != nil {
-		app.committer(app.deliverState.ctx)
-	}
+
 	// TODO: this is missing a module identifier and dumps byte array
 	app.Logger.Debug("Commit synced",
 		"commit", commitID,

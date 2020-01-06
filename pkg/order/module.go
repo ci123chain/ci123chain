@@ -9,8 +9,6 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 )
 
-var OrderCdc *codec.Codec
-var ModuleCdc = OrderCdc
 const ModuleName  = "order"
 
 type AppModule struct {
@@ -21,19 +19,11 @@ type AppModule struct {
 
 func (am AppModule) BeginBlocker(ctx  sdk.Context, req abci.RequestBeginBlock) {
 	//do you want to do
-	am.OrderKeeper.WaitForReady(ctx.ChainID(),ctx.BlockHeight())
+	am.OrderKeeper.WaitForReady(ctx)
 }
 
 func (am AppModule) Committer(ctx sdk.Context) {
 	//do you want to do
-	if am.OrderKeeper.IsDeal {
-		rev, orderBook := am.OrderKeeper.GetOrderBook()
-		err := am.OrderKeeper.UpdateOrderBook(orderBook, rev, orderBook.Lists[orderBook.Current.Index].Name, orderBook.Lists[orderBook.Current.Index].Height, keeper.StateDone)
-		if err != nil {
-			panic(err)
-		}
-		am.OrderKeeper.IsDeal = false
-	}
 }
 
 type AppModuleBasic struct {
@@ -45,7 +35,7 @@ func (am AppModuleBasic) RegisterCodec(codec *codec.Codec) {
 }
 
 func (am AppModuleBasic) DefaultGenesis() json.RawMessage {
-	return ModuleCdc.MustMarshalJSON(types.DefaultGenesisState())
+	return keeper.ModuleCdc.MustMarshalJSON(types.DefaultGenesisState())
 }
 
 func (am AppModuleBasic) Name() string {
@@ -56,22 +46,21 @@ func RegisterCodec(cdc *codec.Codec)  {
 
 }
 */
-func init()  {
-	ModuleCdc = codec.New()
-	RegisterCodec(ModuleCdc)
-	codec.RegisterCrypto(ModuleCdc)
-}
 
 func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage)  {
-	var genesisState types.GenesisState
-	ModuleCdc.MustUnmarshalJSON(data, &genesisState)
-	InitGenesis(ctx, am.OrderKeeper, genesisState)
-}
-
-func InitGenesis(ctx sdk.Context, ok *keeper.OrderKeeper, data types.GenesisState) {
-	shardID := ctx.ChainID()
-	if data.Params.OrderBook.Lists != nil && data.Params.OrderBook.Lists[0].Name == ""{
-		data.Params.OrderBook.Lists[0].Name = shardID
+	store := ctx.KVStore(am.OrderKeeper.StoreKey)
+	if store.Has([]byte(keeper.OrderBookKey)) {
+		return
 	}
-	ok.SetOrderBook(data.Params.OrderBook)
+	var genesisState types.GenesisState
+	keeper.ModuleCdc.MustUnmarshalJSON(data, &genesisState)
+	shardID := ctx.ChainID()
+	if genesisState.Params.OrderBook.Lists != nil && genesisState.Params.OrderBook.Lists[0].Name == ""{
+		genesisState.Params.OrderBook.Lists[0].Name = shardID
+	}
+	bz, err := keeper.ModuleCdc.MarshalBinaryLengthPrefixed(genesisState.Params.OrderBook)
+	if err != nil {
+		panic(err)
+	}
+	store.Set([]byte(keeper.OrderBookKey), bz)
 }

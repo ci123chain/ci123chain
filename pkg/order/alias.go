@@ -1,7 +1,11 @@
 package order
-import "github.com/tanhuiya/ci123chain/pkg/order/keeper"
+import(
+	"github.com/tanhuiya/ci123chain/pkg/order/keeper"
+	"github.com/tanhuiya/ci123chain/pkg/order/types"
+)
 
 var (
-	NewKeeper = keeper.NewOrderKeeper
+	StoreKey 		 = types.StoreKey
+	NewKeeper 		 = keeper.NewOrderKeeper
 )
 
