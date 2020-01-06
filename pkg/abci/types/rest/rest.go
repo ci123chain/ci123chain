@@ -13,7 +13,7 @@ import (
 
 type Response struct {
 	Ret 	uint32 	`json:"ret"`
-	Data 	string	`json:"data"`
+	Data 	interface{}	`json:"data"`
 	Message	string	`json:"message"`
 }
 
@@ -50,11 +50,20 @@ func WriteErrorRes(w http.ResponseWriter, err sdk.Error) {
 }
 
 func PostProcessResponseBare(w http.ResponseWriter, ctx context.Context, body interface{}) {
-	dataJson, _ := json.Marshal(body)
-	res := Response{
-		Ret:     0,
-		Data:    string(dataJson),
-		Message: "",
+	var res Response
+	dataJson, err := json.Marshal(body)
+	if err != nil {
+		res = Response{
+			Ret:     0,
+			Data:    string(dataJson),
+			Message: "",
+		}
+	} else {
+		res = Response{
+			Ret:     0,
+			Data:    body,
+			Message: "",
+		}
 	}
 	resp, _ := json.Marshal(res)
 	w.Header().Set("Content-Type", "application/json")
