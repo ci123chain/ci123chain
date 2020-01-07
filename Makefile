@@ -38,7 +38,7 @@ build-docker: build-linux build-image
 .PHONY: docker-start
 docker-start: build-docker start
 start:
-	docker run --name ci123-container-v1 -p 1318:80 -p 26676:26656 -e CI123_HOME=/opt/config/ci123/node0 -d cichain:v0.0.1
+	docker run --name ci123-container-v1 -p 1318:80 -p 26676:26656 -d cichain:v0.0.1
 #start:
 #	docker run --name ci123-container-v2 -p 1319:80 -p 26676:26656 -e CI123_HOME=/opt/config/ci123/node1 -d cichain:v0.0.1
 

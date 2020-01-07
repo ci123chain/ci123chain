@@ -31,6 +31,10 @@ type GenTx struct {
 
 func SaveConfig(c *cfg.Config) {
 	configFilePath := filepath.Join(c.RootDir, "config/config.toml")
+	c.Instrumentation.Prometheus = true
+	c.Consensus.TimeoutPropose = 5 * time.Second
+	c.Consensus.TimeoutCommit = 8 * time.Second
+	c.RPC.ListenAddress = "tcp://0.0.0.0:26657"
 	cfg.EnsureRoot(c.RootDir)
 	cfg.WriteConfigFile(configFilePath, c)
 }

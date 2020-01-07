@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,7 +11,9 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/app"
 	"github.com/tanhuiya/ci123chain/pkg/app/types"
 	"github.com/tanhuiya/ci123chain/pkg/config"
+	"github.com/tanhuiya/ci123chain/pkg/couchdb"
 	"github.com/tanhuiya/ci123chain/pkg/node"
+	order "github.com/tanhuiya/ci123chain/pkg/order/keeper"
 	"github.com/tanhuiya/ci123chain/pkg/validator"
 	"github.com/tendermint/go-amino"
 	cfg "github.com/tendermint/tendermint/config"
@@ -20,6 +23,7 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 	"net"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -34,6 +38,8 @@ var (
 	FlagWithTxs = "with-txs"
 	FlagIP = "ip"
 	FlagChainID = "chain-id"
+	FlagStateDB = "statedb"
+	FlagDBName = "dbname"
 )
 
 
@@ -107,9 +113,10 @@ func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Com
 		RunE: func(cmd *cobra.Command, args []string) error {
 			config := ctx.Config
 			config.SetRoot(viper.GetString(tmcli.HomeFlag))
+			id := viper.GetString(FlagChainID)
 
 			initConfig := InitConfig{
-				ChainID: viper.GetString(FlagChainID),
+				ChainID: id,
 				//viper.GetBool(FlagWithTxs),
 				//filepath.Join(config.RootDir, "config", "gentx"),
 				Overwrite: viper.GetBool(FlagOverwrite),
@@ -143,6 +150,8 @@ func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Com
 	//cmd.Flags().AddFlagSet(appInit.FlagsAppGenState)
 	//cmd.Flags().AddFlagSet(appInit.FlagsAppGenTx) // need to add this flagset for when no GenTx's provided
 	//cmd.AddCommand(GenTxCmd(ctx, cdc, appInit))
+	cmd.Flags().String(FlagStateDB, "couchdb@127.0.0.1:5984", "fetch new shard from db")
+	cmd.Flags().String(FlagDBName, "ci123", "the name of db that used for chain")
 	return cmd
 }
 
@@ -201,6 +210,76 @@ func gentxWithConfig(cdc *amino.Codec, appInit app.AppInit, config *cfg.Config, 
 	return
 }
 
+
+func GetChainID() (string, error){
+
+	var id string
+	//查询下一个要启动的链的chainID.
+	dbname := viper.GetString(FlagDBName)
+	// couchdb://admin:password@192.168.2.89:5984
+	statedb := viper.GetString(FlagStateDB)
+
+	s := strings.Split(statedb, "://")
+	if len(s) < 2 {
+		return "", errors.New("statedb format error")
+	}
+	if s[0] != "couchdb" {
+		return "", errors.New("statedb format error")
+	}
+	auths := strings.Split(s[1], "@")
+
+	info := auths[0]
+	userpass := strings.Split(info, ":")
+	auth := &couchdb.BasicAuth{Username: userpass[0], Password: userpass[1]}
+
+	cnn, err := couchdb.NewConnection(auths[1], 10 *time.Second)
+	if err != nil {
+		//
+		return "", errors.New("failed to create connection")
+	}
+	db := cnn.SelectDB(dbname ,auth)
+	key := []byte("OrderBook")
+	var doc couchdb.KVRead
+	var ob order.OrderBook
+	_, Geterr := db.Read(hex.EncodeToString(key), &doc,nil)
+	if Geterr != nil {
+		return "", errors.New("failed to read")
+	}
+	res, err := hex.DecodeString(doc.Value)
+	if err != nil {
+		return "", errors.New("format error")
+	}
+	if len(res) == 0 {
+		return "", errors.New("there is no ready shard")
+	}
+
+	err = json.Unmarshal(res, &ob)
+	if err != nil {
+		return "", errors.New("failed to unmarshal")
+	}
+	if len(ob.Actions) == 1{
+		if ob.Actions[0].Type == "ADD" {
+			id = ob.Actions[0].Name
+		}
+	}else {
+		for i := 0; i < len(ob.Actions) - 1; i++ {
+			if ob.Actions[i].Type == "ADD" {
+				id = ob.Actions[i].Name
+				break
+			}
+		}
+	}
+	/*
+	for i := range ob.Actions {
+		if ob.Actions[i].Type == "ADD" {
+			id = ob.Actions[i].Name
+			break
+		}
+	}
+	*/
+	return id, nil
+}
+
 func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initConfig InitConfig)(
 	chainID string, nodeID string, appMessage json.RawMessage, err error) {
 
@@ -216,9 +295,15 @@ func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initCo
 	nodeID = string(nodeKey.ID())
 
 	if initConfig.ChainID == "" {
-		initConfig.ChainID = fmt.Sprintf("test-chain-%v", cmn.RandStr(6))
+		//initConfig.ChainID = fmt.Sprintf("test-chain-%v", cmn.RandStr(6))
+		ChainID, err := GetChainID()
+		if err != nil {
+			return "", "", nil, err
+		}
+		initConfig.ChainID = ChainID
+		chainID = ChainID
 	}
-	chainID = initConfig.ChainID
+	//chainID = initConfig.ChainID
 
 	genFile := c.GenesisFile()
 	if !initConfig.Overwrite && cmn.FileExists(genFile) {

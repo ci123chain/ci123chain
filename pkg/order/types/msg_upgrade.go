@@ -1,4 +1,4 @@
-package order
+package types
 
 
 import (
@@ -10,7 +10,6 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/util"
 )
 
-const RouteKey = "Upgrade"
 type UpgradeTx struct {
 	transaction.CommonTx
 	Type      string   `json:"type"`

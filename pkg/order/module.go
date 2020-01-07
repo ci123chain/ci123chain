@@ -9,8 +9,6 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 )
 
-const ModuleName  = "order"
-
 type AppModule struct {
 	AppModuleBasic
 
@@ -31,7 +29,7 @@ type AppModuleBasic struct {
 }
 
 func (am AppModuleBasic) RegisterCodec(codec *codec.Codec) {
-	RegisterCodec(codec)
+	types.RegisterCodec(codec)
 }
 
 func (am AppModuleBasic) DefaultGenesis() json.RawMessage {

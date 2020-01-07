@@ -2,8 +2,8 @@ package handler
 
 import (
 	"github.com/tanhuiya/ci123chain/pkg/abci/types"
-	order "github.com/tanhuiya/ci123chain/pkg/order"
 	"github.com/tanhuiya/ci123chain/pkg/order/keeper"
+	order "github.com/tanhuiya/ci123chain/pkg/order/types"
 	"reflect"
 )
 

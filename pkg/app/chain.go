@@ -146,6 +146,8 @@ func NewChain(logger log.Logger, tmdb tmdb.DB, traceStore io.Writer) *Chain {
 
 	c.QueryRouter().AddRoute(distr.RouteKey, distr.NewQuerier(distrKeeper))
 
+	c.QueryRouter().AddRoute(order.RouteKey, order.NewQuerier(&orderKeeper))
+
 	c.SetAnteHandler(ante.NewAnteHandler(c.authKeeper, accKeeper, fcKeeper))
 	c.SetBeginBlocker(c.BeginBlocker)
 	c.SetCommitter(c.Committer)
