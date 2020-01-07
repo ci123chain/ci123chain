@@ -1,11 +1,11 @@
 package distribution
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/distribution/types"
+	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/distribution/client/rest"
 	"github.com/tanhuiya/ci123chain/pkg/distribution/keeper"
+	"github.com/tanhuiya/ci123chain/pkg/distribution/types"
 	"strconv"
-	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 )
 
 const (

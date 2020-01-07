@@ -1,4 +1,4 @@
-package order
+package types
 
 import (
 	"github.com/tanhuiya/ci123chain/pkg/abci/codec"

@@ -6,12 +6,12 @@ import (
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/order/keeper"
 	"github.com/tanhuiya/ci123chain/pkg/order/types"
+	orTypes "github.com/tanhuiya/ci123chain/pkg/order/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 )
 
 var OrderCdc *codec.Codec
 var ModuleCdc = OrderCdc
-const ModuleName  = "order"
 
 type AppModule struct {
 	AppModuleBasic
@@ -41,7 +41,7 @@ type AppModuleBasic struct {
 }
 
 func (am AppModuleBasic) RegisterCodec(codec *codec.Codec) {
-	RegisterCodec(codec)
+	orTypes.RegisterCodec(codec)
 }
 
 func (am AppModuleBasic) DefaultGenesis() json.RawMessage {
@@ -58,7 +58,7 @@ func RegisterCodec(cdc *codec.Codec)  {
 */
 func init()  {
 	ModuleCdc = codec.New()
-	RegisterCodec(ModuleCdc)
+	orTypes.RegisterCodec(ModuleCdc)
 	codec.RegisterCrypto(ModuleCdc)
 }
 

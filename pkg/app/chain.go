@@ -22,6 +22,7 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/mortgage"
 	"github.com/tanhuiya/ci123chain/pkg/order"
 	orhandler "github.com/tanhuiya/ci123chain/pkg/order/handler"
+	ok "github.com/tanhuiya/ci123chain/pkg/order/keeper"
 	"github.com/tanhuiya/ci123chain/pkg/params"
 	"github.com/tanhuiya/ci123chain/pkg/supply"
 	"github.com/tanhuiya/ci123chain/pkg/transaction"
@@ -126,7 +127,7 @@ func NewChain(logger log.Logger, tmdb tmdb.DB, traceStore io.Writer) *Chain {
 	distrKeeper := k.NewKeeper(cdc, disrtStoreKey, fcKeeper, accKeeper)
 
 	cdb := tmdb.(*couchdb.GoCouchDB)
-	orderKeeper := order.NewKeeper(cdb)
+	orderKeeper := ok.NewOrderKeeper(cdb)
 
 	// 设置modules
 	c.mm = module.NewManager(
@@ -143,6 +144,8 @@ func NewChain(logger log.Logger, tmdb tmdb.DB, traceStore io.Writer) *Chain {
 	c.QueryRouter().AddRoute(ibc.RouterKey, ibc.NewQuerier(ibcKeeper))
 
 	c.QueryRouter().AddRoute(distr.RouteKey, distr.NewQuerier(distrKeeper))
+
+	c.QueryRouter().AddRoute(order.RouteKey, order.NewQuerier(orderKeeper))
 
 	//c.SetAnteHandler(ante.NewAnteHandler(c.authKeeper, accKeeper, fcKeeper))
 	c.SetBeginBlocker(c.BeginBlocker)

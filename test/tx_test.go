@@ -6,13 +6,14 @@ import (
 	"fmt"
 	"github.com/panjf2000/ants/v2"
 	"github.com/stretchr/testify/assert"
-	"github.com/tanhuiya/ci123chain/pkg/order"
+	order "github.com/tanhuiya/ci123chain/pkg/order/types"
 	"github.com/tanhuiya/ci123chain/pkg/transfer"
 	"github.com/tanhuiya/fabric-crypto/cryptoutil"
 	"github.com/tendermint/tendermint/rpc/client"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -211,7 +212,7 @@ func TestAddShard(t *testing.T) {
 
 
 	signdata, err := order.SignUpgradeTx("0x204bCC42559Faf6DFE1485208F7951aaD800B313",
-		20000, 1, "ADD", "test-chain-Wicb26", 16, privByte)
+		20000, 1, "ADD", "shard3", 500, privByte)
 
 	assert.NoError(t, err)
 	httpPostUpgradeTx(hex.EncodeToString(signdata))
@@ -228,7 +229,7 @@ type ciRes struct{
 }
 
 func httpPostUpgradeTx(param string) retData{
-	resp, err := http.PostForm("http://127.0.0.1:1310/tx/addShard",
+	resp, err := http.PostForm("http://127.0.0.1:1317/tx/addShard",
 		url.Values{"data": {param}})
 	if err != nil {
 		fmt.Println(err)
@@ -259,4 +260,21 @@ func httpPostUpgradeTx(param string) retData{
 		fmt.Println(ret.RawLog)
 	}
 	return ret
+}
+
+func TestFomate(t *testing.T) {
+
+	var statedb = "couchdb://admin:password@192.168.2.89:5984"
+	s := strings.Split(statedb, "://")
+	auths := strings.Split(s[1], "@")
+
+	info := auths[0]
+	userpass := strings.Split(info, ":")
+	fmt.Println(s[0])
+	fmt.Println(s[1])
+	fmt.Println(auths[0])
+	fmt.Println(auths[1])
+	fmt.Println(userpass[0])
+	fmt.Println(userpass[1])
+
 }
