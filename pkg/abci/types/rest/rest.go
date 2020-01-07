@@ -2,7 +2,6 @@ package rest
 
 import (
 	"encoding/json"
-	"github.com/tanhuiya/ci123chain/pkg/abci/codec"
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/client/context"
 	"github.com/tanhuiya/ci123chain/pkg/transfer"
@@ -18,23 +17,23 @@ type Response struct {
 }
 
 // ErrorResponse defines the attributes of a JSON error response.
-type ErrorResponse struct {
-	Code  int    `json:"code,omitempty"`
-	Error string `json:"error"`
-}
-
-// NewErrorResponse creates a new ErrorResponse instance.
-func NewErrorResponse(code int ,err string) ErrorResponse {
-	return ErrorResponse{Code:code, Error:err}
-}
-
-// WriteErrorResponse prepares and writes a HTTP error
-// given a status code and an error message.
-func WriteErrorResponse(w http.ResponseWriter, status int, err string) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	_, _ = w.Write(codec.Cdc.MustMarshalJSON(NewErrorResponse(0, err)))
-}
+//type ErrorResponse struct {
+//	Code  int    `json:"code,omitempty"`
+//	Error string `json:"error"`
+//}
+//
+//// NewErrorResponse creates a new ErrorResponse instance.
+//func NewErrorResponse(code int ,err string) ErrorResponse {
+//	return ErrorResponse{Code:code, Error:err}
+//}
+//
+//// WriteErrorResponse prepares and writes a HTTP error
+//// given a status code and an error message.
+//func WriteErrorResponse(w http.ResponseWriter, status int, err string) {
+//	w.Header().Set("Content-Type", "application/json")
+//	w.WriteHeader(status)
+//	_, _ = w.Write(codec.Cdc.MustMarshalJSON(NewErrorResponse(0, err)))
+//}
 
 func NewErrorRes(err sdk.Error) Response {
 	return Response{
@@ -46,7 +45,8 @@ func NewErrorRes(err sdk.Error) Response {
 
 func WriteErrorRes(w http.ResponseWriter, err sdk.Error) {
 	w.Header().Set("Content-Type", "application/json")
-	_, _ = w.Write(codec.Cdc.MustMarshalJSON(NewErrorRes(err)))
+	resp, _ := json.Marshal(NewErrorRes(err))
+	_, _ = w.Write(resp)
 }
 
 func PostProcessResponseBare(w http.ResponseWriter, ctx context.Context, body interface{}) {
