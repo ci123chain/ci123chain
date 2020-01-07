@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -11,7 +10,6 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/app"
 	"github.com/tanhuiya/ci123chain/pkg/app/types"
 	"github.com/tanhuiya/ci123chain/pkg/config"
-	"github.com/tanhuiya/ci123chain/pkg/couchdb"
 	"github.com/tanhuiya/ci123chain/pkg/node"
 	order "github.com/tanhuiya/ci123chain/pkg/order/keeper"
 	"github.com/tanhuiya/ci123chain/pkg/validator"
@@ -23,7 +21,6 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 	"net"
 	"path/filepath"
-	"strings"
 	"time"
 )
 
@@ -218,40 +215,11 @@ func GetChainID() (string, error){
 	dbname := viper.GetString(FlagDBName)
 	// couchdb://admin:password@192.168.2.89:5984
 	statedb := viper.GetString(FlagStateDB)
-
-	s := strings.Split(statedb, "://")
-	if len(s) < 2 {
-		return "", errors.New("statedb format error")
-	}
-	if s[0] != "couchdb" {
-		return "", errors.New("statedb format error")
-	}
-	auths := strings.Split(s[1], "@")
-
-	info := auths[0]
-	userpass := strings.Split(info, ":")
-	auth := &couchdb.BasicAuth{Username: userpass[0], Password: userpass[1]}
-
-	cnn, err := couchdb.NewConnection(auths[1], 10 *time.Second)
-	if err != nil {
-		//
-		return "", errors.New("failed to create connection")
-	}
-	db := cnn.SelectDB(dbname ,auth)
+	db, err := app.GetStateDB(dbname, "", statedb)
 	key := []byte("OrderBook")
-	var doc couchdb.KVRead
 	var ob order.OrderBook
-	_, Geterr := db.Read(hex.EncodeToString(key), &doc,nil)
-	if Geterr != nil {
-		return "", errors.New("failed to read")
-	}
-	res, err := hex.DecodeString(doc.Value)
-	if err != nil {
-		return "", errors.New("format error")
-	}
-	if len(res) == 0 {
-		return "", errors.New("there is no ready shard")
-	}
+
+	res := db.Get(key)
 
 	err = json.Unmarshal(res, &ob)
 	if err != nil {
@@ -269,14 +237,6 @@ func GetChainID() (string, error){
 			}
 		}
 	}
-	/*
-	for i := range ob.Actions {
-		if ob.Actions[i].Type == "ADD" {
-			id = ob.Actions[i].Name
-			break
-		}
-	}
-	*/
 	return id, nil
 }
 

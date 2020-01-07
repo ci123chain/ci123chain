@@ -32,7 +32,7 @@ func ConstructAppCreator(appFn AppCreatorInit, name string) AppCreator {
 
 	return func(rootDir string, logger log.Logger, statedb, traceStore string) (sdk.Application, error) {
 		dataDir := filepath.Join(rootDir, "data")
-		db, err := getStateDB(name, dataDir, statedb)
+		db, err := GetStateDB(name, dataDir, statedb)
 		if err != nil {
 			return nil, types.ErrNewDB(types.DefaultCodespace, err)
 		}
@@ -75,7 +75,7 @@ func ConstructAppExporter(appFn AppExporterInit, name string) AppExporter {
 	}
 }
 
-func getStateDB(name, path, statedb string) (db dbm.DB, err error) {
+func GetStateDB(name, path, statedb string) (db dbm.DB, err error) {
 	if statedb == "leveldb" {
 		db, err = dbm.NewGoLevelDB(name, path)
 		return
