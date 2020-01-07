@@ -2,6 +2,7 @@ package couchdb
 
 import (
 	"encoding/hex"
+	"fmt"
 	dbm "github.com/tendermint/tm-db"
 )
 
@@ -41,11 +42,17 @@ func (cdb *GoCouchDB) Get(key []byte) []byte {
 	var doc KVRead
 	_, err := cdb.db.Read(hex.EncodeToString(key), &doc,nil)
 	if err != nil {
-		er := err.(*Error)
-		if er.ErrorCode == "not_found" {
-			return nil
+		switch t := err.(type) {
+		case *Error:
+			if t.ErrorCode == "not_found" {
+				return nil
+			}
+		default:
+			fmt.Println("***********")
+			fmt.Println(err)
+			fmt.Println("***********")
+			panic(err)
 		}
-		panic(err)
 	}
 	res, err := hex.DecodeString(doc.Value)
 	if err != nil {
@@ -288,11 +295,17 @@ func (cdb *GoCouchDB) GetRev(key []byte) string {
 	// read oldDoc & now rev
 	rev, err := cdb.db.Read(id, nil, nil)
 	if err != nil {
-		er := err.(*Error)
-		if er.ErrorCode == "not_found" {
-			return ""
+		switch t := err.(type) {
+		case *Error:
+			if t.ErrorCode == "not_found" {
+				return ""
+			}
+		default:
+			fmt.Println("***********")
+			fmt.Println(err)
+			fmt.Println("***********")
+			panic(err)
 		}
-		panic(err)
 	}
 	return rev
 }
@@ -319,11 +332,17 @@ func (cdb *GoCouchDB) GetRevAndValue(key []byte) (string, []byte) {
 	var doc KVRead
 	rev, err := cdb.db.Read(hex.EncodeToString(key), &doc,nil)
 	if err != nil {
-		er := err.(*Error)
-		if er.ErrorCode == "not_found" {
-			return "", nil
+		switch t := err.(type) {
+		case *Error:
+			if t.ErrorCode == "not_found" {
+				return "", nil
+			}
+		default:
+			fmt.Println("***********")
+			fmt.Println(err)
+			fmt.Println("***********")
+			panic(err)
 		}
-		panic(err)
 	}
 	res, err := hex.DecodeString(doc.Value)
 	if err != nil {
