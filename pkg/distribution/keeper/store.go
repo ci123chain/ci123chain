@@ -94,6 +94,10 @@ func (d *DistrKeeper) GetValidatorCurrentRewards(ctx sdk.Context, val sdk.AccAdd
 func (d *DistrKeeper) DeleteValidatorOldRewardsRecord(ctx sdk.Context, val sdk.AccAddr) {
 
 	store := ctx.KVStore(d.storeKey)
+	b := store.Get(GetValidatorCurrentRewardsKey(val))
+	if b == nil {
+		return
+	}
 	store.Delete(GetValidatorCurrentRewardsKey(val))
 }
 
@@ -175,6 +179,10 @@ func (d *DistrKeeper) GetValidatorsInfo(ctx sdk.Context, height int64) []byte{
 func (d *DistrKeeper) DeleteValidatorsInfo(ctx sdk.Context, height int64) {
 	store := ctx.KVStore(d.storeKey)
 	key := []byte(strconv.FormatInt(height, 10))
+	bz := store.Get(GetValidatorsInfoKey(key))
+	if bz == nil {
+		return
+	}
 	store.Delete(GetValidatorsInfoKey(key))
 }
 

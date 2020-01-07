@@ -216,12 +216,13 @@ func GetChainID() (string, error){
 	// couchdb://admin:password@192.168.2.89:5984
 	statedb := viper.GetString(FlagStateDB)
 	db, err := app.GetStateDB(dbname, "", statedb)
-	key := []byte("OrderBook")
+	key := []byte("order//OrderBook")
 	var ob order.OrderBook
 
 	res := db.Get(key)
 
-	err = json.Unmarshal(res, &ob)
+	err = order.ModuleCdc.UnmarshalBinaryLengthPrefixed(res, &ob)
+	//err = json.Unmarshal(res, &ob)
 	if err != nil {
 		return "", errors.New("failed to unmarshal")
 	}
