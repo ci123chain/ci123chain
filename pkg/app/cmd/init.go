@@ -303,7 +303,7 @@ func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initCo
 		initConfig.ChainID = ChainID
 		chainID = ChainID
 	}
-	//chainID = initConfig.ChainID
+	chainID = initConfig.ChainID
 
 	genFile := c.GenesisFile()
 	if !initConfig.Overwrite && cmn.FileExists(genFile) {

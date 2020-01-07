@@ -217,7 +217,7 @@ func (app *BaseApp) setCheckState(header abci.Header) {
 }
 
 func (app *BaseApp) setDeliverState(header abci.Header) {
-	ms := app.cms.CacheMultiStore()
+	ms := app.cms.(sdk.CacheMultiStore)
 	app.deliverState = &state{
 		ms:  ms,
 		ctx: sdk.NewContext(ms, header, false, app.Logger),

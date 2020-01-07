@@ -106,7 +106,10 @@ func (ks *baseKVStore) Gas(meter GasMeter, config GasConfig) KVStore {
 
 // Implements CacheWrapper.
 func (ks *baseKVStore) CacheWrap() CacheWrap {
-	return nil
+	return &cacheKVStore{
+		cache:  make(map[string]cValue),
+		parent: ks,
+	}
 }
 
 // CacheWrapWithTrace implements the CacheWrapper interface.
