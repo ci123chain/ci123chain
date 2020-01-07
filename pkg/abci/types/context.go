@@ -75,6 +75,15 @@ func (c Context) KVStore(key StoreKey) KVStore {
 	return c.MultiStore().GetKVStore(key).Gas(c.GasMeter(), cachedKVGasConfig)
 }
 
+// KVStore fetches a KVStore from the MultiStore.
+func (c Context) LoadLatestVersion() {
+	err := c.MultiStore().(CommitMultiStore).LoadLatestVersion()
+	if err != nil {
+		panic(err)
+	}
+	return
+}
+
 // TransientStore fetches a TransientStore from the MultiStore.
 func (c Context) TransientStore(key StoreKey) KVStore {
 	return c.MultiStore().GetKVStore(key).Gas(c.GasMeter(), cachedTransientGasConfig)

@@ -128,7 +128,7 @@ func NewChain(logger log.Logger, tmdb tmdb.DB, traceStore io.Writer) *Chain {
 	distrKeeper := k.NewKeeper(cdc, disrtStoreKey, fcKeeper, accKeeper)
 
 	cdb := tmdb.(*couchdb.GoCouchDB)
-	orderKeeper := order.NewKeeper(cdb, OrderStoreKey, c.BaseApp)
+	orderKeeper := order.NewKeeper(cdb, OrderStoreKey)
 
 	// 设置modules
 	c.mm = module.NewManager(

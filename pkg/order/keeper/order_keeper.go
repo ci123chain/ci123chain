@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/abci/baseapp"
 	"github.com/tanhuiya/ci123chain/pkg/abci/codec"
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/couchdb"
@@ -19,7 +18,6 @@ type OrderKeeper struct {
 	cdb 		*couchdb.GoCouchDB
 	StoreKey	sdk.StoreKey
 	paramSubspace subspace.Subspace
-	*baseapp.BaseApp
 }
 
 type OrderBook struct {
@@ -46,16 +44,17 @@ type Actions struct {
 	Name	string	`json:"name"`
 }
 
-func NewOrderKeeper(cdb *couchdb.GoCouchDB, key sdk.StoreKey, app *baseapp.BaseApp) OrderKeeper {
+func NewOrderKeeper(cdb *couchdb.GoCouchDB, key sdk.StoreKey) OrderKeeper {
 	return OrderKeeper{
 		cdb:		cdb,
 		StoreKey:	key,
-		BaseApp:	app,
 	}
 }
 
 func (ok *OrderKeeper) WaitForReady(ctx sdk.Context) {
 	for {
+		//更新store
+		//ctx.LoadLatestVersion()
 		store := ctx.KVStore(ok.StoreKey)
 		var orderbook OrderBook
 		bz := store.Get([]byte(OrderBookKey))
@@ -68,7 +67,6 @@ func (ok *OrderKeeper) WaitForReady(ctx sdk.Context) {
 			return
 		}
 		time.Sleep(SleepTime)
-		err = ok.BaseApp.LoadLatestVersion(ok.StoreKey)
 		if err != nil {
 			panic(err)
 		}

@@ -93,6 +93,13 @@ func (bs *baseMultiStore) LoadVersion(ver int64) error {
 		return nil
 	}
 
+	for key, storeParams := range bs.storesParams {
+		id := CommitID{}
+		err := bs.loadCommitStoreFromParams(key, id, storeParams)
+		if err != nil {
+			return fmt.Errorf("failed to load rootMultiStore: %v", err)
+		}
+	}
 	cInfo, err := getCommitInfo(bs.db, ver)
 	if err != nil {
 		return err

@@ -32,7 +32,7 @@ func NewBaseKVStore(parent dbm.DB, storeEvery, numRecent int64, key sdk.StoreKey
 	}
 }
 
-func (ks baseKVStore) SetPruning(pruning sdk.PruningStrategy) {
+func (ks *baseKVStore) SetPruning(pruning sdk.PruningStrategy) {
 	switch pruning {
 	case sdk.PruneEverything:
 		ks.numRecent = 0
@@ -46,12 +46,12 @@ func (ks baseKVStore) SetPruning(pruning sdk.PruningStrategy) {
 }
 
 // Implements Store.
-func (ks baseKVStore) GetStoreType() StoreType {
+func (ks *baseKVStore) GetStoreType() StoreType {
 	return sdk.StoreTypeMulti
 }
 
 // Implements KVStore.
-func (ks baseKVStore) Get(key []byte) (value []byte) {
+func (ks *baseKVStore) Get(key []byte) (value []byte) {
 	ks.mtx.Lock()
 	defer ks.mtx.Unlock()
 	ks.assertValidKey(key)
@@ -59,7 +59,9 @@ func (ks baseKVStore) Get(key []byte) (value []byte) {
 	cacheValue, ok := ks.cache[ckey]
 	if !ok {
 		value = ks.parent.Get([]byte(ckey))
-		ks.setCacheValue([]byte(ckey), value, false, false)
+		if string(key) != "OrderBook" {
+			ks.setCacheValue([]byte(ckey), value, false, false)
+		}
 	} else {
 		value = cacheValue.value
 	}
@@ -68,24 +70,23 @@ func (ks baseKVStore) Get(key []byte) (value []byte) {
 }
 
 // Implements KVStore.
-func (ks baseKVStore) Set(key []byte, value []byte) {
+func (ks *baseKVStore) Set(key []byte, value []byte) {
 	ks.mtx.Lock()
 	defer ks.mtx.Unlock()
 	ks.assertValidKey(key)
 	ks.assertValidValue(value)
-	ckey := ks.getCombineKey(key)
+	ckey := ks.setCombineKey(key)
 	ks.setCacheValue([]byte(ckey), value, false, true)
 }
 
 // Implements KVStore.
-func (ks baseKVStore) Has(key []byte) bool {
-	ckey := ks.getCombineKey(key)
-	value := ks.Get([]byte(ckey))
+func (ks *baseKVStore) Has(key []byte) bool {
+	value := ks.Get(key)
 	return value != nil
 }
 
 // Implements KVStore.
-func (ks baseKVStore) Delete(key []byte) {
+func (ks *baseKVStore) Delete(key []byte) {
 	ks.mtx.Lock()
 	defer ks.mtx.Unlock()
 	ks.assertValidKey(key)
@@ -94,40 +95,40 @@ func (ks baseKVStore) Delete(key []byte) {
 }
 
 // Implements KVStore
-func (ks baseKVStore) Prefix(prefix []byte) KVStore {
+func (ks *baseKVStore) Prefix(prefix []byte) KVStore {
 	return prefixStore{ks, prefix}
 }
 
 // Implements KVStore
-func (ks baseKVStore) Gas(meter GasMeter, config GasConfig) KVStore {
+func (ks *baseKVStore) Gas(meter GasMeter, config GasConfig) KVStore {
 	return NewGasKVStore(meter, config, ks)
 }
 
 // Implements CacheWrapper.
-func (ks baseKVStore) CacheWrap() CacheWrap {
+func (ks *baseKVStore) CacheWrap() CacheWrap {
 	return nil
 }
 
 // CacheWrapWithTrace implements the CacheWrapper interface.
-func (ks baseKVStore) CacheWrapWithTrace(w io.Writer, tc TraceContext) CacheWrap {
+func (ks *baseKVStore) CacheWrapWithTrace(w io.Writer, tc TraceContext) CacheWrap {
 	return nil
 }
 
 // Implements KVStore.
-func (ks baseKVStore) Iterator(start, end []byte) Iterator {
+func (ks *baseKVStore) Iterator(start, end []byte) Iterator {
 	cstart := ks.getCombineKey(start)
 	cend := ks.getCombineKey(end)
 	return ks.iterator([]byte(cstart), []byte(cend), true)
 }
 
 // Implements KVStore.
-func (ks baseKVStore) ReverseIterator(start, end []byte) Iterator {
+func (ks *baseKVStore) ReverseIterator(start, end []byte) Iterator {
 	cstart := ks.getCombineKey(start)
 	cend := ks.getCombineKey(end)
 	return ks.iterator([]byte(cstart), []byte(cend), false)
 }
 
-func (ks baseKVStore) iterator(start, end []byte, ascending bool) Iterator {
+func (ks *baseKVStore) iterator(start, end []byte, ascending bool) Iterator {
 	var parent, cache Iterator
 	cstart := ks.getCombineKey(start)
 	cend := ks.getCombineKey(end)
@@ -145,7 +146,7 @@ func (ks baseKVStore) iterator(start, end []byte, ascending bool) Iterator {
 }
 
 // Constructs a slice of dirty items, to use w/ memIterator.
-func (ks baseKVStore) dirtyItems(ascending bool) []cmn.KVPair {
+func (ks *baseKVStore) dirtyItems(ascending bool) []cmn.KVPair {
 	items := make([]cmn.KVPair, 0, len(ks.cache))
 
 	for key, cacheValue := range ks.cache {
@@ -168,24 +169,24 @@ func (ks baseKVStore) dirtyItems(ascending bool) []cmn.KVPair {
 }
 
 // Implements CacheKVStore.
-func (ks baseKVStore) Write() {
+func (ks *baseKVStore) Write() {
 	return
 }
 
-func (ks baseKVStore) assertValidKey(key []byte) {
+func (ks *baseKVStore) assertValidKey(key []byte) {
 	if key == nil {
 		panic("types is nil")
 	}
 }
 
-func (ks baseKVStore) assertValidValue(value []byte) {
+func (ks *baseKVStore) assertValidValue(value []byte) {
 	if value == nil {
 		panic("value is nil")
 	}
 }
 
 // Only entrypoint to mutate ci.cache.
-func (ks baseKVStore) setCacheValue(key, value []byte, deleted bool, dirty bool) {
+func (ks *baseKVStore) setCacheValue(key, value []byte, deleted bool, dirty bool) {
 	ks.cache[string(key)] = cValue{
 		value:   value,
 		deleted: deleted,
@@ -193,7 +194,7 @@ func (ks baseKVStore) setCacheValue(key, value []byte, deleted bool, dirty bool)
 	}
 }
 
-func (ks baseKVStore) Commit() CommitID {
+func (ks *baseKVStore) Commit() CommitID {
 	ks.mtx.Lock()
 	defer ks.mtx.Unlock()
 
@@ -255,7 +256,7 @@ func (ks baseKVStore) Commit() CommitID {
 	}
 }
 
-func (ks baseKVStore) LastCommitID() CommitID {
+func (ks *baseKVStore) LastCommitID() CommitID {
 	version := getLatestVersion(ks.parent)
 	cInfo, err := getCommitInfo(ks.parent, version)
 	if err != nil {
@@ -264,10 +265,23 @@ func (ks baseKVStore) LastCommitID() CommitID {
 	return cInfo.CommitID()
 }
 
-func (ks baseKVStore) getCombineKey(key []byte) string {
-	version := ks.LastCommitID().Version + 1
+func (ks *baseKVStore) getCombineKey(key []byte) string {
+	//var version int64
+	//
+	//version = ks.LastCommitID().Version
+	//
+	//ckey := ks.preKey.Name() + "/" + strconv.FormatInt(version,10) + "/" + string(key)
+	ckey := ks.preKey.Name() + "/" + "/" + string(key)
+	return ckey
+}
 
-	ckey := ks.preKey.Name() + "/" + string(version) + "/" + string(key)
+func (ks *baseKVStore) setCombineKey(key []byte) string {
+	//var version int64
+    //
+	//version = ks.LastCommitID().Version + 1
+	//
+	//ckey := ks.preKey.Name() + "/" + strconv.FormatInt(version,10) + "/" + string(key)
+	ckey := ks.preKey.Name() + "/" + "/" + string(key)
 	return ckey
 }
 
@@ -281,23 +295,20 @@ func (ks *baseKVStore) Query(req abci.RequestQuery) (res abci.ResponseQuery) {
 
 	// store the height we chose in the response, with 0 being changed to the
 	// latest height
-	version := req.Height
 
 	switch req.Path {
 	case "/types": // get by types
 		key := req.Data // data holds the types bytes
 
 		res.Key = key
-		ckey := ks.preKey.Name() + "/" + string(version) + "/" + string(key)
-		value := ks.Get([]byte(ckey))
+		value := ks.Get(key)
 		res.Value = value
 	case "/subspace":
 		var KVs []KVPair
 
 		subspace := req.Data
 		res.Key = subspace
-		cpre := ks.preKey.Name() + "/" + string(version) + "/" + string(subspace)
-		iterator := sdk.KVStorePrefixIterator(ks, []byte(cpre))
+		iterator := sdk.KVStorePrefixIterator(ks, subspace)
 		for ; iterator.Valid(); iterator.Next() {
 			KVs = append(KVs, KVPair{Key: iterator.Key(), Value: iterator.Value()})
 		}

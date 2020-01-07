@@ -54,7 +54,8 @@ func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, fck f
 		//计算fee
 		gasPrice := 2*price
 		fee := newCtx.GasMeter().GasConsumed() * gasPrice
-
+		fmt.Println("============================================")
+		fmt.Println(fee)
 		getFee := sdk.Coin(fee)
 
 		newCtx = SetGasMeter(simulate, ctx, gas)
