@@ -21,10 +21,8 @@ func NewHandler(keeper *keeper.OrderKeeper) types.Handler {
 
 func handlerUpgradeTx(ctx types.Context,k *keeper.OrderKeeper, tx *order.UpgradeTx) types.Result {
 	///扩展容量交易的处理
-	var orderbook keeper.OrderBook
-	store := ctx.KVStore(k.StoreKey)
-	bz := store.Get([]byte(keeper.OrderBookKey))
-	err := keeper.ModuleCdc.UnmarshalBinaryLengthPrefixed(bz, &orderbook)
+
+	orderbook, err := k.GetOrderBook(ctx)
 	if err != nil {
 		panic(err)
 	}

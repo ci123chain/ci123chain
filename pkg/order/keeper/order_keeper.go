@@ -55,13 +55,11 @@ func (ok *OrderKeeper) WaitForReady(ctx sdk.Context) {
 	for {
 		//更新store
 		//ctx.LoadLatestVersion()
-		store := ctx.KVStore(ok.StoreKey)
-		var orderbook OrderBook
-		bz := store.Get([]byte(OrderBookKey))
-		err := ModuleCdc.UnmarshalBinaryLengthPrefixed(bz, &orderbook)
+		orderbook, err := ok.GetOrderBook(ctx)
 		if err != nil {
 			panic(err)
 		}
+
 		if ok.isReady(orderbook, ctx.ChainID(), ctx.BlockHeight()) {
 			ok.UpdateOrderBook(ctx, orderbook, nil)
 			return
@@ -105,13 +103,34 @@ func (ok *OrderKeeper) UpdateOrderBook(ctx sdk.Context, orderbook OrderBook, act
 			}
 		}
 	}
+	ok.SetOrderBook(ctx, orderbook)
+	return
+}
+
+func (ok *OrderKeeper) GetOrderBook(ctx sdk.Context) (OrderBook, error) {
 	store := ctx.KVStore(ok.StoreKey)
-	bz, err := ModuleCdc.MarshalBinaryLengthPrefixed(orderbook)
+	var orderbook OrderBook
+	bz := store.Get([]byte(OrderBookKey))
+	err := ModuleCdc.UnmarshalJSON(bz, &orderbook)
+	return orderbook, err
+}
+
+func (ok *OrderKeeper) ExistOrderBook(ctx sdk.Context) bool  {
+	store := ctx.KVStore(ok.StoreKey)
+	bz := store.Get([]byte(OrderBookKey))
+	if len(bz) > 0 {
+		return true
+	}
+	return false
+}
+
+func (ok *OrderKeeper) SetOrderBook(ctx sdk.Context, orderbook OrderBook)  {
+	store := ctx.KVStore(ok.StoreKey)
+	bz, err := ModuleCdc.MarshalJSON(orderbook)
 	if err != nil {
 		panic(err)
 	}
 	store.Set([]byte(OrderBookKey), bz)
-	return
 }
 
 func (ok *OrderKeeper) isReady(orderbook OrderBook, shardID string, height int64) bool {

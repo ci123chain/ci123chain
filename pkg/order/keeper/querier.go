@@ -24,10 +24,7 @@ func NewQuerier(orderKeeper *OrderKeeper) sdk.Querier {
 
 
 func queryState(ctx sdk.Context, k *OrderKeeper) ([]byte, sdk.Error) {
-	store := ctx.KVStore(k.StoreKey)
-	var order OrderBook
-	res := store.Get([]byte(OrderBookKey))
-	err := ModuleCdc.UnmarshalBinaryLengthPrefixed(res, &order)
+	order, err := k.GetOrderBook(ctx)
 	if err != nil {
 		panic(err)
 	}

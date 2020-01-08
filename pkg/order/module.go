@@ -46,19 +46,16 @@ func RegisterCodec(cdc *codec.Codec)  {
 */
 
 func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage)  {
-	store := ctx.KVStore(am.OrderKeeper.StoreKey)
-	if store.Has([]byte(keeper.OrderBookKey)) {
+	if am.OrderKeeper.ExistOrderBook(ctx) {
 		return
 	}
+
 	var genesisState types.GenesisState
 	keeper.ModuleCdc.MustUnmarshalJSON(data, &genesisState)
 	shardID := ctx.ChainID()
 	if genesisState.Params.OrderBook.Lists != nil && genesisState.Params.OrderBook.Lists[0].Name == ""{
 		genesisState.Params.OrderBook.Lists[0].Name = shardID
 	}
-	bz, err := keeper.ModuleCdc.MarshalBinaryLengthPrefixed(genesisState.Params.OrderBook)
-	if err != nil {
-		panic(err)
-	}
-	store.Set([]byte(keeper.OrderBookKey), bz)
+
+	am.OrderKeeper.SetOrderBook(ctx, genesisState.Params.OrderBook)
 }

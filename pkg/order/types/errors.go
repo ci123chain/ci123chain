@@ -23,3 +23,4 @@ func ErrFailedMarshal(codespace sdk.CodespaceType, detailStr string) sdk.Error {
 func ErrQueryTx(codespace sdk.CodespaceType, str string) sdk.Error {
 	return sdk.NewError(codespace, CodeQueryTxError, "query error", str)
 }
+
