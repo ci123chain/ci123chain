@@ -50,7 +50,7 @@ func (s *CouchDBSourceImp) FetchSource() (hostArr []string) {
 			continue
 		}
 		name := item["name"].(string)
-		name = "http://localhost:1317"
+		name = "http://192.168.2.89:1317"
 		hostArr = append(hostArr, name)
 	}
 	log.Println(hostArr)
