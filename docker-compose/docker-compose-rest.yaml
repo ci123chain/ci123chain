@@ -1,0 +1,61 @@
+version: "3"
+services:
+  nginx:
+    image: nginx
+    container_name: nginx
+      hostname: nginx
+    volumes:
+      - ./nginx/Documents/www:/usr/share/nginx/html:ro
+      - ./nginx/config/web.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "8080:80"
+    networks:
+      couchdb_nn:
+
+  ci1:
+    image: cichain:v0.0.1
+    container_name: ci1
+    hostname: ci1
+    ports:
+      - 26616:26656
+      - 1311:80
+    networks:
+      couchdb_nn:
+
+  ci2:
+    image: cichain:v0.0.1
+    container_name: ci2
+    hostname: ci2
+    ports:
+      - 26626:26656
+      - 1312:80
+    networks:
+      couchdb_nn:
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    hostname: prometheus
+    restart: always
+    volumes:
+      - ../prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - 9090:9090
+    networks:
+      couchdb_nn:
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    hostname: grafana
+    restart: always
+    volumes:
+      - ./grafana-storage:/var/lib/grafana
+    ports:
+      - 3000:3000
+    networks:
+      couchdb_nn:
+
+networks:
+  couchdb_nn:
+    external: true

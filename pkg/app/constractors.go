@@ -81,6 +81,7 @@ func GetStateDB(name, path, statedb string) (db dbm.DB, err error) {
 		return
 	} else {
 		// couchdb://admin:password@192.168.2.89:5984
+		// couchdb://192.168.2.89:5984
 		s := strings.Split(statedb, "://")
 		if len(s) < 2 {
 			return nil, errors.New("statedb format error")

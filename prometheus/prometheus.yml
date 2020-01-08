@@ -26,15 +26,3 @@ scrape_configs:
       - targets: ['ci2:26660']
         labels:
           instance: ci123chain_node2
-
-  - job_name: ci123chain_node3
-    static_configs:
-      - targets: ['ci3:26660']
-        labels:
-          instance: ci123chain_node3
-
-  - job_name: ci123chain_node4
-    static_configs:
-      - targets: ['ci4:26660']
-        labels:
-          instance: ci123chain_node4

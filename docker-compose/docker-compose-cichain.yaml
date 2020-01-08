@@ -1,0 +1,17 @@
+version: "3"
+services:
+  ci0:
+    image: cichain:v0.0.1
+    container_name: ci0
+    hostname: ci0
+    environment:
+      CHAIN_ID: Shard1
+    ports:
+      - 26607:26657
+      - 1310:80
+    networks:
+      couchdb_nn:
+
+networks:
+  couchdb_nn:
+    external: true

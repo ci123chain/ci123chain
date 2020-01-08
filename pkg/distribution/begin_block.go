@@ -15,14 +15,14 @@ func BeginBlock(ctx types.Context, req abci.RequestBeginBlock, distr k.DistrKeep
 		fee := distr.FeeCollectionKeeper.GetCollectedFees(ctx)
 		//分配完奖励金之后清空奖金池
 		distr.FeeCollectionKeeper.ClearCollectedFees(ctx)
+		//分给validators
+		SaveValidatorsInfo(ctx, req, distr, height, fee)
 		proposerAddress := distr.GetPreviousProposer(ctx)
 
 		rewards := distr.GetProposerCurrentRewards(ctx, proposerAddress, height - ModuleHeight)
 		rewards = rewards.SafeAdd(fee)
 		distr.SetProposerCurrentRewards(ctx, proposerAddress, rewards, height)
 
-		//分给validators
-		SaveValidatorsInfo(ctx, req, distr, height, fee)
 		//store记录的数据维持在100个块内
 		h := height - block
 		if h >= ModuleHeight {
@@ -39,15 +39,24 @@ func SaveValidatorsInfo(ctx types.Context, req abci.RequestBeginBlock, distr k.D
 	length := len(votes)
 	//fmt.Println(length)
 	var validatorAddresses lastCommitValidatorsAddr
-	for i := 0; i < length; i++ {
-		addr := votes[i].Validator.Address
-		address := fmt.Sprintf("%X", addr)
+	if length == 1 {
+		addr := votes[0].Validator.Address
 		valAddress := types.AccAddr(addr)
 		//发放奖金给validators
 		valRewards := distr.GetValidatorCurrentRewards(ctx, valAddress, height - ModuleHeight)
 		valRewards = valRewards.SafeAdd(fee)
 		distr.SetValidatorCurrentRewards(ctx, valAddress, valRewards, height)
-		validatorAddresses.Address = append(validatorAddresses.Address, address)
+	}else {
+		for i := 0; i < length; i++ {
+			addr := votes[i].Validator.Address
+			address := fmt.Sprintf("%X", addr)
+			valAddress := types.AccAddr(addr)
+			//发放奖金给validators
+			valRewards := distr.GetValidatorCurrentRewards(ctx, valAddress, height - ModuleHeight)
+			valRewards = valRewards.SafeAdd(fee)
+			distr.SetValidatorCurrentRewards(ctx, valAddress, valRewards, height)
+			validatorAddresses.Address = append(validatorAddresses.Address, address)
+		}
 	}
 	//存储上个高度的验证者集合的信息
 	b, err := json.Marshal(validatorAddresses)

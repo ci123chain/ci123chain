@@ -14,6 +14,7 @@ const StateProcessing = "Processing"
 const StateDone = "Done"
 const StateInit = "Init"
 const OrderBookKey = "OrderBook"
+const OpADD = "ADD"
 type OrderKeeper struct {
 	cdb 		*couchdb.GoCouchDB
 	StoreKey	sdk.StoreKey
@@ -90,7 +91,7 @@ func (ok *OrderKeeper) UpdateOrderBook(ctx sdk.Context, orderbook OrderBook, act
 	if orderbook.Current.Index == 0 && orderbook.Actions != nil {
 		var actions []Actions
 		for k, v := range orderbook.Actions {
-			if v.Type == "ADD" && ctx.BlockHeight() == v.Height {
+			if v.Type == OpADD && ctx.BlockHeight() == v.Height {
 				list := Lists{
 					Name:   v.Name,
 					Height: 0,
