@@ -3,6 +3,9 @@ package gateway
 import (
 	"flag"
 	"fmt"
+	"github.com/tanhuiya/ci123chain/pkg/gateway/backend"
+	"github.com/tanhuiya/ci123chain/pkg/gateway/couchdbsource"
+	"github.com/tanhuiya/ci123chain/pkg/gateway/lbpolicy"
 	"log"
 	"net"
 	"net/http"
@@ -43,7 +46,7 @@ func lb(w http.ResponseWriter, r *http.Request) {
 
 	peer := serverPool.GetNextPeer()
 	if peer != nil {
-		peer.ReverseProxy.ServeHTTP(w, r)
+		peer.Proxy().ServeHTTP(w, r)
 		return
 	}
 	http.Error(w, "Service not available", http.StatusServiceUnavailable)
@@ -98,8 +101,10 @@ func Start() {
 	//if len(serverList) == 0 {
 	//	log.Fatal("Please provide one or more backends to load balance")
 	//}
+	policy := lbpolicy.NewRoundPolicy()
+	svr := couchdbsource.NewCouchSource()
 
-	serverPool = NewServerPool(lb)
+	serverPool = NewServerPool(backend.NewBackEnd ,lb, policy, svr)
 	// parse servers
 	// create http server
 	server := http.Server{

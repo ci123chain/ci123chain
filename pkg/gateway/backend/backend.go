@@ -1,7 +1,8 @@
-package gateway
+package backend
 
 
 import (
+	"github.com/tanhuiya/ci123chain/pkg/gateway/types"
 	"net/http/httputil"
 	"net/url"
 	"sync"
@@ -9,7 +10,7 @@ import (
 
 // Backend holds the data about a server
 type Backend struct {
-	URL          *url.URL
+	url          *url.URL
 	Alive        bool
 	mux          sync.RWMutex
 	ReverseProxy *httputil.ReverseProxy
@@ -30,3 +31,18 @@ func (b *Backend) IsAlive() (alive bool) {
 	return
 }
 
+func (b *Backend) URL() *url.URL{
+	return b.url
+}
+
+func (b *Backend) Proxy() *httputil.ReverseProxy {
+	return b.ReverseProxy
+}
+
+func NewBackEnd(url *url.URL, alive bool, proxy *httputil.ReverseProxy) types.Instance {
+	return &Backend{
+		url:          url,
+		Alive:        alive,
+		ReverseProxy: proxy,
+	}
+}
