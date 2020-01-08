@@ -2,7 +2,7 @@ From ubuntu
 
 COPY ./build/cli-linux /opt
 COPY ./build/cid-linux /opt
-COPY ./docker/start.sh /opt
+COPY ./start.sh /opt
 
 RUN mkdir /opt/config
 COPY ./sample /opt/config
