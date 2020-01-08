@@ -19,7 +19,6 @@ const (
 	Retry
 )
 
-
 // GetAttemptsFromContext returns the attempts for request
 func GetAttemptsFromContext(r *http.Request) int {
 	if attempts, ok := r.Context().Value(Attempts).(int); ok {
@@ -89,7 +88,6 @@ func fetchSharedRoutine()  {
 	}
 }
 
-
 var serverPool *ServerPool
 
 func Start() {
@@ -99,13 +97,9 @@ func Start() {
 	flag.StringVar(&serverList, "backends", "", "Load balanced backends, use commas to separate")
 	flag.StringVar(&statedb, "statedb", "couchdb://couchdb-service:5984", "server resource")
 	flag.StringVar(&dbname, "db", "ci123", "db name")
-
 	flag.IntVar(&port, "port", 3030, "Port to serve")
 	flag.Parse()
-	//
-	//if len(serverList) == 0 {
-	//	log.Fatal("Please provide one or more backends to load balance")
-	//}
+
 	policy := lbpolicy.NewRoundPolicy()
 	svr := couchdbsource.NewCouchSource(dbname, statedb)
 

@@ -10,8 +10,6 @@ import (
 
 
 const SharedKey  = "order//OrderBook"
-//const StateDB = "couchdb://couchdb-service:5984"
-//const StateDB = "couchdb://192.168.2.89:30301"
 
 func NewCouchSource(dbname, host string) *CouchDBSourceImp {
 	imp := &CouchDBSourceImp{
@@ -66,9 +64,7 @@ func (s *CouchDBSourceImp) FetchSource() (hostArr []string) {
 		name := item["name"].(string)
 		hostArr = append(hostArr, name)
 	}
-	//log.Println(hostArr)
 	return
-	//s.ConfigServerPool(hostArr)
 }
 
 func (svr *CouchDBSourceImp) GetDBConnection() (db *couchdb.GoCouchDB, err error) {
