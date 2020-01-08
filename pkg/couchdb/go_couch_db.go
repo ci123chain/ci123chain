@@ -26,12 +26,15 @@ func NewGoCouchDB(name, address string, auth Auth) (*GoCouchDB, error) {
 		return nil, err
 	}
 	err = conn.CreateDB(name, auth)
-	if err != nil {
-		er := err.(*Error)
-		if er.ErrorCode != "file_exists"{
-			return nil, err
+	switch t := err.(type) {
+	case *Error:
+		if t.ErrorCode == "file_exists" {
+			// do nothing
 		}
+	default:
+		return nil, err
 	}
+
 	db := conn.SelectDB(name, auth)
 	return &GoCouchDB{db:db}, nil
 }

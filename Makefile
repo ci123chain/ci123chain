@@ -68,4 +68,6 @@ build-lb-image: build-lb-linux
 	docker build -t lbservice:$(Tag) ./docker/lb
 start-lb: build-lb-image
 	docker run --name ci123-lb-v1 -p 3030:3030 -d lbservice:$(Tag)
-
+clean-lb:
+	docker ps -a | grep "ci123-lb-" | awk '{print $$1}' | xargs docker rm -f
+	docker images | grep "lbservice" | awk '{print $$3}' | xargs docker rmi

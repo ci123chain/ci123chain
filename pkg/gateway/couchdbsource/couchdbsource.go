@@ -1,7 +1,5 @@
 package couchdbsource
 
-
-
 import (
 	"encoding/json"
 	"errors"
@@ -11,26 +9,42 @@ import (
 )
 
 
-const Name  = "ci123"
 const SharedKey  = "order//OrderBook"
 //const StateDB = "couchdb://couchdb-service:5984"
-const StateDB = "couchdb://192.168.2.89:30301"
+//const StateDB = "couchdb://192.168.2.89:30301"
 
-func NewCouchSource() *CouchDBSourceImp {
-	return &CouchDBSourceImp{}
+func NewCouchSource(dbname, host string) *CouchDBSourceImp {
+	imp := &CouchDBSourceImp{
+		dbname: dbname,
+		hostStr: host,
+	}
+	conn, err := imp.GetDBConnection()
+	if err != nil {
+		panic(err)
+	}
+	imp.conn = conn
+	return imp
 }
 
 type CouchDBSourceImp struct {
+	dbname  string
+	hostStr string
+	conn    *couchdb.GoCouchDB
 }
 
 func (s *CouchDBSourceImp) FetchSource() (hostArr []string) {
-	conn, err := s.GetDBConnection()
-	if err != nil {
-		log.Println(err)
+
+	if s.conn == nil {
+		conn, err := s.GetDBConnection()
+		if err != nil {
+			log.Println(err)
+		}
+		s.conn =conn
 	}
-	bz := conn.Get([]byte(SharedKey))
+
+	bz := s.conn.Get([]byte(SharedKey))
 	var shared map[string]interface{}
-	err = json.Unmarshal(bz, &shared)
+	err := json.Unmarshal(bz, &shared)
 	if err != nil {
 		log.Println(err)
 	}
@@ -50,16 +64,15 @@ func (s *CouchDBSourceImp) FetchSource() (hostArr []string) {
 			continue
 		}
 		name := item["name"].(string)
-		name = "http://192.168.2.89:1317"
 		hostArr = append(hostArr, name)
 	}
-	log.Println(hostArr)
+	//log.Println(hostArr)
 	return
 	//s.ConfigServerPool(hostArr)
 }
 
 func (svr *CouchDBSourceImp) GetDBConnection() (db *couchdb.GoCouchDB, err error) {
-	s := strings.Split(StateDB, "://")
+	s := strings.Split(svr.hostStr, "://")
 	if len(s) < 2 {
 		return nil, errors.New("statedb format error")
 	}
@@ -69,15 +82,18 @@ func (svr *CouchDBSourceImp) GetDBConnection() (db *couchdb.GoCouchDB, err error
 	auths := strings.Split(s[1], "@")
 
 	if len(auths) < 2 {
-		db, err = couchdb.NewGoCouchDB(Name, auths[0],nil)
+		db, err = couchdb.NewGoCouchDB(svr.dbname, auths[0],nil)
 	} else {
 		info := auths[0]
 		userpass := strings.Split(info, ":")
 		if len(userpass) < 2 {
-			db, err = couchdb.NewGoCouchDB(Name, auths[1],nil)
+			db, err = couchdb.NewGoCouchDB(svr.dbname, auths[1],nil)
 		}
 		auth := &couchdb.BasicAuth{Username: userpass[0], Password: userpass[1]}
-		db, err = couchdb.NewGoCouchDB(Name, auths[1], auth)
+		db, err = couchdb.NewGoCouchDB(svr.dbname, auths[1], auth)
 	}
+	//if err != nil {
+	//	err = errors.New(fmt.Sprintf("cannot connect to couchdb, expect couchdb://xxxxx:5984 or couchdb://user:pass@xxxxx:5984, got %s", svr.hostStr))
+	//}
 	return
 }
