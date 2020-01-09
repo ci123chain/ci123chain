@@ -45,6 +45,7 @@ func lb(w http.ResponseWriter, r *http.Request) {
 	}
 
 	peer := serverPool.GetNextPeer()
+	log.Printf("Proxy by host: " + peer.URL().String())
 	if peer != nil {
 		peer.Proxy().ServeHTTP(w, r)
 		return
@@ -57,7 +58,7 @@ func isBackendAlive(u *url.URL) bool {
 	timeout := 2 * time.Second
 	conn, err := net.DialTimeout("tcp", u.Host, timeout)
 	if err != nil {
-		log.Println("Site unreachable, error: ", err)
+		log.Println(fmt.Sprintf("Site unreachable for host: %s, error: %v", u.String(), err))
 		return false
 	}
 	_ = conn.Close()

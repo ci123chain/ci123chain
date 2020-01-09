@@ -26,6 +26,10 @@ LOOP:
 			log.Fatal(err)
 		}
 
+		if !isBackendAlive(serverUrl) {
+			continue
+		}
+
 		proxy := httputil.NewSingleHostReverseProxy(serverUrl)
 		proxy.ErrorHandler = func(writer http.ResponseWriter, request *http.Request, e error) {
 			log.Printf("[%s] %s\n", serverUrl.Host, e.Error())
