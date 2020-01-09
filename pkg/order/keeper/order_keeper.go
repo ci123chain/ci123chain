@@ -74,6 +74,17 @@ func (ok *OrderKeeper) WaitForReady(ctx sdk.Context) {
 
 func (ok *OrderKeeper) UpdateOrderBook(ctx sdk.Context, orderbook OrderBook, actions *Actions) {
 	if actions != nil {
+		name := actions.Name
+		for _,v := range orderbook.Lists{
+			if v.Name == name{
+				return
+			}
+		}
+		for _,v := range orderbook.Actions{
+			if v.Name == name{
+				return
+			}
+		}
 		orderbook.Actions = append(orderbook.Actions, *actions)
 	}
 
@@ -85,9 +96,10 @@ func (ok *OrderKeeper) UpdateOrderBook(ctx sdk.Context, orderbook OrderBook, act
 			break
 		}
 	}
+
 	//handler actions
+	var deleteIndex []int
 	if orderbook.Current.Index == 0 && orderbook.Actions != nil {
-		var actions []Actions
 		for k, v := range orderbook.Actions {
 			if v.Type == OpADD && ctx.BlockHeight() == v.Height {
 				list := Lists{
@@ -95,15 +107,20 @@ func (ok *OrderKeeper) UpdateOrderBook(ctx sdk.Context, orderbook OrderBook, act
 					Height: 0,
 				}
 				orderbook.Lists = append(orderbook.Lists, list)
-				length := len(orderbook.Actions)
-				if length - 1 > k {
-					orderbook.Actions = orderbook.Actions[k+1:]
-				} else {
-					orderbook.Actions = actions
-				}
+				deleteIndex = append(deleteIndex, k)
 			}
 		}
 	}
+
+	for k, v := range deleteIndex{
+		length := len(orderbook.Actions)
+		if length - 1 > 0 {
+			orderbook.Actions = append(orderbook.Actions[:v-k],orderbook.Actions[v-k+1:]...)
+		} else {
+			orderbook.Actions = nil
+		}
+	}
+
 	ok.SetOrderBook(ctx, orderbook)
 	return
 }

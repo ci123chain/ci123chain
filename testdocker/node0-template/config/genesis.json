@@ -1,0 +1,89 @@
+{
+  "genesis_time": "2020-01-09T01:15:44.642135Z",
+  "chain_id": "ci0",
+  "consensus_params": {
+    "block": {
+      "max_bytes": "22020096",
+      "max_gas": "-1",
+      "time_iota_ms": "1000"
+    },
+    "evidence": {
+      "max_age": "100000"
+    },
+    "validator": {
+      "pub_key_types": [
+        "secp256k1"
+      ]
+    }
+  },
+  "validators": [
+    {
+      "address": "62DD247AE8B78F259D1D1BB2D9485909DAE52AFD",
+      "pub_key": {
+        "type": "tendermint/PubKeySecp256k1",
+        "value": "AsmkX+1DTwdYpQC6ELgTGhki5rNTOOZIK4zmo7ZrERlo"
+      },
+      "power": "1",
+      "name": ""
+    }
+  ],
+  "app_hash": "",
+  "app_state": {
+    "auth": {
+      "params": {
+        "max_memo_characters": "256",
+        "tx_size_cost_per_byte": "10",
+        "sig_verify_cost_ed_25519": "590",
+        "sig_verify_cost_secp_256_k_1": "1000"
+      }
+    },
+    "order": {
+      "params": {
+        "orderBook": {
+          "lists": [
+            {
+              "name": "ci0",
+              "height": "0"
+            }
+          ],
+          "current": {
+            "index": "0",
+            "state": "Init"
+          },
+          "actions": [
+            {
+              "type": "ADD",
+              "height": "2",
+              "name": "ci1"
+            },
+            {
+              "type": "ADD",
+              "height": "4",
+              "name": "ci2"
+            }
+          ]
+        }
+      }
+    },
+    "accounts": [
+      {
+        "address": "0xD1a14962627fAc768Fe885Eeb9FF072706B54c19",
+        "coin": "100000",
+        "sequence_number": "0",
+        "account_number": "0"
+      },
+      {
+        "address": "0x505A74675dc9C71eF3CB5DF309256952917E801e",
+        "coin": "100000",
+        "sequence_number": "0",
+        "account_number": "0"
+      },
+      {
+        "address": "0x204bCC42559Faf6DFE1485208F7951aaD800B313",
+        "coin": "100000",
+        "sequence_number": "0",
+        "account_number": "0"
+      }
+    ]
+  }
+}

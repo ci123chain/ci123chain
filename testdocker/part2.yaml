@@ -1,0 +1,54 @@
+version: "3"
+services:
+  ci0:
+    image: cichain:v0.0.1
+    container_name: ci0
+    hostname: ci0
+    environment:
+      ShardID: ci0
+    ports:
+      - 26606:26656
+      - 1310:80
+    volumes:
+      - ./node0:/root/cid
+#    depends_on:
+#      - couchdb-service
+    networks:
+      testdocker_couchDB:
+
+  lb:
+    image: lbservice:v0.0.1
+    container_name: lbservice
+    hostname: lb
+    ports:
+      - 3030:3030
+    networks:
+      testdocker_couchDB:
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    hostname: prometheus
+    restart: always
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - 9090:9090
+    networks:
+      testdocker_couchDB:
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    hostname: grafana
+    restart: always
+    volumes:
+      - ./grafana-storage:/var/lib/grafana
+    ports:
+      - 3000:3000
+    networks:
+      testdocker_couchDB:
+
+networks: ##定义网络组
+  testdocker_couchDB: ## 网络组名称
+    external: true

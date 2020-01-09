@@ -62,6 +62,9 @@ func (s *CouchDBSourceImp) FetchSource() (hostArr []string) {
 			continue
 		}
 		name := item["name"].(string)
+		if !strings.HasPrefix(name, "http") {
+			name = "http://" + name + ":80"
+		}
 		hostArr = append(hostArr, name)
 	}
 	return

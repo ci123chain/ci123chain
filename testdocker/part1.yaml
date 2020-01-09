@@ -1,0 +1,13 @@
+version: "3"
+services:
+  couchdb-service:
+    image: couchdb
+    container_name: couchdb-service
+    hostname: couchdb-service
+    ports:
+      - 5984:5984
+    networks:
+      couchDB:
+
+networks: ##定义网络组
+  couchDB: ## 网络组名称     
