@@ -1,25 +1,25 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ci123chain-deployment
+  name: ci123chain-deployment-3
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: ci123chain
+      app: ci123chain-3
 
   template:
     metadata:
       labels:
-        app: ci123chain
+        app: ci123chain-3
     spec:
       containers:
-      - name: ci123chain
+      - name: ci123chain-3
         image: cichain:v0.0.1
         imagePullPolicy: IfNotPresent
         env:
         - name: ShardID
-          value: "ci123chain-shared1"
+          value: "ci123chain-shared3"
         ports:
         - containerPort: 80
 #        volumeMounts:
@@ -34,14 +34,14 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: ci123chain-shared1
+  name: ci123chain-shared3
   labels:
-    app: ci123chain
+    app: ci123chain-3
 spec:
   type: NodePort
   ports:
   - port: 80
     targetPort: 80
-    nodePort: 30302
+    nodePort: 30304
   selector:
-    app: ci123chain
+    app: ci123chain-3

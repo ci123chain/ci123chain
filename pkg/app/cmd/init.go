@@ -147,7 +147,7 @@ func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Com
 	//cmd.Flags().AddFlagSet(appInit.FlagsAppGenState)
 	//cmd.Flags().AddFlagSet(appInit.FlagsAppGenTx) // need to add this flagset for when no GenTx's provided
 	//cmd.AddCommand(GenTxCmd(ctx, cdc, appInit))
-	cmd.Flags().String(FlagStateDB, "couchdb://couchdb_service:5984", "fetch new shard from db")
+	cmd.Flags().String(FlagStateDB, "couchdb://couchdb-service:5984", "fetch new shard from db")
 	cmd.Flags().String(FlagDBName, "ci123", "the name of db that used for chain")
 	return cmd
 }

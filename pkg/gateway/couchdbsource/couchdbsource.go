@@ -31,7 +31,7 @@ type CouchDBSourceImp struct {
 }
 
 func (s *CouchDBSourceImp) FetchSource() (hostArr []string) {
-
+	log.Println("Start fetch from couchdb")
 	if s.conn == nil {
 		conn, err := s.GetDBConnection()
 		if err != nil {
@@ -52,6 +52,7 @@ func (s *CouchDBSourceImp) FetchSource() (hostArr []string) {
 		return
 	}
 	lists := orderDict["lists"].([]interface{})
+	log.Println(lists)
 	if !ok {
 		return
 	}
@@ -65,9 +66,9 @@ func (s *CouchDBSourceImp) FetchSource() (hostArr []string) {
 		if !strings.HasPrefix(name, "http") {
 			name = "http://" + name + ":80"
 		}
-		name = "http://192.168.2.89:1317"
 		hostArr = append(hostArr, name)
 	}
+	log.Println("End fetch from couchdb")
 	return
 }
 

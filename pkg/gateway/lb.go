@@ -67,7 +67,7 @@ func isBackendAlive(u *url.URL) bool {
 
 // healthCheck runs a routine for check status of the backends every 2 mins
 func healthCheck() {
-	t := time.NewTicker(time.Second * 15)
+	t := time.NewTicker(time.Second * 20)
 	for {
 		select {
 		case <-t.C:
@@ -80,7 +80,7 @@ func healthCheck() {
 
 func fetchSharedRoutine()  {
 	serverPool.SharedCheck()
-	t := time.NewTicker(time.Second * 14)
+	t := time.NewTicker(time.Second * 15)
 	for {
 		select {
 		case <-t.C:

@@ -2,7 +2,7 @@ version: "3"
 services:
   couchDB:
     image: couchdb
-    container_name: couchdb_service
+    container_name: couchdb-service
       #environment:
         #COUCHDB_USER: adminuser
         #COUCHDB_PASSWORD: password
