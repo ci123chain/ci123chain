@@ -42,6 +42,6 @@ spec:
   ports:
   - port: 80
     targetPort: 80
-    nodePort: 30302
+    nodePort: 30310
   selector:
     app: ci123chain

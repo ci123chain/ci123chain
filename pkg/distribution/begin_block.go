@@ -69,6 +69,9 @@ func SaveValidatorsInfo(ctx types.Context, req abci.RequestBeginBlock, distr k.D
 func DeleteHistoricalRewards(ctx types.Context, distr k.DistrKeeper, height int64) {
 	var valCommitAddresses lastCommitValidatorsAddr
 	bz := distr.GetValidatorsInfo(ctx, height)
+	if len(bz) < 1 {
+		return
+	}
 	err := json.Unmarshal(bz, &valCommitAddresses)
 	if err != nil {
 		panic(err)

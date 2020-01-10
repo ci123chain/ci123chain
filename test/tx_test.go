@@ -206,7 +206,7 @@ func TestProcessFour(t *testing.T) {
 
 func TestHexToString(t *testing.T) {
 
-	b, _ := hex.DecodeString("66632f2f636f6c6c656374656446656573")
+	b, _ := hex.DecodeString("64697374722f2f01")
 	fmt.Println(string(b))
 }
 
@@ -218,7 +218,7 @@ func TestAddShard(t *testing.T) {
 
 
 	signdata, err := order.SignUpgradeTx("0x204bCC42559Faf6DFE1485208F7951aaD800B313",
-		20000, 1, "ADD", "ci123chain-shared3", 30, privByte)
+		20000, 1, "ADD", "ci123chain-shared2", 5670, privByte)
 
 	assert.NoError(t, err)
 	httpPostUpgradeTx(hex.EncodeToString(signdata))
@@ -235,7 +235,7 @@ type ciRes struct{
 }
 
 func httpPostUpgradeTx(param string) retData{
-	resp, err := http.PostForm("http://localhost:30303/tx/addShard",
+	resp, err := http.PostForm("http://localhost:1317/tx/addShard",
 		url.Values{"data": {param}})
 	if err != nil {
 		fmt.Println(err)
