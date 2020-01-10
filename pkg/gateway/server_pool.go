@@ -14,13 +14,16 @@ type BackendProto func(url *url.URL, alive bool, proxy *httputil.ReverseProxy) t
 
 func (s *ServerPool)ConfigServerPool(tokens []string)  {
 	for _, tok := range tokens {
-LOOP:
+		exist := false
 		for _, back := range s.backends {
 			if back.URL().String() == tok {
-				break LOOP
+				exist = true
+				break
 			}
 		}
-
+		if exist {
+			continue
+		}
 		serverUrl, err := url.Parse(tok)
 		if err != nil {
 			log.Fatal(err)

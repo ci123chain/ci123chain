@@ -38,11 +38,11 @@ func TestSignTx(t *testing.T) {
 	privByte := cryptoutil.MarshalPrivateKey(priKey)
 
 	signedData, err := SignTx("0x204bCC42559Faf6DFE1485208F7951aaD800B313",
-		"0xD1a14962627fAc768Fe885Eeb9FF072706B54c19",
-		50,
+		"0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c",
+		10000,
 		10000,
 		privByte,
-		false)
+		true)
 
 	assert.NoError(t, err)
 	fmt.Println(hex.EncodeToString(signedData))

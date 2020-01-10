@@ -12,8 +12,9 @@ CID_HOME="${HOME_DIR}/cid"
 if [ ! -f ${CID_HOME}/config/genesis.json ]; then
     ./cid-linux init --home=$CID_HOME --chain-id=${ShardID}
     ./cid-linux add-genesis-account 0x204bCC42559Faf6DFE1485208F7951aaD800B313 10000000000 --home=$CID_HOME
-    ./cid-linux add-genesis-account 0x505A74675dc9C71eF3CB5DF309256952917E801e 10000000000 --home=$CID_HOME
-    ./cid-linux add-genesis-account 0xD1a14962627fAc768Fe885Eeb9FF072706B54c19 10000000000 --home=$CID_HOME
+    # a78a8a281d160847f1ed7881e5497e1a98ccd4fe6ba9ce918630f93a44e09793
+    ./cid-linux add-genesis-account 0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c 10000000000 --home=$CID_HOME
+    # 2b452434ac4f7cf9c5d61d62f23834f34e851fb6efdb8d4a8c6e214a8bc93d70
 fi
 
 # start

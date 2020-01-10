@@ -48,6 +48,7 @@ func main()  {
 	}
 	rootCmd.Flags().String(flagLogLevel, "info", "Run abci app with different log level")
 	rootCmd.PersistentFlags().String("log_level", ctx.Config.LogLevel, "log level")
+
 	cmd.AddServerCommands(
 		ctx,
 		app.MakeCodec(),

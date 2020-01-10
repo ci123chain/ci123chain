@@ -51,8 +51,7 @@ func (s *CouchDBSourceImp) FetchSource() (hostArr []string) {
 	if !ok {
 		return
 	}
-	lists := orderDict["lists"].([]interface{})
-	log.Println(lists)
+	lists, ok := orderDict["lists"].([]interface{})
 	if !ok {
 		return
 	}
