@@ -42,30 +42,39 @@ func NewGoCouchDB(name, address string, auth Auth) (*GoCouchDB, error) {
 
 // Implements DB.
 func (cdb *GoCouchDB) Get(key []byte) []byte {
-	key = nonNilBytes(key)
-	var doc KVRead
-	_, err := cdb.db.Read(hex.EncodeToString(key), &doc,nil)
-	if err != nil {
-		switch t := err.(type) {
-		case *Error:
-			if t.ErrorCode == "not_found" {
-				return nil
+	retry := 0
+	for {
+		key = nonNilBytes(key)
+		var doc KVRead
+
+		_, err := cdb.db.Read(hex.EncodeToString(key), &doc,nil)
+
+		if err != nil {
+			switch t := err.(type) {
+			case *Error:
+				if t.ErrorCode == "not_found" {
+					return nil
+				}
+			default:
+				panic(err)
 			}
-		default:
-			fmt.Println("***********")
-			fmt.Println(err)
-			fmt.Println("***********")
+		}
+		res, err := hex.DecodeString(doc.Value)
+		if err != nil {
 			panic(err)
 		}
+		if len(res) == 0 {
+			if err != nil {
+				fmt.Println("***********retry***********", retry)
+				fmt.Println("key: ", string(key), " id:", hex.EncodeToString(key))
+				fmt.Println(err)
+			}
+		} else {
+			return res
+		}
+		retry++
 	}
-	res, err := hex.DecodeString(doc.Value)
-	if err != nil {
-		panic(err)
-	}
-	if len(res) == 0 {
-		return nil
-	}
-	return res
+
 }
 
 // Implements DB.
@@ -114,10 +123,6 @@ func (cdb *GoCouchDB) Delete(key []byte) {
 		rev := cdb.GetRev(key)
 		rev, err := cdb.db.Delete(id, rev)
 		if err != nil {
-			//er := err.(*Error)
-			//if er.ErrorCode != "not_found"{
-			//	panic(er)
-			//}
 			fmt.Println("***************Retry******************", retry)
 			fmt.Println(err)
 			cdb.Delete(key)
@@ -262,7 +267,7 @@ type goCouchDBBatch struct{
 func (mBatch *goCouchDBBatch) Set(key, value []byte) {
 	var newDoc KVWrite
 	value = nonNilBytes(value)
-	id := hex.EncodeToString(key)
+id := hex.EncodeToString(key)
 	rev := mBatch.cdb.GetRev(key)
 	newDoc = KVWrite{
 		Value:	hex.EncodeToString(value),
