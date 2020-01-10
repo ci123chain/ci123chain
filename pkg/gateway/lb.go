@@ -104,7 +104,7 @@ func Start() {
 	policy := lbpolicy.NewRoundPolicy()
 	svr := couchdbsource.NewCouchSource(dbname, statedb)
 
-	serverPool = NewServerPool(backend.NewBackEnd ,lb, policy, svr)
+	serverPool = NewServerPool(backend.NewBackEnd ,lb, policy, svr, true, 3)
 
 	list := strings.Split(serverList, ",")
 	serverPool.ConfigServerPool(list)

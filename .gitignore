@@ -2,4 +2,4 @@ build
 vendor
 .idea
 go.sum
-chain-shared2.yaml
+data_dir

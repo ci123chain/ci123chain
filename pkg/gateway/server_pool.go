@@ -17,7 +17,7 @@ func (s *ServerPool)ConfigServerPool(tokens []string)  {
 LOOP:
 		for _, back := range s.backends {
 			if back.URL().String() == tok {
-				goto LOOP
+				break LOOP
 			}
 		}
 
@@ -58,18 +58,23 @@ LOOP:
 	}
 }
 
-func NewServerPool(backProto BackendProto, lb http.HandlerFunc, police types.LBPolicy, svrsource types.ServerSource) *ServerPool {
+func NewServerPool(backProto BackendProto, lb http.HandlerFunc, policy types.LBPolicy,
+	svrsource types.ServerSource, clean bool, times int) *ServerPool {
 	return &ServerPool{
+		clean: 			clean,
+		retryTime: 		times,
 		backendProto: 	backProto,
 		backends: 		make([]types.Instance, 0),
 		lb:				lb,
-		policy:  		police,
+		policy:  		policy,
 		svrsource: 		svrsource,
 	}
 }
 
 // ServerPool holds information about reachable backends
 type ServerPool struct {
+	clean			bool
+	retryTime 		int
 	backendProto 	BackendProto
 	backends 		[]types.Instance
 	lb 		  		http.HandlerFunc
@@ -108,6 +113,7 @@ func (s *ServerPool) GetNextPeer() types.Instance {
 
 // HealthCheck pings the backends and update the status
 func (s *ServerPool) HealthCheck() {
+	var newBackend []types.Instance
 	for _, b := range s.backends {
 		status := "up"
 		alive := isBackendAlive(b.URL())
@@ -116,5 +122,12 @@ func (s *ServerPool) HealthCheck() {
 			status = "down"
 		}
 		log.Printf("%s [%s]\n", b.URL(), status)
+
+		if s.clean && !alive && b.FailTime() >= s.retryTime {
+			log.Printf("%s has been removed, retry %d times\n", b.URL(), b.FailTime())
+			continue
+		}
+		newBackend = append(newBackend, b)
 	}
+	s.backends = newBackend
 }

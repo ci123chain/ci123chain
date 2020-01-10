@@ -14,11 +14,17 @@ type Backend struct {
 	Alive        bool
 	mux          sync.RWMutex
 	ReverseProxy *httputil.ReverseProxy
+	retry 		 int
 }
 
 // SetAlive for this backend
 func (b *Backend) SetAlive(alive bool) {
 	b.mux.Lock()
+	if alive {
+		b.retry = 0
+	} else {
+		b.retry++
+	}
 	b.Alive = alive
 	b.mux.Unlock()
 }
@@ -39,10 +45,16 @@ func (b *Backend) Proxy() *httputil.ReverseProxy {
 	return b.ReverseProxy
 }
 
+func (b *Backend) FailTime() int {
+	return b.retry
+}
+
 func NewBackEnd(url *url.URL, alive bool, proxy *httputil.ReverseProxy) types.Instance {
 	return &Backend{
 		url:          url,
 		Alive:        alive,
 		ReverseProxy: proxy,
+		retry: 		  0,
 	}
 }
+

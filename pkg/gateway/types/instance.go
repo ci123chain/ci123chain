@@ -10,4 +10,5 @@ type Instance interface {
 	SetAlive(live bool)
 	URL() *url.URL
 	Proxy() *httputil.ReverseProxy
+	FailTime() int
 }

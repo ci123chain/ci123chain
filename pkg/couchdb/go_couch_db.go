@@ -65,8 +65,8 @@ func (cdb *GoCouchDB) Get(key []byte) []byte {
 		}
 		if len(res) == 0 {
 			if err != nil {
-				fmt.Println("***********retry***********", retry)
-				fmt.Println("key: ", string(key), " id:", hex.EncodeToString(key))
+				fmt.Println("***********Retry***********", retry)
+				fmt.Println("Method: Get, ","key: ", string(key), " id:", hex.EncodeToString(key))
 				fmt.Println(err)
 			}
 		} else {
@@ -99,6 +99,7 @@ func (cdb *GoCouchDB) Set(key []byte, value []byte) {
 		rev, err := cdb.db.Save(newDoc, id, rev)
 		if err != nil {
 			fmt.Println("***************Retry******************", retry)
+			fmt.Println("Method: Set, ","key: ", string(key), ", id:", hex.EncodeToString(key))
 			fmt.Println(err)
 		} else {
 			return
@@ -124,6 +125,7 @@ func (cdb *GoCouchDB) Delete(key []byte) {
 		rev, err := cdb.db.Delete(id, rev)
 		if err != nil {
 			fmt.Println("***************Retry******************", retry)
+			fmt.Println("Method: Delete, ","key: ", string(key), ", id:", hex.EncodeToString(key))
 			fmt.Println(err)
 			cdb.Delete(key)
 		} else {
