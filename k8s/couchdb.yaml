@@ -14,11 +14,19 @@ spec:
         app: couchdb
     spec:
       containers:
-        - name: couchdb
-          image: couchdb:2.3.1
-          imagePullPolicy: IfNotPresent
-          ports:
-          - containerPort: 5984
+      - name: couchdb
+        image: couchdb:2.3.1
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5984
+        volumeMounts:
+        - mountPath: /opt/couchdb/data
+          name: chain-volume
+      volumes:
+      - name: chain-volume
+        hostPath:
+          path: /Users/tanhui/Documents/Work/BlockChain/ci123chain/k8s/data_dir/couchdb
+          type: Directory
 ---
 apiVersion: v1
 kind: Service

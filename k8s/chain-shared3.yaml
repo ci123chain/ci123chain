@@ -30,7 +30,7 @@ spec:
       volumes:
       - name: chain-volume
         hostPath:
-          path: /Users/tanhui/Documents/Work/BlockChain/ci123chain/k8s/data_dir
+          path: /Users/tanhui/Documents/Work/BlockChain/ci123chain/k8s/data_dir/shared
           type: Directory
 ---
 apiVersion: v1

@@ -2,6 +2,7 @@
 
 
 if [ $GATEWAY ]; then
+# 启动 gateway 服务
     ./gateway-linux
     exit 0
 fi
@@ -25,6 +26,7 @@ if [ ! -f ${CID_HOME}/config/genesis.json ]; then
 fi
 
 # start
-nohup ./cid-linux start --home=$CID_HOME --statedb=couchdb://couchdb-service:5984 > cid-output 2>&1 &
 
-./cli-linux rest-server --laddr=tcp://0.0.0.0:80 --home=$CLI_HOME > rest-output 2>&1
+nohup ./cli-linux rest-server --laddr=tcp://0.0.0.0:80 --home=$CLI_HOME > rest-output 2>&1 &
+
+./cid-linux start --home=$CID_HOME --statedb=couchdb://couchdb-service:5984
