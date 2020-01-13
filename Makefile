@@ -53,21 +53,29 @@ node-stop:
 node-restart:
 	docker ps -a | grep "ci123-chain-" | awk '{print $$1}' | xargs docker start
 
-.PHONY:release
-release: build-linux
+
+.PHONY: build-gateway
+build-gateway:
+	GOPROXY=$(PROXY) $(GO_BUILD_CMD) -o $(LB) ./cmd/gateway
+
+build-gateway-linux:
+	GOPROXY=$(PROXY) CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GO_BUILD_CMD) -o ./docker/gateway/build/gateway-linux ./cmd/gateway
+
+build-gateway-image: build-gateway-linux
+	docker build -t gatewayservice:$(Tag) ./docker/gateway
+start-gateway: build-gateway-image
+	docker run --name ci123-gateway-v1 -p 3030:3030 -d gatewayservice:$(Tag)
+clean-gateway:
+	docker ps -a | grep "ci123-$(Tag)-" | awk '{print $$1}' | xargs docker rm -f
+	docker images | grep "$(Tag)service" | awk '{print $$3}' | xargs docker rmi
 
 
-.PHONY: build-lb
-build-lb:
-	GOPROXY=$(PROXY) $(GO_BUILD_CMD) -o $(LB) ./cmd/lb
 
-build-lb-linux:
-	GOPROXY=$(PROXY) CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GO_BUILD_CMD) -o ./docker/lb/build/lb-linux ./cmd/lb
 
-build-lb-image: build-lb-linux
-	docker build -t lbservice:$(Tag) ./docker/lb
-start-lb: build-lb-image
-	docker run --name ci123-lb-v1 -p 3030:3030 -d lbservice:$(Tag)
-clean-lb:
-	docker ps -a | grep "ci123-lb-" | awk '{print $$1}' | xargs docker rm -f
-	docker images | grep "lbservice" | awk '{print $$3}' | xargs docker rmi
+
+.PHONY:release, build all
+release: build-linux build-gateway-linux
+
+release-build: build-linux build-gateway-linux
+	docker build -t cichain:$(Tag) .
+

@@ -1,5 +1,12 @@
 #!/bin/bash
 
+
+if [ $GATEWAY ]; then
+    ./gateway-linux
+    exit 0
+fi
+
+
 HOME_DIR="$HOME"
 if [ $CI123_HOME ];then
     HOME_DIR=$CI123_HOME

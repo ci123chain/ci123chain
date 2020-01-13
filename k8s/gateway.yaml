@@ -15,8 +15,11 @@ spec:
     spec:
       containers:
       - name: chain-gateway
-        image: lbservice:v0.0.1
+        image: cichain:v0.0.1
         imagePullPolicy: IfNotPresent
+        env:
+        - name: GATEWAY
+          value: "true"
         ports:
         - containerPort: 3030
 ---
