@@ -10,6 +10,7 @@ const (
 	GasReadCostFlatDesc     = "ReadFlat"
 	GasHasDesc              = "Has"
 	GasDeleteDesc           = "Delete"
+	unit					= 1000
 )
 
 var (
@@ -56,7 +57,7 @@ func (g *basicGasMeter) GasConsumed() Gas {
 
 func (g *basicGasMeter) ConsumeGas(amount Gas, descriptor string) {
 	var overflow bool
-
+	//amount /= unit
 	// TODO: Should we set the consumed field after overflow checking?
 	g.consumed, overflow = AddUint64Overflow(g.consumed, amount)
 	if overflow {

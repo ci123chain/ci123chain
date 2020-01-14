@@ -59,7 +59,7 @@ func (d *DistrKeeper) GetProposerCurrentRewards(ctx sdk.Context, val sdk.AccAddr
 	store := ctx.KVStore(d.storeKey)
 	b := store.Get(GetValidatorCurrentRewardsKey(key))
 	if b == nil {
-		return sdk.NewCoin()
+		return sdk.NewCoin(sdk.NewInt(0))
 	}
 	d.cdc.MustUnmarshalBinaryLengthPrefixed(b, &rewards)
 	return
@@ -85,7 +85,7 @@ func (d *DistrKeeper) GetValidatorCurrentRewards(ctx sdk.Context, val sdk.AccAdd
 	store := ctx.KVStore(d.storeKey)
 	b := store.Get(GetValidatorCurrentRewardsKey(key))
 	if b == nil {
-		return sdk.NewCoin()
+		return sdk.NewCoin(sdk.NewInt(0))
 	}
 	d.cdc.MustUnmarshalBinaryLengthPrefixed(b, &rewards)
 	return
@@ -107,7 +107,7 @@ func (d *DistrKeeper) GetValCurrentRewards(ctx sdk.Context, val sdk.AccAddr) (re
 	store := ctx.KVStore(d.storeKey)
 	b := store.Get(GetValidatorCurrentRewardsKey(val))
 	if b == nil {
-		return sdk.NewCoin(), errors.New("no such information")
+		return sdk.NewCoin(sdk.NewInt(0)), errors.New("no such information")
 	}
 	d.cdc.MustUnmarshalBinaryLengthPrefixed(b, &rewards)
 	return

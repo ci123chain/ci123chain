@@ -11,7 +11,7 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/transaction"
 )
 const price uint64 = 1
-
+const unit = 1000
 func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, fck fc.FcKeeper) sdk.AnteHandler {
 	return func(ctx sdk.Context, tx sdk.Tx, simulate bool) (newCtx sdk.Context, res sdk.Result, abort bool) {
 
@@ -48,17 +48,8 @@ func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, fck f
 		gas := stdTx.GetGas()//用户期望的gas值 g.limit
 		newCtx = SetGasMeter(simulate, ctx, gas)//设置为GasMeter的gasLimit,成为用户可承受的gas上限.
 		//pms.TxSizeCostPerByte*sdk.Gas(len(newCtx.TxBytes()))
-		var sg uint64 = 1
-		newCtx.GasMeter().ConsumeGas(sg, "txSize") //计算最终的gas值. g.consumed
-
-		//计算fee
-		gasPrice := 2*price
-		fee := newCtx.GasMeter().GasConsumed() * gasPrice
-		fmt.Println("============================================")
-		fmt.Println(fee)
-		getFee := sdk.Coin(fee)
-
-		newCtx = SetGasMeter(simulate, ctx, gas)
+		fmt.Println("-------- newCtx init ----------")
+		fmt.Println(newCtx.GasMeter().GasConsumed())
 		// AnteHandlers must have their own defer/recover in order for the BaseApp
 		// to know how much gas was used! This is because the GasMeter is created in
 		// the AnteHandler, but if it panics the context won't be set properly in
@@ -75,6 +66,8 @@ func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, fck f
 
 					res.GasWanted = gas
 					res.GasUsed = newCtx.GasMeter().GasConsumed()
+					fmt.Println("-------- last ----------")
+					fmt.Println(newCtx.GasMeter().GasConsumed())
 					abort = true
 				default:
 					panic(r)
@@ -84,18 +77,23 @@ func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, fck f
 		if err := tx.ValidateBasic(); err != nil {
 			return newCtx, types.ErrTxValidateBasic(types.DefaultCodespace, err).Result(), true
 		}
-
+		//计算fee
+		gasPrice := price
 		newCtx.GasMeter().ConsumeGas(params.TxSizeCostPerByte*sdk.Gas(len(newCtx.TxBytes())), "txSize")
-
+		fee := newCtx.GasMeter().GasConsumed() * gasPrice
+		getFee := sdk.NewUInt64Coin(fee)
 		res = DeductFees(acc, getFee, ak, ctx)
-
+		fmt.Println("-------- consume gas by txSize ----------")
+		fmt.Println(newCtx.GasMeter().GasConsumed())
 		if !res.IsOK() {
 			return newCtx, res, true
 		}
 		//存储奖励金
-
+		fmt.Println("-------- before collectedFees ----------")
+		fmt.Println(newCtx.GasMeter().GasConsumed())
 		fck.AddCollectedFees(newCtx, getFee)
-
+		fmt.Println("-------- after collectedFees ----------")
+		fmt.Println(newCtx.GasMeter().GasConsumed())
 		return newCtx, sdk.Result{GasWanted:gas,GasUsed:fee}, false
 	}
 }

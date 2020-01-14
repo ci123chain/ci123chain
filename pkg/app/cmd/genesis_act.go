@@ -66,7 +66,7 @@ func AddGenesisAccountCmd(ctx *app.Context, cdc *codec.Codec) *cobra.Command {
 
 func ParseCoin(coin string) (types.Coin, error) {
 	coin64, err := strconv.ParseUint(coin, 10, 64)
-	return types.Coin(coin64), err
+	return types.NewUInt64Coin(coin64), err
 }
 
 func ParseAccAddress(addr string) types.AccAddress {
