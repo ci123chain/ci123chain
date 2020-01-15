@@ -20,7 +20,7 @@ func BeginBlock(ctx types.Context, req abci.RequestBeginBlock, distr k.DistrKeep
 		proposerAddress := distr.GetPreviousProposer(ctx)
 
 		rewards := distr.GetProposerCurrentRewards(ctx, proposerAddress, height - ModuleHeight)
-		rewards = rewards.SafeAdd(fee)
+		rewards = rewards.Add(fee)
 		distr.SetProposerCurrentRewards(ctx, proposerAddress, rewards, height)
 
 		//store记录的数据维持在100个块内
@@ -44,7 +44,7 @@ func SaveValidatorsInfo(ctx types.Context, req abci.RequestBeginBlock, distr k.D
 		valAddress := types.AccAddr(addr)
 		//发放奖金给validators
 		valRewards := distr.GetValidatorCurrentRewards(ctx, valAddress, height - ModuleHeight)
-		valRewards = valRewards.SafeAdd(fee)
+		valRewards = valRewards.Add(fee)
 		distr.SetValidatorCurrentRewards(ctx, valAddress, valRewards, height)
 	}else {
 		for i := 0; i < length; i++ {
@@ -53,7 +53,7 @@ func SaveValidatorsInfo(ctx types.Context, req abci.RequestBeginBlock, distr k.D
 			valAddress := types.AccAddr(addr)
 			//发放奖金给validators
 			valRewards := distr.GetValidatorCurrentRewards(ctx, valAddress, height - ModuleHeight)
-			valRewards = valRewards.SafeAdd(fee)
+			valRewards = valRewards.Add(fee)
 			distr.SetValidatorCurrentRewards(ctx, valAddress, valRewards, height)
 			validatorAddresses.Address = append(validatorAddresses.Address, address)
 		}

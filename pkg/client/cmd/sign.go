@@ -64,7 +64,7 @@ var signCmd = &cobra.Command{
 		}
 		ucoin := uint64(viper.GetInt(flagAmount))
 
-		tx := transfer.NewTransferTx(from, tos[0], uint64(viper.GetInt(flagGas)), nonce , sdk.Coin(ucoin), isFabric)
+		tx := transfer.NewTransferTx(from, tos[0], uint64(viper.GetInt(flagGas)), nonce , sdk.NewUInt64Coin(ucoin), isFabric)
 		password := viper.GetString(flagPassword)
 		if len(password) < 1 {
 			var err error

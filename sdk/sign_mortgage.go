@@ -40,7 +40,7 @@ func buildMortgageTx (from, to string, amount, gas uint64, uniqueID string) (*ty
 		return nil,err
 	}
 	nonce, err := ctx.GetNonceByAddress(fromAddr)
-	mort := mortgage.NewMortgageMsg(fromAddr, toAddr, gas, nonce, types.Coin(amount), []byte(uniqueID))
+	mort := mortgage.NewMortgageMsg(fromAddr, toAddr, gas, nonce, types.NewUInt64Coin(amount), []byte(uniqueID))
 	return mort, nil
 }
 

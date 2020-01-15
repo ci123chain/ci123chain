@@ -93,7 +93,7 @@ func buildTransferTx(r *http.Request, isFabric bool) (transaction.Transaction, e
 		return nil, client.ErrNewClientCtx(types.DefaultCodespace, err)
 	}
 	nonce, err := ctx.GetNonceByAddress(froms[0])
-	tx := transfer.NewTransferTx(froms[0], tos[0], gasI, nonce, sdk.Coin(amountI), isFabric)
+	tx := transfer.NewTransferTx(froms[0], tos[0], gasI, nonce, sdk.NewUInt64Coin(amountI), isFabric)
 
 	return tx, nil
 }
