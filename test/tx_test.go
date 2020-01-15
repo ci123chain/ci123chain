@@ -45,13 +45,19 @@ func MakeParams(i int, pri []byte) string{
 	nonce := uint64(i)
 	privByte := pri
 	signdata, err := transfer.SignTransferTx("0x204bCC42559Faf6DFE1485208F7951aaD800B313",
-		"0xD1a14962627fAc768Fe885Eeb9FF072706B54c19", 1, 20000, nonce, privByte)
+		"0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c", 1, 20000, nonce, privByte)
 	if err != nil {
 		panic(err)
 	}
 	req := hex.EncodeToString(signdata)
 
 	return req
+}
+
+func TestSign(t *testing.T) {
+	key := makePrivateKey()
+	res := MakeParams(3, key)
+	fmt.Println(res)
 }
 
 
@@ -218,7 +224,9 @@ func TestAddShard(t *testing.T) {
 
 
 	signdata, err := order.SignUpgradeTx("0x204bCC42559Faf6DFE1485208F7951aaD800B313",
+
 		20000, 1, "ADD", "ci123chain-shared3", 40, privByte)
+
 
 	assert.NoError(t, err)
 	httpPostUpgradeTx(hex.EncodeToString(signdata))

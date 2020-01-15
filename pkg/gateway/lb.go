@@ -1,16 +1,11 @@
 package gateway
 
 import (
-	"flag"
 	"fmt"
-	"github.com/tanhuiya/ci123chain/pkg/gateway/backend"
-	"github.com/tanhuiya/ci123chain/pkg/gateway/couchdbsource"
-	"github.com/tanhuiya/ci123chain/pkg/gateway/lbpolicy"
 	"log"
 	"net"
 	"net/http"
 	"net/url"
-	"strings"
 	"time"
 )
 
@@ -35,6 +30,7 @@ func GetRetryFromContext(r *http.Request) int {
 	return 0
 }
 
+/*
 // lb load balances the incoming request
 func lb(w http.ResponseWriter, r *http.Request) {
 	attempts := GetAttemptsFromContext(r)
@@ -52,6 +48,7 @@ func lb(w http.ResponseWriter, r *http.Request) {
 	}
 	http.Error(w, "Service not available", http.StatusServiceUnavailable)
 }
+*/
 
 // isAlive checks whether a backend is Alive by establishing a TCP connection
 func isBackendAlive(u *url.URL) bool {
@@ -91,7 +88,7 @@ func fetchSharedRoutine()  {
 
 var serverPool *ServerPool
 
-func Start() {
+/*func Start() {
 	var serverList string
 	var statedb, dbname string
 	var port int
@@ -123,4 +120,4 @@ func Start() {
 	if err := server.ListenAndServe(); err != nil {
 		log.Fatal(err)
 	}
-}
+}*/

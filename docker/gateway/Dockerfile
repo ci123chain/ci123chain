@@ -1,9 +1,9 @@
 From ubuntu
 
-COPY ./build/lb-linux /opt
+COPY ./build/gateway-linux /opt
 
 WORKDIR /opt
 
-RUN chmod +x lb-linux
+RUN chmod +x gateway-linux
 
-ENTRYPOINT ./lb-linux
+ENTRYPOINT ./gateway-linux
