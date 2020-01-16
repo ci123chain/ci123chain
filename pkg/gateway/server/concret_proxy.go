@@ -9,16 +9,13 @@ import (
 
 type ConcretProxy struct {
 	ProxyType types.ProxyType
-	Channel chan int
 }
 
 func NewConcretProxy(pt types.ProxyType) *ConcretProxy {
 
 	cp := &ConcretProxy{
 		ProxyType: pt,
-		Channel:make(chan int),
 	}
-
 	return cp
 }
 
@@ -29,23 +26,22 @@ func (cp *ConcretProxy) Handle(r *http.Request, backends []types.Instance) ([]by
 	var resultResp []ciRes
 
 	if backendsLen == 1 {
-		byte, _, err := SendRequest(backends[0].URL(), r)
+		resByte, _, err := SendRequest(backends[0].URL(), r)
 		if err != nil {
 			//
 			return nil, errors.New("failed get response")
 		}
-		return byte, nil
+		return resByte, nil
 	}else {
 		for i := 0; i < backendsLen - 1; i++ {
 			var result ciRes
-			byte, _, err := SendRequest(backends[i].URL(),r)
+			resByte, _, err := SendRequest(backends[i].URL(),r)
 			if err != nil {
 				//return nil, errors.New("failed get response")
 			}
-			result = AddResponses(byte)
+			result = AddResponses(resByte)
 			resultResp = append(resultResp, result)
 		}
-
 	}
 	resultByte, err := json.Marshal(resultResp)
 	if err != nil {

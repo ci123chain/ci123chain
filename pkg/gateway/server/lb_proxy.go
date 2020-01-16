@@ -25,9 +25,7 @@ func NewLBProxy(pt types.ProxyType) *LBProxy {
 
 func (lbp *LBProxy) Handle(r *http.Request, backends []types.Instance) ([]byte, error) {
 
-
 	url := lbp.Policy.NextPeer(backends).URL()
-
 	b, _, err := SendRequest(url, r)
 	if err != nil {
 		return nil, errors.New("failed to get response")

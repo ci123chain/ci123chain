@@ -232,8 +232,6 @@ func TestAddShard(t *testing.T) {
 	httpPostUpgradeTx(hex.EncodeToString(signdata))
 }
 
-func TestGet
-
 type retData struct {
 	Data string `json:"data"`
 	RawLog  string `json:"raw_log"`

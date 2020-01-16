@@ -9,10 +9,6 @@ import (
 	"strings"
 )
 
-type BalanceData struct {
-	Balance uint64 `json:"balance"`
-}
-
 type ciRes struct{
 	Ret 	uint32 	`json:"ret"`
 	Data 	interface{}	`json:"data"`
@@ -31,7 +27,6 @@ func SendRequest(url *url.URL,r *http.Request) ([]byte, *http.Response, error) {
 	cli := &http.Client{}
 	body := make([]byte, 0)
 	reqUrl := "http://" + url.Host + r.URL.Path
-
 	req2, err := http.NewRequest(r.Method, reqUrl, strings.NewReader(string(body)))
 	if err != nil {
 		return nil, nil, err
@@ -67,9 +62,9 @@ func AddResponses(b []byte) ciRes {
 }
 
 
-var ConcretResultResponse []ciResult
-var FilterResultResponse ciResult
-var response = make(chan int)
+
+
+
 var sc = make(chan int)
 
 type ClasterJob interface {
@@ -91,6 +86,7 @@ func NewClasterTask(url *url.URL, r *http.Request, num, id int) *ClasterTask{
 		id:id,
 	}
 }
+
 
 func (ct *ClasterTask) Do() {
 	var resp ciRes
