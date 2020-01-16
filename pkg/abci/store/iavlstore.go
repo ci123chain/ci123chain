@@ -166,6 +166,14 @@ func (st *iavlStore) Gas(meter GasMeter, config GasConfig) KVStore {
 	return NewGasKVStore(meter, config, st)
 }
 
+func (st *iavlStore) Latest(keys []string) KVStore {
+	return nil
+}
+
+func (st *iavlStore) Parent() KVStore {
+	return nil
+}
+
 // Implements KVStore.
 func (st *iavlStore) Iterator(start, end []byte) Iterator {
 	return newIAVLIterator(st.tree.ImmutableTree, start, end, true)

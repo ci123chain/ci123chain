@@ -12,14 +12,48 @@ services:
     volumes:
       - ./node0:/root/cid
 #    depends_on:
-#      - couchdb-service
+#      - couchdb_service
     networks:
       testdocker_couchDB:
 
-  lb:
-    image: lbservice:v0.0.1
-    container_name: lbservice
-    hostname: lb
+  ci1:
+    image: cichain:v0.0.1
+    container_name: ci1
+    hostname: ci1
+    environment:
+      ShardID: ci1
+    ports:
+      - 26616:26656
+      - 1311:80
+    volumes:
+      - ./node1:/root/cid
+    # depends_on:
+    #   - ci0
+    #   - couchdb_service
+    networks:
+      testdocker_couchDB:
+
+  ci2:
+    image: cichain:v0.0.1
+    container_name: ci2
+    hostname: ci2
+    environment:
+      ShardID: ci2
+    ports:
+      - 26626:26656
+      - 1312:80
+    volumes:
+      - ./node2:/root/cid
+    # depends_on:
+    #   - ci0
+    #   - couchdb_service
+    networks:
+      testdocker_couchDB:
+
+  gateway:
+    image: gatewayservice:v0.0.1
+    container_name: gatewayservice
+    hostname: gatewayservice
     ports:
       - 3030:3030
     networks:

@@ -1,0 +1,67 @@
+{
+  "genesis_time": "2020-01-16T03:29:09.80628Z",
+  "chain_id": "ci2",
+  "consensus_params": {
+    "block": {
+      "max_bytes": "22020096",
+      "max_gas": "-1",
+      "time_iota_ms": "1000"
+    },
+    "evidence": {
+      "max_age": "100000"
+    },
+    "validator": {
+      "pub_key_types": [
+        "secp256k1"
+      ]
+    }
+  },
+  "validators": [
+    {
+      "address": "5889FEEECEA033EE0D635AB756398A05AF7471D5",
+      "pub_key": {
+        "type": "tendermint/PubKeySecp256k1",
+        "value": "AoRAQfwroX12T9IjP1ZrrewW1yaXSO2qjQoHKvfWQSA9"
+      },
+      "power": "1",
+      "name": ""
+    }
+  ],
+  "app_hash": "",
+  "app_state": {
+    "accounts": [],
+    "auth": {
+      "params": {
+        "max_memo_characters": "256",
+        "tx_size_cost_per_byte": "10",
+        "sig_verify_cost_ed_25519": "590",
+        "sig_verify_cost_secp_256_k_1": "1000"
+      }
+    },
+    "order": {
+      "params": {
+        "orderBook": {
+          "lists": [
+            {
+              "name": "ci0",
+              "height": "0"
+            },
+            {
+              "name": "ci1",
+              "height": "0"
+            },
+            {
+              "name": "ci2",
+              "height": "0"
+            }
+          ],
+          "current": {
+            "index": "0",
+            "state": "Init"
+          },
+          "actions": null
+        }
+      }
+    }
+  }
+}

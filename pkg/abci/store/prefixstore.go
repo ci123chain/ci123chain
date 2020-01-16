@@ -85,6 +85,14 @@ func (s prefixStore) Gas(meter GasMeter, config GasConfig) KVStore {
 	return NewGasKVStore(meter, config, s)
 }
 
+func (s prefixStore) Latest(keys []string) KVStore {
+	return nil
+}
+
+func (s prefixStore) Parent() KVStore {
+	return s.parent
+}
+
 // Implements KVStore
 // Check https://github.com/tendermint/tendermint/blob/master/libs/db/prefix_db.go#L106
 func (s prefixStore) Iterator(start, end []byte) Iterator {

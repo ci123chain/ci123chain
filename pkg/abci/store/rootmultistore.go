@@ -85,7 +85,7 @@ func (rs *rootMultiStore) GetCommitKVStore(key StoreKey) CommitKVStore {
 
 // Implements CommitMultiStore.
 func (rs *rootMultiStore) LoadLatestVersion() error {
-	ver := getLatestVersion(rs.db)
+	ver := getLatestVersion(dbStoreAdapter{rs.db})
 	return rs.LoadVersion(ver)
 }
 
@@ -109,7 +109,7 @@ func (rs *rootMultiStore) LoadVersion(ver int64) error {
 	// Otherwise, version is 1 or greater
 
 	// Get commitInfo
-	cInfo, err := getCommitInfo(rs.db, ver)
+	cInfo, err := getCommitInfo(dbStoreAdapter{rs.db}, ver)
 	if err != nil {
 		return err
 	}
@@ -298,7 +298,7 @@ func (rs *rootMultiStore) Query(req abci.RequestQuery) abci.ResponseQuery {
 		return sdk.ErrInternal("substore proof was nil/empty when it should never be").QueryResult()
 	}
 
-	commitInfo, errMsg := getCommitInfo(rs.db, res.Height)
+	commitInfo, errMsg := getCommitInfo(dbStoreAdapter{rs.db}, res.Height)
 	if errMsg != nil {
 		return sdk.ErrInternal(errMsg.Error()).QueryResult()
 	}
@@ -450,7 +450,7 @@ func (si storeInfo) Hash() []byte {
 //----------------------------------------
 // Misc.
 
-func getLatestVersion(db dbm.DB) int64 {
+func getLatestVersion(db KVStore) int64 {
 	var latest int64
 	latestBytes := db.Get([]byte(types.LatestVersionKey))
 	if latestBytes == nil {
@@ -499,7 +499,7 @@ func commitStores(version int64, storeMap map[StoreKey]CommitStore) commitInfo {
 }
 
 // Gets commitInfo from disk.
-func getCommitInfo(db dbm.DB, ver int64) (commitInfo, error) {
+func getCommitInfo(db KVStore, ver int64) (commitInfo, error) {
 	if ver == 0 {
 		return commitInfo{}, nil
 	}

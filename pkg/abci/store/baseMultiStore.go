@@ -75,7 +75,8 @@ func (bs *baseMultiStore) GetKVStore(key StoreKey) KVStore {
 }
 
 func (bs *baseMultiStore) LoadLatestVersion() error {
-	ver := getLatestVersion(bs.db)
+
+	ver := getLatestVersion(dbStoreAdapter{bs.db})
 	err := bs.LoadVersion(ver)
 	return err
 }
@@ -100,7 +101,7 @@ func (bs *baseMultiStore) LoadVersion(ver int64) error {
 			return fmt.Errorf("failed to load rootMultiStore: %v", err)
 		}
 	}
-	cInfo, err := getCommitInfo(bs.db, ver)
+	cInfo, err := getCommitInfo(dbStoreAdapter{bs.db}, ver)
 	if err != nil {
 		return err
 	}
@@ -218,7 +219,7 @@ func (bs *baseMultiStore) CacheMultiStore() CacheMultiStore {
 func (bs *baseMultiStore) loadCommitStoreFromParams(key sdk.StoreKey, id CommitID, params storeParams) error {
 	_, ok := bs.stores[key]
 	if !ok {
-		store := NewBaseKVStore(bs.db, int64(0), int64(0), key)
+		store := NewBaseKVStore(dbStoreAdapter{bs.db}, int64(0), int64(0), key)
 		store.SetPruning(bs.pruning)
 		bs.stores[key] = store
 	}

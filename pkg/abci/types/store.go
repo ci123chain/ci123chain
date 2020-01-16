@@ -162,6 +162,13 @@ type KVStore interface {
 	// CONTRACT: when Gas is called on a KVStore more than once,
 	// the concatanation of the meters/configs is applied
 	Gas(GasMeter, GasConfig) KVStore
+
+	// Latest store
+	// Use latest store when some key-values must be latest
+	Latest(Keys []string) KVStore
+
+	// parent
+	Parent() KVStore
 }
 
 // Alias iterator to db's Iterator for convenience.

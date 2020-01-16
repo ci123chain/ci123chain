@@ -87,6 +87,14 @@ func (tkv *TraceKVStore) Gas(meter GasMeter, config GasConfig) KVStore {
 	return NewGasKVStore(meter, config, tkv.parent)
 }
 
+func (tkv *TraceKVStore) Latest(keys []string) KVStore {
+	return nil
+}
+
+func (tkv *TraceKVStore) Parent() KVStore {
+	return tkv.parent
+}
+
 // Iterator implements the KVStore interface. It delegates the Iterator call
 // the to the parent KVStore.
 func (tkv *TraceKVStore) Iterator(start, end []byte) sdk.Iterator {

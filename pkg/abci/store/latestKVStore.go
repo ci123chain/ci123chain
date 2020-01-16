@@ -12,26 +12,28 @@ import (
 	"sync"
 )
 
-type baseKVStore struct {
+type latestStore struct {
 	mtx    		sync.Mutex
 	cache  		map[string]cValue
 	parent 		KVStore
 	storeEvery 	int64
 	numRecent 	int64
 	preKey		sdk.StoreKey
+	latestKeys  []string
 }
 
-func NewBaseKVStore(parent KVStore, storeEvery, numRecent int64, key sdk.StoreKey) *baseKVStore {
-	return &baseKVStore{
+func NewlatestStore(parent KVStore, storeEvery, numRecent int64, key sdk.StoreKey, latestKeys []string) *latestStore {
+	return &latestStore{
 		cache:  	make(map[string]cValue),
 		parent: 	parent,
 		storeEvery: storeEvery,
 		numRecent:	numRecent,
 		preKey:		key,
+		latestKeys: latestKeys,
 	}
 }
 
-func (ks *baseKVStore) SetPruning(pruning sdk.PruningStrategy) {
+func (ks *latestStore) SetPruning(pruning sdk.PruningStrategy) {
 	switch pruning {
 	case sdk.PruneEverything:
 		ks.numRecent = 0
@@ -45,45 +47,53 @@ func (ks *baseKVStore) SetPruning(pruning sdk.PruningStrategy) {
 }
 
 // Implements Store.
-func (ks *baseKVStore) GetStoreType() StoreType {
+func (ks *latestStore) GetStoreType() StoreType {
 	return sdk.StoreTypeMulti
 }
 
 // Implements KVStore.
-func (ks *baseKVStore) Get(key []byte) (value []byte) {
+func (ks *latestStore) Get(key []byte) (value []byte) {
 	ks.mtx.Lock()
 	defer ks.mtx.Unlock()
 	ks.assertValidKey(key)
-	ckey := ks.getCombineKey(key)
-	cacheValue, ok := ks.cache[ckey]
-	if !ok {
-		value = ks.parent.Get([]byte(ckey))
-			ks.setCacheValue([]byte(ckey), value, false, false)
-	} else {
-		value = cacheValue.value
+	for _, v := range ks.latestKeys{
+		if v == string(key) {
+			value = ks.parentGet(key)
+			return
+		}
 	}
 
+	ckey := ks.getCombineKey(key)
+	value = ks.parent.Get([]byte(ckey))
 	return value
 }
 
-// Implements KVStore.
-func (ks *baseKVStore) Set(key []byte, value []byte) {
-	ks.mtx.Lock()
-	defer ks.mtx.Unlock()
-	ks.assertValidKey(key)
-	ks.assertValidValue(value)
-	ckey := ks.setCombineKey(key)
-	ks.setCacheValue([]byte(ckey), value, false, true)
+func (ks *latestStore) parentGet(key []byte) (value []byte) {
+	ckey := ks.getCombineKey(key)
+	value = ks.parent.Parent().Get([]byte(ckey))
+	if len(value) > 0 {
+		return
+	} else {
+		value = ks.parent.Get(key)
+	}
+	return
 }
 
 // Implements KVStore.
-func (ks *baseKVStore) Has(key []byte) bool {
+func (ks *latestStore) Set(key []byte, value []byte) {
+	ks.mtx.Lock()
+	defer ks.mtx.Unlock()
+	ks.parent.Set(key, value)
+}
+
+// Implements KVStore.
+func (ks *latestStore) Has(key []byte) bool {
 	value := ks.Get(key)
 	return value != nil
 }
 
 // Implements KVStore.
-func (ks *baseKVStore) Delete(key []byte) {
+func (ks *latestStore) Delete(key []byte) {
 	ks.mtx.Lock()
 	defer ks.mtx.Unlock()
 	ks.assertValidKey(key)
@@ -92,17 +102,27 @@ func (ks *baseKVStore) Delete(key []byte) {
 }
 
 // Implements KVStore
-func (ks *baseKVStore) Prefix(prefix []byte) KVStore {
+func (ks *latestStore) Prefix(prefix []byte) KVStore {
 	return prefixStore{ks, prefix}
 }
 
 // Implements KVStore
-func (ks *baseKVStore) Gas(meter GasMeter, config GasConfig) KVStore {
+func (ks *latestStore) Gas(meter GasMeter, config GasConfig) KVStore {
 	return NewGasKVStore(meter, config, ks)
 }
 
+// Implements KVStore
+func (ks *latestStore) Latest(keys []string) KVStore {
+	return nil
+}
+
+// Implements KVStore
+func (ks *latestStore) Parent() KVStore {
+	return nil
+}
+
 // Implements CacheWrapper.
-func (ks *baseKVStore) CacheWrap() CacheWrap {
+func (ks *latestStore) CacheWrap() CacheWrap {
 	return &cacheKVStore{
 		cache:  make(map[string]cValue),
 		parent: ks,
@@ -110,25 +130,25 @@ func (ks *baseKVStore) CacheWrap() CacheWrap {
 }
 
 // CacheWrapWithTrace implements the CacheWrapper interface.
-func (ks *baseKVStore) CacheWrapWithTrace(w io.Writer, tc TraceContext) CacheWrap {
+func (ks *latestStore) CacheWrapWithTrace(w io.Writer, tc TraceContext) CacheWrap {
 	return nil
 }
 
 // Implements KVStore.
-func (ks *baseKVStore) Iterator(start, end []byte) Iterator {
+func (ks *latestStore) Iterator(start, end []byte) Iterator {
 	cstart := ks.getCombineKey(start)
 	cend := ks.getCombineKey(end)
 	return ks.iterator([]byte(cstart), []byte(cend), true)
 }
 
 // Implements KVStore.
-func (ks *baseKVStore) ReverseIterator(start, end []byte) Iterator {
+func (ks *latestStore) ReverseIterator(start, end []byte) Iterator {
 	cstart := ks.getCombineKey(start)
 	cend := ks.getCombineKey(end)
 	return ks.iterator([]byte(cstart), []byte(cend), false)
 }
 
-func (ks *baseKVStore) iterator(start, end []byte, ascending bool) Iterator {
+func (ks *latestStore) iterator(start, end []byte, ascending bool) Iterator {
 	var parent, cache Iterator
 	cstart := ks.getCombineKey(start)
 	cend := ks.getCombineKey(end)
@@ -146,7 +166,7 @@ func (ks *baseKVStore) iterator(start, end []byte, ascending bool) Iterator {
 }
 
 // Constructs a slice of dirty items, to use w/ memIterator.
-func (ks *baseKVStore) dirtyItems(ascending bool) []cmn.KVPair {
+func (ks *latestStore) dirtyItems(ascending bool) []cmn.KVPair {
 	items := make([]cmn.KVPair, 0, len(ks.cache))
 
 	for key, cacheValue := range ks.cache {
@@ -169,24 +189,24 @@ func (ks *baseKVStore) dirtyItems(ascending bool) []cmn.KVPair {
 }
 
 // Implements CacheKVStore.
-func (ks *baseKVStore) Write() {
+func (ks *latestStore) Write() {
 	return
 }
 
-func (ks *baseKVStore) assertValidKey(key []byte) {
+func (ks *latestStore) assertValidKey(key []byte) {
 	if key == nil {
 		panic("types is nil")
 	}
 }
 
-func (ks *baseKVStore) assertValidValue(value []byte) {
+func (ks *latestStore) assertValidValue(value []byte) {
 	if value == nil {
 		panic("value is nil")
 	}
 }
 
 // Only entrypoint to mutate ci.cache.
-func (ks *baseKVStore) setCacheValue(key, value []byte, deleted bool, dirty bool) {
+func (ks *latestStore) setCacheValue(key, value []byte, deleted bool, dirty bool) {
 	ks.cache[string(key)] = cValue{
 		value:   value,
 		deleted: deleted,
@@ -194,7 +214,7 @@ func (ks *baseKVStore) setCacheValue(key, value []byte, deleted bool, dirty bool
 	}
 }
 
-func (ks *baseKVStore) Commit() CommitID {
+func (ks *latestStore) Commit() CommitID {
 	ks.mtx.Lock()
 	defer ks.mtx.Unlock()
 
@@ -256,7 +276,7 @@ func (ks *baseKVStore) Commit() CommitID {
 	}
 }
 
-func (ks *baseKVStore) LastCommitID() CommitID {
+func (ks *latestStore) LastCommitID() CommitID {
 	version := getLatestVersion(ks.parent)
 	cInfo, err := getCommitInfo(ks.parent, version)
 	if err != nil {
@@ -265,15 +285,7 @@ func (ks *baseKVStore) LastCommitID() CommitID {
 	return cInfo.CommitID()
 }
 
-func (ks *baseKVStore) Latest(keys []string) KVStore {
-	return NewlatestStore(ks, ks.storeEvery, ks.numRecent, ks.preKey, keys)
-}
-
-func (ks *baseKVStore) Parent() KVStore {
-	return ks.parent
-}
-
-func (ks *baseKVStore) getCombineKey(key []byte) string {
+func (ks *latestStore) getCombineKey(key []byte) string {
 	//var version int64
 	//
 	//version = ks.LastCommitID().Version
@@ -283,9 +295,9 @@ func (ks *baseKVStore) getCombineKey(key []byte) string {
 	return ckey
 }
 
-func (ks *baseKVStore) setCombineKey(key []byte) string {
+func (ks *latestStore) setCombineKey(key []byte) string {
 	//var version int64
-    //
+	//
 	//version = ks.LastCommitID().Version + 1
 	//
 	//ckey := ks.preKey.Name() + "/" + strconv.FormatInt(version,10) + "/" + string(key)
@@ -295,7 +307,7 @@ func (ks *baseKVStore) setCombineKey(key []byte) string {
 
 //-------------------------------------
 //query
-func (ks *baseKVStore) Query(req abci.RequestQuery) (res abci.ResponseQuery) {
+func (ks *latestStore) Query(req abci.RequestQuery) (res abci.ResponseQuery) {
 	if len(req.Data) == 0 {
 		msg := "Query cannot be zero length"
 		return sdk.ErrTxDecode(msg).QueryResult()
