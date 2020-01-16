@@ -5,16 +5,19 @@ import (
 	"errors"
 	"github.com/tanhuiya/ci123chain/pkg/couchdb"
 	"log"
+	"regexp"
 	"strings"
 )
 
 
 const SharedKey  = "order//OrderBook"
+const HostPattern  = "[*]+"
 
-func NewCouchSource(dbname, host string) *CouchDBSourceImp {
+func NewCouchSource(dbname, host, urlreg string) *CouchDBSourceImp {
 	imp := &CouchDBSourceImp{
-		dbname: dbname,
-		hostStr: host,
+		dbname: 	dbname,
+		hostStr: 	host,
+		urlreg:  	urlreg,
 	}
 	conn, err := imp.GetDBConnection()
 	if err != nil {
@@ -27,6 +30,7 @@ func NewCouchSource(dbname, host string) *CouchDBSourceImp {
 type CouchDBSourceImp struct {
 	dbname  string
 	hostStr string
+	urlreg  string
 	conn    *couchdb.GoCouchDB
 }
 
@@ -62,10 +66,15 @@ func (s *CouchDBSourceImp) FetchSource() (hostArr []string) {
 			continue
 		}
 		name := item["name"].(string)
-		if !strings.HasPrefix(name, "http") {
-			name = "http://" + name + ":80"
+
+		host := s.getAdjustHost(HostPattern, name)
+
+		//if !strings.HasPrefix(name, "http") {
+		//	name = "http://" + name + ":80"
+		//}
+		if len(host) > 0 {
+			hostArr = append(hostArr, host)
 		}
-		hostArr = append(hostArr, name)
 	}
 	log.Println("End fetch from couchdb")
 	return
@@ -96,4 +105,13 @@ func (svr *CouchDBSourceImp) GetDBConnection() (db *couchdb.GoCouchDB, err error
 	//	err = errors.New(fmt.Sprintf("cannot connect to couchdb, expect couchdb://xxxxx:5984 or couchdb://user:pass@xxxxx:5984, got %s", svr.hostStr))
 	//}
 	return
+}
+
+func (s *CouchDBSourceImp)getAdjustHost(pattern, name string) string {
+	reg, err := regexp.Compile(pattern)
+	if err != nil {
+		return ""
+	}
+	host := reg.ReplaceAllString(s.urlreg, name)
+	return host
 }

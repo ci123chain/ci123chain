@@ -7,21 +7,27 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/gateway/couchdbsource"
 	"log"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 )
 
 func Start() {
 	var serverList string
-	var statedb, dbname string
+	var statedb, dbname, urlreg string
 	var port int
 	flag.StringVar(&serverList, "backends", "", "Load balanced backends, use commas to separate")
 	flag.StringVar(&statedb, "statedb", "couchdb://couchdb_service:5984", "server resource")
+	flag.StringVar(&urlreg, "urlreg", "http://***:80", "reg for url connection to node")
+
 	flag.StringVar(&dbname, "db", "ci123", "db name")
 	flag.IntVar(&port, "port", 3030, "Port to serve")
 	flag.Parse()
 
-	svr := couchdbsource.NewCouchSource(dbname, statedb)
+	if ok, err :=  regexp.MatchString("[*]+", urlreg); !ok {
+		panic(err)
+	}
+	svr := couchdbsource.NewCouchSource(dbname, statedb, urlreg)
 
 	serverPool = NewServerPool(backend.NewBackEnd, svr, 10)
 
