@@ -8,6 +8,7 @@ import (
 	"github.com/tendermint/tendermint/crypto/tmhash"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	"io"
+	"reflect"
 	"sort"
 	"sync"
 )
@@ -70,7 +71,17 @@ func (ks *latestStore) Get(key []byte) (value []byte) {
 
 func (ks *latestStore) parentGet(key []byte) (value []byte) {
 	ckey := ks.getCombineKey(key)
-	value = ks.parent.Parent().Get([]byte(ckey))
+
+	p := ks.parent
+	for {
+		if reflect.TypeOf(p) != reflect.TypeOf(dbStoreAdapter{}) {
+			p = p.Parent()
+		} else {
+			break
+		}
+	}
+
+	value = p.Get([]byte(ckey))
 	if len(value) > 0 {
 		return
 	} else {
@@ -118,7 +129,7 @@ func (ks *latestStore) Latest(keys []string) KVStore {
 
 // Implements KVStore
 func (ks *latestStore) Parent() KVStore {
-	return nil
+	return ks.parent
 }
 
 // Implements CacheWrapper.
