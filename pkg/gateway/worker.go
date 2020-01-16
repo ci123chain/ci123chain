@@ -14,7 +14,6 @@ type SpecificJob struct {
 	Proxy          types.Proxy
 	ResponseWriter http.ResponseWriter
 	Backends       []types.Instance
-	//ResponseWriter ResWriter
 }
 
 type OtherParams struct {
@@ -28,24 +27,30 @@ type Params struct {
 }
 
 
-type ResWriter func(w http.ResponseWriter, result []byte)
 
-func (sjob SpecificJob) Do() {
-	sjob.Proxy.Handle(sjob.ResponseWriter,sjob.Request, sjob.Backends)
-	//fmt.Println(string(byte))
-	//sjob.ResponseWriter.WriteHeader()
-	//sjob.ResponseWriter.Write([]byte("bbb"))
+func (sjob *SpecificJob) Do() {
+	resultBytes, err := sjob.Proxy.Handle(sjob.Request, sjob.Backends)
+	sjob.ResponseWriter.Header().Set("Content-Type", "application/json")
+	if err != nil {
+		errRes := types.ErrorResponse{
+			Err:  err.Error(),
+			//Code: types.ErrGetErrorResponse,
+		}
+		res, _ := json.Marshal(errRes)
+		sjob.ResponseWriter.Write(res)
+	}else {
+		sjob.ResponseWriter.Write(resultBytes)
+	}
 }
 
-func NewSpecificJob(w http.ResponseWriter, r *http.Request, backends []types.Instance) SpecificJob {
-	//
+func NewSpecificJob(w http.ResponseWriter, r *http.Request, backends []types.Instance) *SpecificJob {
 
 	proxy, err := ParseURL(r)
 	if err != nil {
 		w.Write([]byte("unexpected policy"))
 	}
 
-	return SpecificJob{
+	return &SpecificJob{
 		Request: r,
 		Proxy:   proxy,
 		Backends:backends,
@@ -55,8 +60,6 @@ func NewSpecificJob(w http.ResponseWriter, r *http.Request, backends []types.Ins
 
 func ParseURL(r *http.Request) (types.Proxy, error){
 	body, _ := ioutil.ReadAll(r.Body)
-
-	//
 	var params Params
 	err := json.Unmarshal(body, &params)
 	if err != nil {

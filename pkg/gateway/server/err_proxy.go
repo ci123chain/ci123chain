@@ -13,6 +13,7 @@ func NewErrProxy(pt types.ProxyType) ErrProxy {
 	return ErrProxy{}
 }
 
-func (ep ErrProxy) Handle(w http.ResponseWriter, r *http.Request, backends []types.Instance) {
+func (ep ErrProxy) Handle(r *http.Request, backends []types.Instance) ([]byte, error) {
 	//do nothing
+	return nil, nil
 }

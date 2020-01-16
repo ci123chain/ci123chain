@@ -177,6 +177,56 @@ func (s *ServerPool) MarkBackendStatus(backendUrl *url.URL, alive bool) {
 
 func (s *ServerPool)ConfigServerPool(tokens []string)  {
 	for _, tok := range tokens {
+		exist := false
+		for _, back := range s.backends {
+			if back.URL().String() == tok {
+				exist = true
+				break
+			}
+		}
+		if exist {
+			continue
+		}
+		serverUrl, err := url.Parse(tok)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		if !isBackendAlive(serverUrl) {
+			continue
+		}
+
+		proxy := httputil.NewSingleHostReverseProxy(serverUrl)
+		proxy.ErrorHandler = func(writer http.ResponseWriter, request *http.Request, e error) {
+			log.Printf("[%s] %s\n", serverUrl.Host, e.Error())
+			retries := GetRetryFromContext(request)
+			if retries < 3 {
+				select {
+				case <-time.After(10 * time.Millisecond):
+					ctx := context.WithValue(request.Context(), Retry, retries+1)
+					proxy.ServeHTTP(writer, request.WithContext(ctx))
+				}
+				return
+			}
+
+			// after 3 retries, mark this backend as down
+			serverPool.MarkBackendStatus(serverUrl, false)
+
+			// if the same request routing for few attempts with different backends, increase the count
+			attempts := GetAttemptsFromContext(request)
+			log.Printf("%s(%s) Attempting retry %d\n", request.RemoteAddr, request.URL.Path, attempts)
+			ctx := context.WithValue(request.Context(), Attempts, attempts+1)
+			AllHandle(writer, request.WithContext(ctx))
+		}
+
+		serverPool.AddBackend(s.backendProto(serverUrl, true, proxy))
+		log.Printf("Configured server: %s\n", serverUrl)
+	}
+}
+
+/*
+func (s *ServerPool)ConfigServerPool(tokens []string)  {
+	for _, tok := range tokens {
 		serverUrl, err := url.Parse(tok)
 		if err != nil {
 			log.Fatal(err)
@@ -209,6 +259,7 @@ func (s *ServerPool)ConfigServerPool(tokens []string)  {
 		log.Printf("Configured server: %s\n", serverUrl)
 	}
 }
+*/
 
 func NewServerPool(backProto BackendProto, svrsource types.ServerSource, workerlen int) *ServerPool {
 

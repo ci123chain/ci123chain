@@ -2,7 +2,7 @@ package server
 
 import (
 	"encoding/json"
-	"github.com/tanhuiya/ci123chain/pkg/gateway/types"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -25,12 +25,12 @@ type ciResult struct {
 	Message	string	`json:"message"`
 }
 
+
 func SendRequest(url *url.URL,r *http.Request) ([]byte, *http.Response, error) {
 
 	cli := &http.Client{}
 	body := make([]byte, 0)
 	reqUrl := "http://" + url.Host + r.URL.Path
-	//fmt.Println(reqUrl)
 
 	req2, err := http.NewRequest(r.Method, reqUrl, strings.NewReader(string(body)))
 	if err != nil {
@@ -51,7 +51,24 @@ func SendRequest(url *url.URL,r *http.Request) ([]byte, *http.Response, error) {
 	return b, rep2, nil
 }
 
-var ResultResponse []types.ResultRep
+func AddResponses(b []byte) ciRes {
+	var resultCi ciResult
+	var resCi ciRes
+	err := json.Unmarshal(b, &resultCi)
+	if err != nil {
+		err2 := json.Unmarshal(b, &resCi)
+		if err2 != nil {
+			return ciRes{}
+		}
+
+		return resCi
+	}
+	return resCi
+}
+
+
+var ConcretResultResponse []ciResult
+var FilterResultResponse ciResult
 var response = make(chan int)
 var sc = make(chan int)
 
@@ -60,7 +77,6 @@ type ClasterJob interface {
 }
 
 type ClasterTask struct {
-	//
 	num int
 	id int
 	url *url.URL
@@ -77,22 +93,14 @@ func NewClasterTask(url *url.URL, r *http.Request, num, id int) *ClasterTask{
 }
 
 func (ct *ClasterTask) Do() {
-	var resp types.ResultRep
+	var resp ciRes
 	res, _, err := SendRequest(ct.url, ct.r)
 	if err != nil {
 		//
 		panic(err)
 	}
-	err = json.Unmarshal(res, &resp)
-	if err != nil {
-		//
-		panic(err)
-	}
-	//fmt.Println(resp)
-	ResultResponse = append(ResultResponse, resp)
-	if ct.id == ct.num - 1 {
-		response <- 0
-	}
+	resp = AddResponses(res)
+	fmt.Println(resp)
 }
 
 type Worker struct {
