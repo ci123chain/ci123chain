@@ -16,7 +16,7 @@ func Start() {
 	var serverList string
 	var statedb, dbname, urlreg string
 	var port int
-	flag.StringVar(&serverList, "backends", "", "Load balanced backends, use commas to separate")
+	flag.StringVar(&serverList, "backends", "http://127.0.0.1:1310", "Load balanced backends, use commas to separate")
 	flag.StringVar(&statedb, "statedb", "couchdb://couchdb_service:5984", "server resource")
 	flag.StringVar(&urlreg, "urlreg", "http://***:80", "reg for url connection to node")
 
