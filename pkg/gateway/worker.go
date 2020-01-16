@@ -7,7 +7,6 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/gateway/types"
 	"io/ioutil"
 	"net/http"
-	"strings"
 )
 
 type SpecificJob struct {
@@ -15,6 +14,7 @@ type SpecificJob struct {
 	Proxy          types.Proxy
 	ResponseWriter http.ResponseWriter
 	Backends       []types.Instance
+	RequestBody    []byte
 }
 
 type OtherParams struct {
@@ -27,18 +27,9 @@ type Params struct {
 	Other  OtherParams `json:"other"`
 }
 
-type RequestParams struct {
-	Proxy string `json:"proxy"`
-	Data interface{} `json:"data"`
-}
-
-type NewRequestParams struct {
-	Data interface{} `json:"data"`
-}
-
 
 func (sjob *SpecificJob) Do() {
-	resultBytes, err := sjob.Proxy.Handle(sjob.Request, sjob.Backends)
+	resultBytes, err := sjob.Proxy.Handle(sjob.Request, sjob.Backends, sjob.RequestBody)
 	sjob.ResponseWriter.Header().Set("Content-Type", "application/json")
 	if err != nil {
 		errRes := types.ErrorResponse{
@@ -54,47 +45,46 @@ func (sjob *SpecificJob) Do() {
 
 func NewSpecificJob(w http.ResponseWriter, r *http.Request, backends []types.Instance) *SpecificJob {
 
-	proxy, err, newRequest := ParseURL(r)
+	proxy, err, reqBody := ParseURL(r)
 	if err != nil {
 		_, _ = w.Write([]byte("unexpected proxy"))
 	}
-	r = newRequest
+	//r = newRequest
 
 	return &SpecificJob{
 		Request: r,
 		Proxy:   proxy,
 		Backends:backends,
 		ResponseWriter:w,
+		RequestBody:reqBody,
 	}
 }
 
-func ParseURL(r *http.Request) (types.Proxy, error, *http.Request){
+func ParseURL(r *http.Request) (types.Proxy, error, []byte){
 	body, _ := ioutil.ReadAll(r.Body)
-	var params RequestParams
+	var params types.RequestParams
 	err := json.Unmarshal(body, &params)
 	if err != nil {
 		return server.NewErrProxy("err"), err, nil
 	}
-	nrp := NewRequestParams{Data:params.Data}
+
+	nrp := types.NewRequestParams{Data:params.Data}
 	newByte, err := json.Marshal(nrp)
 	if err != nil {
 		//
 	}
-	newReq, err := http.NewRequest(r.Method, r.Host, strings.NewReader(string(newByte)))
-	if err != nil {
-		//
-	}
+
 
 	pt := types.ProxyType(params.Proxy)
 	switch params.Proxy {
 	case types.LB:
-		return server.NewLBProxy(pt), nil, newReq
+		return server.NewLBProxy(pt), nil, newByte
 	case types.Concret:
-		return server.NewConcretProxy(pt), nil, newReq
+		return server.NewConcretProxy(pt), nil, newByte
 	case types.Filter:
-		return server.NewFilterProxy(pt), nil, newReq
+		return server.NewFilterProxy(pt), nil, newByte
 	default:
-		return server.NewErrProxy("unexpected policy"), errors.New("unexpected policy"), nil
+		return server.NewErrProxy("unexpected policy"), errors.New("unexpected policy"), newByte
 	}
 }
 

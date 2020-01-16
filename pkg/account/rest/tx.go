@@ -24,7 +24,7 @@ type BalanceData struct {
 }
 
 type QueryAddress struct {
-	Address string `json:"address"`
+	Data string `json:"data"`
 }
 func QueryBalancesRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, request *http.Request) {
@@ -43,7 +43,7 @@ func QueryBalancesRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			rest.WriteErrorRes(w, err)
 			return
 		}
-		addrBytes, err2 := helper.ParseAddrs(addr.Address)
+		addrBytes, err2 := helper.ParseAddrs(addr.Data)
 		if len(addrBytes) < 1 || err2 != nil {
 			rest.WriteErrorRes(w, client.ErrParseAddr(types.DefaultCodespace, err2))
 			return

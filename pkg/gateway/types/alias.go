@@ -29,3 +29,12 @@ type ErrorResponse struct {
 	Err string `json:"err"`
 	//Code uint32 `json:"code"`
 }
+
+type RequestParams struct {
+	Proxy string `json:"proxy"`
+	Data interface{} `json:"data"`
+}
+
+type NewRequestParams struct {
+	Data interface{} `json:"data"`
+}

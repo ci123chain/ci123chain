@@ -23,10 +23,10 @@ func NewLBProxy(pt types.ProxyType) *LBProxy {
 	return lbp
 }
 
-func (lbp *LBProxy) Handle(r *http.Request, backends []types.Instance) ([]byte, error) {
+func (lbp *LBProxy) Handle(r *http.Request, backends []types.Instance, reqBody []byte) ([]byte, error) {
 
 	url := lbp.Policy.NextPeer(backends).URL()
-	b, _, err := SendRequest(url, r)
+	b, _, err := SendRequest(url, r, reqBody)
 	if err != nil {
 		return nil, errors.New("failed to get response")
 	}

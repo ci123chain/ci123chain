@@ -18,7 +18,7 @@ func NewFilterProxy(pt types.ProxyType) *FilterProxy {
 	return fp
 }
 
-func (fp *FilterProxy) Handle(r *http.Request, backends []types.Instance) ([]byte, error) {
+func (fp *FilterProxy) Handle(r *http.Request, backends []types.Instance, reqBody []byte) ([]byte, error) {
 
 	backendsLen := len(backends)
 	var resultResp []*http.Response
@@ -26,7 +26,7 @@ func (fp *FilterProxy) Handle(r *http.Request, backends []types.Instance) ([]byt
 	var result []string
 
 	if backendsLen == 1 {
-		resByte, _, err := SendRequest(backends[0].URL(), r)
+		resByte, _, err := SendRequest(backends[0].URL(), r, reqBody)
 		if err != nil {
 			//
 			return nil, errors.New("failed to get response")
@@ -35,7 +35,7 @@ func (fp *FilterProxy) Handle(r *http.Request, backends []types.Instance) ([]byt
 
 	}else {
 		for i := 0; i < backendsLen - 1; i++ {
-			resByte, rep, _ := SendRequest(backends[i].URL(),r)
+			resByte, rep, _ := SendRequest(backends[i].URL(),r, reqBody)
 			resultResp = append(resultResp, rep)
 			result = append(result, string(resByte))
 		}
