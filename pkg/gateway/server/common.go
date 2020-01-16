@@ -15,7 +15,7 @@ type BalanceData struct {
 
 type ciRes struct{
 	Ret 	uint32 	`json:"ret"`
-	Data 	BalanceData	`json:"data"`
+	Data 	interface{}	`json:"data"`
 	Message	string	`json:"message"`
 }
 

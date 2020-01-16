@@ -225,12 +225,14 @@ func TestAddShard(t *testing.T) {
 
 	signdata, err := order.SignUpgradeTx("0x204bCC42559Faf6DFE1485208F7951aaD800B313",
 
-		20000, 1, "ADD", "ci123chain-shared3", 40, privByte)
+		20000, 1, "ADD", "ci123chain-shared3", 500, privByte)
 
 
 	assert.NoError(t, err)
 	httpPostUpgradeTx(hex.EncodeToString(signdata))
 }
+
+func TestGet
 
 type retData struct {
 	Data string `json:"data"`

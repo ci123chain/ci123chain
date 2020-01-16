@@ -30,26 +30,6 @@ func GetRetryFromContext(r *http.Request) int {
 	return 0
 }
 
-/*
-// lb load balances the incoming request
-func lb(w http.ResponseWriter, r *http.Request) {
-	attempts := GetAttemptsFromContext(r)
-	if attempts > 3 {
-		log.Printf("%s(%s) Max attempts reached, terminating\n", r.RemoteAddr, r.URL.Path)
-		http.Error(w, "Service not available", http.StatusServiceUnavailable)
-		return
-	}
-
-	peer := serverPool.GetNextPeer()
-	log.Printf("Proxy by host: " + peer.URL().String())
-	if peer != nil {
-		peer.Proxy().ServeHTTP(w, r)
-		return
-	}
-	http.Error(w, "Service not available", http.StatusServiceUnavailable)
-}
-*/
-
 // isAlive checks whether a backend is Alive by establishing a TCP connection
 func isBackendAlive(u *url.URL) bool {
 	timeout := 2 * time.Second
