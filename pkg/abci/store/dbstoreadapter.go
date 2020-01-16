@@ -37,5 +37,15 @@ func (dsa dbStoreAdapter) Gas(meter GasMeter, config GasConfig) KVStore {
 	return NewGasKVStore(meter, config, dsa)
 }
 
+// Implements KVStore
+func (dsa dbStoreAdapter) Latest(keys []string) KVStore {
+	return nil
+}
+
+// Implements KVStore
+func (dsa dbStoreAdapter) Parent() KVStore {
+	return nil
+}
+
 // dbm.DB implements KVStore so we can CacheKVStore it.
 var _ KVStore = dbStoreAdapter{}
