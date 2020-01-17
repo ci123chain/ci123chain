@@ -2,11 +2,13 @@ package rest
 
 import (
 	"encoding/hex"
+	"encoding/json"
 	"github.com/gorilla/mux"
 	"github.com/tanhuiya/ci123chain/pkg/abci/types/rest"
 	"github.com/tanhuiya/ci123chain/pkg/client"
 	"github.com/tanhuiya/ci123chain/pkg/client/context"
 	"github.com/tanhuiya/ci123chain/pkg/order/types"
+	"io/ioutil"
 	"net/http"
 )
 
@@ -22,14 +24,14 @@ type ShardTxBytes struct {
 func AddShardTxRequest(cliCtx context.Context) http.HandlerFunc{
 	return func(writer http.ResponseWriter, request *http.Request) {
 
-		/*var shardTxBytes ShardTxBytes
+		var shardTxBytes ShardTxBytes
 		b, readErr := ioutil.ReadAll(request.Body)
 		readErr = json.Unmarshal(b, &shardTxBytes)
 		if readErr != nil {
 			//
-		}*/
-		data := request.FormValue("data")
-		txByte, err := hex.DecodeString(data)
+		}
+		//data := request.FormValue("data")
+		txByte, err := hex.DecodeString(shardTxBytes.Data)
 		if err != nil {
 			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"data error"))
 			return

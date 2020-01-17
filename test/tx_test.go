@@ -44,7 +44,7 @@ func MakeParams(i int, pri []byte) string{
 	nonce := uint64(i)
 	privByte := pri
 	signdata, err := order.SignUpgradeTx("0x204bCC42559Faf6DFE1485208F7951aaD800B313",
-		20000, nonce, "ADD", "ty5", 6000, privByte)
+		20000, nonce, "ADD", "ty8", 8000, privByte)
 
 
 
@@ -62,7 +62,7 @@ func MakeParams(i int, pri []byte) string{
 
 func TestSign(t *testing.T) {
 	key := makePrivateKey()
-	res := MakeParams(12, key)
+	res := MakeParams(18, key)
 	fmt.Println(res)
 }
 

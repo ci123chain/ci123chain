@@ -39,7 +39,6 @@ func NewSpecificJob(w http.ResponseWriter, r *http.Request, backends []types.Ins
 	if err != nil {
 		_, _ = w.Write([]byte("unexpected proxy"))
 	}
-	//r = newRequest
 
 	return &SpecificJob{
 		Request: r,

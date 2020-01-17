@@ -33,7 +33,6 @@ func SendRequest(url *url.URL,r *http.Request, reqBody []byte) ([]byte, *http.Re
 	if err != nil {
 		return nil, nil, err
 	}
-	fmt.Println(string(reqBody))
 
 	// set request content type
 	contentType := r.Header.Get("Content-Type")
