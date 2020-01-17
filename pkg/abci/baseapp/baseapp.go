@@ -562,7 +562,7 @@ func (app *BaseApp) cacheTxContext(ctx sdk.Context, txBytes []byte) (
 		).(sdk.CacheMultiStore)
 	}
 
-	return ctx.WithMultiStore(msCache), msCache
+	return ctx.WithMultiStore(ms), msCache
 }
 
 // runTx processes a transfer. The transactions is proccessed via an
