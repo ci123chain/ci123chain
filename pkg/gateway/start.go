@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
-	"time"
 )
 
 const DefaultLogDir  = "$HOME/.gateway"
@@ -67,5 +66,8 @@ func AllHandle(w http.ResponseWriter, r *http.Request) {
 	if job != nil {
 		serverPool.JobQueue <- job
 	}
-	time.Sleep(100 * time.Millisecond)
+	select {
+	 case resp := <-job.Response():
+		w.Write(resp)
+	}
 }

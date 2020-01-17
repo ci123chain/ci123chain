@@ -16,6 +16,8 @@ type SpecificJob struct {
 	ResponseWriter http.ResponseWriter
 	Backends       []types.Instance
 	RequestBody    []byte
+
+	responseChan 	chan []byte
 }
 
 type OtherParams struct {
@@ -28,6 +30,9 @@ type Params struct {
 	Other  OtherParams `json:"other"`
 }
 
+func (sjob *SpecificJob) Response() chan []byte {
+	return sjob.responseChan
+}
 
 func (sjob *SpecificJob) Do() {
 	if len(sjob.Backends) < 1 {
@@ -61,15 +66,24 @@ func NewSpecificJob(w http.ResponseWriter, r *http.Request, backends []types.Ins
 		_, _ = w.Write([]byte("unexpected proxy"))
 		return nil
 	}
-	//r = newRequest
 
-	return &SpecificJob{
+
+	job := &SpecificJob{
 		Request: r,
 		Proxy:   proxy,
 		Backends:backends,
 		ResponseWriter:w,
 		RequestBody:reqBody,
+		responseChan: make(chan []byte),
 	}
+
+	//r = newRequest
+	select {
+	case resp2 := <- proxy.Response():
+		job.responseChan <- resp2
+	}
+
+	return job
 }
 
 func ParseURL(r *http.Request) (types.Proxy, error, []byte){
