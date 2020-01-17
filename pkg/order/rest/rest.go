@@ -15,8 +15,19 @@ func RegisterTxRoutes(cliCtx context.Context, r *mux.Router)  {
 	r.HandleFunc("/tx/addShard", AddShardTxRequest(cliCtx)).Methods("POST")
 }
 
+type ShardTxBytes struct {
+	Data string `json:"data"`
+}
+
 func AddShardTxRequest(cliCtx context.Context) http.HandlerFunc{
 	return func(writer http.ResponseWriter, request *http.Request) {
+
+		/*var shardTxBytes ShardTxBytes
+		b, readErr := ioutil.ReadAll(request.Body)
+		readErr = json.Unmarshal(b, &shardTxBytes)
+		if readErr != nil {
+			//
+		}*/
 		data := request.FormValue("data")
 		txByte, err := hex.DecodeString(data)
 		if err != nil {

@@ -17,16 +17,6 @@ type SpecificJob struct {
 	RequestBody    []byte
 }
 
-type OtherParams struct {
-	ID   uint64     `json:"id"`
-	Host string     `json:"host"`
-}
-
-type Params struct {
-	Proxy string      `json:"proxy"`
-	Other  OtherParams `json:"other"`
-}
-
 
 func (sjob *SpecificJob) Do() {
 	resultBytes, err := sjob.Proxy.Handle(sjob.Request, sjob.Backends, sjob.RequestBody)
