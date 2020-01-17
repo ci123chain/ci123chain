@@ -1,6 +1,7 @@
-package logger
+package spliter
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -16,6 +17,7 @@ func NewFileLogger(fileDir, fileName string) FileLogger {
 		fileName: 		fileName,
 		mu:            	new(sync.RWMutex),
 		stopTickerChan: make(chan bool, 1),
+		errchan: 		make(chan string, 1),
 	}
 
 	t, _ := time.Parse(DATE_FORMAT, time.Now().Format(DATE_FORMAT))
@@ -29,9 +31,9 @@ type FileLogger struct {
 	fileName       string         // 日志文件名（无需包含日期和扩展名）
 	logFile        *os.File       // 日志文件
 	date           *time.Time     // 日志当前日期
-	parent         Logger    // 系统日志对象
 	mu             *sync.RWMutex  // 读写锁，在进行日志分割和日志写入时需要锁住
 	stopTickerChan chan bool      // 停止定时器的通道
+	errchan 	   chan string
 }
 
 const DATE_FORMAT = "2006-01-02"
@@ -46,13 +48,19 @@ func (f *FileLogger) fileMonitor() {
 		case <-ticker.C:
 			if f.isMustSplit() {
 				if err := f.split(); err != nil {
-					GetLogger().Error("Log split error ", "error", err)
+					if len(f.errchan) < 1 {
+						f.errchan <- fmt.Sprintf("Log split error: %v", err)
+					}
 				}
 			}
 		case <-f.stopTickerChan:
 			return
 		}
 	}
+}
+
+func (f *FileLogger)ErrChan() <- chan string{
+	return f.errchan
 }
 
 func (f *FileLogger) isMustSplit() bool {

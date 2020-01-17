@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/tanhuiya/ci123chain/pkg/couchdb"
-	"log"
+	"github.com/tanhuiya/ci123chain/pkg/gateway/logger"
 	"regexp"
 	"strings"
 )
@@ -35,11 +35,11 @@ type CouchDBSourceImp struct {
 }
 
 func (s *CouchDBSourceImp) FetchSource() (hostArr []string) {
-	log.Println("Start fetch from couchdb")
+	logger.Debug("Start fetch from couchdb")
 	if s.conn == nil {
 		conn, err := s.GetDBConnection()
 		if err != nil {
-			log.Println(err)
+			logger.Error("Connection Error: ", err)
 		}
 		s.conn =conn
 	}
@@ -48,7 +48,7 @@ func (s *CouchDBSourceImp) FetchSource() (hostArr []string) {
 	var shared map[string]interface{}
 	err := json.Unmarshal(bz, &shared)
 	if err != nil {
-		log.Println(err)
+		logger.Error("fetch data from couchdb error: ", err)
 	}
 
 	orderDict, ok := shared["value"].(map[string]interface{})
@@ -76,7 +76,7 @@ func (s *CouchDBSourceImp) FetchSource() (hostArr []string) {
 			hostArr = append(hostArr, host)
 		}
 	}
-	log.Println("End fetch from couchdb")
+	logger.Debug("End fetch from couchdb")
 	return
 }
 

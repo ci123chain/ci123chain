@@ -2,7 +2,7 @@ package gateway
 
 import (
 	"fmt"
-	"log"
+	"github.com/tanhuiya/ci123chain/pkg/gateway/logger"
 	"net"
 	"net/http"
 	"net/url"
@@ -35,7 +35,7 @@ func isBackendAlive(u *url.URL) bool {
 	timeout := 2 * time.Second
 	conn, err := net.DialTimeout("tcp", u.Host, timeout)
 	if err != nil {
-		log.Println(fmt.Sprintf("Site unreachable for host: %s, error: %v", u.String(), err))
+		logger.Warn(fmt.Sprintf("Site unreachable for host: %s, error: %v", u.String(), err))
 		return false
 	}
 	_ = conn.Close()
@@ -48,9 +48,9 @@ func healthCheck() {
 	for {
 		select {
 		case <-t.C:
-			log.Println("Starting health check...")
+			logger.Debug("Starting health check...")
 			serverPool.HealthCheck()
-			log.Println("Health check completed")
+			logger.Debug("Health check completed")
 		}
 	}
 }

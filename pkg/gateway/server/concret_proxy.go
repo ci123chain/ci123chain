@@ -47,6 +47,7 @@ func (cp *ConcretProxy) Handle(r *http.Request, backends []types.Instance, reqBo
 	if err != nil {
 		return nil, errors.New("failed to unmarshal response bytes")
 	}
+
 	return resultByte, nil
 
 /*
