@@ -9,5 +9,5 @@ type Proxy interface {
 
 	//HaveResponse() chan int
 
-	Handle(r *http.Request, backends []Instance) ([]byte, error)
+	Handle(r *http.Request, backends []Instance, reqBody []byte) ([]byte, error)
 }

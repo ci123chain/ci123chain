@@ -65,5 +65,3 @@ func fetchSharedRoutine()  {
 		}
 	}
 }
-
-var serverPool *ServerPool

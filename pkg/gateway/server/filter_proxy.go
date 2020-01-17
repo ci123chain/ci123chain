@@ -18,7 +18,7 @@ func NewFilterProxy(pt types.ProxyType) *FilterProxy {
 	return fp
 }
 
-func (fp *FilterProxy) Handle(r *http.Request, backends []types.Instance) ([]byte, error) {
+func (fp *FilterProxy) Handle(r *http.Request, backends []types.Instance, reqBody []byte) ([]byte, error) {
 
 	backendsLen := len(backends)
 	var resultResp []*http.Response
@@ -26,25 +26,26 @@ func (fp *FilterProxy) Handle(r *http.Request, backends []types.Instance) ([]byt
 	var result []string
 
 	if backendsLen == 1 {
-		byte, _, err := SendRequest(backends[0].URL(), r)
+		resByte, _, err := SendRequest(backends[0].URL(), r, reqBody)
 		if err != nil {
 			//
 			return nil, errors.New("failed to get response")
 		}
-		return byte, nil
+		return resByte, nil
 
 	}else {
 		for i := 0; i < backendsLen - 1; i++ {
-			byte, rep2, err := SendRequest(backends[i].URL(),r)
-			if err != nil {
-				//
-				//return nil, errors.New("failed to get response")
-			}
-			resultResp = append(resultResp, rep2)
-			result = append(result, string(byte))
+			resByte, rep, _ := SendRequest(backends[i].URL(),r, reqBody)
+			resultResp = append(resultResp, rep)
+			result = append(result, string(resByte))
 		}
 	}
-	for i, _ := range resultResp {
+	if result == nil {
+		//
+		resByte := []byte("sorry, no results")
+		return resByte, nil
+	}
+	for i := range resultResp {
 		if resultResp[i].StatusCode == types.ValidCode {
 			resultByte = []byte(result[i])
 			break

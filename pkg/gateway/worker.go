@@ -15,6 +15,7 @@ type SpecificJob struct {
 	Proxy          types.Proxy
 	ResponseWriter http.ResponseWriter
 	Backends       []types.Instance
+	RequestBody    []byte
 }
 
 type OtherParams struct {
@@ -23,22 +24,21 @@ type OtherParams struct {
 }
 
 type Params struct {
-	Policy string      `json:"policy"`
+	Proxy string      `json:"proxy"`
 	Other  OtherParams `json:"other"`
 }
 
 
-
 func (sjob *SpecificJob) Do() {
-	if len(sjob.Backends) > 0 {
+	if len(sjob.Backends) < 1 {
 		res, _ := json.Marshal(types.ErrorResponse{
 			Err:  "service backend not found",
 		})
 		sjob.ResponseWriter.Write(res)
 		return
 	}
-	resultBytes, err := sjob.Proxy.Handle(sjob.Request, sjob.Backends)
 
+	resultBytes, err := sjob.Proxy.Handle(sjob.Request, sjob.Backends, sjob.RequestBody)
 	sjob.ResponseWriter.Header().Set("Content-Type", "application/json")
 	if err != nil {
 		errRes := types.ErrorResponse{
@@ -46,48 +46,58 @@ func (sjob *SpecificJob) Do() {
 			//Code: types.ErrGetErrorResponse,
 		}
 		res, _ := json.Marshal(errRes)
-		sjob.ResponseWriter.Write(res)
+		_, _ = sjob.ResponseWriter.Write(res)
 	}else {
-		sjob.ResponseWriter.Write(resultBytes)
+		_, _ = sjob.ResponseWriter.Write(resultBytes)
 	}
 
-	logger.Info("===\n Request for : %s;  response: %v", sjob.Request.URL.String(), string(resultBytes))
+	logger.Info("===\n Request for : %s; Params: %v;  response: %v", sjob.Request.URL.String(), sjob.RequestBody, string(resultBytes))
 }
 
 func NewSpecificJob(w http.ResponseWriter, r *http.Request, backends []types.Instance) *SpecificJob {
 
-	proxy, err := ParseURL(r)
+	proxy, err, reqBody := ParseURL(r)
 	if err != nil {
-		w.Write([]byte("unexpected policy"))
+		_, _ = w.Write([]byte("unexpected proxy"))
+		return nil
 	}
+	//r = newRequest
 
 	return &SpecificJob{
 		Request: r,
 		Proxy:   proxy,
 		Backends:backends,
 		ResponseWriter:w,
+		RequestBody:reqBody,
 	}
 }
 
-func ParseURL(r *http.Request) (types.Proxy, error){
+func ParseURL(r *http.Request) (types.Proxy, error, []byte){
 	body, _ := ioutil.ReadAll(r.Body)
-	logger.Info("Got Request: %s; params: %v;\n===", r.URL.String(), string(body))
 
-	var params Params
+	var params types.RequestParams
 	err := json.Unmarshal(body, &params)
 	if err != nil {
-		return server.NewErrProxy("err"), err
+		return server.NewErrProxy("err"), err, nil
 	}
-	pt := types.ProxyType(params.Policy)
-	switch params.Policy {
+
+	nrp := types.NewRequestParams{Data:params.Data}
+	newByte, err := json.Marshal(nrp)
+	if err != nil {
+		//
+	}
+
+
+	pt := types.ProxyType(params.Proxy)
+	switch params.Proxy {
 	case types.LB:
-		return server.NewLBProxy(pt), nil
+		return server.NewLBProxy(pt), nil, newByte
 	case types.Concret:
-		return server.NewConcretProxy(pt), nil
+		return server.NewConcretProxy(pt), nil, newByte
 	case types.Filter:
-		return server.NewFilterProxy(pt), nil
+		return server.NewFilterProxy(pt), nil, newByte
 	default:
-		return server.NewErrProxy("unexpected policy"), errors.New("unexpected policy")
+		return server.NewErrProxy("unexpected policy"), errors.New("unexpected policy"), newByte
 	}
 }
 

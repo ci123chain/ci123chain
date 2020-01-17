@@ -14,6 +14,7 @@ import (
 )
 
 const DefaultLogDir  = "$HOME/.gateway"
+var serverPool *ServerPool
 
 func Start() {
 	var logDir, logLevel, serverList string
@@ -63,6 +64,8 @@ func Start() {
 func AllHandle(w http.ResponseWriter, r *http.Request) {
 	//do something
 	job := NewSpecificJob(w, r, serverPool.backends)
-	serverPool.JobQueue <- job
+	if job != nil {
+		serverPool.JobQueue <- job
+	}
 	time.Sleep(100 * time.Millisecond)
 }

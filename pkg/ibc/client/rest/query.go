@@ -3,21 +3,27 @@ package rest
 import (
 	"bytes"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/tanhuiya/ci123chain/pkg/abci/types/rest"
 	"github.com/tanhuiya/ci123chain/pkg/client/context"
 	"github.com/tanhuiya/ci123chain/pkg/ibc/types"
 	"github.com/tanhuiya/ci123chain/pkg/transfer"
+	"io/ioutil"
 	"net/http"
 )
 
 
 func RegisterTxRoutes(cliCtx context.Context, r *mux.Router)  {
-	r.HandleFunc("/ibctx/{uniqueid}", QueryTxByUniqueIDRequestHandlerFn(cliCtx)).Methods("GET")
-	r.HandleFunc("/ibctx/state/{ibcstate}", QueryTxByStateRequestHandlerFn(cliCtx)).Methods("GET")
-	r.HandleFunc("/ibctx/nonce/{accountaddress}", QueryAccountNonceRequestHandlerFn(cliCtx)).Methods("GET")
+	r.HandleFunc("/ibctx", QueryTxByUniqueIDRequestHandlerFn(cliCtx)).Methods("POST")
+	r.HandleFunc("/ibctx/state", QueryTxByStateRequestHandlerFn(cliCtx)).Methods("POST")
+	r.HandleFunc("/ibctx/nonce", QueryAccountNonceRequestHandlerFn(cliCtx)).Methods("POST")
 
+}
+
+type Params struct {
+	Data string `json:"data"`
 }
 
 type IBCUniqueIDData struct {
@@ -25,10 +31,16 @@ type IBCUniqueIDData struct {
 }
 func QueryTxByStateRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
-		vars := mux.Vars(request)
-		ibcState := vars["ibcstate"]
+		//vars := mux.Vars(request)
+		//ibcState := vars["ibcstate"]
+		var params Params
+		b, readErr := ioutil.ReadAll(request.Body)
+		readErr = json.Unmarshal(b, &params)
+		if readErr != nil {
+			//
+		}
 
-		if err := types.ValidateState(ibcState); err != nil {
+		if err := types.ValidateState(params.Data); err != nil {
 			rest.WriteErrorRes(writer, err)
 			return
 		}
@@ -39,7 +51,7 @@ func QueryTxByStateRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			return
 		}
 
-		res, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/state/" + ibcState, nil)
+		res, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/state/" + params.Data, nil)
 		if len(res) < 1 {
 			rest.WriteErrorRes(writer, transfer.ErrQueryTx(types.DefaultCodespace, "There is no ibctx ready"))
 			return
@@ -60,15 +72,22 @@ type IBCTxStateData struct {
 }
 func QueryTxByUniqueIDRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
-		vars := mux.Vars(request)
-		uniqueidStr := vars["uniqueid"]
+		//vars := mux.Vars(request)
+		//uniqueidStr := vars["uniqueid"]
+
+		var params Params
+		b, readErr := ioutil.ReadAll(request.Body)
+		readErr = json.Unmarshal(b, &params)
+		if readErr != nil {
+			//
+		}
 
 		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(writer, cliCtx, request)
 		if !ok {
 			rest.WriteErrorRes(writer, err)
 			return
 		}
-		uniqueBz := []byte(uniqueidStr)
+		uniqueBz := []byte(params.Data)
 
 		res, _, err := cliCtx.Query("/store/" + types.StoreKey + "/types", uniqueBz)
 		if len(res) < 1 {
@@ -82,7 +101,7 @@ func QueryTxByUniqueIDRequestHandlerFn(cliCtx context.Context) http.HandlerFunc 
 			return
 		}
 		if !bytes.Equal(uniqueBz, ibcMsg.UniqueID) {
-			rest.WriteErrorRes(writer, transfer.ErrQueryTx(types.DefaultCodespace, fmt.Sprintf("different uniqueID get %s, expected %s", hex.EncodeToString(ibcMsg.UniqueID), uniqueidStr)))
+			rest.WriteErrorRes(writer, transfer.ErrQueryTx(types.DefaultCodespace, fmt.Sprintf("different uniqueID get %s, expected %s", hex.EncodeToString(ibcMsg.UniqueID), params.Data)))
 			return
 		}
 		resp := &IBCTxStateData{State:ibcMsg.State}
@@ -95,15 +114,21 @@ type NonceData struct {
 }
 func QueryAccountNonceRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
-		vars := mux.Vars(request)
-		accountAddress := vars["accountaddress"]
+		//vars := mux.Vars(request)
+		//accountAddress := vars["accountaddress"]
+		var params Params
+		b, readErr := ioutil.ReadAll(request.Body)
+		readErr = json.Unmarshal(b, &params)
+		if readErr != nil {
+			//
+		}
 		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(writer, cliCtx, request)
 		if !ok {
 			rest.WriteErrorRes(writer, err)
 			return
 		}
 
-		res, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/nonce/" + accountAddress, nil)
+		res, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/nonce/" + params.Data, nil)
 		if err != nil {
 			rest.WriteErrorRes(writer, err)
 			return

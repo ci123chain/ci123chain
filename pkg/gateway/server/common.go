@@ -9,10 +9,6 @@ import (
 	"strings"
 )
 
-type BalanceData struct {
-	Balance uint64 `json:"balance"`
-}
-
 type ciRes struct{
 	Ret 	uint32 	`json:"ret"`
 	Data 	interface{}	`json:"data"`
@@ -26,16 +22,19 @@ type ciResult struct {
 }
 
 
-func SendRequest(url *url.URL,r *http.Request) ([]byte, *http.Response, error) {
+func SendRequest(url *url.URL,r *http.Request, reqBody []byte) ([]byte, *http.Response, error) {
 
 	cli := &http.Client{}
-	body := make([]byte, 0)
+	//body := make([]byte, 0)
 	reqUrl := "http://" + url.Host + r.URL.Path
 
-	req2, err := http.NewRequest(r.Method, reqUrl, strings.NewReader(string(body)))
+
+	req2, err := http.NewRequest(r.Method, reqUrl, strings.NewReader(string(reqBody)))
 	if err != nil {
 		return nil, nil, err
 	}
+	fmt.Println(string(reqBody))
+
 	// set request content type
 	contentType := r.Header.Get("Content-Type")
 	req2.Header.Set("Content-Type", contentType)
@@ -67,9 +66,9 @@ func AddResponses(b []byte) ciRes {
 }
 
 
-var ConcretResultResponse []ciResult
-var FilterResultResponse ciResult
-var response = make(chan int)
+
+
+
 var sc = make(chan int)
 
 type ClasterJob interface {
@@ -92,9 +91,10 @@ func NewClasterTask(url *url.URL, r *http.Request, num, id int) *ClasterTask{
 	}
 }
 
+
 func (ct *ClasterTask) Do() {
 	var resp ciRes
-	res, _, err := SendRequest(ct.url, ct.r)
+	res, _, err := SendRequest(ct.url, ct.r, nil)
 	if err != nil {
 		//
 		panic(err)
