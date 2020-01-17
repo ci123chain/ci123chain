@@ -23,28 +23,47 @@ var cdc = app.MakeCodec()
 type Tx struct {
 	SignedTx	string `json:"signedtx"`
 }
+
+type TxAccountParams struct {
+	From       string    `json:"from"`
+	To         string    `json:"to"`
+	Gas        string    `json:"gas"`
+	Amount     string    `json:"amount"`
+	Key        string    `json:"key"`
+	Fabric     string     `json:"fabric"`
+}
+
+type TxParams struct {
+	Data TxAccountParams `json:"data"`
+}
+
+
 func SignTxRequestHandler(cliCtx context.Context) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 
-		var params Params
+		var params TxParams
 		b, readErr := ioutil.ReadAll(request.Body)
 		readErr = json.Unmarshal(b, &params)
 		if readErr != nil {
 			//
 		}
-		priv := params.Data
-		//priv := request.FormValue("privateKey")
+		priv := params.Data.Key
 		if len(priv) < 1 {
 			rest.WriteErrorRes(writer, transaction.ErrBadPrivkey(types.DefaultCodespace, errors.New("param privateKey not found")) )
 			return
 		}
+		from := params.Data.From
+		to := params.Data.To
+		gas := params.Data.Gas
+		amount := params.Data.Amount
 
-		fabric := request.FormValue("fabric")
+		fabric := params.Data.Fabric
+		//fabric := request.FormValue("fabric")
 		isFabric, err  := strconv.ParseBool(fabric)
 		if err != nil {
 			isFabric = false
 		}
-		tx, err := buildTransferTx(request, isFabric)
+		tx, err := buildTransferTx(request, isFabric, from, to , gas, amount)
 		if err != nil {
 			rest.WriteErrorRes(writer, err.(sdk.Error))
 			return
@@ -65,11 +84,11 @@ func SignTxRequestHandler(cliCtx context.Context) http.HandlerFunc {
 	}
 }
 
-func buildTransferTx(r *http.Request, isFabric bool) (transaction.Transaction, error) {
-	from := r.FormValue("from")
-	to := r.FormValue("to")
-	amount := r.FormValue("amount")
-	gas := r.FormValue("gas")
+func buildTransferTx(r *http.Request, isFabric bool,from, to , gas, amount string) (transaction.Transaction, error) {
+	//from := r.FormValue("from")
+	//to := r.FormValue("to")
+	//amount := r.FormValue("amount")
+	//gas := r.FormValue("gas")
 
 
 	froms, err := helper.ParseAddrs(from)

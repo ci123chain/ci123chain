@@ -20,17 +20,13 @@ type RewardsData struct {
 	Rewards 	uint64 `json:"rewards"`
 }
 
-type searchHeight struct {
-	Height string `json:"height"`
-}
-
-type InsideParams struct {
+type RewardsParams struct {
 	Address string `json:"address"`
 	Height  string     `json:"height"`
 }
 
-type Params struct {
-	Data InsideParams `json:"data"`
+type QueryRewardsParams struct {
+	Data RewardsParams `json:"data"`
 }
 
 func QueryValidatorRewardsRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
@@ -39,7 +35,7 @@ func QueryValidatorRewardsRequestHandlerFn(cliCtx context.Context) http.HandlerF
 		//accountAddress := vars["accountAddress"]
 		//height := vars["height"]
 
-		var params Params
+		var params QueryRewardsParams
 		b, readErr := ioutil.ReadAll(request.Body)
 		readErr = json.Unmarshal(b, &params)
 		if readErr != nil {
@@ -55,7 +51,7 @@ func QueryValidatorRewardsRequestHandlerFn(cliCtx context.Context) http.HandlerF
 			}
 		}
 
-		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(writer, cliCtx, request)
+		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(writer, cliCtx, request, "")
 		if !ok {
 			rest.WriteErrorRes(writer, err)
 			return

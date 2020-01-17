@@ -9,18 +9,20 @@ import (
 
 type ConcretProxy struct {
 	ProxyType types.ProxyType
+	ResponseChannel chan []byte
 }
 
 func NewConcretProxy(pt types.ProxyType) *ConcretProxy {
 
 	cp := &ConcretProxy{
 		ProxyType: pt,
+		ResponseChannel:make(chan []byte),
 	}
 	return cp
 }
 
 
-func (cp *ConcretProxy) Handle(r *http.Request, backends []types.Instance, reqBody []byte) ([]byte, error) {
+func (cp *ConcretProxy) Handle(r *http.Request, backends []types.Instance, reqBody []byte) {
 
 	backendsLen := len(backends)
 	var resultResp []ciRes
@@ -29,9 +31,16 @@ func (cp *ConcretProxy) Handle(r *http.Request, backends []types.Instance, reqBo
 		resByte, _, err := SendRequest(backends[0].URL(), r, reqBody)
 		if err != nil {
 			//
-			return nil, errors.New("failed get response")
+			err = errors.New("failed get response")
+			res, _ := json.Marshal(types.ErrorResponse{
+				Err:  err.Error(),
+			})
+			//return res
+			cp.ResponseChannel <- res
+			return
 		}
-		return resByte, nil
+		cp.ResponseChannel <- resByte
+		return
 	}else {
 		for i := 0; i < backendsLen - 1; i++ {
 			var result ciRes
@@ -45,10 +54,16 @@ func (cp *ConcretProxy) Handle(r *http.Request, backends []types.Instance, reqBo
 	}
 	resultByte, err := json.Marshal(resultResp)
 	if err != nil {
-		return nil, errors.New("failed to unmarshal response bytes")
+		err = errors.New("failed to unmarshal response bytes")
+		res, _ := json.Marshal(types.ErrorResponse{
+			Err:  err.Error(),
+		})
+		cp.ResponseChannel <- res
+		return
 	}
 
-	return resultByte, nil
+	cp.ResponseChannel <- resultByte
+	return
 
 /*
 	//------
@@ -79,5 +94,9 @@ func (cp *ConcretProxy) Handle(r *http.Request, backends []types.Instance, reqBo
 	clasterTaskPool.Stop()
 	return allResult
 	*/
+}
+
+func (cp *ConcretProxy) Response() *chan []byte {
+	return &cp.ResponseChannel
 }
 

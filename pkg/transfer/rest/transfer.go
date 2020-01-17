@@ -14,24 +14,26 @@ import (
 	"net/http"
 )
 
+
+
 func SendRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 
-		var params Params
+		var params TxParams
 		b, readErr := ioutil.ReadAll(request.Body)
 		readErr = json.Unmarshal(b, &params)
 		if readErr != nil {
 			//
 		}
 
-		priv := params.Data
+		priv := params.Data.Key
 		//priv := request.FormValue("privateKey")
 		if len(priv) < 1 {
 			rest.WriteErrorRes(writer, transaction.ErrBadPrivkey(types.DefaultCodespace, errors.New("param privateKey not found")) )
 			return
 		}
 
-		tx, err := buildTransferTx(request, false)
+		tx, err := buildTransferTx(request, false, params.Data.From, params.Data.To, params.Data.Gas, params.Data.Amount)
 		if err != nil {
 			rest.WriteErrorRes(writer, err.(sdk.Error))
 			return

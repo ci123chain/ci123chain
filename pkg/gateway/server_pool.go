@@ -1,18 +1,14 @@
 package gateway
 
 import (
-	"context"
 	"github.com/tanhuiya/ci123chain/pkg/gateway/logger"
 	"github.com/tanhuiya/ci123chain/pkg/gateway/types"
 	"log"
-	"net/http"
-	"net/http/httputil"
 	"net/url"
-	"time"
 )
 
 
-type BackendProto func(url *url.URL, alive bool, proxy *httputil.ReverseProxy) types.Instance
+type BackendProto func(url *url.URL, alive bool) types.Instance
 
 type ServerPool struct{
 	backendProto 	BackendProto
@@ -60,7 +56,7 @@ func (s *ServerPool)ConfigServerPool(tokens []string)  {
 		if !isBackendAlive(serverUrl) {
 			continue
 		}
-
+/*
 		proxy := httputil.NewSingleHostReverseProxy(serverUrl)
 		proxy.ErrorHandler = func(writer http.ResponseWriter, request *http.Request, e error) {
 			logger.Debug("[%s] %s\n", serverUrl.Host, e.Error())
@@ -83,15 +79,15 @@ func (s *ServerPool)ConfigServerPool(tokens []string)  {
 			ctx := context.WithValue(request.Context(), Attempts, attempts+1)
 			AllHandle(writer, request.WithContext(ctx))
 		}
+		*/
 
-		serverPool.AddBackend(s.backendProto(serverUrl, true, proxy))
+		serverPool.AddBackend(s.backendProto(serverUrl, true))
 		logger.Debug("Configured server: %s\n", serverUrl)
 	}
 }
 
 func NewServerPool(backProto BackendProto, svrsource types.ServerSource, workerlen int) *ServerPool {
 
-	//
 	return &ServerPool{
 		backendProto: 	backProto,
 		backends: 		make([]types.Instance, 0),
@@ -108,8 +104,7 @@ func (s *ServerPool) Run() {
 		worker := NewWorker()
 		worker.Run(s.WorkerQueue)
 	}
-
-	// 循环获取可用的worker,往worker中写job
+	// get new job, send to worker.
 	go func() {
 		for {
 			select {

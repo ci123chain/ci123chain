@@ -9,11 +9,15 @@ type ErrProxy struct {
 
 }
 
-func NewErrProxy(pt types.ProxyType) ErrProxy {
-	return ErrProxy{}
+func NewErrProxy(pt types.ProxyType) *ErrProxy {
+	return &ErrProxy{}
 }
 
-func (ep ErrProxy) Handle(r *http.Request, backends []types.Instance, reqBody []byte) ([]byte, error) {
+func (ep *ErrProxy) Handle(r *http.Request, backends []types.Instance, reqBody []byte) {
 	//do nothing
-	return nil, nil
+	return
+}
+
+func (ep *ErrProxy) Response() *chan []byte {
+	return nil
 }

@@ -1,6 +1,7 @@
 package server
 
 import (
+	"encoding/json"
 	"errors"
 	"github.com/tanhuiya/ci123chain/pkg/gateway/types"
 	"net/http"
@@ -8,17 +9,19 @@ import (
 
 type FilterProxy struct {
 	ProxyType types.ProxyType
+	ResponseChannel chan []byte
 }
 
 func NewFilterProxy(pt types.ProxyType) *FilterProxy {
 
 	fp :=  &FilterProxy{
 		ProxyType:pt,
+		ResponseChannel:make(chan []byte),
 	}
 	return fp
 }
 
-func (fp *FilterProxy) Handle(r *http.Request, backends []types.Instance, reqBody []byte) ([]byte, error) {
+func (fp *FilterProxy) Handle(r *http.Request, backends []types.Instance, reqBody []byte) {
 
 	backendsLen := len(backends)
 	var resultResp []*http.Response
@@ -29,9 +32,15 @@ func (fp *FilterProxy) Handle(r *http.Request, backends []types.Instance, reqBod
 		resByte, _, err := SendRequest(backends[0].URL(), r, reqBody)
 		if err != nil {
 			//
-			return nil, errors.New("failed to get response")
+			err = errors.New("failed to get response")
+			res, _ := json.Marshal(types.ErrorResponse{
+				Err:  err.Error(),
+			})
+			fp.ResponseChannel <- res
+			return
 		}
-		return resByte, nil
+		fp.ResponseChannel <- resByte
+		return
 
 	}else {
 		for i := 0; i < backendsLen - 1; i++ {
@@ -42,8 +51,12 @@ func (fp *FilterProxy) Handle(r *http.Request, backends []types.Instance, reqBod
 	}
 	if result == nil {
 		//
-		resByte := []byte("sorry, no results")
-		return resByte, nil
+		err := errors.New("failed to get response")
+		res, _ := json.Marshal(types.ErrorResponse{
+			Err:  err.Error(),
+		})
+		fp.ResponseChannel <- res
+		return
 	}
 	for i := range resultResp {
 		if resultResp[i].StatusCode == types.ValidCode {
@@ -51,7 +64,8 @@ func (fp *FilterProxy) Handle(r *http.Request, backends []types.Instance, reqBod
 			break
 		}
 	}
-	return resultByte, nil
+	fp.ResponseChannel <- resultByte
+	return
 
 	/*
 	clasterTaskPool := NewClasterTaskPool(3)
@@ -72,4 +86,8 @@ func (fp *FilterProxy) Handle(r *http.Request, backends []types.Instance, reqBod
 	clasterTaskPool.Stop()
 	return byte
 	*/
+}
+
+func (fp *FilterProxy) Response() *chan []byte {
+	return &fp.ResponseChannel
 }

@@ -1,7 +1,7 @@
 package server
 
 import (
-	"errors"
+	"encoding/json"
 	"github.com/tanhuiya/ci123chain/pkg/gateway/lbpolicy"
 	"github.com/tanhuiya/ci123chain/pkg/gateway/types"
 
@@ -11,6 +11,7 @@ import (
 type LBProxy struct {
 	Policy types.LBPolicy
 	ProxyType types.ProxyType
+	ResponseChannel chan []byte
 }
 
 
@@ -19,16 +20,24 @@ func NewLBProxy(pt types.ProxyType) *LBProxy {
 	lbp := &LBProxy{
 		ProxyType: pt,
 		Policy:policy,
+		ResponseChannel:make(chan []byte),
 	}
 	return lbp
 }
 
-func (lbp *LBProxy) Handle(r *http.Request, backends []types.Instance, reqBody []byte) ([]byte, error) {
+func (lbp *LBProxy) Handle(r *http.Request, backends []types.Instance, reqBody []byte) {
 
 	url := lbp.Policy.NextPeer(backends).URL()
 	b, _, err := SendRequest(url, r, reqBody)
 	if err != nil {
-		return nil, errors.New("failed to get response")
+		res, _ := json.Marshal(types.ErrorResponse{
+			Err:  err.Error(),
+		})
+		lbp.ResponseChannel <- res
 	}
-	return b, nil
+	lbp.ResponseChannel <- b
+}
+
+func (lbp *LBProxy) Response() *chan []byte {
+	return &lbp.ResponseChannel
 }

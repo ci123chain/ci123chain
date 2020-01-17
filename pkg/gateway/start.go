@@ -1,11 +1,14 @@
 package gateway
 
 import (
+	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"github.com/tanhuiya/ci123chain/pkg/gateway/backend"
 	"github.com/tanhuiya/ci123chain/pkg/gateway/couchdbsource"
 	"github.com/tanhuiya/ci123chain/pkg/gateway/logger"
+	"github.com/tanhuiya/ci123chain/pkg/gateway/types"
 	"log"
 	"net/http"
 	"regexp"
@@ -22,7 +25,7 @@ func Start() {
 	flag.StringVar(&logDir, "logdir", DefaultLogDir, "log dir")
 	flag.StringVar(&logLevel, "loglevel", "DEBUG", "level for log")
 
-	flag.StringVar(&serverList, "backends", "", "Load balanced backends, use commas to separate")
+	flag.StringVar(&serverList, "backends", "http://localhost:1317", "Load balanced backends, use commas to separate")
 	flag.StringVar(&statedb, "statedb", "couchdb://couchdb_service:5984", "server resource")
 	flag.StringVar(&urlreg, "urlreg", "http://***:80", "reg for url connection to node")
 
@@ -63,12 +66,19 @@ func Start() {
 
 func AllHandle(w http.ResponseWriter, r *http.Request) {
 	//do something
-	job := NewSpecificJob(w, r, serverPool.backends)
+	w.Header().Set("Content-Type", "application/json")
+	job := NewSpecificJob(r, serverPool.backends)
 	if job != nil {
 		serverPool.JobQueue <- job
+	}else {
+		err := errors.New("arguments error")
+		res, _ := json.Marshal(types.ErrorResponse{
+			Err:  err.Error(),
+		})
+		w.Write(res)
 	}
 	select {
-	 case resp := <-job.Response():
+	 case resp := <-*job.ResponseChan:
 		w.Write(resp)
 	}
 }

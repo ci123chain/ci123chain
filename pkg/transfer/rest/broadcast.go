@@ -11,11 +11,20 @@ import (
 	"net/http"
 )
 
+type TxByte struct {
+	Tx     string   `json:"tx"`
+}
+
+type TxRequest struct {
+	//
+	Data   TxByte    `json:"data"`
+}
+
 
 func BroadcastTxRequest(cliCtx context.Context) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 
-		var params Params
+		var params TxRequest
 		b, readErr := ioutil.ReadAll(request.Body)
 		readErr = json.Unmarshal(b, &params)
 		if readErr != nil {
@@ -23,7 +32,7 @@ func BroadcastTxRequest(cliCtx context.Context) http.HandlerFunc {
 		}
 
 		//data := request.FormValue("data")
-		txByte, err := hex.DecodeString(params.Data)
+		txByte, err := hex.DecodeString(params.Data.Tx)
 		if err != nil {
 			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"data error"))
 			return
@@ -41,7 +50,7 @@ func BroadcastTxRequest(cliCtx context.Context) http.HandlerFunc {
 func BroadcastTxRequestAsync(cliCtx context.Context) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 
-		var params Params
+		var params TxRequest
 		b, readErr := ioutil.ReadAll(request.Body)
 		readErr = json.Unmarshal(b, &params)
 		if readErr != nil {
@@ -49,7 +58,7 @@ func BroadcastTxRequestAsync(cliCtx context.Context) http.HandlerFunc {
 		}
 
 		//data := request.FormValue("data")
-		txByte, err := hex.DecodeString(params.Data)
+		txByte, err := hex.DecodeString(params.Data.Tx)
 		if err != nil {
 			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"data error"))
 			return

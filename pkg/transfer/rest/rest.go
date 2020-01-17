@@ -20,8 +20,14 @@ func RegisterTxRoutes(cliCtx context.Context, r *mux.Router)  {
 	r.HandleFunc("/tx/broadcast_async", BroadcastTxRequestAsync(cliCtx)).Methods("POST")
 }
 
-type Params struct {
-	Data string `json:"data"`
+type TxRequestParams struct {
+	Hash    string    `json:"hash"`
+	Height  string    `json:"height"`
+}
+
+type QueryTxRequestParams struct{
+	//
+	Data    TxRequestParams `json:"data"`
 }
 
 func QueryTxRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
@@ -29,20 +35,20 @@ func QueryTxRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		//vars := mux.Vars(request)
 		//hashHexStr := vars["hash"]
 
-		var params Params
+		var params QueryTxRequestParams
 		b, readErr := ioutil.ReadAll(request.Body)
 		readErr = json.Unmarshal(b, &params)
 		if readErr != nil {
 			//
 		}
 
-		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(writer, cliCtx, request)
+		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(writer, cliCtx, request, params.Data.Height)
 		if !ok {
 			rest.WriteErrorRes(writer, err)
 			return
 		}
 
-		resp, err := utils.QueryTx(cliCtx, params.Data)
+		resp, err := utils.QueryTx(cliCtx, params.Data.Hash)
 		if err != nil {
 			rest.WriteErrorRes(writer, err)
 			return

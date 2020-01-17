@@ -8,6 +8,7 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/client"
 	"github.com/tanhuiya/ci123chain/pkg/client/context"
 	"github.com/tanhuiya/ci123chain/pkg/order/types"
+	order "github.com/tanhuiya/ci123chain/pkg/order/types"
 	"io/ioutil"
 	"net/http"
 )
@@ -18,20 +19,37 @@ func RegisterTxRoutes(cliCtx context.Context, r *mux.Router)  {
 }
 
 type ShardTxBytes struct {
-	Data string `json:"data"`
+	From     string     `json:"from"`
+	Gas      uint64     `json:"gas"`
+	Nonce    uint64     `json:"nonce"`
+	Type     string     `json:"type"`
+	Name     string     `json:"name"`
+	Height   int64     `json:"height"`
+	Key      string     `json:"key"`
+}
+
+type AddShardParams struct {
+	Data ShardTxBytes `json:"data"`
 }
 
 func AddShardTxRequest(cliCtx context.Context) http.HandlerFunc{
 	return func(writer http.ResponseWriter, request *http.Request) {
 
-		var shardTxBytes ShardTxBytes
+		var shardTxBytes AddShardParams
 		b, readErr := ioutil.ReadAll(request.Body)
 		readErr = json.Unmarshal(b, &shardTxBytes)
 		if readErr != nil {
 			//
 		}
 		//data := request.FormValue("data")
-		txByte, err := hex.DecodeString(shardTxBytes.Data)
+		privByte, err := hex.DecodeString(shardTxBytes.Data.Key)
+		if err != nil {
+			rest.WriteErrorRes(writer, client.ErrBroadcast(types.DefaultCodespace, err))
+			return
+		}
+
+		txByte, err := order.SignUpgradeTx(shardTxBytes.Data.From,
+			shardTxBytes.Data.Gas, shardTxBytes.Data.Nonce, shardTxBytes.Data.Type, shardTxBytes.Data.Name, shardTxBytes.Data.Height, privByte)
 		if err != nil {
 			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"data error"))
 			return
