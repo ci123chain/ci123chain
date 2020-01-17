@@ -34,6 +34,7 @@ func (sjob *SpecificJob) Response() chan []byte {
 	return sjob.responseChan
 }
 
+
 func (sjob *SpecificJob) Do() {
 	if len(sjob.Backends) < 1 {
 		res, _ := json.Marshal(types.ErrorResponse{
