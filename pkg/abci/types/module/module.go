@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/tanhuiya/ci123chain/pkg/abci/codec"
 	"github.com/tanhuiya/ci123chain/pkg/abci/types"
+	"github.com/tanhuiya/ci123chain/pkg/order"
 	abci "github.com/tendermint/tendermint/abci/types"
 )
 
@@ -83,8 +84,15 @@ func (am AppManager) InitGenesis(ctx types.Context, data map[string]json.RawMess
 }
 
 func (am AppManager) BeginBlocker(ctx types.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
+	o, ok := am.Modules[order.ModuleName]
+	if ok && o != nil{
+		o.BeginBlocker(ctx, req)
+	}
 
 	for _, m := range am.Modules {
+		if m == am.Modules[order.ModuleName] {
+			continue
+		}
 		m.BeginBlocker(ctx, req)
 	}
 	return abci.ResponseBeginBlock{}
