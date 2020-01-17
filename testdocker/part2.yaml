@@ -51,37 +51,39 @@ services:
       testdocker_couchDB:
 
   gateway:
-    image: gatewayservice:v0.0.1
+    image: cichain:v0.0.1
     container_name: gatewayservice
     hostname: gatewayservice
+    environment:
+      GATEWAY: "true"
     ports:
       - 3030:3030
     networks:
       testdocker_couchDB:
 
-  prometheus:
-    image: prom/prometheus
-    container_name: prometheus
-    hostname: prometheus
-    restart: always
-    volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
-    ports:
-      - 9090:9090
-    networks:
-      testdocker_couchDB:
-
-  grafana:
-    image: grafana/grafana
-    container_name: grafana
-    hostname: grafana
-    restart: always
-    volumes:
-      - ./grafana-storage:/var/lib/grafana
-    ports:
-      - 3000:3000
-    networks:
-      testdocker_couchDB:
+#  prometheus:
+#    image: prom/prometheus
+#    container_name: prometheus
+#    hostname: prometheus
+#    restart: always
+#    volumes:
+#      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+#    ports:
+#      - 9090:9090
+#    networks:
+#      testdocker_couchDB:
+#
+#  grafana:
+#    image: grafana/grafana
+#    container_name: grafana
+#    hostname: grafana
+#    restart: always
+#    volumes:
+#      - ./grafana-storage:/var/lib/grafana
+#    ports:
+#      - 3000:3000
+#    networks:
+#      testdocker_couchDB:
 
 networks: ##定义网络组
   testdocker_couchDB: ## 网络组名称

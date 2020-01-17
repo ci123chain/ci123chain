@@ -3,6 +3,7 @@ package gateway
 import (
 	"encoding/json"
 	"errors"
+	"github.com/tanhuiya/ci123chain/pkg/gateway/logger"
 	"github.com/tanhuiya/ci123chain/pkg/gateway/server"
 	"github.com/tanhuiya/ci123chain/pkg/gateway/types"
 	"io/ioutil"
@@ -29,7 +30,15 @@ type Params struct {
 
 
 func (sjob *SpecificJob) Do() {
+	if len(sjob.Backends) > 0 {
+		res, _ := json.Marshal(types.ErrorResponse{
+			Err:  "service backend not found",
+		})
+		sjob.ResponseWriter.Write(res)
+		return
+	}
 	resultBytes, err := sjob.Proxy.Handle(sjob.Request, sjob.Backends)
+
 	sjob.ResponseWriter.Header().Set("Content-Type", "application/json")
 	if err != nil {
 		errRes := types.ErrorResponse{
@@ -41,6 +50,8 @@ func (sjob *SpecificJob) Do() {
 	}else {
 		sjob.ResponseWriter.Write(resultBytes)
 	}
+
+	logger.Info("===\n Request for : %s;  response: %v", sjob.Request.URL.String(), string(resultBytes))
 }
 
 func NewSpecificJob(w http.ResponseWriter, r *http.Request, backends []types.Instance) *SpecificJob {
@@ -60,6 +71,8 @@ func NewSpecificJob(w http.ResponseWriter, r *http.Request, backends []types.Ins
 
 func ParseURL(r *http.Request) (types.Proxy, error){
 	body, _ := ioutil.ReadAll(r.Body)
+	logger.Info("Got Request: %s; params: %v;\n===", r.URL.String(), string(body))
+
 	var params Params
 	err := json.Unmarshal(body, &params)
 	if err != nil {

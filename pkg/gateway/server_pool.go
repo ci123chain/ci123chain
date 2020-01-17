@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"context"
+	"github.com/tanhuiya/ci123chain/pkg/gateway/logger"
 	"github.com/tanhuiya/ci123chain/pkg/gateway/types"
 	"log"
 	"net/http"
@@ -198,7 +199,7 @@ func (s *ServerPool)ConfigServerPool(tokens []string)  {
 
 		proxy := httputil.NewSingleHostReverseProxy(serverUrl)
 		proxy.ErrorHandler = func(writer http.ResponseWriter, request *http.Request, e error) {
-			log.Printf("[%s] %s\n", serverUrl.Host, e.Error())
+			logger.Debug("[%s] %s\n", serverUrl.Host, e.Error())
 			retries := GetRetryFromContext(request)
 			if retries < 3 {
 				select {
@@ -214,13 +215,13 @@ func (s *ServerPool)ConfigServerPool(tokens []string)  {
 
 			// if the same request routing for few attempts with different backends, increase the count
 			attempts := GetAttemptsFromContext(request)
-			log.Printf("%s(%s) Attempting retry %d\n", request.RemoteAddr, request.URL.Path, attempts)
+			logger.Debug("%s(%s) Attempting retry %d\n", request.RemoteAddr, request.URL.Path, attempts)
 			ctx := context.WithValue(request.Context(), Attempts, attempts+1)
 			AllHandle(writer, request.WithContext(ctx))
 		}
 
 		serverPool.AddBackend(s.backendProto(serverUrl, true, proxy))
-		log.Printf("Configured server: %s\n", serverUrl)
+		logger.Debug("Configured server: %s\n", serverUrl)
 	}
 }
 
@@ -270,8 +271,9 @@ func (s *ServerPool) HealthCheck() {
 		b.SetAlive(alive)
 		if !alive {
 			status = "down"
+			logger.Warn("%s [%s]\n", b.URL(), status)
 		}
-		log.Printf("%s [%s]\n", b.URL(), status)
+		logger.Info("%s [%s]\n", b.URL(), status)
 	}
 }
 
