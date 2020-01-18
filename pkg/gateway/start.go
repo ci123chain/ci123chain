@@ -25,7 +25,7 @@ func Start() {
 	flag.StringVar(&logDir, "logdir", DefaultLogDir, "log dir")
 	flag.StringVar(&logLevel, "loglevel", "DEBUG", "level for log")
 
-	flag.StringVar(&serverList, "backends", "http://localhost:1317", "Load balanced backends, use commas to separate")
+	flag.StringVar(&serverList, "backends", "", "Load balanced backends, use commas to separate")
 	flag.StringVar(&statedb, "statedb", "couchdb://couchdb_service:5984", "server resource")
 	flag.StringVar(&urlreg, "urlreg", "http://***:80", "reg for url connection to node")
 

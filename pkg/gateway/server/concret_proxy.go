@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/tanhuiya/ci123chain/pkg/gateway/types"
 	"net/http"
 )
@@ -26,6 +27,9 @@ func (cp *ConcretProxy) Handle(r *http.Request, backends []types.Instance, reqBo
 
 	backendsLen := len(backends)
 	var resultResp []ciRes
+	for i := 0; i < backendsLen; i++ {
+		fmt.Println(backends[i].URL().Host)
+	}
 
 	if backendsLen == 1 {
 		resByte, _, err := SendRequest(backends[0].URL(), r, reqBody)
@@ -42,7 +46,7 @@ func (cp *ConcretProxy) Handle(r *http.Request, backends []types.Instance, reqBo
 		cp.ResponseChannel <- resByte
 		return
 	}else {
-		for i := 0; i < backendsLen - 1; i++ {
+		for i := 0; i < backendsLen; i++ {
 			var result ciRes
 			resByte, _, err := SendRequest(backends[i].URL(),r, reqBody)
 			if err != nil {

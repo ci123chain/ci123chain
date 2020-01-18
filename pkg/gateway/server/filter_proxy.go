@@ -24,9 +24,8 @@ func NewFilterProxy(pt types.ProxyType) *FilterProxy {
 func (fp *FilterProxy) Handle(r *http.Request, backends []types.Instance, reqBody []byte) {
 
 	backendsLen := len(backends)
-	var resultResp []*http.Response
 	var resultByte []byte
-	var result []string
+	var resultResp []ciRes
 
 	if backendsLen == 1 {
 		resByte, _, err := SendRequest(backends[0].URL(), r, reqBody)
@@ -43,24 +42,16 @@ func (fp *FilterProxy) Handle(r *http.Request, backends []types.Instance, reqBod
 		return
 
 	}else {
-		for i := 0; i < backendsLen - 1; i++ {
-			resByte, rep, _ := SendRequest(backends[i].URL(),r, reqBody)
-			resultResp = append(resultResp, rep)
-			result = append(result, string(resByte))
+		for i := 0; i < backendsLen; i++ {
+			var result ciRes
+			resByte, _, _ := SendRequest(backends[i].URL(),r, reqBody)
+			result = AddResponses(resByte)
+			resultResp = append(resultResp, result)
 		}
 	}
-	if result == nil {
-		//
-		err := errors.New("failed to get response")
-		res, _ := json.Marshal(types.ErrorResponse{
-			Err:  err.Error(),
-		})
-		fp.ResponseChannel <- res
-		return
-	}
 	for i := range resultResp {
-		if resultResp[i].StatusCode == types.ValidCode {
-			resultByte = []byte(result[i])
+		if resultResp[i].Message == "" && resultResp[i].Data != nil {
+			resultByte, _ = json.Marshal(resultResp[i])
 			break
 		}
 	}
