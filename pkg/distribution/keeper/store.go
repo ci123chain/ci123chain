@@ -48,7 +48,7 @@ func GetValidatorsInfoKey(v []byte) []byte {
 func (d *DistrKeeper) SetProposerCurrentRewards(ctx sdk.Context, val sdk.AccAddr, rewards sdk.Coin, height int64) {
 
 	key := getKey(val, height)
-	store := ctx.KVStore(d.storeKey)
+	store := d.GetPreFixStore(ctx, ctx.ChainID())
 	b := d.cdc.MustMarshalBinaryLengthPrefixed(rewards)
 	store.Set(GetValidatorCurrentRewardsKey(key), b)
 }
@@ -56,7 +56,7 @@ func (d *DistrKeeper) SetProposerCurrentRewards(ctx sdk.Context, val sdk.AccAddr
 func (d *DistrKeeper) GetProposerCurrentRewards(ctx sdk.Context, val sdk.AccAddr, height int64) (rewards sdk.Coin) {
 
 	key := getKey(val, height)
-	store := ctx.KVStore(d.storeKey)
+	store := d.GetPreFixStore(ctx, ctx.ChainID())
 	b := store.Get(GetValidatorCurrentRewardsKey(key))
 	if b == nil {
 		return sdk.NewCoin(sdk.NewInt(0))
@@ -66,7 +66,7 @@ func (d *DistrKeeper) GetProposerCurrentRewards(ctx sdk.Context, val sdk.AccAddr
 }
 
 func (d *DistrKeeper) DeleteProposerCurrentRewards(ctx sdk.Context, val sdk.AccAddr) {
-	store := ctx.KVStore(d.storeKey)
+	store := d.GetPreFixStore(ctx, ctx.ChainID())
 	store.Delete(GetValidatorCurrentRewardsKey(val))
 }
 
@@ -74,7 +74,7 @@ func (d *DistrKeeper) DeleteProposerCurrentRewards(ctx sdk.Context, val sdk.AccA
 func (d *DistrKeeper) SetValidatorCurrentRewards(ctx sdk.Context, val sdk.AccAddr, rewards sdk.Coin, height int64) {
 
 	key := getKey(val, height)
-	store := ctx.KVStore(d.storeKey)
+	store := d.GetPreFixStore(ctx, ctx.ChainID())
 	b := d.cdc.MustMarshalBinaryLengthPrefixed(rewards)
 	store.Set(GetValidatorCurrentRewardsKey(key), b)
 }
@@ -82,7 +82,7 @@ func (d *DistrKeeper) SetValidatorCurrentRewards(ctx sdk.Context, val sdk.AccAdd
 func (d *DistrKeeper) GetValidatorCurrentRewards(ctx sdk.Context, val sdk.AccAddr, height int64) (rewards sdk.Coin) {
 
 	key := getKey(val, height)
-	store := ctx.KVStore(d.storeKey)
+	store := d.GetPreFixStore(ctx, ctx.ChainID())
 	b := store.Get(GetValidatorCurrentRewardsKey(key))
 	if b == nil {
 		return sdk.NewCoin(sdk.NewInt(0))
@@ -93,7 +93,7 @@ func (d *DistrKeeper) GetValidatorCurrentRewards(ctx sdk.Context, val sdk.AccAdd
 
 func (d *DistrKeeper) DeleteValidatorOldRewardsRecord(ctx sdk.Context, val sdk.AccAddr) {
 
-	store := ctx.KVStore(d.storeKey)
+	store := d.GetPreFixStore(ctx, ctx.ChainID())
 	b := store.Get(GetValidatorCurrentRewardsKey(val))
 	if b == nil {
 		return
@@ -104,7 +104,7 @@ func (d *DistrKeeper) DeleteValidatorOldRewardsRecord(ctx sdk.Context, val sdk.A
 //query
 func (d *DistrKeeper) GetValCurrentRewards(ctx sdk.Context, val sdk.AccAddr) (rewards sdk.Coin, err error) {
 
-	store := ctx.KVStore(d.storeKey)
+	store := d.GetPreFixStore(ctx, ctx.ChainID())
 	b := store.Get(GetValidatorCurrentRewardsKey(val))
 	if b == nil {
 		return sdk.NewCoin(sdk.NewInt(0)), errors.New("no such information")
@@ -143,9 +143,9 @@ func (d *DistrKeeper) DistributeRewardsToValidators(ctx sdk.Context, proposer sd
 */
 
 //lastProposer
-func (d *DistrKeeper)GetPreviousProposer(ctx sdk.Context) (proposer sdk.AccAddr){
+func (d *DistrKeeper) GetPreviousProposer(ctx sdk.Context) (proposer sdk.AccAddr){
 
-	store := ctx.KVStore(d.storeKey)
+	store := d.GetPreFixStore(ctx, ctx.ChainID())
 	b := store.Get(types.ProposerKey)
 	if b == nil {
 		//panic("Previous proposer not set")
@@ -156,8 +156,8 @@ func (d *DistrKeeper)GetPreviousProposer(ctx sdk.Context) (proposer sdk.AccAddr)
 }
 
 
-func (d *DistrKeeper)SetPreviousProposer(ctx sdk.Context, proposer sdk.AccAddr) {
-	store := ctx.KVStore(d.storeKey)
+func (d *DistrKeeper) SetPreviousProposer(ctx sdk.Context, proposer sdk.AccAddr) {
+	store := d.GetPreFixStore(ctx, ctx.ChainID())
 	b := d.cdc.MustMarshalBinaryLengthPrefixed(proposer)
 	store.Set(types.ProposerKey, b)
 }
@@ -165,19 +165,19 @@ func (d *DistrKeeper)SetPreviousProposer(ctx sdk.Context, proposer sdk.AccAddr) 
 //validatorsInfo
 func (d *DistrKeeper) SetValidatorsInfo(ctx sdk.Context, bytes []byte, height int64) {
 	key := []byte(strconv.FormatInt(height, 10))
-	store := ctx.KVStore(d.storeKey)
+	store := d.GetPreFixStore(ctx, ctx.ChainID())
 	store.Set(GetValidatorsInfoKey(key), bytes)
 }
 
 func (d *DistrKeeper) GetValidatorsInfo(ctx sdk.Context, height int64) []byte{
 	key := []byte(strconv.FormatInt(height, 10))
-	store := ctx.KVStore(d.storeKey)
+	store := d.GetPreFixStore(ctx, ctx.ChainID())
 	bz := store.Get(GetValidatorsInfoKey(key))
 	return bz
 }
 
 func (d *DistrKeeper) DeleteValidatorsInfo(ctx sdk.Context, height int64) {
-	store := ctx.KVStore(d.storeKey)
+	store := d.GetPreFixStore(ctx, ctx.ChainID())
 	key := []byte(strconv.FormatInt(height, 10))
 	bz := store.Get(GetValidatorsInfoKey(key))
 	if bz == nil {
@@ -193,4 +193,9 @@ func getKey(val sdk.AccAddr, height int64) sdk.AccAddr {
 	tKey := add + h
 	key := sdk.AccAddr([]byte(tKey))
 	return key
+}
+
+func (d *DistrKeeper) GetPreFixStore(ctx sdk.Context, prefix string) sdk.KVStore{
+	store := ctx.KVStore(d.storeKey).Prefix([]byte(prefix))
+	return store
 }
