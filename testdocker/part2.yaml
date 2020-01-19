@@ -54,6 +54,8 @@ services:
     image: cichain:v0.0.1
     container_name: gatewayservice
     hostname: gatewayservice
+    volumes:
+    - ./gateway:/root/gateway
     environment:
       GATEWAY: "true"
     ports:
