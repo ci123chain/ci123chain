@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"errors"
 	"github.com/tanhuiya/ci123chain/pkg/abci/codec"
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/couchdb"
@@ -10,11 +11,11 @@ import (
 
 var ModuleCdc *codec.Codec
 const SleepTime = 1 * time.Second
-const StateProcessing = "Processing"
 const StateDone = "Done"
 const StateInit = "Init"
 const OrderBookKey = "OrderBook"
 const OpADD = "ADD"
+const NoOrderBookErr = "No OrderBook"
 type OrderKeeper struct {
 	cdb 		*couchdb.GoCouchDB
 	StoreKey	sdk.StoreKey
@@ -54,11 +55,14 @@ func NewOrderKeeper(cdb *couchdb.GoCouchDB, key sdk.StoreKey) OrderKeeper {
 
 func (ok *OrderKeeper) WaitForReady(ctx sdk.Context) {
 	for {
-		//更新store
-		//ctx.LoadLatestVersion()
 		orderbook, err := ok.GetOrderBook(ctx)
 		if err != nil {
-			panic(err)
+			if err.Error() != NoOrderBookErr {
+				panic(err)
+			} else {
+				time.Sleep(SleepTime)
+				continue
+			}
 		}
 
 		if ok.isReady(orderbook, ctx.ChainID(), ctx.BlockHeight()) {
@@ -126,15 +130,19 @@ func (ok *OrderKeeper) UpdateOrderBook(ctx sdk.Context, orderbook OrderBook, act
 }
 
 func (ok *OrderKeeper) GetOrderBook(ctx sdk.Context) (OrderBook, error) {
-	store := ctx.KVStore(ok.StoreKey)
+	store := ctx.KVStore(ok.StoreKey).Latest([]string{OrderBookKey})
 	var orderbook OrderBook
+	isExist := ok.ExistOrderBook(ctx)
+	if !isExist {
+		return orderbook, errors.New(NoOrderBookErr)
+	}
 	bz := store.Get([]byte(OrderBookKey))
 	err := ModuleCdc.UnmarshalJSON(bz, &orderbook)
 	return orderbook, err
 }
 
 func (ok *OrderKeeper) ExistOrderBook(ctx sdk.Context) bool  {
-	store := ctx.KVStore(ok.StoreKey)
+	store := ctx.KVStore(ok.StoreKey).Latest([]string{OrderBookKey})
 	bz := store.Get([]byte(OrderBookKey))
 	if len(bz) > 0 {
 		return true

@@ -57,7 +57,7 @@ func (ctx *Context) GetBalanceByAddress(addr sdk.AccAddress) (uint64, error) {
 	if err2 != nil {
 		return 0, err2
 	}
-	balance := uint64(acc.GetCoin())
+	balance := uint64(acc.GetCoin().Amount.Int64())
 	return balance, nil
 }
 

@@ -2,6 +2,7 @@ package logger
 
 import (
 	"github.com/spf13/viper"
+	"github.com/tanhuiya/ci123chain/pkg/logger/spliter"
 	cfg "github.com/tendermint/tendermint/config"
 	"github.com/tendermint/tendermint/libs/cli"
 	tmflags "github.com/tendermint/tendermint/libs/cli/flags"
@@ -15,7 +16,7 @@ type Logger = log.Logger
 
 var logger Logger
 
-var fileLogger FileLogger
+var fileLogger spliter.FileLogger
 
 func GetDefaultLogger(lv string) Logger {
 	fname := "dailylog"
@@ -39,7 +40,7 @@ func GetDefaultLogger(lv string) Logger {
 		logger = log.NewTracingLogger(logger)
 	}
 
-	fileLogger = NewFileLogger(logDir, fname)
+	fileLogger = spliter.NewFileLogger(logDir, fname)
 	logger = logger.With("module", "main")
 	return logger
 }

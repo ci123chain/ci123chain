@@ -1,9 +1,7 @@
 package backend
 
-
 import (
 	"github.com/tanhuiya/ci123chain/pkg/gateway/types"
-	"net/http/httputil"
 	"net/url"
 	"sync"
 )
@@ -13,7 +11,6 @@ type Backend struct {
 	url          *url.URL
 	Alive        bool
 	mux          sync.RWMutex
-	ReverseProxy *httputil.ReverseProxy
 	retry 		 int
 }
 
@@ -41,19 +38,14 @@ func (b *Backend) URL() *url.URL{
 	return b.url
 }
 
-func (b *Backend) Proxy() *httputil.ReverseProxy {
-	return b.ReverseProxy
-}
-
 func (b *Backend) FailTime() int {
 	return b.retry
 }
 
-func NewBackEnd(url *url.URL, alive bool, proxy *httputil.ReverseProxy) types.Instance {
+func NewBackEnd(url *url.URL, alive bool) types.Instance {
 	return &Backend{
 		url:          url,
 		Alive:        alive,
-		ReverseProxy: proxy,
 		retry: 		  0,
 	}
 }

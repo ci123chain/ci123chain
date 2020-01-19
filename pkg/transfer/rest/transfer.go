@@ -2,6 +2,7 @@ package rest
 
 import (
 	"encoding/hex"
+	"encoding/json"
 	"github.com/pkg/errors"
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/abci/types/rest"
@@ -9,19 +10,30 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/client/context"
 	"github.com/tanhuiya/ci123chain/pkg/transaction"
 	"github.com/tanhuiya/ci123chain/pkg/transfer/types"
+	"io/ioutil"
 	"net/http"
 )
+
+
 
 func SendRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 
-		priv := request.FormValue("privateKey")
+		var params TxParams
+		b, readErr := ioutil.ReadAll(request.Body)
+		readErr = json.Unmarshal(b, &params)
+		if readErr != nil {
+			//
+		}
+
+		priv := params.Data.Key
+		//priv := request.FormValue("privateKey")
 		if len(priv) < 1 {
 			rest.WriteErrorRes(writer, transaction.ErrBadPrivkey(types.DefaultCodespace, errors.New("param privateKey not found")) )
 			return
 		}
 
-		tx, err := buildTransferTx(request, false)
+		tx, err := buildTransferTx(request, false, params.Data.From, params.Data.To, params.Data.Gas, params.Data.Amount)
 		if err != nil {
 			rest.WriteErrorRes(writer, err.(sdk.Error))
 			return

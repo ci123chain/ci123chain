@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"encoding/json"
 	"github.com/gorilla/mux"
 	"github.com/tanhuiya/ci123chain/pkg/abci/types/rest"
 	"github.com/tanhuiya/ci123chain/pkg/account/types"
@@ -8,30 +9,44 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/client/context"
 	"github.com/tanhuiya/ci123chain/pkg/client/helper"
 	"github.com/tanhuiya/ci123chain/pkg/transfer"
+	"io/ioutil"
 	"net/http"
 )
 
 // RegisterRoutes - Central function to define routes that get registered by the main application
 func RegisterRoutes(cliCtx context.Context, r *mux.Router) {
 
-	r.HandleFunc("/bank/balances/{address}", QueryBalancesRequestHandlerFn(cliCtx)).Methods("GET")
+	r.HandleFunc("/bank/balances", QueryBalancesRequestHandlerFn(cliCtx)).Methods("POST")
 }
 
 type BalanceData struct {
 	Balance uint64 `json:"balance"`
 }
+
+type AccountAddress struct {
+	Address string `json:"address"`
+	Height  string  `json:"height"`
+}
+
+type QueryAddressParams struct {
+	Data AccountAddress `json:"data"`
+}
 func QueryBalancesRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, request *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		vars := mux.Vars(request)
-		addr := vars["address"]
+		var params QueryAddressParams
+		b, readErr := ioutil.ReadAll(request.Body)
+		readErr = json.Unmarshal(b, &params)
+		if readErr != nil {
+			//
+		}
 
-		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, request)
+		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, request, params.Data.Height)
 		if !ok {
 			rest.WriteErrorRes(w, err)
 			return
 		}
-		addrBytes, err2 := helper.ParseAddrs(addr)
+		addrBytes, err2 := helper.ParseAddrs(params.Data.Address)
 		if len(addrBytes) < 1 || err2 != nil {
 			rest.WriteErrorRes(w, client.ErrParseAddr(types.DefaultCodespace, err2))
 			return

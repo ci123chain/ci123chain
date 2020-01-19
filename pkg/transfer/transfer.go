@@ -35,7 +35,7 @@ func SignTransferTx(from string, to string, amount, gas, nonce uint64, priv []by
 	if err != nil {
 		return nil, err
 	}
-	tx := NewTransferTx(fromAddr, toAddr, gas, nonce, sdk.Coin(amount), true)
+	tx := NewTransferTx(fromAddr, toAddr, gas, nonce, sdk.NewUInt64Coin(amount), true)
 	sid := cryptosuit.NewFabSignIdentity()
 	pub, err  := sid.GetPubKey(priv)
 
@@ -79,7 +79,7 @@ func (tx *TransferTx) ValidateBasic() sdk.Error {
 	if err := tx.Common.ValidateBasic(); err != nil {
 		return err
 	}
-	if tx.Amount == 0 {
+	if tx.Amount.IsEqual(sdk.NewCoin(sdk.NewInt(0)))  {
 		return types.ErrBadAmount(types.DefaultCodespace, errors.New("amount = 0"))
 	}
 	if transaction.EmptyAddr(tx.To) {

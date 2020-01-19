@@ -44,7 +44,7 @@ func queryRewards(ctx sdk.Context, path []string, req abci.RequestQuery, keeper 
 		return nil, types.ErrBadHeight(types.DefaultCodespace, err)
 	}
 
-	amount := uint64(rewards)
+	amount := uint64(rewards.Amount.Int64())
 	retbz, err := types.DistributionCdc.MarshalBinaryLengthPrefixed(amount)
 	if err != nil {
 		return nil, types.ErrFailedMarshal(types.DefaultCodespace, err.Error())

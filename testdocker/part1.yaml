@@ -1,9 +1,9 @@
 version: "3"
 services:
-  couchdb-service:
+  couchdb_service:
     image: couchdb
-    container_name: couchdb-service
-    hostname: couchdb-service
+    container_name: couchdb_service
+    hostname: couchdb_service
     ports:
       - 5984:5984
     networks:

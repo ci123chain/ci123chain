@@ -1,16 +1,14 @@
 #!/bin/bash
 
 
-if [ $GATEWAY ]; then
-# 启动 gateway 服务
-    ./gateway-linux
-    exit 0
-fi
-
-
 HOME_DIR="$HOME"
 if [ $CI123_HOME ];then
     HOME_DIR=$CI123_HOME
+fi
+
+if [ $GATEWAY ]; then
+    ./gateway-linux --logdir=${HOME_DIR}/gateway
+    exit 0
 fi
 
 CLI_HOME="${HOME_DIR}/cli"
@@ -27,6 +25,11 @@ fi
 
 # start
 
-nohup ./cli-linux rest-server --laddr=tcp://0.0.0.0:80 --home=$CLI_HOME > rest-output 2>&1 &
+COUCHDB_HOST="couchdb://couchdb_service:5984"
+if [ $CI123_COUCHDB ];then
+    COUCHDB_HOST=$CI123_COUCHDB
+fi
 
-./cid-linux start --home=$CID_HOME --statedb=couchdb://couchdb-service:5984
+nohup ./cid-linux start --home=$CID_HOME --statedb=$COUCHDB_HOST > cid-output 2>&1 &
+
+./cli-linux rest-server --laddr=tcp://0.0.0.0:80 --home=$CLI_HOME > rest-output 2>&1

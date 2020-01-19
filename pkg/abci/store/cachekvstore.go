@@ -101,6 +101,14 @@ func (ci *cacheKVStore) Gas(meter GasMeter, config GasConfig) KVStore {
 	return NewGasKVStore(meter, config, ci)
 }
 
+func (ci *cacheKVStore) Latest(keys []string) KVStore {
+	return nil
+}
+
+func (ci *cacheKVStore) Parent() KVStore {
+	return nil
+}
+
 // Implements CacheKVStore.
 func (ci *cacheKVStore) Write() {
 	ci.mtx.Lock()

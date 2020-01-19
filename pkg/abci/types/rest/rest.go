@@ -70,8 +70,8 @@ func PostProcessResponseBare(w http.ResponseWriter, ctx context.Context, body in
 	_, _ = w.Write(resp)
 }
 
-func ParseQueryHeightOrReturnBadRequest(w http.ResponseWriter, cliCtx context.Context, r *http.Request) (context.Context, bool, sdk.Error) {
-	heightStr := r.FormValue("height")
+func ParseQueryHeightOrReturnBadRequest(w http.ResponseWriter, cliCtx context.Context, r *http.Request, heightStr string) (context.Context, bool, sdk.Error) {
+
 	if heightStr != "" {
 		height, err := strconv.ParseInt(heightStr, 10, 64)
 		if err != nil {

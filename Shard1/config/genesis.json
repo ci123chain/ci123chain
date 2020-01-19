@@ -1,0 +1,59 @@
+{
+  "genesis_time": "2020-01-16T10:11:59.596981Z",
+  "chain_id": "Shard1",
+  "consensus_params": {
+    "block": {
+      "max_bytes": "22020096",
+      "max_gas": "-1",
+      "time_iota_ms": "1000"
+    },
+    "evidence": {
+      "max_age": "100000"
+    },
+    "validator": {
+      "pub_key_types": [
+        "secp256k1"
+      ]
+    }
+  },
+  "validators": [
+    {
+      "address": "8C9D45C89732D433660E5A7C4A01A2341BF4D6AD",
+      "pub_key": {
+        "type": "tendermint/PubKeySecp256k1",
+        "value": "A+XDwKBkJYA0D+lNpdQReQvDg6y+Tyt7PsKuESOTuRiK"
+      },
+      "power": "1",
+      "name": ""
+    }
+  ],
+  "app_hash": "",
+  "app_state": {
+    "accounts": [],
+    "auth": {
+      "params": {
+        "max_memo_characters": "256",
+        "tx_size_cost_per_byte": "10",
+        "sig_verify_cost_ed_25519": "590",
+        "sig_verify_cost_secp_256_k_1": "1000"
+      }
+    },
+    "order": {
+      "params": {
+        "orderBook": {
+          "lists": [
+            {
+              "name": "",
+              "height": "0"
+            }
+          ],
+          "current": {
+            "index": "0",
+            "state": "Init"
+          },
+          "actions": null
+        }
+      }
+    }
+  }
+}

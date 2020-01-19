@@ -79,6 +79,16 @@ func (gs *gasKVStore) Gas(meter GasMeter, config GasConfig) KVStore {
 	return NewGasKVStore(meter, config, gs)
 }
 
+// Implements KVStore
+func (gs *gasKVStore) Latest(keys []string) KVStore {
+	return nil
+}
+
+// Implements KVStore
+func (gs *gasKVStore) Parent() KVStore {
+	return gs.parent
+}
+
 // Iterator implements the KVStore interface. It returns an iterator which
 // incurs a flat gas cost for seeking to the first types/value pair and a variable
 // gas cost based on the current value's length if the iterator is valid.

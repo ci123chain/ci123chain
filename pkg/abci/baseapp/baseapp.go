@@ -392,7 +392,7 @@ func handleQueryCustom(app *BaseApp, path []string, req abci.RequestQuery) (res 
 	}
 
 	// Cache wrap the commit-multistore for safety.
-	ctx := sdk.NewContext(app.cms.CacheMultiStore(), app.checkState.ctx.BlockHeader(), true, app.Logger)
+	ctx := sdk.NewContext(app.cms, app.checkState.ctx.BlockHeader(), true, app.Logger)
 
 	// Passes the rest of the path as an argument to the querier.
 	// For example, in the path "custom/gov/proposal/test", the gov querier gets []string{"proposal", "test"} as the path
@@ -503,6 +503,7 @@ func (app *BaseApp) runMsgs(ctx sdk.Context, tx sdk.Tx, mode runTxMode) (result 
 	var codespace sdk.CodespaceType
 
 	txRoute := tx.Route()
+
 	handler := app.router.Route(txRoute)
 
 	if handler == nil {
@@ -510,20 +511,25 @@ func (app *BaseApp) runMsgs(ctx sdk.Context, tx sdk.Tx, mode runTxMode) (result 
 	}
 	var msgResult sdk.Result
 
+	fmt.Println("-------- enter handler ----------")
+	fmt.Println(ctx.GasMeter().GasConsumed())
+
 	// check 不实际执行
 	if mode != runTxModeCheck {
 		msgResult = handler(ctx, tx)
 	}
 
+	fmt.Println("-------- out handler ----------")
+	fmt.Println(ctx.GasMeter().GasConsumed())
 	if !msgResult.IsOK() {
 		code = msgResult.Code
 		codespace = msgResult.Codespace
 	}
 	return sdk.Result{
-		Code: code,
-		Codespace: codespace,
-		GasUsed:   ctx.GasMeter().GasConsumed(),
-		Log: 	strings.TrimSpace(msgResult.Log),
+		Code: 		code,
+		Codespace: 	codespace,
+		GasUsed:   	ctx.GasMeter().GasConsumed(),
+		Log: 		strings.TrimSpace(msgResult.Log),
 		Data: 		msgResult.Data,
 	}
 }
@@ -556,7 +562,7 @@ func (app *BaseApp) cacheTxContext(ctx sdk.Context, txBytes []byte) (
 		).(sdk.CacheMultiStore)
 	}
 
-	return ctx.WithMultiStore(msCache), msCache
+	return ctx.WithMultiStore(ms), msCache
 }
 
 // runTx processes a transfer. The transactions is proccessed via an
@@ -568,7 +574,7 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 	// determined by the GasMeter. We need access to the context to get the gas
 	// meter so we initialize upfront.
 	var gasWanted uint64
-
+	var gasUsed uint64
 	ctx := app.getContextForTx(mode, txBytes)
 	ms := ctx.MultiStore()
 
@@ -584,7 +590,7 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 			}
 		}
 		result.GasWanted = gasWanted
-		result.GasUsed = ctx.GasMeter().GasConsumed()
+		result.GasUsed = gasUsed
 	}()
 
 		if err := tx.ValidateBasic(); err != nil {
@@ -603,31 +609,50 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 		// writes do not happen if aborted/failed.  This may have some
 		// performance benefits, but it'll be more difficult to get right.
 		anteCtx, msCache = app.cacheTxContext(ctx, txBytes)
-
+		fmt.Println("-------- anteCtx gas1 ----------")
+		fmt.Println(anteCtx.GasMeter().GasConsumed())
 		newCtx, result, abort := app.anteHandler(anteCtx, tx, (mode == runTxModeSimulate))
+		fmt.Println("-------- anteCtx gas2 ----------")
+		fmt.Println(anteCtx.GasMeter().GasConsumed())
 		if abort {
 			ctx = newCtx
 			return result
 		}
+		fmt.Println("-------- newctx gas ----------")
+		fmt.Println(newCtx.GasMeter().GasConsumed())
 		if !newCtx.IsZero() {
 			// At this point, newCtx.MultiStore() is cache wrapped,
 			// or something else replaced by anteHandler.
 			// We want the original ms, not one which was cache-wrapped
 			// for the ante handler.
 			ctx = newCtx.WithMultiStore(ms)
+
+			fmt.Println("-------- ctx gas ----------")
+			fmt.Println(ctx.GasMeter().GasConsumed())
 		}
-		msCache.Write() // TODO should write at checktx?
 		gasWanted = result.GasWanted
+		gasUsed = result.GasUsed
+		if abort {
+			return result
+		}
+
+		msCache.Write()
+	}
+
+	if mode == runTxModeCheck { // XXX
+		return
 	}
 
 	// Create a new context based off of the existing context with a cache wrapped
 	// multi-store in case message processing fails.
+	fmt.Println("-------- ctx gas ----------")
+	fmt.Println(ctx.GasMeter().GasConsumed())
 	runMsgCtx, msCache := app.cacheTxContext(ctx, txBytes)
-
+	fmt.Println("-------- runMsgCtx gas ----------")
+	fmt.Println(runMsgCtx.GasMeter().GasConsumed())
 	result = app.runMsgs(runMsgCtx, tx, mode)
-	result.GasWanted = gasWanted
 
-	if mode == runTxModeSimulate || mode == runTxModeCheck { // XXX
+	if mode == runTxModeSimulate  { // XXX
 		return
 	}
 
@@ -635,8 +660,7 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 	if result.IsOK() {
 		msCache.Write()
 	}
-
-	return
+	return result
 }
 
 // EndBlock implements the ABCI application interface.

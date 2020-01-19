@@ -7,7 +7,6 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/tmhash"
 	cmn "github.com/tendermint/tendermint/libs/common"
-	dbm "github.com/tendermint/tm-db"
 	"io"
 	"sort"
 	"sync"
@@ -16,13 +15,13 @@ import (
 type baseKVStore struct {
 	mtx    		sync.Mutex
 	cache  		map[string]cValue
-	parent 		dbm.DB
+	parent 		KVStore
 	storeEvery 	int64
 	numRecent 	int64
 	preKey		sdk.StoreKey
 }
 
-func NewBaseKVStore(parent dbm.DB, storeEvery, numRecent int64, key sdk.StoreKey) *baseKVStore {
+func NewBaseKVStore(parent KVStore, storeEvery, numRecent int64, key sdk.StoreKey) *baseKVStore {
 	return &baseKVStore{
 		cache:  	make(map[string]cValue),
 		parent: 	parent,
@@ -59,9 +58,7 @@ func (ks *baseKVStore) Get(key []byte) (value []byte) {
 	cacheValue, ok := ks.cache[ckey]
 	if !ok {
 		value = ks.parent.Get([]byte(ckey))
-		if string(key) != "OrderBook" {
 			ks.setCacheValue([]byte(ckey), value, false, false)
-		}
 	} else {
 		value = cacheValue.value
 	}
@@ -266,6 +263,14 @@ func (ks *baseKVStore) LastCommitID() CommitID {
 		panic(err)
 	}
 	return cInfo.CommitID()
+}
+
+func (ks *baseKVStore) Latest(keys []string) KVStore {
+	return NewlatestStore(ks, ks.storeEvery, ks.numRecent, ks.preKey, keys)
+}
+
+func (ks *baseKVStore) Parent() KVStore {
+	return ks.parent
 }
 
 func (ks *baseKVStore) getCombineKey(key []byte) string {

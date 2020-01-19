@@ -228,3 +228,41 @@ type retData struct {
 	Data string `json:"data"`
 	RawLog  string `json:"raw_log"`
 }
+
+type BalanceData struct {
+	Balance uint64 `json:"balance"`
+}
+
+func Test90(t *testing.T) {
+	var ret = BalanceData{Balance:10000000000}
+	bt, err := json.Marshal(ret)
+	if err != nil {
+		//
+		panic(err)
+	}
+	var op = ciRes{
+		Ret:     0,
+		Data:    string(bt),
+		Message: "",
+	}
+	nb, err := json.Marshal(op)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(nb)
+	fmt.Println(string(nb))
+
+	var ty ciRes
+	var res BalanceData
+	err1 := json.Unmarshal(nb, &ty)
+	if err1 != nil {
+		panic(err1)
+	}
+
+	d := []byte(ty.Data)
+	err2 := json.Unmarshal(d, &res)
+	if err2 != nil {
+		panic(err2)
+	}
+	fmt.Println(res.Balance)
+}

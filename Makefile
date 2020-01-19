@@ -43,6 +43,8 @@ node-start: build-docker simple-start
 simple-start:
 	docker run --name ci123-chain-v1 -p 1318:80 -p 26676:26656 -d cichain:$(Tag)
 
+.PHONY: docker-clean
+docker-clean: clean-node
 clean-node:
 	docker ps -a | grep "ci123-chain-" | awk '{print $$1}' | xargs docker rm -f
 	docker images | grep "cichain" | awk '{print $$3}' | xargs docker rmi
