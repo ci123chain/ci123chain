@@ -92,7 +92,7 @@ func (f *FileLogger) CreateFile() (*os.File, error) {
 		os.MkdirAll(f.fileDir, os.ModePerm)
 		os.Chmod(f.fileDir, os.ModePerm)
 	}
-	fullFileName := filepath.Join(f.fileDir, f.fileName+".log")
+	fullFileName := filepath.Join(f.fileDir, f.fileName)
 	file, err := os.OpenFile(fullFileName, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0666)
 	return file, err
 }

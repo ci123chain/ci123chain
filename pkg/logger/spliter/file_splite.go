@@ -96,13 +96,17 @@ func (f *FileLogger) split() error {
 	}
 
 	t, _ := time.Parse(DATE_FORMAT, time.Now().Format(DATE_FORMAT))
+
 	f.date = &t
 
-	tempf, err := os.OpenFile(logFile, os.O_RDWR|os.O_TRUNC|os.O_CREATE, 0666)
-	if err != nil {
-		return err
-	}
-	_, err = tempf.WriteAt([]byte(""), 0)
+	os.Truncate(logFile, 0)
+
+
+	//tempf, err := os.OpenFile(logFile, os.O_RDWR|os.O_CREATE, 0666)
+	//if err != nil {
+	//	return err
+	//}
+	//_, err = tempf.WriteAt([]byte(""), 0)
 	return nil
 }
 
