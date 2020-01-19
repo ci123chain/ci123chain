@@ -25,7 +25,9 @@ func (fp *FilterProxy) Handle(r *http.Request, backends []types.Instance, reqBod
 
 	backendsLen := len(backends)
 	var resultByte []byte
-	var resultResp []ciRes
+	var resultResp []Response
+	var Responses []string
+	var existResult = false
 
 	if backendsLen == 1 {
 		resByte, _, err := SendRequest(backends[0].URL(), r, reqBody)
@@ -43,17 +45,22 @@ func (fp *FilterProxy) Handle(r *http.Request, backends []types.Instance, reqBod
 
 	}else {
 		for i := 0; i < backendsLen; i++ {
-			var result ciRes
+			var result Response
 			resByte, _, _ := SendRequest(backends[i].URL(),r, reqBody)
-			result = AddResponses(resByte)
+			Responses = append(Responses, string(resByte))
+			result = HandleResponse(resByte)
 			resultResp = append(resultResp, result)
 		}
 	}
 	for i := range resultResp {
 		if resultResp[i].Message == "" && resultResp[i].Data != nil {
 			resultByte, _ = json.Marshal(resultResp[i])
+			existResult = true
 			break
 		}
+	}
+	if existResult == false {
+		resultByte = []byte(Responses[len(Responses) - 1])
 	}
 	fp.ResponseChannel <- resultByte
 	return resultByte
