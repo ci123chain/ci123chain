@@ -1,4 +1,4 @@
-From ubuntu
+From harbor.oneitfarm.com/library/golang:1.12
 
 COPY ./docker/node/build/cli-linux /opt
 COPY ./docker/node/build/cid-linux /opt
