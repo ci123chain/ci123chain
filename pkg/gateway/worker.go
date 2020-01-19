@@ -28,8 +28,7 @@ func (sjob *SpecificJob) Do() {
 		return
 	}
 
-	sjob.Proxy.Handle(sjob.Request, sjob.Backends, sjob.RequestBody)
-	resultBytes := <- *sjob.ResponseChan
+	resultBytes := sjob.Proxy.Handle(sjob.Request, sjob.Backends, sjob.RequestBody)
 
 	logger.Info("===\n Request for : %s; Params: %v;  response: %v", sjob.Request.URL.String(), sjob.RequestBody, string(resultBytes))
 }

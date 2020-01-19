@@ -18,7 +18,6 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
-	"net/http/httputil"
 	"net/url"
 	"os"
 	"strconv"
@@ -104,8 +103,15 @@ type QueryParams struct {
 	Data    HeightParams  `json:"data"`
 }
 
+type Response struct {
+	Ret 	uint32 	`json:"ret"`
+	Data 	interface{}	`json:"data"`
+	Message	string	`json:"message"`
+}
+
 func Handle404() http.Handler {
 	return http.HandlerFunc(func (w http.ResponseWriter, req *http.Request) {
+		cli := &http.Client{}
 
 		nodeUri := req.RequestURI
 		if strings.HasPrefix(nodeUri, CorePrefix) {
@@ -121,11 +127,10 @@ func Handle404() http.Handler {
 			}
 			var p QueryParams
 			err = json.Unmarshal(body, &p)
-			fmt.Println(p.Data.Height)
 
 
 			proxyurl, _ := url.Parse(dest)
-			proxy := httputil.NewSingleHostReverseProxy(proxyurl)
+			//proxy := httputil.NewSingleHostReverseProxy(proxyurl)
 
 			data := url.Values{}
 			data.Set("height", p.Data.Height)
@@ -145,14 +150,27 @@ func Handle404() http.Handler {
 			*/
 			r.URL.Host = proxyurl.Host
 			r.URL.Path = newPath
-			r.RequestURI = newPath
+			//r.RequestURI = newPath
 
 			r.Body = ioutil.NopCloser(strings.NewReader(data.Encode()))
 			r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 			r.Header.Set("Content-Length", strconv.Itoa(len(data.Encode())))
 			//req.Header.Add("Content-Length", strconv.Itoa(len(data.Encode())))
 			// Note that ServeHttp is non blocking and uses a go routine under the hood
-			proxy.ServeHTTP(w, r)
+
+			rep, err := cli.Do(r)
+			if err != nil {
+				//return nil, nil, err
+			}
+			resBody, err := ioutil.ReadAll(rep.Body)
+			var resultRsp client.BlockInformation
+			err = json.Unmarshal(resBody, &resultRsp)
+
+
+			resByte, err := json.Marshal(Response{Data: resultRsp})
+			w.Write(resByte)
+
+			//proxy.ServeHTTP(w, r)
 		}
 	})
 }

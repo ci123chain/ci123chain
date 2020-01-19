@@ -25,7 +25,7 @@ func NewLBProxy(pt types.ProxyType) *LBProxy {
 	return lbp
 }
 
-func (lbp *LBProxy) Handle(r *http.Request, backends []types.Instance, reqBody []byte) {
+func (lbp *LBProxy) Handle(r *http.Request, backends []types.Instance, reqBody []byte) []byte {
 
 	url := lbp.Policy.NextPeer(backends).URL()
 	b, _, err := SendRequest(url, r, reqBody)
@@ -34,8 +34,10 @@ func (lbp *LBProxy) Handle(r *http.Request, backends []types.Instance, reqBody [
 			Err:  err.Error(),
 		})
 		lbp.ResponseChannel <- res
+		return res
 	}
 	lbp.ResponseChannel <- b
+	return b
 }
 
 func (lbp *LBProxy) Response() *chan []byte {

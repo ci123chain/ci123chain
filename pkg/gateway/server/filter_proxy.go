@@ -21,7 +21,7 @@ func NewFilterProxy(pt types.ProxyType) *FilterProxy {
 	return fp
 }
 
-func (fp *FilterProxy) Handle(r *http.Request, backends []types.Instance, reqBody []byte) {
+func (fp *FilterProxy) Handle(r *http.Request, backends []types.Instance, reqBody []byte) []byte {
 
 	backendsLen := len(backends)
 	var resultByte []byte
@@ -36,10 +36,10 @@ func (fp *FilterProxy) Handle(r *http.Request, backends []types.Instance, reqBod
 				Err:  err.Error(),
 			})
 			fp.ResponseChannel <- res
-			return
+			return res
 		}
 		fp.ResponseChannel <- resByte
-		return
+		return resByte
 
 	}else {
 		for i := 0; i < backendsLen; i++ {
@@ -56,7 +56,7 @@ func (fp *FilterProxy) Handle(r *http.Request, backends []types.Instance, reqBod
 		}
 	}
 	fp.ResponseChannel <- resultByte
-	return
+	return resultByte
 
 	/*
 	clasterTaskPool := NewClasterTaskPool(3)

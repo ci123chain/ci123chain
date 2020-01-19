@@ -13,9 +13,9 @@ func NewErrProxy(pt types.ProxyType) *ErrProxy {
 	return &ErrProxy{}
 }
 
-func (ep *ErrProxy) Handle(r *http.Request, backends []types.Instance, reqBody []byte) {
+func (ep *ErrProxy) Handle(r *http.Request, backends []types.Instance, reqBody []byte) []byte {
 	//do nothing
-	return
+	return nil
 }
 
 func (ep *ErrProxy) Response() *chan []byte {

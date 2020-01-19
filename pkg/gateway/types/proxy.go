@@ -7,7 +7,7 @@ import (
 
 type Proxy interface {
 
-	Handle(r *http.Request, backends []Instance, reqBody []byte)
+	Handle(r *http.Request, backends []Instance, reqBody []byte) []byte
 
 	Response() *chan []byte
 }

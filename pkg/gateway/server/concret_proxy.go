@@ -23,7 +23,7 @@ func NewConcretProxy(pt types.ProxyType) *ConcretProxy {
 }
 
 
-func (cp *ConcretProxy) Handle(r *http.Request, backends []types.Instance, reqBody []byte) {
+func (cp *ConcretProxy) Handle(r *http.Request, backends []types.Instance, reqBody []byte) []byte {
 
 	backendsLen := len(backends)
 	var resultResp []ciRes
@@ -41,10 +41,10 @@ func (cp *ConcretProxy) Handle(r *http.Request, backends []types.Instance, reqBo
 			})
 			//return res
 			cp.ResponseChannel <- res
-			return
+			return res
 		}
 		cp.ResponseChannel <- resByte
-		return
+		return resByte
 	}else {
 		for i := 0; i < backendsLen; i++ {
 			var result ciRes
@@ -63,11 +63,11 @@ func (cp *ConcretProxy) Handle(r *http.Request, backends []types.Instance, reqBo
 			Err:  err.Error(),
 		})
 		cp.ResponseChannel <- res
-		return
+		return res
 	}
 
 	cp.ResponseChannel <- resultByte
-	return
+	return resultByte
 
 /*
 	//------
