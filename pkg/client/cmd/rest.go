@@ -134,11 +134,13 @@ func Handle404() http.Handler {
 			data := url.Values{}
 			data.Set("height", p.Data.Height)
 			remote_addr := "http://" + proxyurl.Host + newPath
+			fmt.Println(remote_addr)
 
 			r, Err := http.NewRequest(req.Method, remote_addr, strings.NewReader(data.Encode()))
 			if Err != nil {
 				panic(Err)
 			}
+
 
 /*
 			req.URL.Host = proxyurl.Host
@@ -160,15 +162,11 @@ func Handle404() http.Handler {
 				//return nil, nil, err
 			}
 			resBody, err := ioutil.ReadAll(rep.Body)
-			var resultRsp client.BlockInformation
-			err = json.Unmarshal(resBody, &resultRsp)
 
-
-			resByte, err := json.Marshal(Response{Data: resultRsp})
 			w.Header().Set("Content-Type","application/json")
-			w.Write(resByte)
+			w.Write(resBody)
 
-			//proxy.ServeHTTP(w, r)
+			//proxy.ServeHTTP(w, req)
 		}
 	})
 }
