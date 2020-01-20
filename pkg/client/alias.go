@@ -15,3 +15,15 @@ var (
 	ErrPhrasesNotMatch	= types.ErrPhrasesNotMatch
 	ErrNode				= types.ErrNode
 )
+
+type TMResponse struct {
+	Jsonrpc  string `json:"jsonrpc"`
+	ID      string  `json:"id"`
+	Result   interface{} `json:"result"`
+}
+
+type Response struct {
+	Ret 	uint32 	`json:"ret"`
+	Data 	interface{}	`json:"data"`
+	Message	string	`json:"message"`
+}
