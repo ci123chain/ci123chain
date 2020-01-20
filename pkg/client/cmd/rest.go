@@ -165,6 +165,7 @@ func Handle404() http.Handler {
 
 
 			resByte, err := json.Marshal(Response{Data: resultRsp})
+			w.Header().Set("Content-Type","application/json")
 			w.Write(resByte)
 
 			//proxy.ServeHTTP(w, r)
