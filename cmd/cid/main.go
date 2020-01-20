@@ -57,7 +57,7 @@ func main()  {
 		app.ConstructAppCreator(newApp, appName),
 		app.ConstructAppExporter(exportAppState, appName),
 		)
-
+	viper.AutomaticEnv()
 	viper.BindPFlags(rootCmd.Flags())
 	rootDir := os.ExpandEnv(DefaultConfDir)
 	if len(viper.GetString(cli.HomeFlag)) > 0 {

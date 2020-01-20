@@ -2,10 +2,10 @@ package auth
 
 import (
 	"encoding/json"
-	"github.com/tanhuiya/ci123chain/pkg/abci/types/module"
-	"github.com/tanhuiya/ci123chain/pkg/auth/types"
 	"github.com/tanhuiya/ci123chain/pkg/abci/codec"
 	abci_types "github.com/tanhuiya/ci123chain/pkg/abci/types"
+	"github.com/tanhuiya/ci123chain/pkg/abci/types/module"
+	"github.com/tanhuiya/ci123chain/pkg/auth/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 )
 

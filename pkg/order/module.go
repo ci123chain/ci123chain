@@ -53,7 +53,13 @@ func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage)  {
 	var genesisState types.GenesisState
 	keeper.ModuleCdc.MustUnmarshalJSON(data, &genesisState)
 	shardID := ctx.ChainID()
-	if genesisState.Params.OrderBook.Lists != nil && genesisState.Params.OrderBook.Lists[0].Name == shardID{
-		am.OrderKeeper.SetOrderBook(ctx, genesisState.Params.OrderBook)
+	if genesisState.Params.OrderBook.Lists != nil {
+		name := genesisState.Params.OrderBook.Lists[0].Name
+		if name == "" {
+			genesisState.Params.OrderBook.Lists[0].Name = shardID
+			am.OrderKeeper.SetOrderBook(ctx, genesisState.Params.OrderBook)
+		}else if name == shardID {
+			am.OrderKeeper.SetOrderBook(ctx, genesisState.Params.OrderBook)
+		}
 	}
 }

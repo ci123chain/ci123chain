@@ -16,6 +16,7 @@ type Params struct {
 
 func DefaultParams() Params {
 	var lists []keeper.Lists
+
 	p1 := &keeper.Lists{
 		Name:   "",
 		Height: 0,
