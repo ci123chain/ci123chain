@@ -128,15 +128,12 @@ func Handle404() http.Handler {
 			var p QueryParams
 			err = json.Unmarshal(body, &p)
 
-
 			proxyurl, _ := url.Parse(dest)
 			//proxy := httputil.NewSingleHostReverseProxy(proxyurl)
 
 			data := url.Values{}
 			data.Set("height", p.Data.Height)
-
 			remote_addr := "http://" + proxyurl.Host + newPath
-
 
 			r, Err := http.NewRequest(req.Method, remote_addr, strings.NewReader(data.Encode()))
 			if Err != nil {
@@ -168,6 +165,7 @@ func Handle404() http.Handler {
 
 
 			resByte, err := json.Marshal(Response{Data: resultRsp})
+			w.Header().Set("Content-Type","application/json")
 			w.Write(resByte)
 
 			//proxy.ServeHTTP(w, r)
