@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -15,12 +14,11 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/util"
 	"github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/rpc/lib/server"
-	"io/ioutil"
 	"net"
 	"net/http"
+	"net/http/httputil"
 	"net/url"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 
@@ -111,7 +109,7 @@ type Response struct {
 
 func Handle404() http.Handler {
 	return http.HandlerFunc(func (w http.ResponseWriter, req *http.Request) {
-		cli := &http.Client{}
+		//cli := &http.Client{}
 
 		nodeUri := req.RequestURI
 		if strings.HasPrefix(nodeUri, CorePrefix) {
@@ -120,17 +118,18 @@ func Handle404() http.Handler {
 			newPath := strings.Join(arr, "")
 			dest := viper.GetString(helper.FlagNode)
 			dest = strings.ReplaceAll(dest, "tcp", "http")
-
+/*
 			body, err := ioutil.ReadAll(req.Body)
 			if err != nil {
 				//
 			}
 			var p QueryParams
 			err = json.Unmarshal(body, &p)
+			*/
 
 			proxyurl, _ := url.Parse(dest)
-			//proxy := httputil.NewSingleHostReverseProxy(proxyurl)
-
+			proxy := httputil.NewSingleHostReverseProxy(proxyurl)
+/*
 			data := url.Values{}
 			data.Set("height", p.Data.Height)
 			remote_addr := "http://" + proxyurl.Host + newPath
@@ -142,11 +141,13 @@ func Handle404() http.Handler {
 			}
 
 
-/*
+*/
 			req.URL.Host = proxyurl.Host
 			req.URL.Path = newPath
-			req.RequestURI = newPath
-			*/
+			//req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+			//req.Header.Set("Content-Length", strconv.Itoa(len(data.Encode())))
+			//req.RequestURI = newPath
+			/*
 			r.URL.Host = proxyurl.Host
 			r.URL.Path = newPath
 			//r.RequestURI = newPath
@@ -156,8 +157,9 @@ func Handle404() http.Handler {
 			r.Header.Set("Content-Length", strconv.Itoa(len(data.Encode())))
 			//req.Header.Add("Content-Length", strconv.Itoa(len(data.Encode())))
 			// Note that ServeHttp is non blocking and uses a go routine under the hood
-
-			rep, err := cli.Do(r)
+*/
+			/*
+			rep, err := cli.Do(req)
 			if err != nil {
 				//return nil, nil, err
 			}
@@ -165,8 +167,9 @@ func Handle404() http.Handler {
 
 			w.Header().Set("Content-Type","application/json")
 			w.Write(resBody)
-
-			//proxy.ServeHTTP(w, req)
+*/
+			//w.Header().Set("Content-Type","application/json")
+			proxy.ServeHTTP(w, req)
 		}
 	})
 }

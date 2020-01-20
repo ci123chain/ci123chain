@@ -2,7 +2,6 @@ package rest
 
 import (
 	"encoding/hex"
-	"encoding/json"
 	"github.com/pkg/errors"
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/abci/types/rest"
@@ -13,7 +12,6 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/transaction"
 	"github.com/tanhuiya/ci123chain/pkg/transfer"
 	"github.com/tanhuiya/ci123chain/pkg/transfer/types"
-	"io/ioutil"
 	"net/http"
 	"strconv"
 )
@@ -24,7 +22,7 @@ type Tx struct {
 	SignedTx	string `json:"signedtx"`
 }
 
-type TxAccountParams struct {
+/*type TxAccountParams struct {
 	From       string    `json:"from"`
 	To         string    `json:"to"`
 	Gas        string    `json:"gas"`
@@ -35,35 +33,40 @@ type TxAccountParams struct {
 
 type TxParams struct {
 	Data TxAccountParams `json:"data"`
-}
+}*/
 
 
 func SignTxRequestHandler(cliCtx context.Context) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 
+		/*
 		var params TxParams
 		b, readErr := ioutil.ReadAll(request.Body)
 		readErr = json.Unmarshal(b, &params)
 		if readErr != nil {
 			//
 		}
-		priv := params.Data.Key
+		*/
+		//priv := params.Data.Key
+		priv := request.FormValue("privateKey")
 		if len(priv) < 1 {
 			rest.WriteErrorRes(writer, transaction.ErrBadPrivkey(types.DefaultCodespace, errors.New("param privateKey not found")) )
 			return
 		}
+		/*
 		from := params.Data.From
 		to := params.Data.To
 		gas := params.Data.Gas
 		amount := params.Data.Amount
 
 		fabric := params.Data.Fabric
-		//fabric := request.FormValue("fabric")
+		*/
+		fabric := request.FormValue("fabric")
 		isFabric, err  := strconv.ParseBool(fabric)
 		if err != nil {
 			isFabric = false
 		}
-		tx, err := buildTransferTx(request, isFabric, from, to , gas, amount)
+		tx, err := buildTransferTx(request, isFabric)
 		if err != nil {
 			rest.WriteErrorRes(writer, err.(sdk.Error))
 			return
@@ -84,11 +87,11 @@ func SignTxRequestHandler(cliCtx context.Context) http.HandlerFunc {
 	}
 }
 
-func buildTransferTx(r *http.Request, isFabric bool,from, to , gas, amount string) (transaction.Transaction, error) {
-	//from := r.FormValue("from")
-	//to := r.FormValue("to")
-	//amount := r.FormValue("amount")
-	//gas := r.FormValue("gas")
+func buildTransferTx(r *http.Request, isFabric bool) (transaction.Transaction, error) {
+	from := r.FormValue("from")
+	to := r.FormValue("to")
+	amount := r.FormValue("amount")
+	gas := r.FormValue("gas")
 
 
 	froms, err := helper.ParseAddrs(from)

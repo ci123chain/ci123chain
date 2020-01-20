@@ -2,15 +2,14 @@ package rest
 
 import (
 	"encoding/hex"
-	"encoding/json"
 	"github.com/gorilla/mux"
 	"github.com/tanhuiya/ci123chain/pkg/abci/types/rest"
 	"github.com/tanhuiya/ci123chain/pkg/client"
 	"github.com/tanhuiya/ci123chain/pkg/client/context"
 	"github.com/tanhuiya/ci123chain/pkg/order/types"
 	order "github.com/tanhuiya/ci123chain/pkg/order/types"
-	"io/ioutil"
 	"net/http"
+	"strconv"
 )
 
 func RegisterTxRoutes(cliCtx context.Context, r *mux.Router)  {
@@ -35,21 +34,35 @@ type AddShardParams struct {
 func AddShardTxRequest(cliCtx context.Context) http.HandlerFunc{
 	return func(writer http.ResponseWriter, request *http.Request) {
 
+		/*
 		var shardTxBytes AddShardParams
 		b, readErr := ioutil.ReadAll(request.Body)
 		readErr = json.Unmarshal(b, &shardTxBytes)
 		if readErr != nil {
 			//
 		}
-		//data := request.FormValue("data")
-		privByte, err := hex.DecodeString(shardTxBytes.Data.Key)
+		*/
+		data := request.FormValue("data")
+		from := request.FormValue("from")
+		gas := request.FormValue("gas")
+		Gas, err := strconv.ParseInt(gas, 10, 64)
+		UserGas := uint64(Gas)
+		nonce := request.FormValue("nonce")
+		Nonce, err := strconv.ParseInt(nonce, 10, 64)
+		UserNonce := uint64(Nonce)
+		ty := request.FormValue("type")
+		name := request.FormValue("name")
+		height := request.FormValue("height")
+		Height, err := strconv.ParseInt(height, 10, 64)
+		//UserHeight := uint64(Height)
+		privByte, err := hex.DecodeString(data)
 		if err != nil {
 			rest.WriteErrorRes(writer, client.ErrBroadcast(types.DefaultCodespace, err))
 			return
 		}
 
-		txByte, err := order.SignUpgradeTx(shardTxBytes.Data.From,
-			shardTxBytes.Data.Gas, shardTxBytes.Data.Nonce, shardTxBytes.Data.Type, shardTxBytes.Data.Name, shardTxBytes.Data.Height, privByte)
+		txByte, err := order.SignUpgradeTx(from,
+			UserGas, UserNonce, ty, name, Height, privByte)
 		if err != nil {
 			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"data error"))
 			return
