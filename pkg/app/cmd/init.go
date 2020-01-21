@@ -141,6 +141,9 @@ func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Com
 			return nil
 		},
 	}
+	viper.BindEnv(FlagChainID)
+	viper.BindEnv(FlagStateDB)
+	viper.BindEnv(tmcli.HomeFlag)
 	cmd.Flags().BoolP(FlagOverwrite, "o", false, "overwrite the genesis.json file")
 	cmd.Flags().String(FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")
 	//cmd.Flags().Bool(FlagWithTxs, false, "apply existing genesis transactions from [--home]/config/gentx/")

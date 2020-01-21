@@ -18,7 +18,7 @@ const (
 	MinPassLength = 4
 
 	FlagHeight = "height"
-	FlagHomeDir = "home"
+	FlagHomeDir = "clihome"
 	FlagVerbose = "verbose"
 	FlagNode = "node"
 	FlagAddress = "address"

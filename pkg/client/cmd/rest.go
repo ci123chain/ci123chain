@@ -44,13 +44,15 @@ func init() {
 	rpcCmd.Flags().Uint(FlagMaxOpenConnections, 1000, "The number of maximum open connections")
 	rpcCmd.Flags().Uint(FlagRPCReadTimeout, 10, "The RPC read timeout")
 	rpcCmd.Flags().Uint(FlagRPCWriteTimeout, 10, "The RPC write timeout")
+	viper.BindPFlags(rpcCmd.Flags())
+	viper.SetEnvPrefix("CI")
+
 }
 
 var rpcCmd = &cobra.Command{
 	Use: "rest-server",
 	Short: "Start rpc server",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		viper.BindPFlags(cmd.Flags())
 		rs := NewRestServer()
 		err := rs.Start(
 			viper.GetString(FlagListenAddr),
