@@ -4,4 +4,4 @@ cp -r node2-template node2
 mkdir gateway
 docker-compose -f part1.yaml up -d
 sleep 15
-docker-compose -f part2.yaml up -d
+docker-compose -f part22.yaml up -d
