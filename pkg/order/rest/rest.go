@@ -42,20 +42,32 @@ func AddShardTxRequest(cliCtx context.Context) http.HandlerFunc{
 			//
 		}
 		*/
-		data := request.FormValue("data")
+		key := request.FormValue("privateKey")
 		from := request.FormValue("from")
 		gas := request.FormValue("gas")
 		Gas, err := strconv.ParseInt(gas, 10, 64)
+		if err != nil || Gas < 0 {
+			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"gas error"))
+			return
+		}
 		UserGas := uint64(Gas)
 		nonce := request.FormValue("nonce")
 		Nonce, err := strconv.ParseInt(nonce, 10, 64)
+		if err != nil || Nonce < 0 {
+			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"nonce error"))
+			return
+		}
 		UserNonce := uint64(Nonce)
 		ty := request.FormValue("type")
 		name := request.FormValue("name")
 		height := request.FormValue("height")
 		Height, err := strconv.ParseInt(height, 10, 64)
+		if err != nil || Height < 0 {
+			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"height error"))
+			return
+		}
 		//UserHeight := uint64(Height)
-		privByte, err := hex.DecodeString(data)
+		privByte, err := hex.DecodeString(key)
 		if err != nil {
 			rest.WriteErrorRes(writer, client.ErrBroadcast(types.DefaultCodespace, err))
 			return
