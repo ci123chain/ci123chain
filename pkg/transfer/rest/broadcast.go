@@ -2,15 +2,14 @@ package rest
 
 import (
 	"encoding/hex"
-	"encoding/json"
 	"github.com/tanhuiya/ci123chain/pkg/abci/types/rest"
 	"github.com/tanhuiya/ci123chain/pkg/client"
 	"github.com/tanhuiya/ci123chain/pkg/client/context"
 	"github.com/tanhuiya/ci123chain/pkg/transfer/types"
-	"io/ioutil"
 	"net/http"
 )
 
+/*
 type TxByte struct {
 	Tx     string   `json:"tx"`
 }
@@ -19,20 +18,21 @@ type TxRequest struct {
 	//
 	Data   TxByte    `json:"data"`
 }
-
+*/
 
 func BroadcastTxRequest(cliCtx context.Context) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
-
+/*
 		var params TxRequest
 		b, readErr := ioutil.ReadAll(request.Body)
 		readErr = json.Unmarshal(b, &params)
 		if readErr != nil {
 			//
 		}
+		*/
 
-		//data := request.FormValue("data")
-		txByte, err := hex.DecodeString(params.Data.Tx)
+		data := request.FormValue("txByte")
+		txByte, err := hex.DecodeString(data)
 		if err != nil {
 			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"data error"))
 			return
@@ -50,15 +50,17 @@ func BroadcastTxRequest(cliCtx context.Context) http.HandlerFunc {
 func BroadcastTxRequestAsync(cliCtx context.Context) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 
+		/*
 		var params TxRequest
 		b, readErr := ioutil.ReadAll(request.Body)
 		readErr = json.Unmarshal(b, &params)
 		if readErr != nil {
 			//
 		}
+		*/
 
-		//data := request.FormValue("data")
-		txByte, err := hex.DecodeString(params.Data.Tx)
+		data := request.FormValue("txByte")
+		txByte, err := hex.DecodeString(data)
 		if err != nil {
 			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"data error"))
 			return

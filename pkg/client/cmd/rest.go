@@ -20,7 +20,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 
@@ -111,6 +110,7 @@ type Response struct {
 
 func Handle404() http.Handler {
 	return http.HandlerFunc(func (w http.ResponseWriter, req *http.Request) {
+		//req.RequestURI = ""
 		cli := &http.Client{}
 
 		nodeUri := req.RequestURI
@@ -121,33 +121,52 @@ func Handle404() http.Handler {
 			dest := viper.GetString(helper.FlagNode)
 			dest = strings.ReplaceAll(dest, "tcp", "http")
 
+			req.ParseForm()
+			var data = map[string]string{}
+
+			for k, v := range req.Form {
+				//fmt.Println("key is: ", k)
+				//fmt.Println("val is: ", v)
+				//data.Set(k, v[0])
+				key := k
+				value := v[0]
+				data[key] = value
+			}
+
+			newData := url.Values{}
+			for k, v := range data {
+				//fmt.Println(j)
+				newData.Set(k, v)
+			}
+/*
 			body, err := ioutil.ReadAll(req.Body)
 			if err != nil {
 				//
 			}
 			var p QueryParams
 			err = json.Unmarshal(body, &p)
-
+			*/
 
 			proxyurl, _ := url.Parse(dest)
 			//proxy := httputil.NewSingleHostReverseProxy(proxyurl)
 
-			data := url.Values{}
-			data.Set("height", p.Data.Height)
 
 			remote_addr := "http://" + proxyurl.Host + newPath
 
-
-			r, Err := http.NewRequest(req.Method, remote_addr, strings.NewReader(data.Encode()))
+			r, Err := http.NewRequest(req.Method, remote_addr, strings.NewReader(newData.Encode()))
 			if Err != nil {
 				panic(Err)
 			}
+			r.Body = ioutil.NopCloser(strings.NewReader(newData.Encode()))
 
-/*
-			req.URL.Host = proxyurl.Host
-			req.URL.Path = newPath
-			req.RequestURI = newPath
-			*/
+
+
+			r.URL.Host = proxyurl.Host
+			r.URL.Path = newPath
+			//req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+			//req.Header.Set("Content-Length", strconv.Itoa(len(data.Encode())))
+			//req.RequestURI = newPath
+			/*
 			r.URL.Host = proxyurl.Host
 			r.URL.Path = newPath
 			//r.RequestURI = newPath
@@ -157,20 +176,30 @@ func Handle404() http.Handler {
 			r.Header.Set("Content-Length", strconv.Itoa(len(data.Encode())))
 			//req.Header.Add("Content-Length", strconv.Itoa(len(data.Encode())))
 			// Note that ServeHttp is non blocking and uses a go routine under the hood
+*/
+			r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 			rep, err := cli.Do(r)
 			if err != nil {
 				//return nil, nil, err
 			}
 			resBody, err := ioutil.ReadAll(rep.Body)
-			var resultRsp client.BlockInformation
-			err = json.Unmarshal(resBody, &resultRsp)
 
+			var tmResponse client.TMResponse
+			err = json.Unmarshal(resBody, &tmResponse)
+			ResultResponse := client.Response{
+				Ret:     0,
+				Data:    tmResponse,
+				Message: "",
+			}
 
-			resByte, err := json.Marshal(Response{Data: resultRsp})
-			w.Write(resByte)
+			ResultByte, _ := json.Marshal(ResultResponse)
 
-			//proxy.ServeHTTP(w, r)
+			w.Header().Set("Content-Type","application/json")
+			w.Write(ResultByte)
+
+			//w.Header().Set("Content-Type","application/json")
+			//proxy.ServeHTTP(w, req)
 		}
 	})
 }

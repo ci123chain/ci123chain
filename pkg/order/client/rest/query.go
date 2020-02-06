@@ -5,8 +5,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/tanhuiya/ci123chain/pkg/abci/types/rest"
 	"github.com/tanhuiya/ci123chain/pkg/client/context"
-	"io/ioutil"
-
 	//"github.com/tanhuiya/ci123chain/pkg/order"
 	"github.com/tanhuiya/ci123chain/pkg/order/types"
 	"net/http"
@@ -36,6 +34,7 @@ type Actions struct {
 	Name	string	`json:"name"`
 }
 
+/*
 type ShardStateParams struct {
 	Height     string    `json:"height"`
 }
@@ -44,7 +43,7 @@ type QueryShardStateParams struct {
 	//
 	Data      ShardStateParams  `json:"data"`
 }
-
+*/
 
 func RegisterTxRoutes(cliCtx context.Context, r *mux.Router)  {
 	r.HandleFunc("/allShardState", QueryShardStatesRequestHandlerFn(cliCtx)).Methods("GET")
@@ -55,14 +54,16 @@ func QueryShardStatesRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 
 	return func(writer http.ResponseWriter, request *http.Request) {
 
+		/*
 		var params QueryShardStateParams
 		b, readErr := ioutil.ReadAll(request.Body)
 		readErr = json.Unmarshal(b, &params)
 		if readErr != nil {
 			//
 		}
+		*/
 
-		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(writer, cliCtx, request, params.Data.Height)
+		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(writer, cliCtx, request, "")
 		if !ok {
 			rest.WriteErrorRes(writer, err)
 			return

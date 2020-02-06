@@ -3,14 +3,12 @@ package rest
 import (
 	"bytes"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/tanhuiya/ci123chain/pkg/abci/types/rest"
 	"github.com/tanhuiya/ci123chain/pkg/client/context"
 	"github.com/tanhuiya/ci123chain/pkg/ibc/types"
 	"github.com/tanhuiya/ci123chain/pkg/transfer"
-	"io/ioutil"
 	"net/http"
 )
 
@@ -37,27 +35,29 @@ type QueryStateParams struct {
 }
 func QueryTxByStateRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
-		//vars := mux.Vars(request)
-		//ibcState := vars["ibcstate"]
+		vars := mux.Vars(request)
+		ibcState := vars["ibcstate"]
+		/*
 		var params QueryStateParams
 		b, readErr := ioutil.ReadAll(request.Body)
 		readErr = json.Unmarshal(b, &params)
 		if readErr != nil {
 			//
 		}
+		*/
 
-		if err := types.ValidateState(params.Data.State); err != nil {
+		if err := types.ValidateState(ibcState); err != nil {
 			rest.WriteErrorRes(writer, err)
 			return
 		}
 
-		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(writer, cliCtx, request, params.Data.Height)
+		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(writer, cliCtx, request, "")
 		if !ok {
 			rest.WriteErrorRes(writer, err)
 			return
 		}
 
-		res, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/state/" + params.Data.State, nil)
+		res, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/state/" + ibcState, nil)
 		if len(res) < 1 {
 			rest.WriteErrorRes(writer, transfer.ErrQueryTx(types.DefaultCodespace, "There is no ibctx ready"))
 			return
@@ -89,21 +89,23 @@ type QueryTxParams struct {
 func QueryTxByUniqueIDRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		//vars := mux.Vars(request)
-		//uniqueidStr := vars["uniqueid"]
+		uniqueidStr := request.FormValue("uniqueID")
 
+		/*
 		var params QueryTxParams
 		b, readErr := ioutil.ReadAll(request.Body)
 		readErr = json.Unmarshal(b, &params)
 		if readErr != nil {
 			//
 		}
+		*/
 
-		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(writer, cliCtx, request, params.Data.Height)
+		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(writer, cliCtx, request, "")
 		if !ok {
 			rest.WriteErrorRes(writer, err)
 			return
 		}
-		uniqueBz := []byte(params.Data.UniqueID)
+		uniqueBz := []byte(uniqueidStr)
 
 		res, _, err := cliCtx.Query("/store/" + types.StoreKey + "/types", uniqueBz)
 		if len(res) < 1 {
@@ -117,7 +119,7 @@ func QueryTxByUniqueIDRequestHandlerFn(cliCtx context.Context) http.HandlerFunc 
 			return
 		}
 		if !bytes.Equal(uniqueBz, ibcMsg.UniqueID) {
-			rest.WriteErrorRes(writer, transfer.ErrQueryTx(types.DefaultCodespace, fmt.Sprintf("different uniqueID get %s, expected %s", hex.EncodeToString(ibcMsg.UniqueID), params.Data)))
+			rest.WriteErrorRes(writer, transfer.ErrQueryTx(types.DefaultCodespace, fmt.Sprintf("different uniqueID get %s, expected %s", hex.EncodeToString(ibcMsg.UniqueID), uniqueidStr)))
 			return
 		}
 		resp := &IBCTxStateData{State:ibcMsg.State}
@@ -140,21 +142,23 @@ type QueryAccountNonceParams struct {
 }
 func QueryAccountNonceRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
-		//vars := mux.Vars(request)
-		//accountAddress := vars["accountaddress"]
+		vars := mux.Vars(request)
+		accountAddress := vars["accountAddress"]
+		/*
 		var params QueryAccountNonceParams
 		b, readErr := ioutil.ReadAll(request.Body)
 		readErr = json.Unmarshal(b, &params)
 		if readErr != nil {
 			//
 		}
-		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(writer, cliCtx, request, params.Data.Height)
+		*/
+		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(writer, cliCtx, request, "")
 		if !ok {
 			rest.WriteErrorRes(writer, err)
 			return
 		}
 
-		res, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/nonce/" + params.Data.Address, nil)
+		res, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/nonce/" + accountAddress, nil)
 		if err != nil {
 			rest.WriteErrorRes(writer, err)
 			return
