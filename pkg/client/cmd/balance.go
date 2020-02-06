@@ -1,12 +1,11 @@
 package cmd
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/client/helper"
-	"github.com/tanhuiya/ci123chain/pkg/util"
 	"fmt"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"github.com/tanhuiya/ci123chain/pkg/client"
+	"github.com/tanhuiya/ci123chain/pkg/client/helper"
+	"github.com/tanhuiya/ci123chain/pkg/util"
 )
 
 func init()  {
@@ -19,7 +18,6 @@ var balanceCmd = &cobra.Command{
 	Use: "balance",
 	Short: "",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		viper.BindPFlags(cmd.Flags())
 		ctx, err := client.NewClientContextFromViper(cdc)
 		if err != nil {
 			return  err

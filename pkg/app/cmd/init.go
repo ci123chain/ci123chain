@@ -35,7 +35,7 @@ var (
 	FlagOverwrite = "overwrite"
 	FlagWithTxs = "with-txs"
 	FlagIP = "ip"
-	FlagChainID = "chain-id"
+	FlagChainID = "chain_id"
 	FlagStateDB = "statedb"
 	FlagDBName = "dbname"
 )
@@ -141,9 +141,7 @@ func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Com
 			return nil
 		},
 	}
-	viper.BindEnv(FlagChainID)
-	viper.BindEnv(FlagStateDB)
-	viper.BindEnv(tmcli.HomeFlag)
+
 	cmd.Flags().BoolP(FlagOverwrite, "o", false, "overwrite the genesis.json file")
 	cmd.Flags().String(FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")
 	//cmd.Flags().Bool(FlagWithTxs, false, "apply existing genesis transactions from [--home]/config/gentx/")
@@ -152,6 +150,7 @@ func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Com
 	//cmd.AddCommand(GenTxCmd(ctx, cdc, appInit))
 	cmd.Flags().String(FlagStateDB, "couchdb://couchdb-service:5984", "fetch new shard from db")
 	cmd.Flags().String(FlagDBName, "ci123", "the name of db that used for chain")
+
 	return cmd
 }
 

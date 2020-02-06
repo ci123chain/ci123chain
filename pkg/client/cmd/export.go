@@ -31,7 +31,6 @@ var exportCmd = &cobra.Command{
 	Short: "export privatekey of a account",
 	Long:  `export privatekey of a account from keystore`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		viper.BindPFlags(cmd.Flags())
 		dir := viper.GetString(helper.FlagHomeDir)
 		addr := viper.GetString(helper.FlagAddress)
 		password := viper.GetString(flagPassword)

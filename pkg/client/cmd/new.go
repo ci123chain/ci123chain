@@ -34,7 +34,6 @@ var newAccountCmd = &cobra.Command{
 	Short: "Create a new account",
 	Long:  `Add an encrypted account to the keystore.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		viper.BindPFlags(cmd.Flags())
 		dir := viper.GetString(helper.FlagHomeDir)
 		ks := keystore.NewKeyStore(dir, keystore.StandardScryptN, keystore.StandardScryptP)
 		mnemonic := viper.GetString(flagMnemonic)

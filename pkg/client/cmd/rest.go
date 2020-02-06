@@ -45,8 +45,6 @@ func init() {
 	rpcCmd.Flags().Uint(FlagRPCReadTimeout, 10, "The RPC read timeout")
 	rpcCmd.Flags().Uint(FlagRPCWriteTimeout, 10, "The RPC write timeout")
 	viper.BindPFlags(rpcCmd.Flags())
-	viper.SetEnvPrefix("CI")
-
 }
 
 var rpcCmd = &cobra.Command{

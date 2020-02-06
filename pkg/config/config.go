@@ -2,7 +2,6 @@ package config
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 	"time"
@@ -36,9 +35,6 @@ func SaveConfig(c *cfg.Config) {
 	c.Consensus.TimeoutPropose = 5 * time.Second
 	c.Consensus.TimeoutCommit = 8 * time.Second
 	c.RPC.ListenAddress = "tcp://0.0.0.0:26657"
-	fmt.Println("!@3132132132321313")
-	fmt.Println(c.RootDir)
-	fmt.Println("!@3132132132321313")
 	cfg.EnsureRoot(c.RootDir)
 	cfg.WriteConfigFile(configFilePath, c)
 }

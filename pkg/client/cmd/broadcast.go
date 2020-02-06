@@ -21,7 +21,6 @@ var broadCastCmd = &cobra.Command{
 	Use: "broadcast",
 	Short: "broadcast transfer",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		viper.BindPFlags(cmd.Flags())
 		ctx, err := client.NewClientContextFromViper(cdc)
 		if err != nil {
 			return err

@@ -1,5 +1,5 @@
-From harbor.oneitfarm.com/library/golang:1.12
-
+#From harbor.oneitfarm.com/library/golang:1.12
+From ubuntu
 COPY ./docker/node/build/cli-linux /opt
 COPY ./docker/node/build/cid-linux /opt
 COPY ./docker/gateway/build/gateway-linux /opt
