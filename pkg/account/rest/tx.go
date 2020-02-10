@@ -1,6 +1,9 @@
 package rest
 
 import (
+	"encoding/hex"
+	"fmt"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/gorilla/mux"
 	"github.com/tanhuiya/ci123chain/pkg/abci/types/rest"
 	"github.com/tanhuiya/ci123chain/pkg/account/types"
@@ -13,7 +16,7 @@ import (
 
 // RegisterRoutes - Central function to define routes that get registered by the main application
 func RegisterRoutes(cliCtx context.Context, r *mux.Router) {
-
+	r.HandleFunc("/account/new", NewAccountRequestHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/bank/balances", QueryBalancesRequestHandlerFn(cliCtx)).Methods("POST")
 }
 
@@ -23,7 +26,12 @@ type BalanceData struct {
 
 type AccountAddress struct {
 	Address string `json:"address"`
-	Height  string  `json:"height"`
+	Height  string `json:"height"`
+}
+
+type Account struct {
+	Address string `json:"address"`
+	PrivKey string `json:"privKey"`
 }
 
 type QueryAddressParams struct {
@@ -61,6 +69,26 @@ func QueryBalancesRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			return
 		}
 		resp := BalanceData{Balance:res}
+		rest.PostProcessResponseBare(w, cliCtx, resp)
+	}
+}
+
+func NewAccountRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
+	return func(w http.ResponseWriter, request *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
+		key, err := crypto.GenerateKey()
+		if err != nil {
+			fmt.Println("Error: ", err.Error());
+		}
+
+		address := crypto.PubkeyToAddress(key.PublicKey).Hex()
+		privKey := hex.EncodeToString(key.D.Bytes())
+
+		resp := Account{
+			Address:	address,
+			PrivKey:	privKey,
+		}
 		rest.PostProcessResponseBare(w, cliCtx, resp)
 	}
 }
