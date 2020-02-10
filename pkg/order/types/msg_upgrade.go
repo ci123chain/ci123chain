@@ -1,10 +1,7 @@
 package types
 
-
 import (
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
-	"github.com/tanhuiya/ci123chain/pkg/client/helper"
-	"github.com/tanhuiya/ci123chain/pkg/cryptosuit"
 	"github.com/tanhuiya/ci123chain/pkg/order/keeper"
 	"github.com/tanhuiya/ci123chain/pkg/transaction"
 	"github.com/tanhuiya/ci123chain/pkg/util"
@@ -31,6 +28,7 @@ func NewUpgradeTx(from sdk.AccAddress, gas ,nonce uint64, t, name string, height
 	}
 }
 
+/*
 func SignUpgradeTx(from string, gas, nonce uint64,t, name string, height int64, priv []byte) ([]byte, error){
 
 	fromAddr, err := helper.StrToAddress(from)
@@ -47,6 +45,8 @@ func SignUpgradeTx(from string, gas, nonce uint64,t, name string, height int64, 
 	tx.SetSignature(signature)
 	return tx.Bytes(), nil
 }
+*/
+
 
 
 func (msg *UpgradeTx) ValidateBasic() sdk.Error{

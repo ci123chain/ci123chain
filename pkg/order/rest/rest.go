@@ -1,15 +1,15 @@
 package rest
 
 import (
-	"encoding/hex"
 	"github.com/gorilla/mux"
 	"github.com/tanhuiya/ci123chain/pkg/abci/types/rest"
 	"github.com/tanhuiya/ci123chain/pkg/client"
 	"github.com/tanhuiya/ci123chain/pkg/client/context"
 	"github.com/tanhuiya/ci123chain/pkg/order/types"
-	order "github.com/tanhuiya/ci123chain/pkg/order/types"
+	//order "github.com/tanhuiya/ci123chain/pkg/order/types"
 	"net/http"
 	"strconv"
+	sdk "github.com/tanhuiya/ci123chain/sdk/shard"
 )
 
 func RegisterTxRoutes(cliCtx context.Context, r *mux.Router)  {
@@ -35,12 +35,12 @@ func AddShardTxRequest(cliCtx context.Context) http.HandlerFunc{
 	return func(writer http.ResponseWriter, request *http.Request) {
 
 		/*
-		var shardTxBytes AddShardParams
-		b, readErr := ioutil.ReadAll(request.Body)
-		readErr = json.Unmarshal(b, &shardTxBytes)
-		if readErr != nil {
-			//
-		}
+			var shardTxBytes AddShardParams
+			b, readErr := ioutil.ReadAll(request.Body)
+			readErr = json.Unmarshal(b, &shardTxBytes)
+			if readErr != nil {
+				//
+			}
 		*/
 		key := request.FormValue("privateKey")
 		from := request.FormValue("from")
@@ -67,14 +67,14 @@ func AddShardTxRequest(cliCtx context.Context) http.HandlerFunc{
 			return
 		}
 		//UserHeight := uint64(Height)
-		privByte, err := hex.DecodeString(key)
+		/*privByte, err := hex.DecodeString(key)
 		if err != nil {
 			rest.WriteErrorRes(writer, client.ErrBroadcast(types.DefaultCodespace, err))
 			return
-		}
+		}*/
 
-		txByte, err := order.SignUpgradeTx(from,
-			UserGas, UserNonce, ty, name, Height, privByte)
+		txByte, err := sdk.SignAddShardMsg(from,
+			UserGas, UserNonce, ty, name, Height, key)
 		if err != nil {
 			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"data error"))
 			return
