@@ -23,7 +23,7 @@ func TestSignTransferMsg(t *testing.T) {
 }
 func httpTransfer(param string) {
 	cli := &http.Client{}
-	reqUrl := "http://localhost:3030/tx/broadcast"
+	reqUrl := "http://ciChain:3030/tx/broadcast"
 	data := url.Values{}
 	data.Set("txByte", param)
 	data.Set("proxy", "lb")
@@ -61,9 +61,10 @@ func TestSendTransferMSg(t *testing.T) {
 func httpSendTransferMSg(from, to, amount, gas, nonce, priv, proxy string) {
 	//
 	cli := &http.Client{}
-	reqUrl := "http://localhost:3030/tx/transfers"
+	reqUrl := "http://ciChain:3030/tx/transfers"
 	data := url.Values{}
 	data.Set("from", from)
+	data.Set("to", to)
 	data.Set("gas", gas)
 	data.Set("nonce", nonce)
 	data.Set("amount", amount)

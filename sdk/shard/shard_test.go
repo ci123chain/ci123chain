@@ -26,7 +26,7 @@ func TestSignAddShardMsg(t *testing.T) {
 func httpSignAddShardMsg(param string) {
 
 	cli := &http.Client{}
-	reqUrl := "http://localhost:3030/tx/broadcast"
+	reqUrl := "http://ciChain:3030/tx/broadcast"
 	data := url.Values{}
 	data.Set("txByte", param)
 	data.Set("proxy", "lb")
@@ -67,7 +67,7 @@ func httpSendAddShardMsg(from, gas, nonce, Type, name, height, priv, proxy strin
 	//
 	cli := &http.Client{}
 	///body := make([]byte, 0)
-	reqUrl := "http://localhost:3030/tx/addShard"
+	reqUrl := "http://ciChain:3030/tx/addShard"
 	data := url.Values{}
 	data.Set("from", from)
 	data.Set("gas", gas)

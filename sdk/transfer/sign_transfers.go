@@ -2,12 +2,18 @@ package transfer
 
 import (
 	"encoding/hex"
+	"fmt"
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/client/helper"
 	"github.com/tanhuiya/ci123chain/pkg/cryptosuit"
 	"github.com/tanhuiya/ci123chain/pkg/transfer"
+	"io/ioutil"
+	"net/http"
+	"net/url"
+	"strings"
 )
 
+//off line
 func SignTransferMsg(from, to string, amount, gas, nonce uint64, priv string, isfabric bool) ([]byte, error) {
 
 	var signature []byte
@@ -45,4 +51,38 @@ func SignTransferMsg(from, to string, amount, gas, nonce uint64, priv string, is
 	}
 	tx.SetSignature(signature)
 	return tx.Bytes(), nil
+}
+
+//on line
+func HttpTransferTx(from, to, gas, nonce, amount, priv, proxy string) {
+	cli := &http.Client{}
+	reqUrl := "http://ciChain:3030/tx/transfers"
+	data := url.Values{}
+	data.Set("from", from)
+	data.Set("to", to)
+	data.Set("gas", gas)
+	data.Set("nonce", nonce)
+	data.Set("amount", amount)
+	data.Set("privateKey", priv)
+	data.Set("proxy", proxy)
+
+
+	req, err := http.NewRequest("POST", reqUrl, strings.NewReader(data.Encode()))
+	if err != nil {
+		panic(err)
+	}
+	req.Body = ioutil.NopCloser(strings.NewReader(data.Encode()))
+
+	// set request content type
+	req.Header.Set("Content-Type", "x-www-form-urlencoded")
+	// request
+	rep, err := cli.Do(req)
+	if err != nil {
+		panic(err)
+	}
+	b, err := ioutil.ReadAll(rep.Body)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Print(string(b))
 }
