@@ -35,6 +35,8 @@ func AddServerCommands(
 		AddGenesisAccountCmd(ctx, cdc),
 		testnetGenCmd(ctx, cdc, appInit),
 		testnetAddCmd(ctx, cdc, appInit),
+		bootstrapGenCmd(ctx, cdc, appInit),
+		bootstrapAddCmd(ctx, cdc, appInit),
 		tendermintCmd,
 		LineBreak,
 		versionCmd,

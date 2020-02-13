@@ -354,5 +354,3 @@ func addrToIP(addr net.Addr) net.IP {
 	}
 	return ip
 }
-
-
