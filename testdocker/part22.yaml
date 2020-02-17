@@ -9,6 +9,7 @@ services:
       CI_STATEDB: couchdb://couchdb_service:5984
       CI_HOME: /root/cid
       CI_CLIHOME: /root/cli
+      CI_VALIDATOR_KEY: oQLmM5pM5wL78a6LJntQY8tPGQPpp050udIA5YZMkCc=
     ports:
       - 26606:26656
       - 1310:80
@@ -28,6 +29,7 @@ services:
       CI_STATEDB: couchdb://couchdb_service:5984
       CI_HOME: /root/cid
       CI_CLIHOME: /root/cli
+      CI_VALIDATOR_KEY: oQLmM5pM5wL78a6LJntQY8tPGQPpp050udIA5YZMkCc=
     ports:
       - 26616:26656
       - 1311:80
@@ -48,6 +50,7 @@ services:
       CI_STATEDB: couchdb://couchdb_service:5984
       CI_HOME: /root/cid
       CI_CLIHOME: /root/cli
+      CI_VALIDATOR_KEY: oQLmM5pM5wL78a6LJntQY8tPGQPpp050udIA5YZMkCc=
     ports:
       - 26626:26656
       - 1312:80

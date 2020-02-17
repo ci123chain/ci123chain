@@ -264,7 +264,6 @@ func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initCo
 		validatorKey,
 	)
 
-	fmt.Printf("%s", cdc.MustMarshalJSON(pv.Key.PrivKey))
 	nodeKey, err = node.GenNodeKeyByPrivKey(c.NodeKeyFile(), pv.Key.PrivKey)
 	nodeID = string(nodeKey.ID())
 

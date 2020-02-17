@@ -38,7 +38,7 @@ func TestGenValidator(t *testing.T) {
 	fmt.Printf("%s", jsonBytes)
 }
 
-// 通过secret 构造私钥
+// 通过secret （32位字符串）构造私钥
 func TestGenValidator2(t *testing.T) {
 	// 私钥编码后的数据
 	privSecret := "nodenodenodenodenodenodenodenode"
