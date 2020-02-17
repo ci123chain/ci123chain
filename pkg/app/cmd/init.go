@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -39,7 +38,7 @@ var (
 	FlagChainID = "chain_id"
 	FlagStateDB = "statedb"
 	FlagDBName = "dbname"
-	FlagWithValidator = "validatorKey"
+	FlagWithValidator = "validator_key"
 )
 
 
@@ -259,18 +258,14 @@ func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initCo
 		validatorKey = secp256k1.GenPrivKey()
 	}
 
-	if err != nil {
-		pv := validator.GenFilePV(
-			c.PrivValidatorKeyFile(),
-			c.PrivValidatorStateFile(),
-			validatorKey,
-		)
+	pv := validator.GenFilePV(
+		c.PrivValidatorKeyFile(),
+		c.PrivValidatorStateFile(),
+		validatorKey,
+	)
 
-		fmt.Println(string(validatorKey[:]), hex.EncodeToString(validatorKey[:]))
-		fmt.Printf("%s", cdc.MustMarshalJSON(pv.Key.PrivKey))
-
-		nodeKey, err = node.GenNodeKeyByPrivKey(c.NodeKeyFile(), pv.Key.PrivKey)
-	}
+	fmt.Printf("%s", cdc.MustMarshalJSON(pv.Key.PrivKey))
+	nodeKey, err = node.GenNodeKeyByPrivKey(c.NodeKeyFile(), pv.Key.PrivKey)
 	nodeID = string(nodeKey.ID())
 
 	if initConfig.ChainID == "" {
