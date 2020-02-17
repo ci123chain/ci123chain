@@ -51,7 +51,7 @@ necessary files (private validator, genesis, config, etc.).
 Note, strict routability for addresses is turned off in the config file.
 
 Example:
-	cid boot-gen --chain-pre=xxxx --node-num=4 --output-dir=./output
+	cid boot-gen --chain-pre=xxxx --node-num=4 --output-dir=./output --validatorKey="privKey"
 	`,
 		RunE: func(_ *cobra.Command, _ []string) error {
 			config := ctx.Config
@@ -65,6 +65,7 @@ Example:
 		"Number of nodes")
 	cmd.Flags().StringP(outputDir, "o", "./mytestnet",
 		"Directory to store initialization data for the testnet")
+	cmd.Flags().String(FlagWithValidator, "", "the validator key")
 	//cmd.Flags().AddFlagSet(appInit.FlagsAppGenTx)
 	return cmd
 }
@@ -79,7 +80,7 @@ necessary files (private validator, genesis, config, etc.).
 Note, strict routability for addresses is turned off in the config file.
 
 Example:
-	cid add-net --chain-pre=xxxx --output=./output
+	cid boot-add --chain-pre=xxxx --output=./output
 	`,
 		RunE: func(_ *cobra.Command, _ []string) error {
 			config := ctx.Config
@@ -111,8 +112,19 @@ func bootstrapGenWithConfig(c *cfg.Config, cdc *amino.Codec, appInit app.AppInit
 	outDir := viper.GetString(outputDir)
 	nodes := viper.GetInt(nNodes)
 	var validators []types.GenesisValidator
-	var genFilePath, nodeKeyPath, privKeyPath, privStatePath string
-
+	var genFilePath string
+	var validatorKey secp256k1.PrivKeySecp256k1
+	var privStr string
+	privBz := viper.GetString(FlagWithValidator)
+	if len(privBz) > 0 {
+		privStr = fmt.Sprintf(`{"type":"%s","value":"%s"}`, secp256k1.PrivKeyAminoName, privBz)
+		err := cdc.UnmarshalJSON([]byte(privStr), &validatorKey)
+		if err != nil {
+			panic(err)
+		}
+	}else {
+		validatorKey = secp256k1.GenPrivKey()
+	}
 	//生成chainID和rootDir
 	if chainPrefix == "" {
 		chainPrefix = cmn.RandStr(6) + "-"
@@ -126,31 +138,15 @@ func bootstrapGenWithConfig(c *cfg.Config, cdc *amino.Codec, appInit app.AppInit
 		c.Moniker = chainName
 		cfg.EnsureRoot(filepath.Join(rootDir, chainName))
 
-		if i == 0 {
-			pv := validator.GenFilePV(
-				c.PrivValidatorKeyFile(),
-				c.PrivValidatorStateFile(),
-				secp256k1.GenPrivKey(),
-			)
-			_, err := node.GenNodeKeyByPrivKey(c.NodeKeyFile(), pv.Key.PrivKey)
-			if err != nil {
-				return err
-			}
-			nodeKeyPath = c.NodeKeyFile()
-			privKeyPath = c.PrivValidatorKeyFile()
-			privStatePath = c.PrivValidatorStateFile()
-		}else {
-			if err := CopyFile(nodeKeyPath, filepath.Join(c.RootDir, "config/node_key.json")); err != nil {
-				return err
-			}
-			if err := CopyFile(privKeyPath, filepath.Join(c.RootDir, "config/priv_validator_key.json")); err != nil {
-				return err
-			}
-			if err := CopyFile(privStatePath, filepath.Join(c.RootDir, "data/priv_validator_state.json")); err != nil {
-				return err
-			}
+		pv := validator.GenFilePV(
+			c.PrivValidatorKeyFile(),
+			c.PrivValidatorStateFile(),
+			validatorKey,
+		)
+		_, err := node.GenNodeKeyByPrivKey(c.NodeKeyFile(), pv.Key.PrivKey)
+		if err != nil {
+			return err
 		}
-
 		genTime := tmtime.Now()
 
 		validator, appState, err := getValidator(cdc, c, appInit)
