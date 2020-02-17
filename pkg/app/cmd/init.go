@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -244,12 +245,18 @@ func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initCo
 	chainID string, nodeID string, appMessage json.RawMessage, err error) {
 
 	nodeKey, err := node.LoadNodeKey(c.NodeKeyFile())
+
+	gpv := secp256k1.GenPrivKey()
 	if err != nil {
 		pv := validator.GenFilePV(
 			c.PrivValidatorKeyFile(),
 			c.PrivValidatorStateFile(),
-			secp256k1.GenPrivKey(),
+			gpv,
 		)
+
+		fmt.Println(string(gpv[:]), hex.EncodeToString(gpv[:]))
+		fmt.Printf("%s", cdc.MustMarshalJSON(pv.Key.PrivKey))
+
 		nodeKey, err = node.GenNodeKeyByPrivKey(c.NodeKeyFile(), pv.Key.PrivKey)
 	}
 	nodeID = string(nodeKey.ID())
