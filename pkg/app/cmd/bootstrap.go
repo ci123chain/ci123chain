@@ -37,7 +37,7 @@ var (
 type genState struct {
 	Accounts json.RawMessage `json:"accounts"`
 	Auth json.RawMessage	`json:"auth"`
-	Order otypes.GenesisState `json:"order"`
+	Order otypes.GenesisState 	`json:"order"`
 }
 
 // get cmd to initialize all files for tendermint testnet and application
@@ -173,9 +173,10 @@ func bootstrapGenWithConfig(c *cfg.Config, cdc *amino.Codec, appInit app.AppInit
 			ls = append(ls, l)
 		}
 		gs.Order.Params.OrderBook.Lists = ls
-		genState, _ := json.Marshal(gs)
+		genState, _ := cdc.MarshalJSON(gs)
+		gst := json.RawMessage(string(genState))
 		genFilePath = c.GenesisFile()
-		err = writeGenesisFile(cdc, genFilePath, chainName, validators, genState, genTime)
+		err = writeGenesisFile(cdc, genFilePath, chainName, validators, gst, genTime)
 		if err != nil {
 				return err
 			}
@@ -242,9 +243,10 @@ func bootstrapAddNode(c *cfg.Config, cdc *amino.Codec, appInit app.AppInit) erro
 	}
 	genTime := time.Now()
 	gs.Order.Params.OrderBook.Lists = ls
-	genState, _ := json.Marshal(gs)
+	genState, _ := cdc.MarshalJSON(gs)
+	gst := json.RawMessage(string(genState))
 	genFilePath := c.GenesisFile()
-	err = writeGenesisFile(cdc, genFilePath, chainName, validators, genState, genTime)
+	err = writeGenesisFile(cdc, genFilePath, chainName, validators, gst, genTime)
 	if err != nil {
 		return err
 	}
