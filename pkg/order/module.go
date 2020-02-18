@@ -15,6 +15,11 @@ type AppModule struct {
 	OrderKeeper	*keeper.OrderKeeper
 }
 
+func (am AppModule) EndBlock(ctx sdk.Context, req abci.RequestEndBlock) []abci.ValidatorUpdate {
+
+	return nil
+}
+
 func (am AppModule) BeginBlocker(ctx  sdk.Context, req abci.RequestBeginBlock) {
 	//do you want to do
 	am.OrderKeeper.WaitForReady(ctx)
@@ -45,9 +50,9 @@ func RegisterCodec(cdc *codec.Codec)  {
 }
 */
 
-func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage)  {
+func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.ValidatorUpdate  {
 	if am.OrderKeeper.ExistOrderBook(ctx) {
-		return
+		return nil
 	}
 
 	var genesisState types.GenesisState
@@ -62,4 +67,5 @@ func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage)  {
 			am.OrderKeeper.SetOrderBook(ctx, genesisState.Params.OrderBook)
 		}
 	}
+	return nil
 }

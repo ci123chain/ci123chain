@@ -106,6 +106,51 @@ func (k Keeper) SendCoinsFromModuleToAccount(ctx sdk.Context, senderModule strin
 	return k.ak.Transfer(ctx, senderAddr, recipientAddr, amt)
 }
 
+func (k Keeper) SendCoinsFromModuleToModule(ctx sdk.Context, senderModule, recipientModule string, amt sdk.Coin) error {
+
+	senderAddr := k.GetModuleAddress(senderModule)
+	if senderAddr.Empty() {
+		return sdk.ErrUnknownAddress(fmt.Sprintf("module account %s does not exist", senderModule))
+	}
+	recipientAcc := k.GetModuleAccount(ctx, recipientModule)
+	if recipientAcc == nil {
+		return sdk.ErrUnknownAddress(fmt.Sprintf("module account %s isn't able to be created", recipientModule))
+	}
+	return k.ak.Transfer(ctx, senderAddr, recipientAcc.GetAddress(), amt)
+}
+
+func (k Keeper) DelegateCoinsFromAccountToModule(ctx sdk.Context, senderAddr sdk.AccAddress, recipientModule string,
+	amt sdk.Coin) error {
+
+	recipientAcc := k.GetModuleAccount(ctx, recipientModule)
+	if recipientAcc == nil {
+		return sdk.ErrUnknownAddress(fmt.Sprintf("module account %s isn't able to be created", recipientModule))
+	}
+
+	if !recipientAcc.HasPermission(types2.Staking) {
+		return sdk.ErrNoPermission(fmt.Sprintf("module account %s has no expected permission", recipientModule))
+	}
+	return k.ak.Transfer(ctx, senderAddr, recipientAcc.GetAddress(), amt)
+}
+
+// UndelegateCoinsFromModuleToAccount undelegates the unbonding coins and transfers
+// them from a module account to the delegator account. It will panic if the
+// module account does not exist or is unauthorized.
+func (k Keeper) UndelegateCoinsFromModuleToAccount(
+	ctx sdk.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coin,
+) error {
+
+	acc := k.GetModuleAccount(ctx, senderModule)
+	if acc == nil {
+		return sdk.ErrUnknownAddress(fmt.Sprintf("module account %s isn't able to be created", recipientAddr))
+	}
+
+	if !acc.HasPermission(types2.Staking) {
+		return sdk.ErrNoPermission(fmt.Sprintf("module account %s has no expected permission", recipientAddr))
+	}
+
+	return k.ak.Transfer(ctx, acc.GetAddress(), recipientAddr, amt)
+}
 ///-------------
 
 //func (k Keeper) SetAccountSequence(ctx sdk.Context, addr sdk.AccAddress, nonce uint64) sdk.Error {

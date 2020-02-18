@@ -22,7 +22,10 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/ibc"
 	"github.com/tanhuiya/ci123chain/pkg/mortgage"
 	"github.com/tanhuiya/ci123chain/pkg/order"
+	orhandler "github.com/tanhuiya/ci123chain/pkg/order/handler"
 	"github.com/tanhuiya/ci123chain/pkg/params"
+	"github.com/tanhuiya/ci123chain/pkg/staking"
+	stakingTypes "github.com/tanhuiya/ci123chain/pkg/staking/types"
 	"github.com/tanhuiya/ci123chain/pkg/supply"
 	"github.com/tanhuiya/ci123chain/pkg/transaction"
 	"github.com/tanhuiya/ci123chain/pkg/transfer"
@@ -36,7 +39,6 @@ import (
 	tmdb "github.com/tendermint/tm-db"
 	"io"
 	"os"
-	orhandler "github.com/tanhuiya/ci123chain/pkg/order/handler"
 )
 
 const (
@@ -63,6 +65,7 @@ var (
 
 	fcStoreKey       = sdk.NewKVStoreKey(fc.FcStoreKey)
 	disrtStoreKey         = sdk.NewKVStoreKey(k.DisrtKey)
+	stakingStoreKey  = sdk.NewKVStoreKey(staking.StoreKey)
 
 	ModuleBasics = module.NewBasicManager(
 		account.AppModuleBasic{},
@@ -74,6 +77,8 @@ var (
 	maccPerms = map[string][]string{
 		//mortgage.ModuleName: nil,
 		ibc.ModuleName: nil,
+		stakingTypes.BondedPoolName: {supply.Burner, supply.Staking},
+		stakingTypes.NotBondedPoolName: {supply.Burner, supply.Staking},
 	}
 )
 
@@ -126,6 +131,7 @@ func NewChain(logger log.Logger, tmdb tmdb.DB, traceStore io.Writer) *Chain {
 
 	fcKeeper := fc.NewFcKeeper(cdc, fcStoreKey, accKeeper)
 	distrKeeper := k.NewKeeper(cdc, disrtStoreKey, fcKeeper, accKeeper)
+	stakingKeeper := staking.NewKeeper(cdc, stakingStoreKey, accKeeper,supplyKeeper, paramsKeeper.Subspace(params.ModuleName))
 
 	cdb := tmdb.(*couchdb.GoCouchDB)
 	orderKeeper := order.NewKeeper(cdb, OrderStoreKey)
@@ -136,11 +142,13 @@ func NewChain(logger log.Logger, tmdb tmdb.DB, traceStore io.Writer) *Chain {
 		account.AppModule{AccountKeeper: accKeeper},
 		distr.AppModule{DistributionKeeper: distrKeeper},
 		order.AppModule{OrderKeeper: &orderKeeper},
+		staking.AppModule{StakingKeeper:stakingKeeper, AccountKeeper:accKeeper, SupplyKeeper:supplyKeeper},
 		)
 	// invoke router
 	c.Router().AddRoute(transfer.RouteKey, handler.NewHandler(txm, accKeeper, sm))
 	c.Router().AddRoute(ibc.RouterKey, ibc.NewHandler(ibcKeeper))
 	c.Router().AddRoute(order.RouteKey, orhandler.NewHandler(&orderKeeper))
+	c.Router().AddRoute(staking.RouteKey, staking.NewHandler(stakingKeeper))
 	// query router
 	c.QueryRouter().AddRoute(ibc.RouterKey, ibc.NewQuerier(ibcKeeper))
 
@@ -148,10 +156,13 @@ func NewChain(logger log.Logger, tmdb tmdb.DB, traceStore io.Writer) *Chain {
 
 	c.QueryRouter().AddRoute(order.RouteKey, order.NewQuerier(&orderKeeper))
 
+	c.QueryRouter().AddRoute(staking.RouteKey, staking.NewQuerier(stakingKeeper))
+
 	c.SetAnteHandler(ante.NewAnteHandler(c.authKeeper, accKeeper, fcKeeper))
 	c.SetBeginBlocker(c.BeginBlocker)
 	c.SetCommitter(c.Committer)
 	c.SetInitChainer(c.InitChainer)
+	c.SetEndBlocker(c.EndBlocker)
 	shardID := viper.GetString("ShardID")
 	app_types.CommitInfoKeyFmt = shardID + "s/%d"
 	app_types.LatestVersionKey = shardID + "s/latest"
@@ -175,6 +186,7 @@ func (c *Chain) mountStores() error {
 		fcStoreKey,
 		disrtStoreKey,
 		OrderStoreKey,
+		stakingStoreKey,
 	}
 	c.MountStoresIAVL(keys...)
 

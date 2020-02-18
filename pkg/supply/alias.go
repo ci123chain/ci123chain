@@ -17,3 +17,8 @@ var (
 
 	RegisterCodec = types.RegisterCodec
 )
+
+const (
+	Burner   = types.Burner
+	Staking  = types.Staking
+)

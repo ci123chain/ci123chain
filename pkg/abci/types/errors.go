@@ -43,6 +43,25 @@ const (
 	CodeMemoTooLarge      CodeType = 13
 	CodeInsufficientFee   CodeType = 14
 	CodeTooManySignatures CodeType = 15
+	CodeNoPermission      CodeType = 16
+	CodeBondedTokensFailed CodeType = 17
+	CodeUnknowTokenSource   CodeType = 18
+	CodeInvalidValidatorStatus CodeType = 19
+	CodeNoDelegation      CodeType = 20
+	CodeNoValidator       CodeType = 21
+	CodeNoRedelegation    CodeType = 22
+	CodeEmptyDelegatorAddr CodeType = 23
+	CodeEmptyValidatorAddr CodeType = 24
+	CodeBadValidatorAddr CodeType = 25
+	CodeEmptyValidatorPubKey CodeType = 26
+	CodeBadDelegationAmount CodeType = 27
+	CodeMinSelfDelegationInvalid CodeType = 28
+	CodeSelfDelegationBelowMinimum CodeType = 29
+
+	CodeEmptyDescription CodeType = 30
+	CodeEmptyCommission CodeType = 31
+	CodeInvalidCommission CodeType = 32
+	CodeBadSharesAmount  CodeType = 33
 
 	// CodespaceRoot is a codespace for error codes in this file only.
 	// Notice that 0 is an "unset" codespace, which can be overridden with
@@ -142,6 +161,78 @@ func ErrInsufficientFee(msg string) Error {
 }
 func ErrTooManySignatures(msg string) Error {
 	return newErrorWithRootCodespace(CodeTooManySignatures, msg)
+}
+
+func ErrNoPermission(msg string) Error {
+	return newErrorWithRootCodespace(CodeNoPermission, msg)
+}
+
+func ErrNoDelegation(msg string) Error {
+	return newErrorWithRootCodespace(CodeNoDelegation, msg)
+}
+
+func ErrNoValidatorFound(msg string) Error {
+	return newErrorWithRootCodespace(CodeNoValidator, msg)
+}
+
+func ErrNoRedelegation(msg string) Error {
+	return newErrorWithRootCodespace(CodeNoRedelegation, msg)
+}
+
+func ErrEmptyDelegatorAddr(msg string) Error {
+	return newErrorWithRootCodespace(CodeEmptyDelegatorAddr, msg)
+}
+
+func ErrEmptyValidatorAddr(msg string) Error {
+	return newErrorWithRootCodespace(CodeEmptyValidatorAddr, msg)
+}
+
+func ErrBadValidatorAddr(msg string) Error {
+	return newErrorWithRootCodespace(CodeBadValidatorAddr, msg)
+}
+
+func ErrEmptyValidatorPubKey(msg string) Error {
+	return newErrorWithRootCodespace(CodeEmptyValidatorPubKey, msg)
+}
+
+func ErrBadDelegationAmount(msg string) Error {
+	return newErrorWithRootCodespace(CodeBadDelegationAmount, msg)
+}
+
+func ErrMinSelfDelegationInvalid(msg string) Error {
+	return newErrorWithRootCodespace(CodeMinSelfDelegationInvalid, msg)
+}
+
+func ErrSelfDelegationBelowMinimum(msg string) Error {
+	return newErrorWithRootCodespace(CodeSelfDelegationBelowMinimum, msg)
+}
+
+func ErrEmptyDescription(msg string) Error {
+	return newErrorWithRootCodespace(CodeEmptyDescription, msg)
+}
+func ErremptyCommission(msg string) Error {
+	return newErrorWithRootCodespace(CodeEmptyCommission, msg)
+}
+
+func ErrInvalidCommission(msg string) Error {
+	return newErrorWithRootCodespace(CodeInvalidCommission, msg)
+}
+
+func ErrBadSharesAmount(msg string) Error {
+	return newErrorWithRootCodespace(CodeBadSharesAmount, msg)
+}
+
+
+func ErrBondedTokendFailed(msg string) Error {
+	return newErrorWithRootCodespace(CodeBondedTokensFailed, msg)
+}
+
+func ErrUnknowTokenSource(msg string) Error {
+	return newErrorWithRootCodespace(CodeUnknowTokenSource, msg)
+}
+
+func ErrInvalidValidatorStatus(msg string) Error {
+	return newErrorWithRootCodespace(CodeInvalidValidatorStatus, msg)
 }
 
 //----------------------------------------
