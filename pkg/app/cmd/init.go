@@ -38,6 +38,7 @@ var (
 	FlagChainID = "chain_id"
 	FlagStateDB = "statedb"
 	FlagDBName = "dbname"
+	FlagWithValidator = "validator_key"
 )
 
 
@@ -150,12 +151,13 @@ func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Com
 	//cmd.AddCommand(GenTxCmd(ctx, cdc, appInit))
 	cmd.Flags().String(FlagStateDB, "couchdb://couchdb-service:5984", "fetch new shard from db")
 	cmd.Flags().String(FlagDBName, "ci123", "the name of db that used for chain")
-
+	cmd.Flags().String(FlagWithValidator, "", "the validator key")
 	return cmd
 }
 
 func gentxWithConfig(cdc *amino.Codec, appInit app.AppInit, config *cfg.Config, genTxConfig config.GenTx) (
 	cliPrint json.RawMessage, genTxFile json.RawMessage, err error ) {
+
 
 	pv := validator.GenFilePV(
 		config.PrivValidatorKeyFile(),
@@ -242,16 +244,27 @@ func GetChainID() (string, error){
 
 func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initConfig InitConfig)(
 	chainID string, nodeID string, appMessage json.RawMessage, err error) {
-
+	var validatorKey secp256k1.PrivKeySecp256k1
+	var privStr string
 	nodeKey, err := node.LoadNodeKey(c.NodeKeyFile())
-	if err != nil {
-		pv := validator.GenFilePV(
-			c.PrivValidatorKeyFile(),
-			c.PrivValidatorStateFile(),
-			secp256k1.GenPrivKey(),
-		)
-		nodeKey, err = node.GenNodeKeyByPrivKey(c.NodeKeyFile(), pv.Key.PrivKey)
+	privBz := viper.GetString(FlagWithValidator)
+	if len(privBz) > 0 {
+		privStr = fmt.Sprintf(`{"type":"%s","value":"%s"}`, secp256k1.PrivKeyAminoName, privBz)
+		err = cdc.UnmarshalJSON([]byte(privStr), &validatorKey)
+		if err != nil {
+			panic(err)
+		}
+	}else {
+		validatorKey = secp256k1.GenPrivKey()
 	}
+
+	pv := validator.GenFilePV(
+		c.PrivValidatorKeyFile(),
+		c.PrivValidatorStateFile(),
+		validatorKey,
+	)
+
+	nodeKey, err = node.GenNodeKeyByPrivKey(c.NodeKeyFile(), pv.Key.PrivKey)
 	nodeID = string(nodeKey.ID())
 
 	if initConfig.ChainID == "" {
