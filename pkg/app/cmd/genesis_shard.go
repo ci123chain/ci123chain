@@ -9,28 +9,19 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/order/keeper"
 	otype "github.com/tanhuiya/ci123chain/pkg/order/types"
 	"github.com/tendermint/tendermint/libs/cli"
-	"strconv"
 	"strings"
 )
 
 func AddGenesisShardCmd(ctx *app.Context, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:  "add-genesis-shard [name1:height1;name2:height2]",
+		Use:  "add-genesis-shard [name1,name2,name3]",
 		Short: "Add genesis shard to genesis.json",
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			config := ctx.Config
 			config.SetRoot(viper.GetString(cli.HomeFlag))
+			shards := strings.Split(args[0],",")
 
-			var names []string
-			var heights []int64
-			shards := strings.Split(args[0],";")
-			for i := 0; i < len(shards); i++ {
-				shard := strings.Split(shards[i],":")
-				names = append(names,shard[0])
-				height, _ := strconv.ParseInt(shard[1],10,64)
-				heights = append(heights, height)
-			}
 			genFile := config.GenesisFile()
 			appState, genDoc, err := app.GenesisStateFromGenFile(cdc, genFile)
 			if err != nil {
@@ -48,8 +39,8 @@ func AddGenesisShardCmd(ctx *app.Context, cdc *codec.Codec) *cobra.Command {
 			for i := 0; i < len(shards); i++ {
 				var list keeper.Lists
 				exist := false
-				list.Name = names[i]
-				list.Height = heights[i]
+				list.Name = shards[i]
+				list.Height = 0
 				for _,v := range gs.Params.OrderBook.Lists {
 					if v.Name == list.Name{
 						exist = true
