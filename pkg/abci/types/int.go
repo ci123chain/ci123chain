@@ -84,6 +84,16 @@ func (i Int) BigInt() *big.Int {
 	return new(big.Int).Set(i.i)
 }
 
+// IsNegative returns true if Int is negative
+func (i Int) IsNegative() bool {
+	return i.i.Sign() == -1
+}
+
+// IsPositive returns true if Int is positive
+func (i Int) IsPositive() bool {
+	return i.i.Sign() == 1
+}
+
 // NewInt constructs Int from int64
 func NewInt(n int64) Int {
 	return Int{big.NewInt(n)}
@@ -222,6 +232,19 @@ func (i Int) MulRaw(i2 int64) Int {
 	return i.Mul(NewInt(i2))
 }
 
+func (i Int) Quo(i2 Int) (res Int) {
+	// Check division-by-zero
+	if i2.i.Sign() == 0 {
+		panic("Division by zero")
+	}
+	return Int{div(i.i, i2.i)}
+}
+
+// QuoRaw divides Int with int64
+func (i Int) QuoRaw(i2 int64) Int {
+	return i.Quo(NewInt(i2))
+}
+
 // Div divides Int with Int
 func (i Int) Div(i2 Int) (res Int) {
 	// Check division-by-zero
@@ -262,6 +285,11 @@ func MinInt(i1, i2 Int) Int {
 // Human readable string
 func (i Int) String() string {
 	return i.i.String()
+}
+
+// ToDec converts Int to Dec
+func (i Int) ToDec() Dec {
+	return NewDecFromInt(i)
 }
 
 // Testing purpose random Int generator
@@ -559,4 +587,9 @@ func AddUint64Overflow(a, b uint64) (uint64, bool) {
 // intended to be used with require/assert:  require.True(IntEq(...))
 func IntEq(t *testing.T, exp, got Int) (*testing.T, bool, string, string, string) {
 	return t, exp.Equal(got), "expected:\t%v\ngot:\t\t%v", exp.String(), got.String()
+}
+
+
+type IntProto struct {
+	Int   Int
 }

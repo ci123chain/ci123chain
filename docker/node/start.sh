@@ -7,7 +7,7 @@ if [ $CI123_HOME ];then
 fi
 
 if [ $GATEWAY ]; then
-    ./gateway-linux --logdir=${HOME_DIR}/gateway --statedb=${STATE_DB}
+    ./gateway-linux --logdir=${HOME_DIR}/gateway --statedb=${CI123_COUCHDB}
     exit 0
 fi
 

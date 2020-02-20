@@ -41,11 +41,13 @@ func startCmd(ctx *app.Context, appCreator app.AppCreator) *cobra.Command {
 			select {}
 		},
 	}
+
 	cmd.Flags().Bool(flagWithTendermint, true, "Run abci app embedded in-process with tendermint")
 	cmd.Flags().String(flagAddress, "tcp://0.0.0.0:26658", "Listen address")
 	cmd.Flags().String(flagTraceStore, "", "Enable KVStore tracing to an output file")
 	cmd.Flags().String(flagPruning, "syncable", "Pruning strategy: syncable, nothing, everything")
 	cmd.Flags().String(flagStateDB, "leveldb", "db of abci persistent")
+
 	//cmd.Flags().String(flagLogLevel, "debug", "Run abci app with different log level")
 	tcmd.AddNodeFlags(cmd)
 	return cmd
@@ -84,9 +86,9 @@ func startStandAlone(ctx *app.Context, appCreator app.AppCreator) error {
 func StartInProcess(ctx *app.Context, appCreator app.AppCreator) (*node.Node, error) {
 	cfg := ctx.Config
 	home := cfg.RootDir
+	viper.SetEnvPrefix("CI")
 	traceStore := viper.GetString(flagTraceStore)
 	stateDB := viper.GetString(flagStateDB)
-
 	gendoc, err := types.GenesisDocFromFile(cfg.GenesisFile())
 	if err != nil {
 		panic(err)

@@ -1,13 +1,13 @@
 package app
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/config"
 	"github.com/spf13/viper"
+	"github.com/tanhuiya/ci123chain/pkg/config"
+	"github.com/tanhuiya/ci123chain/pkg/logger"
+	cfg "github.com/tendermint/tendermint/config"
+	"github.com/tendermint/tendermint/libs/cli"
 	"github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/libs/log"
-	tmcli "github.com/tendermint/tendermint/libs/cli"
-	cfg "github.com/tendermint/tendermint/config"
-	"github.com/tanhuiya/ci123chain/pkg/logger"
 	"os"
 )
 
@@ -29,7 +29,7 @@ func NewContext(config *cfg.Config, logger log.Logger) *Context {
 }
 
 func SetupContext(ctx *Context, level string) error {
-	root := viper.GetString(tmcli.HomeFlag)
+	root := viper.GetString(cli.HomeFlag)
 	c, err := config.GetConfig(root)
 	if err == config.ErrConfigNotFound {
 		c, err = config.CreateConfig(common.RandStr(8), root)

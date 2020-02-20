@@ -12,9 +12,10 @@ type AppModuleGenesis interface {
 	AppModuleBasic
 
 	// 根据 genesis 配置初始化
-	InitGenesis(ctx types.Context, data json.RawMessage)
+	InitGenesis(ctx types.Context, data json.RawMessage) []abci.ValidatorUpdate
 	BeginBlocker(ctx types.Context, req abci.RequestBeginBlock)
 	Committer(ctx types.Context)
+	EndBlock(ctx types.Context, req abci.RequestEndBlock) []abci.ValidatorUpdate
 }
 
 type AppModuleBasic interface {
@@ -104,4 +105,23 @@ func (am AppManager) Committer(ctx types.Context) abci.ResponseCommit {
 		m.Committer(ctx)
 	}
 	return abci.ResponseCommit{}
+}
+
+func (am AppManager) EndBlocker(ctx types.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
+
+	validatorUpdates := []abci.ValidatorUpdate{}
+	for _, m := range am.Modules {
+		if m == am.Modules[order.ModuleName] {
+			continue
+		}
+		moduleValUpdates := m.EndBlock(ctx, req)
+		if len(moduleValUpdates) > 0 {
+			if len(validatorUpdates) > 0 {
+				panic("validator EndBlock updates already set by a previous module")
+			}
+
+			validatorUpdates = moduleValUpdates
+		}
+	}
+	return abci.ResponseEndBlock{}
 }

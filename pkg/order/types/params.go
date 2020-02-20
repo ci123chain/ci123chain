@@ -16,6 +16,7 @@ type Params struct {
 
 func DefaultParams() Params {
 	var lists []keeper.Lists
+
 	p1 := &keeper.Lists{
 		Name:   "",
 		Height: 0,
@@ -61,6 +62,6 @@ func ParamKeyTable() subspace.KeyTable {
 
 func (p *Params) ParamSetPairs() subspace.ParamSetPairs {
 	return subspace.ParamSetPairs{
-		{KeyOrderBook, &p.OrderBook},
+		{KeyOrderBook, &p.OrderBook, nil},
 	}
 }

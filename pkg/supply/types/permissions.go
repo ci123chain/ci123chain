@@ -6,6 +6,12 @@ import (
 	"strings"
 )
 
+// permissions
+const (
+	Burner  = "burner"
+	Staking = "staking"
+)
+
 type PermissionsForAddress struct {
 	permissions 	[]string
 	address 		sdk.AccAddress

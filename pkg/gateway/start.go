@@ -5,6 +5,8 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
 	"github.com/tanhuiya/ci123chain/pkg/gateway/backend"
 	"github.com/tanhuiya/ci123chain/pkg/gateway/couchdbsource"
 	"github.com/tanhuiya/ci123chain/pkg/gateway/logger"
@@ -22,16 +24,26 @@ func Start() {
 	var logDir, logLevel, serverList string
 	var statedb, dbname, urlreg string
 	var port int
-	flag.StringVar(&logDir, "logdir", DefaultLogDir, "log dir")
+	flag.String("logdir", DefaultLogDir, "log dir")
 	flag.StringVar(&logLevel, "loglevel", "DEBUG", "level for log")
 
 	flag.StringVar(&serverList, "backends", "", "Load balanced backends, use commas to separate")
-	flag.StringVar(&statedb, "statedb", "couchdb://couchdb_service:5984", "server resource")
+	flag.String("statedb", "couchdb://couchdb_service:5984", "server resource")
 	flag.StringVar(&urlreg, "urlreg", "http://***:80", "reg for url connection to node")
 
 	flag.StringVar(&dbname, "db", "ci123", "db name")
 	flag.IntVar(&port, "port", 3030, "Port to serve")
-	flag.Parse()
+	//flag.Parse()
+
+	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
+	pflag.Parse()
+	viper.SetEnvPrefix("CI")
+	viper.BindPFlags(pflag.CommandLine)
+	viper.AutomaticEnv()
+	//viper.BindEnv("statedb")
+	//viper.BindEnv("logdir")
+	statedb = viper.GetString("statedb")
+	logDir = viper.GetString("logdir")
 
 	if ok, err :=  regexp.MatchString("[*]+", urlreg); !ok {
 		panic(err)

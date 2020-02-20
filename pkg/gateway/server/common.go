@@ -2,37 +2,35 @@ package server
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
 )
 
-type ciRes struct{
-	Ret 	uint32 	`json:"ret"`
+type Response struct {
+	Ret 	interface{} 	`json:"ret"`
 	Data 	interface{}	`json:"data"`
 	Message	string	`json:"message"`
 }
 
-type ciResult struct {
-	Ret 	uint32 	`json:"ret"`
-	Data 	string	`json:"data"`
-	Message	string	`json:"message"`
-}
-
-
-func SendRequest(url *url.URL,r *http.Request, reqBody []byte) ([]byte, *http.Response, error) {
+func SendRequest(requestUrl *url.URL,r *http.Request, RequestParams map[string]string) ([]byte, *http.Response, error) {
 
 	cli := &http.Client{}
-	//body := make([]byte, 0)
-	reqUrl := "http://" + url.Host + r.URL.Path
+	///body := make([]byte, 0)
+	reqUrl := "http://" + requestUrl.Host + r.URL.Path
+	data := url.Values{}
+	for k, v := range RequestParams {
+		//fmt.Println(j)
+		data.Set(k, v)
+	}
 
 
-	req2, err := http.NewRequest(r.Method, reqUrl, strings.NewReader(string(reqBody)))
+	req2, err := http.NewRequest(r.Method, reqUrl, strings.NewReader(data.Encode()))
 	if err != nil {
 		return nil, nil, err
 	}
+	req2.Body = ioutil.NopCloser(strings.NewReader(data.Encode()))
 
 	// set request content type
 	contentType := r.Header.Get("Content-Type")
@@ -49,21 +47,15 @@ func SendRequest(url *url.URL,r *http.Request, reqBody []byte) ([]byte, *http.Re
 	return b, rep2, nil
 }
 
-func AddResponses(b []byte) ciRes {
-	var resultCi ciResult
-	var resCi ciRes
-	err := json.Unmarshal(b, &resultCi)
+
+func HandleResponse(b []byte) Response {
+	var res Response
+	err := json.Unmarshal(b, &res)
 	if err != nil {
-		err2 := json.Unmarshal(b, &resCi)
-		if err2 != nil {
-			return ciRes{}
-		}
-
-		return resCi
+		//
 	}
-	return resCi
+	return res
 }
-
 
 
 
@@ -92,14 +84,7 @@ func NewClasterTask(url *url.URL, r *http.Request, num, id int) *ClasterTask{
 
 
 func (ct *ClasterTask) Do() {
-	var resp ciRes
-	res, _, err := SendRequest(ct.url, ct.r, nil)
-	if err != nil {
-		//
-		panic(err)
-	}
-	resp = AddResponses(res)
-	fmt.Println(resp)
+	//
 }
 
 type Worker struct {

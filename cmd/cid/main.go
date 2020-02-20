@@ -19,7 +19,8 @@ import (
 const (
 	appName = "ci123"
 	DefaultConfDir = "$HOME/.ci123"
-	flagLogLevel       = "log_level"
+	flagLogLevel = "log_level"
+	HomeFlag     = "home"
 	logDEBUG     = "main:debug,state:debug,ibc:debug,*:error"
 	logINFO      = "main:info,state:info,ibc:info,*:error"
 	logERROR     = "*:error"
@@ -30,7 +31,7 @@ func main()  {
 	cobra.EnableCommandSorting = false
 	ctx := app.NewDefaultContext()
 	rootCmd := &cobra.Command{
-		Use: 	"ci123",
+		Use: 	 "ci123",
 		Short:  "ci123 node",
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			switch viper.GetString(flagLogLevel) {
@@ -46,6 +47,7 @@ func main()  {
 			return app.SetupContext(ctx, logINFO)
 		},
 	}
+	rootCmd.Flags().String(HomeFlag, "", "directory for config and data")
 	rootCmd.Flags().String(flagLogLevel, "info", "Run abci app with different log level")
 	rootCmd.PersistentFlags().String("log_level", ctx.Config.LogLevel, "log level")
 
@@ -57,13 +59,15 @@ func main()  {
 		app.ConstructAppCreator(newApp, appName),
 		app.ConstructAppExporter(exportAppState, appName),
 		)
-
+	viper.SetEnvPrefix("CI")
 	viper.BindPFlags(rootCmd.Flags())
+	viper.BindPFlags(rootCmd.PersistentFlags())
+	viper.AutomaticEnv()
 	rootDir := os.ExpandEnv(DefaultConfDir)
-	if len(viper.GetString(cli.HomeFlag)) > 0 {
-		rootDir = os.ExpandEnv(viper.GetString(cli.HomeFlag))
+	if len(viper.GetString(HomeFlag)) > 0 {
+		rootDir = os.ExpandEnv(viper.GetString(HomeFlag))
 	}
-	exector := cli.PrepareBaseCmd(rootCmd, "CORE", rootDir)
+	exector := cli.PrepareBaseCmd(rootCmd, "CI", rootDir)
 	exector.Execute()
 }
 
