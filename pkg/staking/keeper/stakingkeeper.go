@@ -12,6 +12,7 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 )
 
+var ModuleCdc *codec.Codec
 const aminoCacheSize = 500
 
 type StakingKeeper struct {

@@ -72,6 +72,7 @@ var (
 		auth.AppModuleBasic{},
 		supply.AppModuleBasic{},
 		order.AppModuleBasic{},
+		staking.AppModuleBasic{},
 		)
 
 	maccPerms = map[string][]string{

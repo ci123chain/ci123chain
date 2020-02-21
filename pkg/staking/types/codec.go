@@ -13,8 +13,8 @@ func init(){
 
 func RegisterCodec(cdc *codec.Codec) {
 	//
-	cdc.RegisterConcrete(CreateValidatorTx{}, "ciChain/MsgCreateValidator", nil)
-	cdc.RegisterConcrete(DelegateTx{}, "ciChain/MsgDelegate", nil)
-	cdc.RegisterConcrete(UndelegateTx{}, "ciChain/MsgUndelegate", nil)
-	cdc.RegisterConcrete(RedelegateTx{}, "ciChain/MsgBeginRedelegate", nil)
+	cdc.RegisterConcrete(&CreateValidatorTx{}, "ci123chain/CreateValidatorTx", nil)
+	cdc.RegisterConcrete(&DelegateTx{}, "ci123chain/DelegateTx", nil)
+	cdc.RegisterConcrete(&UndelegateTx{}, "ci123chain/UndelegateTx", nil)
+	cdc.RegisterConcrete(&RedelegateTx{}, "ci123chain/RedelegateTx", nil)
 }

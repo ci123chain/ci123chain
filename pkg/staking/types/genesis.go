@@ -34,7 +34,5 @@ func NewGenesisState(params Params, validators []Validator, delegations []Delega
 
 // DefaultGenesisState gets the raw genesis raw message for testing
 func DefaultGenesisState() GenesisState {
-	return GenesisState{
-		Params: DefaultParams(),
-	}
+	return GenesisState{Params:DefaultParams()}
 }

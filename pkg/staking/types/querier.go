@@ -28,7 +28,7 @@ func NewQueryValidatorsParams(page, limit int, status string) QueryValidatorsPar
 }
 
 type QueryValidatorParams struct {
-	ValidatorAddr sdk.AccAddress
+	ValidatorAddr sdk.AccAddress  `json:"validator_addr"`
 }
 
 func NewQueryValidatorParams(validatorAddr sdk.AccAddress) QueryValidatorParams {

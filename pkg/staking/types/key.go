@@ -13,16 +13,17 @@ const (
 	ModuleName = "staking"
 
 	QueryDelegation = "delegation"
-	QueryAllDelegation = "allDelegation"
+	QueryValidatorDelegations          = "validatorDelegations"
 	QueryValidators = "validators"
 	QueryValidator = "validator"
 	QueryDelegatorValidators = "delegator_validators"
 	QueryDelegatorValidator = "delegator_validator"
 	QueryRedelegations = "redelegations"
+	QueryDelegatorDelegations          = "delegatorDelegations"
 )
 
 var (
-	ValidatorsKey = []byte("validators")
+	ValidatorsKey = []byte{0x21}
 	ValidatorsByConsAddrKey = []byte("consensus")
 	ValidatorsByPowerIndexKey = []byte("validators_power")
 	DelegationKey = []byte("delegation")

@@ -38,7 +38,7 @@ func buildIBCTransferMsg (from, to string, amount, gas, nonce uint64) (transacti
 	if err != nil {
 		return nil, err
 	}
-	ibcMsg := ibc.NewIBCTransfer(fromAddr, toAddr, sdk.Coin(amount),  gas, nonce)
+	ibcMsg := ibc.NewIBCTransfer(fromAddr, toAddr, sdk.NewUInt64Coin(amount),  gas, nonce)
 	return ibcMsg, nil
 }
 

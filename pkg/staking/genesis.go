@@ -34,7 +34,12 @@ func InitGenesis(
 	keeper.SetLastTotalPower(ctx, data.LastTotalPower)
 
 	for _, validator := range data.Validators {
-		keeper.SetValidator(ctx, validator)
+		opAddr := sdk.ToAccAddress(validator.GetConsPubKey().Address())
+		validator.OperatorAddress = opAddr
+		err := keeper.SetValidator(ctx, validator)
+		if err != nil {
+			panic(err)
+		}
 
 		// Manually set indices for the first time
 		keeper.SetValidatorByConsAddr(ctx, validator)

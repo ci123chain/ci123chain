@@ -1,7 +1,6 @@
 package staking
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/staking/client/rest"
 	h "github.com/tanhuiya/ci123chain/pkg/staking/handler"
 	k "github.com/tanhuiya/ci123chain/pkg/staking/keeper"
 	"github.com/tanhuiya/ci123chain/pkg/staking/types"
@@ -27,7 +26,11 @@ var (
 	NewHandler = h.NewHandler
 	NewKeeper = k.NewStakingKeeper
 	NewQuerier = k.NewQuerier
-	RegisterRoutes = rest.RegisterTxRoutes
 	KeyBondDenom = types.KeyBondDenom
 	DefaultGenesisState                = types.DefaultGenesisState
+
+	NewCreateValidatorMsg = types.NewCreateValidatorTx
+	NewDelegateMsg = types.NewDelegateTx
+	NewRedelegateMsg = types.NewRedelegateTx
+	NewUndelegateMsg = types.NewUndelegateTx
 )

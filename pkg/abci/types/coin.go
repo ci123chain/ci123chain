@@ -11,6 +11,9 @@ type Coin struct {
 	Denom  string `json:"denom"`
 	Amount Int `json:"amount"`
 }
+const (
+	blankCoin = ""
+)
 
 func NewCoin(amount Int) Coin {
 
@@ -19,7 +22,7 @@ func NewCoin(amount Int) Coin {
 	}
 
 	return Coin{
-		Denom:"ciCoin",
+		Denom: "stake",
 		Amount: amount,
 	}
 }
@@ -52,7 +55,7 @@ func (c Coin) IsEqual(other Coin) bool {
 }
 
 func (c Coin) Add(coinB Coin) Coin {
-	if c.Denom != coinB.Denom {
+	if c.Denom != coinB.Denom && c.Denom != blankCoin {
 		panic(fmt.Sprintf("invalid coin denominations; %s, %s", c.Denom, coinB.Denom))
 	}
 

@@ -11,7 +11,6 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/client/context"
 	"github.com/tanhuiya/ci123chain/pkg/client/helper"
 	"github.com/tanhuiya/ci123chain/pkg/ibc"
-	"github.com/tanhuiya/ci123chain/pkg/staking"
 	txRpc "github.com/tanhuiya/ci123chain/pkg/transfer/rest"
 	"github.com/tanhuiya/ci123chain/pkg/util"
 	"github.com/tendermint/tendermint/libs/log"
@@ -28,6 +27,7 @@ import (
 	distr "github.com/tanhuiya/ci123chain/pkg/distribution"
 	orQuery "github.com/tanhuiya/ci123chain/pkg/order"
 	order "github.com/tanhuiya/ci123chain/pkg/order/rest"
+	sRest "github.com/tanhuiya/ci123chain/pkg/staking/client/rest"
 )
 
 const (
@@ -86,7 +86,8 @@ func NewRestServer() *RestServer {
 	distr.RegisterRoutes(cliCtx, r)
 	order.RegisterTxRoutes(cliCtx, r)
 	orQuery.RegisterTxRoutes(cliCtx, r)
-	staking.RegisterRoutes(cliCtx, r)
+	sRest.RegisterRestTxRoutes(cliCtx, r)
+	sRest.RegisterTxRoutes(cliCtx, r)
 
 	return &RestServer{
 		Mux: r,

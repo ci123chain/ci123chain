@@ -8,10 +8,10 @@ import (
 
 type RedelegateTx struct {
 	transaction.CommonTx
-	DelegatorAddress     types.AccAddress
-	ValidatorSrcAddress  types.AccAddress
-	ValidatorDstAddress  types.AccAddress
-	Amount               types.Coin
+	DelegatorAddress     types.AccAddress    `json:"delegator_address"`
+	ValidatorSrcAddress  types.AccAddress	 `json:"validator_src_address"`
+	ValidatorDstAddress  types.AccAddress	 `json:"validator_dst_address"`
+	Amount               types.Coin	 		 `json:"amount"`
 }
 
 func NewRedelegateTx(from types.AccAddress, gas ,nonce uint64, delegateAddr types.AccAddress, validatorSrcAddr,

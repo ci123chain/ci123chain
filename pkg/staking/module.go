@@ -51,3 +51,20 @@ func (a AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.Vali
 }
 
 type AppModuleBasic struct {}
+
+func (am AppModuleBasic) RegisterCodec(codec *codec.Codec) {
+	types.RegisterCodec(codec)
+}
+
+func (am AppModuleBasic) DefaultGenesis() json.RawMessage {
+	p := types.DefaultGenesisState()
+	b,err := json.Marshal(p)
+	if err != nil{
+		panic(err)
+	}
+	return b
+}
+
+func (am AppModuleBasic) Name() string {
+	return ModuleName
+}

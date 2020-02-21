@@ -1,22 +1,21 @@
 package types
 
 import (
-	"encoding/json"
 	"github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/transaction"
 )
 
 type DelegateTx struct {
 	transaction.CommonTx
-	DelegatorAddress  types.AccAddress
-	ValidatorAddress  types.AccAddress
-	Amount            types.Coin
+	DelegatorAddress  types.AccAddress    `json:"delegator_address"`
+	ValidatorAddress  types.AccAddress    `json:"validator_address"`
+	Amount            types.Coin		  `json:"amount"`
 }
 
 func NewDelegateTx(from types.AccAddress, gas ,nonce uint64, delegatorAddr types.AccAddress, validatorAddr types.AccAddress,
-	amount types.Coin) *DelegateTx {
+	amount types.Coin) DelegateTx {
 
-	return &DelegateTx{
+	return DelegateTx{
 		CommonTx:         transaction.CommonTx{
 			From: from,
 			Gas: 	gas,
@@ -52,10 +51,11 @@ func (msg *DelegateTx) SetSignature(sig []byte) {
 	msg.Signature = sig
 }
 func (msg *DelegateTx) Bytes() []byte {
-	bytes, err := json.Marshal(msg)
+	bytes, err := StakingCodec.MarshalBinaryLengthPrefixed(msg)
 	if err != nil {
 		panic(err)
 	}
+
 	return bytes
 }
 func (msg *DelegateTx) SetPubKey(pub []byte) {

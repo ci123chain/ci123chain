@@ -13,7 +13,8 @@ func signAddShardTxDemo() (string, error) {
 	name := "ciChain-2"
 	height := int64(900)
 	priv := "2b452434ac4f7cf9c5d61d62f23834f34e851fb6efdb8d4a8c6e214a8bc93d70"
-	txByte, err := sdk.SignAddShardMsg(from, gas, nonce, t, name, height, priv)
+	isFabric := false
+	txByte, err := sdk.SignAddShardMsg(from, gas, nonce, t, name, height, priv, isFabric)
 	if err != nil {
 		return "", err
 	}

@@ -23,7 +23,7 @@ const (
 	// DefaultUnbondingTime reflects three weeks in seconds as the default
 	// unbonding time.
 	// TODO: Justify our choice of default here.
-	DefaultUnbondingTime time.Duration = time.Hour * 24 * 7 * 3
+	DefaultUnbondingTime time.Duration = 259200000000000//time.Hour * 24 * 7 * 3
 
 	// Default maximum number of bonded validators
 	DefaultMaxValidators uint32 = 100
@@ -37,11 +37,11 @@ const (
 )
 
 type Params struct {
-	UnbondingTime    time.Duration
-	MaxValidators    uint32
-	MaxEntries       uint32
-	HistoricalEntries       uint32
-	BondDenom       string
+	UnbondingTime    time.Duration   `json:"unbonding_time"`
+	MaxValidators    uint32          `json:"max_validators"`
+	MaxEntries       uint32			 `json:"max_entries"`
+	HistoricalEntries       uint32   `json:"historical_entries"`
+	BondDenom       string			 `json:"bond_denom"`
 }
 
 func (p *Params) ParamSetPairs() params.ParamSetPairs {

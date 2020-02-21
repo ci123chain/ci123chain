@@ -3,8 +3,12 @@ package types
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/crypto"
+	cryptoAmino "github.com/tendermint/tendermint/crypto/encoding/amino"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
 )
 
 const (
@@ -82,8 +86,19 @@ func (acca AccAddr) Bytes() []byte {
 	return acca
 }
 
-func GetConsAddress(pubKey crypto.PubKey) AccAddress {
-	return ToAccAddress(pubKey.Address())
+func GetConsAddress(pubKeyVal string) AccAddress {
+	var pk secp256k1.PubKeySecp256k1
+	pubStr := fmt.Sprintf(`{"type":"%s","value":"%s"}`, secp256k1.PubKeyAminoName, pubKeyVal)
+	err := cdc.UnmarshalJSON([]byte(pubStr), &pk)
+	if err != nil {
+		panic(err)
+	}
+	addr := ToAccAddress(crypto.PubKey(pk).Address())
+	return addr
 }
 
+var cdc = amino.NewCodec()
 
+func init() {
+	cryptoAmino.RegisterAmino(cdc)
+}

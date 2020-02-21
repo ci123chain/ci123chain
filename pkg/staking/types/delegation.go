@@ -35,6 +35,8 @@ func (d Delegation) String() string {
 	out, _ := yaml.Marshal(d)
 	return string(out)
 }
+func (d Delegation) GetDelegatorAddr() sdk.AccAddress { return d.DelegatorAddress }
+func (d Delegation) GetValidatorAddr() sdk.AccAddress { return d.ValidatorAddress }
 
 
 type Delegations []Delegation

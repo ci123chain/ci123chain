@@ -7,7 +7,7 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/staking/keeper"
 	"github.com/tanhuiya/ci123chain/pkg/staking/types"
 	staking "github.com/tanhuiya/ci123chain/pkg/staking/types"
-	tmtypes "github.com/tendermint/tendermint/types"
+	//tmtypes "github.com/tendermint/tendermint/types"
 	//tmstrings "github.com/tendermint/tendermint/libs/strings"
 	"time"
 )
@@ -38,12 +38,13 @@ func handleCreateValidatorTx(ctx sdk.Context, k keeper.StakingKeeper, tx staking
 		return types.ErrValidatorExisted(types.DefaultCodespace, nil).Result()
 	}
 	pk := tx.PublicKey
+
 	/*pk, err := sdk.GetPubKeyFromAddress(tx.ValidatorAddress)
 	if err != nil {
 		return types.ErrGetPubKeyFromAddress(types.DefaultCodespace, err).Result()
 	}*/
 
-	if _, found := k.GetValidatorByConsAddr(ctx, sdk.GetConsAddress(tx.PublicKey)); found {
+	if _, found := k.GetValidatorByConsAddr(ctx, sdk.GetConsAddress(pk.Value)); found {
 		return types.ErrValidatorExisted(types.DefaultCodespace, nil).Result()
 	}
 
@@ -54,14 +55,14 @@ func handleCreateValidatorTx(ctx sdk.Context, k keeper.StakingKeeper, tx staking
 	//--------------
 	if ctx.ConsensusParams() != nil {
 		//
-		tmPubKey := tmtypes.TM2PB.PubKey(pk)
-		fmt.Println(tmPubKey)
+		//tmPubKey := tmtypes.TM2PB.PubKey(pk)
+		//fmt.Println(tmPubKey)
 		/*if !tmstrings.StringInSlice(tmPubKey.Type, ctx.ConsensusParams().Validator.PubKeyTypes) {
 			//
 		}*/
 	}
 
-	validator := staking.NewValidator(tx.ValidatorAddress, tx.PubKey, tx.Description)
+	validator := staking.NewValidator(tx.ValidatorAddress, tx.PublicKey, tx.Description)
 	commission := staking.NewCommissionWithTime(tx.Commission.Rate,
 		tx.Commission.MaxRate, tx.Commission.MaxChangeRate, ctx.BlockHeader().Time)
 
@@ -107,7 +108,9 @@ func handleDelegateTx(ctx sdk.Context, k keeper.StakingKeeper, tx staking.Delega
 	if !found {
 		return types.ErrNoExpectedValidator(types.DefaultCodespace, nil).Result()
 	}
-	if tx.Amount.Denom != k.BondDenom(ctx) {
+	denom := k.BondDenom(ctx)
+	fmt.Println(denom)
+	if tx.Amount.Denom != denom {
 		return types.ErrBondedDenomDiff(types.DefaultCodespace, nil).Result()
 	}
 	_, err := k.Delegate(ctx, tx.DelegatorAddress, tx.Amount.Amount, sdk.Unbonded, validator, true)

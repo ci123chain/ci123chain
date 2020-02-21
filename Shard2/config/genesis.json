@@ -1,5 +1,5 @@
 {
-  "genesis_time": "2020-02-18T06:08:41.954324Z",
+  "genesis_time": "2020-02-21T09:40:39.751142Z",
   "chain_id": "Shard2",
   "consensus_params": {
     "block": {
@@ -18,10 +18,10 @@
   },
   "validators": [
     {
-      "address": "2FCD8160D4BF16FF4684CEFAFD391C3DA3B98FEC",
+      "address": "AFD809610BF8D4F26CACEABEFF6AD1144D0E6A1D",
       "pub_key": {
         "type": "tendermint/PubKeySecp256k1",
-        "value": "AvETgLtKo7SUeWG7glRSgEHHhUhVqGgh1ayxDF5PkbGD"
+        "value": "A5Bb1ZBrtMloniDxkPLNM1y1d6aoetETQBIQI+0VQW46"
       },
       "power": "1",
       "name": ""
@@ -29,7 +29,44 @@
   ],
   "app_hash": "",
   "app_state": {
-    "accounts": [],
+    "accounts": [
+      {
+        "address": "0xD1a14962627fAc768Fe885Eeb9FF072706B54c19",
+        "coin": {
+          "denom": "stake",
+          "amount": "100000"
+        },
+        "sequence_number": "0",
+        "account_number": "0"
+      },
+      {
+        "address": "0x505A74675dc9C71eF3CB5DF309256952917E801e",
+        "coin": {
+          "denom": "stake",
+          "amount": "100000"
+        },
+        "sequence_number": "0",
+        "account_number": "0"
+      },
+      {
+        "address": "0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c",
+        "coin": {
+          "denom": "stake",
+          "amount": "100000"
+        },
+        "sequence_number": "0",
+        "account_number": "0"
+      },
+      {
+        "address": "0x204bCC42559Faf6DFE1485208F7951aaD800B313",
+        "coin": {
+          "denom": "stake",
+          "amount": "100000"
+        },
+        "sequence_number": "0",
+        "account_number": "0"
+      }
+    ],
     "auth": {
       "params": {
         "max_memo_characters": "256",
@@ -37,24 +74,6 @@
         "sig_verify_cost_ed_25519": "590",
         "sig_verify_cost_secp_256_k_1": "1000"
       }
-    },
-    "staking": {
-      "pool": {
-        "not_bonded_tokens": "9870000",
-        "bonded_tokens": "0"
-      },
-      "params": {
-        "unbonding_time": "259200000000000",
-        "max_validators": "300",
-        "bond_denom": "stake"
-      },
-      "last_total_power": "0",
-      "last_validator_powers": null,
-      "validators": null,
-      "bonds": null,
-      "unbonding_delegations": null,
-      "redelegations": null,
-      "exported": false
     },
     "order": {
       "params": {
@@ -72,6 +91,33 @@
           "actions": null
         }
       }
+    },
+    "staking": {
+      "params": {
+        "unbonding_time": "259200000000000",
+        "max_validators": 100,
+        "max_entries": 7,
+        "historical_entries": 0,
+        "bond_denom": "stake"
+      },
+      "last_total_power": "0",
+      "lase_validator_powers": null,
+      "validators": [
+        {
+          "address": "AFD809610BF8D4F26CACEABEFF6AD1144D0E6A1D",
+          "consensus_key": {
+            "type": "tendermint/PubKeySecp256k1",
+            "value": "A5Bb1ZBrtMloniDxkPLNM1y1d6aoetETQBIQI+0VQW46"
+          },
+          "tokens": "100",
+          "status": 1,
+          "delegator_shares": "100"
+        }
+      ],
+      "delegations": null,
+      "unbonding_delegations": null,
+      "redelegations": null,
+      "exported": false
     }
   }
 }

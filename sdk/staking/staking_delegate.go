@@ -1,55 +1,53 @@
-package shard
+package staking
 
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/tanhuiya/ci123chain/pkg/client/helper"
 	"github.com/tanhuiya/ci123chain/pkg/cryptosuit"
+	"github.com/tanhuiya/ci123chain/pkg/staking"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
-
-	"github.com/tanhuiya/ci123chain/pkg/order"
 )
 
-//off line
-func SignAddShardMsg(from string, gas, nonce uint64,t, name string, height int64, priv string, isFabric bool) ([]byte, error){
+func SignDelegateMsg(from string, amount, gas, nonce uint64, priv string,
+	validatorAddress, delegatorAddress string) ([]byte, error) {
 
-	fromAddr, err := helper.StrToAddress(from)
+	//
+	privateKey, err := hex.DecodeString(priv)
 	if err != nil {
 		return nil, err
 	}
-	tx := order.NewAddShardTx(fromAddr, gas, nonce, t, name, height)
+	fromAddr, amt, validatorAddr, delegatorAddr, err := CommonParseArgs(from, amount, validatorAddress, delegatorAddress)
+	if err != nil {
+		return nil, err
+	}
+	tx := staking.NewDelegateMsg(fromAddr, gas, nonce, delegatorAddr, validatorAddr,amt)
+
 	sid := cryptosuit.NewFabSignIdentity()
-	privPub, err := hex.DecodeString(priv)
-	if err != nil {
-		return nil, err
-	}
-	pub, err  := sid.GetPubKey(privPub)
-	if err != nil {
-		return nil, err
-	}
+	pub, err  := sid.GetPubKey(privateKey)
 
 	tx.SetPubKey(pub)
 	signbyte := tx.GetSignBytes()
-	signature, err := sid.Sign(signbyte, privPub)
+	signature, err := sid.Sign(signbyte, privateKey)
 	tx.SetSignature(signature)
+
 	return tx.Bytes(), nil
+
 }
 
-//on line
-func HttpAddShardTx(from, gas, nonce, Type, name, height, priv, proxy string) {
+func httpDelegateTx(from, gas, nonce, amount,priv, validatorAddr, delegatorAddr, proxy string) {
 	cli := &http.Client{}
-	reqUrl := "http://ciChain:3030/tx/addShard"
+	reqUrl := "http://ciChain:3030/staking/delegate"
 	data := url.Values{}
 	data.Set("from", from)
 	data.Set("gas", gas)
 	data.Set("nonce", nonce)
-	data.Set("type", Type)
-	data.Set("name", name)
-	data.Set("height", height)
 	data.Set("privateKey", priv)
+	data.Set("amount", amount)
+	data.Set("validatorAddr", validatorAddr)
+	data.Set("delegatorAddr", delegatorAddr)
 	data.Set("proxy", proxy)
 
 

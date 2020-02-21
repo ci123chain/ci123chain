@@ -8,9 +8,9 @@ import (
 
 type UndelegateTx struct {
 	transaction.CommonTx
-	DelegatorAddress  types.AccAddress
-	ValidatorAddress  types.AccAddress
-	Amount            types.Coin
+	DelegatorAddress  types.AccAddress   `json:"delegator_address"`
+	ValidatorAddress  types.AccAddress	 `json:"validator_address"`
+	Amount            types.Coin		 `json:"amount"`
 }
 
 func NewUndelegateTx(from types.AccAddress, gas ,nonce uint64, delegatorAddr types.AccAddress, validatorAddr types.AccAddress,

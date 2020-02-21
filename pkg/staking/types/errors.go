@@ -24,6 +24,7 @@ const (
 	CodeUndelegateFailed CodeType = 36
 	CodeValidateUnbondAmountFailed CodeType = 37
 	CodeNoUnbondingDelegation CodeType = 38
+	CodeCheckParamsError	CodeType = 39
 )
 
 var (
@@ -207,4 +208,8 @@ return sdk.NewError(codespace, CodeValidateUnbondAmountFailed, "Validate unbond 
 
 func ErrNoUnbondingDelegation(codespace sdk.CodespaceType, err error) sdk.Error {
 	return sdk.NewError(codespace, CodeNoUnbondingDelegation, "No unbonding delegation", err)
+}
+
+func ErrCheckParams(codespace sdk.CodespaceType, str string) sdk.Error {
+	return sdk.NewError(codespace, CodeCheckParamsError, "param invalid", str)
 }

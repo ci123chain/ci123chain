@@ -13,7 +13,7 @@ type IBCTransfer struct {
 	Coin 	 sdk.Coin			`json:"coin"`
 }
 
-func NewIBCTransferMsg(from, to sdk.AccAddress, amout sdk.Coin, gas uint64, nonce uint64) *IBCTransfer {
+func NewIBCTransferMsg(from, to sdk.AccAddress, amount sdk.Coin, gas uint64, nonce uint64) *IBCTransfer {
 	return &IBCTransfer{
 		CommonTx: transaction.CommonTx{
 			From:  from,
@@ -21,7 +21,7 @@ func NewIBCTransferMsg(from, to sdk.AccAddress, amout sdk.Coin, gas uint64, nonc
 			Nonce: nonce,
 		},
 		ToAddress: to,
-		Coin: amout,
+		Coin: amount,
 	}
 }
 

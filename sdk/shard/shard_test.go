@@ -14,7 +14,7 @@ import (
 func TestSignAddShardMsg(t *testing.T) {
 
 	signdata, err := SignAddShardMsg("0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c",
-		20000, 2, "ADD", "ty8", 8000, "2b452434ac4f7cf9c5d61d62f23834f34e851fb6efdb8d4a8c6e214a8bc93d70")
+		20000, 2, "ADD", "ty8", 8000, "2b452434ac4f7cf9c5d61d62f23834f34e851fb6efdb8d4a8c6e214a8bc93d70", false)
 	if err != nil {
 		panic(err)
 	}

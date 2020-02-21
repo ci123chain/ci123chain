@@ -2,12 +2,20 @@ package rest
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/client/context"
 	"github.com/tanhuiya/ci123chain/pkg/transfer"
 	cmn "github.com/tendermint/tendermint/libs/common"
+	"github.com/tendermint/tendermint/types"
 	"net/http"
+	"net/url"
 	"strconv"
+)
+const (
+	DefaultPage  = 1
+	DefaultLimit = 30 // should be consistent with tendermint/tendermint/rpc/core/pipe.go:19
 )
 
 type Response struct {
@@ -87,4 +95,56 @@ func ParseQueryHeightOrReturnBadRequest(w http.ResponseWriter, cliCtx context.Co
 		cliCtx = cliCtx.WithHeight(0)
 	}
 	return cliCtx, true , nil
+}
+
+
+// ParseHTTPArgsWithLimit parses the request's URL and returns a slice containing
+// all arguments pairs. It separates page and limit used for pagination where a
+// default limit can be provided.
+func ParseHTTPArgsWithLimit(r *http.Request, defaultLimit int) (tags []string, page, limit int, err error) {
+	tags = make([]string, 0, len(r.Form))
+	for key, values := range r.Form {
+		if key == "page" || key == "limit" {
+			continue
+		}
+		var value string
+		value, err = url.QueryUnescape(values[0])
+		if err != nil {
+			return tags, page, limit, err
+		}
+
+		var tag string
+		if key == types.TxHeightKey {
+			tag = fmt.Sprintf("%s=%s", key, value)
+		} else {
+			tag = fmt.Sprintf("%s='%s'", key, value)
+		}
+		tags = append(tags, tag)
+	}
+
+	pageStr := r.FormValue("page")
+	if pageStr == "" {
+		page = DefaultPage
+	} else {
+		page, err = strconv.Atoi(pageStr)
+		if err != nil {
+			return tags, page, limit, err
+		} else if page <= 0 {
+			return tags, page, limit, errors.New("page must greater than 0")
+		}
+	}
+
+	limitStr := r.FormValue("limit")
+	if limitStr == "" {
+		limit = defaultLimit
+	} else {
+		limit, err = strconv.Atoi(limitStr)
+		if err != nil {
+			return tags, page, limit, err
+		} else if limit <= 0 {
+			return tags, page, limit, errors.New("limit must greater than 0")
+		}
+	}
+
+	return tags, page, limit, nil
 }

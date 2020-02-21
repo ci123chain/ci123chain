@@ -4,30 +4,30 @@ import (
 	"encoding/json"
 	"github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/transaction"
-	"github.com/tendermint/tendermint/crypto"
 )
+
 
 type CreateValidatorTx struct {
 	//
 	transaction.CommonTx
-	PublicKey crypto.PubKey
-	Value    types.Coin
-	ValidatorAddress  types.AccAddress
-	DelegatorAddress  types.AccAddress
-	MinSelfDelegation  types.Int
-	Commission        CommissionRates
-	Description       Description
+	PublicKey         PubKey             `json:"public_key"`
+	Value             types.Coin         `json:"value"`
+	ValidatorAddress  types.AccAddress   `json:"validator_address"`
+	DelegatorAddress  types.AccAddress   `json:"delegator_address"`
+	MinSelfDelegation  types.Int         `json:"min_self_delegation"`
+	Commission        CommissionRates    `json:"commission"`
+	Description       Description        `json:"description"`
 }
 
 func NewCreateValidatorTx(from types.AccAddress, gas ,nonce uint64, value types.Coin, minSelfDelegation types.Int, validatorAddr types.AccAddress, delegatorAddr types.AccAddress,
-	rate, maxRate, maxChangeRate types.Dec, moniker, identity, website, securityContact, details string, pubKey crypto.PubKey) *CreateValidatorTx {
-	return &CreateValidatorTx{
+	rate, maxRate, maxChangeRate types.Dec, moniker, identity, website, securityContact, details string, pubType, pubValue string) CreateValidatorTx {
+	return CreateValidatorTx{
 		CommonTx: transaction.CommonTx{
 			From: from,
 			Gas: 	gas,
 			Nonce: nonce,
 		},
-		PublicKey:pubKey,
+		PublicKey:PubKey{Value:pubValue, Type:pubType},
 		Value:value,
 		ValidatorAddress:validatorAddr,
 		DelegatorAddress:delegatorAddr,
@@ -49,7 +49,7 @@ func (msg *CreateValidatorTx) ValidateBasic() types.Error {
 	if !types.AccAddress(msg.ValidatorAddress).Equals(msg.DelegatorAddress) {
 		return types.ErrBadValidatorAddr("bad validator address")
 	}
-	if msg.PublicKey == nil {
+	if msg.PublicKey.Type == "" || msg.PublicKey.Value == "" {
 		return types.ErrEmptyValidatorPubKey("empty validator pubkey")
 	}
 	if !msg.Value.Amount.IsPositive() {

@@ -1,0 +1,56 @@
+package main
+
+import (
+	"encoding/hex"
+	sdk "github.com/tanhuiya/ci123chain/sdk/staking"
+)
+
+func SignCreateValidatorTx(from string, amount, gas, nonce uint64, priv string, minSelfDelegation int64,
+	validatorAddress, delegatorAddress string, rate, maxRate, maxChangeRate int64,
+	moniker, identity, website, securityContact, details string, pubKeyTy, pubKeyVal string) (string, error) {
+	//
+	privateKey, err := hex.DecodeString(priv)
+	if err != nil {
+		return "", err
+	}
+
+	txBytes, err := sdk.SignCreateValidatorMSg(from, amount, gas, nonce, privateKey, minSelfDelegation, validatorAddress,
+		delegatorAddress, rate, maxRate, maxChangeRate, moniker, identity, website, securityContact, details, pubKeyTy, pubKeyVal)
+
+	if err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(txBytes), nil
+}
+
+func SignDelegateTx(from string, amount, gas, nonce uint64, priv string, validatorAddress, delegatorAddress string) (string, error) {
+
+	//
+
+	txBytes, err := sdk.SignDelegateMsg(from, amount, gas, nonce, priv, validatorAddress, delegatorAddress)
+	if err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(txBytes), nil
+}
+
+func SignRelegateTx(from string, amount, gas, nonce uint64, priv string, validatorSrcAddress, validatorDstAddress, delegatorAddress string) (string, error) {
+
+	//
+	txBytes, err := sdk.SignRedelegateMsg(from, amount, gas, nonce, priv, validatorSrcAddress, validatorDstAddress, delegatorAddress)
+	if err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(txBytes), nil
+}
+
+func SignUndelegate(from string, amount, gas, nonce uint64, priv string, validatorAddress, delegatorAddress string) (string, error) {
+
+	//
+
+	txBytes, err := sdk.SignUndelegateMsg(from, amount, gas, nonce, priv, validatorAddress, delegatorAddress)
+	if err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(txBytes), nil
+}

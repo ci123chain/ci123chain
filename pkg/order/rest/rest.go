@@ -61,6 +61,7 @@ func AddShardTxRequest(cliCtx context.Context) http.HandlerFunc{
 		ty := request.FormValue("type")
 		name := request.FormValue("name")
 		height := request.FormValue("height")
+		isFabricMode := request.FormValue("isFabric")
 		Height, err := strconv.ParseInt(height, 10, 64)
 		if err != nil || Height < 0 {
 			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"height error"))
@@ -72,9 +73,13 @@ func AddShardTxRequest(cliCtx context.Context) http.HandlerFunc{
 			rest.WriteErrorRes(writer, client.ErrBroadcast(types.DefaultCodespace, err))
 			return
 		}*/
+		isFabric, err  := strconv.ParseBool(isFabricMode)
+		if err != nil {
+			isFabric = false
+		}
 
 		txByte, err := sdk.SignAddShardMsg(from,
-			UserGas, UserNonce, ty, name, Height, key)
+			UserGas, UserNonce, ty, name, Height, key, isFabric)
 		if err != nil {
 			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"data error"))
 			return

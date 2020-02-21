@@ -7,8 +7,8 @@ import (
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/cryptosuit"
 	"github.com/tanhuiya/ci123chain/pkg/ibc/types"
-	"github.com/tanhuiya/fabric-crypto/cryptoutil"
 	"github.com/tanhuiya/ci123chain/pkg/transaction"
+	"github.com/tanhuiya/fabric-crypto/cryptoutil"
 )
 
 // 验证 apply 消息

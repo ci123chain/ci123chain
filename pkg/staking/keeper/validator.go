@@ -28,7 +28,7 @@ func (k StakingKeeper) GetValidator(ctx sdk.Context, addr sdk.AccAddress) (valid
 		return validator, false
 	}
 
-	err := types.StakingCodec.UnmarshalBinaryLengthPrefixed(value, validator)
+	err := types.StakingCodec.UnmarshalBinaryLengthPrefixed(value, &validator)
 	if err != nil {
 		return validator, false
 	}

@@ -2,39 +2,47 @@ package types
 
 import (
 	"bytes"
+	"fmt"
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
+	"github.com/tendermint/go-amino"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto"
-	tmamino "github.com/tendermint/tendermint/crypto/encoding/amino"
+	cryptoAmino "github.com/tendermint/tendermint/crypto/encoding/amino"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
 	tmtypes "github.com/tendermint/tendermint/types"
 	"sort"
 	"time"
 )
 
+type PubKey struct {
+	Type   string  `json:"type"`
+	Value  string   `json:"value"`
+}
+
 type Validator struct {
-	OperatorAddress    sdk.AccAddress
-	ConsensusPubkey    string
-	Jailed             bool
-	Status              sdk.BondStatus
-	Tokens             sdk.Int
-	DelegatorShares    sdk.Dec
-	Description        Description
-	UnbondingHeight    int64
-	UnbondingTime      time.Time
-	Commission         Commission
-	MinSelfDelegation   sdk.Int
+	OperatorAddress    sdk.AccAddress	`json:"operator_address"`
+	ConsensusKey       PubKey           `json:"consensus_key"`
+	Jailed             bool             `json:"jailed"`
+	Status             sdk.BondStatus   `json:"status"`
+	Tokens             sdk.Int          `json:"tokens"`
+	DelegatorShares    sdk.Dec          `json:"delegator_shares"`
+	Description        Description      `json:"description"`
+	UnbondingHeight    int64      		`json:"unbonding_height"`
+	UnbondingTime      time.Time        `json:"unbonding_time"`
+	Commission         Commission       `json:"commission"`
+	MinSelfDelegation   sdk.Int  		`json:"min_self_delegation"`
 }
 
 //crypto pubKey
-func NewValidator(operator sdk.AccAddress, pubKey []byte, description Description) Validator {
-	var pkStr string
+func NewValidator(operator sdk.AccAddress, pubKey PubKey, description Description) Validator {
+	/*var pkStr string
 	if pubKey != nil {
 		pkStr = string(pubKey)
-	}
+	}*/
 
 	return Validator{
 		OperatorAddress: operator,
-		ConsensusPubkey: pkStr,
+		ConsensusKey: pubKey,
 		Jailed:          false,
 		Status:          sdk.Unbonded,
 		Tokens:          sdk.ZeroInt(),
@@ -95,6 +103,7 @@ func (v Validator) AddTokensFromDel(amount sdk.Int) (Validator, sdk.Dec) {
 		issuedShares = shares
 	}
 
+	//issuedShares = amount.ToDec()
 	v.Tokens = v.Tokens.Add(amount)
 	v.DelegatorShares = v.DelegatorShares.Add(issuedShares)
 
@@ -213,12 +222,14 @@ func (v Validator) GetMinSelfDelegation() sdk.Int { return v.MinSelfDelegation }
 func (v Validator) GetDelegatorShares() sdk.Dec   { return v.DelegatorShares }
 
 func (v Validator) GetConsPubKey() crypto.PubKey {
-	pk, err := tmamino.PubKeyFromBytes([]byte(v.ConsensusPubkey))
+	var pk secp256k1.PubKeySecp256k1
+	pubStr := fmt.Sprintf(`{"type":"%s","value":"%s"}`, secp256k1.PubKeyAminoName, v.ConsensusKey.Value)
+	err := cdc.UnmarshalJSON([]byte(pubStr), &pk)
 	if err != nil {
-		//
 		panic(err)
 	}
-	return pk
+	pubKey := crypto.PubKey(pk)
+	return pubKey
 }
 
 
@@ -245,4 +256,10 @@ func (v Validators) Swap(i, j int) {
 	it := v[i]
 	v[i] = v[j]
 	v[j] = it
+}
+
+var cdc = amino.NewCodec()
+
+func init() {
+	cryptoAmino.RegisterAmino(cdc)
 }

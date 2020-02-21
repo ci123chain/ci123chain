@@ -18,7 +18,7 @@ func (k StakingKeeper) GetDelegation(ctx sdk.Context, delAddr sdk.AccAddress, va
 	if value == nil {
 		return delegation, false
 	}
-	types.StakingCodec.MustUnmarshalBinaryLengthPrefixed(value, delegation)
+	types.StakingCodec.MustUnmarshalBinaryLengthPrefixed(value, &delegation)
 	return delegation, true
 }
 
@@ -645,4 +645,21 @@ func (k StakingKeeper) GetRedelegationsFromSrcValidator(ctx sdk.Context, valAddr
 		reds = append(reds, red)
 	}
 	return reds
+}
+
+// return all delegations to a specific validator. Useful for querier.
+func (k StakingKeeper) GetValidatorDelegations(ctx sdk.Context, valAddr sdk.AccAddress) (delegations []types.Delegation) { //nolint:interfacer
+	store := ctx.KVStore(k.storeKey)
+	iterator := sdk.KVStorePrefixIterator(store, types.DelegationKey)
+	defer iterator.Close()
+	var delegation types.Delegation
+
+	for ; iterator.Valid(); iterator.Next() {
+		//delegation := types.MustUnmarshalDelegation(k.cdc, iterator.Value())
+		types.StakingCodec.MustUnmarshalBinaryLengthPrefixed(iterator.Value(), &delegation)
+		if delegation.GetValidatorAddr().Equals(valAddr) {
+			delegations = append(delegations, delegation)
+		}
+	}
+	return delegations
 }

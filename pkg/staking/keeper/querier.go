@@ -12,20 +12,22 @@ import (
 func NewQuerier(k StakingKeeper) sdk.Querier {
 	return func(ctx sdk.Context, path []string, req abci.RequestQuery) (res []byte, err sdk.Error)  {
 		switch path[0] {
-		case s.QueryDelegation:
-			return queryDelegation(ctx, path[1:], req, k)
-		case s.QueryAllDelegation:
-			return queryAllDelegation(ctx, path[1:], req, k)
-		case s.QueryValidators:
+		case s.QueryDelegation://
+			return queryDelegation(ctx, req, k)
+		case s.QueryValidatorDelegations://
+			return queryAllDelegation(ctx, req, k)
+		case s.QueryValidators://
 			return queryValidators(ctx, req, k)
-		case s.QueryValidator:
+		case s.QueryValidator://
 			return queryValidator(ctx, req, k)
-		case s.QueryDelegatorValidators:
+		case s.QueryDelegatorValidators://
 			return queryDelegatorValidators(ctx, req, k)
-		case s.QueryDelegatorValidator:
+		case s.QueryDelegatorValidator://
 			return queryDelegatorValidator(ctx, req, k)
 		case s.QueryRedelegations:
 			return queryRedelegations(ctx, req, k)
+		case s.QueryDelegatorDelegations:
+			return queryDelegatorDelegations(ctx, req, k)
 
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown nameservice query endpoint")
@@ -33,7 +35,7 @@ func NewQuerier(k StakingKeeper) sdk.Querier {
 	}
 }
 
-func queryDelegation(ctx sdk.Context, path []string, req abci.RequestQuery, k StakingKeeper) ([]byte, sdk.Error) {
+func queryDelegation(ctx sdk.Context, req abci.RequestQuery, k StakingKeeper) ([]byte, sdk.Error) {
 	//
 	var params types.QueryBondsParams
 
@@ -62,9 +64,28 @@ func queryDelegation(ctx sdk.Context, path []string, req abci.RequestQuery, k St
 	//return nil, nil
 }
 
-func queryAllDelegation(ctx sdk.Context, path []string, req abci.RequestQuery, keeper StakingKeeper) ([]byte, sdk.Error) {
+func queryAllDelegation(ctx sdk.Context, req abci.RequestQuery, k StakingKeeper) ([]byte, sdk.Error) {
 	//
-	return nil, nil
+	var params types.QueryValidatorParams
+
+	err := types.StakingCodec.UnmarshalJSON(req.Data, &params)
+	if err != nil {
+		return nil, sdk.ErrInternal("unmarshal failed")
+	}
+
+	delegations := k.GetValidatorDelegations(ctx, params.ValidatorAddr)
+	delegationResps, err := delegationsToDelegationResponses(ctx, k, delegations)
+	if err != nil {
+		return nil, sdk.ErrInternal("failed get delegation responses")
+	}
+
+	if delegationResps == nil {
+		delegationResps = types.DelegationResponses{}
+	}
+
+	res := types.StakingCodec.MustMarshalJSON(delegationResps)
+
+	return res, nil
 }
 
 
@@ -92,10 +113,6 @@ func queryValidators(ctx sdk.Context, req abci.RequestQuery, k StakingKeeper) ([
 		filteredVals = filteredVals[start:end]
 	}
 	res:= types.StakingCodec.MustMarshalJSON(filteredVals)
-	//res, err := app.MarshalJSONIndent(types.StakingCodec, filteredVals)
-	/*if err != nil {
-		return nil, sdk.ErrInternal("marshal failed")
-	}*/
 
 	return res, nil
 }
@@ -277,4 +294,28 @@ func redelegationsToRedelegationResponses(
 	}
 
 	return resp, nil
+}
+
+func queryDelegatorDelegations(ctx sdk.Context, req abci.RequestQuery, k StakingKeeper) ([]byte, sdk.Error) {
+
+	var params types.QueryDelegatorParams
+
+	err := types.StakingCodec.UnmarshalJSON(req.Data, &params)
+	if err != nil {
+		return nil, sdk.ErrInternal("unmarshal failed")
+	}
+
+	delegations := k.GetAllDelegatorDelegations(ctx, params.DelegatorAddr)
+	delegationResps, err := delegationsToDelegationResponses(ctx, k, delegations)
+	if err != nil {
+		return nil, sdk.ErrInternal("failed to get delegation responses")
+	}
+
+	if delegationResps == nil {
+		delegationResps = types.DelegationResponses{}
+	}
+
+	res := types.StakingCodec.MustMarshalJSON(delegationResps)
+
+	return res, nil
 }
