@@ -116,9 +116,9 @@ func (ks *baseKVStore) CacheWrapWithTrace(w io.Writer, tc TraceContext) CacheWra
 
 // Implements KVStore.
 func (ks *baseKVStore) Iterator(start, end []byte) Iterator {
-	cstart := ks.getCombineKey(start)
-	cend := ks.getCombineKey(end)
-	return ks.iterator([]byte(cstart), []byte(cend), true)
+	//cstart := ks.getCombineKey(start)
+	//cend := ks.getCombineKey(end)
+	return ks.iterator([]byte(start), []byte(end), true)
 }
 
 // Implements KVStore.

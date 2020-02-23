@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"fmt"
 	"github.com/gorilla/mux"
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/abci/types/rest"
@@ -105,8 +104,9 @@ func validatorsHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		}
 		var validators []types.Validator
 		types.StakingCodec.MustUnmarshalJSON(res, &validators)
-		fmt.Println(validators)
-		rest.PostProcessResponseBare(writer, cliCtx, res)
+		//fmt.Println(validators)
+		resp := validators
+		rest.PostProcessResponseBare(writer, cliCtx, resp)
 	}
 }
 

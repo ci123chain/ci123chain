@@ -23,7 +23,7 @@ const (
 )
 
 var (
-	ValidatorsKey = []byte{0x21}
+	ValidatorsKey = []byte("validator")
 	ValidatorsByConsAddrKey = []byte("consensus")
 	ValidatorsByPowerIndexKey = []byte("validators_power")
 	DelegationKey = []byte("delegation")

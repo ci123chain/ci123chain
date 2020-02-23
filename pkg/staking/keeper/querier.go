@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"fmt"
 	"github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/staking/types"
@@ -98,6 +99,7 @@ func queryValidators(ctx sdk.Context, req abci.RequestQuery, k StakingKeeper) ([
 	}
 
 	validators := k.GetAllValidators(ctx)
+	fmt.Println(validators)
 	filteredVals := make([]types.Validator, 0, len(validators))
 
 	for _, val := range validators {
