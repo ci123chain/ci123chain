@@ -21,6 +21,7 @@ var (
 	offlineGas = uint64(20000)
 	offlineNonce = uint64(2)
 	offlineAmount = uint64(2)
+	onlineReqUrl = "http://ciChain:3030/tx/transfers"
 )
 
 func main() {
@@ -34,7 +35,7 @@ func main() {
 		fmt.Println("---------------普通转账在线签名交易----------------------")
 
 		fmt.Println("---交易结果：---")
-		transfersdk.HttpTransferTx(from, to, gas, nonce, amount, priv, proxy)
+		transfersdk.HttpTransferTx(from, to, gas, nonce, amount, priv, proxy, onlineReqUrl)
 	}else {
 		fmt.Println("---------------普通转账离线签名交易----------------------")
 		tx, err := SignTransferTxDemo()
