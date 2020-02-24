@@ -102,7 +102,6 @@ func (k StakingKeeper) SetDelegation(ctx sdk.Context, delegation types.Delegatio
 
 // remove a delegation
 func (k StakingKeeper) RemoveDelegation(ctx sdk.Context, delegation types.Delegation) {
-	// TODO: Consider calling hooks outside of the store wrapper functions, it's unobvious.
 	k.BeforeDelegationRemoved(ctx, delegation.DelegatorAddress, delegation.ValidatorAddress)
 	store := ctx.KVStore(k.storeKey)
 	store.Delete(types.GetDelegationKey(delegation.DelegatorAddress, delegation.ValidatorAddress))
@@ -521,7 +520,7 @@ func (k StakingKeeper) CompleteRedelegationWithAmount(
 
 	red, found := k.GetRedelegation(ctx, delAddr, valSrcAddr, valDstAddr)
 	if !found {
-		return nil, errors.New("no redelegation exist")
+		return nil, errors.New("no ReDelegation exist")
 	}
 
 	//bondDenom := k.GetParams(ctx).BondDenom
@@ -557,7 +556,7 @@ func (k StakingKeeper) CompleteRedelegationWithAmount(
 func (k StakingKeeper) CompleteUnbondingWithAmount(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.AccAddress) (sdk.Coins, error) {
 	ubd, found := k.GetUnbondingDelegation(ctx, delAddr, valAddr)
 	if !found {
-		return nil, errors.New("No unbonding delegation")
+		return nil, errors.New("no UnBonding delegation")
 	}
 
 	//bondDenom := k.GetParams(ctx).BondDenom

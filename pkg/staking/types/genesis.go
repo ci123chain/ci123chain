@@ -7,7 +7,7 @@ import (
 type GenesisState struct {
 	Params               Params                 `json:"params"`
 	LastTotalPower       sdk.Int                `json:"last_total_power"`
-	LastValidatorPowers  []LastValidatorPower   `json:"lase_validator_powers"`
+	LastValidatorPowers  []LastValidatorPower   `json:"last_validator_powers"`
 	Validators           Validators             `json:"validators"`
 	Delegations          Delegations            `json:"delegations"`
 	UnbondingDelegations []UnbondingDelegation  `json:"unbonding_delegations"`

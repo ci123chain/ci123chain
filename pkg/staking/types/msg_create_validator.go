@@ -1,7 +1,6 @@
 package types
 
 import (
-	"encoding/json"
 	"github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/transaction"
 )
@@ -84,10 +83,11 @@ func (msg *CreateValidatorTx) SetSignature(sig []byte) {
 	msg.Signature = sig
 }
 func (msg *CreateValidatorTx) Bytes() []byte {
-	bytes, err := json.Marshal(msg)
+	bytes, err := StakingCodec.MarshalBinaryLengthPrefixed(msg)
 	if err != nil {
 		panic(err)
 	}
+
 	return bytes
 }
 func (msg *CreateValidatorTx) SetPubKey(pub []byte) {

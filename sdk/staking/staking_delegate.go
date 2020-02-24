@@ -37,9 +37,8 @@ func SignDelegateMsg(from string, amount, gas, nonce uint64, priv string,
 
 }
 
-func httpDelegateTx(from, gas, nonce, amount,priv, validatorAddr, delegatorAddr, proxy string) {
+func HttpDelegateTx(from, gas, nonce, amount,priv, validatorAddr, delegatorAddr, proxy, reqUrl string) {
 	cli := &http.Client{}
-	reqUrl := "http://ciChain:3030/staking/delegate"
 	data := url.Values{}
 	data.Set("from", from)
 	data.Set("gas", gas)

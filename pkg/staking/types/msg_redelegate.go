@@ -1,7 +1,6 @@
 package types
 
 import (
-	"encoding/json"
 	"github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/transaction"
 )
@@ -57,10 +56,11 @@ func (msg *RedelegateTx) SetSignature(sig []byte) {
 	msg.Signature = sig
 }
 func (msg *RedelegateTx) Bytes() []byte {
-	bytes, err := json.Marshal(msg)
+	bytes, err := StakingCodec.MarshalBinaryLengthPrefixed(msg)
 	if err != nil {
 		panic(err)
 	}
+
 	return bytes
 }
 func (msg *RedelegateTx) SetPubKey(pub []byte) {

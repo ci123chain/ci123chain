@@ -35,13 +35,13 @@ func SignRedelegateMsg(from string, amount, gas, nonce uint64, priv string,
 	return tx.Bytes(), nil
 }
 
-func httpRedelegateTx(from, gas, nonce, Type, name, height, priv, validatorSrcAddr, validatorDstAddr, delegatorAddr, proxy string) {
+func HttpRedelegateTx(from, gas, nonce, amount, priv, validatorSrcAddr, validatorDstAddr, delegatorAddr, proxy, reqUrl string) {
 	cli := &http.Client{}
-	reqUrl := "http://ciChain:3030/staking/redelegate"
 	data := url.Values{}
 	data.Set("from", from)
 	data.Set("gas", gas)
 	data.Set("nonce", nonce)
+	data.Set("amount", amount)
 	data.Set("privateKey", priv)
 	data.Set("validatorSrcAddr", validatorSrcAddr)
 	data.Set("validatorDstAddr", validatorDstAddr)

@@ -12,6 +12,11 @@ type Response struct {
 	Message string   `json:"message"`
 }
 
+var (
+	reqUrl = "http://ciChain:3030/account/new"
+	proxy = "lb"
+)
+
 func main() {
 	var res Response
 	var online bool
@@ -20,7 +25,7 @@ func main() {
 
 	if online == true {
 		fmt.Println("---------------在线生成新的账户----------------------")
-		b, err := sdk.NewAccountOnLine()
+		b, err := sdk.NewAccountOnLine(reqUrl, proxy)
 		if err != nil {
 			fmt.Println("---生成失败---")
 			fmt.Println(err)

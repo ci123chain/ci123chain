@@ -9,12 +9,8 @@ func SignCreateValidatorTx(from string, amount, gas, nonce uint64, priv string, 
 	validatorAddress, delegatorAddress string, rate, maxRate, maxChangeRate int64,
 	moniker, identity, website, securityContact, details string, pubKeyTy, pubKeyVal string) (string, error) {
 	//
-	privateKey, err := hex.DecodeString(priv)
-	if err != nil {
-		return "", err
-	}
 
-	txBytes, err := sdk.SignCreateValidatorMSg(from, amount, gas, nonce, privateKey, minSelfDelegation, validatorAddress,
+	txBytes, err := sdk.SignCreateValidatorMSg(from, amount, gas, nonce, priv, minSelfDelegation, validatorAddress,
 		delegatorAddress, rate, maxRate, maxChangeRate, moniker, identity, website, securityContact, details, pubKeyTy, pubKeyVal)
 
 	if err != nil {

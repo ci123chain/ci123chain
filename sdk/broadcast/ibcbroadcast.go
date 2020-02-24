@@ -21,9 +21,8 @@ type ciRes struct{
 }
 
 //同步
-func httpIBCBroadcastTx(tx string) retData {
+func httpIBCBroadcastTx(tx, reqUrl string) retData {
 	cli := &http.Client{}
-	reqUrl := "http://ciChain:3030/tx/broadcast"
 	data := url.Values{}
 	data.Set("txByte", tx)
 	data.Set("proxy", "lb")

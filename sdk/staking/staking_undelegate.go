@@ -37,13 +37,13 @@ func SignUndelegateMsg(from string, amount, gas, nonce uint64, priv string,
 
 }
 
-func httpUndelegateTx(from, gas, nonce, Type, name, height, priv, validatorAddr, delegatorAddr, proxy string) {
+func HttpUndelegateTx(from, gas, nonce, amount, priv, validatorAddr, delegatorAddr, proxy, reqUrl string) {
 	cli := &http.Client{}
-	reqUrl := "http://ciChain:3030/staking/undelegate"
 	data := url.Values{}
 	data.Set("from", from)
 	data.Set("gas", gas)
 	data.Set("nonce", nonce)
+	data.Set("amount", amount)
 	data.Set("privateKey", priv)
 	data.Set("validatorAddr", validatorAddr)
 	data.Set("delegatorAddr", delegatorAddr)

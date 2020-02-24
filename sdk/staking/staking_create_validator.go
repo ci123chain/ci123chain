@@ -1,14 +1,19 @@
 package staking
 
 import (
+	"encoding/hex"
 	"github.com/tanhuiya/ci123chain/pkg/cryptosuit"
 	"github.com/tanhuiya/ci123chain/pkg/staking"
 )
 
-func SignCreateValidatorMSg(from string, amount, gas, nonce uint64, priv []byte, minSelfDelegation int64,
+func SignCreateValidatorMSg(from string, amount, gas, nonce uint64, priv string, minSelfDelegation int64,
 	validatorAddress, delegatorAddress string, rate, maxRate, maxChangeRate int64,
 	moniker, identity, website, securityContact, details string, pubKeyTp, pubKeyVal string) ([]byte, error) {
 
+	privateKey, err := hex.DecodeString(priv)
+	if err != nil {
+		return nil, err
+	}
 	fromAddr, amt, validatorAddr, delegatorAddr, err := CommonParseArgs(from, amount, validatorAddress, delegatorAddress)
 	if err != nil {
 		return nil, err
@@ -19,11 +24,11 @@ func SignCreateValidatorMSg(from string, amount, gas, nonce uint64, priv []byte,
 	moniker, identity, website, securityContact, details, pubKeyTp, pubKeyVal)
 
 	sid := cryptosuit.NewFabSignIdentity()
-	pub, err  := sid.GetPubKey(priv)
+	pub, err  := sid.GetPubKey(privateKey)
 
 	tx.SetPubKey(pub)
 	signbyte := tx.GetSignBytes()
-	signature, err := sid.Sign(signbyte, priv)
+	signature, err := sid.Sign(signbyte, privateKey)
 	tx.SetSignature(signature)
 
 	return tx.Bytes(), nil

@@ -34,7 +34,11 @@ func (a AppModule) DefaultGenesis() json.RawMessage {
 func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.ValidatorUpdate {
 	//
 	var genesisState types.GenesisState
-	ModuleCdc.MustUnmarshalJSON(data, &genesisState)
+	//ModuleCdc.MustUnmarshalJSON(data, &genesisState)
+	err := json.Unmarshal(data, & genesisState)
+	if err != nil {
+		panic(err)
+	}
 	return InitGenesis(ctx, am.StakingKeeper, am.AccountKeeper, am.SupplyKeeper, genesisState)
 }
 

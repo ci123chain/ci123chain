@@ -6,10 +6,9 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/client"
 	"github.com/tanhuiya/ci123chain/pkg/client/context"
 	"github.com/tanhuiya/ci123chain/pkg/order/types"
-	//order "github.com/tanhuiya/ci123chain/pkg/order/types"
+	sdk "github.com/tanhuiya/ci123chain/sdk/shard"
 	"net/http"
 	"strconv"
-	sdk "github.com/tanhuiya/ci123chain/sdk/shard"
 )
 
 func RegisterTxRoutes(cliCtx context.Context, r *mux.Router)  {
@@ -34,14 +33,6 @@ type AddShardParams struct {
 func AddShardTxRequest(cliCtx context.Context) http.HandlerFunc{
 	return func(writer http.ResponseWriter, request *http.Request) {
 
-		/*
-			var shardTxBytes AddShardParams
-			b, readErr := ioutil.ReadAll(request.Body)
-			readErr = json.Unmarshal(b, &shardTxBytes)
-			if readErr != nil {
-				//
-			}
-		*/
 		key := request.FormValue("privateKey")
 		from := request.FormValue("from")
 		gas := request.FormValue("gas")
@@ -61,25 +52,20 @@ func AddShardTxRequest(cliCtx context.Context) http.HandlerFunc{
 		ty := request.FormValue("type")
 		name := request.FormValue("name")
 		height := request.FormValue("height")
-		isFabricMode := request.FormValue("isFabric")
+		//isFabricMode := request.FormValue("isFabric")
 		Height, err := strconv.ParseInt(height, 10, 64)
 		if err != nil || Height < 0 {
 			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"height error"))
 			return
 		}
 		//UserHeight := uint64(Height)
-		/*privByte, err := hex.DecodeString(key)
-		if err != nil {
-			rest.WriteErrorRes(writer, client.ErrBroadcast(types.DefaultCodespace, err))
-			return
-		}*/
-		isFabric, err  := strconv.ParseBool(isFabricMode)
+		/*isFabric, err  := strconv.ParseBool(isFabricMode)
 		if err != nil {
 			isFabric = false
-		}
+		}*/
 
 		txByte, err := sdk.SignAddShardMsg(from,
-			UserGas, UserNonce, ty, name, Height, key, isFabric)
+			UserGas, UserNonce, ty, name, Height, key)
 		if err != nil {
 			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"data error"))
 			return

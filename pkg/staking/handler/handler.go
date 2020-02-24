@@ -53,14 +53,14 @@ func handleCreateValidatorTx(ctx sdk.Context, k keeper.StakingKeeper, tx staking
 	}
 
 	//--------------
-	if ctx.ConsensusParams() != nil {
+	//if ctx.ConsensusParams() != nil {
 		//
 		//tmPubKey := tmtypes.TM2PB.PubKey(pk)
 		//fmt.Println(tmPubKey)
 		/*if !tmstrings.StringInSlice(tmPubKey.Type, ctx.ConsensusParams().Validator.PubKeyTypes) {
 			//
 		}*/
-	}
+	//}
 
 	validator := staking.NewValidator(tx.ValidatorAddress, tx.PublicKey, tx.Description)
 	commission := staking.NewCommissionWithTime(tx.Commission.Rate,
@@ -109,7 +109,6 @@ func handleDelegateTx(ctx sdk.Context, k keeper.StakingKeeper, tx staking.Delega
 		return types.ErrNoExpectedValidator(types.DefaultCodespace, nil).Result()
 	}
 	denom := k.BondDenom(ctx)
-	fmt.Println(denom)
 	if tx.Amount.Denom != denom {
 		return types.ErrBondedDenomDiff(types.DefaultCodespace, nil).Result()
 	}
