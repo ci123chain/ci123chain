@@ -35,7 +35,6 @@ import (
 	"github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/types"
-	tmtypes "github.com/tendermint/tendermint/types"
 	tmdb "github.com/tendermint/tm-db"
 	"io"
 	"os"
@@ -220,11 +219,11 @@ type AppInit struct {
 
 	// create the application genesis tx
 	AppGenTx func(cdc *amino.Codec, pk crypto.PubKey, genTxConfig config.GenTx) (
-		appGenTx, cliPrint json.RawMessage, validator tmtypes.GenesisValidator, err error)
+		appGenTx, cliPrint json.RawMessage, validator types.GenesisValidator, err error)
 
 	// AppGenState creates the core parameters initialization. It takes in a
 	// pubkey meant to represent the pubkey of the validator of this machine.
-	AppGenState func() (appState json.RawMessage, err error)
+	AppGenState func(validators []types.GenesisValidator) (appState json.RawMessage, err error)
 
 
 	GetValidator func(pk crypto.PubKey, name string) types.GenesisValidator

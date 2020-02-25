@@ -16,16 +16,16 @@ const (
 	QueryValidatorDelegations          = "validatorDelegations"
 	QueryValidators = "validators"
 	QueryValidator = "validator"
-	QueryDelegatorValidators = "delegator_validators"
-	QueryDelegatorValidator = "delegator_validator"
+	QueryDelegatorValidators = "delegatorValidators"
+	QueryDelegatorValidator = "delegatorValidator"
 	QueryRedelegations = "redelegations"
 	QueryDelegatorDelegations          = "delegatorDelegations"
 )
 
 var (
-	ValidatorsKey = []byte("validator")
-	ValidatorsByConsAddrKey = []byte("consensus")
-	ValidatorsByPowerIndexKey = []byte("validators_power")
+	ValidatorsKey = []byte{0x21}//[]byte("validator")
+	ValidatorsByConsAddrKey = []byte{0x22}//[]byte("consensus")
+	ValidatorsByPowerIndexKey = []byte{0x23}//[]byte("validators_power")
 	DelegationKey = []byte("delegation")
 	RedelegationKey = []byte("redelegation")
 	RedelegationByValSrcIndexKey = []byte("redelegaion_by_val_src")

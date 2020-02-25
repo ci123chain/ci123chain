@@ -51,31 +51,10 @@ func NewSpecificJob(r *http.Request, backends []types.Instance) *SpecificJob {
 }
 
 func ParseURL(r *http.Request) (types.Proxy, error, map[string]string){
-	//body, _ := ioutil.ReadAll(r.Body)
-	//data := r.Form
-
-	/*
-	var params types.RequestParams
-	err := json.Unmarshal(body, &params)
-	if err != nil {
-		return server.NewErrProxy("err"), err, nil
-	}
-
-	nrp := types.NewRequestParams{Data:params.Data}
-	newByte, err := json.Marshal(nrp)
-	if err != nil {
-		return server.NewErrProxy("err"), err, nil
-	}
-	*/
-	//data := r.PostForm
-	//data := url.Values{}
-	r.ParseForm()
+	_ = r.ParseForm()
 	var data = map[string]string{}
 
 	for k, v := range r.Form {
-		//fmt.Println("key is: ", k)
-		//fmt.Println("val is: ", v)
-		//data.Set(k, v[0])
 		key := k
 		value := v[0]
 		data[key] = value

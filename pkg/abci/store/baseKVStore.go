@@ -123,9 +123,9 @@ func (ks *baseKVStore) Iterator(start, end []byte) Iterator {
 
 // Implements KVStore.
 func (ks *baseKVStore) ReverseIterator(start, end []byte) Iterator {
-	cstart := ks.getCombineKey(start)
-	cend := ks.getCombineKey(end)
-	return ks.iterator([]byte(cstart), []byte(cend), false)
+	//cstart := ks.getCombineKey(start)
+	//cend := ks.getCombineKey(end)
+	return ks.iterator([]byte(start), []byte(end), false)
 }
 
 func (ks *baseKVStore) iterator(start, end []byte, ascending bool) Iterator {

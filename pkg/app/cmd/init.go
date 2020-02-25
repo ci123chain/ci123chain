@@ -286,7 +286,7 @@ func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initCo
 	validator := appInit.GetValidator(nodeKey.PubKey(), viper.GetString(FlagName))
 	validators := []tmtypes.GenesisValidator{validator}
 
-	appState, err := appInit.AppGenState()
+	appState, err := appInit.AppGenState(validators)
 
 	if err != nil {
 		return

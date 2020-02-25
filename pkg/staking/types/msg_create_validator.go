@@ -3,13 +3,14 @@ package types
 import (
 	"github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/transaction"
+	"github.com/tendermint/tendermint/crypto"
 )
 
 
 type CreateValidatorTx struct {
 	//
 	transaction.CommonTx
-	PublicKey         PubKey             `json:"public_key"`
+	PublicKey         crypto.PubKey      `json:"public_key"`
 	Value             types.Coin         `json:"value"`
 	ValidatorAddress  types.AccAddress   `json:"validator_address"`
 	DelegatorAddress  types.AccAddress   `json:"delegator_address"`
@@ -19,14 +20,14 @@ type CreateValidatorTx struct {
 }
 
 func NewCreateValidatorTx(from types.AccAddress, gas ,nonce uint64, value types.Coin, minSelfDelegation types.Int, validatorAddr types.AccAddress, delegatorAddr types.AccAddress,
-	rate, maxRate, maxChangeRate types.Dec, moniker, identity, website, securityContact, details string, pubType, pubValue string) CreateValidatorTx {
+	rate, maxRate, maxChangeRate types.Dec, moniker, identity, website, securityContact, details string, publicKey crypto.PubKey ) CreateValidatorTx {
 	return CreateValidatorTx{
 		CommonTx: transaction.CommonTx{
 			From: from,
 			Gas: 	gas,
 			Nonce: nonce,
 		},
-		PublicKey:PubKey{Value:pubValue, Type:pubType},
+		PublicKey:publicKey,
 		Value:value,
 		ValidatorAddress:validatorAddr,
 		DelegatorAddress:delegatorAddr,
@@ -45,10 +46,10 @@ func (msg *CreateValidatorTx) ValidateBasic() types.Error {
 	if msg.ValidatorAddress.Empty() {
 		return types.ErrEmptyValidatorAddr("empty validator address")
 	}
-	if !types.AccAddress(msg.ValidatorAddress).Equals(msg.DelegatorAddress) {
+	if !msg.ValidatorAddress.Equals(msg.DelegatorAddress) {
 		return types.ErrBadValidatorAddr("bad validator address")
 	}
-	if msg.PublicKey.Type == "" || msg.PublicKey.Value == "" {
+	if msg.PublicKey == nil {
 		return types.ErrEmptyValidatorPubKey("empty validator pubkey")
 	}
 	if !msg.Value.Amount.IsPositive() {

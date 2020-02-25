@@ -19,16 +19,19 @@ var (
 	// requestURL = "http://ciChain:3030/tx/broadcast_async"
 
 	from = "0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c"
-	amount uint64 = 2
+	amount uint64 = 20
 	gas uint64 = 20000
 	nonce uint64 = 1
 	pri = "2b452434ac4f7cf9c5d61d62f23834f34e851fb6efdb8d4a8c6e214a8bc93d70"
 	proxy = "lb"
 	minSelfDelegation int64 = 2
 	validatorAddress = "0xdE47Fff5F768964A673fc2426dcBF0DaF4FE5691"
+	//validatorAddress = "0xb0524aFaf13473D11b5AdeF961bCF5DC71d301f2"
 	validatorSrcAddress = ""
 	validatorDstAddress = ""
+	//delegatorAddress = "0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c"
 	delegatorAddress = "0xdE47Fff5F768964A673fc2426dcBF0DaF4FE5691"
+	//delegatorAddress = "0xb0524aFaf13473D11b5AdeF961bCF5DC71d301f2"
 	rate int64 = 1.000000000000000000
 	maxRate int64 = 1.000000000000000000
 	maxChangeRate int64 = 1.000000000000000000
@@ -37,8 +40,8 @@ var (
 	website = "website"
 	securityContact = "security"
 	details = "details"
-	pubKeyTp = "tendermint/PubKeySecp256k1"
-	pubKeyVal = "AkC+G+OfYtwTld9eOmJOq7+7tPWIAkanVDdgio/j4eVn"
+	publicKey = ""
+	//pubKeyVal = "A6QEpjsHkhm33l9N4OyRGMiaccw3S7P+jIzLKkxeMdeT"
 
 	onlineGas = "20000"
 	onlineNonce = "2"
@@ -61,7 +64,7 @@ func main() {
 	if create {
 		fmt.Println("---------------添加验证者离线签名交易----------------------")
 		tx, err := SignCreateValidatorTx(from, amount, gas, nonce, pri, minSelfDelegation, validatorAddress, delegatorAddress, rate, maxRate,
-			maxChangeRate, moniker, identity, website, securityContact, details, pubKeyTp, pubKeyVal)
+			maxChangeRate, moniker, identity, website, securityContact, details, publicKey)
 		if err != nil {
 			fmt.Println("签名失败，参数错误")
 			fmt.Println(err)

@@ -7,11 +7,11 @@ import (
 
 func SignCreateValidatorTx(from string, amount, gas, nonce uint64, priv string, minSelfDelegation int64,
 	validatorAddress, delegatorAddress string, rate, maxRate, maxChangeRate int64,
-	moniker, identity, website, securityContact, details string, pubKeyTy, pubKeyVal string) (string, error) {
+	moniker, identity, website, securityContact, details string, publicKey string) (string, error) {
 	//
 
 	txBytes, err := sdk.SignCreateValidatorMSg(from, amount, gas, nonce, priv, minSelfDelegation, validatorAddress,
-		delegatorAddress, rate, maxRate, maxChangeRate, moniker, identity, website, securityContact, details, pubKeyTy, pubKeyVal)
+		delegatorAddress, rate, maxRate, maxChangeRate, moniker, identity, website, securityContact, details, publicKey)
 
 	if err != nil {
 		return "", err

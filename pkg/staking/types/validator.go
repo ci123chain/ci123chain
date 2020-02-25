@@ -2,26 +2,21 @@ package types
 
 import (
 	"bytes"
-	"fmt"
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tendermint/go-amino"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto"
 	cryptoAmino "github.com/tendermint/tendermint/crypto/encoding/amino"
-	"github.com/tendermint/tendermint/crypto/secp256k1"
+	cmn "github.com/tendermint/tendermint/libs/common"
 	tmtypes "github.com/tendermint/tendermint/types"
 	"sort"
 	"time"
 )
 
-type PubKey struct {
-	Type   string  `json:"type"`
-	Value  string   `json:"value"`
-}
-
 type Validator struct {
 	OperatorAddress    sdk.AccAddress	`json:"operator_address"`
-	ConsensusKey       PubKey           `json:"consensus_key"`
+	Address            cmn.HexBytes     `json:"address"`
+	ConsensusKey       crypto.PubKey    `json:"pub_key"`
 	Jailed             bool             `json:"jailed"`
 	Status             sdk.BondStatus   `json:"status"`
 	Tokens             sdk.Int          `json:"tokens"`
@@ -34,7 +29,7 @@ type Validator struct {
 }
 
 //crypto pubKey
-func NewValidator(operator sdk.AccAddress, pubKey PubKey, description Description) Validator {
+func NewValidator(operator sdk.AccAddress, pubKey crypto.PubKey, description Description) Validator {
 	/*var pkStr string
 	if pubKey != nil {
 		pkStr = string(pubKey)
@@ -222,14 +217,7 @@ func (v Validator) GetMinSelfDelegation() sdk.Int { return v.MinSelfDelegation }
 func (v Validator) GetDelegatorShares() sdk.Dec   { return v.DelegatorShares }
 
 func (v Validator) GetConsPubKey() crypto.PubKey {
-	var pk secp256k1.PubKeySecp256k1
-	pubStr := fmt.Sprintf(`{"type":"%s","value":"%s"}`, secp256k1.PubKeyAminoName, v.ConsensusKey.Value)
-	err := cdc.UnmarshalJSON([]byte(pubStr), &pk)
-	if err != nil {
-		panic(err)
-	}
-	pubKey := crypto.PubKey(pk)
-	return pubKey
+	return v.ConsensusKey
 }
 
 

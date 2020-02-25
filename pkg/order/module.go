@@ -7,6 +7,7 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/order/keeper"
 	"github.com/tanhuiya/ci123chain/pkg/order/types"
 	abci "github.com/tendermint/tendermint/abci/types"
+	tmtypes "github.com/tendermint/tendermint/types"
 )
 
 type AppModule struct {
@@ -37,7 +38,7 @@ func (am AppModuleBasic) RegisterCodec(codec *codec.Codec) {
 	types.RegisterCodec(codec)
 }
 
-func (am AppModuleBasic) DefaultGenesis() json.RawMessage {
+func (am AppModuleBasic) DefaultGenesis(_ []tmtypes.GenesisValidator) json.RawMessage {
 	return keeper.ModuleCdc.MustMarshalJSON(types.DefaultGenesisState())
 }
 

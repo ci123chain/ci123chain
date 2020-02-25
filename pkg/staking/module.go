@@ -9,6 +9,7 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/staking/types"
 	sk "github.com/tanhuiya/ci123chain/pkg/supply/keeper"
 	abci "github.com/tendermint/tendermint/abci/types"
+	tmtypes "github.com/tendermint/tendermint/types"
 )
 
 type AppModule struct {
@@ -18,40 +19,32 @@ type AppModule struct {
 	SupplyKeeper  sk.Keeper
 }
 
-func (a AppModule) Name() string {
-	//panic("implement me")
-	return ModuleName
-}
-
-func (a AppModule) RegisterCodec(codec *codec.Codec) {
-	types.RegisterCodec(codec)
-}
-
-func (a AppModule) DefaultGenesis() json.RawMessage {
+/*
+func (am AppModule) DefaultGenesis() json.RawMessage {
 	return ModuleCdc.MustMarshalJSON(DefaultGenesisState())
 }
+*/
 
 func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.ValidatorUpdate {
 	//
 	var genesisState types.GenesisState
-	//ModuleCdc.MustUnmarshalJSON(data, &genesisState)
-	err := json.Unmarshal(data, & genesisState)
+	err := types.StakingCodec.UnmarshalJSON(data, &genesisState)
 	if err != nil {
 		panic(err)
 	}
 	return InitGenesis(ctx, am.StakingKeeper, am.AccountKeeper, am.SupplyKeeper, genesisState)
 }
 
-func (a AppModule) BeginBlocker(ctx sdk.Context, _ abci.RequestBeginBlock) {
-	BeginBlock(ctx, a.StakingKeeper)
+func (am AppModule) BeginBlocker(ctx sdk.Context, _ abci.RequestBeginBlock) {
+	BeginBlock(ctx, am.StakingKeeper)
 }
 
-func (a AppModule) Committer(ctx sdk.Context) {
+func (am AppModule) Committer(ctx sdk.Context) {
 	//
 }
 
-func (a AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
-	return EndBlock(ctx, a.StakingKeeper)
+func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
+	return EndBlock(ctx, am.StakingKeeper)
 }
 
 type AppModuleBasic struct {}
@@ -60,9 +53,9 @@ func (am AppModuleBasic) RegisterCodec(codec *codec.Codec) {
 	types.RegisterCodec(codec)
 }
 
-func (am AppModuleBasic) DefaultGenesis() json.RawMessage {
-	p := types.DefaultGenesisState()
-	b,err := json.Marshal(p)
+func (am AppModuleBasic) DefaultGenesis(validators []tmtypes.GenesisValidator) json.RawMessage {
+	p := types.DefaultGenesisState(validators)
+	b, err := types.StakingCodec.MarshalJSONIndent(p, "", "")
 	if err != nil{
 		panic(err)
 	}

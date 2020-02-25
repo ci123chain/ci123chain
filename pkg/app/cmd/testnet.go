@@ -297,13 +297,15 @@ func CopyFile(src, dst string) error {
 }
 
 func getValidator(cdc *amino.Codec, c *cfg.Config, appInit app.AppInit) (*types.GenesisValidator, *json.RawMessage, error){
+	var validators []types.GenesisValidator
 	nodeKey, err := node.LoadNodeKey(c.NodeKeyFile())
 	if err != nil {
 		return  nil, nil, err
 	}
 
 	validator := appInit.GetValidator(nodeKey.PubKey(), viper.GetString(FlagName))
-	appState, err := appInit.AppGenState()
+	validators = append(validators, validator)
+	appState, err := appInit.AppGenState(validators)
 
 	if err != nil {
 		return  nil, nil, err

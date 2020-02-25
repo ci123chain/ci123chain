@@ -16,17 +16,17 @@ func RegisterTxRoutes(cliCtx context.Context, r *mux.Router) {
 	// Get a single validator info
 	r.HandleFunc("/staking/validator", validatorHandlerFn(cliCtx), ).Methods("POST")
 	// Get all delegations to a validator
-	r.HandleFunc("/staking/validators/delegations", validatorDelegationsHandlerFn(cliCtx), ).Methods("POST")
+	r.HandleFunc("/staking/validator/delegations", validatorDelegationsHandlerFn(cliCtx), ).Methods("POST")
 	// Query all validators that a delegator is bonded to
-	r.HandleFunc("/staking/delegators/validators", delegatorValidatorsHandlerFn(cliCtx), ).Methods("POST")
+	r.HandleFunc("/staking/delegator/validators", delegatorValidatorsHandlerFn(cliCtx), ).Methods("POST")
 
 	// Query a validator that a delegator is bonded to
-	r.HandleFunc("/staking/delegators/validators/", delegatorValidatorHandlerFn(cliCtx), ).Methods("POST")
+	r.HandleFunc("/staking/delegator/validator", delegatorValidatorHandlerFn(cliCtx), ).Methods("POST")
 
 	// Query a delegation between a delegator and a validator
-	r.HandleFunc("/staking/delegators/delegations/", delegationHandlerFn(cliCtx), ).Methods("POST")
+	r.HandleFunc("/staking/delegator/delegation", delegationHandlerFn(cliCtx), ).Methods("POST")
 	// Get all delegations from a delegator
-	r.HandleFunc("/staking/delegators/delegations", delegatorDelegationsHandlerFn(cliCtx), ).Methods("POST")
+	r.HandleFunc("/staking/delegator/delegations", delegatorDelegationsHandlerFn(cliCtx), ).Methods("POST")
 	// Query redelegations (filters in query params)
 	r.HandleFunc("/staking/redelegations", redelegationsHandlerFn(cliCtx), ).Methods("POST")
 
@@ -104,7 +104,11 @@ func validatorsHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		}
 		var validators []types.Validator
 		types.StakingCodec.MustUnmarshalJSON(res, &validators)
-		//fmt.Println(validators)
+		/*Err = types.StakingCodec.UnmarshalJSON(res, &validators)
+		if Err != nil {
+			rest.WriteErrorRes(writer, transfer.ErrQueryTx(types.DefaultCodespace, "unmarshal failed"))
+			return
+		}*/
 		resp := validators
 		rest.PostProcessResponseBare(writer, cliCtx, resp)
 	}

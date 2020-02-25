@@ -59,7 +59,7 @@ func (c Coin) Add(coinB Coin) Coin {
 		panic(fmt.Sprintf("invalid coin denominations; %s, %s", c.Denom, coinB.Denom))
 	}
 
-	return Coin{c.Denom,c.Amount.Add(coinB.Amount)}
+	return Coin{coinB.Denom,c.Amount.Add(coinB.Amount)}
 }
 
 func (c Coin) Sub(coinB Coin) Coin {

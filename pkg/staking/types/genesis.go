@@ -2,6 +2,7 @@ package types
 
 import (
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
+	tmtypes "github.com/tendermint/tendermint/types"
 )
 
 type GenesisState struct {
@@ -32,7 +33,28 @@ func NewGenesisState(params Params, validators []Validator, delegations []Delega
 	}
 }
 
+func DefaultValidators(validators []tmtypes.GenesisValidator) []Validator {
+	var genesisValidators []Validator
+	var genesisValidator Validator
+	if len(validators) == 0 {
+		return genesisValidators
+	}else {
+		for i := range validators {
+			genesisValidator.OperatorAddress = sdk.ToAccAddress(validators[i].PubKey.Address())
+			genesisValidator.Address = validators[i].PubKey.Address()
+			genesisValidator.ConsensusKey = validators[i].PubKey
+			genesisValidator.Status = 1
+			genesisValidator.DelegatorShares = sdk.NewDec(100)
+			genesisValidator.Tokens = sdk.NewInt(100)
+			genesisValidators = append(genesisValidators, genesisValidator)
+		}
+	}
+	return genesisValidators
+}
+
 // DefaultGenesisState gets the raw genesis raw message for testing
-func DefaultGenesisState() GenesisState {
-	return GenesisState{Params:DefaultParams()}
+func DefaultGenesisState(validators []tmtypes.GenesisValidator) GenesisState {
+	genesisValidators := DefaultValidators(validators)
+	//return GenesisState{Params:DefaultParams(), Validators:genesisValidators}
+	return NewGenesisState(DefaultParams(), genesisValidators, nil)
 }
