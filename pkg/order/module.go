@@ -54,7 +54,7 @@ func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.Va
 	if am.OrderKeeper.ExistOrderBook(ctx) {
 		return nil
 	}
-
+	am.OrderKeeper.Cdb.ResetDB()
 	var genesisState types.GenesisState
 	keeper.ModuleCdc.MustUnmarshalJSON(data, &genesisState)
 	shardID := ctx.ChainID()

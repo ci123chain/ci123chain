@@ -17,7 +17,7 @@ const OrderBookKey = "OrderBook"
 const OpADD = "ADD"
 const NoOrderBookErr = "No OrderBook"
 type OrderKeeper struct {
-	cdb 		*couchdb.GoCouchDB
+	Cdb 		*couchdb.GoCouchDB
 	StoreKey	sdk.StoreKey
 	paramSubspace subspace.Subspace
 }
@@ -48,7 +48,7 @@ type Actions struct {
 
 func NewOrderKeeper(cdb *couchdb.GoCouchDB, key sdk.StoreKey) OrderKeeper {
 	return OrderKeeper{
-		cdb:		cdb,
+		Cdb:		cdb,
 		StoreKey:	key,
 	}
 }
