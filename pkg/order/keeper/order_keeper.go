@@ -64,7 +64,6 @@ func (ok *OrderKeeper) WaitForReady(ctx sdk.Context) {
 				continue
 			}
 		}
-
 		if ok.isReady(orderbook, ctx.ChainID(), ctx.BlockHeight()) {
 			ok.UpdateOrderBook(ctx, orderbook, nil)
 			return
@@ -124,7 +123,6 @@ func (ok *OrderKeeper) UpdateOrderBook(ctx sdk.Context, orderbook OrderBook, act
 			orderbook.Actions = nil
 		}
 	}
-
 	ok.SetOrderBook(ctx, orderbook)
 	return
 }

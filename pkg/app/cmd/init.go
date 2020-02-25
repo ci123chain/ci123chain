@@ -110,6 +110,11 @@ func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Com
 		Short: "Initialize genesis config, priv-validator file, and p2p-node file",
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
+
+			fmt.Println("validator_key:", viper.GetString(FlagWithValidator))
+			fmt.Println("home:", viper.GetString(tmcli.HomeFlag))
+			fmt.Println("chainid:", viper.GetString(FlagChainID),)
+
 			config := ctx.Config
 			config.SetRoot(viper.GetString(tmcli.HomeFlag))
 
