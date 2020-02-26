@@ -38,6 +38,7 @@ func NewValidator(operator sdk.AccAddress, pubKey crypto.PubKey, description Des
 	return Validator{
 		OperatorAddress: operator,
 		ConsensusKey: pubKey,
+		Address: pubKey.Address(),
 		Jailed:          false,
 		Status:          sdk.Unbonded,
 		Tokens:          sdk.ZeroInt(),
