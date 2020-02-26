@@ -4,7 +4,6 @@ import (
 	"encoding/hex"
 	"github.com/tanhuiya/ci123chain/pkg/abci/codec"
 	"github.com/tanhuiya/ci123chain/pkg/client/context"
-	"github.com/tanhuiya/ci123chain/pkg/transfer"
 	"github.com/tanhuiya/ci123chain/pkg/transfer/types"
 	"time"
 
@@ -76,7 +75,8 @@ func parseTx(cdc *codec.Codec, txBytes []byte) (sdk.Tx, error) {
 
 	// todo: only TransferTx implement
 
-	tx := new(transfer.TransferTx)
+	//tx := new(transfer.TransferTx)
+	var tx sdk.Tx
 	//rlp.DecodeBytes(txBytes, &tx)
 	err := cdc.UnmarshalBinaryLengthPrefixed(txBytes, &tx)
 	if err != nil {

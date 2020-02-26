@@ -3,6 +3,7 @@ package app
 import (
 	"encoding/json"
 	"errors"
+	"github.com/spf13/viper"
 	"github.com/tanhuiya/ci123chain/pkg/abci"
 	"github.com/tanhuiya/ci123chain/pkg/app/types"
 	"github.com/tanhuiya/ci123chain/pkg/couchdb"
@@ -18,6 +19,11 @@ import (
 	"path/filepath"
 )
 
+const DefaultDBName = "ci123"
+const DBAuthUser = "DBAuthUser"
+const DBAuthPwd = "DBAuthPwd"
+const DBAuth = "DBAuth"
+const DBName = "DBName"
 type (
 	AppCreator func(home string, logger log.Logger, statedb, traceStore string) (sdk.Application, error)
 
@@ -32,7 +38,7 @@ func ConstructAppCreator(appFn AppCreatorInit, name string) AppCreator {
 
 	return func(rootDir string, logger log.Logger, statedb, traceStore string) (sdk.Application, error) {
 		dataDir := filepath.Join(rootDir, "data")
-		db, err := GetStateDB(name, dataDir, statedb)
+		db, err := GetStateDB(dataDir, statedb)
 		if err != nil {
 			return nil, types.ErrNewDB(types.DefaultCodespace, err)
 		}
@@ -75,13 +81,14 @@ func ConstructAppExporter(appFn AppExporterInit, name string) AppExporter {
 	}
 }
 
-func GetStateDB(name, path, statedb string) (db dbm.DB, err error) {
+func GetStateDB(path, statedb string) (db dbm.DB, err error) {
+	var dbname string
 	if statedb == "leveldb" {
-		db, err = dbm.NewGoLevelDB(name, path)
+		db, err = dbm.NewGoLevelDB(DefaultDBName, path)
 		return
 	} else {
-		// couchdb://admin:password@192.168.2.89:5984
-		// couchdb://192.168.2.89:5984
+		// couchdb://admin:password@192.168.2.89:5984/dbname
+		// couchdb://192.168.2.89:5984/dbname
 		s := strings.Split(statedb, "://")
 		if len(s) < 2 {
 			return nil, errors.New("statedb format error")
@@ -92,17 +99,40 @@ func GetStateDB(name, path, statedb string) (db dbm.DB, err error) {
 		auths := strings.Split(s[1], "@")
 
 		if len(auths) < 2 {
-			db, err = couchdb.NewGoCouchDB(name, auths[0],nil)
+			info := auths[0]
+			split := strings.Split(info, "/")
+			if len(split) < 2 {
+				dbname = DefaultDBName
+			} else {
+				dbname = split[1]
+			}
+			db, err = couchdb.NewGoCouchDB(dbname, split[0],nil)
+			viper.Set(DBName, dbname)
 		} else {
 			info := auths[0]
 			userpass := strings.Split(info, ":")
 			if len(userpass) < 2 {
-				db, err = couchdb.NewGoCouchDB(name, auths[1],nil)
+				split := strings.Split(userpass[0], "/")
+				if len(split) < 2 {
+					dbname = DefaultDBName
+				} else {
+					dbname = split[1]
+				}
+				db, err = couchdb.NewGoCouchDB(dbname, split[0],nil)
+			} else {
+				auth := &couchdb.BasicAuth{Username: userpass[0], Password: userpass[1]}
+				split := strings.Split(userpass[0], "/")
+				if len(split) < 2 {
+					dbname = DefaultDBName
+				} else {
+					dbname = split[1]
+				}
+				db, err = couchdb.NewGoCouchDB(dbname, split[0], auth)
+				viper.Set(DBAuthUser, userpass[0])
+				viper.Set(DBAuthPwd, userpass[1])
+				viper.Set(DBName, dbname)
 			}
-			auth := &couchdb.BasicAuth{Username: userpass[0], Password: userpass[1]}
-			db, err = couchdb.NewGoCouchDB(name, auths[1], auth)
 		}
 		return
 	}
-	return nil, errors.New("statedb format error")
 }

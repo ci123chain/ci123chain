@@ -3,9 +3,14 @@ package couchdb
 import (
 	"encoding/hex"
 	"fmt"
+	"github.com/spf13/viper"
 	dbm "github.com/tendermint/tm-db"
 )
 
+const DBAuthUser = "DBAuthUser"
+const DBAuthPwd = "DBAuthPwd"
+const DBAuth = "DBAuth"
+const DBName = "DBName"
 type GoCouchDB struct {
 	db 		*Database
 }
@@ -405,4 +410,34 @@ func (cdb *GoCouchDB) GetRevAndValue(key []byte) (string, []byte) {
 		return "", nil
 	}
 	return rev, res
+}
+
+func (cdb *GoCouchDB) ResetDB() error {
+	var auth *BasicAuth
+	name := viper.GetString(DBName)
+	user := viper.GetString(DBAuthUser)
+	pwd := viper.GetString(DBAuthPwd)
+	if user == "" && pwd == "" {
+		err := cdb.db.connection.DeleteDB(name, nil)
+		if err != nil {
+			return err
+		}
+		err = cdb.db.connection.CreateDB(name, nil)
+		if err != nil {
+			return err
+		}
+	} else {
+		auth = &BasicAuth{user,pwd}
+		err := cdb.db.connection.DeleteDB(name, auth)
+		if err != nil {
+			return err
+		}
+		err = cdb.db.connection.CreateDB(name, auth)
+		if err != nil {
+			return err
+		}
+	}
+
+
+	return nil
 }

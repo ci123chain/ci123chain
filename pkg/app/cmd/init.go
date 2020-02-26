@@ -37,7 +37,7 @@ var (
 	FlagIP = "ip"
 	FlagChainID = "chain_id"
 	FlagStateDB = "statedb"
-	FlagDBName = "dbname"
+	//FlagDBName = "dbname"
 	FlagWithValidator = "validator_key"
 )
 
@@ -154,8 +154,7 @@ func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Com
 	//cmd.Flags().AddFlagSet(appInit.FlagsAppGenState)
 	//cmd.Flags().AddFlagSet(appInit.FlagsAppGenTx) // need to add this flagset for when no GenTx's provided
 	//cmd.AddCommand(GenTxCmd(ctx, cdc, appInit))
-	cmd.Flags().String(FlagStateDB, "couchdb://couchdb-service:5984", "fetch new shard from db")
-	cmd.Flags().String(FlagDBName, "ci123", "the name of db that used for chain")
+	cmd.Flags().String(FlagStateDB, "couchdb://couchdb-service:5984/ci123", "fetch new shard from db")
 	cmd.Flags().String(FlagWithValidator, "", "the validator key")
 	return cmd
 }
@@ -220,9 +219,9 @@ func gentxWithConfig(cdc *amino.Codec, appInit app.AppInit, config *cfg.Config, 
 func GetChainID() (string, error){
 
 	var id string
-	dbname := viper.GetString(FlagDBName)
+
 	statedb := viper.GetString(FlagStateDB)
-	db, err := app.GetStateDB(dbname, "", statedb)
+	db, err := app.GetStateDB("", statedb)
 	key := ortypes.ModuleName + "//" + order.OrderBookKey
 	var ob order.OrderBook
 
