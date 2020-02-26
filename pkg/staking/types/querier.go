@@ -5,8 +5,8 @@ import (
 )
 
 type QueryBondsParams struct {
-	DelegatorAddr sdk.AccAddress
-	ValidatorAddr sdk.AccAddress
+	DelegatorAddr sdk.AccAddress    `json:"delegator_addr"`
+	ValidatorAddr sdk.AccAddress     `json:"validator_addr"`
 }
 
 func NewQueryBondsParams(delegatorAddr sdk.AccAddress, validatorAddr sdk.AccAddress) QueryBondsParams {

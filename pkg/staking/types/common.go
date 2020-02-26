@@ -15,9 +15,9 @@ const (
 )
 
 type CommissionRates struct {
-	Rate           sdk.Dec
-	MaxRate        sdk.Dec
-	MaxChangeRate  sdk.Dec
+	Rate           sdk.Dec     `json:"rate"`
+	MaxRate        sdk.Dec     `json:"max_rate"`
+	MaxChangeRate  sdk.Dec     `json:"max_change_rate"`
 }
 
 func NewCommissionRates(rate, maxRate, maxChangeRate sdk.Dec) CommissionRates {
@@ -58,11 +58,11 @@ func (cr CommissionRates) Validate() error {
 }
 
 type Description struct {
-	Moniker         string
-	Identity        string
-	Website         string
-	SecurityContact string
-	Details         string
+	Moniker         string    `json:"moniker"`
+	Identity        string	  `json:"identity"`
+	Website         string 	  `json:"website"`
+	SecurityContact string	  `json:"security_contact"`
+	Details         string	  `json:"details"`
 }
 
 func NewDescription(moniker, identity, website, securityContact, details string) Description {
@@ -132,8 +132,8 @@ func (m Description) EnsureLength() (Description, error) {
 }
 
 type Commission struct {
-	CommissionRates   CommissionRates
-	UpdateTime        time.Time
+	CommissionRates   CommissionRates   `json:"commission_rates"`
+	UpdateTime        time.Time         `json:"update_time"`
 }
 
 func (m *Commission) Reset()      { *m = Commission{} }

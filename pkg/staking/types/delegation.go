@@ -8,9 +8,9 @@ import (
 )
 
 type Delegation struct {
-	DelegatorAddress  sdk.AccAddress
-	ValidatorAddress  sdk.AccAddress
-	Shares            sdk.Dec
+	DelegatorAddress  sdk.AccAddress  	`json:"delegator_address"`
+	ValidatorAddress  sdk.AccAddress    `json:"validator_address"`
+	Shares            sdk.Dec           `json:"shares"`
 }
 // IsMature - is the current entry mature
 func (e RedelegationEntry) IsMature(currentTime time.Time) bool {
@@ -44,16 +44,16 @@ type Delegations []Delegation
 func (d Delegation) GetShares() sdk.Dec {return d.Shares}
 
 type UnbondingDelegation struct {
-	DelegatorAddress   sdk.AccAddress
-	ValidatorAddress   sdk.AccAddress
-	Entries            []UnbondingDelegationEntry
+	DelegatorAddress   sdk.AccAddress   `json:"delegator_address"`
+	ValidatorAddress   sdk.AccAddress	`json:"validator_address"`
+	Entries            []UnbondingDelegationEntry `json:"entries"'`
 }
 
 type UnbondingDelegationEntry struct {
-	CreationHeight    int64
-	CompletionTime    time.Time
-	InitialBalance    sdk.Int
-	Balance           sdk.Int
+	CreationHeight    int64			`json:"creation_height"`
+	CompletionTime    time.Time		`json:"completion_time"`
+	InitialBalance    sdk.Int		`json:"initial_balance"`
+	Balance           sdk.Int		`json:"balance"`
 }
 
 // IsMature - is the current entry mature
@@ -98,7 +98,7 @@ func (ubd *UnbondingDelegation) AddEntry(creationHeight int64, minTime time.Time
 
 type DelegationResponse struct {
 	Delegation
-	Balance sdk.Coin `json:"balance" yaml:"balance"`
+	Balance sdk.Coin       `json:"balance" yaml:"balance"`
 }
 
 // NewDelegationResp creates a new DelegationResponse instance

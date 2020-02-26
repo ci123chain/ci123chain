@@ -13,7 +13,7 @@ var (
 	to = "0x505A74675dc9C71eF3CB5DF309256952917E801e"
 	amount = "2"
 	gas = "20000"
-	nonce = "2"
+	nonce = ""
 	priv = "2b452434ac4f7cf9c5d61d62f23834f34e851fb6efdb8d4a8c6e214a8bc93d70"
 	proxy = "lb"
 	requestURL = "http://ciChain:3030/tx/broadcast"

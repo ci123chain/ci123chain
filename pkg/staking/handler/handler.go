@@ -99,6 +99,15 @@ func handleCreateValidatorTx(ctx sdk.Context, k keeper.StakingKeeper, tx staking
 			),
 	})
 
+	//交易成功，nonce+1
+	account := k.AccountKeeper.GetAccount(ctx, tx.From)
+	saveErr := account.SetSequence(account.GetSequence() + 1)
+	if saveErr != nil {
+		return types.ErrSetCommissionFailed(types.DefaultCodespace, saveErr).Result()
+	}
+	k.AccountKeeper.SetAccount(ctx, account)
+	//
+
 	return sdk.Result{Events: em.Events()}
 }
 
@@ -128,6 +137,15 @@ func handleDelegateTx(ctx sdk.Context, k keeper.StakingKeeper, tx staking.Delega
 			sdk.NewAttribute(sdk.AttributeKeySender, tx.DelegatorAddress.String()),
 			),
 	})
+	//交易成功，nonce+1
+	account := k.AccountKeeper.GetAccount(ctx, tx.From)
+	saveErr := account.SetSequence(account.GetSequence() + 1)
+	if saveErr != nil {
+		return types.ErrSetCommissionFailed(types.DefaultCodespace, saveErr).Result()
+	}
+	k.AccountKeeper.SetAccount(ctx, account)
+	//
+
 	return sdk.Result{Events: em.Events()}
 }
 
@@ -167,6 +185,14 @@ func handleRedelegateTx(ctx sdk.Context, k keeper.StakingKeeper, tx staking.Rede
 			sdk.NewAttribute(sdk.AttributeKeySender, tx.DelegatorAddress.String()),
 			),
 	})
+	//交易成功，nonce+1
+	account := k.AccountKeeper.GetAccount(ctx, tx.From)
+	saveErr := account.SetSequence(account.GetSequence() + 1)
+	if saveErr != nil {
+		return types.ErrSetCommissionFailed(types.DefaultCodespace, saveErr).Result()
+	}
+	k.AccountKeeper.SetAccount(ctx, account)
+	//
 
 	return sdk.Result{Data: completionTimeBz, Events: em.Events()}
 }
@@ -204,5 +230,13 @@ func handleUndelegateTx(ctx sdk.Context, k keeper.StakingKeeper, tx staking.Unde
 			sdk.NewAttribute(sdk.AttributeKeySender, tx.DelegatorAddress.String()),
 			),
 		})
+	//交易成功，nonce+1
+	account := k.AccountKeeper.GetAccount(ctx, tx.From)
+	saveErr := account.SetSequence(account.GetSequence() + 1)
+	if saveErr != nil {
+		return types.ErrSetCommissionFailed(types.DefaultCodespace, saveErr).Result()
+	}
+	k.AccountKeeper.SetAccount(ctx, account)
+	//
 	return sdk.Result{Data: completionTimeBz, Events: em.Events()}
 }

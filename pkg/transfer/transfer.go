@@ -49,9 +49,9 @@ func SignTransferTx(from string, to string, amount, gas, nonce uint64, priv []by
 
 type TransferTx struct {
 	Common transaction.CommonTx
-	To     sdk.AccAddress
-	Amount sdk.Coin
-	FabricMode bool
+	To     sdk.AccAddress   `json:"to"`
+	Amount sdk.Coin         `json:"amount"`
+	FabricMode bool         `json:"fabric_mode"`
 }
 
 //func DecodeTransferTx(b []byte) (*TransferTx, error) {

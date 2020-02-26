@@ -10,8 +10,8 @@ import (
 )
 
 type cachedValidator struct {
-	val   types.Validator
-	marshalled  string
+	val   types.Validator   `json:"val"`
+	marshalled  string		`json:"marshalled"`
 }
 
 func newCachedValidator(val types.Validator, marshalled string) cachedValidator {

@@ -18,7 +18,7 @@ const aminoCacheSize = 500
 type StakingKeeper struct {
 	storeKey            sdk.StoreKey
 	cdc                 *codec.Codec
-	AccountKeeper                  account.AccountKeeper
+	AccountKeeper       account.AccountKeeper
 	SupplyKeeper        supply.Keeper
 	hooks               types.StakingHooks
 	paramstore          subspace.Subspace
@@ -27,7 +27,6 @@ type StakingKeeper struct {
 }
 
 const (
-	StakingStoreKey = "staking"
 	RouteKey = "staking"
 )
 

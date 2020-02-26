@@ -7,11 +7,11 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/account/exported"
 	"github.com/tanhuiya/ci123chain/pkg/auth"
 	"github.com/tanhuiya/ci123chain/pkg/auth/types"
-	fc "github.com/tanhuiya/ci123chain/pkg/fc"
+	"github.com/tanhuiya/ci123chain/pkg/fc"
 	"github.com/tanhuiya/ci123chain/pkg/transaction"
 )
 const price uint64 = 1
-const unit = 1000
+//const unit = 1000
 func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, fck fc.FcKeeper) sdk.AnteHandler {
 	return func(ctx sdk.Context, tx sdk.Tx, simulate bool) (newCtx sdk.Context, res sdk.Result, abort bool) {
 
@@ -28,12 +28,12 @@ func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, fck f
 			newCtx := ctx.WithGasMeter(sdk.NewGasMeter(0))
 			return newCtx, transaction.ErrInvalidTx(types.DefaultCodespace, "Invalid account").Result(), true
 		}
-		/*accountSequence := acc.GetSequence()
+		accountSequence := acc.GetSequence()
 		txNonce := stdTx.GetNonce()
 		if txNonce != accountSequence {
 			newCtx := ctx.WithGasMeter(sdk.NewGasMeter(0))
 			return newCtx, transaction.ErrInvalidTx(types.DefaultCodespace, "Unexpected nonce ").Result(), true
-		}*/
+		}
 
 		params := authKeeper.GetParams(ctx)
 		// Ensure that the provided fees meet a minimum threshold for the validator,
@@ -131,7 +131,7 @@ func EnsureSufficientMempoolFees() sdk.Result {
 }
 
 
-func DeductFees(acc exported.Account, fee sdk.Coin, ak account.AccountKeeper, ctx sdk.Context) (sdk.Result) {
+func DeductFees(acc exported.Account, fee sdk.Coin, ak account.AccountKeeper, ctx sdk.Context) sdk.Result {
 	coin := acc.GetCoin()
 	newCoins, ok := coin.SafeSub(fee)
 	if !ok {

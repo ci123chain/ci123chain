@@ -134,7 +134,7 @@ func NewChain(logger log.Logger, tmdb tmdb.DB, traceStore io.Writer) *Chain {
 	stakingKeeper := staking.NewKeeper(cdc, stakingStoreKey, accKeeper,supplyKeeper, paramsKeeper.Subspace(params.ModuleName))
 
 	cdb := tmdb.(*couchdb.GoCouchDB)
-	orderKeeper := order.NewKeeper(cdb, OrderStoreKey)
+	orderKeeper := order.NewKeeper(cdb, OrderStoreKey, accKeeper)
 
 	// 设置modules
 	c.mm = module.NewManager(

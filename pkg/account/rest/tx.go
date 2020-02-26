@@ -18,10 +18,15 @@ import (
 func RegisterRoutes(cliCtx context.Context, r *mux.Router) {
 	r.HandleFunc("/account/new", NewAccountRequestHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/bank/balances", QueryBalancesRequestHandlerFn(cliCtx)).Methods("POST")
+	r.HandleFunc("/account/nonce", QueryNonceRequestHandleFn(cliCtx)).Methods("POST")
 }
 
 type BalanceData struct {
 	Balance uint64 `json:"balance"`
+}
+
+type NonceData struct {
+	Nonce   uint64   `json:"nonce"`
 }
 
 type AccountAddress struct {
@@ -34,21 +39,10 @@ type Account struct {
 	PrivKey string `json:"privKey"`
 }
 
-type QueryAddressParams struct {
-	Data AccountAddress `json:"data"`
-}
 func QueryBalancesRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, request *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
-		/*
-		var params QueryAddressParams
-		b, readErr := ioutil.ReadAll(request.Body)
-		readErr = json.Unmarshal(b, &params)
-		if readErr != nil {
-			//
-		}
-		*/
 		address := request.FormValue("address")
 		height := request.FormValue("height")
 
@@ -89,6 +83,32 @@ func NewAccountRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			Address:	address,
 			PrivKey:	privKey,
 		}
+		rest.PostProcessResponseBare(w, cliCtx, resp)
+	}
+}
+
+func QueryNonceRequestHandleFn(cliCtx context.Context) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
+		address := r.FormValue("address")
+
+		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r, "")
+		if !ok {
+			rest.WriteErrorRes(w, err)
+			return
+		}
+		addrBytes, err2 := helper.ParseAddrs(address)
+		if len(addrBytes) < 1 || err2 != nil {
+			rest.WriteErrorRes(w, client.ErrParseAddr(types.DefaultCodespace, err2))
+			return
+		}
+		res, err2 := cliCtx.GetNonceByAddress(addrBytes[0])
+		if err2 != nil {
+			rest.WriteErrorRes(w, transfer.ErrQueryTx(types.DefaultCodespace, err2.Error()))
+			return
+		}
+		resp := NonceData{Nonce:res}
 		rest.PostProcessResponseBare(w, cliCtx, resp)
 	}
 }

@@ -46,7 +46,7 @@ var (
 	//}
 
 	onlineGas = "20000"
-	onlineNonce = "2"
+	onlineNonce = ""
 	onlineAmount = "2"
 	delegateURL = "http://ciChain:3030/staking/delegate"
 	redelegateURL = "http://ciChain:3030/staking/redelegate"

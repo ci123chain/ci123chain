@@ -8,17 +8,17 @@ import (
 )
 
 type RedelegationEntry struct {
-	CreationHeight   int64
-	CompletionTime   time.Time
-	InitialBalance   sdk.Int
-	SharesDst        sdk.Dec
+	CreationHeight   int64       `json:"creation_height"`
+	CompletionTime   time.Time	 `json:"completion_time"`
+	InitialBalance   sdk.Int	 `json:"initial_balance"`
+	SharesDst        sdk.Dec	 `json:"shares_dst"`
 }
 
 type Redelegation struct {
-	DelegatorAddress sdk.AccAddress
-	ValidatorSrcAddress sdk.AccAddress
-	ValidatorDstAddress sdk.AccAddress
-	Entries           []RedelegationEntry
+	DelegatorAddress sdk.AccAddress		`json:"delegator_address"`
+	ValidatorSrcAddress sdk.AccAddress	`json:"validator_src_address"`
+	ValidatorDstAddress sdk.AccAddress	`json:"validator_dst_address"`
+	Entries           []RedelegationEntry `json:"entries"`
 }
 
 func NewRedelegation(delegatorAddr sdk.AccAddress, validatorSrcAddr, validatorDstAddr sdk.AccAddress,

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/tanhuiya/ci123chain/pkg/abci/codec"
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
+	"github.com/tanhuiya/ci123chain/pkg/account"
 	"github.com/tanhuiya/ci123chain/pkg/couchdb"
 	"github.com/tanhuiya/ci123chain/pkg/params/subspace"
 	"time"
@@ -20,6 +21,7 @@ type OrderKeeper struct {
 	cdb 		*couchdb.GoCouchDB
 	StoreKey	sdk.StoreKey
 	paramSubspace subspace.Subspace
+	AccountKeeper  account.AccountKeeper
 }
 
 type OrderBook struct {
@@ -46,10 +48,11 @@ type Actions struct {
 	Name	string	`json:"name"`
 }
 
-func NewOrderKeeper(cdb *couchdb.GoCouchDB, key sdk.StoreKey) OrderKeeper {
+func NewOrderKeeper(cdb *couchdb.GoCouchDB, key sdk.StoreKey, ak account.AccountKeeper) OrderKeeper {
 	return OrderKeeper{
 		cdb:		cdb,
 		StoreKey:	key,
+		AccountKeeper:ak,
 	}
 }
 

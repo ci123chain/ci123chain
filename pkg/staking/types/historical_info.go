@@ -7,8 +7,8 @@ import (
 )
 
 type HistoricalInfo struct {
-	Header    types.Header
-	Valset    []Validator
+	Header    types.Header   `json:"header"`
+	Valset    []Validator	 `json:"valset"`
 }
 
 

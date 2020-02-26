@@ -10,7 +10,7 @@ var (
 	online, async, isIBC bool
 	from = "0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c"
 	gas = "20000"
-	nonce = "2"
+	nonce = ""
 	t ="ADD"
 	name = "ciChain-1"
 	height = "800"

@@ -3,8 +3,10 @@ package rest
 import (
 	"github.com/gorilla/mux"
 	"github.com/tanhuiya/ci123chain/pkg/abci/types/rest"
+	"github.com/tanhuiya/ci123chain/pkg/app"
 	"github.com/tanhuiya/ci123chain/pkg/client"
 	"github.com/tanhuiya/ci123chain/pkg/client/context"
+	"github.com/tanhuiya/ci123chain/pkg/client/helper"
 	"github.com/tanhuiya/ci123chain/pkg/order/types"
 	sdk "github.com/tanhuiya/ci123chain/sdk/shard"
 	"net/http"
@@ -16,6 +18,7 @@ func RegisterTxRoutes(cliCtx context.Context, r *mux.Router)  {
 	r.HandleFunc("/tx/addShard", AddShardTxRequest(cliCtx)).Methods("POST")
 }
 
+var cdc = app.MakeCodec()
 type ShardTxBytes struct {
 	From     string     `json:"from"`
 	Gas      uint64     `json:"gas"`
@@ -42,13 +45,45 @@ func AddShardTxRequest(cliCtx context.Context) http.HandlerFunc{
 			return
 		}
 		UserGas := uint64(Gas)
-		nonce := request.FormValue("nonce")
+		userNonce := request.FormValue("nonce")
+		/*if nonce == "" {
+			//
+		}
 		Nonce, err := strconv.ParseInt(nonce, 10, 64)
 		if err != nil || Nonce < 0 {
 			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"nonce error"))
 			return
 		}
-		UserNonce := uint64(Nonce)
+		UserNonce := uint64(Nonce)*/
+		froms, err := helper.ParseAddrs(from)
+		if err != nil {
+			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"parse address error"))
+			return
+		}
+		if len(froms) != 1 {
+			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"from error"))
+			return
+		}
+		var nonce uint64
+		if userNonce != "" {
+			UserNonce, err := strconv.ParseInt(userNonce, 10, 64)
+			if err != nil || UserNonce < 0 {
+				rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"nonce error"))
+				return
+			}
+			nonce = uint64(UserNonce)
+		}else {
+			ctx, err := client.NewClientContextFromViper(cdc)
+			if err != nil {
+				rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"new client context error"))
+				return
+			}
+			nonce, err = ctx.GetNonceByAddress(froms[0])
+			if err != nil {
+				rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"get nonce error"))
+				return
+			}
+		}
 		ty := request.FormValue("type")
 		name := request.FormValue("name")
 		height := request.FormValue("height")
@@ -58,14 +93,9 @@ func AddShardTxRequest(cliCtx context.Context) http.HandlerFunc{
 			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"height error"))
 			return
 		}
-		//UserHeight := uint64(Height)
-		/*isFabric, err  := strconv.ParseBool(isFabricMode)
-		if err != nil {
-			isFabric = false
-		}*/
 
 		txByte, err := sdk.SignAddShardMsg(from,
-			UserGas, UserNonce, ty, name, Height, key)
+			UserGas, nonce, ty, name, Height, key)
 		if err != nil {
 			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"data error"))
 			return

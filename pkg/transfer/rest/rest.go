@@ -23,24 +23,9 @@ type TxRequestParams struct {
 	Height  string    `json:"height"`
 }
 
-/*type QueryTxRequestParams struct{
-	//
-	Data    TxRequestParams `json:"data"`
-}*/
-
 func QueryTxRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
-		//vars := mux.Vars(request)
 		hashHexStr := request.FormValue("hash")
-
-		/*
-		var params QueryTxRequestParams
-		b, readErr := ioutil.ReadAll(request.Body)
-		readErr = json.Unmarshal(b, &params)
-		if readErr != nil {
-			//
-		}
-		*/
 
 		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(writer, cliCtx, request, "")
 		if !ok {
