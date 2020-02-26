@@ -25,13 +25,10 @@ var (
 	pri = "2b452434ac4f7cf9c5d61d62f23834f34e851fb6efdb8d4a8c6e214a8bc93d70"
 	proxy = "lb"
 	minSelfDelegation int64 = 2
-	validatorAddress = "0xdE47Fff5F768964A673fc2426dcBF0DaF4FE5691"
-	//validatorAddress = "0xb0524aFaf13473D11b5AdeF961bCF5DC71d301f2"
+	validatorAddress = "0xB6727FCbC60A03A6689AEE6E5fBC83a7FDc9beBf"
 	validatorSrcAddress = ""
 	validatorDstAddress = ""
-	//delegatorAddress = "0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c"
-	delegatorAddress = "0xdE47Fff5F768964A673fc2426dcBF0DaF4FE5691"
-	//delegatorAddress = "0xb0524aFaf13473D11b5AdeF961bCF5DC71d301f2"
+	delegatorAddress = "0xB6727FCbC60A03A6689AEE6E5fBC83a7FDc9beBf"
 	rate int64 = 1.000000000000000000
 	maxRate int64 = 1.000000000000000000
 	maxChangeRate int64 = 1.000000000000000000
@@ -40,8 +37,13 @@ var (
 	website = "website"
 	securityContact = "security"
 	details = "details"
-	publicKey = ""
-	//pubKeyVal = "A6QEpjsHkhm33l9N4OyRGMiaccw3S7P+jIzLKkxeMdeT"
+	publicKey = "7b0a2274797065223a202274656e6465726d696e742f5075624b6579536563703235366b31222c0a2276616c7565223a20224138485a776b6442307544497150594536783530394d304a654c56585a2b70613172343279706e4630316e36220a7d"
+	//"validatorAddress": "0xB6727FCbC60A03A6689AEE6E5fBC83a7FDc9beBf"
+	//"address": "B6727FCBC60A03A6689AEE6E5FBC83A7FDC9BEBF"
+	//{
+	//"type": "tendermint/PubKeySecp256k1",
+	//"value": "A8HZwkdB0uDIqPYE6x509M0JeLVXZ+pa1r42ypnF01n6"
+	//}
 
 	onlineGas = "20000"
 	onlineNonce = "2"

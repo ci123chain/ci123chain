@@ -284,7 +284,7 @@ func (k StakingKeeper) GetAllValidators(ctx sdk.Context) (validators []types.Val
 	defer iterator.Close()
 
 	for ; iterator.Valid(); iterator.Next() {
-		types.StakingCodec.MustUnmarshalBinaryLengthPrefixed(iterator.Value(), &validator)
+		_ = types.StakingCodec.UnmarshalBinaryLengthPrefixed(iterator.Value(), &validator)
 		validators = append(validators, validator)
 	}
 

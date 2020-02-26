@@ -113,7 +113,7 @@ func queryValidators(ctx sdk.Context, req abci.RequestQuery, k StakingKeeper) ([
 	} else {
 		filteredVals = filteredVals[start:end]
 	}
-	res:= types.StakingCodec.MustMarshalJSON(filteredVals)
+	res := types.StakingCodec.MustMarshalJSON(filteredVals)
 
 	return res, nil
 }

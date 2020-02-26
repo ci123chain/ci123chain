@@ -103,11 +103,11 @@ func validatorsHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			return
 		}
 		var validators []types.Validator
-		types.StakingCodec.MustUnmarshalJSON(res, &validators)
+		cliCtx.Cdc.MustUnmarshalJSON(res, &validators)
 		/*Err = types.StakingCodec.UnmarshalJSON(res, &validators)
 		if Err != nil {
-			rest.WriteErrorRes(writer, transfer.ErrQueryTx(types.DefaultCodespace, "unmarshal failed"))
-			return
+			//rest.WriteErrorRes(writer, transfer.ErrQueryTx(types.DefaultCodespace, "unmarshal failed"))
+			//return
 		}*/
 		resp := validators
 		rest.PostProcessResponseBare(writer, cliCtx, resp)
