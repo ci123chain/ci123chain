@@ -14,4 +14,6 @@ rm -rf ~/.shard2
 
 ./build/cid add-genesis-account 0x204bCC42559Faf6DFE1485208F7951aaD800B313 100000 --home ~/.shard1
 
+./build/cid add-genesis-account 0xB6727FCbC60A03A6689AEE6E5fBC83a7FDc9beBf 100000 --home ~/.shard1
+
 ./build/cid init --chain-id Shard2 --home ~/.shard2

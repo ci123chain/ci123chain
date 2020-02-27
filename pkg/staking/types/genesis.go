@@ -44,8 +44,8 @@ func DefaultValidators(validators []tmtypes.GenesisValidator) []Validator {
 			genesisValidator.Address = validators[i].PubKey.Address()
 			genesisValidator.ConsensusKey = validators[i].PubKey
 			genesisValidator.Status = 1
-			genesisValidator.DelegatorShares = sdk.NewDec(100)
-			genesisValidator.Tokens = sdk.NewInt(100)
+			//genesisValidator.DelegatorShares = sdk.NewDec(100)
+			//genesisValidator.Tokens = sdk.NewInt(100)
 			genesisValidators = append(genesisValidators, genesisValidator)
 		}
 	}

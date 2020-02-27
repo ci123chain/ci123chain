@@ -14,13 +14,92 @@ import (
 )
 
 func RegisterRestTxRoutes(cliCtx context.Context, r *mux.Router)  {
-
+	r.HandleFunc("/staking/createValidator", CreateValidatorRequest(cliCtx)).Methods("POST")
 	r.HandleFunc("/staking/delegate", DelegateTX(cliCtx)).Methods("POST")
 	r.HandleFunc("/staking/redelegate", RedelegateTX(cliCtx)).Methods("POST")
 	r.HandleFunc("/staking/undelegate", UndelegateTX(cliCtx)).Methods("POST")
 }
 
 var cdc = app.MakeCodec()
+
+
+func CreateValidatorRequest(cliCtx context.Context) http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		//
+		priv := request.FormValue("privateKey")
+		from := request.FormValue("from")
+		gas := request.FormValue("gas")
+		Gas, err := strconv.ParseInt(gas, 10, 64)
+		if err != nil || Gas < 0 {
+			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"gas error"))
+			return
+		}
+		UserGas := uint64(Gas)
+		userNonce := request.FormValue("nonce")
+
+		nonce, err := ParseNonce(from, userNonce)
+		if err != nil {
+			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"nonce error"))
+			return
+		}
+		amount := request.FormValue("amount")
+		amt, err := strconv.ParseInt(amount, 10, 64)
+		if err != nil || amt < 0 {
+			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"amount of coin error"))
+			return
+		}
+		cAmt := uint64(amt)
+		validatorAddr := request.FormValue("validatorAddress")
+		delegatorAddr := request.FormValue("delegatorAddress")
+
+		minSelfDelegation := request.FormValue("minSelfDelegation")
+		msd, err := strconv.ParseInt(minSelfDelegation, 10, 64)
+		if err != nil || msd < 0 {
+			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"minSelfDelegation error"))
+			return
+		}
+		rate := request.FormValue("rate")
+		r, err := strconv.ParseInt(rate, 10, 64)
+		if err != nil || r < 0 {
+			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"rate error"))
+			return
+		}
+		maxRate := request.FormValue("maxRate")
+		mr, err := strconv.ParseInt(maxRate, 10, 64)
+		if err != nil || mr < 0 {
+			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"max rate error"))
+			return
+		}
+		maxChangeRate := request.FormValue("maxChangeRate")
+		mcr, err := strconv.ParseInt(maxChangeRate, 10, 64)
+		if err != nil || mcr < 0 {
+			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"max change rate error"))
+			return
+		}
+		moniker := request.FormValue("moniker")
+		identity := request.FormValue("identity")
+		website := request.FormValue("website")
+		securityContact := request.FormValue("securityContact")
+		details := request.FormValue("details")
+		publicKey := request.FormValue("publicKey")
+
+		txByte, err := sSdk.SignCreateValidatorMSg(from, cAmt, UserGas, nonce, priv, msd, validatorAddr,
+			delegatorAddr, r, mr, mcr, moniker, identity, website, securityContact, details, publicKey)
+		if err != nil {
+			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"data error"))
+			return
+		}
+
+		res, err := cliCtx.BroadcastSignedData(txByte)
+		if err != nil {
+			rest.WriteErrorRes(writer, client.ErrBroadcast(types.DefaultCodespace, err))
+			return
+		}
+		rest.PostProcessResponseBare(writer, cliCtx, res)
+
+	}
+}
+
 func DelegateTX(cliCtx context.Context) http.HandlerFunc{
 	return func(writer http.ResponseWriter, request *http.Request) {
 
