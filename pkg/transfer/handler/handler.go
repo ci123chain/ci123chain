@@ -31,12 +31,12 @@ func NewHandler(
 }
 
 func handlerTransferTx(ctx types.Context, am keeper.AccountKeeper, tx *transfer.TransferTx) types.Result {
-	if err := am.Transfer(ctx, tx.Common.From, tx.To, tx.Amount); err != nil {
+	if err := am.Transfer(ctx, tx.From, tx.To, tx.Amount); err != nil {
 		return err.Result()
 	}
 
 	//交易成功，nonce+1
-	account := am.GetAccount(ctx, tx.Common.From)
+	account := am.GetAccount(ctx, tx.From)
 	saveErr := account.SetSequence(account.GetSequence() + 1)
 	if saveErr != nil {
 		return types.ErrInvalidSequence("Unexpected nonce of transaction").Result()
