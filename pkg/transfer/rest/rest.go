@@ -1,14 +1,12 @@
 package rest
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/tanhuiya/ci123chain/pkg/abci/types/rest"
 	"github.com/tanhuiya/ci123chain/pkg/client/context"
 	"github.com/tanhuiya/ci123chain/pkg/transfer/rest/utils"
 	"github.com/tanhuiya/ci123chain/pkg/transfer/types"
-	"io/ioutil"
 	"net/http"
 )
 
@@ -25,36 +23,38 @@ type TxRequestParams struct {
 	Height  string    `json:"height"`
 }
 
-type QueryTxRequestParams struct{
+/*type QueryTxRequestParams struct{
 	//
 	Data    TxRequestParams `json:"data"`
-}
+}*/
 
 func QueryTxRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		//vars := mux.Vars(request)
-		//hashHexStr := vars["hash"]
+		hashHexStr := request.FormValue("hash")
 
+		/*
 		var params QueryTxRequestParams
 		b, readErr := ioutil.ReadAll(request.Body)
 		readErr = json.Unmarshal(b, &params)
 		if readErr != nil {
 			//
 		}
+		*/
 
-		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(writer, cliCtx, request, params.Data.Height)
+		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(writer, cliCtx, request, "")
 		if !ok {
 			rest.WriteErrorRes(writer, err)
 			return
 		}
 
-		resp, err := utils.QueryTx(cliCtx, params.Data.Hash)
+		resp, err := utils.QueryTx(cliCtx, hashHexStr)
 		if err != nil {
 			rest.WriteErrorRes(writer, err)
 			return
 		}
 		if resp.Empty() {
-			rest.WriteErrorRes(writer, types.ErrQueryTx(types.DefaultCodespace,fmt.Sprintf("no transfer found with hash %s", params.Data)))
+			rest.WriteErrorRes(writer, types.ErrQueryTx(types.DefaultCodespace,fmt.Sprintf("no transfer found with hash %s", hashHexStr)))
 		}
 		rest.PostProcessResponseBare(writer, cliCtx, resp)
 	}

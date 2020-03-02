@@ -304,6 +304,7 @@ func getValidator(cdc *amino.Codec, c *cfg.Config, appInit app.AppInit) (*types.
 
 	validator := appInit.GetValidator(nodeKey.PubKey(), viper.GetString(FlagName))
 	appState, err := appInit.AppGenState()
+
 	if err != nil {
 		return  nil, nil, err
 	}

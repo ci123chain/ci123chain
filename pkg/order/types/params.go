@@ -62,6 +62,6 @@ func ParamKeyTable() subspace.KeyTable {
 
 func (p *Params) ParamSetPairs() subspace.ParamSetPairs {
 	return subspace.ParamSetPairs{
-		{KeyOrderBook, &p.OrderBook},
+		{KeyOrderBook, &p.OrderBook, nil},
 	}
 }

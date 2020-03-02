@@ -13,13 +13,14 @@ import (
 	"github.com/tendermint/tendermint/types"
 	"github.com/tendermint/tm-db"
 	"io"
+	"os"
 )
 
 const (
 	appName = "ci123"
 	DefaultConfDir = "$HOME/.ci123"
 	flagLogLevel = "log_level"
-	HomeFlag     = "root"
+	HomeFlag     = "home"
 	logDEBUG     = "main:debug,state:debug,ibc:debug,*:error"
 	logINFO      = "main:info,state:info,ibc:info,*:error"
 	logERROR     = "*:error"
@@ -30,7 +31,7 @@ func main()  {
 	cobra.EnableCommandSorting = false
 	ctx := app.NewDefaultContext()
 	rootCmd := &cobra.Command{
-		Use: 	"ci123",
+		Use: 	 "ci123",
 		Short:  "ci123 node",
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			switch viper.GetString(flagLogLevel) {
@@ -58,17 +59,15 @@ func main()  {
 		app.ConstructAppCreator(newApp, appName),
 		app.ConstructAppExporter(exportAppState, appName),
 		)
-
 	viper.SetEnvPrefix("CI")
 	viper.BindPFlags(rootCmd.Flags())
 	viper.BindPFlags(rootCmd.PersistentFlags())
 	viper.AutomaticEnv()
-	//viper.BindEnv(cli.HomeFlag)
-
-	rootDir := viper.GetString(HomeFlag)
-	viper.Set(cli.HomeFlag, rootDir)
-
-	exector := cli.PrepareBaseCmd(rootCmd, "CORE", rootDir)
+	rootDir := os.ExpandEnv(DefaultConfDir)
+	if len(viper.GetString(HomeFlag)) > 0 {
+		rootDir = os.ExpandEnv(viper.GetString(HomeFlag))
+	}
+	exector := cli.PrepareBaseCmd(rootCmd, "CI", rootDir)
 	exector.Execute()
 }
 

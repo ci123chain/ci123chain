@@ -35,9 +35,10 @@ var (
 	FlagOverwrite = "overwrite"
 	FlagWithTxs = "with-txs"
 	FlagIP = "ip"
-	FlagChainID = "chain-id"
+	FlagChainID = "chain_id"
 	FlagStateDB = "statedb"
-	FlagDBName = "dbname"
+	//FlagDBName = "dbname"
+	FlagWithValidator = "validator_key"
 )
 
 
@@ -109,6 +110,11 @@ func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Com
 		Short: "Initialize genesis config, priv-validator file, and p2p-node file",
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
+
+			fmt.Println("validator_key:", viper.GetString(FlagWithValidator))
+			fmt.Println("home:", viper.GetString(tmcli.HomeFlag))
+			fmt.Println("chainid:", viper.GetString(FlagChainID),)
+
 			config := ctx.Config
 			config.SetRoot(viper.GetString(tmcli.HomeFlag))
 
@@ -141,22 +147,21 @@ func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Com
 			return nil
 		},
 	}
-	viper.BindEnv(FlagChainID)
-	viper.BindEnv(FlagStateDB)
-	viper.BindEnv(tmcli.HomeFlag)
+
 	cmd.Flags().BoolP(FlagOverwrite, "o", false, "overwrite the genesis.json file")
 	cmd.Flags().String(FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")
 	//cmd.Flags().Bool(FlagWithTxs, false, "apply existing genesis transactions from [--home]/config/gentx/")
 	//cmd.Flags().AddFlagSet(appInit.FlagsAppGenState)
 	//cmd.Flags().AddFlagSet(appInit.FlagsAppGenTx) // need to add this flagset for when no GenTx's provided
 	//cmd.AddCommand(GenTxCmd(ctx, cdc, appInit))
-	cmd.Flags().String(FlagStateDB, "couchdb://couchdb-service:5984", "fetch new shard from db")
-	cmd.Flags().String(FlagDBName, "ci123", "the name of db that used for chain")
+	cmd.Flags().String(FlagStateDB, "couchdb://couchdb-service:5984/ci123", "fetch new shard from db")
+	cmd.Flags().String(FlagWithValidator, "", "the validator key")
 	return cmd
 }
 
 func gentxWithConfig(cdc *amino.Codec, appInit app.AppInit, config *cfg.Config, genTxConfig config.GenTx) (
 	cliPrint json.RawMessage, genTxFile json.RawMessage, err error ) {
+
 
 	pv := validator.GenFilePV(
 		config.PrivValidatorKeyFile(),
@@ -214,9 +219,9 @@ func gentxWithConfig(cdc *amino.Codec, appInit app.AppInit, config *cfg.Config, 
 func GetChainID() (string, error){
 
 	var id string
-	dbname := viper.GetString(FlagDBName)
+
 	statedb := viper.GetString(FlagStateDB)
-	db, err := app.GetStateDB(dbname, "", statedb)
+	db, err := app.GetStateDB("", statedb)
 	key := ortypes.ModuleName + "//" + order.OrderBookKey
 	var ob order.OrderBook
 
@@ -243,16 +248,27 @@ func GetChainID() (string, error){
 
 func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initConfig InitConfig)(
 	chainID string, nodeID string, appMessage json.RawMessage, err error) {
-
+	var validatorKey secp256k1.PrivKeySecp256k1
+	var privStr string
 	nodeKey, err := node.LoadNodeKey(c.NodeKeyFile())
-	if err != nil {
-		pv := validator.GenFilePV(
-			c.PrivValidatorKeyFile(),
-			c.PrivValidatorStateFile(),
-			secp256k1.GenPrivKey(),
-		)
-		nodeKey, err = node.GenNodeKeyByPrivKey(c.NodeKeyFile(), pv.Key.PrivKey)
+	privBz := viper.GetString(FlagWithValidator)
+	if len(privBz) > 0 {
+		privStr = fmt.Sprintf(`{"type":"%s","value":"%s"}`, secp256k1.PrivKeyAminoName, privBz)
+		err = cdc.UnmarshalJSON([]byte(privStr), &validatorKey)
+		if err != nil {
+			panic(err)
+		}
+	}else {
+		validatorKey = secp256k1.GenPrivKey()
 	}
+
+	pv := validator.GenFilePV(
+		c.PrivValidatorKeyFile(),
+		c.PrivValidatorStateFile(),
+		validatorKey,
+	)
+
+	nodeKey, err = node.GenNodeKeyByPrivKey(c.NodeKeyFile(), pv.Key.PrivKey)
 	nodeID = string(nodeKey.ID())
 
 	if initConfig.ChainID == "" {
@@ -355,5 +371,3 @@ func addrToIP(addr net.Addr) net.IP {
 	}
 	return ip
 }
-
-

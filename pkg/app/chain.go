@@ -22,6 +22,7 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/ibc"
 	"github.com/tanhuiya/ci123chain/pkg/mortgage"
 	"github.com/tanhuiya/ci123chain/pkg/order"
+	orhandler "github.com/tanhuiya/ci123chain/pkg/order/handler"
 	"github.com/tanhuiya/ci123chain/pkg/params"
 	"github.com/tanhuiya/ci123chain/pkg/supply"
 	"github.com/tanhuiya/ci123chain/pkg/transaction"
@@ -36,7 +37,6 @@ import (
 	tmdb "github.com/tendermint/tm-db"
 	"io"
 	"os"
-	orhandler "github.com/tanhuiya/ci123chain/pkg/order/handler"
 )
 
 const (
@@ -152,6 +152,7 @@ func NewChain(logger log.Logger, tmdb tmdb.DB, traceStore io.Writer) *Chain {
 	c.SetBeginBlocker(c.BeginBlocker)
 	c.SetCommitter(c.Committer)
 	c.SetInitChainer(c.InitChainer)
+	c.SetEndBlocker(c.EndBlocker)
 	shardID := viper.GetString("ShardID")
 	app_types.CommitInfoKeyFmt = shardID + "s/%d"
 	app_types.LatestVersionKey = shardID + "s/latest"

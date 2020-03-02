@@ -15,12 +15,18 @@ type AppModule struct {
 	DistributionKeeper  k.DistrKeeper
 }
 
+func (am AppModule) EndBlock(ctx types.Context, req abci.RequestEndBlock) []abci.ValidatorUpdate {
+	//panic("implement me")
+	return nil
+}
+
 func (am AppModule) BeginBlocker(ctx types.Context, req abci.RequestBeginBlock) {
 	BeginBlock(ctx, req, am.DistributionKeeper)
 }
 
-func (am AppModule) InitGenesis(ctx types.Context, data json.RawMessage)  {
-	//do something
+func (am AppModule) InitGenesis(ctx types.Context, data json.RawMessage) []abci.ValidatorUpdate {
+
+	return nil
 }
 
 

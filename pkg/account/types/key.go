@@ -9,6 +9,8 @@ var (
 	AddressStoreKeyPrefix = []byte{0x01}
 
 	GlobalAccountNumberKey = []byte("globalAccountNumber")
+
+	BalancesPrefix = []byte("balances")
 )
 
 // AddressStoreKey turn an address to types used to get it from the account store

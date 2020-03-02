@@ -3,6 +3,7 @@ package couchdbsource
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/tanhuiya/ci123chain/pkg/couchdb"
 	"github.com/tanhuiya/ci123chain/pkg/gateway/logger"
 	"regexp"
@@ -12,23 +13,21 @@ import (
 
 const SharedKey  = "order//OrderBook"
 const HostPattern  = "[*]+"
-
-func NewCouchSource(dbname, host, urlreg string) *CouchDBSourceImp {
+const DefaultDBName = "ci123"
+func NewCouchSource(host, urlreg string) *CouchDBSourceImp {
 	imp := &CouchDBSourceImp{
-		dbname: 	dbname,
 		hostStr: 	host,
 		urlreg:  	urlreg,
 	}
 	conn, err := imp.GetDBConnection()
 	if err != nil {
-		panic(err)
+		panic(errors.New(fmt.Sprintf("Cann't connect to %s: %s", host, err.Error())))
 	}
 	imp.conn = conn
 	return imp
 }
 
 type CouchDBSourceImp struct {
-	dbname  string
 	hostStr string
 	urlreg  string
 	conn    *couchdb.GoCouchDB
@@ -81,6 +80,7 @@ func (s *CouchDBSourceImp) FetchSource() (hostArr []string) {
 }
 
 func (svr *CouchDBSourceImp) GetDBConnection() (db *couchdb.GoCouchDB, err error) {
+	var dbname string
 	s := strings.Split(svr.hostStr, "://")
 	if len(s) < 2 {
 		return nil, errors.New("statedb format error")
@@ -91,15 +91,35 @@ func (svr *CouchDBSourceImp) GetDBConnection() (db *couchdb.GoCouchDB, err error
 	auths := strings.Split(s[1], "@")
 
 	if len(auths) < 2 {
-		db, err = couchdb.NewGoCouchDB(svr.dbname, auths[0],nil)
+		info := auths[0]
+		split := strings.Split(info, "/")
+		if len(split) < 2 {
+			dbname = DefaultDBName
+		} else {
+			dbname = split[1]
+		}
+		db, err = couchdb.NewGoCouchDB(dbname, split[0],nil)
 	} else {
 		info := auths[0]
 		userpass := strings.Split(info, ":")
 		if len(userpass) < 2 {
-			db, err = couchdb.NewGoCouchDB(svr.dbname, auths[1],nil)
+			split := strings.Split(userpass[0], "/")
+			if len(split) < 2 {
+				dbname = DefaultDBName
+			} else {
+				dbname = split[1]
+			}
+			db, err = couchdb.NewGoCouchDB(dbname, split[0],nil)
+		} else {
+			auth := &couchdb.BasicAuth{Username: userpass[0], Password: userpass[1]}
+			split := strings.Split(userpass[0], "/")
+			if len(split) < 2 {
+				dbname = DefaultDBName
+			} else {
+				dbname = split[1]
+			}
+			db, err = couchdb.NewGoCouchDB(dbname, split[0], auth)
 		}
-		auth := &couchdb.BasicAuth{Username: userpass[0], Password: userpass[1]}
-		db, err = couchdb.NewGoCouchDB(svr.dbname, auths[1], auth)
 	}
 	//if err != nil {
 	//	err = errors.New(fmt.Sprintf("cannot connect to couchdb, expect couchdb://xxxxx:5984 or couchdb://user:pass@xxxxx:5984, got %s", svr.hostStr))

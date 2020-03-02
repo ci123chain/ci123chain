@@ -5,10 +5,12 @@ services:
     container_name: ci0
     hostname: ci0
     environment:
-      CI_CHAIN-ID: ci0
-      CI_STATEDB: couchdb://couchdb_service:5984
-      CI_ROOT: /root/cid
+      CI_CHAIN_ID: ci0
+      CI_STATEDB: couchdb://couchdb_service:5984/ci1
+      CI_HOME: /root/cid
       CI_CLIHOME: /root/cli
+      CI_VALIDATOR_KEY: oQLmM5pM5wL78a6LJntQY8tPGQPpp050udIA5YZMkCc=
+      GENESIS_SHARED: ci0,ci1,ci2
     ports:
       - 26606:26656
       - 1310:80
@@ -24,10 +26,12 @@ services:
     container_name: ci1
     hostname: ci1
     environment:
-      CI_CHAIN-ID: ci1
-      CI_STATEDB: couchdb://couchdb_service:5984
-      CI_ROOT: /root/cid
+      CI_CHAIN_ID: ci1
+      CI_STATEDB: couchdb://couchdb_service:5984/ci1
+      CI_HOME: /root/cid
       CI_CLIHOME: /root/cli
+      CI_VALIDATOR_KEY: oQLmM5pM5wL78a6LJntQY8tPGQPpp050udIA5YZMkCc=
+      GENESIS_SHARED: ci0,ci1,ci2
     ports:
       - 26616:26656
       - 1311:80
@@ -44,10 +48,12 @@ services:
     container_name: ci2
     hostname: ci2
     environment:
-      CI_CHAIN-ID: ci2
-      CI_STATEDB: couchdb://couchdb_service:5984
-      CI_ROOT: /root/cid
+      CI_CHAIN_ID: ci2
+      CI_STATEDB: couchdb://couchdb_service:5984/ci1
+      CI_HOME: /root/cid
       CI_CLIHOME: /root/cli
+      CI_VALIDATOR_KEY: oQLmM5pM5wL78a6LJntQY8tPGQPpp050udIA5YZMkCc=
+      GENESIS_SHARED: ci0,ci1,ci2
     ports:
       - 26626:26656
       - 1312:80
@@ -68,6 +74,7 @@ services:
     environment:
       GATEWAY: "true"
       CI_LOGDIR: /root/gateway
+      CI_STATEDB: couchdb://couchdb_service:5984/ci1
     ports:
       - 3030:3030
     networks:

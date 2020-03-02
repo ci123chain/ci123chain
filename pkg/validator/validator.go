@@ -8,6 +8,8 @@ func GenFilePV(keyFilePath, stateFilePath string, prv crypto.PrivKey) *pvm.FileP
 	privValidator.Key.PrivKey = prv
 	privValidator.Key.PubKey = prv.PubKey()
 	privValidator.Key.Address = prv.PubKey().Address()
-	privValidator.Save()
+	if keyFilePath != "" {
+		privValidator.Save()
+	}
 	return  privValidator
 }

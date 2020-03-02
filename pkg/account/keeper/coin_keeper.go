@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	prefix "github.com/tanhuiya/ci123chain/pkg/abci/store"
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/account/types"
 	"github.com/tanhuiya/ci123chain/pkg/transaction"
@@ -88,20 +89,86 @@ func (ak AccountKeeper) Transfer(ctx sdk.Context, fromAddr sdk.AccAddress, toAdd
 	return nil
 }
 
-func (ak *AccountKeeper) getStore(ctx sdk.Context) sdk.KVStore {
+func (ak AccountKeeper) getStore(ctx sdk.Context) sdk.KVStore {
 	return ctx.KVStore(ak.key)
 }
 
 
-func (am *AccountKeeper) getBalance(ctx sdk.Context, addr sdk.AccAddress) sdk.Coin {
-	acc := am.GetAccount(ctx, addr)
+func (k AccountKeeper) getBalance(ctx sdk.Context, addr sdk.AccAddress) sdk.Coin {
+	acc := k.GetAccount(ctx, addr)
 	if acc == nil {
 		return sdk.NewCoin(sdk.NewInt(0))
 	}
 	return acc.GetCoin()
+}
+
+func (k AccountKeeper) SetBalances(ctx sdk.Context, addr sdk.AccAddress, balances sdk.Coins) error {
+	//
+
+	k.ClearBalances(ctx, addr)
+
+	for _, balance := range balances {
+		err := k.SetCoin(ctx, addr, balance)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (k AccountKeeper) ClearBalances(ctx sdk.Context, addr sdk.AccAddress) {
+
+	keys := [][]byte{}
+	k.IterateAccountBalances(ctx, addr, func(balance sdk.Coin) bool {
+		keys = append(keys, []byte(balance.Denom))
+		return false
+	})
+
+	store := ctx.KVStore(k.key)
+	balancesStore := prefix.NewPrefixStore(store, types.BalancesPrefix)
+	accountStore := prefix.NewPrefixStore(balancesStore, addr.Bytes())
+
+	for _, key := range keys {
+		accountStore.Delete(key)
+	}
 
 }
 
+// IterateAccountBalances iterates over the balances of a single account and
+// provides the token balance to a callback. If true is returned from the
+// callback, iteration is halted.
+func (k AccountKeeper) IterateAccountBalances(ctx sdk.Context, addr sdk.AccAddress, cb func(sdk.Coin) bool) {
+
+	store := ctx.KVStore(k.key)
+	balancesStore := prefix.NewPrefixStore(store, types.BalancesPrefix)
+	accountStore := prefix.NewPrefixStore(balancesStore, addr.Bytes())
+
+	iterator := accountStore.Iterator(nil, nil)
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		var balance sdk.Coin
+		k.cdc.MustUnmarshalBinaryBare(iterator.Value(), &balance)
+
+		if cb(balance) {
+			break
+		}
+	}
+
+}
+
+func (am AccountKeeper) GetAllBalances(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins {
+	//
+
+	balances := sdk.NewCoins()
+	am.IterateAccountBalances(ctx, addr, func(balance sdk.Coin) bool {
+		balances = balances.Add(balance)
+		return false
+	})
+
+	return balances.Sort()
+}
 
 //func (ak *AccountKeeper) SetSequence(ctx sdk.Context, addr sdk.AccAddress, nonce uint64) sdk.Error {
 //	//err := ak.SetSequence(ctx, addr, nonce)
