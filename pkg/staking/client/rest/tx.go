@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"errors"
 	"github.com/gorilla/mux"
 	"github.com/tanhuiya/ci123chain/pkg/abci/types/rest"
 	"github.com/tanhuiya/ci123chain/pkg/app"
@@ -25,65 +26,11 @@ var cdc = app.MakeCodec()
 
 func CreateValidatorRequest(cliCtx context.Context) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
-		//
-		priv := request.FormValue("privateKey")
-		from := request.FormValue("from")
-		gas := request.FormValue("gas")
-		Gas, err := strconv.ParseInt(gas, 10, 64)
-		if err != nil || Gas < 0 {
-			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"gas error"))
-			return
-		}
-		UserGas := uint64(Gas)
-		userNonce := request.FormValue("nonce")
 
-		nonce, err := ParseNonce(from, userNonce)
-		if err != nil {
-			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"nonce error"))
-			return
-		}
-		amount := request.FormValue("amount")
-		amt, err := strconv.ParseInt(amount, 10, 64)
-		if err != nil || amt < 0 {
-			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"amount of coin error"))
-			return
-		}
-		cAmt := uint64(amt)
-		validatorAddr := request.FormValue("validatorAddress")
-		delegatorAddr := request.FormValue("delegatorAddress")
+		gas, cAmt, msd, r, mr, mcr, moniker, identity, website, securityContact, details,
+		priv, from, validatorAddr, delegatorAddr, publicKey, nonce, err := ParseArgs(request)
 
-		minSelfDelegation := request.FormValue("minSelfDelegation")
-		msd, err := strconv.ParseInt(minSelfDelegation, 10, 64)
-		if err != nil || msd < 0 {
-			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"minSelfDelegation error"))
-			return
-		}
-		rate := request.FormValue("rate")
-		r, err := strconv.ParseInt(rate, 10, 64)
-		if err != nil || r < 0 {
-			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"rate error"))
-			return
-		}
-		maxRate := request.FormValue("maxRate")
-		mr, err := strconv.ParseInt(maxRate, 10, 64)
-		if err != nil || mr < 0 {
-			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"max rate error"))
-			return
-		}
-		maxChangeRate := request.FormValue("maxChangeRate")
-		mcr, err := strconv.ParseInt(maxChangeRate, 10, 64)
-		if err != nil || mcr < 0 {
-			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"max change rate error"))
-			return
-		}
-		moniker := request.FormValue("moniker")
-		identity := request.FormValue("identity")
-		website := request.FormValue("website")
-		securityContact := request.FormValue("securityContact")
-		details := request.FormValue("details")
-		publicKey := request.FormValue("publicKey")
-
-		txByte, err := sSdk.SignCreateValidatorMSg(from, cAmt, UserGas, nonce, priv, msd, validatorAddr,
+		txByte, err := sSdk.SignCreateValidatorMSg(from, cAmt, gas, nonce, priv, msd, validatorAddr,
 			delegatorAddr, r, mr, mcr, moniker, identity, website, securityContact, details, publicKey)
 		if err != nil {
 			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"data error"))
@@ -113,37 +60,7 @@ func DelegateTX(cliCtx context.Context) http.HandlerFunc{
 		}
 		UserGas := uint64(Gas)
 		userNonce := request.FormValue("nonce")
-		/*Nonce, err := strconv.ParseInt(nonce, 10, 64)
-		if err != nil || Nonce < 0 {
-			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"nonce error"))
-			return
-		}
-		UserNonce := uint64(Nonce)*/
-		/*froms, err := helper.StrToAddress(from)
-		if err != nil {
-			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"parse from address error"))
-			return
-		}
-		var nonce uint64
-		if userNonce != "" {
-			UserNonce, err := strconv.ParseInt(userNonce, 10, 64)
-			if err != nil || UserNonce < 0 {
-				rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"nonce error"))
-				return
-			}
-			nonce = uint64(UserNonce)
-		}else {
-			ctx, err := client.NewClientContextFromViper(cdc)
-			if err != nil {
-				rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"new client context error"))
-				return
-			}
-			nonce, err = ctx.GetNonceByAddress(froms)
-			if err != nil {
-				rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"got nonce error"))
-				return
-			}
-		}*/
+
 		nonce, err := ParseNonce(from, userNonce)
 		if err != nil {
 			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"nonce error"))
@@ -187,13 +104,6 @@ func RedelegateTX(cliCtx context.Context) http.HandlerFunc{
 		}
 		UserGas := uint64(Gas)
 		userNonce := request.FormValue("nonce")
-		/*
-		Nonce, err := strconv.ParseInt(nonce, 10, 64)
-		if err != nil || Nonce < 0 {
-			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"nonce error"))
-			return
-		}
-		UserNonce := uint64(Nonce)*/
 		nonce, err := ParseNonce(from, userNonce)
 		if err != nil {
 			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"nonce error"))
@@ -238,13 +148,7 @@ func UndelegateTX(cliCtx context.Context) http.HandlerFunc{
 		}
 		UserGas := uint64(Gas)
 		userNonce := request.FormValue("nonce")
-		/*
-		Nonce, err := strconv.ParseInt(nonce, 10, 64)
-		if err != nil || Nonce < 0 {
-			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"nonce error"))
-			return
-		}
-		UserNonce := uint64(Nonce)*/
+
 		nonce, err := ParseNonce(from, userNonce)
 		if err != nil {
 			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"nonce error"))
@@ -299,4 +203,92 @@ func ParseNonce(from, userNonce string) (uint64, error) {
 		}
 	}
 	return nonce, nil
+}
+
+func ParseArgs(request *http.Request) (uint64,uint64, int64, int64, int64, int64, string,
+	string, string, string, string, string, string, string, string, string, uint64, error) {
+	gas := request.FormValue("gas")
+	Gas, err := strconv.ParseInt(gas, 10, 64)
+	if err != nil || Gas < 0 {
+		return 0, 0, 0, 0, 0, 0, "", "", "", "", "", "", "", "", "", "", 0, errors.New("gas error")
+	}
+	UserGas := uint64(Gas)
+	amount := request.FormValue("amount")
+	amt, err := strconv.ParseInt(amount, 10, 64)
+	if err != nil || amt < 0 {
+		return 0, 0, 0, 0, 0, 0, "", "", "", "", "", "", "", "", "", "", 0, errors.New("amount error")
+	}
+	cAmt := uint64(amt)
+
+	minSelfDelegation := request.FormValue("minSelfDelegation")
+	msd, err := strconv.ParseInt(minSelfDelegation, 10, 64)
+	if err != nil || msd < 0 {
+		return 0, 0, 0, 0, 0, 0, "", "", "", "", "", "", "", "", "", "", 0, errors.New("minSelfDelegation error")
+	}
+	rate := request.FormValue("rate")
+	r, err := strconv.ParseInt(rate, 10, 64)
+	if err != nil || r < 0 {
+		return 0, 0, 0, 0, 0, 0, "", "", "", "", "", "", "", "", "", "", 0, errors.New("rate error")
+	}
+	maxRate := request.FormValue("maxRate")
+	mr, err := strconv.ParseInt(maxRate, 10, 64)
+	if err != nil || mr < 0 {
+		return 0, 0, 0, 0, 0, 0, "", "", "", "", "", "", "", "", "", "", 0, errors.New("max rate error")
+	}
+
+	maxChangeRate := request.FormValue("maxChangeRate")
+	mcr, err := strconv.ParseInt(maxChangeRate, 10, 64)
+	if err != nil || mcr < 0 {
+		return 0, 0, 0, 0, 0, 0, "", "", "", "", "", "", "", "", "", "", 0, errors.New("max change rate error")
+	}
+	moniker := request.FormValue("moniker")
+	if moniker == "" {
+		moniker = "moniker"
+	}
+	identity := request.FormValue("identity")
+	if identity == "" {
+		identity = "identity"
+	}
+	website := request.FormValue("website")
+	if website == "" {
+		website = "website"
+	}
+	securityContact := request.FormValue("securityContact")
+	if securityContact == "" {
+		securityContact = "securityContact"
+	}
+	details := request.FormValue("details")
+	if details == "" {
+		details = "details"
+	}
+
+	priv := request.FormValue("privateKey")
+	if priv == "" {
+		return 0, 0, 0, 0, 0, 0, "", "", "", "", "", "", "", "", "", "", 0, errors.New("private key can't be empty")
+	}
+	from := request.FormValue("from")
+	if from == "" {
+		return 0, 0, 0, 0, 0, 0, "", "", "", "", "", "", "", "", "", "", 0, errors.New("from error")
+	}
+
+	userNonce := request.FormValue("nonce")
+	nonce, err := ParseNonce(from, userNonce)
+	if err != nil {
+		return 0, 0, 0, 0, 0, 0, "", "", "", "", "", "", "", "", "", "", 0, errors.New("nonce error")
+	}
+
+	validatorAddr := request.FormValue("validatorAddress")
+	if validatorAddr == "" {
+		return 0, 0, 0, 0, 0, 0, "", "", "", "", "", "", "", "", "", "", 0, errors.New("validator address error")
+	}
+	delegatorAddr := request.FormValue("delegatorAddress")
+	if delegatorAddr == "" {
+		return 0, 0, 0, 0, 0, 0, "", "", "", "", "", "", "", "", "", "", 0, errors.New("delegator address error")
+	}
+	publicKey := request.FormValue("publicKey")
+	if publicKey == "" {
+		return 0, 0, 0, 0, 0, 0, "", "", "", "", "", "", "", "", "", "", 0, errors.New("public key can't be empty")
+	}
+
+	return UserGas, cAmt, msd, r, mr, mcr, moniker, identity, website, securityContact, details, priv, from, validatorAddr, delegatorAddr, publicKey, nonce, nil
 }

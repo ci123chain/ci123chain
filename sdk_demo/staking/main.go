@@ -21,7 +21,7 @@ var (
 	from = "0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c"
 	amount uint64 = 20
 	gas uint64 = 20000
-	nonce uint64 = 1
+	nonce uint64 = 0
 	pri = "2b452434ac4f7cf9c5d61d62f23834f34e851fb6efdb8d4a8c6e214a8bc93d70"
 	proxy = "lb"
 	minSelfDelegation int64 = 2

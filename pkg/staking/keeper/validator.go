@@ -10,8 +10,8 @@ import (
 )
 
 type cachedValidator struct {
-	val   types.Validator   `json:"val"`
-	marshalled  string		`json:"marshalled"`
+	val   types.Validator
+	marshalled  string
 }
 
 func newCachedValidator(val types.Validator, marshalled string) cachedValidator {
@@ -130,7 +130,7 @@ func (k StakingKeeper) RemoveValidatorTokensAndShares(ctx sdk.Context, validator
 
 	k.DeleteValidatorByPowerIndex(ctx, validator)
 	validator, removedTokens = validator.RemoveDelShares(sharesToRemove)
-	k.SetValidator(ctx, validator)
+	_ = k.SetValidator(ctx, validator)
 	k.SetValidatorByPowerIndex(ctx, validator)
 	return validator, removedTokens
 }
@@ -150,7 +150,7 @@ func (k StakingKeeper) GetValidatorQueueTimeSlice(ctx sdk.Context, timestamp tim
 		return nil
 	}
 
-	va := []sdk.AccAddress{}
+	var va []sdk.AccAddress
 	k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &va)
 	return va
 }
@@ -174,7 +174,7 @@ func (k StakingKeeper) SetValidatorQueueTimeSlice(ctx sdk.Context, timestamp tim
 // Delete a validator address from the validator queue
 func (k StakingKeeper) DeleteValidatorQueue(ctx sdk.Context, val types.Validator) {
 	timeSlice := k.GetValidatorQueueTimeSlice(ctx, val.UnbondingTime)
-	newTimeSlice := []sdk.AccAddress{}
+	var newTimeSlice []sdk.AccAddress
 	for _, addr := range timeSlice {
 		if !bytes.Equal(addr.Bytes(), val.OperatorAddress.Bytes()) {
 			newTimeSlice = append(newTimeSlice, addr)
@@ -227,7 +227,7 @@ func (k StakingKeeper) UnbondAllMatureValidatorQueue(ctx sdk.Context) {
 	defer validatorTimesliceIterator.Close()
 
 	for ; validatorTimesliceIterator.Valid(); validatorTimesliceIterator.Next() {
-		timeslice := []sdk.AccAddress{}
+		var timeslice []sdk.AccAddress
 		k.cdc.MustUnmarshalBinaryLengthPrefixed(validatorTimesliceIterator.Value(), &timeslice)
 
 		for _, valAddr := range timeslice {

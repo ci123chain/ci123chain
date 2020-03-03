@@ -23,21 +23,25 @@ const (
 )
 
 var (
+	LastTotalPowerKey = []byte{0x11}//[]byte("last_total_power")
+	LastValidatorPowerKey = []byte{0x12}//[]byte("last_validator_power")
+
 	ValidatorsKey = []byte{0x21}//[]byte("validator")
 	ValidatorsByConsAddrKey = []byte{0x22}//[]byte("consensus")
 	ValidatorsByPowerIndexKey = []byte{0x23}//[]byte("validators_power")
-	DelegationKey = []byte("delegation")
-	RedelegationKey = []byte("redelegation")
-	RedelegationByValSrcIndexKey = []byte("redelegaion_by_val_src")
-	RedelegationByValDstIndexKey = []byte("redelegaion_by_val_dst")
-	UnbondingDelegationKey  = []byte("unbonding_delegation")
-	UnbondingDelegationByValIndexKey = []byte("unbonding_delegation_by_val")
-	UnbondingQueueKey = []byte("unbonding_queue")
-	RedelegationQueueKey = []byte("redelegation_queue")
-	LastTotalPowerKey = []byte("last_total_power")
-	LastValidatorPowerKey = []byte("last_validator_power")
-	ValidatorQueueKey = []byte("validator_queue")
-	HistoricalInfoKey = []byte("historical_info")
+
+	DelegationKey = []byte{0x31}//[]byte("delegation")
+	RedelegationKey = []byte{0x32}//[]byte("redelegation")
+	RedelegationByValSrcIndexKey = []byte{0x33}//[]byte("redelegaion_by_val_src")
+	RedelegationByValDstIndexKey = []byte{0x34}//[]byte("redelegation_by_val_dst")
+	UnbondingDelegationKey  = []byte{0x35}//[]byte("unbonding_delegation")
+	UnbondingDelegationByValIndexKey = []byte{0x36}//[]byte("unbonding_delegation_by_val")
+
+	UnbondingQueueKey = []byte{0x41}//[]byte("unbonding_queue")
+	RedelegationQueueKey = []byte{0x42}//[]byte("redelegation_queue")
+	ValidatorQueueKey = []byte{0x43}//[]byte("validator_queue")
+
+	HistoricalInfoKey = []byte{0x50}//[]byte("historical_info")
 )
 
 

@@ -12,17 +12,17 @@ import (
 func NewQuerier(k StakingKeeper) sdk.Querier {
 	return func(ctx sdk.Context, path []string, req abci.RequestQuery) (res []byte, err sdk.Error)  {
 		switch path[0] {
-		case s.QueryDelegation://
+		case s.QueryDelegation:
 			return queryDelegation(ctx, req, k)
-		case s.QueryValidatorDelegations://
+		case s.QueryValidatorDelegations:
 			return queryAllDelegation(ctx, req, k)
-		case s.QueryValidators://
+		case s.QueryValidators:
 			return queryValidators(ctx, req, k)
-		case s.QueryValidator://
+		case s.QueryValidator:
 			return queryValidator(ctx, req, k)
-		case s.QueryDelegatorValidators://
+		case s.QueryDelegatorValidators:
 			return queryDelegatorValidators(ctx, req, k)
-		case s.QueryDelegatorValidator://
+		case s.QueryDelegatorValidator:
 			return queryDelegatorValidator(ctx, req, k)
 		case s.QueryRedelegations:
 			return queryRedelegations(ctx, req, k)
@@ -131,11 +131,6 @@ func queryValidator(ctx sdk.Context, req abci.RequestQuery, k StakingKeeper) ([]
 		return nil, sdk.ErrNoValidatorFound("no validator found")
 	}
 	res := types.StakingCodec.MustMarshalJSON(validator)
-
-	/*res, err := app.MarshalJSONIndent(types.StakingCodec, validator)
-	if err != nil {
-		return nil, sdk.ErrInternal("marshal failed")
-	}*/
 
 	return res, nil
 }

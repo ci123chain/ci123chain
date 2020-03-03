@@ -85,10 +85,10 @@ func AllHandle(w http.ResponseWriter, r *http.Request) {
 		res, _ := json.Marshal(types.ErrorResponse{
 			Err:  err.Error(),
 		})
-		w.Write(res)
+		_, _ = w.Write(res)
 	}
 	select {
-	 case resp := <-*job.ResponseChan:
-		w.Write(resp)
+	 case resp := <- *job.ResponseChan:
+		_, _ = w.Write(resp)
 	}
 }
