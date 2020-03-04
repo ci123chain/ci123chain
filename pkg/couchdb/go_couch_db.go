@@ -127,6 +127,9 @@ func (cdb *GoCouchDB) Delete(key []byte) {
 		id := hex.EncodeToString(key)
 		// read oldDoc & now rev
 		rev := cdb.GetRev(key)
+		if rev == "" {
+			return
+		}
 		rev, err := cdb.db.Delete(id, rev)
 		if err != nil {
 			fmt.Println("***************Retry******************", retry)
@@ -136,8 +139,8 @@ func (cdb *GoCouchDB) Delete(key []byte) {
 		} else {
 			return
 		}
+		retry++
 	}
-	retry++
 }
 
 // Implements DB.
