@@ -39,11 +39,6 @@ func handleCreateValidatorTx(ctx sdk.Context, k keeper.StakingKeeper, tx staking
 	}
 	pk := tx.PublicKey
 
-	/*pk, err := sdk.GetPubKeyFromAddress(tx.ValidatorAddress)
-	if err != nil {
-		return types.ErrGetPubKeyFromAddress(types.DefaultCodespace, err).Result()
-	}*/
-
 	if _, found := k.GetValidatorByConsAddr(ctx, sdk.GetConsAddress(pk)); found {
 		return types.ErrValidatorExisted(types.DefaultCodespace, nil).Result()
 	}

@@ -132,6 +132,7 @@ func (k StakingKeeper) ApplyAndReturnValidatorSetUpdates(ctx sdk.Context) (updat
 
 		count++
 		totalPower = totalPower.Add(sdk.NewInt(newPower))
+
 	}
 
 	noLongerBonded := sortNoLongerBonded(last)
@@ -153,9 +154,15 @@ func (k StakingKeeper) ApplyAndReturnValidatorSetUpdates(ctx sdk.Context) (updat
 	// Compare and subtract the respective amounts to only perform one transfer.
 	// This is done in order to avoid doing multiple updates inside each iterator/loop.
 	case amtFromNotBondedToBonded.GT(amtFromBondedToNotBonded):
-		k.notBondedTokensToBonded(ctx, amtFromNotBondedToBonded.Sub(amtFromBondedToNotBonded))
+		err := k.notBondedTokensToBonded(ctx, amtFromNotBondedToBonded.Sub(amtFromBondedToNotBonded))
+		if err != nil {
+			panic(err)
+		}
 	case amtFromNotBondedToBonded.LT(amtFromBondedToNotBonded):
-		k.bondedTokensToNotBonded(ctx, amtFromBondedToNotBonded.Sub(amtFromNotBondedToBonded))
+		err := k.bondedTokensToNotBonded(ctx, amtFromBondedToNotBonded.Sub(amtFromNotBondedToBonded))
+		if err != nil {
+			panic(err)
+		}
 	default:
 		// equal amounts of tokens; no update required
 	}
@@ -176,7 +183,10 @@ func (k StakingKeeper) bondValidator(ctx sdk.Context, validator types.Validator)
 	validator = validator.UpdateStatus(sdk.Bonded)
 
 	// save the now bonded validator record to the two referenced stores
-	k.SetValidator(ctx, validator)
+	err := k.SetValidator(ctx, validator)
+	if err != nil {
+		panic(err)
+	}
 	k.SetValidatorByPowerIndex(ctx, validator)
 
 	// delete from queue if present
@@ -207,7 +217,10 @@ func (k StakingKeeper) beginUnbondingValidator(ctx sdk.Context, validator types.
 	validator.UnbondingHeight = ctx.BlockHeader().Height
 
 	// save the now unbonded validator record and power index
-	k.SetValidator(ctx, validator)
+	err := k.SetValidator(ctx, validator)
+	if err != nil {
+		panic(err)
+	}
 	k.SetValidatorByPowerIndex(ctx, validator)
 
 	// Adds to unbonding validator queue
@@ -284,7 +297,10 @@ func (k StakingKeeper) getLastValidatorsByAddr(ctx sdk.Context) validatorsByAddr
 // perform all the store operations for when a validator status becomes unbonded
 func (k StakingKeeper) completeUnbondingValidator(ctx sdk.Context, validator types.Validator) types.Validator {
 	validator = validator.UpdateStatus(sdk.Unbonded)
-	k.SetValidator(ctx, validator)
+	err := k.SetValidator(ctx, validator)
+	if err != nil {
+		panic(err)
+	}
 	return validator
 }
 

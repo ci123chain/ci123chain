@@ -124,5 +124,5 @@ func (am AppManager) EndBlocker(ctx types.Context, req abci.RequestEndBlock) abc
 			validatorUpdates = moduleValUpdates
 		}
 	}
-	return abci.ResponseEndBlock{}
+	return abci.ResponseEndBlock{ValidatorUpdates:validatorUpdates}
 }

@@ -278,13 +278,16 @@ func (k StakingKeeper) GetLastValidators(ctx sdk.Context) (validators []types.Va
 
 // get the set of all validators with no limits, used during genesis dump
 func (k StakingKeeper) GetAllValidators(ctx sdk.Context) (validators []types.Validator) {
-	var validator types.Validator
 	store := ctx.KVStore(k.storeKey)
 	iterator := sdk.KVStorePrefixIterator(store, types.ValidatorsKey)
 	defer iterator.Close()
 
 	for ; iterator.Valid(); iterator.Next() {
-		_ = types.StakingCodec.UnmarshalBinaryLengthPrefixed(iterator.Value(), &validator)
+		var validator types.Validator
+		err := types.StakingCodec.UnmarshalBinaryLengthPrefixed(iterator.Value(), &validator)
+		if err != nil {
+			panic(err)
+		}
 		validators = append(validators, validator)
 	}
 
