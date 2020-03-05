@@ -141,14 +141,6 @@ func Handle404() http.Handler {
 				//fmt.Println(j)
 				newData.Set(k, v)
 			}
-/*
-			body, err := ioutil.ReadAll(req.Body)
-			if err != nil {
-				//
-			}
-			var p QueryParams
-			err = json.Unmarshal(body, &p)
-			*/
 
 			proxyurl, _ := url.Parse(dest)
 			//proxy := httputil.NewSingleHostReverseProxy(proxyurl)

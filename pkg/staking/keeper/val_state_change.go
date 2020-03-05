@@ -116,7 +116,7 @@ func (k StakingKeeper) ApplyAndReturnValidatorSetUpdates(ctx sdk.Context) (updat
 
 		// fetch the old power bytes
 		var valAddrBytes [sdk.AddrLen]byte
-		copy(valAddrBytes[:], valAddr.Bytes())
+		copy(valAddrBytes[:], valAddr.Bytes()[:])
 		oldPowerBytes, found := last[valAddrBytes]
 
 		newPower := validator.ConsensusPower()
@@ -286,7 +286,7 @@ func (k StakingKeeper) getLastValidatorsByAddr(ctx sdk.Context) validatorsByAddr
 	for ; iterator.Valid(); iterator.Next() {
 		var valAddr [sdk.AddrLen]byte
 		// extract the validator address from the key (prefix is 1-byte)
-		copy(valAddr[:], iterator.Key()[1:])
+		copy(valAddr[:], iterator.Key()[10:])
 		powerBytes := iterator.Value()
 		last[valAddr] = make([]byte, len(powerBytes))
 		copy(last[valAddr], powerBytes)
