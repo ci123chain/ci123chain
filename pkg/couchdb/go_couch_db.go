@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"github.com/spf13/viper"
 	dbm "github.com/tendermint/tm-db"
+	"io"
+	"io/ioutil"
 )
 
 const DBAuthUser = "DBAuthUser"
@@ -443,4 +445,27 @@ func (cdb *GoCouchDB) ResetDB() error {
 
 
 	return nil
+}
+
+func (cdb *GoCouchDB) SaveAttachment(key []byte, rev, attName, attType string, attContent io.Reader) string {
+	key = nonNilBytes(key)
+	rev, err := cdb.db.SaveAttachment(hex.EncodeToString(key), rev, attName, attType, attContent)
+	if err != nil {
+		panic(err)
+	}
+	return rev
+}
+
+func (cdb *GoCouchDB) GetAttachment(key []byte, rev, attType, attName string) []byte {
+	key = nonNilBytes(key)
+	reader, err := cdb.db.GetAttachment(hex.EncodeToString(key), rev, attType, attName)
+	if err != nil {
+		panic(err)
+	}
+	defer reader.Close()
+	by, err := ioutil.ReadAll(reader)
+	if err != nil {
+		panic(err)
+	}
+	return by
 }
