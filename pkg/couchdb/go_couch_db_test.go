@@ -1,8 +1,11 @@
 package couchdb
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	"io/ioutil"
+	"os"
 	"testing"
 )
 
@@ -34,5 +37,36 @@ func TestRead2(t *testing.T)  {
 		assert.NotEmpty(bz)
 		//db.Set(key, []byte("dfasfdsagagfe2323wf"))
 	}
+}
+
+func TestAttachment(t *testing.T) {
+	db, _ := NewGoCouchDB("ci123", "127.0.0.1:5984", nil)
+	key := []byte("key")
+	value := []byte("value")
+	Att := []byte("foo")
+	db.Set(key, value)
+	rev := db.GetRev(key)
+	reader := bytes.NewReader(Att)
+	newrev := db.SaveAttachment(key, rev, "foo", "text/plain", reader)
+	fmt.Println(string(db.GetAttachment(key, newrev, "text/plain","foo")))
+}
+
+func TestAttachmentFile(t *testing.T) {
+	db, _ := NewGoCouchDB("ci123", "127.0.0.1:5984", nil)
+	key := []byte("key")
+	value := []byte("value")
+	f, err := os.Open("./test.txt")
+	if err != nil {
+		panic(err)
+	}
+	Att, err := ioutil.ReadAll(f)
+	if err != nil {
+		panic(err)
+	}
+	db.Set(key, value)
+	rev := db.GetRev(key)
+	reader := bytes.NewReader(Att)
+	newrev := db.SaveAttachment(key, rev, "testFile", "text/plain", reader)
+	fmt.Println(string(db.GetAttachment(key, newrev, "text/plain","testFile")))
 }
 
