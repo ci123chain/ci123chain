@@ -28,3 +28,22 @@ func NewQueryCodeInfoParams(id uint64) CodeInfoParams {
 type ContractState struct {
 	Result   string    `json:"result"`
 }
+
+type ContractListParams struct {
+	AccountAddress       sdk.AccAddress   `json:"account_address"`
+}
+
+func NewContractListParams(accountAddress sdk.AccAddress) ContractListParams {
+	params := ContractListParams{
+		AccountAddress:  accountAddress,
+	}
+	return params
+}
+
+type ContractListResponse struct {
+	ContractAddressList  []string   `json:"contract_address_list"`
+}
+
+func NewContractListResponse(contractList []string) ContractListResponse {
+	return ContractListResponse{ContractAddressList:contractList}
+}

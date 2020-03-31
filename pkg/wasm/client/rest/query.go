@@ -13,8 +13,8 @@ import (
 
 func registerQueryRoutes(cliCtx context.Context, r *mux.Router) {
 	r.HandleFunc("/wasm/codeSearch/list", listCodesHandlerFn(cliCtx)).Methods("POST")
-	r.HandleFunc("/wasm/codeSearch/", queryCodeHandlerFn(cliCtx)).Methods("POST")
-	r.HandleFunc("/wasm/codeSearch/contracts", listContractsByCodeHandlerFn(cliCtx)).Methods("POST")
+	r.HandleFunc("/wasm/codeSearch", queryCodeHandlerFn(cliCtx)).Methods("POST")
+	r.HandleFunc("/wasm/codeSearch/contractsList", listContractsByCodeHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/wasm/contractSearch", queryContractHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/wasm/contractSearch/state", queryContractStateAllHandlerFn(cliCtx)).Methods("POST")
 }
@@ -53,7 +53,7 @@ func queryCodeHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			return
 		}
 		if len(res) < 1 {
-			rest.WriteErrorRes(w, transfer.ErrQueryTx(types.DefaultCodespace, "query response length less than 1"))
+			rest.WriteErrorRes(w, transfer.ErrQueryTx(types.DefaultCodespace, "no excepted code"))
 			return
 		}
 		var codeInfo types.CodeInfo
@@ -65,8 +65,29 @@ func queryCodeHandlerFn(cliCtx context.Context) http.HandlerFunc {
 
 func listContractsByCodeHandlerFn(cliCtx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		//
-		rest.WriteErrorRes(w, sdk.ErrInternal("Implement me"))
+
+		accountAddr := r.FormValue("accountAddress")
+		accountAddress := sdk.HexToAddress(accountAddr)
+		params := types.NewContractListParams(accountAddress)
+		bz, Er := cliCtx.Cdc.MarshalJSON(params)
+		if Er != nil {
+			rest.WriteErrorRes(w, sdk.ErrInternal("marshal failed"))
+			return
+		}
+
+		res, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryContractList, bz)
+		if err != nil {
+			rest.WriteErrorRes(w, err)
+			return
+		}
+		if len(res) < 1 {
+			rest.WriteErrorRes(w, transfer.ErrQueryTx(types.DefaultCodespace, "the length of contract list is 0"))
+			return
+		}
+		var contractList types.ContractListResponse
+		cliCtx.Cdc.MustUnmarshalBinaryBare(res, &contractList)
+
+		rest.PostProcessResponseBare(w, cliCtx, contractList)
 	}
 }
 
@@ -95,7 +116,7 @@ func queryContractHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			return
 		}
 		if len(res) < 1 {
-			rest.WriteErrorRes(w, transfer.ErrQueryTx(types.DefaultCodespace, "query response length less than 1"))
+			rest.WriteErrorRes(w, transfer.ErrQueryTx(types.DefaultCodespace, "no expected contract"))
 			return
 		}
 		var contractInfo types.ContractInfo

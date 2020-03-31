@@ -3,7 +3,6 @@ package types
 import (
 	"encoding/json"
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
-	"github.com/tanhuiya/ci123chain/pkg/account"
 )
 
 type CodeInfo struct {
@@ -27,7 +26,7 @@ type ContractInfo struct {
 
 	CodeID      uint64   `json:"code_id"`
 	Creator     sdk.AccAddress  `json:"creator"`
-	Label       string          `json:"label"`
+	Label       string          `json:"label"` //标签
 	InitMsg     json.RawMessage  `json:"init_msg"`
 	Created     *CreatedAt        `json:"created"`
 }
@@ -72,7 +71,7 @@ func NewContractInfo(CodeID uint64, creator sdk.AccAddress, initMsg []byte, labe
 	}
 }
 
-func NewParams(ctx sdk.Context, creator sdk.AccAddress, deposit sdk.Coins, contractAcct account.BaseAccount) {}
+//func NewParams(ctx sdk.Context, creator sdk.AccAddress, deposit sdk.Coins, contractAcct account.BaseAccount) {}
 
 
 type WasmConfig struct {}

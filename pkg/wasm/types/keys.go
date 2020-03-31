@@ -12,6 +12,7 @@ const (
 	QueryContractInfo  = "queryContractInfo"
 	QueryCodeInfo      = "queryCodeInfo"
 	QueryContractState = "queryContractState"
+	QueryContractList  = "queryContractList"
 
 	ModePerm os.FileMode = 0666
 )

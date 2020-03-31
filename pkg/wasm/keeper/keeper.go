@@ -67,7 +67,7 @@ func (k Keeper) Create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte,
 	return codeID, nil
 }
 
-//实例化合约对象，初始化合约的初始信息（合约双方的账户信息，约定的信息），执行instance的init方法。
+//
 func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator sdk.AccAddress, initMsg []byte, label string, deposit sdk.Coin) (sdk.AccAddress, error) {
 	var codeInfo types.CodeInfo
 	var wasmer Wasmer
@@ -104,19 +104,22 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator sdk.AccAddre
 
 	//TODO
 	params := []string{"1", "2"}
-	res, err := k.wasmer.Instantiate(codeInfo.CodeHash, "sum", params)
+	_, err := k.wasmer.Instantiate(codeInfo.CodeHash, "sum", params)
 	if err != nil {
 		return sdk.AccAddress{}, err
 	}
-	fmt.Println(res)
 	//save the contract info.
 	createdAt := types.NewCreatedAt(ctx)
 	contractInfo := types.NewContractInfo(codeID, creator, initMsg, label, createdAt)
 	store.Set(types.GetContractAddressKey(contractAddress), k.cdc.MustMarshalBinaryBare(contractInfo))
+	//save contractAddress into account
+	Account := k.AccountKeeper.GetAccount(ctx, creator)
+	Account.AddContract(contractAddress)
+	k.AccountKeeper.SetAccount(ctx, Account)
 	return contractAddress, nil
 }
 
-//执行合约，事件触发，执行instance的invoke方法。返回执行结果，链根据结果来执行新的动作。
+//
 func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, msg []byte, coin sdk.Coin) (sdk.Result, error) {
 
 	codeInfo, err := k.contractInstance(ctx, contractAddress)
@@ -129,7 +132,6 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	if err != nil {
 		return sdk.Result{}, err
 	}
-	fmt.Println(res)
 	return sdk.Result{
 		Data:   []byte(fmt.Sprintf("executeResult:%s", res)),
 	}, nil

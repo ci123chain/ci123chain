@@ -41,7 +41,6 @@ func handleStoreCodeTx(ctx sdk.Context, k Keeper, msg wasm.StoreCodeTx) sdk.Resu
 	}
 	k.AccountKeeper.SetAccount(ctx, account)
 	//
-
 	return sdk.Result{
 		Data:   []byte(fmt.Sprintf("codeID:%d", codeID)),
 	}

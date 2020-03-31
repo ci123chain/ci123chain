@@ -29,9 +29,9 @@ func ErrCreateFailed(codespce sdk.CodespaceType, err error) sdk.Error {
 	return sdk.NewError(codespce, CodeHandleMsgFailedError, "create failed", err)
 }
 
-func ErrCheckWasmCode(codespce sdk.CodespaceType, err error) sdk.Error {
+/*func ErrCheckWasmCode(codespce sdk.CodespaceType, err error) sdk.Error {
 	return sdk.NewError(codespce, CodeHandleMsgFailedError, "uncompress code failed", err)
-}
+}*/
 
 func ErrInstantiateFailed(codespce sdk.CodespaceType, err error) sdk.Error {
 	return sdk.NewError(codespce, CodeHandleMsgFailedError, "instantiate failed", err)
