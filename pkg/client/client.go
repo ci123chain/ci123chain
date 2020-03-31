@@ -1,10 +1,10 @@
 package client
 
 import (
+	"github.com/spf13/viper"
 	"github.com/tanhuiya/ci123chain/pkg/abci/codec"
 	"github.com/tanhuiya/ci123chain/pkg/client/context"
 	"github.com/tanhuiya/ci123chain/pkg/client/helper"
-	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/rpc/client"
 	"os"
 )

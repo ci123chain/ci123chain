@@ -1,0 +1,254 @@
+package keeper
+
+import (
+	"encoding/binary"
+	"fmt"
+	"github.com/tanhuiya/ci123chain/pkg/abci/codec"
+	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
+	"github.com/tanhuiya/ci123chain/pkg/account"
+	"github.com/tanhuiya/ci123chain/pkg/account/exported"
+	"github.com/tanhuiya/ci123chain/pkg/wasm/types"
+)
+
+const (
+	RouteKey = "wasm"
+)
+
+type Keeper struct {
+	storeKey    sdk.StoreKey
+	cdc         *codec.Codec
+	wasmer      Wasmer
+	AccountKeeper       account.AccountKeeper
+}
+
+func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, homeDir string, wasmConfig types.WasmConfig,  accountKeeper account.AccountKeeper) Keeper {
+	wasmer, err := NewWasmer(homeDir, wasmConfig)
+	if err != nil {
+		panic(err)
+	}
+	return Keeper{
+		storeKey:      storeKey,
+		cdc:           cdc,
+		wasmer:        wasmer,
+		AccountKeeper: accountKeeper,
+	}
+}
+
+//　Create uploads and compiles a WASM contract, returning a short identifier for the contract
+func (k Keeper) Create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte, source string, builder string) (codeID uint64, err error) {
+
+	wasmCode, err = uncompress(wasmCode)
+	if err != nil {
+		return 0, err
+	}
+	store := ctx.KVStore(k.storeKey)
+	var wasmer Wasmer
+	wasmerBz := store.Get(types.GetWasmerKey())
+	if wasmerBz != nil {
+		k.cdc.MustUnmarshalJSON(wasmerBz, &wasmer)
+		if wasmer.LastFileID == 0 {
+			return 0, sdk.ErrInternal("empty wasmer")
+		}
+		k.wasmer = wasmer
+	}
+	newWasmer, codeHash, err := k.wasmer.Create(wasmCode)
+	if err != nil {
+		return 0, err
+	}
+	bz := k.cdc.MustMarshalJSON(newWasmer)
+	if bz == nil {
+		return 0, sdk.ErrInternal("marshal json failed")
+	}
+	codeID = k.autoIncrementID(ctx, types.KeyLastCodeID)
+	codeInfo := types.NewCodeInfo(codeHash, creator, source, builder)
+	store.Set(types.GetCodeKey(codeID), k.cdc.MustMarshalBinaryBare(codeInfo))
+	store.Set(types.GetWasmerKey(), bz)
+
+	return codeID, nil
+}
+
+//实例化合约对象，初始化合约的初始信息（合约双方的账户信息，约定的信息），执行instance的init方法。
+func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator sdk.AccAddress, initMsg []byte, label string, deposit sdk.Coin) (sdk.AccAddress, error) {
+	var codeInfo types.CodeInfo
+	var wasmer Wasmer
+	contractAddress := k.generateContractAddress(ctx, codeID)
+	existingAcct := k.AccountKeeper.GetAccount(ctx, contractAddress)
+	if existingAcct != nil {
+		return sdk.AccAddress{}, sdk.ErrInternal("account exists")
+	}
+	var contractAccount exported.Account
+	if !deposit.IsZero() {
+		sdkerr := k.AccountKeeper.Transfer(ctx, creator, contractAddress, deposit)
+		if sdkerr != nil {
+			return sdk.AccAddress{}, sdk.ErrInternal("transfer failed")
+		}
+	}else {
+		contractAccount = k.AccountKeeper.NewAccountWithAddress(ctx, contractAddress)
+		k.AccountKeeper.SetAccount(ctx, contractAccount)
+	}
+
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.GetCodeKey(codeID))
+	if bz == nil {
+		return sdk.AccAddress{}, sdk.ErrInternal("empty codeID")
+	}
+	wasmerBz := store.Get(types.GetWasmerKey())
+	if wasmerBz != nil {
+		k.cdc.MustUnmarshalJSON(wasmerBz, &wasmer)
+		if wasmer.LastFileID == 0 {
+			return sdk.AccAddress{}, sdk.ErrInternal("empty wasmer")
+		}
+		k.wasmer = wasmer
+	}
+	k.cdc.MustUnmarshalBinaryBare(bz, &codeInfo)
+
+	//TODO
+	params := []string{"1", "2"}
+	res, err := k.wasmer.Instantiate(codeInfo.CodeHash, "sum", params)
+	if err != nil {
+		return sdk.AccAddress{}, err
+	}
+	fmt.Println(res)
+	//save the contract info.
+	createdAt := types.NewCreatedAt(ctx)
+	contractInfo := types.NewContractInfo(codeID, creator, initMsg, label, createdAt)
+	store.Set(types.GetContractAddressKey(contractAddress), k.cdc.MustMarshalBinaryBare(contractInfo))
+	return contractAddress, nil
+}
+
+//执行合约，事件触发，执行instance的invoke方法。返回执行结果，链根据结果来执行新的动作。
+func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, msg []byte, coin sdk.Coin) (sdk.Result, error) {
+
+	codeInfo, err := k.contractInstance(ctx, contractAddress)
+	if err != nil {
+		return sdk.Result{}, err
+	}
+	//TODO
+	params := []string{"1", "2"}
+	res, err := k.wasmer.Execute(codeInfo.CodeHash, "sum", params)
+	if err != nil {
+		return sdk.Result{}, err
+	}
+	fmt.Println(res)
+	return sdk.Result{
+		Data:   []byte(fmt.Sprintf("executeResult:%s", res)),
+	}, nil
+}
+
+func (k Keeper) Query(ctx sdk.Context, contractAddress sdk.AccAddress) (types.ContractState, error) {
+
+	codeInfo, err := k.contractInstance(ctx, contractAddress)
+	if err != nil {
+		return types.ContractState{}, err
+	}
+	//TODO
+	params := []string{"1", "2"}
+	res, err := k.wasmer.Query(codeInfo.CodeHash, "sum", params)
+	if err != nil {
+		return types.ContractState{}, err
+	}
+	contractState := types.ContractState{Result:res}
+	return contractState, nil
+}
+
+
+func (k *Keeper) contractInstance(ctx sdk.Context, contractAddress sdk.AccAddress) (types.CodeInfo, error) {
+
+	var wasmer Wasmer
+	store := ctx.KVStore(k.storeKey)
+	contractBz := store.Get(types.GetContractAddressKey(contractAddress))
+	if contractBz == nil {
+		return types.CodeInfo{}, sdk.ErrInternal("get contract address failed")
+	}
+	var contract types.ContractInfo
+	k.cdc.MustUnmarshalBinaryBare(contractBz, &contract)
+
+	bz := store.Get(types.GetCodeKey(contract.CodeID))
+	if bz == nil {
+		return types.CodeInfo{}, sdk.ErrInternal("get code key failed")
+	}
+	wasmerBz := store.Get(types.GetWasmerKey())
+	if wasmerBz != nil {
+		k.cdc.MustUnmarshalJSON(wasmerBz, &wasmer)
+		if wasmer.LastFileID == 0 {
+			return types.CodeInfo{}, sdk.ErrInternal("unexpected wasmer info")
+		}
+		k.wasmer = wasmer
+	}
+
+	contractInfoBz := store.Get(types.GetCodeKey(contract.CodeID))
+	if contractInfoBz == nil {
+		return types.CodeInfo{}, sdk.ErrInternal("get contract info failed")
+	}
+
+	var codeInfo types.CodeInfo
+	k.cdc.MustUnmarshalBinaryBare(contractInfoBz, &codeInfo)
+	return codeInfo, nil
+}
+
+func (k Keeper) GetContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress) *types.ContractInfo {
+
+	store := ctx.KVStore(k.storeKey)
+	var contract types.ContractInfo
+	contractBz := store.Get(types.GetContractAddressKey(contractAddress))
+	if contractBz == nil {
+		return nil
+	}
+	k.cdc.MustUnmarshalBinaryBare(contractBz, &contract)
+	return &contract
+}
+
+func (k Keeper) SetContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress, contract types.ContractInfo) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(types.GetContractAddressKey(contractAddress), k.cdc.MustMarshalBinaryBare(contract))
+}
+
+func (k Keeper) GetCodeInfo(ctx sdk.Context, codeID uint64) *types.CodeInfo {
+	store := ctx.KVStore(k.storeKey)
+	var codeInfo types.CodeInfo
+	codeInfoBz := store.Get(types.GetCodeKey(codeID))
+	if codeInfoBz == nil {
+		return nil
+	}
+	k.cdc.MustUnmarshalBinaryBare(codeInfoBz, &codeInfo)
+	return &codeInfo
+}
+
+
+func (k Keeper) GetByteCode(ctx sdk.Context, codeID uint64) ([]byte, error) {
+	store := ctx.KVStore(k.storeKey)
+	var codeInfo types.CodeInfo
+	codeInfoBz := store.Get(types.GetCodeKey(codeID))
+	if codeInfoBz == nil {
+		return nil, nil
+	}
+	k.cdc.MustUnmarshalBinaryBare(codeInfoBz, &codeInfo)
+	//get code???
+	return nil, nil
+}
+
+func (k Keeper) generateContractAddress(ctx sdk.Context, codeID uint64) sdk.AccAddress {
+	instanceID := k.autoIncrementID(ctx, types.KeyLastInstanceID)
+
+	contractID := codeID<<32 + instanceID
+	return addrFromUint64(contractID)
+}
+
+func (k Keeper) autoIncrementID(ctx sdk.Context, lastIDKey []byte) uint64 {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(lastIDKey)
+	id := uint64(1)
+	if bz != nil {
+		id = binary.BigEndian.Uint64(bz)
+	}
+	bz = sdk.Uint64ToBigEndian(id + 1)
+	store.Set(lastIDKey, bz)
+	return id
+}
+
+func addrFromUint64(id uint64) sdk.AccAddress {
+	addr := make([]byte, 20)
+	addr[0] = 'C'
+	binary.PutUvarint(addr[1:], id)
+	return sdk.ToAccAddress(addr)
+}

@@ -30,8 +30,11 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/transaction"
 	"github.com/tanhuiya/ci123chain/pkg/transfer"
 	"github.com/tanhuiya/ci123chain/pkg/transfer/handler"
+	"github.com/tanhuiya/ci123chain/pkg/wasm"
+	wasm_types "github.com/tanhuiya/ci123chain/pkg/wasm/types"
 	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/crypto"
+	"github.com/tendermint/tendermint/libs/cli"
 	"github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/types"
@@ -65,6 +68,7 @@ var (
 	fcStoreKey       = sdk.NewKVStoreKey(fc.FcStoreKey)
 	disrtStoreKey         = sdk.NewKVStoreKey(k.DisrtKey)
 	stakingStoreKey  = sdk.NewKVStoreKey(staking.StoreKey)
+	wasmStoreKey     = sdk.NewKVStoreKey(wasm.StoreKey)
 
 	ModuleBasics = module.NewBasicManager(
 		account.AppModuleBasic{},
@@ -72,6 +76,7 @@ var (
 		supply.AppModuleBasic{},
 		order.AppModuleBasic{},
 		staking.AppModuleBasic{},
+		wasm.AppModuleBasic{},
 		)
 
 	maccPerms = map[string][]string{
@@ -136,6 +141,10 @@ func NewChain(logger log.Logger, tmdb tmdb.DB, traceStore io.Writer) *Chain {
 	cdb := tmdb.(*couchdb.GoCouchDB)
 	orderKeeper := order.NewKeeper(cdb, OrderStoreKey, accKeeper)
 
+	homeDir := viper.GetString(cli.HomeFlag)
+	var wasmconfig wasm_types.WasmConfig
+	wasmKeeper := wasm.NewKeeper(cdc, wasmStoreKey,homeDir, wasmconfig, accKeeper)
+
 	// 设置modules
 	c.mm = module.NewManager(
 		auth.AppModule{AuthKeeper: c.authKeeper},
@@ -143,12 +152,14 @@ func NewChain(logger log.Logger, tmdb tmdb.DB, traceStore io.Writer) *Chain {
 		distr.AppModule{DistributionKeeper: distrKeeper},
 		order.AppModule{OrderKeeper: &orderKeeper},
 		staking.AppModule{StakingKeeper:stakingKeeper, AccountKeeper:accKeeper, SupplyKeeper:supplyKeeper},
+		wasm.AppModule{WasmKeeper:wasmKeeper},
 		)
 	// invoke router
 	c.Router().AddRoute(transfer.RouteKey, handler.NewHandler(txm, accKeeper, sm))
 	c.Router().AddRoute(ibc.RouterKey, ibc.NewHandler(ibcKeeper))
 	c.Router().AddRoute(order.RouteKey, orhandler.NewHandler(&orderKeeper))
 	c.Router().AddRoute(staking.RouteKey, staking.NewHandler(stakingKeeper))
+	c.Router().AddRoute(wasm.RouteKey, wasm.NewHandler(wasmKeeper))
 	// query router
 	c.QueryRouter().AddRoute(ibc.RouterKey, ibc.NewQuerier(ibcKeeper))
 
@@ -157,6 +168,8 @@ func NewChain(logger log.Logger, tmdb tmdb.DB, traceStore io.Writer) *Chain {
 	c.QueryRouter().AddRoute(order.RouteKey, order.NewQuerier(&orderKeeper))
 
 	c.QueryRouter().AddRoute(staking.RouteKey, staking.NewQuerier(stakingKeeper))
+
+	c.QueryRouter().AddRoute(wasm.RouteKey, wasm.NewQuerier(wasmKeeper))
 
 	c.SetAnteHandler(ante.NewAnteHandler(c.authKeeper, accKeeper, fcKeeper))
 	c.SetBeginBlocker(c.BeginBlocker)
@@ -187,6 +200,7 @@ func (c *Chain) mountStores() error {
 		disrtStoreKey,
 		OrderStoreKey,
 		stakingStoreKey,
+		wasmStoreKey,
 	}
 	c.MountStoresIAVL(keys...)
 

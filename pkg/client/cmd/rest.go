@@ -28,6 +28,7 @@ import (
 	orQuery "github.com/tanhuiya/ci123chain/pkg/order"
 	order "github.com/tanhuiya/ci123chain/pkg/order/rest"
 	sRest "github.com/tanhuiya/ci123chain/pkg/staking/client/rest"
+	wRest "github.com/tanhuiya/ci123chain/pkg/wasm/client/rest"
 )
 
 const (
@@ -88,6 +89,7 @@ func NewRestServer() *RestServer {
 	orQuery.RegisterTxRoutes(cliCtx, r)
 	sRest.RegisterRestTxRoutes(cliCtx, r)
 	sRest.RegisterTxRoutes(cliCtx, r)
+	wRest.RegisterRoutes(cliCtx, r)
 
 	return &RestServer{
 		Mux: r,
