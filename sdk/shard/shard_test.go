@@ -11,10 +11,25 @@ import (
 	"testing"
 )
 
+var (
+	from = "0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c"
+	gas = "20000"
+	offlineGas = uint64(20000)
+	nonce = "2"
+	offlineNonce = uint64(2)
+	ty = "ADD"
+	name = "ci"
+	offlineHeight = int64(800)
+	height = "800"
+	priv = "2b452434ac4f7cf9c5d61d62f23834f34e851fb6efdb8d4a8c6e214a8bc93d70"
+	reqUrl = "http://ciChain:3030/tx/broadcast"
+	onelineReqUrl = "http://ciChain:3030/tx/addShard"
+	proxy = "lb"
+)
+
 func TestSignAddShardMsg(t *testing.T) {
 
-	signdata, err := SignAddShardMsg("0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c",
-		20000, 2, "ADD", "ty8", 8000, "2b452434ac4f7cf9c5d61d62f23834f34e851fb6efdb8d4a8c6e214a8bc93d70")
+	signdata, err := SignAddShardMsg(from, offlineGas, offlineNonce, ty, name, offlineHeight, priv)
 	if err != nil {
 		panic(err)
 	}
@@ -26,7 +41,6 @@ func TestSignAddShardMsg(t *testing.T) {
 func httpSignAddShardMsg(param string) {
 
 	cli := &http.Client{}
-	reqUrl := "http://ciChain:3030/tx/broadcast"
 	data := url.Values{}
 	data.Set("txByte", param)
 	data.Set("proxy", "lb")
@@ -51,23 +65,14 @@ func httpSignAddShardMsg(param string) {
 }
 
 func TestSendAddShardMsg(t *testing.T) {
-	from := "0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c"
-	gas := "20000"
-	nonce := "2"
-	Type := "ADD"
-	name := "cichain-shard1"
-	height := "900"
-	priv := "2b452434ac4f7cf9c5d61d62f23834f34e851fb6efdb8d4a8c6e214a8bc93d70"
-	proxy := "lb"
-	httpSendAddShardMsg(from, gas, nonce, Type, name, height, priv, proxy)
+	httpSendAddShardMsg(from, gas, nonce, ty, name, height, priv, proxy, onelineReqUrl)
 
 }
 
-func httpSendAddShardMsg(from, gas, nonce, Type, name, height, priv, proxy string) {
+func httpSendAddShardMsg(from, gas, nonce, Type, name, height, priv, proxy, reqUrl string) {
 	//
 	cli := &http.Client{}
-	///body := make([]byte, 0)
-	reqUrl := "http://ciChain:3030/tx/addShard"
+
 	data := url.Values{}
 	data.Set("from", from)
 	data.Set("gas", gas)

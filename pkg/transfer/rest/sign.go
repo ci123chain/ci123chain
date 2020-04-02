@@ -10,9 +10,8 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/client/context"
 	"github.com/tanhuiya/ci123chain/pkg/client/helper"
 	"github.com/tanhuiya/ci123chain/pkg/transaction"
-	//"github.com/tanhuiya/ci123chain/pkg/transfer"
-	tSDK "github.com/tanhuiya/ci123chain/sdk/transfer"
 	"github.com/tanhuiya/ci123chain/pkg/transfer/types"
+	tSDK "github.com/tanhuiya/ci123chain/sdk/transfer"
 	"net/http"
 	"strconv"
 )
@@ -36,24 +35,6 @@ func SignTxRequestHandler(cliCtx context.Context) http.HandlerFunc {
 		if err != nil {
 			isFabric = false
 		}
-		/*
-			tx, err := buildTransferTx(request, isFabric)
-			if err != nil {
-				rest.WriteErrorRes(writer, err.(sdk.Error))
-				return
-			}
-
-			privPub, err := hex.DecodeString(priv)
-			if err != nil {
-				rest.WriteErrorRes(writer, transaction.ErrBadPrivkey(types.DefaultCodespace, err))
-			}
-			tx, err = cliCtx.SignWithTx(tx, privPub, isFabric)
-			if err != nil {
-				rest.WriteErrorRes(writer, transaction.ErrSignature(types.DefaultCodespace, errors.New("sign with tx error")))
-				return
-			}
-			txByte := tx.Bytes()
-		*/
 		txByte, err := buildTransferTx(request, isFabric, priv)
 		if err != nil {
 			rest.WriteErrorRes(writer, transaction.ErrSignature(types.DefaultCodespace, errors.New("sign with tx error")))
@@ -75,6 +56,7 @@ func buildTransferTx(r *http.Request, isFabric bool, priv string) ([]byte, error
 	to := r.FormValue("to")
 	amount := r.FormValue("amount")
 	gas := r.FormValue("gas")
+	userNonce := r.FormValue("nonce")
 
 
 	froms, err := helper.ParseAddrs(from)
@@ -102,18 +84,27 @@ func buildTransferTx(r *http.Request, isFabric bool, priv string) ([]byte, error
 	if err != nil {
 		return nil, types.ErrCheckParams(types.DefaultCodespace, "amount error")
 	}
-	ctx, err := client.NewClientContextFromViper(cdc)
-	if err != nil {
-		return nil, client.ErrNewClientCtx(types.DefaultCodespace, err)
+	var nonce uint64
+	if userNonce != "" {
+		UserNonce, err := strconv.ParseInt(userNonce, 10, 64)
+		if err != nil || UserNonce < 0 {
+			return nil, types.ErrCheckParams(types.DefaultCodespace, "nonce error")
+		}
+		nonce = uint64(UserNonce)
+	}else {
+		ctx, err := client.NewClientContextFromViper(cdc)
+		if err != nil {
+			return nil, client.ErrNewClientCtx(types.DefaultCodespace, err)
+		}
+		nonce, err = ctx.GetNonceByAddress(froms[0])
+		if err != nil {
+			return nil, types.ErrCheckParams(types.DefaultCodespace, "nonce error")
+		}
 	}
-	nonce, err := ctx.GetNonceByAddress(froms[0])
-	if err != nil {
-		return nil, types.ErrCheckParams(types.DefaultCodespace, "nonce error")
-	}
-
 	tx, err := tSDK.SignTransferMsg(from, to, amountI, gasI, nonce, priv, isFabric)
-
-	//tx := transfer.NewTransferTx(froms[0], tos[0], gasI, nonce, sdk.NewUInt64Coin(amountI), isFabric)
+	if err != nil {
+		return nil, err
+	}
 
 	return tx, nil
 }

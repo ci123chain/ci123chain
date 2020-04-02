@@ -6,7 +6,7 @@ import (
 )
 
 type RoundPolicy struct {
-	current uint64
+	current uint64    `json:"current"`
 }
 
 func NewRoundPolicy() *RoundPolicy {

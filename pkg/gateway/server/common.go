@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"github.com/tanhuiya/ci123chain/pkg/gateway/types"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -10,8 +11,8 @@ import (
 
 type Response struct {
 	Ret 	interface{} 	`json:"ret"`
-	Data 	interface{}	`json:"data"`
-	Message	string	`json:"message"`
+	Data 	interface{}	    `json:"data"`
+	Message	string	        `json:"message"`
 }
 
 func SendRequest(requestUrl *url.URL,r *http.Request, RequestParams map[string]string) ([]byte, *http.Response, error) {
@@ -52,39 +53,49 @@ func HandleResponse(b []byte) Response {
 	var res Response
 	err := json.Unmarshal(b, &res)
 	if err != nil {
-		//
+		var res = Response{
+			Ret:     nil,
+			Data:    nil,
+			Message: "failed to unmarshal response",
+		}
+		return res
 	}
 	return res
 }
 
-
-
-
-var sc = make(chan int)
 
 type ClasterJob interface {
 	Do()
 }
 
 type ClasterTask struct {
-	num int
-	id int
 	url *url.URL
 	r *http.Request
+	requestParmas map[string]string
+
+	responseChan chan []byte
 }
 
-func NewClasterTask(url *url.URL, r *http.Request, num, id int) *ClasterTask{
+func NewClasterTask(url *url.URL, r *http.Request, requestParams map[string]string) *ClasterTask{
 	return &ClasterTask{
 		url:url,
 		r:r,
-		num:num,
-		id:id,
+		requestParmas:requestParams,
+		responseChan:make(chan []byte),
 	}
 }
 
 
 func (ct *ClasterTask) Do() {
-	//
+	res, _, err := SendRequest(ct.url, ct.r, ct.requestParmas)
+	if err != nil {
+		res, _ := json.Marshal(types.ErrorResponse{
+			Err:  err.Error(),
+		})
+		ct.responseChan <- res
+		return
+	}
+	ct.responseChan <- res
 }
 
 type Worker struct {
@@ -109,18 +120,12 @@ func (w Worker) Run(ctp chan chan ClasterJob) {
 			}
 		}
 	}()
-	go w.stop()
-}
-
-func (w Worker)stop() {
-	<- sc
-	w.JobQueue = nil
 }
 
 
 type ClasterTaskPool struct {
 
-	workerlen   int
+	workerLen   int
 	JobQueue    chan ClasterJob
 	WorkerQueue chan chan ClasterJob
 }
@@ -128,14 +133,14 @@ type ClasterTaskPool struct {
 func NewClasterTaskPool(workerlen int) *ClasterTaskPool{
 
 	return &ClasterTaskPool{
-		workerlen:   workerlen,
+		workerLen:   workerlen,
 		JobQueue:    make(chan ClasterJob),
 		WorkerQueue: make(chan chan ClasterJob, workerlen),
 	}
 }
 
 func (ctp *ClasterTaskPool) Run() {
-	for i := 0; i < ctp.workerlen; i++ {
+	for i := 0; i < ctp.workerLen; i++ {
 		worker := NewWorker()
 		worker.Run(ctp.WorkerQueue)
 	}
@@ -149,10 +154,4 @@ func (ctp *ClasterTaskPool) Run() {
 			}
 		}
 	}()
-}
-
-func (ctp *ClasterTaskPool) Stop() {
-	sc <- 0
-	ctp.JobQueue = nil
-	ctp.WorkerQueue = nil
 }

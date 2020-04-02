@@ -54,9 +54,8 @@ func SignTransferMsg(from, to string, amount, gas, nonce uint64, priv string, is
 }
 
 //on line
-func HttpTransferTx(from, to, gas, nonce, amount, priv, proxy string) {
+func HttpTransferTx(from, to, gas, nonce, amount, priv, proxy, reqUrl string) {
 	cli := &http.Client{}
-	reqUrl := "http://ciChain:3030/tx/transfers"
 	data := url.Values{}
 	data.Set("from", from)
 	data.Set("to", to)

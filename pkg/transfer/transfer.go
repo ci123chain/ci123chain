@@ -14,7 +14,7 @@ const RouteKey = "Transfer"
 
 func NewTransferTx(from, to sdk.AccAddress, gas, nonce uint64, amount sdk.Coin, isFabric bool ) transaction.Transaction {
 	tx := &TransferTx{
-		Common: transaction.CommonTx{
+		CommonTx: transaction.CommonTx{
 			From: from,
 			Gas:  gas,
 			Nonce:nonce,
@@ -48,10 +48,10 @@ func SignTransferTx(from string, to string, amount, gas, nonce uint64, priv []by
 
 
 type TransferTx struct {
-	Common transaction.CommonTx
-	To     sdk.AccAddress
-	Amount sdk.Coin
-	FabricMode bool
+	transaction.CommonTx
+	To     sdk.AccAddress   	`json:"to"`
+	Amount sdk.Coin         	`json:"amount"`
+	FabricMode bool         	`json:"fabric_mode"`
 }
 
 //func DecodeTransferTx(b []byte) (*TransferTx, error) {
@@ -67,16 +67,16 @@ type TransferTx struct {
 //}
 
 func (tx *TransferTx) SetPubKey(pub []byte) {
-	tx.Common.PubKey = pub
+	tx.CommonTx.PubKey = pub
 }
 
 func (tx *TransferTx) SetSignature(sig []byte) {
-	tx.Common.SetSignature(sig)
+	tx.CommonTx.SetSignature(sig)
 }
 
 
 func (tx *TransferTx) ValidateBasic() sdk.Error {
-	if err := tx.Common.ValidateBasic(); err != nil {
+	if err := tx.CommonTx.ValidateBasic(); err != nil {
 		return err
 	}
 	if tx.Amount.IsEqual(sdk.NewCoin(sdk.NewInt(0)))  {
@@ -85,7 +85,7 @@ func (tx *TransferTx) ValidateBasic() sdk.Error {
 	if transaction.EmptyAddr(tx.To) {
 		return types.ErrBadReceiver(types.DefaultCodespace, errors.New("empty to address"))
 	}
-	return tx.Common.VerifySignature(tx.GetSignBytes(), tx.FabricMode)
+	return tx.VerifySignature(tx.GetSignBytes(), tx.FabricMode)
 }
 
 func (tx *TransferTx) Route() string {
@@ -109,13 +109,13 @@ func (tx *TransferTx) Bytes() []byte {
 }
 
 func (tx *TransferTx) GetGas() uint64 {
-	return tx.Common.Gas
+	return tx.Gas
 }
 
 func (tx *TransferTx) GetNonce() uint64 {
-	return tx.Common.Nonce
+	return tx.Nonce
 }
 
 func (tx *TransferTx) GetFromAddress() sdk.AccAddress {
-	return tx.Common.From
+	return tx.From
 }

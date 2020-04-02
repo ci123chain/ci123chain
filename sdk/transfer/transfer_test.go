@@ -11,19 +11,30 @@ import (
 	"testing"
 )
 
+var (
+	from = "0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c"
+	to = "0x505A74675dc9C71eF3CB5DF309256952917E801e"
+	amount = "2"
+	offlineAmount = uint64(2)
+	gas = "20000"
+	offlineGas = uint64(20000)
+	nonce = "2"
+	offlineNonce = uint64(2)
+	priv = "2b452434ac4f7cf9c5d61d62f23834f34e851fb6efdb8d4a8c6e214a8bc93d70"
+	proxy = "lb"
+	reqUrl = "http://ciChain:3030/tx/broadcast"
+	onlineReqUrl = "http://ciChain:3030/tx/transfers"
+)
 
 func TestSignTransferMsg(t *testing.T) {
 
-	signdata, err := SignTransferMsg("0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c",
-		"0x505A74675dc9C71eF3CB5DF309256952917E801e",2, 20000, 2, "2b452434ac4f7cf9c5d61d62f23834f34e851fb6efdb8d4a8c6e214a8bc93d70", false)
-
+	signdata, err := SignTransferMsg(from, to,offlineAmount, offlineGas, offlineNonce, priv, false)
 
 	assert.NoError(t, err)
 	httpTransfer(hex.EncodeToString(signdata))
 }
 func httpTransfer(param string) {
 	cli := &http.Client{}
-	reqUrl := "http://ciChain:3030/tx/broadcast"
 	data := url.Values{}
 	data.Set("txByte", param)
 	data.Set("proxy", "lb")
@@ -48,20 +59,12 @@ func httpTransfer(param string) {
 }
 
 func TestSendTransferMSg(t *testing.T) {
-	from := "0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c"
-	to := "0x505A74675dc9C71eF3CB5DF309256952917E801e"
-	amount := "2"
-	gas := "20000"
-	nonce := "2"
-	priv := "2b452434ac4f7cf9c5d61d62f23834f34e851fb6efdb8d4a8c6e214a8bc93d70"
-	proxy := "lb"
-	httpSendTransferMSg(from, to, amount, gas, nonce, priv, proxy)
+	httpSendTransferMSg(from, to, amount, gas, nonce, priv, proxy, onlineReqUrl)
 }
 
-func httpSendTransferMSg(from, to, amount, gas, nonce, priv, proxy string) {
+func httpSendTransferMSg(from, to, amount, gas, nonce, priv, proxy, reqUrl string) {
 	//
 	cli := &http.Client{}
-	reqUrl := "http://ciChain:3030/tx/transfers"
 	data := url.Values{}
 	data.Set("from", from)
 	data.Set("to", to)

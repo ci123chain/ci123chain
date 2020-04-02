@@ -675,7 +675,7 @@ func (app *BaseApp) EndBlock(req abci.RequestEndBlock) (res abci.ResponseEndBloc
 	if app.committer != nil {
 		app.committer(app.deliverState.ctx)
 	}
-	return
+	return res
 }
 
 // Implements ABCI
@@ -684,6 +684,8 @@ func (app *BaseApp) Commit() (res abci.ResponseCommit) {
 	/*
 		// Write the latest Header to the store
 			headerBytes, err := proto.Marshal(&header)
+
+
 			if err != nil {
 				panic(err)
 			}

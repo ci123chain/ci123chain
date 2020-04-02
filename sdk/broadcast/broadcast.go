@@ -8,9 +8,8 @@ import (
 )
 
 //同步
-func httpBroadcastTx(tx string) ([]byte, error) {
+func httpBroadcastTx(tx, reqUrl string) ([]byte, error) {
 	cli := &http.Client{}
-	reqUrl := "http://ciChain:3030/tx/broadcast"
 	data := url.Values{}
 	data.Set("txByte", tx)
 	data.Set("proxy", "lb")

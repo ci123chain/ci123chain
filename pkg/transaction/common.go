@@ -8,12 +8,12 @@ import (
 )
 
 type CommonTx struct {
-	Code      uint8
-	From      sdk.AccAddress
-	Nonce     uint64
-	Gas       uint64
-	PubKey 	  []byte
-	Signature []byte
+	Code      uint8				`json:"code"`
+	From      sdk.AccAddress	`json:"from"`
+	Nonce     uint64			`json:"nonce"`
+	Gas       uint64			`json:"gas"`
+	PubKey 	  []byte			`json:"pub_key"`
+	Signature []byte			`json:"signature"`
 }
 
 

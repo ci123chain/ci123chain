@@ -24,6 +24,8 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/order"
 	orhandler "github.com/tanhuiya/ci123chain/pkg/order/handler"
 	"github.com/tanhuiya/ci123chain/pkg/params"
+	"github.com/tanhuiya/ci123chain/pkg/staking"
+	stakingTypes "github.com/tanhuiya/ci123chain/pkg/staking/types"
 	"github.com/tanhuiya/ci123chain/pkg/supply"
 	"github.com/tanhuiya/ci123chain/pkg/transaction"
 	"github.com/tanhuiya/ci123chain/pkg/transfer"
@@ -33,7 +35,6 @@ import (
 	"github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/types"
-	tmtypes "github.com/tendermint/tendermint/types"
 	tmdb "github.com/tendermint/tm-db"
 	"io"
 	"os"
@@ -63,17 +64,21 @@ var (
 
 	fcStoreKey       = sdk.NewKVStoreKey(fc.FcStoreKey)
 	disrtStoreKey         = sdk.NewKVStoreKey(k.DisrtKey)
+	stakingStoreKey  = sdk.NewKVStoreKey(staking.StoreKey)
 
 	ModuleBasics = module.NewBasicManager(
 		account.AppModuleBasic{},
 		auth.AppModuleBasic{},
 		supply.AppModuleBasic{},
 		order.AppModuleBasic{},
+		staking.AppModuleBasic{},
 		)
 
 	maccPerms = map[string][]string{
 		//mortgage.ModuleName: nil,
 		ibc.ModuleName: nil,
+		stakingTypes.BondedPoolName: {supply.Burner, supply.Staking},
+		stakingTypes.NotBondedPoolName: {supply.Burner, supply.Staking},
 	}
 )
 
@@ -126,9 +131,10 @@ func NewChain(logger log.Logger, tmdb tmdb.DB, traceStore io.Writer) *Chain {
 
 	fcKeeper := fc.NewFcKeeper(cdc, fcStoreKey, accKeeper)
 	distrKeeper := k.NewKeeper(cdc, disrtStoreKey, fcKeeper, accKeeper)
+	stakingKeeper := staking.NewKeeper(cdc, stakingStoreKey, accKeeper,supplyKeeper, paramsKeeper.Subspace(params.ModuleName))
 
 	cdb := tmdb.(*couchdb.GoCouchDB)
-	orderKeeper := order.NewKeeper(cdb, OrderStoreKey)
+	orderKeeper := order.NewKeeper(cdb, OrderStoreKey, accKeeper)
 
 	// 设置modules
 	c.mm = module.NewManager(
@@ -136,17 +142,21 @@ func NewChain(logger log.Logger, tmdb tmdb.DB, traceStore io.Writer) *Chain {
 		account.AppModule{AccountKeeper: accKeeper},
 		distr.AppModule{DistributionKeeper: distrKeeper},
 		order.AppModule{OrderKeeper: &orderKeeper},
+		staking.AppModule{StakingKeeper:stakingKeeper, AccountKeeper:accKeeper, SupplyKeeper:supplyKeeper},
 		)
 	// invoke router
 	c.Router().AddRoute(transfer.RouteKey, handler.NewHandler(txm, accKeeper, sm))
 	c.Router().AddRoute(ibc.RouterKey, ibc.NewHandler(ibcKeeper))
 	c.Router().AddRoute(order.RouteKey, orhandler.NewHandler(&orderKeeper))
+	c.Router().AddRoute(staking.RouteKey, staking.NewHandler(stakingKeeper))
 	// query router
 	c.QueryRouter().AddRoute(ibc.RouterKey, ibc.NewQuerier(ibcKeeper))
 
 	c.QueryRouter().AddRoute(distr.RouteKey, distr.NewQuerier(distrKeeper))
 
 	c.QueryRouter().AddRoute(order.RouteKey, order.NewQuerier(&orderKeeper))
+
+	c.QueryRouter().AddRoute(staking.RouteKey, staking.NewQuerier(stakingKeeper))
 
 	c.SetAnteHandler(ante.NewAnteHandler(c.authKeeper, accKeeper, fcKeeper))
 	c.SetBeginBlocker(c.BeginBlocker)
@@ -176,6 +186,7 @@ func (c *Chain) mountStores() error {
 		fcStoreKey,
 		disrtStoreKey,
 		OrderStoreKey,
+		stakingStoreKey,
 	}
 	c.MountStoresIAVL(keys...)
 
@@ -208,11 +219,11 @@ type AppInit struct {
 
 	// create the application genesis tx
 	AppGenTx func(cdc *amino.Codec, pk crypto.PubKey, genTxConfig config.GenTx) (
-		appGenTx, cliPrint json.RawMessage, validator tmtypes.GenesisValidator, err error)
+		appGenTx, cliPrint json.RawMessage, validator types.GenesisValidator, err error)
 
 	// AppGenState creates the core parameters initialization. It takes in a
 	// pubkey meant to represent the pubkey of the validator of this machine.
-	AppGenState func() (appState json.RawMessage, err error)
+	AppGenState func(validators []types.GenesisValidator) (appState json.RawMessage, err error)
 
 
 	GetValidator func(pk crypto.PubKey, name string) types.GenesisValidator

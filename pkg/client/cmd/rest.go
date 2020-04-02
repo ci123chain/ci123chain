@@ -27,6 +27,7 @@ import (
 	distr "github.com/tanhuiya/ci123chain/pkg/distribution"
 	orQuery "github.com/tanhuiya/ci123chain/pkg/order"
 	order "github.com/tanhuiya/ci123chain/pkg/order/rest"
+	sRest "github.com/tanhuiya/ci123chain/pkg/staking/client/rest"
 )
 
 const (
@@ -85,6 +86,8 @@ func NewRestServer() *RestServer {
 	distr.RegisterRoutes(cliCtx, r)
 	order.RegisterTxRoutes(cliCtx, r)
 	orQuery.RegisterTxRoutes(cliCtx, r)
+	sRest.RegisterRestTxRoutes(cliCtx, r)
+	sRest.RegisterTxRoutes(cliCtx, r)
 
 	return &RestServer{
 		Mux: r,
@@ -138,14 +141,6 @@ func Handle404() http.Handler {
 				//fmt.Println(j)
 				newData.Set(k, v)
 			}
-/*
-			body, err := ioutil.ReadAll(req.Body)
-			if err != nil {
-				//
-			}
-			var p QueryParams
-			err = json.Unmarshal(body, &p)
-			*/
 
 			proxyurl, _ := url.Parse(dest)
 			//proxy := httputil.NewSingleHostReverseProxy(proxyurl)
