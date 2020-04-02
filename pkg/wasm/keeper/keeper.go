@@ -36,7 +36,7 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, homeDir string, wasmConf
 }
 
 //　Create uploads and compiles a WASM contract, returning a short identifier for the contract
-func (k Keeper) Create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte, source string, builder string) (codeID uint64, err error) {
+func (k Keeper) Create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte) (codeID uint64, err error) {
 
 	wasmCode, err = uncompress(wasmCode)
 	if err != nil {
