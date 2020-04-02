@@ -108,6 +108,12 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator sdk.AccAddre
 	wc, err := k.wasmer.GetWasmCode(codeInfo.CodeHash)
 	if err != nil {
 		wc = store.Get(codeInfo.CodeHash)
+		newWasmer, _, err := k.wasmer.Create(wc)
+		if err != nil {
+			return sdk.AccAddress{}, err
+		}
+		bz := k.cdc.MustMarshalJSON(newWasmer)
+		store.Set(types.GetWasmerKey(), bz)
 	}
 	code = wc
 	_, err = k.wasmer.Instantiate(code,types.FunctionName, initMsg)
@@ -138,6 +144,12 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	wc, err := k.wasmer.GetWasmCode(codeInfo.CodeHash)
 	if err != nil {
 		wc = store.Get(codeInfo.CodeHash)
+		newWasmer, _, err := k.wasmer.Create(wc)
+		if err != nil {
+			return sdk.Result{}, err
+		}
+		bz := k.cdc.MustMarshalJSON(newWasmer)
+		store.Set(types.GetWasmerKey(), bz)
 	}
 	code = wc
 	res, err := k.wasmer.Execute(code, types.FunctionName, msg)
@@ -163,6 +175,12 @@ func (k Keeper) Query(ctx sdk.Context, contractAddress sdk.AccAddress) (types.Co
 	wc, err := k.wasmer.GetWasmCode(codeInfo.CodeHash)
 	if err != nil {
 		wc = store.Get(codeInfo.CodeHash)
+		newWasmer, _, err := k.wasmer.Create(wc)
+		if err != nil {
+			return types.ContractState{}, err
+		}
+		bz := k.cdc.MustMarshalJSON(newWasmer)
+		store.Set(types.GetWasmerKey(), bz)
 	}
 	code = wc
 	res, err := k.wasmer.Query(code, types.FunctionName, nil)
