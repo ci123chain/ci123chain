@@ -9,14 +9,14 @@ import (
 )
 
 
-func SignStoreCodeMsg(from sdk.AccAddress, gas, nonce uint64, priv string, sender sdk.AccAddress, wasmcode []byte, source, builder string) ([]byte, error) {
+func SignStoreCodeMsg(from sdk.AccAddress, gas, nonce uint64, priv string, sender sdk.AccAddress, wasmcode []byte) ([]byte, error) {
 
 	privateKey, err := hex.DecodeString(priv)
 	if err != nil {
 		return nil, err
 	}
 
-	tx := wasm.NewStoreCodeTx(from, gas, nonce, sender, wasmcode, source, builder)
+	tx := wasm.NewStoreCodeTx(from, gas, nonce, sender, wasmcode)
 	sid := cryptosuit.NewFabSignIdentity()
 	pub, err  := sid.GetPubKey(privateKey)
 

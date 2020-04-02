@@ -11,11 +11,9 @@ type StoreCodeTx struct {
 	transaction.CommonTx
 	Sender      sdk.AccAddress    `json:"sender"`
 	WASMByteCode []byte           `json:"wasm_byte_code"`
-	Source      string            `json:"source"`
-	Builder     string            `json:"builder"`
 }
 
-func NewStoreCodeTx(from sdk.AccAddress, gas, nonce uint64, sender sdk.AccAddress, wasmCode []byte, source, builder string) StoreCodeTx{
+func NewStoreCodeTx(from sdk.AccAddress, gas, nonce uint64, sender sdk.AccAddress, wasmCode []byte) StoreCodeTx{
 
 	return StoreCodeTx{
 		CommonTx:     transaction.CommonTx{
@@ -25,13 +23,17 @@ func NewStoreCodeTx(from sdk.AccAddress, gas, nonce uint64, sender sdk.AccAddres
 		},
 		Sender:       sender,
 		WASMByteCode: wasmCode,
-		Source:       source,
-		Builder:      builder,
 	}
 }
 
 //TODO
 func (msg *StoreCodeTx) ValidateBasic() sdk.Error {
+
+	/*if err := msg.CommonTx.ValidateBasic(); err != nil {
+		return err
+	}
+	return msg.VerifySignature(msg.GetSignBytes(), true)*/
+
 	return nil
 }
 
@@ -103,6 +105,11 @@ func NewInstantiateContractTx(from sdk.AccAddress, gas, nonce, codeID uint64, se
 
 //TODO
 func (msg *InstantiateContractTx) ValidateBasic() sdk.Error {
+	/*if err := msg.CommonTx.ValidateBasic(); err != nil {
+		return err
+	}
+	return msg.VerifySignature(msg.GetSignBytes(), true)*/
+
 	return nil
 }
 
@@ -173,6 +180,11 @@ func NewExecuteContractTx(from sdk.AccAddress, gas, nonce uint64, sender sdk.Acc
 
 //TODO
 func (msg *ExecuteContractTx) ValidateBasic() sdk.Error {
+
+	/*if err := msg.CommonTx.ValidateBasic(); err != nil {
+		return err
+	}
+	return msg.VerifySignature(msg.GetSignBytes(), true)*/
 	return nil
 }
 

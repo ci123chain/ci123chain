@@ -8,17 +8,13 @@ import (
 type CodeInfo struct {
 	CodeHash    []byte          `json:"code_hash"`
 	Creator     sdk.AccAddress  `json:"creator"`
-	Source      string          `json:"source"`
-	Builder     string          `json:"builder"`
 }
 
-func NewCodeInfo(codeHash []byte, creator sdk.AccAddress, source string, builder string) CodeInfo {
+func NewCodeInfo(codeHash []byte, creator sdk.AccAddress) CodeInfo {
 
 	return CodeInfo{
 		CodeHash: codeHash,
 		Creator:  creator,
-		Source:   source,
-		Builder:  builder,
 	}
 }
 

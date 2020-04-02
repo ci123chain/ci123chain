@@ -24,6 +24,15 @@ const (
 	FlagAddress = "address"
 	FlagPassword = "password"
 	//FlagWithCrypto 	   = "cryptosuit"
+
+	FlagFile = "file"
+	FlagGas = "gas"
+	FlagPrivateKey = "privateKey"
+	FlagMsg = "msg"
+	FlagLabel = "label"
+	FlagID = "codeID"
+	FlagFunds = "funds"
+	FlagContractAddress = "contractAddress"
 )
 
 func GetPassphrase(addr sdk.AccAddress) (string, error) {

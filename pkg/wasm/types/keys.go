@@ -15,6 +15,10 @@ const (
 	QueryContractList  = "queryContractList"
 
 	ModePerm os.FileMode = 0666
+	SuffixName = ".wasm"
+	FolderName = "wasm"
+
+	FunctionName = "sum"
 )
 
 var (

@@ -28,7 +28,7 @@ func handleStoreCodeTx(ctx sdk.Context, k Keeper, msg wasm.StoreCodeTx) sdk.Resu
 		return wasm.ErrInvalidMsg(wasm.DefaultCodespace, err).Result()
 	}
 
-	codeID, Err := k.Create(ctx, msg.Sender, msg.WASMByteCode, msg.Source, msg.Builder)
+	codeID, Err := k.Create(ctx, msg.Sender, msg.WASMByteCode)
 	if Err != nil {
 		return wasm.ErrCreateFailed(wasm.DefaultCodespace, Err).Result()
 	}
