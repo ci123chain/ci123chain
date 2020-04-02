@@ -75,7 +75,7 @@ clean-cproxy:
 
 
 .PHONY:release, build all
-release: build-linux build-cproxy-image
+release: build-linux
 
 release-build: build-linux build-cproxy-image
 	docker build -t cichain:$(Tag) .
