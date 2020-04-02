@@ -143,7 +143,7 @@ func NewChain(logger log.Logger, tmdb tmdb.DB, traceStore io.Writer) *Chain {
 
 	homeDir := viper.GetString(cli.HomeFlag)
 	var wasmconfig wasm_types.WasmConfig
-	wasmKeeper := wasm.NewKeeper(cdc, wasmStoreKey,homeDir, wasmconfig, accKeeper)
+	wasmKeeper := wasm.NewKeeper(cdb, cdc, wasmStoreKey,homeDir, wasmconfig, accKeeper)
 
 	// 设置modules
 	c.mm = module.NewManager(

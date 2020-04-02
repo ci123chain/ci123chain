@@ -7,6 +7,7 @@ import (
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/account"
 	"github.com/tanhuiya/ci123chain/pkg/account/exported"
+	"github.com/tanhuiya/ci123chain/pkg/couchdb"
 	"github.com/tanhuiya/ci123chain/pkg/wasm/types"
 )
 
@@ -15,18 +16,20 @@ const (
 )
 
 type Keeper struct {
+	cdb 		*couchdb.GoCouchDB
 	storeKey    sdk.StoreKey
 	cdc         *codec.Codec
 	wasmer      Wasmer
 	AccountKeeper       account.AccountKeeper
 }
 
-func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, homeDir string, wasmConfig types.WasmConfig,  accountKeeper account.AccountKeeper) Keeper {
+func NewKeeper(cdb *couchdb.GoCouchDB,cdc *codec.Codec, storeKey sdk.StoreKey, homeDir string, wasmConfig types.WasmConfig,  accountKeeper account.AccountKeeper) Keeper {
 	wasmer, err := NewWasmer(homeDir, wasmConfig)
 	if err != nil {
 		panic(err)
 	}
 	return Keeper{
+		cdb:		   cdb,
 		storeKey:      storeKey,
 		cdc:           cdc,
 		wasmer:        wasmer,
@@ -63,7 +66,7 @@ func (k Keeper) Create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte,
 	codeInfo := types.NewCodeInfo(codeHash, creator, source, builder)
 	store.Set(types.GetCodeKey(codeID), k.cdc.MustMarshalBinaryBare(codeInfo))
 	store.Set(types.GetWasmerKey(), bz)
-
+	store.Set(codeHash, wasmCode)
 	return codeID, nil
 }
 
@@ -103,8 +106,14 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator sdk.AccAddre
 	k.cdc.MustUnmarshalBinaryBare(bz, &codeInfo)
 
 	//TODO
+	var code []byte
 	params := []string{"1", "2"}
-	_, err := k.wasmer.Instantiate(codeInfo.CodeHash, "sum", params)
+	wc, err := k.wasmer.GetWasmCode(codeInfo.CodeHash)
+	if err != nil {
+		wc = store.Get(codeInfo.CodeHash)
+	}
+	code = wc
+	_, err = k.wasmer.Instantiate(code,"sum", params)
 	if err != nil {
 		return sdk.AccAddress{}, err
 	}
@@ -127,8 +136,15 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 		return sdk.Result{}, err
 	}
 	//TODO
+	store := ctx.KVStore(k.storeKey)
+	var code []byte
+	wc, err := k.wasmer.GetWasmCode(codeInfo.CodeHash)
+	if err != nil {
+		wc = store.Get(codeInfo.CodeHash)
+	}
+	code = wc
 	params := []string{"1", "2"}
-	res, err := k.wasmer.Execute(codeInfo.CodeHash, "sum", params)
+	res, err := k.wasmer.Execute(code, "sum", params)
 	if err != nil {
 		return sdk.Result{}, err
 	}
@@ -137,6 +153,7 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	}, nil
 }
 
+// query?
 func (k Keeper) Query(ctx sdk.Context, contractAddress sdk.AccAddress) (types.ContractState, error) {
 
 	codeInfo, err := k.contractInstance(ctx, contractAddress)
@@ -144,8 +161,15 @@ func (k Keeper) Query(ctx sdk.Context, contractAddress sdk.AccAddress) (types.Co
 		return types.ContractState{}, err
 	}
 	//TODO
+	var code []byte
+	store := ctx.KVStore(k.storeKey)
 	params := []string{"1", "2"}
-	res, err := k.wasmer.Query(codeInfo.CodeHash, "sum", params)
+	wc, err := k.wasmer.GetWasmCode(codeInfo.CodeHash)
+	if err != nil {
+		wc = store.Get(codeInfo.CodeHash)
+	}
+	code = wc
+	res, err := k.wasmer.Query(code, "sum", params)
 	if err != nil {
 		return types.ContractState{}, err
 	}
