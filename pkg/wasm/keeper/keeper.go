@@ -36,7 +36,7 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, homeDir string, wasmConf
 }
 
 //　Create uploads and compiles a WASM contract, returning a short identifier for the contract
-func (k Keeper) Create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte) (codeID uint64, err error) {
+func (k Keeper) Create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte, source string, builder string) (codeID uint64, err error) {
 
 	wasmCode, err = uncompress(wasmCode)
 	if err != nil {
@@ -64,14 +64,15 @@ func (k Keeper) Create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte)
 	codeInfo := types.NewCodeInfo(codeHash, creator)
 	store.Set(types.GetCodeKey(codeID), k.cdc.MustMarshalBinaryBare(codeInfo))
 	store.Set(types.GetWasmerKey(), bz)
-
+	store.Set(codeHash, wasmCode)
 	return codeID, nil
 }
 
-//init contract
+//
 func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator sdk.AccAddress, initMsg json.RawMessage, label string, deposit sdk.Coin) (sdk.AccAddress, error) {
 	var codeInfo types.CodeInfo
 	var wasmer Wasmer
+	var code []byte
 	contractAddress := k.generateContractAddress(ctx, codeID)
 	existingAcct := k.AccountKeeper.GetAccount(ctx, contractAddress)
 	if existingAcct != nil {
@@ -91,7 +92,7 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator sdk.AccAddre
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.GetCodeKey(codeID))
 	if bz == nil {
-		return sdk.AccAddress{}, sdk.ErrInternal("invalid codeID")
+		return sdk.AccAddress{}, sdk.ErrInternal("empty codeID")
 	}
 	wasmerBz := store.Get(types.GetWasmerKey())
 	if wasmerBz != nil {
@@ -103,7 +104,13 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator sdk.AccAddre
 	}
 	k.cdc.MustUnmarshalBinaryBare(bz, &codeInfo)
 
-	_, err := k.wasmer.Instantiate(codeInfo.CodeHash, types.FunctionName, initMsg)
+	//params := []string{"1", "2"}
+	wc, err := k.wasmer.GetWasmCode(codeInfo.CodeHash)
+	if err != nil {
+		wc = store.Get(codeInfo.CodeHash)
+	}
+	code = wc
+	_, err = k.wasmer.Instantiate(code,types.FunctionName, initMsg)
 	if err != nil {
 		return sdk.AccAddress{}, err
 	}
@@ -118,23 +125,31 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator sdk.AccAddre
 	return contractAddress, nil
 }
 
-//invoke contract
+//
 func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, msg json.RawMessage, coin sdk.Coin) (sdk.Result, error) {
 
 	codeInfo, err := k.contractInstance(ctx, contractAddress)
 	if err != nil {
 		return sdk.Result{}, err
 	}
-	res, err := k.wasmer.Execute(codeInfo.CodeHash, types.FunctionName, msg)
+	//TODO
+	store := ctx.KVStore(k.storeKey)
+	var code []byte
+	wc, err := k.wasmer.GetWasmCode(codeInfo.CodeHash)
+	if err != nil {
+		wc = store.Get(codeInfo.CodeHash)
+	}
+	code = wc
+	res, err := k.wasmer.Execute(code, types.FunctionName, msg)
 	if err != nil {
 		return sdk.Result{}, err
 	}
-	//TODO
 	return sdk.Result{
 		Data:   []byte(fmt.Sprintf("executeResult:%s", res)),
 	}, nil
 }
 
+// query?
 func (k Keeper) Query(ctx sdk.Context, contractAddress sdk.AccAddress) (types.ContractState, error) {
 
 	codeInfo, err := k.contractInstance(ctx, contractAddress)
@@ -142,8 +157,15 @@ func (k Keeper) Query(ctx sdk.Context, contractAddress sdk.AccAddress) (types.Co
 		return types.ContractState{}, err
 	}
 	//TODO
-	params := []string{"1", "2"}
-	res, err := k.wasmer.Query(codeInfo.CodeHash, types.FunctionName, params)
+	var code []byte
+	store := ctx.KVStore(k.storeKey)
+	//params := []string{"1", "2"}
+	wc, err := k.wasmer.GetWasmCode(codeInfo.CodeHash)
+	if err != nil {
+		wc = store.Get(codeInfo.CodeHash)
+	}
+	code = wc
+	res, err := k.wasmer.Query(code, types.FunctionName, nil)
 	if err != nil {
 		return types.ContractState{}, err
 	}

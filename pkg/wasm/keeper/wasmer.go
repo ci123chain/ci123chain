@@ -14,7 +14,7 @@ import (
 )
 
 type Wasmer struct {
-	HomeDir     string              `json:"home_dir"`
+	HomeDir      string              `json:"home_dir"`
 	FilePathMap  map[string]string  `json:"file_path_map"`
 	LastFileID   int				`json:"last_file_id"`
 }
@@ -42,8 +42,9 @@ func (w *Wasmer) Create(code []byte) (Wasmer,[]byte, error) {
 	codeHash := MakeCodeHash(code)
 	hash := fmt.Sprintf("%x", codeHash)
 	if Str := w.FilePathMap[hash]; Str != "" {
-		return Wasmer{}, nil, errors.New("the file has existed")
+		return Wasmer{}, nil, errors.New("the contract file has existed")
 	}
+
 	id, fileName := makeFilePath(w.LastFileID)
 	err := ioutil.WriteFile(w.HomeDir + "/" + fileName, code, types.ModePerm)
 	if err != nil {
@@ -59,12 +60,8 @@ func (w *Wasmer) Create(code []byte) (Wasmer,[]byte, error) {
 }
 
 
-func (w *Wasmer) Instantiate(id []byte, funcName string, args json.RawMessage) (string, error) {
+func (w *Wasmer) Instantiate(code []byte, funcName string, args json.RawMessage) (string, error) {
 	//直接引用go-ext-wasm的instance.
-	code, err := w.GetWasmCode(id)
-	if err != nil {
-		return "", err
-	}
 	instance, err := wasmer.NewInstance(code)
 	//instance, err := wasmer.NewInstanceWithImports(code, imports)
 	if err != nil {
@@ -77,14 +74,10 @@ func (w *Wasmer) Instantiate(id []byte, funcName string, args json.RawMessage) (
 	//result, _ := function(args)
 	Result := result.String()
 	return Result, nil
+
 }
 
-func (w *Wasmer) Execute(id []byte, funcName string, args json.RawMessage) (string, error) {
-
-	code, err := w.GetWasmCode(id)
-	if err != nil {
-		return "", err
-	}
+func (w *Wasmer) Execute(code []byte, funcName string, args json.RawMessage) (string, error) {
 	instance, err := wasmer.NewInstance(code)
 	//instance, err := wasmer.NewInstanceWithImports(code, imports)
 	if err != nil {
@@ -93,20 +86,16 @@ func (w *Wasmer) Execute(id []byte, funcName string, args json.RawMessage) (stri
 	function:= instance.Exports[funcName]
 
 	//TODO
-	result, _ := function(2,3)
+	result, _ := function(3, 4)
 	//result, _ := function(args)
 	Result := result.String()
 	return Result, nil
 }
 
 
-func (w *Wasmer) Query(id []byte, funcName string, args []string) (string, error) {
-
-	code, err := w.GetWasmCode(id)
-	if err != nil {
-		return "", err
-	}
+func (w *Wasmer) Query(code []byte, funcName string, args json.RawMessage) (string, error) {
 	instance, err := wasmer.NewInstance(code)
+	//instance, err := wasmer.NewInstanceWithImports(code, imports)
 	if err != nil {
 		return "", err
 	}
@@ -118,7 +107,6 @@ func (w *Wasmer) Query(id []byte, funcName string, args []string) (string, error
 	Result := result.String()
 	return Result, nil
 }
-
 
 func makeFilePath(id int) (int, string) {
 	id ++
@@ -134,8 +122,7 @@ func MakeCodeHash(code []byte) []byte {
 	return Result
 }
 
-func(w *Wasmer) GetWasmCode(id []byte) ([]byte, error) {
-
+func (w *Wasmer) GetWasmCode(id []byte) ([]byte, error) {
 	hash := fmt.Sprintf("%x", id)
 	filePath := w.FilePathMap[hash]
 	code, err := ioutil.ReadFile(w.HomeDir + "/" + filePath)

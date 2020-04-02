@@ -66,7 +66,7 @@ func queryContractState(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byt
 	if err != nil {
 		return nil, sdk.ErrInternal("unmarshal failed")
 	}
-
+	//query
 	contractState, err := k.Query(ctx, params.ContractAddress)
 	if err != nil {
 		return nil, sdk.ErrInternal("get contract state failed")
