@@ -26,4 +26,4 @@ clean-cproxy:
 	docker images | grep "$(Tag)service" | awk '{print $$3}' | xargs docker rmi
 
 .PHONY:release, build all
-release: build-cproxy-image
+release: build-cproxy-linux
