@@ -82,6 +82,9 @@ func ConstructAppExporter(appFn AppExporterInit, name string) AppExporter {
 }
 
 func GetStateDB(path, statedb string) (db dbm.DB, err error) {
+
+
+
 	var dbname string
 	if statedb == "leveldb" {
 		db, err = dbm.NewGoLevelDB(DefaultDBName, path)

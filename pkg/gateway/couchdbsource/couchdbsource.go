@@ -100,10 +100,11 @@ func (svr *CouchDBSourceImp) GetDBConnection() (db *couchdb.GoCouchDB, err error
 		}
 		db, err = couchdb.NewGoCouchDB(dbname, split[0],nil)
 	} else {
-		info := auths[0]
-		userpass := strings.Split(info, ":")
-		if len(userpass) < 2 {
-			split := strings.Split(userpass[0], "/")
+		info := auths[0] // admin:password
+		userandpass := strings.Split(info, ":")
+		if len(userandpass) < 2 {
+			hostandpath := auths[1]
+			split := strings.Split(hostandpath, "/")
 			if len(split) < 2 {
 				dbname = DefaultDBName
 			} else {
@@ -111,8 +112,9 @@ func (svr *CouchDBSourceImp) GetDBConnection() (db *couchdb.GoCouchDB, err error
 			}
 			db, err = couchdb.NewGoCouchDB(dbname, split[0],nil)
 		} else {
-			auth := &couchdb.BasicAuth{Username: userpass[0], Password: userpass[1]}
-			split := strings.Split(userpass[0], "/")
+			auth := &couchdb.BasicAuth{Username: userandpass[0], Password: userandpass[1]}
+			hostandpath := auths[1]
+			split := strings.Split(hostandpath, "/")
 			if len(split) < 2 {
 				dbname = DefaultDBName
 			} else {
