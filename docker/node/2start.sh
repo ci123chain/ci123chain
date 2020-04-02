@@ -1,8 +1,4 @@
 #!/bin/bash
-if [ $GATEWAY ]; then
-    ./gateway-linux
-    exit 0
-fi
 
 # genesis file
 if [ ! -f $CI_HOME/config/genesis.json ]; then
