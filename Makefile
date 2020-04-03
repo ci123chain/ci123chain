@@ -33,6 +33,7 @@ client-linux:
 	GOPROXY=$(PROXY) CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GO_BUILD_CMD) -o ./docker/node/build/cli-linux ./cmd/cicli
 
 build-image:
+	docker rmi cichain:$(Tag)
 	docker build -t cichain:$(Tag) ./docker/node
 
 .PHONY: build-docker
@@ -64,6 +65,7 @@ build-cproxy-linux:
 	GOPROXY=$(PROXY) CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GO_BUILD_CMD) -o ./docker/gateway/build/cproxy-linux ./cmd/gateway
 
 build-cproxy-image: build-cproxy-linux
+	docker rmi cproxyservice:$(Tag)
 	docker build -t cproxyservice:$(Tag) ./docker/gateway
 start-cproxy: build-cproxy-image
 	docker run --name ci123-cproxy-v1 -p 3030:3030 -d cproxyservice:$(Tag)
@@ -71,12 +73,9 @@ clean-cproxy:
 	docker ps -a | grep "ci123-$(Tag)-" | awk '{print $$1}' | xargs docker rm -f
 	docker images | grep "$(Tag)service" | awk '{print $$3}' | xargs docker rmi
 
-
-
-
 .PHONY:release, build all
 release: build-linux build-cproxy-linux
 
-release-build: build-linux build-cproxy-image
+release-build: build-linux build-cproxy-linux
 	docker build -t cichain:$(Tag) .
 
