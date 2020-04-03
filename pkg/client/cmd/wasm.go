@@ -18,147 +18,127 @@ import (
 )
 
 func init() {
-	WasmCmd.AddCommand(StoreCodeCmd,
-		InstantiateContractCmd,
-		ExecuteContractCmd)
 	rootCmd.AddCommand(WasmCmd)
 
-	StoreCodeCmd.Flags().String(helper.FlagFile, "", "the path of contract file")
-	StoreCodeCmd.Flags().String(helper.FlagGas, "", "expected gas of transaction")
-	StoreCodeCmd.Flags().String(helper.FlagPrivateKey, "", "the privateKey of account")
+	WasmCmd.Flags().String(helper.FlagAddress, "", "the address of your account")
+	WasmCmd.Flags().String(helper.FlagGas, "", "expected gas of transaction")
+	WasmCmd.Flags().String(helper.FlagPrivateKey, "", "the privateKey of account")
+	WasmCmd.Flags().String(helper.FlagFunds, "", "funds of contract")
+	WasmCmd.Flags().String(helper.FlagMsg, "", "message of init contract")
+	WasmCmd.Flags().String(helper.FlagFile, "", "the path of contract file")
+	WasmCmd.Flags().String(helper.FlagID, "", "id of contract code")
+	WasmCmd.Flags().String(helper.FlagLabel, "", "label of contract")
+	WasmCmd.Flags().String(helper.FlagContractAddress, "", "address of contract account")
 
-	InstantiateContractCmd.Flags().String(helper.FlagGas, "", "expected gas of transaction")
-	InstantiateContractCmd.Flags().String(helper.FlagPrivateKey, "", "the privateKey of account")
-	InstantiateContractCmd.Flags().String(helper.FlagID, "", "id of contract code")
-	InstantiateContractCmd.Flags().String(helper.FlagLabel, "", "label of contract")
-	InstantiateContractCmd.Flags().String(helper.FlagFunds, "", "funds of contract")
-	InstantiateContractCmd.Flags().String(helper.FlagMsg, "", "message of init contract")
-
-	ExecuteContractCmd.Flags().String(helper.FlagGas, "", "expected gas of transaction")
-	ExecuteContractCmd.Flags().String(helper.FlagPrivateKey, "", "the privateKey of account")
-	ExecuteContractCmd.Flags().String(helper.FlagContractAddress, "", "address of contract account")
-	ExecuteContractCmd.Flags().String(helper.FlagMsg, "", "msg of execute contract")
-	ExecuteContractCmd.Flags().String(helper.FlagFunds, "", "funds of contract")
-
-	util.CheckRequiredFlag(StoreCodeCmd, helper.FlagFile)
-	util.CheckRequiredFlag(StoreCodeCmd, helper.FlagGas)
-	util.CheckRequiredFlag(StoreCodeCmd, helper.FlagPrivateKey)
-
-	util.CheckRequiredFlag(InstantiateContractCmd, helper.FlagGas)
-	util.CheckRequiredFlag(InstantiateContractCmd, helper.FlagPrivateKey)
-	util.CheckRequiredFlag(InstantiateContractCmd, helper.FlagID)
-	util.CheckRequiredFlag(InstantiateContractCmd, helper.FlagLabel)
-	util.CheckRequiredFlag(InstantiateContractCmd, helper.FlagFunds)
-	util.CheckRequiredFlag(InstantiateContractCmd, helper.FlagMsg)
-
-	util.CheckRequiredFlag(ExecuteContractCmd, helper.FlagGas)
-	util.CheckRequiredFlag(ExecuteContractCmd, helper.FlagPrivateKey)
-	util.CheckRequiredFlag(ExecuteContractCmd, helper.FlagContractAddress)
-	util.CheckRequiredFlag(ExecuteContractCmd, helper.FlagMsg)
-	util.CheckRequiredFlag(ExecuteContractCmd, helper.FlagFunds)
-}
-
-
-var StoreCodeCmd = &cobra.Command{
-	Use: "store",
-	Short: "Upload a wasm binary",
-	RunE: func(cmd *cobra.Command, args []string) error {
-
-		ctx, err := client.NewClientContextFromViper(cdc)
-		if err != nil {
-			return  err
-		}
-		code, err := ioutil.ReadFile(helper.FlagFile)
-		if err != nil {
-			return err
-		}
-		from, gas, nonce, key, _, _, err := GetArgs(ctx)
-		if err != nil {
-			return err
-		}
-		txByte, err := sdk.SignStoreCodeMsg(from, gas, nonce, key, from, code)
-		txid, err := ctx.BroadcastSignedData(txByte)
-		if err != nil {
-			return err
-		}
-		fmt.Println(txid)
-		return nil
-	},
-}
-
-var InstantiateContractCmd = &cobra.Command{
-	Use: "init",
-	Short: "Init a wasm contract",
-	RunE: func(cmd *cobra.Command, args []string) error {
-
-		ctx, err := client.NewClientContextFromViper(cdc)
-		if err != nil {
-			return  err
-		}
-		from, gas, nonce, key, funds, msg, err := GetArgs(ctx)
-		if err != nil {
-			return err
-		}
-		id := viper.GetString(helper.FlagID)
-		codeID, err := strconv.ParseUint(id, 10, 64)
-		if err != nil {
-			return err
-		}
-		label := viper.GetString(helper.FlagLabel)
-
-		txByte, err := sdk.SignInstantiateContractMsg(from, gas, nonce, codeID, key, from, label, msg, funds)
-		txid, err := ctx.BroadcastSignedData(txByte)
-		if err != nil {
-			return err
-		}
-		fmt.Println(txid)
-
-		return nil
-	},
-}
-
-var ExecuteContractCmd = &cobra.Command{
-	Use: "invoke",
-	Short: "Execute a command on a wasm contract",
-	RunE: func(cmd *cobra.Command, args []string) error {
-
-		ctx, err := client.NewClientContextFromViper(cdc)
-		if err != nil {
-			return  err
-		}
-		from, gas, nonce, key, funds, msg, err := GetArgs(ctx)
-		if err != nil {
-			return err
-		}
-		contractAddr := viper.GetString(helper.FlagAddress)
-		addrs, err := helper.ParseAddrs(contractAddr)
-		if err != nil {
-			return err
-		}
-		contractAddress := addrs[0]
-		txByte, err := sdk.SignExecuteContractMsg(from, gas, nonce, key, from, contractAddress, msg, funds)
-		txid, err := ctx.BroadcastSignedData(txByte)
-		if err != nil {
-			return err
-		}
-		fmt.Println(txid)
-		return nil
-	},
+	util.CheckRequiredFlag(WasmCmd, helper.FlagGas)
+	util.CheckRequiredFlag(WasmCmd, helper.FlagPrivateKey)
+	util.CheckRequiredFlag(WasmCmd, helper.FlagAddress)
+	err := viper.BindPFlags(WasmCmd.Flags())
+	if err != nil {
+		panic(err)
+	}
 }
 
 var WasmCmd = &cobra.Command{
-	Use: "wasm",
+	Use: "wasm [functionName]",
 	Short: "Wasm transaction subcommands",
+	RunE: func(cmd *cobra.Command, args []string) error {
+
+		funcName := args[0]
+		switch funcName {
+		case "upload":
+			return uploadFile()
+		case "init":
+			return initContract()
+		case "invoke":
+			return invokeContract()
+		}
+
+		return nil
+	},
+}
+
+func uploadFile() error {
+	ctx, err := client.NewClientContextFromViper(cdc)
+	if err != nil {
+		return  err
+	}
+	path := viper.GetString(helper.FlagFile)
+	code, err := ioutil.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	from, gas, nonce, key, _, _, err := GetArgs(ctx)
+	if err != nil {
+		return err
+	}
+	txByte, err := sdk.SignStoreCodeMsg(from, gas, nonce, key, from, code)
+	txid, err := ctx.BroadcastSignedData(txByte)
+	if err != nil {
+		return err
+	}
+	fmt.Println(txid)
+	return nil
+}
+
+func initContract() error {
+	ctx, err := client.NewClientContextFromViper(cdc)
+	if err != nil {
+		return  err
+	}
+	from, gas, nonce, key, funds, msg, err := GetArgs(ctx)
+	if err != nil {
+		return err
+	}
+	id := viper.GetString(helper.FlagID)
+	codeID, err := strconv.ParseUint(id, 10, 64)
+	if err != nil {
+		return err
+	}
+	label := viper.GetString(helper.FlagLabel)
+	if label == "" {
+		label = "demo contract"
+	}
+
+	txByte, err := sdk.SignInstantiateContractMsg(from, gas, nonce, codeID, key, from, label, msg, funds)
+	txid, err := ctx.BroadcastSignedData(txByte)
+	if err != nil {
+		return err
+	}
+	fmt.Println(txid)
+	return nil
+}
+
+func invokeContract() error {
+	ctx, err := client.NewClientContextFromViper(cdc)
+	if err != nil {
+		return  err
+	}
+	from, gas, nonce, key, funds, msg, err := GetArgs(ctx)
+	if err != nil {
+		return err
+	}
+	contractAddr := viper.GetString(helper.FlagContractAddress)
+	addrs := types.HexToAddress(contractAddr)
+	contractAddress := addrs
+	txByte, err := sdk.SignExecuteContractMsg(from, gas, nonce, key, from, contractAddress, msg, funds)
+	txid, err := ctx.BroadcastSignedData(txByte)
+	if err != nil {
+		return err
+	}
+	fmt.Println(txid)
+	return nil
 }
 
 
 func GetArgs(ctx context.Context) (types.AccAddress, uint64, uint64, string, types.Coin, json.RawMessage,  error) {
 	var JsonMsg interface{}
-	addrs, err := ctx.GetInputAddresses()
-	if err != nil {
-		return types.AccAddress{}, 0, 0, "", types.Coin{}, nil, err
-	}
-	nonce, err := ctx.GetNonceByAddress(addrs[0])
+	var Funds types.Coin
+	var msg json.RawMessage
+	addrs := viper.GetString(helper.FlagAddress)
+	address := types.HexToAddress(addrs)
+
+	nonce, err := ctx.GetNonceByAddress(address)
 	if err != nil {
 		return types.AccAddress{}, 0, 0, "", types.Coin{}, nil, err
 	}
@@ -173,20 +153,28 @@ func GetArgs(ctx context.Context) (types.AccAddress, uint64, uint64, string, typ
 	}
 
 	funds := viper.GetString(helper.FlagFunds)
-	fs, err := strconv.ParseInt(funds, 10, 64)
-	if err != nil {
-		return types.AccAddress{}, 0, 0, "", types.Coin{}, nil, errors.New("privateKey can not be empty")
+	if funds == "" {
+		Funds = types.NewCoin(types.NewInt(0))
+	}else {
+		fs, err := strconv.ParseInt(funds, 10, 64)
+		if err != nil {
+			return types.AccAddress{}, 0, 0, "", types.Coin{}, nil, errors.New("privateKey can not be empty")
+		}
+		Funds = types.NewCoin(types.NewInt(fs))
 	}
-	Funds := types.NewCoin(types.NewInt(fs))
 	Msg := viper.GetString(helper.FlagMsg)
-	msgByte, err := hex.DecodeString(Msg)
-	if err != nil {
-		return types.AccAddress{}, 0, 0, "", types.Coin{}, nil, err
+	if Msg == "" {
+		msg = json.RawMessage{}
+	}else {
+		msgByte, err := hex.DecodeString(Msg)
+		if err != nil {
+			return types.AccAddress{}, 0, 0, "", types.Coin{}, nil, err
+		}
+		msg = msgByte
+		err = json.Unmarshal(msgByte, &JsonMsg)
+		if err != nil {
+			return types.AccAddress{}, 0, 0, "", types.Coin{}, nil, err
+		}
 	}
-	msg := json.RawMessage(msgByte)
-	err = json.Unmarshal(msgByte, &JsonMsg)
-	if err != nil {
-		return types.AccAddress{}, 0, 0, "", types.Coin{}, nil, err
-	}
-	return addrs[0], Gas, nonce, key, Funds, msg, nil
+	return address, Gas, nonce, key, Funds, msg, nil
 }

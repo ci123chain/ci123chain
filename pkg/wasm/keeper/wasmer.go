@@ -1,5 +1,10 @@
 package keeper
 
+// #include <stdlib.h>
+//
+// extern int read_db(void *context, int key, int value);
+// extern void write_db(void *context, int key, int value);
+// extern void delete_db(void *context, int key);
 import "C"
 import (
 	"crypto/md5"
@@ -12,7 +17,23 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"unsafe"
 )
+
+//export read_db
+func read_db(context unsafe.Pointer, key, value int32) int32 {
+	return readDB(context, key, value)
+}
+
+//export write_db
+func write_db(context unsafe.Pointer, key, value int32) {
+	writeDB(context, key, value)
+}
+
+//export delete_db
+func delete_db(context unsafe.Pointer, key int32) {
+	deleteDB(context, key)
+}
 
 type Wasmer struct {
 	HomeDir      string              `json:"home_dir"`

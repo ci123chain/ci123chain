@@ -24,21 +24,6 @@ func SetStore(kvStore types.KVStore) {
 	store = kvStore
 }
 
-//export read_db
-func read_db(context unsafe.Pointer, key, value int32) int32 {
-	return readDB(context, key, value)
-}
-
-//export write_db
-func write_db(context unsafe.Pointer, key, value int32) {
-	writeDB(context, key, value)
-}
-
-//export delete_db
-func delete_db(context unsafe.Pointer, key int32) {
-	deleteDB(context, key)
-}
-
 
 //export read_db
 func readDB(context unsafe.Pointer, key, value int32) int32 {
