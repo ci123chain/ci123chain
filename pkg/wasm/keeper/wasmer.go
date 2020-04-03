@@ -1,5 +1,6 @@
 package keeper
 
+import "C"
 import (
 	"crypto/md5"
 	"encoding/json"
@@ -59,46 +60,66 @@ func (w *Wasmer) Create(code []byte) (Wasmer,[]byte, error) {
 	return newWasmer,codeHash, nil
 }
 
-
 func (w *Wasmer) Instantiate(code []byte, funcName string, args json.RawMessage) (string, error) {
-	//直接引用go-ext-wasm的instance.
+
+	instance , err := getInstance(code)
+	if err != nil {
+		return "", err
+	}
+	/*//直接引用go-ext-wasm的instance.
 	instance, err := wasmer.NewInstance(code)
 	//instance, err := wasmer.NewInstanceWithImports(code, imports)
 	if err != nil {
 		return "", err
+	}*/
+	init, exist := instance.Exports["init"]
+	if !exist {
+		fmt.Println(exist)
+		return "", errors.New("no expected function")
 	}
-	function:= instance.Exports[funcName]
+
+	res, err := init(args)
+	if err != nil {
+		return "", err
+	}
+	/*function:= instance.Exports[funcName]
 
 	//TODO
-	result, _ := function(1, 2)
+	result, _ := function(1, 2)*/
 	//result, _ := function(args)
-	Result := result.String()
+	Result := res.String()
 	return Result, nil
 
 }
 
 func (w *Wasmer) Execute(code []byte, funcName string, args json.RawMessage) (string, error) {
-	instance, err := wasmer.NewInstance(code)
-	//instance, err := wasmer.NewInstanceWithImports(code, imports)
+	instance , err := getInstance(code)
 	if err != nil {
 		return "", err
 	}
+	/*instance, err := wasmer.NewInstance(code)
+	//instance, err := wasmer.NewInstanceWithImports(code, imports)
+	if err != nil {
+		return "", err
+	}*/
 	function:= instance.Exports[funcName]
 
-	//TODO
-	result, _ := function(3, 4)
-	//result, _ := function(args)
+	//result, _ := function(3, 4)
+	result, _ := function(args)
 	Result := result.String()
 	return Result, nil
 }
 
-
 func (w *Wasmer) Query(code []byte, funcName string, args json.RawMessage) (string, error) {
-	instance, err := wasmer.NewInstance(code)
-	//instance, err := wasmer.NewInstanceWithImports(code, imports)
+	instance, err := getInstance(code)
 	if err != nil {
 		return "", err
 	}
+	/*instance, err := wasmer.NewInstance(code)
+	//instance, err := wasmer.NewInstanceWithImports(code, imports)
+	if err != nil {
+		return "", err
+	}*/
 	function := instance.Exports[funcName]
 
 	//TODO
@@ -107,6 +128,42 @@ func (w *Wasmer) Query(code []byte, funcName string, args json.RawMessage) (stri
 	Result := result.String()
 	return Result, nil
 }
+
+func getInstance(code []byte) (*wasmer.Instance, error) {
+	imports, err := wasmer.NewImports().Namespace("env").Append("read_db", read_db, C.read_db)
+	if err != nil {
+		return &wasmer.Instance{}, err
+	}
+
+	imports, err = imports.Namespace("env").Append("write_db", write_db, C.write_db)
+	if err != nil {
+		return &wasmer.Instance{}, err
+	}
+	imports, err = imports.Namespace("env").Append("delete_db", delete_db, C.delete_db)
+	if err != nil {
+		return &wasmer.Instance{}, err
+	}
+
+	module, err := wasmer.Compile(code)
+	if err != nil {
+		panic(err)
+	}
+	defer module.Close()
+
+	instance, err := module.InstantiateWithImports(imports)
+	if err != nil {
+		panic(err)
+	}
+	defer instance.Close()
+	allocate, exist := instance.Exports["allocate"]
+	if !exist {
+		fmt.Println(exist)
+		return &wasmer.Instance{}, errors.New("no expected function")
+	}
+	middleIns.fun["allocate"] = allocate
+	return &instance, nil
+}
+
 
 func makeFilePath(id int) (int, string) {
 	id ++

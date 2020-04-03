@@ -1,10 +1,10 @@
 package db
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"github.com/tanhuiya/ci123chain/pkg/abci/types"
 )
 
 const (
