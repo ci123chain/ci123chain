@@ -46,7 +46,7 @@ type QueryShardStateParams struct {
 */
 
 func RegisterTxRoutes(cliCtx context.Context, r *mux.Router)  {
-	r.HandleFunc("/allShardState", QueryShardStatesRequestHandlerFn(cliCtx)).Methods("GET")
+	r.HandleFunc("/shared/status", QueryShardStatesRequestHandlerFn(cliCtx)).Methods("GET")
 }
 
 
