@@ -82,7 +82,6 @@ func (w *Wasmer) Create(code []byte) (Wasmer,[]byte, error) {
 }
 
 func (w *Wasmer) Instantiate(code []byte, funcName string, args json.RawMessage) (string, error) {
-
 	instance , err := getInstance(code)
 	if err != nil {
 		return "", err
@@ -93,23 +92,26 @@ func (w *Wasmer) Instantiate(code []byte, funcName string, args json.RawMessage)
 	if err != nil {
 		return "", err
 	}*/
-	init, exist := instance.Exports["init"]
+	init, exist := instance.Exports[funcName]
 	if !exist {
 		fmt.Println(exist)
 		return "", errors.New("no expected function")
 	}
 
-	res, err := init(args)
+	res, err := wasmCall(*instance, init, args)
+	if err != nil {
+		return "", errors.New("init failed")
+	}
+	/*res, err := init(args)
 	if err != nil {
 		return "", err
-	}
+	}*/
 	/*function:= instance.Exports[funcName]
 
-	//TODO
 	result, _ := function(1, 2)*/
 	//result, _ := function(args)
-	Result := res.String()
-	return Result, nil
+	//Result := res.String()
+	return res, nil
 
 }
 
@@ -123,12 +125,21 @@ func (w *Wasmer) Execute(code []byte, funcName string, args json.RawMessage) (st
 	if err != nil {
 		return "", err
 	}*/
-	function:= instance.Exports[funcName]
+	handle, exist := instance.Exports[funcName]
+	if !exist {
+		fmt.Println(exist)
+		return "", errors.New("no expected function")
+	}
+	res, err := wasmCall(*instance, handle, args)
+	if err != nil {
+		return "", errors.New("handle failed")
+	}
+	/*function:= instance.Exports[funcName]
 
 	//result, _ := function(3, 4)
 	result, _ := function(args)
-	Result := result.String()
-	return Result, nil
+	Result := result.String()*/
+	return res, nil
 }
 
 func (w *Wasmer) Query(code []byte, funcName string, args json.RawMessage) (string, error) {
@@ -141,13 +152,23 @@ func (w *Wasmer) Query(code []byte, funcName string, args json.RawMessage) (stri
 	if err != nil {
 		return "", err
 	}*/
-	function := instance.Exports[funcName]
 
-	//TODO
+	query, exist := instance.Exports[funcName]
+	if !exist {
+		fmt.Println(exist)
+		return "", errors.New("no expected function")
+	}
+
+	res, err := wasmCall(*instance, query, args)
+	if err != nil {
+		return "", errors.New("query failed")
+	}
+
+	/*function := instance.Exports[funcName]
 	result, _ := function(3, 4)
 	//result, _ := function(args)
-	Result := result.String()
-	return Result, nil
+	Result := result.String()*/
+	return res, nil
 }
 
 func getInstance(code []byte) (*wasmer.Instance, error) {
@@ -209,4 +230,48 @@ func (w *Wasmer) GetWasmCode(id []byte) ([]byte, error) {
 	}
 	//the file may be not exist.
 	return code, nil
+}
+
+func readCString(memory []byte) string {
+	var res []byte
+	for i := range memory {
+		if memory[i] == 0 {
+			break
+		}
+		res = append(res, memory[i])
+	}
+	return string(res)
+}
+
+func wasmCall(instance wasmer.Instance, fun func(...interface{}) (wasmer.Value, error), msg json.RawMessage) (string, error) {
+	allocate, exist := middleIns.fun["allocate"]
+	if !exist {
+		panic("allocate not found")
+	}
+
+	var data []byte
+	/*switch msg.(type) {
+	case string:
+		data = []byte(msg.(string))
+	default:
+		res, err := json.Marshal(msg)
+		if err != nil {
+			return "", err
+		}
+		data = res
+	}
+	fmt.Println(string(data))*/
+	data = append(msg, 0) // c str, + \0
+
+	offset, err := allocate(len(data))
+	if err != nil {
+		return "", err
+	}
+	copy(instance.Memory.Data()[offset.ToI32():offset.ToI32()+int32(len(data))], data)
+
+	res, err := fun(offset)
+	if err != nil {
+		return "", err
+	}
+	return readCString(instance.Memory.Data()[res.ToI32():]), nil
 }

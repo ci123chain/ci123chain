@@ -1,6 +1,8 @@
 package rest
 
 import (
+	"encoding/hex"
+	"encoding/json"
 	"github.com/gorilla/mux"
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/abci/types/rest"
@@ -127,9 +129,20 @@ func queryContractHandlerFn(cliCtx context.Context) http.HandlerFunc {
 
 func queryContractStateAllHandlerFn(cliCtx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
+		var param types.CallContractParam
 		contractAddr := r.FormValue("contractAddress")
 		contractAddress := sdk.HexToAddress(contractAddr)
+		msg := r.FormValue("queryMSg")
+		queryMsg, Err := hex.DecodeString(msg)
+		if Err != nil {
+			rest.WriteErrorRes(w, sdk.ErrInternal("get msg failed"))
+			return
+		}
+		Err = json.Unmarshal(queryMsg, &param)
+		if Err != nil {
+			rest.WriteErrorRes(w, sdk.ErrInternal("unexpected query msg"))
+			return
+		}
 
 		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r, "")
 		if !ok {
@@ -137,7 +150,7 @@ func queryContractStateAllHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			return
 		}
 
-		params := types.NewQueryContractInfoParams(contractAddress)
+		params := types.NewContractStateParam(contractAddress, queryMsg)
 		bz, Er := cliCtx.Cdc.MarshalJSON(params)
 		if Er != nil {
 			rest.WriteErrorRes(w, sdk.ErrInternal("marshal failed"))

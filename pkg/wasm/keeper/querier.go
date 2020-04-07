@@ -61,13 +61,13 @@ func queryCodeInfo(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, sd
 }
 
 func queryContractState(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, sdk.Error) {
-	var params types.ContractInfoParams
+	var params types.ContractStateParam
 	err := types.WasmCodec.UnmarshalJSON(req.Data, &params)
 	if err != nil {
 		return nil, sdk.ErrInternal("unmarshal failed")
 	}
 	//query
-	contractState, err := k.Query(ctx, params.ContractAddress)
+	contractState, err := k.Query(ctx, params.ContractAddress, params.QueryMessage)
 	if err != nil {
 		return nil, sdk.ErrInternal("get contract state failed")
 	}

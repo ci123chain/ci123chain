@@ -18,7 +18,9 @@ const (
 	SuffixName = ".wasm"
 	FolderName = "wasm"
 
-	FunctionName = "sum"
+	InitFunctionName = "init"
+	HandleFunctionName = "handle"
+	QueryFunctionName = "query"
 )
 
 var (

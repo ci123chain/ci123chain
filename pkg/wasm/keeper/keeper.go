@@ -74,6 +74,13 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator sdk.AccAddre
 	var codeInfo types.CodeInfo
 	var wasmer Wasmer
 	var code []byte
+	var params types.CallContractParam
+	if initMsg != nil {
+		err := json.Unmarshal(initMsg, &params)
+		if err != nil {
+			return sdk.AccAddress{}, sdk.ErrInternal("invalid instantiate message")
+		}
+	}
 	contractAddress := k.generateContractAddress(ctx, codeID)
 	existingAcct := k.AccountKeeper.GetAccount(ctx, contractAddress)
 	if existingAcct != nil {
@@ -117,7 +124,7 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator sdk.AccAddre
 		}
 	}
 	code = wc
-	_, err = k.wasmer.Instantiate(code,types.FunctionName, initMsg)
+	_, err = k.wasmer.Instantiate(code,types.InitFunctionName, initMsg)
 	if err != nil {
 		return sdk.AccAddress{}, err
 	}
@@ -135,11 +142,17 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator sdk.AccAddre
 //
 func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, msg json.RawMessage, coin sdk.Coin) (sdk.Result, error) {
 
+	var params types.CallContractParam
+	if msg != nil {
+		err := json.Unmarshal(msg, &params)
+		if err != nil {
+			return sdk.Result{}, sdk.ErrInternal("invalid handle message")
+		}
+	}
 	codeInfo, err := k.contractInstance(ctx, contractAddress)
 	if err != nil {
 		return sdk.Result{}, err
 	}
-	//TODO
 	store := ctx.KVStore(k.storeKey)
 	var code []byte
 	wc, err := k.wasmer.GetWasmCode(codeInfo.CodeHash)
@@ -153,7 +166,7 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 		}
 	}
 	code = wc
-	res, err := k.wasmer.Execute(code, types.FunctionName, msg)
+	res, err := k.wasmer.Execute(code, types.HandleFunctionName, msg)
 	if err != nil {
 		return sdk.Result{}, err
 	}
@@ -163,13 +176,19 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 }
 
 // query?
-func (k Keeper) Query(ctx sdk.Context, contractAddress sdk.AccAddress) (types.ContractState, error) {
+func (k Keeper) Query(ctx sdk.Context, contractAddress sdk.AccAddress, msg json.RawMessage) (types.ContractState, error) {
 
+	var params types.CallContractParam
+	if msg != nil {
+		err := json.Unmarshal(msg, &params)
+		if err != nil {
+			return types.ContractState{}, sdk.ErrInternal("invalid query message")
+		}
+	}
 	codeInfo, err := k.contractInstance(ctx, contractAddress)
 	if err != nil {
 		return types.ContractState{}, err
 	}
-	//TODO
 	var code []byte
 	store := ctx.KVStore(k.storeKey)
 	//params := []string{"1", "2"}
@@ -184,7 +203,7 @@ func (k Keeper) Query(ctx sdk.Context, contractAddress sdk.AccAddress) (types.Co
 		}
 	}
 	code = wc
-	res, err := k.wasmer.Query(code, types.FunctionName, nil)
+	res, err := k.wasmer.Query(code, types.QueryFunctionName, nil)
 	if err != nil {
 		return types.ContractState{}, err
 	}

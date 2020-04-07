@@ -24,6 +24,18 @@ func NewQueryCodeInfoParams(id uint64) CodeInfoParams {
 	return params
 }
 
+type ContractStateParam struct {
+	ContractAddress  sdk.AccAddress  `json:"contract_address"`
+	QueryMessage     []byte          `json:"query_message"`
+}
+
+func NewContractStateParam(addr sdk.AccAddress, msg []byte) ContractStateParam {
+	param := ContractStateParam{
+		ContractAddress: addr,
+		QueryMessage:    msg,
+	}
+	return param
+}
 
 type ContractState struct {
 	Result   string    `json:"result"`

@@ -7,6 +7,19 @@ import (
 )
 
 
+type CallContractParam struct {
+	Method string   `json:"method"`
+	Args   []string `json:"args"`
+}
+
+func NewCallContractParams(method string, args []string) CallContractParam {
+	param := CallContractParam{
+		Method: method,
+		Args:   args,
+	}
+	return param
+}
+
 type StoreCodeTx struct {
 	transaction.CommonTx
 	Sender      sdk.AccAddress    `json:"sender"`

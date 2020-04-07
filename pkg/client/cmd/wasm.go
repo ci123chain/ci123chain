@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -12,9 +11,11 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/client/context"
 	"github.com/tanhuiya/ci123chain/pkg/client/helper"
 	"github.com/tanhuiya/ci123chain/pkg/util"
+	wasm "github.com/tanhuiya/ci123chain/pkg/wasm/types"
 	sdk "github.com/tanhuiya/ci123chain/sdk/wasm"
 	"io/ioutil"
 	"strconv"
+	"strings"
 )
 
 func init() {
@@ -132,7 +133,6 @@ func invokeContract() error {
 
 
 func GetArgs(ctx context.Context) (types.AccAddress, uint64, uint64, string, types.Coin, json.RawMessage,  error) {
-	var JsonMsg interface{}
 	var Funds types.Coin
 	var msg json.RawMessage
 	addrs := viper.GetString(helper.FlagAddress)
@@ -166,15 +166,67 @@ func GetArgs(ctx context.Context) (types.AccAddress, uint64, uint64, string, typ
 	if Msg == "" {
 		msg = json.RawMessage{}
 	}else {
-		msgByte, err := hex.DecodeString(Msg)
-		if err != nil {
-			return types.AccAddress{}, 0, 0, "", types.Coin{}, nil, err
-		}
-		msg = msgByte
-		err = json.Unmarshal(msgByte, &JsonMsg)
+		msgStr := getStr(Msg)
+		msg, err = json.Marshal(msgStr)
 		if err != nil {
 			return types.AccAddress{}, 0, 0, "", types.Coin{}, nil, err
 		}
 	}
 	return address, Gas, nonce, key, Funds, msg, nil
+}
+
+func getStr(m string) wasm.CallContractParam {
+	var str []string
+	var args []string
+	var p wasm.CallContractParam
+	b := strings.Split(m, "{")
+	if b[1] == "" || len(b) != 2 {
+		p = wasm.CallContractParam{
+			Method: "",
+			Args:   nil,
+		}
+		return p
+	}else {
+		c := strings.Split(b[1], "}")
+		if c[0] == "" || len(c) != 2 {
+			p = wasm.CallContractParam{
+				Method: "",
+				Args:   nil,
+			}
+			return p
+		}else {
+			d := strings.Split(c[0], ",")
+			if len(d) == 0 {
+				p = wasm.CallContractParam{
+					Method: "",
+					Args:   nil,
+				}
+				return p
+			}
+			for i := 0; i < len(d); i++ {
+				e := strings.Split(d[i], "\"")
+				if len(e) != 3 {
+					str = append(str, "")
+				}else {
+					str = append(str, e[1])
+				}
+			}
+		}
+	}
+	if len(str) == 0 {
+		p = wasm.CallContractParam{
+			Method: "",
+			Args:   nil,
+		}
+	}else {
+		method := str[0]
+		for i := 1; i < len(str); i++ {
+			args = append(args, str[i])
+		}
+		p = wasm.CallContractParam{
+			Method: method,
+			Args:   args,
+		}
+	}
+	return p
 }
