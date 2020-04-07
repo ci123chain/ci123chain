@@ -1,10 +1,12 @@
 package gateway
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"github.com/tanhuiya/ci123chain/pkg/gateway/logger"
 	"github.com/tanhuiya/ci123chain/pkg/gateway/server"
 	"github.com/tanhuiya/ci123chain/pkg/gateway/types"
+	"io/ioutil"
 	"net/http"
 )
 
@@ -49,13 +51,35 @@ func NewSpecificJob(r *http.Request, backends []types.Instance) *SpecificJob {
 }
 
 func ParseURL(r *http.Request) (types.Proxy, error, map[string]string){
-	_ = r.ParseForm()
 	var data = map[string]string{}
-
-	for k, v := range r.Form {
-		key := k
-		value := v[0]
-		data[key] = value
+	var codeStr string
+	err := r.ParseMultipartForm(32 << 20)
+	if err != nil {
+		for k, v := range r.PostForm {
+			key := k
+			value := v[0]
+			data[key] = value
+		}
+	}else {
+		if r.MultipartForm != nil {
+			for k, v := range r.MultipartForm.Value {
+				key := k
+				value := v[0]
+				data[key] = value
+			}
+			file, _, err := r.FormFile("wasmCode")
+			if err != nil {
+				codeStr = ""
+			} else {
+				wasmcode, err := ioutil.ReadAll(file)
+				if err != nil {
+					codeStr = ""
+				}else {
+					codeStr = hex.EncodeToString(wasmcode)
+				}
+			}
+			data["wasmCodeStr"] = codeStr
+		}
 	}
 	params := r.FormValue("proxy")
 

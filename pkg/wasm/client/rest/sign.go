@@ -18,13 +18,23 @@ var cdc = app.MakeCodec()
 
 func buildStoreCodeMsg(r *http.Request) ([]byte, error) {
 
-	file, _, err := r.FormFile("wasmCode")
-	if err != nil {
-		return nil, err
-	}
-	wasmcode, err := ioutil.ReadAll(file)
-	if err != nil {
-		return nil, err
+	var wasmcode []byte
+	codeStr := r.FormValue("wasmCodeStr")
+	if codeStr != "" {
+		Byte, err := hex.DecodeString(codeStr)
+		if err != nil {
+			return nil, errors.New("invalid wasmcode")
+		}
+		wasmcode = Byte
+	}else {
+		file, _, err := r.FormFile("wasmCode")
+		if err != nil {
+			return nil, err
+		}
+		wasmcode, err = ioutil.ReadAll(file)
+		if err != nil {
+			return nil, err
+		}
 	}
 	if wasmcode == nil {
 		return nil, errors.New("wasmcode can not be empty")

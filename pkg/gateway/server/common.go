@@ -18,11 +18,9 @@ type Response struct {
 func SendRequest(requestUrl *url.URL,r *http.Request, RequestParams map[string]string) ([]byte, *http.Response, error) {
 
 	cli := &http.Client{}
-	///body := make([]byte, 0)
 	reqUrl := "http://" + requestUrl.Host + r.URL.Path
 	data := url.Values{}
 	for k, v := range RequestParams {
-		//fmt.Println(j)
 		data.Set(k, v)
 	}
 
@@ -34,8 +32,9 @@ func SendRequest(requestUrl *url.URL,r *http.Request, RequestParams map[string]s
 	req2.Body = ioutil.NopCloser(strings.NewReader(data.Encode()))
 
 	// set request content type
-	contentType := r.Header.Get("Content-Type")
-	req2.Header.Set("Content-Type", contentType)
+	//contentType := r.Header.Get("Content-Type")
+	//req2.Header.Set("Content-Type", contentType)
+	req2.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	// request
 	rep2, err := cli.Do(req2)
 	if err != nil {
