@@ -14,6 +14,7 @@ import (
 	wasm "github.com/tanhuiya/ci123chain/pkg/wasm/types"
 	sdk "github.com/tanhuiya/ci123chain/sdk/wasm"
 	"io/ioutil"
+	"path"
 	"strconv"
 	"strings"
 )
@@ -25,7 +26,7 @@ func init() {
 	WasmCmd.Flags().String(helper.FlagGas, "", "expected gas of transaction")
 	WasmCmd.Flags().String(helper.FlagPrivateKey, "", "the privateKey of account")
 	WasmCmd.Flags().String(helper.FlagFunds, "", "funds of contract")
-	WasmCmd.Flags().String(helper.FlagMsg, "", "message of init contract")
+	WasmCmd.Flags().String(helper.FlagArgs, "", "args of call contract")
 	WasmCmd.Flags().String(helper.FlagFile, "", "the path of contract file")
 	WasmCmd.Flags().String(helper.FlagID, "", "id of contract code")
 	WasmCmd.Flags().String(helper.FlagLabel, "", "label of contract")
@@ -64,12 +65,19 @@ func uploadFile() error {
 	if err != nil {
 		return  err
 	}
-	path := viper.GetString(helper.FlagFile)
-	code, err := ioutil.ReadFile(path)
+	fpath := viper.GetString(helper.FlagFile)
+	fext := path.Ext(fpath)
+	if fext != ".wasm" {
+		return errors.New("unexpected file")
+	}
+	code, err := ioutil.ReadFile(fpath)
 	if err != nil {
 		return err
 	}
-	from, gas, nonce, key, _, _, err := GetArgs(ctx)
+	if ok := wasm.IsValidaWasmFile(code); ok != nil {
+		return ok
+	}
+	from, gas, nonce, key, _, err := GetArgs(ctx)
 	if err != nil {
 		return err
 	}
@@ -87,7 +95,7 @@ func initContract() error {
 	if err != nil {
 		return  err
 	}
-	from, gas, nonce, key, funds, msg, err := GetArgs(ctx)
+	from, gas, nonce, key, args, err := GetArgs(ctx)
 	if err != nil {
 		return err
 	}
@@ -101,7 +109,7 @@ func initContract() error {
 		label = "demo contract"
 	}
 
-	txByte, err := sdk.SignInstantiateContractMsg(from, gas, nonce, codeID, key, from, label, msg, funds)
+	txByte, err := sdk.SignInstantiateContractMsg(from, gas, nonce, codeID, key, from, label, args)
 	txid, err := ctx.BroadcastSignedData(txByte)
 	if err != nil {
 		return err
@@ -115,14 +123,14 @@ func invokeContract() error {
 	if err != nil {
 		return  err
 	}
-	from, gas, nonce, key, funds, msg, err := GetArgs(ctx)
+	from, gas, nonce, key, args, err := GetArgs(ctx)
 	if err != nil {
 		return err
 	}
 	contractAddr := viper.GetString(helper.FlagContractAddress)
 	addrs := types.HexToAddress(contractAddr)
 	contractAddress := addrs
-	txByte, err := sdk.SignExecuteContractMsg(from, gas, nonce, key, from, contractAddress, msg, funds)
+	txByte, err := sdk.SignExecuteContractMsg(from, gas, nonce, key, from, contractAddress, args)
 	txid, err := ctx.BroadcastSignedData(txByte)
 	if err != nil {
 		return err
@@ -132,47 +140,35 @@ func invokeContract() error {
 }
 
 
-func GetArgs(ctx context.Context) (types.AccAddress, uint64, uint64, string, types.Coin, json.RawMessage,  error) {
-	var Funds types.Coin
-	var msg json.RawMessage
+func GetArgs(ctx context.Context) (types.AccAddress, uint64, uint64, string, json.RawMessage,  error) {
+	var args json.RawMessage
 	addrs := viper.GetString(helper.FlagAddress)
 	address := types.HexToAddress(addrs)
 
 	nonce, err := ctx.GetNonceByAddress(address)
 	if err != nil {
-		return types.AccAddress{}, 0, 0, "", types.Coin{}, nil, err
+		return types.AccAddress{}, 0, 0, "", nil, err
 	}
 	gas := viper.GetString(helper.FlagGas)
 	Gas, err := strconv.ParseUint(gas, 10, 64)
 	if err != nil {
-		return types.AccAddress{}, 0, 0, "", types.Coin{}, nil, err
+		return types.AccAddress{}, 0, 0, "", nil, err
 	}
 	key := viper.GetString(helper.FlagPrivateKey)
 	if key == "" {
-		return types.AccAddress{}, 0, 0, "", types.Coin{}, nil, errors.New("privateKey can not be empty")
+		return types.AccAddress{}, 0, 0, "", nil, errors.New("privateKey can not be empty")
 	}
-
-	funds := viper.GetString(helper.FlagFunds)
-	if funds == "" {
-		Funds = types.NewCoin(types.NewInt(0))
-	}else {
-		fs, err := strconv.ParseInt(funds, 10, 64)
-		if err != nil {
-			return types.AccAddress{}, 0, 0, "", types.Coin{}, nil, errors.New("privateKey can not be empty")
-		}
-		Funds = types.NewCoin(types.NewInt(fs))
-	}
-	Msg := viper.GetString(helper.FlagMsg)
+	Msg := viper.GetString(helper.FlagArgs)
 	if Msg == "" {
-		msg = json.RawMessage{}
+		args = json.RawMessage{}
 	}else {
 		msgStr := getStr(Msg)
-		msg, err = json.Marshal(msgStr)
+		args, err = json.Marshal(msgStr)
 		if err != nil {
-			return types.AccAddress{}, 0, 0, "", types.Coin{}, nil, err
+			return types.AccAddress{}, 0, 0, "", nil, err
 		}
 	}
-	return address, Gas, nonce, key, Funds, msg, nil
+	return address, Gas, nonce, key, args, nil
 }
 
 func getStr(m string) wasm.CallContractParam {

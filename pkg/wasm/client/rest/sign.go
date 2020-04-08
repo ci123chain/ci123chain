@@ -41,8 +41,12 @@ func buildStoreCodeMsg(r *http.Request) ([]byte, error) {
 	if wasmcode == nil {
 		return nil, errors.New("wasmcode can not be empty")
 	}
+	ok := wasm.IsValidaWasmFile(wasmcode)
+	if ok != nil {
+		return nil, ok
+	}
 
-	from, gas, nonce,  priv,_, _, err := getArgs(r)
+	from, gas, nonce,  priv,_, err := getArgs(r)
 	if err != nil {
 		return nil, err
 	}
@@ -67,12 +71,12 @@ func buildInstantiateContractMsg(r *http.Request) ([]byte, error) {
 	if label == "" {
 		label = "label"
 	}
-	from, gas, nonce, priv, Msg, Funds, err := getArgs(r)
+	from, gas, nonce, priv, Msg, err := getArgs(r)
 	if err != nil {
 		return nil, err
 	}
 
-	txByte, err := sdk.SignInstantiateContractMsg(from, gas, nonce, codeID, priv, from, label, Msg, Funds)
+	txByte, err := sdk.SignInstantiateContractMsg(from, gas, nonce, codeID, priv, from, label, Msg)
 	if err != nil {
 		return nil, err
 	}
@@ -87,57 +91,55 @@ func buildExecuteContractMsg(r *http.Request) ([]byte, error) {
 	}
 	contractAddress := types.HexToAddress(contractAddr)
 
-	from, gas, nonce, priv, Msg, Funds, err := getArgs(r)
+	from, gas, nonce, priv, Msg, err := getArgs(r)
 	if err != nil {
 		return nil, err
 	}
 
-	txByte, err := sdk.SignExecuteContractMsg(from, gas, nonce, priv, from, contractAddress, Msg, Funds)
+	txByte, err := sdk.SignExecuteContractMsg(from, gas, nonce, priv, from, contractAddress, Msg)
 	if err != nil {
 		return nil, err
 	}
 	return txByte, nil
 }
 
-func getArgs(r *http.Request) (types.AccAddress, uint64, uint64, string, json.RawMessage, types.Coin, error) {
+func getArgs(r *http.Request) (types.AccAddress, uint64, uint64, string, json.RawMessage, error) {
 	var Msg []byte
-	//var Str interface{}
-	var Funds types.Coin
 
 	from := r.FormValue("from")
 	inputGas := r.FormValue("gas")
 	inputNonce := r.FormValue("nonce")
 	froms, err := helper.ParseAddrs(from)
 	if err != nil {
-		return types.AccAddress{}, 0, 0,  "", nil, types.Coin{}, err
+		return types.AccAddress{}, 0, 0,  "", nil, err
 	}
 	if len(froms) != 1 {
-		return types.AccAddress{}, 0, 0, "", nil, types.Coin{}, err
+		return types.AccAddress{}, 0, 0, "", nil, err
 	}
 	gas, err := strconv.ParseUint(inputGas, 10, 64)
 	if err != nil {
-		return types.AccAddress{}, 0, 0,  "", nil, types.Coin{}, err
+		return types.AccAddress{}, 0, 0,  "", nil, err
 	}
 	var nonce uint64
 	if inputNonce != "" {
 		UserNonce, err := strconv.ParseInt(inputNonce, 10, 64)
 		if err != nil || UserNonce < 0 {
-			return types.AccAddress{}, 0, 0, "", nil, types.Coin{}, err
+			return types.AccAddress{}, 0, 0, "", nil, err
 		}
 		nonce = uint64(UserNonce)
 	}else {
 		ctx, err := client.NewClientContextFromViper(cdc)
 		if err != nil {
-			return types.AccAddress{}, 0, 0, "", nil, types.Coin{}, err
+			return types.AccAddress{}, 0, 0, "", nil, err
 		}
 		nonce, err = ctx.GetNonceByAddress(froms[0])
 		if err != nil {
-			return types.AccAddress{}, 0, 0, "", nil, types.Coin{}, err
+			return types.AccAddress{}, 0, 0, "", nil, err
 		}
 	}
 	priv := r.FormValue("privateKey")
 	if priv == "" {
-		return types.AccAddress{}, 0, 0, "", nil, types.Coin{},errors.New("privateKey can not be empty")
+		return types.AccAddress{}, 0, 0, "", nil, errors.New("privateKey can not be empty")
 	}
 
 	msg := r.FormValue("msg")
@@ -145,14 +147,6 @@ func getArgs(r *http.Request) (types.AccAddress, uint64, uint64, string, json.Ra
 		Msg = nil
 	}else {
 		var Args []string
-		/*Msg, err = hex.DecodeString(msg)
-		if err != nil {
-			return types.AccAddress{}, 0, 0, "", nil, types.Coin{}, errors.New("error initMsg")
-		}
-		err = json.Unmarshal(Msg, &Str)
-		if err != nil {
-			return types.AccAddress{}, 0, 0, "", nil, types.Coin{}, errors.New("invalid json raw message")
-		}*/
 		//
 		args := strings.Split(msg, ",")
 		method := args[0]
@@ -162,22 +156,12 @@ func getArgs(r *http.Request) (types.AccAddress, uint64, uint64, string, json.Ra
 		param := wasm.NewCallContractParams(method, Args)
 		callMsg, err := json.Marshal(param)
 		if err != nil {
-			return types.AccAddress{}, 0, 0, "", nil, types.Coin{}, errors.New("invalid json raw message")
+			return types.AccAddress{}, 0, 0, "", nil, errors.New("invalid json raw message")
 		}
 		Msg = callMsg
 	}
 	JsonMsg := json.RawMessage(Msg)
-	funds := r.FormValue("funds")
-	if funds == "" {
-		Funds = types.NewCoin(types.NewInt(0))
-	}else {
-		fs, err := strconv.ParseInt(funds, 10, 64)
-		if err != nil {
-			return types.AccAddress{}, 0, 0, "", nil, types.Coin{}, err
-		}
-		Funds = types.NewCoin(types.NewInt(fs))
-	}
 
-	return froms[0], gas, nonce, priv,JsonMsg, Funds, nil
+	return froms[0], gas, nonce, priv,JsonMsg, nil
 
 }

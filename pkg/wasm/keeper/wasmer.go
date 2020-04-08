@@ -102,16 +102,13 @@ func (w *Wasmer) Instantiate(code []byte, funcName string, args json.RawMessage)
 	if err != nil {
 		return "", errors.New("init failed")
 	}
-	/*res, err := init(args)
-	if err != nil {
-		return "", err
-	}*/
-	/*function:= instance.Exports[funcName]
-
-	result, _ := function(1, 2)*/
-	//result, _ := function(args)
-	//Result := res.String()
-	return res, nil
+	if res.Err() {
+		errStr := fmt.Sprintf("err: [%s]\n", res.ParseError())
+		return "", errors.New(errStr)
+	}else {
+		resStr := fmt.Sprintf("ok: [%s]\n", string(res.Parse().Data))
+		return resStr, nil
+	}
 
 }
 
@@ -127,19 +124,20 @@ func (w *Wasmer) Execute(code []byte, funcName string, args json.RawMessage) (st
 	}*/
 	handle, exist := instance.Exports[funcName]
 	if !exist {
-		fmt.Println(exist)
 		return "", errors.New("no expected function")
 	}
 	res, err := wasmCall(*instance, handle, args)
 	if err != nil {
 		return "", errors.New("handle failed")
 	}
-	/*function:= instance.Exports[funcName]
-
-	//result, _ := function(3, 4)
-	result, _ := function(args)
-	Result := result.String()*/
-	return res, nil
+	if res.Err() {
+		errStr := fmt.Sprintf("err: [%s]\n", res.ParseError())
+		return "", errors.New(errStr)
+	}else {
+		resStr := fmt.Sprintf("ok: [%s]\n", string(res.Parse().Data))
+		return resStr, nil
+	}
+	//return res, nil
 }
 
 func (w *Wasmer) Query(code []byte, funcName string, args json.RawMessage) (string, error) {
@@ -147,11 +145,6 @@ func (w *Wasmer) Query(code []byte, funcName string, args json.RawMessage) (stri
 	if err != nil {
 		return "", err
 	}
-	/*instance, err := wasmer.NewInstance(code)
-	//instance, err := wasmer.NewInstanceWithImports(code, imports)
-	if err != nil {
-		return "", err
-	}*/
 
 	query, exist := instance.Exports[funcName]
 	if !exist {
@@ -163,12 +156,13 @@ func (w *Wasmer) Query(code []byte, funcName string, args json.RawMessage) (stri
 	if err != nil {
 		return "", errors.New("query failed")
 	}
-
-	/*function := instance.Exports[funcName]
-	result, _ := function(3, 4)
-	//result, _ := function(args)
-	Result := result.String()*/
-	return res, nil
+	if res.Err() {
+		errStr := fmt.Sprintf("err: [%s]\n", res.ParseError())
+		return "", errors.New(errStr)
+	}else {
+		resStr := fmt.Sprintf("ok: [%s]\n", string(res.Parse().Data))
+		return resStr, nil
+	}
 }
 
 func getInstance(code []byte) (*wasmer.Instance, error) {
@@ -243,35 +237,30 @@ func readCString(memory []byte) string {
 	return string(res)
 }
 
-func wasmCall(instance wasmer.Instance, fun func(...interface{}) (wasmer.Value, error), msg json.RawMessage) (string, error) {
+func wasmCall(instance wasmer.Instance, fun func(...interface{}) (wasmer.Value, error), msg json.RawMessage) (ContractResult, error) {
 	allocate, exist := middleIns.fun["allocate"]
 	if !exist {
 		panic("allocate not found")
 	}
 
 	var data []byte
-	/*switch msg.(type) {
-	case string:
-		data = []byte(msg.(string))
-	default:
-		res, err := json.Marshal(msg)
-		if err != nil {
-			return "", err
-		}
-		data = res
-	}
-	fmt.Println(string(data))*/
-	data = append(msg, 0) // c str, + \0
+	data = msg
+	data = append(data, 0) // c str, + \0
 
 	offset, err := allocate(len(data))
 	if err != nil {
-		return "", err
+		return ContractResult{}, err
 	}
 	copy(instance.Memory.Data()[offset.ToI32():offset.ToI32()+int32(len(data))], data)
 
 	res, err := fun(offset)
 	if err != nil {
-		return "", err
+		return ContractResult{}, err
 	}
-	return readCString(instance.Memory.Data()[res.ToI32():]), nil
+	 str := readCString(instance.Memory.Data()[res.ToI32():])
+	 resultMap := make(map[string]interface{})
+	 if err := json.Unmarshal([]byte(str), &resultMap); err != nil {
+	 	return ContractResult{}, err
+	 }
+	 return ContractResult{ resultMap, nil}, nil
 }

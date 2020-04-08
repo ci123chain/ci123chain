@@ -28,14 +28,14 @@ func SignStoreCodeMsg(from sdk.AccAddress, gas, nonce uint64, priv string, sende
 }
 
 func SignInstantiateContractMsg(from sdk.AccAddress, gas, nonce, codeID uint64, priv string, sender sdk.AccAddress, label string,
-	initMsg json.RawMessage, initFunds sdk.Coin) ([]byte, error) {
+	initMsg json.RawMessage) ([]byte, error) {
 
 	privateKey, err := hex.DecodeString(priv)
 	if err != nil {
 		return nil, err
 	}
 
-	tx := wasm.NewInstantiateTx(from, gas, nonce, codeID, sender, label, initMsg, initFunds)
+	tx := wasm.NewInstantiateTx(from, gas, nonce, codeID, sender, label, initMsg)
 	sid := cryptosuit.NewFabSignIdentity()
 	pub, err  := sid.GetPubKey(privateKey)
 
@@ -47,14 +47,14 @@ func SignInstantiateContractMsg(from sdk.AccAddress, gas, nonce, codeID uint64, 
 }
 
 
-func SignExecuteContractMsg(from sdk.AccAddress, gas, nonce uint64, priv string, sender, contractAddress sdk.AccAddress, msg json.RawMessage, sendFunds sdk.Coin) ([]byte, error) {
+func SignExecuteContractMsg(from sdk.AccAddress, gas, nonce uint64, priv string, sender, contractAddress sdk.AccAddress, msg json.RawMessage) ([]byte, error) {
 
 	privateKey, err := hex.DecodeString(priv)
 	if err != nil {
 		return nil, err
 	}
 
-	tx := wasm.NewExecuteTx(from, gas, nonce, sender, contractAddress, msg, sendFunds)
+	tx := wasm.NewExecuteTx(from, gas, nonce, sender, contractAddress, msg)
 	sid := cryptosuit.NewFabSignIdentity()
 	pub, err  := sid.GetPubKey(privateKey)
 

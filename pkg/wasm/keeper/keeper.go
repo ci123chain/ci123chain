@@ -43,6 +43,11 @@ func (k Keeper) Create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte)
 	if err != nil {
 		return 0, err
 	}
+	//checks if the file contents are of wasm binary
+	ok := types.IsValidaWasmFile(wasmCode)
+	if ok != nil {
+		return 0, ok
+	}
 	store := ctx.KVStore(k.storeKey)
 	var wasmer Wasmer
 	wasmerBz := store.Get(types.GetWasmerKey())
@@ -70,13 +75,13 @@ func (k Keeper) Create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte)
 }
 
 //
-func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator sdk.AccAddress, initMsg json.RawMessage, label string, deposit sdk.Coin) (sdk.AccAddress, error) {
+func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator sdk.AccAddress, args json.RawMessage, label string) (sdk.AccAddress, error) {
 	var codeInfo types.CodeInfo
 	var wasmer Wasmer
 	var code []byte
 	var params types.CallContractParam
-	if initMsg != nil {
-		err := json.Unmarshal(initMsg, &params)
+	if args != nil {
+		err := json.Unmarshal(args, &params)
 		if err != nil {
 			return sdk.AccAddress{}, sdk.ErrInternal("invalid instantiate message")
 		}
@@ -87,7 +92,7 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator sdk.AccAddre
 		return sdk.AccAddress{}, sdk.ErrInternal("account exists")
 	}
 	var contractAccount exported.Account
-	if !deposit.IsZero() {
+	/*if !deposit.IsZero() {
 		sdkerr := k.AccountKeeper.Transfer(ctx, creator, contractAddress, deposit)
 		if sdkerr != nil {
 			return sdk.AccAddress{}, sdk.ErrInternal("transfer failed")
@@ -95,7 +100,9 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator sdk.AccAddre
 	}else {
 		contractAccount = k.AccountKeeper.NewAccountWithAddress(ctx, contractAddress)
 		k.AccountKeeper.SetAccount(ctx, contractAccount)
-	}
+	}*/
+	contractAccount = k.AccountKeeper.NewAccountWithAddress(ctx, contractAddress)
+	k.AccountKeeper.SetAccount(ctx, contractAccount)
 
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.GetCodeKey(codeID))
@@ -124,13 +131,13 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator sdk.AccAddre
 		}
 	}
 	code = wc
-	_, err = k.wasmer.Instantiate(code,types.InitFunctionName, initMsg)
+	_, err = k.wasmer.Instantiate(code,types.InitFunctionName, args)
 	if err != nil {
 		return sdk.AccAddress{}, err
 	}
 	//save the contract info.
 	createdAt := types.NewCreatedAt(ctx)
-	contractInfo := types.NewContractInfo(codeID, creator, initMsg, label, createdAt)
+	contractInfo := types.NewContractInfo(codeID, creator, args, label, createdAt)
 	store.Set(types.GetContractAddressKey(contractAddress), k.cdc.MustMarshalBinaryBare(contractInfo))
 	//save contractAddress into account
 	Account := k.AccountKeeper.GetAccount(ctx, creator)
@@ -140,11 +147,11 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator sdk.AccAddre
 }
 
 //
-func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, msg json.RawMessage, coin sdk.Coin) (sdk.Result, error) {
+func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, args json.RawMessage) (sdk.Result, error) {
 
 	var params types.CallContractParam
-	if msg != nil {
-		err := json.Unmarshal(msg, &params)
+	if args != nil {
+		err := json.Unmarshal(args, &params)
 		if err != nil {
 			return sdk.Result{}, sdk.ErrInternal("invalid handle message")
 		}
@@ -166,7 +173,7 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 		}
 	}
 	code = wc
-	res, err := k.wasmer.Execute(code, types.HandleFunctionName, msg)
+	res, err := k.wasmer.Execute(code, types.HandleFunctionName, args)
 	if err != nil {
 		return sdk.Result{}, err
 	}

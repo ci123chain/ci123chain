@@ -6,20 +6,6 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/transaction"
 )
 
-
-type CallContractParam struct {
-	Method string   `json:"method"`
-	Args   []string `json:"args"`
-}
-
-func NewCallContractParams(method string, args []string) CallContractParam {
-	param := CallContractParam{
-		Method: method,
-		Args:   args,
-	}
-	return param
-}
-
 type StoreCodeTx struct {
 	transaction.CommonTx
 	Sender      sdk.AccAddress    `json:"sender"`
@@ -88,18 +74,16 @@ func (msg *StoreCodeTx) GetFromAddress() sdk.AccAddress {
 	return msg.From
 }
 
-
 type InstantiateContractTx struct {
 	transaction.CommonTx
 	Sender       sdk.AccAddress       `json:"sender"`
 	CodeID       uint64               `json:"code_id"`
 	Label        string               `json:"label"`
-	InitMsg      json.RawMessage      `json:"init_msg"`
-	InitFunds    sdk.Coin             `json:"init_funds"`
+	Args      json.RawMessage         `json:"args"`
 }
 
 func NewInstantiateContractTx(from sdk.AccAddress, gas, nonce, codeID uint64, sender sdk.AccAddress, label string,
-	initMsg json.RawMessage, initFunds sdk.Coin) InstantiateContractTx{
+	initMsg json.RawMessage) InstantiateContractTx{
 
 		return InstantiateContractTx{
 			CommonTx: transaction.CommonTx{
@@ -110,8 +94,7 @@ func NewInstantiateContractTx(from sdk.AccAddress, gas, nonce, codeID uint64, se
 			Sender:    sender,
 			CodeID:    codeID,
 			Label:     label,
-			InitMsg:   initMsg,
-			InitFunds: initFunds,
+			Args:   initMsg,
 		}
 }
 
@@ -171,12 +154,11 @@ type ExecuteContractTx struct {
 	transaction.CommonTx
 	Sender           sdk.AccAddress      `json:"sender"`
 	Contract         sdk.AccAddress      `json:"contract"`
-	Msg              json.RawMessage     `json:"msg"`
-	SendFunds        sdk.Coin           `json:"send_funds"`
+	Args              json.RawMessage    `json:"args"`
 }
 
 func NewExecuteContractTx(from sdk.AccAddress, gas, nonce uint64, sender sdk.AccAddress,
-	contractAddress sdk.AccAddress, msg json.RawMessage, sendFunds sdk.Coin) ExecuteContractTx {
+	contractAddress sdk.AccAddress, msg json.RawMessage) ExecuteContractTx {
 
 	return ExecuteContractTx{
 		CommonTx:  transaction.CommonTx{
@@ -186,8 +168,7 @@ func NewExecuteContractTx(from sdk.AccAddress, gas, nonce uint64, sender sdk.Acc
 		},
 		Sender:    sender,
 		Contract:  contractAddress,
-		Msg:       msg,
-		SendFunds: sendFunds,
+		Args:       msg,
 	}
 }
 

@@ -48,7 +48,7 @@ func handleStoreCodeTx(ctx sdk.Context, k Keeper, msg wasm.StoreCodeTx) sdk.Resu
 
 func handleInstantiateContractTx(ctx sdk.Context, k Keeper, msg wasm.InstantiateContractTx) sdk.Result {
 
-	contractAddr , err := k.Instantiate(ctx, msg.CodeID, msg.Sender, msg.InitMsg, msg.Label, msg.InitFunds)
+	contractAddr , err := k.Instantiate(ctx, msg.CodeID, msg.Sender, msg.Args, msg.Label)
 	if err != nil {
 		return wasm.ErrInstantiateFailed(wasm.DefaultCodespace, err).Result()
 	}
@@ -67,7 +67,7 @@ func handleInstantiateContractTx(ctx sdk.Context, k Keeper, msg wasm.Instantiate
 }
 
 func handleExecuteContractTx(ctx sdk.Context, k Keeper, msg wasm.ExecuteContractTx) sdk.Result{
-	res, err := k.Execute(ctx, msg.Contract, msg.Sender,msg.Msg, msg.SendFunds)
+	res, err := k.Execute(ctx, msg.Contract, msg.Sender,msg.Args)
 	if err != nil {
 		return wasm.ErrExecuteFailed(wasm.DefaultCodespace, err).Result()
 	}
@@ -80,6 +80,5 @@ func handleExecuteContractTx(ctx sdk.Context, k Keeper, msg wasm.ExecuteContract
 	}
 	k.AccountKeeper.SetAccount(ctx, account)
 	//
-	//TODO
 	return res
 }

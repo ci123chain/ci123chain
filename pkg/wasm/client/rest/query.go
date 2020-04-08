@@ -16,7 +16,7 @@ import (
 func registerQueryRoutes(cliCtx context.Context, r *mux.Router) {
 	r.HandleFunc("/wasm/codeSearch/list", listCodesHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/wasm/codeSearch", queryCodeHandlerFn(cliCtx)).Methods("POST")
-	r.HandleFunc("/wasm/codeSearch/contractsList", listContractsByCodeHandlerFn(cliCtx)).Methods("POST")
+	r.HandleFunc("/wasm/account/contractsList", listContractsByCodeHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/wasm/contractSearch", queryContractHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/wasm/contractSearch/state", queryContractStateAllHandlerFn(cliCtx)).Methods("POST")
 }
