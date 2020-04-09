@@ -31,7 +31,7 @@ var (
 
 	CodeKeyPrefix        =  []byte{0x01}
 	ContractKeyPrefix    =  []byte{0x02}
-	//ContractStorePrefix  =  []byte{0x03}
+	ContractStorePrefix  =  []byte{0x03}
 )
 
 func GetWasmerKey() []byte {
@@ -47,6 +47,6 @@ func GetContractAddressKey(addr sdk.AccAddress) []byte {
 	return append(ContractKeyPrefix, addr.Bytes()...)
 }
 
-/*func GetContractStorePrefix(addr sdk.AccAddress) []byte {
+func GetContractStorePrefixKey(addr sdk.AccAddress) []byte {
 	return append(ContractStorePrefix, addr.Bytes()...)
-}*/
+}

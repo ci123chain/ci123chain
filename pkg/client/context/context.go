@@ -172,7 +172,7 @@ func (ctx *Context) BroadcastSignedData(data []byte) (sdk.TxResponse, error) {
 }
 
 func (ctx *Context) BroadcastSignedDataAsync(data []byte) (sdk.TxResponse, error) {
-	ctx.BroadcastTxAsync(data)
+	_, _ = ctx.BroadcastTxAsync(data)
 
 	return sdk.TxResponse{}, nil
 }

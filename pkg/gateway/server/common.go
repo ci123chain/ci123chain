@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"github.com/tanhuiya/ci123chain/pkg/gateway/types"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 )
 
 type Response struct {
@@ -17,7 +19,17 @@ type Response struct {
 
 func SendRequest(requestUrl *url.URL,r *http.Request, RequestParams map[string]string) ([]byte, *http.Response, error) {
 
-	cli := &http.Client{}
+	cli := &http.Client{
+		Transport:&http.Transport{
+			Dial: func(netw, addr string) (net.Conn, error) {
+				conn, err := net.DialTimeout(netw, addr, time.Second*60)    //设置建立连接超时
+				if err != nil {
+					return nil, err
+				}
+				return conn, nil
+			},
+		},
+	}
 	reqUrl := "http://" + requestUrl.Host + r.URL.Path
 	data := url.Values{}
 	for k, v := range RequestParams {

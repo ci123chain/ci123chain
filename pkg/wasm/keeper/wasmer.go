@@ -86,6 +86,7 @@ func (w *Wasmer) Instantiate(code []byte, funcName string, args json.RawMessage)
 	if err != nil {
 		return "", err
 	}
+	//defer instance.Close()
 	/*//直接引用go-ext-wasm的instance.
 	instance, err := wasmer.NewInstance(code)
 	//instance, err := wasmer.NewInstanceWithImports(code, imports)
@@ -190,11 +191,11 @@ func getInstance(code []byte) (*wasmer.Instance, error) {
 	if err != nil {
 		panic(err)
 	}
-	defer instance.Close()
+	//defer instance.Close()
 	allocate, exist := instance.Exports["allocate"]
 	if !exist {
 		fmt.Println(exist)
-		return &wasmer.Instance{}, errors.New("no expected function")
+		return &wasmer.Instance{}, errors.New("no allocate")
 	}
 	middleIns.fun["allocate"] = allocate
 	return &instance, nil
