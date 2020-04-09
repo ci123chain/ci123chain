@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"github.com/tanhuiya/ci123chain/pkg/gateway/lbpolicy"
 	"github.com/tanhuiya/ci123chain/pkg/gateway/types"
-
 	"net/http"
 )
 
@@ -25,10 +24,10 @@ func NewLBProxy(pt types.ProxyType) *LBProxy {
 	return lbp
 }
 
-func (lbp *LBProxy) Handle(r *http.Request, backends []types.Instance, reqBody []byte) []byte {
+func (lbp *LBProxy) Handle(r *http.Request, backends []types.Instance, RequestParams map[string]string) []byte {
 
 	url := lbp.Policy.NextPeer(backends).URL()
-	b, _, err := SendRequest(url, r, reqBody)
+	b, _, err := SendRequest(url, r, RequestParams)
 	if err != nil {
 		res, _ := json.Marshal(types.ErrorResponse{
 			Err:  err.Error(),

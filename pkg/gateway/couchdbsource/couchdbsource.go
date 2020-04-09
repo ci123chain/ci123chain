@@ -3,6 +3,7 @@ package couchdbsource
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/tanhuiya/ci123chain/pkg/couchdb"
 	"github.com/tanhuiya/ci123chain/pkg/gateway/logger"
 	"regexp"
@@ -21,7 +22,7 @@ func NewCouchSource(dbname, host, urlreg string) *CouchDBSourceImp {
 	}
 	conn, err := imp.GetDBConnection()
 	if err != nil {
-		panic(err)
+		panic(errors.New(fmt.Sprintf("Cann't connect to %s: %s", host, err.Error())))
 	}
 	imp.conn = conn
 	return imp

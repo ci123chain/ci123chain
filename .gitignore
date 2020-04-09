@@ -3,3 +3,6 @@ vendor
 .idea
 go.sum
 data_dir
+
+testdocker/node*
+testdocker/gateway

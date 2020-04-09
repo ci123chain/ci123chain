@@ -23,16 +23,16 @@ func NewConcretProxy(pt types.ProxyType) *ConcretProxy {
 }
 
 
-func (cp *ConcretProxy) Handle(r *http.Request, backends []types.Instance, reqBody []byte) []byte {
+func (cp *ConcretProxy) Handle(r *http.Request, backends []types.Instance, RequestParams map[string]string) []byte {
 
 	backendsLen := len(backends)
-	var resultResp []ciRes
+	var resultResp []Response
 	for i := 0; i < backendsLen; i++ {
 		fmt.Println(backends[i].URL().Host)
 	}
 
 	if backendsLen == 1 {
-		resByte, _, err := SendRequest(backends[0].URL(), r, reqBody)
+		resByte, _, err := SendRequest(backends[0].URL(), r, RequestParams)
 		if err != nil {
 			//
 			err = errors.New("failed get response")
@@ -47,12 +47,12 @@ func (cp *ConcretProxy) Handle(r *http.Request, backends []types.Instance, reqBo
 		return resByte
 	}else {
 		for i := 0; i < backendsLen; i++ {
-			var result ciRes
-			resByte, _, err := SendRequest(backends[i].URL(),r, reqBody)
+			var result Response
+			resByte, _, err := SendRequest(backends[i].URL(),r, RequestParams)
 			if err != nil {
 				//return nil, errors.New("failed get response")
 			}
-			result = AddResponses(resByte)
+			result = HandleResponse(resByte)
 			resultResp = append(resultResp, result)
 		}
 	}

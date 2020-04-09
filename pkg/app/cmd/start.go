@@ -86,9 +86,9 @@ func startStandAlone(ctx *app.Context, appCreator app.AppCreator) error {
 func StartInProcess(ctx *app.Context, appCreator app.AppCreator) (*node.Node, error) {
 	cfg := ctx.Config
 	home := cfg.RootDir
+	viper.SetEnvPrefix("CI")
 	traceStore := viper.GetString(flagTraceStore)
 	stateDB := viper.GetString(flagStateDB)
-
 	gendoc, err := types.GenesisDocFromFile(cfg.GenesisFile())
 	if err != nil {
 		panic(err)

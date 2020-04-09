@@ -18,7 +18,7 @@ const (
 	MinPassLength = 4
 
 	FlagHeight = "height"
-	FlagHomeDir = "home"
+	FlagHomeDir = "clihome"
 	FlagVerbose = "verbose"
 	FlagNode = "node"
 	FlagAddress = "address"
@@ -49,7 +49,7 @@ func BufferStdin() *bufio.Reader {
 func GetPasswordFromStd() (string, error) {
 	var err error
 	buf := BufferStdin()
-	pass, err := GetCheckPassword("Enter a passphrase for your types:", "Repeat the passphrase:", buf)
+	pass, err := GetCheckPassword("Enter a passphrase for your account:", "Repeat the passphrase:", buf)
 	if err != nil {
 		return "", types.ErrGetCheckPassword(types.DefaultCodespace, err)
 	}
