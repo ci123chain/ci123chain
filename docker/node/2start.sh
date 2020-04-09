@@ -1,6 +1,6 @@
 #!/bin/bash
 if [ $GATEWAY ]; then
-    ./gateway-linux
+    ./cproxy-linux
     exit 0
 fi
 

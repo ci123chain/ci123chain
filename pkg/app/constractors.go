@@ -82,6 +82,9 @@ func ConstructAppExporter(appFn AppExporterInit, name string) AppExporter {
 }
 
 func GetStateDB(path, statedb string) (db dbm.DB, err error) {
+
+
+
 	var dbname string
 	if statedb == "leveldb" {
 		db, err = dbm.NewGoLevelDB(DefaultDBName, path)
@@ -98,7 +101,7 @@ func GetStateDB(path, statedb string) (db dbm.DB, err error) {
 		}
 		auths := strings.Split(s[1], "@")
 
-		if len(auths) < 2 {
+		if len(auths) < 2 { // 192.168.2.89:5984/dbname 无用户名 密码
 			info := auths[0]
 			split := strings.Split(info, "/")
 			if len(split) < 2 {
@@ -108,11 +111,12 @@ func GetStateDB(path, statedb string) (db dbm.DB, err error) {
 			}
 			db, err = couchdb.NewGoCouchDB(dbname, split[0],nil)
 			viper.Set(DBName, dbname)
-		} else {
-			info := auths[0]
-			userpass := strings.Split(info, ":")
-			if len(userpass) < 2 {
-				split := strings.Split(userpass[0], "/")
+		} else { // admin:password@192.168.2.89:5984/dbname
+			info := auths[0] // admin:password
+			userandpass := strings.Split(info, ":")
+			if len(userandpass) < 2 {
+				hostandpath := auths[1]
+				split := strings.Split(hostandpath, "/")
 				if len(split) < 2 {
 					dbname = DefaultDBName
 				} else {
@@ -120,16 +124,17 @@ func GetStateDB(path, statedb string) (db dbm.DB, err error) {
 				}
 				db, err = couchdb.NewGoCouchDB(dbname, split[0],nil)
 			} else {
-				auth := &couchdb.BasicAuth{Username: userpass[0], Password: userpass[1]}
-				split := strings.Split(userpass[0], "/")
+				auth := &couchdb.BasicAuth{Username: userandpass[0], Password: userandpass[1]}
+				hostandpath := auths[1]
+				split := strings.Split(hostandpath, "/")
 				if len(split) < 2 {
 					dbname = DefaultDBName
 				} else {
 					dbname = split[1]
 				}
 				db, err = couchdb.NewGoCouchDB(dbname, split[0], auth)
-				viper.Set(DBAuthUser, userpass[0])
-				viper.Set(DBAuthPwd, userpass[1])
+				viper.Set(DBAuthUser, userandpass[0])
+				viper.Set(DBAuthPwd, userandpass[1])
 				viper.Set(DBName, dbname)
 			}
 		}
