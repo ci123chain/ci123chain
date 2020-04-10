@@ -46,14 +46,15 @@ type Response struct {
 func NewErrorRes(err sdk.Error) Response {
 	return Response{
 		Ret:		uint32(err.Code()),
-		Data:		err.Data().(cmn.FmtError).Error(),
-		Message:	err.Data().(cmn.FmtError).Format(),
+		Data:		"",
+		Message:	err.Data().(cmn.FmtError).Error(),
 	}
 }
 
 func WriteErrorRes(w http.ResponseWriter, err sdk.Error) {
 	w.Header().Set("Content-Type", "application/json")
-	resp, _ := json.Marshal(NewErrorRes(err))
+	nerr := NewErrorRes(err)
+	resp, _ := json.Marshal(nerr)
 	_, _ = w.Write(resp)
 }
 

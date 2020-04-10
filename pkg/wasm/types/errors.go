@@ -17,8 +17,8 @@ const (
 	CodeSetSequenceFailedError CodeType = 53
 )
 
-func ErrCheckParams(codespace sdk.CodespaceType, str string) sdk.Error {
-	return sdk.NewError(codespace, CodeCheckParamsError, "param invalid", str)
+func ErrCheckParams(codespace sdk.CodespaceType, keyname string) sdk.Error {
+	return sdk.NewError(codespace, CodeCheckParamsError, "param invalid: %s", keyname)
 }
 
 func ErrInvalidMsg(codespce sdk.CodespaceType, err error) sdk.Error {

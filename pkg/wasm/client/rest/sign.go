@@ -19,7 +19,6 @@ import (
 var cdc = app.MakeCodec()
 
 func buildStoreCodeMsg(r *http.Request) ([]byte, error) {
-
 	var wasmcode []byte
 	codeStr := r.FormValue("wasmCodeStr")
 	if codeStr != "" {
@@ -31,7 +30,7 @@ func buildStoreCodeMsg(r *http.Request) ([]byte, error) {
 	}else {
 		file, _, err := r.FormFile("wasmCode")
 		if err != nil {
-			return nil, err
+			return nil, errors.New("wasmCodeStr; cannot get wasm file: " + err.Error())
 		}
 		wasmcode, err = ioutil.ReadAll(file)
 		if err != nil {
