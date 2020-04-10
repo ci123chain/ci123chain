@@ -11,6 +11,7 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/client/context"
 	"github.com/tanhuiya/ci123chain/pkg/client/helper"
 	"github.com/tanhuiya/ci123chain/pkg/transfer"
+	"github.com/tanhuiya/ci123chain/pkg/util"
 	"net/http"
 )
 
@@ -45,6 +46,16 @@ func QueryBalancesRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 
 		address := request.FormValue("address")
 		height := request.FormValue("height")
+		checkErr := util.CheckStringLength(42, 100, address)
+		if checkErr != nil {
+			rest.WriteErrorRes(w, client.ErrParseAddr(types.DefaultCodespace, checkErr))
+			return
+		}
+		_, Err := util.CheckInt64(height)
+		if Err != nil {
+			rest.WriteErrorRes(w, client.ErrParseAddr(types.DefaultCodespace, Err))
+			return
+		}
 
 		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, request, height)
 		if !ok {
@@ -92,6 +103,11 @@ func QueryNonceRequestHandleFn(cliCtx context.Context) http.HandlerFunc {
 		w.Header().Set("Content-Type", "application/json")
 
 		address := r.FormValue("address")
+		checkErr := util.CheckStringLength(42, 100, address)
+		if checkErr != nil {
+			rest.WriteErrorRes(w, client.ErrParseAddr(types.DefaultCodespace, checkErr))
+			return
+		}
 
 		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r, "")
 		if !ok {

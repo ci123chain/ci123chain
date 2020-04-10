@@ -9,6 +9,7 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/client/context"
 	"github.com/tanhuiya/ci123chain/pkg/ibc/types"
 	"github.com/tanhuiya/ci123chain/pkg/transfer"
+	"github.com/tanhuiya/ci123chain/pkg/util"
 	"net/http"
 )
 
@@ -80,6 +81,11 @@ type QueryTxParams struct {
 func QueryTxByUniqueIDRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		UniqueidStr := request.FormValue("uniqueID")
+		checkErr := util.CheckStringLength(1, 100, UniqueidStr)
+		if checkErr != nil {
+			rest.WriteErrorRes(writer, transfer.ErrQueryTx(types.DefaultCodespace, "unexpected uniqueID"))
+			return
+		}
 
 		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(writer, cliCtx, request, "")
 		if !ok {

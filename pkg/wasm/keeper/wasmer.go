@@ -86,7 +86,7 @@ func (w *Wasmer) Instantiate(code []byte, funcName string, args json.RawMessage)
 	if err != nil {
 		return "", err
 	}
-	//defer instance.Close()
+	defer instance.Close()
 	/*//直接引用go-ext-wasm的instance.
 	instance, err := wasmer.NewInstance(code)
 	//instance, err := wasmer.NewInstanceWithImports(code, imports)
@@ -119,6 +119,7 @@ func (w *Wasmer) Execute(code []byte, funcName string, args json.RawMessage) (st
 	if err != nil {
 		return "", err
 	}
+	defer instance.Close()
 	/*instance, err := wasmer.NewInstance(code)
 	//instance, err := wasmer.NewInstanceWithImports(code, imports)
 	if err != nil {
@@ -147,6 +148,7 @@ func (w *Wasmer) Query(code []byte, funcName string, args json.RawMessage) (stri
 	if err != nil {
 		return "", err
 	}
+	defer instance.Close()
 
 	query, exist := instance.Exports[funcName]
 	if !exist {

@@ -119,6 +119,19 @@ func NewResponseFormatBroadcastTxCommit(res *ctypes.ResultBroadcastTxCommit) TxR
 	return newTxResponseDeliverTx(res)
 }
 
+func NewResponseFormatBroadcastTx(res *ctypes.ResultBroadcastTx) TxResponse {
+	if res == nil {
+		return TxResponse{}
+	}
+	parsedLogs, _ := ParseABCILogs(res.Log)
+	return TxResponse{
+		Code:res.Code,
+		Data:strings.ToUpper(hex.EncodeToString(res.Data)),
+		TxHash:strings.ToUpper(hex.EncodeToString(res.Hash)),
+		Logs: parsedLogs,
+	}
+}
+
 func newTxResponseCheckTx(res *ctypes.ResultBroadcastTxCommit) TxResponse {
 	if res == nil {
 		return TxResponse{}

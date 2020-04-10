@@ -16,7 +16,6 @@ import (
 	"io/ioutil"
 	"path"
 	"strconv"
-	"strings"
 )
 
 func init() {
@@ -162,67 +161,13 @@ func GetArgs(ctx context.Context) (types.AccAddress, uint64, uint64, string, jso
 	if Msg == "" {
 		args = json.RawMessage{}
 	}else {
-		msgStr := getStr(Msg)
-		args, err = json.Marshal(msgStr)
+		var params wasm.CallContractParam
+		argsByte := []byte(Msg)
+		err := json.Unmarshal(argsByte, params)
 		if err != nil {
-			return types.AccAddress{}, 0, 0, "", nil, err
+			return types.AccAddress{}, 0, 0, "", nil, errors.New("unexpected args")
 		}
+		args = argsByte
 	}
 	return address, Gas, nonce, key, args, nil
-}
-
-func getStr(m string) wasm.CallContractParam {
-	var str []string
-	var args []string
-	var p wasm.CallContractParam
-	b := strings.Split(m, "{")
-	if b[1] == "" || len(b) != 2 {
-		p = wasm.CallContractParam{
-			Method: "",
-			Args:   nil,
-		}
-		return p
-	}else {
-		c := strings.Split(b[1], "}")
-		if c[0] == "" || len(c) != 2 {
-			p = wasm.CallContractParam{
-				Method: "",
-				Args:   nil,
-			}
-			return p
-		}else {
-			d := strings.Split(c[0], ",")
-			if len(d) == 0 {
-				p = wasm.CallContractParam{
-					Method: "",
-					Args:   nil,
-				}
-				return p
-			}
-			for i := 0; i < len(d); i++ {
-				e := strings.Split(d[i], "\"")
-				if len(e) != 3 {
-					str = append(str, "")
-				}else {
-					str = append(str, e[1])
-				}
-			}
-		}
-	}
-	if len(str) == 0 {
-		p = wasm.CallContractParam{
-			Method: "",
-			Args:   nil,
-		}
-	}else {
-		method := str[0]
-		for i := 1; i < len(str); i++ {
-			args = append(args, str[i])
-		}
-		p = wasm.CallContractParam{
-			Method: method,
-			Args:   args,
-		}
-	}
-	return p
 }

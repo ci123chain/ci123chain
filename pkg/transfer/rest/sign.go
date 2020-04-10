@@ -3,6 +3,8 @@ package rest
 import (
 	"encoding/hex"
 	"github.com/pkg/errors"
+	"github.com/tanhuiya/ci123chain/pkg/util"
+
 	//sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/abci/types/rest"
 	"github.com/tanhuiya/ci123chain/pkg/app"
@@ -13,7 +15,6 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/transfer/types"
 	tSDK "github.com/tanhuiya/ci123chain/sdk/transfer"
 	"net/http"
-	"strconv"
 )
 
 var cdc = app.MakeCodec()
@@ -22,16 +23,16 @@ type Tx struct {
 	SignedTx	string `json:"signedtx"`
 }
 
-
 func SignTxRequestHandler(cliCtx context.Context) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		priv := request.FormValue("privateKey")
-		if len(priv) < 1 {
+		err := util.CheckStringLength(1, 100, priv)
+		if err != nil {
 			rest.WriteErrorRes(writer, transaction.ErrBadPrivkey(types.DefaultCodespace, errors.New("param privateKey not found")) )
 			return
 		}
 		fabric := request.FormValue("fabric")
-		isFabric, err  := strconv.ParseBool(fabric)
+		isFabric, err := util.CheckBool(fabric)
 		if err != nil {
 			isFabric = false
 		}
@@ -47,11 +48,6 @@ func SignTxRequestHandler(cliCtx context.Context) http.HandlerFunc {
 
 func buildTransferTx(r *http.Request, isFabric bool, priv string) ([]byte, error) {
 
-	fabric := r.FormValue("fabric")
-	isFabric, err  := strconv.ParseBool(fabric)
-	if err != nil {
-		isFabric = false
-	}
 	from := r.FormValue("from")
 	to := r.FormValue("to")
 	amount := r.FormValue("amount")
@@ -63,34 +59,31 @@ func buildTransferTx(r *http.Request, isFabric bool, priv string) ([]byte, error
 	if err != nil {
 		return nil, client.ErrParseAddr(types.DefaultCodespace, err)
 	}
-	if len(froms) != 1 {
-		return nil, types.ErrCheckParams(types.DefaultCodespace, "from error")
+	err = util.CheckStringLength(42, 100, from)
+	if err != nil {
+		return nil, err
 	}
-	/*
-		tos, err := helper.ParseAddrs(to)
-		if err != nil {
-			return nil, client.ErrParseAddr(types.DefaultCodespace, err)
-		}
-		if len(tos) != 1 {
-			return nil, types.ErrCheckParams(types.DefaultCodespace, "to error")
-		}
-	*/
-	gasI, err := strconv.ParseUint(gas, 10, 64)
+	err = util.CheckStringLength(42, 100, to)
+	if err != nil {
+		return nil, err
+	}
+
+	gasI, err := util.CheckUint64(gas)
 	if err != nil {
 		return nil, types.ErrCheckParams(types.DefaultCodespace, "gas error")
 	}
 
-	amountI, err := strconv.ParseUint(amount, 10, 64)
+	amountI, err := util.CheckUint64(amount)
 	if err != nil {
 		return nil, types.ErrCheckParams(types.DefaultCodespace, "amount error")
 	}
 	var nonce uint64
 	if userNonce != "" {
-		UserNonce, err := strconv.ParseInt(userNonce, 10, 64)
+		UserNonce, err := util.CheckUint64(userNonce)
 		if err != nil || UserNonce < 0 {
 			return nil, types.ErrCheckParams(types.DefaultCodespace, "nonce error")
 		}
-		nonce = uint64(UserNonce)
+		nonce = UserNonce
 	}else {
 		ctx, err := client.NewClientContextFromViper(cdc)
 		if err != nil {

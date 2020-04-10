@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+	"time"
 )
 
 const DefaultLogDir  = "$HOME/.gateway"
@@ -27,7 +28,7 @@ func Start() {
 	flag.String("logdir", DefaultLogDir, "log dir")
 	flag.StringVar(&logLevel, "loglevel", "DEBUG", "level for log")
 
-	flag.StringVar(&serverList, "backends", "", "Load balanced backends, use commas to separate")
+	flag.StringVar(&serverList, "backends", "http://localhost:1317", "Load balanced backends, use commas to separate")
 	flag.String("statedb", "couchdb://couchdb_service:5984/ci123", "server resource")
 	flag.StringVar(&urlreg, "urlreg", "http://***:80", "reg for url connection to node")
 	flag.IntVar(&port, "port", 3030, "Port to serve")
@@ -58,9 +59,11 @@ func Start() {
 
 	serverPool.Run()
 	// create http server
+
+	h := http.TimeoutHandler(http.HandlerFunc(AllHandle), time.Second*60, "server timeout")
 	server := http.Server{
 		Addr:    fmt.Sprintf(":%d", port),
-		Handler: http.HandlerFunc(AllHandle),
+		Handler: h,
 	}
 
 	// start health checking
@@ -75,6 +78,10 @@ func Start() {
 }
 
 func AllHandle(w http.ResponseWriter, r *http.Request) {
+
+
+	time.Sleep(time.Second * 60)
+
 	//do something
 	w.Header().Set("Content-Type", "application/json")
 	job := NewSpecificJob(r, serverPool.backends)

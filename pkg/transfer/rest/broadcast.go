@@ -6,24 +6,22 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/client"
 	"github.com/tanhuiya/ci123chain/pkg/client/context"
 	"github.com/tanhuiya/ci123chain/pkg/transfer/types"
+	"github.com/tanhuiya/ci123chain/pkg/util"
 	"net/http"
 )
 
 func BroadcastTxRequest(cliCtx context.Context) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
-/*
-		var params TxRequest
-		b, readErr := ioutil.ReadAll(request.Body)
-		readErr = json.Unmarshal(b, &params)
-		if readErr != nil {
-			//
-		}
-		*/
 
 		data := request.FormValue("txByte")
+		err := util.CheckStringLength(1, 1000, data)
+		if err != nil {
+			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"error txByte length"))
+			return
+		}
 		txByte, err := hex.DecodeString(data)
 		if err != nil {
-			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"data error"))
+			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"error txByte"))
 			return
 		}
 
@@ -38,15 +36,6 @@ func BroadcastTxRequest(cliCtx context.Context) http.HandlerFunc {
 
 func BroadcastTxRequestAsync(cliCtx context.Context) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
-
-		/*
-		var params TxRequest
-		b, readErr := ioutil.ReadAll(request.Body)
-		readErr = json.Unmarshal(b, &params)
-		if readErr != nil {
-			//
-		}
-		*/
 
 		data := request.FormValue("txByte")
 		txByte, err := hex.DecodeString(data)

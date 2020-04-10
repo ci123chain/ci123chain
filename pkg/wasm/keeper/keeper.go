@@ -107,7 +107,7 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator sdk.AccAddre
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.GetCodeKey(codeID))
 	if bz == nil {
-		return sdk.AccAddress{}, sdk.ErrInternal("empty codeID")
+		return sdk.AccAddress{}, sdk.ErrInternal("codeID not found")
 	}
 	wasmerBz := store.Get(types.GetWasmerKey())
 	if wasmerBz != nil {

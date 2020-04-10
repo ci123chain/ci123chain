@@ -7,6 +7,7 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/client/context"
 	"github.com/tanhuiya/ci123chain/pkg/transfer/rest/utils"
 	"github.com/tanhuiya/ci123chain/pkg/transfer/types"
+	"github.com/tanhuiya/ci123chain/pkg/util"
 	"net/http"
 )
 
@@ -26,6 +27,11 @@ type TxRequestParams struct {
 func QueryTxRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		hashHexStr := request.FormValue("hash")
+		checkErr := util.CheckStringLength(1, 100, hashHexStr)
+		if checkErr != nil {
+			rest.WriteErrorRes(writer, types.ErrQueryTx(types.DefaultCodespace, checkErr.Error()))
+			return
+		}
 
 		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(writer, cliCtx, request, "")
 		if !ok {

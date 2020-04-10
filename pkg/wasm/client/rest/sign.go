@@ -8,12 +8,11 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/app"
 	"github.com/tanhuiya/ci123chain/pkg/client"
 	"github.com/tanhuiya/ci123chain/pkg/client/helper"
+	"github.com/tanhuiya/ci123chain/pkg/util"
 	wasm "github.com/tanhuiya/ci123chain/pkg/wasm/types"
 	sdk "github.com/tanhuiya/ci123chain/sdk/wasm"
 	"io/ioutil"
 	"net/http"
-	"strconv"
-	"strings"
 )
 
 var cdc = app.MakeCodec()
@@ -21,6 +20,11 @@ var cdc = app.MakeCodec()
 func buildStoreCodeMsg(r *http.Request) ([]byte, error) {
 
 	var wasmcode []byte
+	//check params
+	from, gas, nonce,  priv, _, err := getArgs(r)
+	if err != nil {
+		return nil, err
+	}
 	codeStr := r.FormValue("wasmCodeStr")
 	if codeStr != "" {
 		Byte, err := hex.DecodeString(codeStr)
@@ -45,11 +49,6 @@ func buildStoreCodeMsg(r *http.Request) ([]byte, error) {
 	if ok != nil {
 		return nil, ok
 	}
-
-	from, gas, nonce,  priv, _, err := getArgs(r)
-	if err != nil {
-		return nil, err
-	}
 	txByte, err := sdk.SignStoreCodeMsg(from, gas, nonce, priv, from, wasmcode)
 	if err != nil {
 		return nil, err
@@ -60,16 +59,18 @@ func buildStoreCodeMsg(r *http.Request) ([]byte, error) {
 func buildInstantiateContractMsg(r *http.Request) ([]byte, error) {
 
 	codeId := r.FormValue("codeID")
-	if codeId == "" {
-		return nil, errors.New("codeID can not be empty")
-	}
-	codeID, err := strconv.ParseUint(codeId, 10, 64)
+	codeID, err := util.CheckUint64(codeId)
 	if err != nil {
 		return nil, err
 	}
 	label := r.FormValue("label")
 	if label == "" {
 		label = "label"
+	}else {
+		err := util.CheckStringLength(1, 100, label)
+		if err != nil {
+			return nil, errors.New("error label")
+		}
 	}
 	from, gas, nonce, priv, args, err := getArgs(r)
 	if err != nil {
@@ -86,8 +87,9 @@ func buildInstantiateContractMsg(r *http.Request) ([]byte, error) {
 func buildExecuteContractMsg(r *http.Request) ([]byte, error) {
 
 	contractAddr := r.FormValue("contractAddress")
-	if contractAddr == "" {
-		return nil, errors.New("contractAddress can not be empty")
+	err := util.CheckStringLength(42, 100, contractAddr)
+	if err != nil {
+		return nil, errors.New("error contractAddress")
 	}
 	contractAddress := types.HexToAddress(contractAddr)
 
@@ -109,24 +111,43 @@ func getArgs(r *http.Request) (types.AccAddress, uint64, uint64, string, json.Ra
 	from := r.FormValue("from")
 	inputGas := r.FormValue("gas")
 	inputNonce := r.FormValue("nonce")
+	err := util.CheckStringLength(42, 100, from)
+	if err != nil {
+		return types.AccAddress{}, 0, 0,  "", nil, errors.New("error from")
+	}
 	froms, err := helper.ParseAddrs(from)
 	if err != nil {
 		return types.AccAddress{}, 0, 0,  "", nil, err
 	}
-	if len(froms) != 1 {
-		return types.AccAddress{}, 0, 0, "", nil, err
-	}
-	gas, err := strconv.ParseUint(inputGas, 10, 64)
+	gas, err := util.CheckUint64(inputGas)
 	if err != nil {
 		return types.AccAddress{}, 0, 0,  "", nil, err
 	}
+	priv := r.FormValue("privateKey")
+	err = util.CheckStringLength(1, 100, priv)
+	if err != nil {
+		return types.AccAddress{}, 0, 0, "", nil, errors.New("error privateKey")
+	}
+	msg := r.FormValue("args")
+	if msg == "" {
+		args = nil
+	}else {
+		var argsStr wasm.CallContractParam
+		ok, err := util.CheckJsonArgs(msg, argsStr)
+		if err != nil || !ok {
+			return types.AccAddress{}, 0, 0, "", nil, errors.New("unexpected args")
+		}
+		var argsByte = []byte(msg)
+		args = argsByte
+	}
+	JsonArgs := json.RawMessage(args)
 	var nonce uint64
 	if inputNonce != "" {
-		UserNonce, err := strconv.ParseInt(inputNonce, 10, 64)
+		UserNonce, err := util.CheckUint64(inputNonce)
 		if err != nil || UserNonce < 0 {
 			return types.AccAddress{}, 0, 0, "", nil, err
 		}
-		nonce = uint64(UserNonce)
+		nonce = UserNonce
 	}else {
 		ctx, err := client.NewClientContextFromViper(cdc)
 		if err != nil {
@@ -137,36 +158,6 @@ func getArgs(r *http.Request) (types.AccAddress, uint64, uint64, string, json.Ra
 			return types.AccAddress{}, 0, 0, "", nil, err
 		}
 	}
-	priv := r.FormValue("privateKey")
-	if priv == "" {
-		return types.AccAddress{}, 0, 0, "", nil, errors.New("privateKey can not be empty")
-	}
-
-	msg := r.FormValue("args")
-	if msg == "" {
-		args = nil
-	}else {
-		var Args []string
-		var method string
-		//
-		str := strings.Split(msg, ",")
-		if len(str) == 1 {
-			method = str[0]
-			Args = []string{}
-		}else {
-			method = str[0]
-			for i := 1; i < len(str); i++ {
-				Args = append(Args, str[i])
-			}
-		}
-		param := wasm.NewCallContractParams(method, Args)
-		callMsg, err := json.Marshal(param)
-		if err != nil {
-			return types.AccAddress{}, 0, 0, "", nil, errors.New("invalid json raw message")
-		}
-		args = callMsg
-	}
-	JsonArgs := json.RawMessage(args)
 
 	return froms[0], gas, nonce, priv, JsonArgs, nil
 

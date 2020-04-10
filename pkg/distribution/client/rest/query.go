@@ -6,8 +6,8 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/client/context"
 	"github.com/tanhuiya/ci123chain/pkg/distribution/types"
 	"github.com/tanhuiya/ci123chain/pkg/transfer"
+	"github.com/tanhuiya/ci123chain/pkg/util"
 	"net/http"
-	"strconv"
 )
 
 func RegisterTxRoutes(cliCtx context.Context, r *mux.Router)  {
@@ -32,19 +32,16 @@ func QueryValidatorRewardsRequestHandlerFn(cliCtx context.Context) http.HandlerF
 		vars := mux.Vars(request)
 		accountAddress := vars["accountAddress"]
 		height := vars["height"]
-
-		/*
-		var params QueryRewardsParams
-		b, readErr := ioutil.ReadAll(request.Body)
-		readErr = json.Unmarshal(b, &params)
-		if readErr != nil {
-			//
+		checkErr := util.CheckStringLength(42, 100, accountAddress)
+		if checkErr != nil {
+			rest.WriteErrorRes(writer,types.ErrBadHeight(types.DefaultCodespace, checkErr))
+			return
 		}
-		*/
 
-		if height == "now" {
+		if height == "" {
+			height = "now"
 		}else {
-			_, Err := strconv.ParseInt(height, 10 , 64)
+			_, Err := util.CheckInt64(height)
 			if Err != nil {
 				rest.WriteErrorRes(writer,types.ErrBadHeight(types.DefaultCodespace, Err))
 				return
