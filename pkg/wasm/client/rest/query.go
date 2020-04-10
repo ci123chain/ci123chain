@@ -1,16 +1,15 @@
 package rest
 
 import (
-	"encoding/json"
 	"github.com/gorilla/mux"
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/abci/types/rest"
 	"github.com/tanhuiya/ci123chain/pkg/client/context"
 	"github.com/tanhuiya/ci123chain/pkg/transfer"
+	"github.com/tanhuiya/ci123chain/pkg/util"
 	"github.com/tanhuiya/ci123chain/pkg/wasm/types"
 	"net/http"
 	"strconv"
-	"strings"
 )
 
 func registerQueryRoutes(cliCtx context.Context, r *mux.Router) {
@@ -18,7 +17,7 @@ func registerQueryRoutes(cliCtx context.Context, r *mux.Router) {
 	r.HandleFunc("/wasm/codeSearch", queryCodeHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/wasm/account/contractsList", listContractsByCodeHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/wasm/contractSearch", queryContractHandlerFn(cliCtx)).Methods("POST")
-	r.HandleFunc("/wasm/contractSearch/state", queryContractStateAllHandlerFn(cliCtx)).Methods("POST")
+	r.HandleFunc("/wasm/contract/query", queryContractStateAllHandlerFn(cliCtx)).Methods("POST")
 }
 
 func listCodesHandlerFn(cliCtx context.Context) http.HandlerFunc {
@@ -137,14 +136,12 @@ func queryContractStateAllHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		if msg == "" {
 			queryParam = nil
 		}else {
-			var Args []string
-			args := strings.Split(msg, ",")
-			method := args[0]
-			for i := 1; i < len(args); i++ {
-				Args = append(Args, args[i])
+			var argsStr types.CallContractParam
+			ok, err := util.CheckJsonArgs(msg, argsStr)
+			if err != nil || !ok {
+				//return types.AccAddress{}, 0, 0, "", nil, errors.New("unexpected args")
 			}
-			param := types.NewCallContractParams(method, Args)
-			queryParam, _ = json.Marshal(param)
+			queryParam = []byte(msg)
 
 		}
 
