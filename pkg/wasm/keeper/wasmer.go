@@ -135,6 +135,7 @@ func (w *Wasmer) Execute(code []byte, funcName string, args json.RawMessage) (st
 		errStr := fmt.Sprintf("err: [%s]\n", res.ParseError())
 		return "", errors.New(errStr)
 	}else {
+		res.Ok()
 		resStr := fmt.Sprintf("ok: [%s]\n", string(res.Parse().Data))
 		return resStr, nil
 	}
