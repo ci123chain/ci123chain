@@ -9,17 +9,6 @@ import (
 	"net/http"
 )
 
-/*
-type TxByte struct {
-	Tx     string   `json:"tx"`
-}
-
-type TxRequest struct {
-	//
-	Data   TxByte    `json:"data"`
-}
-*/
-
 func BroadcastTxRequest(cliCtx context.Context) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 /*
@@ -66,7 +55,7 @@ func BroadcastTxRequestAsync(cliCtx context.Context) http.HandlerFunc {
 			return
 		}
 
-		cliCtx.BroadcastSignedDataAsync(txByte)
+		_, _ = cliCtx.BroadcastSignedDataAsync(txByte)
 		/*
 		res, err := cliCtx.BroadcastSignedDataAsync(txByte)
 		if err != nil {

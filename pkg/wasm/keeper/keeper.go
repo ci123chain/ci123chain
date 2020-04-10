@@ -131,6 +131,11 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator sdk.AccAddre
 		}
 	}
 	code = wc
+	//create store
+	prefixStoreKey := types.GetContractStorePrefixKey(contractAddress)
+	prefixStore := NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
+	SetStore(prefixStore)
+
 	_, err = k.wasmer.Instantiate(code,types.InitFunctionName, args)
 	if err != nil {
 		return sdk.AccAddress{}, err
@@ -173,6 +178,11 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 		}
 	}
 	code = wc
+	//get store
+	prefixStoreKey := types.GetContractStorePrefixKey(contractAddress)
+	prefixStore := NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
+	SetStore(prefixStore)
+
 	res, err := k.wasmer.Execute(code, types.HandleFunctionName, args)
 	if err != nil {
 		return sdk.Result{}, err
@@ -210,7 +220,13 @@ func (k Keeper) Query(ctx sdk.Context, contractAddress sdk.AccAddress, msg json.
 		}
 	}
 	code = wc
-	res, err := k.wasmer.Query(code, types.QueryFunctionName, nil)
+
+	//get store
+	prefixStoreKey := types.GetContractStorePrefixKey(contractAddress)
+	prefixStore := NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
+	SetStore(prefixStore)
+
+	res, err := k.wasmer.Query(code, types.QueryFunctionName, msg)
 	if err != nil {
 		return types.ContractState{}, err
 	}

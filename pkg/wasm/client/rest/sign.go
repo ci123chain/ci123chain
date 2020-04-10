@@ -45,7 +45,7 @@ func buildStoreCodeMsg(r *http.Request) ([]byte, error) {
 		return nil, ok
 	}
 
-	from, gas, nonce,  priv,_, err := getArgs(r)
+	from, gas, nonce,  priv, _, err := getArgs(r)
 	if err != nil {
 		return nil, err
 	}
@@ -70,12 +70,12 @@ func buildInstantiateContractMsg(r *http.Request) ([]byte, error) {
 	if label == "" {
 		label = "label"
 	}
-	from, gas, nonce, priv, Msg, err := getArgs(r)
+	from, gas, nonce, priv, args, err := getArgs(r)
 	if err != nil {
 		return nil, err
 	}
 
-	txByte, err := sdk.SignInstantiateContractMsg(from, gas, nonce, codeID, priv, from, label, Msg)
+	txByte, err := sdk.SignInstantiateContractMsg(from, gas, nonce, codeID, priv, from, label, args)
 	if err != nil {
 		return nil, err
 	}
@@ -90,12 +90,12 @@ func buildExecuteContractMsg(r *http.Request) ([]byte, error) {
 	}
 	contractAddress := types.HexToAddress(contractAddr)
 
-	from, gas, nonce, priv, Msg, err := getArgs(r)
+	from, gas, nonce, priv, args, err := getArgs(r)
 	if err != nil {
 		return nil, err
 	}
 
-	txByte, err := sdk.SignExecuteContractMsg(from, gas, nonce, priv, from, contractAddress, Msg)
+	txByte, err := sdk.SignExecuteContractMsg(from, gas, nonce, priv, from, contractAddress, args)
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +103,7 @@ func buildExecuteContractMsg(r *http.Request) ([]byte, error) {
 }
 
 func getArgs(r *http.Request) (types.AccAddress, uint64, uint64, string, json.RawMessage, error) {
-	var Msg []byte
+	var args []byte
 
 	from := r.FormValue("from")
 	inputGas := r.FormValue("gas")
@@ -141,26 +141,32 @@ func getArgs(r *http.Request) (types.AccAddress, uint64, uint64, string, json.Ra
 		return types.AccAddress{}, 0, 0, "", nil, errors.New("privateKey can not be empty")
 	}
 
-	msg := r.FormValue("msg")
+	msg := r.FormValue("args")
 	if msg == "" {
-		Msg = nil
+		args = nil
 	}else {
 		var Args []string
+		var method string
 		//
-		args := strings.Split(msg, ",")
-		method := args[0]
-		for i := 1; i < len(args); i++ {
-			Args = append(Args, args[i])
+		str := strings.Split(msg, ",")
+		if len(str) == 1 {
+			method = str[0]
+			Args = []string{}
+		}else {
+			method = str[0]
+			for i := 1; i < len(str); i++ {
+				Args = append(Args, str[i])
+			}
 		}
 		param := wasm.NewCallContractParams(method, Args)
 		callMsg, err := json.Marshal(param)
 		if err != nil {
 			return types.AccAddress{}, 0, 0, "", nil, errors.New("invalid json raw message")
 		}
-		Msg = callMsg
+		args = callMsg
 	}
-	JsonMsg := json.RawMessage(Msg)
+	JsonArgs := json.RawMessage(args)
 
-	return froms[0], gas, nonce, priv,JsonMsg, nil
+	return froms[0], gas, nonce, priv, JsonArgs, nil
 
 }

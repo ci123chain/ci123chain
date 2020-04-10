@@ -30,7 +30,7 @@ func (ctx *Context) BroadcastTxAsync(tx []byte) (sdk.TxResponse, error) {
 	if err != nil {
 		return sdk.TxResponse{}, err
 	}
-	node.BroadcastTxAsync(tx)
+	_, _ = node.BroadcastTxAsync(tx)
 
 	return sdk.TxResponse{Info:"success"}, nil
 }

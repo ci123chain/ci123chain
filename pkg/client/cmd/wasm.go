@@ -48,8 +48,8 @@ var WasmCmd = &cobra.Command{
 
 		funcName := args[0]
 		switch funcName {
-		case "upload":
-			return uploadFile()
+		case "install":
+			return installContract()
 		case "init":
 			return initContract()
 		case "invoke":
@@ -60,7 +60,7 @@ var WasmCmd = &cobra.Command{
 	},
 }
 
-func uploadFile() error {
+func installContract() error {
 	ctx, err := client.NewClientContextFromViper(cdc)
 	if err != nil {
 		return  err

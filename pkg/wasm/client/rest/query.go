@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"github.com/gorilla/mux"
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
@@ -11,6 +10,7 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/wasm/types"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 func registerQueryRoutes(cliCtx context.Context, r *mux.Router) {
@@ -129,19 +129,23 @@ func queryContractHandlerFn(cliCtx context.Context) http.HandlerFunc {
 
 func queryContractStateAllHandlerFn(cliCtx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var param types.CallContractParam
+		var queryParam []byte
 		contractAddr := r.FormValue("contractAddress")
 		contractAddress := sdk.HexToAddress(contractAddr)
-		msg := r.FormValue("queryMSg")
-		queryMsg, Err := hex.DecodeString(msg)
-		if Err != nil {
-			rest.WriteErrorRes(w, sdk.ErrInternal("get msg failed"))
-			return
-		}
-		Err = json.Unmarshal(queryMsg, &param)
-		if Err != nil {
-			rest.WriteErrorRes(w, sdk.ErrInternal("unexpected query msg"))
-			return
+		msg := r.FormValue("args")
+
+		if msg == "" {
+			queryParam = nil
+		}else {
+			var Args []string
+			args := strings.Split(msg, ",")
+			method := args[0]
+			for i := 1; i < len(args); i++ {
+				Args = append(Args, args[i])
+			}
+			param := types.NewCallContractParams(method, Args)
+			queryParam, _ = json.Marshal(param)
+
 		}
 
 		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r, "")
@@ -150,7 +154,7 @@ func queryContractStateAllHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			return
 		}
 
-		params := types.NewContractStateParam(contractAddress, queryMsg)
+		params := types.NewContractStateParam(contractAddress, queryParam)
 		bz, Er := cliCtx.Cdc.MarshalJSON(params)
 		if Er != nil {
 			rest.WriteErrorRes(w, sdk.ErrInternal("marshal failed"))

@@ -86,6 +86,7 @@ func (w *Wasmer) Instantiate(code []byte, funcName string, args json.RawMessage)
 	if err != nil {
 		return "", err
 	}
+	//defer instance.Close()
 	/*//直接引用go-ext-wasm的instance.
 	instance, err := wasmer.NewInstance(code)
 	//instance, err := wasmer.NewInstanceWithImports(code, imports)
@@ -106,6 +107,7 @@ func (w *Wasmer) Instantiate(code []byte, funcName string, args json.RawMessage)
 		errStr := fmt.Sprintf("err: [%s]\n", res.ParseError())
 		return "", errors.New(errStr)
 	}else {
+		res.Ok()
 		resStr := fmt.Sprintf("ok: [%s]\n", string(res.Parse().Data))
 		return resStr, nil
 	}
@@ -134,10 +136,10 @@ func (w *Wasmer) Execute(code []byte, funcName string, args json.RawMessage) (st
 		errStr := fmt.Sprintf("err: [%s]\n", res.ParseError())
 		return "", errors.New(errStr)
 	}else {
+		res.Ok()
 		resStr := fmt.Sprintf("ok: [%s]\n", string(res.Parse().Data))
 		return resStr, nil
 	}
-	//return res, nil
 }
 
 func (w *Wasmer) Query(code []byte, funcName string, args json.RawMessage) (string, error) {
@@ -160,6 +162,7 @@ func (w *Wasmer) Query(code []byte, funcName string, args json.RawMessage) (stri
 		errStr := fmt.Sprintf("err: [%s]\n", res.ParseError())
 		return "", errors.New(errStr)
 	}else {
+		res.Ok()
 		resStr := fmt.Sprintf("ok: [%s]\n", string(res.Parse().Data))
 		return resStr, nil
 	}
@@ -190,11 +193,11 @@ func getInstance(code []byte) (*wasmer.Instance, error) {
 	if err != nil {
 		panic(err)
 	}
-	defer instance.Close()
+	//defer instance.Close()
 	allocate, exist := instance.Exports["allocate"]
 	if !exist {
 		fmt.Println(exist)
-		return &wasmer.Instance{}, errors.New("no expected function")
+		return &wasmer.Instance{}, errors.New("no allocate")
 	}
 	middleIns.fun["allocate"] = allocate
 	return &instance, nil
