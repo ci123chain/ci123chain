@@ -160,56 +160,56 @@ func setUsed(err *Error) {
 }
 
 func ErrValidatorExisted(codespace sdk.CodespaceType, err error) sdk.Error {
-	return sdk.NewError(codespace, CodeValidatorExisted, "Validator existed", err)
+	return sdk.NewError(codespace, CodeValidatorExisted, "Validator existed: %s", err.Error())
 }
 
 func ErrGetPubKeyFromAddress(codespace sdk.CodespaceType, err error) sdk.Error {
-	return sdk.NewError(codespace, CodeGetPubKeyFromAddressFailed, "Get pubKey from address failed", err)
+	return sdk.NewError(codespace, CodeGetPubKeyFromAddressFailed, "Get pubKey from address failed: %s", err.Error())
 }
 
 func ErrDescriptionOutOfLength(codespace sdk.CodespaceType, err error) sdk.Error {
-	return sdk.NewError(codespace, CodeDescriptionOutOfLength, "Description out of length", err)
+	return sdk.NewError(codespace, CodeDescriptionOutOfLength, "Description out of length: %s", err.Error())
 }
 
 func ErrSetCommissionFailed(codespace sdk.CodespaceType, err error) sdk.Error {
-	return sdk.NewError(codespace, CodeSetCommissionFailed, "Set commission failed", err)
+	return sdk.NewError(codespace, CodeSetCommissionFailed, "Set commission failed: %s", err.Error())
 }
 func ErrSetValidatorFailed(codespace sdk.CodespaceType, err error) sdk.Error {
-	return sdk.NewError(codespace, CodeSetValidatorFailed, "Set validator failed", err)
+	return sdk.NewError(codespace, CodeSetValidatorFailed, "Set validator failed: %s", err.Error())
 }
 
 func ErrDelegateFailed(codespace sdk.CodespaceType, err error) sdk.Error {
-	return sdk.NewError(codespace, CodeDelegateFailed, "Delegate failed", err)
+	return sdk.NewError(codespace, CodeDelegateFailed, "Delegate failed: %s", err.Error())
 }
 
 func ErrNoExpectedValidator(codespace sdk.CodespaceType, err error) sdk.Error {
-	return sdk.NewError(codespace, CodeNoExpectedValidator, "No expected validator", err)
+	return sdk.NewError(codespace, CodeNoExpectedValidator, "No expected validator: %s", err.Error())
 }
 
 func ErrBondedDenomDiff(codespace sdk.CodespaceType, err error) sdk.Error {
-	return sdk.NewError(codespace, CodeUnexpectedDeom, "unexpected denom", err)
+	return sdk.NewError(codespace, CodeUnexpectedDeom, "unexpected denom: %s", err.Error())
 }
 
 func ErrRedelegationFailed(codespace sdk.CodespaceType, err error) sdk.Error {
-	return sdk.NewError(codespace, CodeRedelegateFailed, "Redelegatie failed", err)
+	return sdk.NewError(codespace, CodeRedelegateFailed, "Redelegatie failed: %s", err.Error())
 }
 
 func ErrGotTimeFailed(codespace sdk.CodespaceType, err error) sdk.Error {
-	return sdk.NewError(codespace, CodeGotTimeFailed, "got time failed", err)
+	return sdk.NewError(codespace, CodeGotTimeFailed, "got time failed: %s", err.Error())
 }
 
 func ErrUndelegateFailed(codespace sdk.CodespaceType, err error) sdk.Error {
-	return sdk.NewError(codespace, CodeUndelegateFailed, "Undelegate failed", err)
+	return sdk.NewError(codespace, CodeUndelegateFailed, "Undelegate failed: %s", err.Error())
 }
 
 func ErrValidateUnBondAmountFailed(codespace sdk.CodespaceType, err error) sdk.Error {
-return sdk.NewError(codespace, CodeValidateUnbondAmountFailed, "Validate unbond amount failed", err)
+return sdk.NewError(codespace, CodeValidateUnbondAmountFailed, "Validate unbond amount failed: %s", err.Error())
 }
 
 func ErrNoUnbondingDelegation(codespace sdk.CodespaceType, err error) sdk.Error {
-	return sdk.NewError(codespace, CodeNoUnbondingDelegation, "No unbonding delegation", err)
+	return sdk.NewError(codespace, CodeNoUnbondingDelegation, "No unbonding delegation: %s", err.Error())
 }
 
 func ErrCheckParams(codespace sdk.CodespaceType, str string) sdk.Error {
-	return sdk.NewError(codespace, CodeCheckParamsError, "param invalid", str)
+	return sdk.NewError(codespace, CodeCheckParamsError, "param invalid: %s", str)
 }

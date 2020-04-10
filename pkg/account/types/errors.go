@@ -10,5 +10,5 @@ const (
 )
 
 func ErrSetAccount(codespace sdk.CodespaceType, err error) sdk.Error {
-	return sdk.NewError(codespace, CodeSetAccountError,"Set Account Error", err)
+	return sdk.NewError(codespace, CodeSetAccountError,"Set Account Error:%s", err.Error())
 }

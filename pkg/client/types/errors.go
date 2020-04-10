@@ -21,45 +21,45 @@ const (
 )
 
 func ErrNewClientCtx(codespace sdk.CodespaceType, err error) sdk.Error {
-	return sdk.NewError(codespace, CodeNewClientCtxError,"New client context Error", err)
+	return sdk.NewError(codespace, CodeNewClientCtxError,"New client context Error: %s", err.Error())
 }
 
 func ErrGetInputAddrCtx(codespace sdk.CodespaceType, err error) sdk.Error {
-	return sdk.NewError(codespace, CodeGetInputAddrError,"Get input address Error", err)
+	return sdk.NewError(codespace, CodeGetInputAddrError,"Get input address Error: %s", err.Error())
 }
 
 func ErrParseAddr(codespace sdk.CodespaceType, err error) sdk.Error {
-	return sdk.NewError(codespace, CodeParseAddrError,"Parse address Error", err)
+	return sdk.NewError(codespace, CodeParseAddrError,"Parse address Error: %s", err.Error())
 }
 
 func ErrNoAddr(codespace sdk.CodespaceType, err error) sdk.Error {
-	return sdk.NewError(codespace, CodeNoAddrError,"No address Error", err)
+	return sdk.NewError(codespace, CodeNoAddrError,"No address Error: %s", err.Error())
 }
 
 func ErrGetPassPhrase(codespace sdk.CodespaceType, err error) sdk.Error {
-	return sdk.NewError(codespace, CodeGetPassPhraseError,"Get pass phrase Error", err)
+	return sdk.NewError(codespace, CodeGetPassPhraseError,"Get pass phrase Error: %s", err.Error())
 }
 
 func ErrGetSignData(codespace sdk.CodespaceType, err error) sdk.Error {
-	return sdk.NewError(codespace, CodeGetSignDataError,"Get sign data from tx Error", err)
+	return sdk.NewError(codespace, CodeGetSignDataError,"Get sign data from tx Error: %s", err.Error())
 }
 
 func ErrBroadcast(codespace sdk.CodespaceType, err error) sdk.Error {
-	return sdk.NewError(codespace, CodeBroadcastError,"Broadcast Error", err)
+	return sdk.NewError(codespace, CodeBroadcastError,"Broadcast Error: %s", err.Error())
 }
 
 func ErrGetCheckPassword(codespace sdk.CodespaceType, err error) sdk.Error {
-	return sdk.NewError(codespace, CodeGetCheckPasswordError,"Get check password Error", err)
+	return sdk.NewError(codespace, CodeGetCheckPasswordError,"Get check password Error: %s", err.Error())
 }
 
 func ErrGetPassword(codespace sdk.CodespaceType, err error) sdk.Error {
-	return sdk.NewError(codespace, CodeGetPasswordError,"Get password Error", err)
+	return sdk.NewError(codespace, CodeGetPasswordError,"Get password Error: %s", err.Error())
 }
 
 func ErrPhrasesNotMatch(codespace sdk.CodespaceType, err error) sdk.Error {
-	return sdk.NewError(codespace, CodePhrasesNotMatchError,"Phrases not match Error", err)
+	return sdk.NewError(codespace, CodePhrasesNotMatchError,"Phrases not match Error: %s", err.Error())
 }
 
 func ErrNode(codespace sdk.CodespaceType, err error) sdk.Error {
-	return sdk.NewError(codespace, CodeNodeError,"Node error", err)
+	return sdk.NewError(codespace, CodeNodeError,"Node status Error: %s", err.Error())
 }
