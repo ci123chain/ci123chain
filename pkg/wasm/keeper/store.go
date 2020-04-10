@@ -90,12 +90,16 @@ func readDB(context unsafe.Pointer, key, value int32) int32 {
 	}
 
 	size := len(store[string(realKey)])*/
+	var size int;
+	var valueStr string;
 	v := store.Get(realKey)
 	if v == nil {
-		panic(string(realKey) + " not found")
+		valueStr = ""
+		size = 0;
+	} else {
+		valueStr = string(v)
+		size = len(valueStr)
 	}
-	valueStr := string(v)
-	size := len(valueStr)
 
 	valueOffset, err := allocate(size)
 	if err != nil {
