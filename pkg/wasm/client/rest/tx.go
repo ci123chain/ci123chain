@@ -35,9 +35,9 @@ func storeCodeHandler(cliCtx context.Context) http.HandlerFunc {
 
 func instantiateContractHandler(cliCtx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		checkParamString(r.FormValue("from"), r.FormValue("to"))
-		checkParamInt(r.FormValue("coin"))
-		checkParamJson(r.FormValue("msg"))
+		//checkParamString(r.FormValue("from"), r.FormValue("to"))
+		//checkParamInt(r.FormValue("coin"))
+		//checkParamJson(r.FormValue("msg"))
 		txByte, err := buildInstantiateContractMsg(r)
 		if err != nil {
 			rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace,"data error"))
