@@ -23,6 +23,7 @@ func storeCodeHandler(cliCtx context.Context) http.HandlerFunc {
 		ok, err := util.CheckBool(async)  //default async
 		if err != nil {
 			rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace,"error async"))
+
 			return
 		}
 		txByte, err := buildStoreCodeMsg(r)

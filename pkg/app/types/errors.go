@@ -13,17 +13,17 @@ const (
 )
 
 func ErrGenesisFile(codespace sdk.CodespaceType, err error) sdk.Error {
-	return sdk.NewError(codespace, CodeGenesisError,"GenesisFile error", err)
+	return sdk.NewError(codespace, CodeGenesisError,"GenesisFile error: %s", err.Error())
 }
 
 func ErrNewDB(codespace sdk.CodespaceType, err error) sdk.Error {
-	return sdk.NewError(codespace, CodeNewDBError,"New DB error", err)
+	return sdk.NewError(codespace, CodeNewDBError,"New DB error: %s", err.Error())
 }
 
 func ErrInitWithCfg(codespace sdk.CodespaceType, err error) sdk.Error {
-	return sdk.NewError(codespace, CodeInitWithCfgError,"Init with config error", err)
+	return sdk.NewError(codespace, CodeInitWithCfgError,"Init with config error: %s", err.Error())
 }
 
 func ErrTestNet(codespace sdk.CodespaceType, err error) sdk.Error {
-	return sdk.NewError(codespace, CodeTestNetError,"Testnet error", err)
+	return sdk.NewError(codespace, CodeTestNetError,"Testnet error: %s", err.Error())
 }

@@ -1,9 +1,9 @@
 From ubuntu
 
-COPY ./build/gateway-linux /opt
+COPY ./build/cproxy-linux /opt
 
 WORKDIR /opt
 
-RUN chmod +x gateway-linux
+RUN chmod +x cproxy-linux
 
-ENTRYPOINT ./gateway-linux
+ENTRYPOINT ./cproxy-linux
