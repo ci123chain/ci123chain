@@ -51,10 +51,12 @@ func QueryBalancesRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			rest.WriteErrorRes(w, client.ErrParseAddr(types.DefaultCodespace, checkErr))
 			return
 		}
-		_, Err := util.CheckInt64(height)
-		if Err != nil {
-			rest.WriteErrorRes(w, client.ErrParseAddr(types.DefaultCodespace, Err))
-			return
+		if height != "" {
+			_, Err := util.CheckInt64(height)
+			if Err != nil {
+				rest.WriteErrorRes(w, client.ErrParseAddr(types.DefaultCodespace, Err))
+				return
+			}
 		}
 
 		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, request, height)
