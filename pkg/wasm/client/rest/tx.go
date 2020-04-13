@@ -11,7 +11,7 @@ import (
 )
 
 func registerTxRoutes(cliCtx context.Context, r *mux.Router)  {
-	r.HandleFunc("/wasm/code/install", storeCodeHandler(cliCtx)).Methods("POST")
+	r.HandleFunc("/wasm/contract/install", storeCodeHandler(cliCtx)).Methods("POST")
 	r.HandleFunc("/wasm/contract/init", instantiateContractHandler(cliCtx)).Methods("POST")
 	r.HandleFunc("/wasm/contract/execute", executeContractHandler(cliCtx)).Methods("POST")
 }

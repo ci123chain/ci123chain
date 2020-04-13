@@ -13,18 +13,18 @@ import (
 )
 
 func registerQueryRoutes(cliCtx context.Context, r *mux.Router) {
-	r.HandleFunc("/wasm/codeSearch/list", listCodesHandlerFn(cliCtx)).Methods("POST")
-	r.HandleFunc("/wasm/codeSearch", queryCodeHandlerFn(cliCtx)).Methods("POST")
-	r.HandleFunc("/wasm/account/contractsList", listContractsByCodeHandlerFn(cliCtx)).Methods("POST")
-	r.HandleFunc("/wasm/contractSearch", queryContractHandlerFn(cliCtx)).Methods("POST")
+	//r.HandleFunc("/wasm/codeSearch/list", listCodesHandlerFn(cliCtx)).Methods("POST")
+	r.HandleFunc("/wasm/contract/meta", queryCodeHandlerFn(cliCtx)).Methods("POST")
+	r.HandleFunc("/wasm/contract/list", listContractsByCodeHandlerFn(cliCtx)).Methods("POST")
+	r.HandleFunc("/wasm/contract/info", queryContractHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/wasm/contract/query", queryContractStateAllHandlerFn(cliCtx)).Methods("POST")
 }
 
-func listCodesHandlerFn(cliCtx context.Context) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		rest.WriteErrorRes(w, sdk.ErrInternal("Implement me"))
-	}
-}
+//func listCodesHandlerFn(cliCtx context.Context) http.HandlerFunc {
+//	return func(w http.ResponseWriter, r *http.Request) {
+//		rest.WriteErrorRes(w, sdk.ErrInternal("Implement me"))
+//	}
+//}
 
 
 func queryCodeHandlerFn(cliCtx context.Context) http.HandlerFunc {
