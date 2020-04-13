@@ -12,9 +12,9 @@ import (
 
 func RegisterTxRoutes(cliCtx context.Context, r *mux.Router) {
 	// Get all validators
-	r.HandleFunc("/staking/validators", validatorsHandlerFn(cliCtx), ).Methods("POST")
+	r.HandleFunc("/staking/validator/all", validatorsHandlerFn(cliCtx), ).Methods("POST")
 	// Get a single validator info
-	r.HandleFunc("/staking/validator", validatorHandlerFn(cliCtx), ).Methods("POST")
+	r.HandleFunc("/staking/validator/info", validatorHandlerFn(cliCtx), ).Methods("POST")
 	// Get all delegations to a validator
 	r.HandleFunc("/staking/validator/delegations", validatorDelegationsHandlerFn(cliCtx), ).Methods("POST")
 	// Query all validators that a delegator is bonded to

@@ -15,7 +15,7 @@ import (
 )
 
 func RegisterRestTxRoutes(cliCtx context.Context, r *mux.Router)  {
-	r.HandleFunc("/staking/createValidator", CreateValidatorRequest(cliCtx)).Methods("POST")
+	r.HandleFunc("/staking/validator/create", CreateValidatorRequest(cliCtx)).Methods("POST")
 	r.HandleFunc("/staking/delegate", DelegateTX(cliCtx)).Methods("POST")
 	r.HandleFunc("/staking/redelegate", RedelegateTX(cliCtx)).Methods("POST")
 	r.HandleFunc("/staking/undelegate", UndelegateTX(cliCtx)).Methods("POST")
