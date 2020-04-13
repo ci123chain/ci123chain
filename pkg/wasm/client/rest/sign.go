@@ -24,22 +24,9 @@ func buildStoreCodeMsg(r *http.Request) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	codeStr := r.FormValue("wasmCodeStr")
-	if codeStr != "" {
-		Byte, err := hex.DecodeString(codeStr)
-		if err != nil {
-			return nil, errors.New("invalid wasmcode")
-		}
-		wasmcode = Byte
-	}else {
-		file, _, err := r.FormFile("wasmCode")
-		if err != nil {
-			return nil, errors.New("wasmCodeStr; cannot get wasm file: " + err.Error())
-		}
-		wasmcode, err = ioutil.ReadAll(file)
-		if err != nil {
-			return nil, err
-		}
+	wasmcode, err = getWasmCode(r)
+	if err != nil {
+		return nil, err
 	}
 	if wasmcode == nil {
 		return nil, errors.New("wasmcode can not be empty")
@@ -160,4 +147,25 @@ func getArgs(r *http.Request) (types.AccAddress, uint64, uint64, string, json.Ra
 
 	return froms[0], gas, nonce, priv, JsonArgs, nil
 
+}
+
+func getWasmCode(r *http.Request) (wasmcode []byte, err error){
+	codeStr := r.FormValue("wasmCodeStr")
+	if codeStr != "" {
+		Byte, err := hex.DecodeString(codeStr)
+		if err != nil {
+			return nil, errors.New("invalid wasmcode")
+		}
+		wasmcode = Byte
+	}else {
+		file, _, err := r.FormFile("wasmCode")
+		if err != nil {
+			return nil, errors.New("wasmCodeStr; cannot get wasm file: " + err.Error())
+		}
+		wasmcode, err = ioutil.ReadAll(file)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return
 }

@@ -33,7 +33,7 @@ func queryCodeHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		codeId := r.FormValue("codeID")
 		codeID, err := strconv.ParseUint(codeId, 10, 64)
 		if err != nil {
-			//rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace,"codeID parse failure"))
 			return
 		}
 		cliCtx, ok, Err := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r, "")

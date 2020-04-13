@@ -59,3 +59,14 @@ type ContractListResponse struct {
 func NewContractListResponse(contractList []string) ContractListResponse {
 	return ContractListResponse{ContractAddressList:contractList}
 }
+
+type ContractExistParams struct {
+	WasmCodeHash       []byte  `json:"wasm_code_hash"`
+}
+
+func NewContractExistParams(hash []byte) ContractExistParams {
+	param := ContractExistParams{
+		WasmCodeHash: hash,
+	}
+	return param
+}

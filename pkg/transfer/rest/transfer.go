@@ -3,7 +3,9 @@ package rest
 import (
 	//"encoding/hex"
 	"github.com/pkg/errors"
+	"github.com/tanhuiya/ci123chain/pkg/client/helper"
 	"github.com/tanhuiya/ci123chain/pkg/util"
+	"strconv"
 
 	///sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/abci/types/rest"
@@ -35,7 +37,11 @@ func SendRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			rest.WriteErrorRes(writer, transaction.ErrSignature(types.DefaultCodespace, errors.New("sign with tx error")))
 			return
 		}
-
+		isBalanceEnough := CheckBalanceFromParams(cliCtx, request)
+		if !isBalanceEnough {
+			rest.WriteErrorRes(writer, transaction.ErrAmount(types.DefaultCodespace, errors.New("The balance is not enough to pay the amount")) )
+			return
+		}
 		/*res, err := cliCtx.BroadcastSignedData(txByte)
 		if err != nil {
 			rest.WriteErrorRes(writer, client.ErrBroadcast(types.DefaultCodespace, err))
@@ -61,4 +67,23 @@ func SendRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			rest.PostProcessResponseBare(writer, cliCtx, res)
 		}
 	}
+}
+
+// check balance from tranfer params
+
+func CheckBalanceFromParams(ctx context.Context, r *http.Request) bool {
+	from := r.FormValue("from")
+	amount := r.FormValue("amount")
+
+	acc, _ := helper.StrToAddress(from)
+	balance, err := ctx.GetBalanceByAddress(acc)
+	if err != nil {
+		return false
+	}
+	amountU, _ := strconv.ParseUint(amount,10,64)
+	if balance < amountU {
+		return false
+	}
+	return true
+
 }
