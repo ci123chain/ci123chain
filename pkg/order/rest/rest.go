@@ -15,7 +15,7 @@ import (
 
 func RegisterTxRoutes(cliCtx context.Context, r *mux.Router)  {
 
-	r.HandleFunc("/tx/addShard", AddShardTxRequest(cliCtx)).Methods("POST")
+	r.HandleFunc("/shared/add", AddShardTxRequest(cliCtx)).Methods("POST")
 }
 
 var cdc = app.MakeCodec()
