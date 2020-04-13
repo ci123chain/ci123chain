@@ -79,9 +79,6 @@ func Start() {
 
 func AllHandle(w http.ResponseWriter, r *http.Request) {
 
-
-	time.Sleep(time.Second * 60)
-
 	//do something
 	w.Header().Set("Content-Type", "application/json")
 	job := NewSpecificJob(r, serverPool.backends)

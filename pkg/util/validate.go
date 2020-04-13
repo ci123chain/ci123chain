@@ -39,6 +39,7 @@ func CheckUint64(num string) (uint64, error) {
 	}
 	return n, nil
 }
+//check length of string
 
 func CheckStringLength(min, max int, str string) error {
 	if str == "" {
@@ -59,6 +60,7 @@ func CheckStringLength(min, max int, str string) error {
 		return nil
 	}
 }
+//check json string
 
 func CheckJsonArgs(str string, param interface{}) (bool, error) {
 	if str == "" {
