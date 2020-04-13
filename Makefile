@@ -74,8 +74,8 @@ clean-cproxy:
 	docker images | grep "$(Tag)service" | awk '{print $$3}' | xargs docker rmi
 
 .PHONY:release, build all
-release: build-linux build-cproxy-linux
+release:
 
-release-build: build-linux build-cproxy-linux
+release-build:
 	docker build -t cichain:$(Tag) .
 

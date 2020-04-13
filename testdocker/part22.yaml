@@ -1,12 +1,12 @@
 version: "3"
 services:
   ci0:
-    image: cichain:v0.0.1
+    image: cichain:v1.1-test
     container_name: ci0
     hostname: ci0
     environment:
       CI_CHAIN_ID: ci0
-      CI_STATEDB: couchdb://admin:password@couchdb_service:5984/ci1
+      CI_STATEDB: couchdb://admin:password@couchdb_service:5984/test
       CI_HOME: /root/cid
       CI_CLIHOME: /root/cli
       CI_VALIDATOR_KEY: oQLmM5pM5wL78a6LJntQY8tPGQPpp050udIA5YZMkCc=
@@ -20,47 +20,47 @@ services:
     #      - couchdb_service
     networks:
       testdocker_couchDB:
-#
-#  ci1:
-#    image: cichain:v0.0.1
-#    container_name: ci1
-#    hostname: ci1
-#    environment:
-#      CI_CHAIN_ID: ci1
-#      CI_STATEDB: couchdb://admin:password@couchdb_service:5984/ci1
-#      CI_HOME: /root/cid
-#      CI_CLIHOME: /root/cli
-#      CI_VALIDATOR_KEY: oQLmM5pM5wL78a6LJntQY8tPGQPpp050udIA5YZMkCc=
-#      GENESIS_SHARED: ci0,ci1,ci2
-#    ports:
-#      - 26616:26656
-#      - 1311:80
-#    volumes:
-#      - ./node1:/root/cid
-#    networks:
-#      testdocker_couchDB:
-#
-#  ci2:
-#    image: cichain:v0.0.1
-#    container_name: ci2
-#    hostname: ci2
-#    environment:
-#      CI_CHAIN_ID: ci2
-#      CI_STATEDB: couchdb://admin:password@couchdb_service:5984/ci1
-#      CI_HOME: /root/cid
-#      CI_CLIHOME: /root/cli
-#      CI_VALIDATOR_KEY: oQLmM5pM5wL78a6LJntQY8tPGQPpp050udIA5YZMkCc=
-#      GENESIS_SHARED: ci0,ci1,ci2
-#    ports:
-#      - 26626:26656
-#      - 1312:80
-#    volumes:
-#      - ./node2:/root/cid
-#    networks:
-#      testdocker_couchDB:
+
+  ci1:
+    image: cichain:v1.1-test
+    container_name: ci1
+    hostname: ci1
+    environment:
+      CI_CHAIN_ID: ci1
+      CI_STATEDB: couchdb://admin:password@couchdb_service:5984/test
+      CI_HOME: /root/cid
+      CI_CLIHOME: /root/cli
+      CI_VALIDATOR_KEY: oQLmM5pM5wL78a6LJntQY8tPGQPpp050udIA5YZMkCc=
+      GENESIS_SHARED: ci0,ci1,ci2
+    ports:
+      - 26616:26656
+      - 1311:80
+    volumes:
+      - ./node1:/root/cid
+    networks:
+      testdocker_couchDB:
+
+  ci2:
+    image: cichain:v1.1-test
+    container_name: ci2
+    hostname: ci2
+    environment:
+      CI_CHAIN_ID: ci2
+      CI_STATEDB: couchdb://admin:password@couchdb_service:5984/test
+      CI_HOME: /root/cid
+      CI_CLIHOME: /root/cli
+      CI_VALIDATOR_KEY: oQLmM5pM5wL78a6LJntQY8tPGQPpp050udIA5YZMkCc=
+      GENESIS_SHARED: ci0,ci1,ci2
+    ports:
+      - 26626:26656
+      - 1312:80
+    volumes:
+      - ./node2:/root/cid
+    networks:
+      testdocker_couchDB:
 
   gateway:
-    image: cichain:v0.0.1
+    image: cichain:v1.1-test
     container_name: cproxyservice
     hostname: cproxyservice
     volumes:
@@ -68,7 +68,7 @@ services:
     environment:
       GATEWAY: "true"
       CI_LOGDIR: /root/gateway
-      CI_STATEDB: couchdb://admin:password@couchdb_service:5984/ci1
+      CI_STATEDB: couchdb://admin:password@couchdb_service:5984/test
     ports:
       - 3030:3030
     networks:
