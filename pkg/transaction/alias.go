@@ -10,4 +10,5 @@ var (
 	ErrBadPrivkey				= types.ErrDecodePrivkey
 	ErrSetSequence				= types.ErrSetSequence
 	ErrSendCoin					= types.ErrSendCoin
+	ErrAmount					= types.ErrAmount
 )

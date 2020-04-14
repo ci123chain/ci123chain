@@ -36,11 +36,13 @@ func SignTxRequestHandler(cliCtx context.Context) http.HandlerFunc {
 		if err != nil {
 			isFabric = false
 		}
+
 		txByte, err := buildTransferTx(request, isFabric, priv)
 		if err != nil {
 			rest.WriteErrorRes(writer, transaction.ErrSignature(types.DefaultCodespace, errors.New("sign with tx error")))
 			return
 		}
+
 		resp := &Tx{SignedTx:hex.EncodeToString(txByte)}
 		rest.PostProcessResponseBare(writer, cliCtx, resp)
 	}

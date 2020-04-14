@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"errors"
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/wasm/types"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -18,6 +19,8 @@ func NewQuerier(k Keeper) sdk.Querier {
 			return queryContractState(ctx, req, k)
 		case types.QueryContractList:
 			return queryAccountContractList(ctx, req, k)
+		case types.QueryContractExist:
+			return queryContractExist(ctx, req, k)
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown nameservice query endpoint")
 		}
@@ -91,4 +94,18 @@ func queryAccountContractList(ctx sdk.Context, req abci.RequestQuery, k Keeper) 
 	list := types.NewContractListResponse(contractList)
 	res := types.WasmCodec.MustMarshalBinaryBare(list)
 	return res, nil
+}
+
+func queryContractExist(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, sdk.Error) {
+	var params types.ContractExistParams
+	err := types.WasmCodec.UnmarshalJSON(req.Data, &params)
+	if err != nil {
+		return nil, sdk.ErrInternal("unmarshal failed")
+	}
+	store := ctx.KVStore(k.storeKey)
+	byCode := store.Get(params.WasmCodeHash)
+	if byCode != nil {
+		return nil, types.ErrCreateFailed(types.DefaultCodespace,errors.New("the code already exists"))
+	}
+	return nil, nil
 }

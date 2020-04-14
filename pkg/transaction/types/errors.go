@@ -17,6 +17,7 @@ const (
 	CodeBadPrivkey			CodeType = 105
 	CodeSetSequenceError	CodeType = 106
 	CodeSendCoinError		CodeType = 107
+	CodeAmountError			CodeType = 108
 )
 
 //----------------------------------------
@@ -48,4 +49,8 @@ func ErrSetSequence(codespace sdk.CodespaceType, str string) sdk.Error {
 
 func ErrSendCoin(codespace sdk.CodespaceType, err error) sdk.Error {
 	return sdk.NewError(codespace, CodeSendCoinError, "Send coin to module error: %s", err.Error())
+}
+
+func ErrAmount(codespace sdk.CodespaceType, err error) sdk.Error {
+	return sdk.NewError(codespace, CodeAmountError, "amount error: %s", err.Error())
 }

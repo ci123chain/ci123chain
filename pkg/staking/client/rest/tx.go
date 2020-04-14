@@ -9,6 +9,7 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/client/context"
 	"github.com/tanhuiya/ci123chain/pkg/client/helper"
 	"github.com/tanhuiya/ci123chain/pkg/staking/types"
+	tRest "github.com/tanhuiya/ci123chain/pkg/transfer/rest"
 	sSdk "github.com/tanhuiya/ci123chain/sdk/staking"
 	"net/http"
 	"strconv"
@@ -58,6 +59,13 @@ func DelegateTX(cliCtx context.Context) http.HandlerFunc{
 			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"gas error"))
 			return
 		}
+
+		isBalanceEnough := tRest.CheckBalanceFromParams(cliCtx, request)
+		if !isBalanceEnough {
+			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"The balance is not enough to pay the delegate"))
+			return
+		}
+
 		UserGas := uint64(Gas)
 		userNonce := request.FormValue("nonce")
 

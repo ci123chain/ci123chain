@@ -2,12 +2,15 @@ package rest
 
 import (
 	"github.com/gorilla/mux"
+	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/abci/types/rest"
 	"github.com/tanhuiya/ci123chain/pkg/client"
 	"github.com/tanhuiya/ci123chain/pkg/client/context"
 	"github.com/tanhuiya/ci123chain/pkg/util"
+	"github.com/tanhuiya/ci123chain/pkg/wasm/keeper"
 	"github.com/tanhuiya/ci123chain/pkg/wasm/types"
 	"net/http"
+	"strconv"
 )
 
 func registerTxRoutes(cliCtx context.Context, r *mux.Router)  {
@@ -26,6 +29,26 @@ func storeCodeHandler(cliCtx context.Context) http.HandlerFunc {
 
 			return
 		}
+
+		wasmCode, err := getWasmCode(r)
+		if err != nil || wasmCode == nil {
+			rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "get wasmCode error"))
+			return
+		}
+		//checkContractIsExist
+		hash := keeper.MakeCodeHash(wasmCode)
+		params := types.NewContractExistParams(hash)
+		bz, Er := cliCtx.Cdc.MarshalJSON(params)
+		if Er != nil {
+			rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "marshal failed"))
+			return
+		}
+		_, _, err = cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryContractExist, bz)
+		if err != nil {
+			rest.WriteErrorRes(w, err.(sdk.Error))
+			return
+		}
+
 		txByte, err := buildStoreCodeMsg(r)
 		if err != nil {
 			rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
@@ -62,11 +85,32 @@ func instantiateContractHandler(cliCtx context.Context) http.HandlerFunc {
 			return
 		}
 
+		//check codeID
+		codeId := r.FormValue("codeID")
+		codeID, err := strconv.ParseUint(codeId, 10, 64)
+		if err != nil {
+			rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace,"codeID parse fail"))
+			return
+		}
+		params := types.NewQueryCodeInfoParams(codeID)
+		bz, Er := cliCtx.Cdc.MarshalJSON(params)
+		if Er != nil {
+			rest.WriteErrorRes(w, sdk.ErrInternal("marshal failed"))
+			return
+		}
+
+		res, _, _ := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryCodeInfo, bz)
+		if res == nil {
+			rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace,"codeID does not exists"))
+			return
+		}
+
 		txByte, err := buildInstantiateContractMsg(r)
 		if err != nil {
 			rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace,"data error"))
 			return
 		}
+
 		if ok {
 			//async
 			res, err := cliCtx.BroadcastTxAsync(txByte)
@@ -96,6 +140,22 @@ func executeContractHandler(cliCtx context.Context) http.HandlerFunc {
 			rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace,"error async"))
 			return
 		}
+
+		contractAddr := r.FormValue("contractAddress")
+		contractAddress := sdk.HexToAddress(contractAddr)
+		params := types.NewQueryContractInfoParams(contractAddress)
+		bz, Er := cliCtx.Cdc.MarshalJSON(params)
+		if Er != nil {
+			rest.WriteErrorRes(w, sdk.ErrInternal("marshal failed"))
+			return
+		}
+
+		res, _, _ := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryContractInfo, bz)
+		if res == nil {
+			rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "contract does not exist"))
+			return
+		}
+
 		txByte, err := buildExecuteContractMsg(r)
 		if err != nil {
 			rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace,"data error"))

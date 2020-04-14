@@ -13,6 +13,7 @@ const (
 	QueryCodeInfo      = "queryCodeInfo"
 	QueryContractState = "queryContractState"
 	QueryContractList  = "queryContractList"
+	QueryContractExist  = "queryContractExist"
 
 	ModePerm os.FileMode = 0666
 	SuffixName = ".wasm"
