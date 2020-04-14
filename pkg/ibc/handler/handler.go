@@ -6,7 +6,6 @@ import (
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
 	"github.com/tanhuiya/ci123chain/pkg/ibc/keeper"
 	"github.com/tanhuiya/ci123chain/pkg/ibc/types"
-	"github.com/tanhuiya/ci123chain/pkg/transaction"
 )
 
 func NewHandler(k keeper.IBCKeeper) sdk.Handler {
@@ -104,12 +103,12 @@ func handleMsgIBCBankSendTx(ctx sdk.Context, k keeper.IBCKeeper, tx types.IBCMsg
 	receiptBz, _ := json.Marshal(*receipt)
 
 	//bank转账成功，observer nonce+1
-	account := k.AccountKeeper.GetAccount(ctx, tx.From)
-	saveErr := account.SetSequence(account.GetSequence() + 1)
-	if saveErr != nil {
-		return sdk.ErrInternal("Failed to set sequence").Result()
-	}
-	k.AccountKeeper.SetAccount(ctx, account)
+	//account := k.AccountKeeper.GetAccount(ctx, tx.From)
+	//saveErr := account.SetSequence(account.GetSequence() + 1)
+	//if saveErr != nil {
+	//	return sdk.ErrInternal("Failed to set sequence").Result()
+	//}
+	//k.AccountKeeper.SetAccount(ctx, account)
 	//
 
 	ctx.Logger().Info("Handle IBCTransaction successed")
@@ -130,12 +129,12 @@ func handleMsgReceiveReceipt(ctx sdk.Context, k keeper.IBCKeeper, tx types.IBCRe
 		return types.ErrReceiveReceipt(types.DefaultCodespace, err2).Result()
 	}
 	//交易成功，observer nonce+1
-	account := k.AccountKeeper.GetAccount(ctx, tx.From)
-	saveErr := account.SetSequence(account.GetSequence() + 1)
-	if saveErr != nil {
-		return transaction.ErrSetSequence(types.DefaultCodespace, saveErr.Error()).Result()
-	}
-	k.AccountKeeper.SetAccount(ctx, account)
+	//account := k.AccountKeeper.GetAccount(ctx, tx.From)
+	//saveErr := account.SetSequence(account.GetSequence() + 1)
+	//if saveErr != nil {
+	//	return transaction.ErrSetSequence(types.DefaultCodespace, saveErr.Error()).Result()
+	//}
+	//k.AccountKeeper.SetAccount(ctx, account)
 	//
 	ctx.Logger().Info("Handle receipt successed")
 

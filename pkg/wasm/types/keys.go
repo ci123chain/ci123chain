@@ -24,9 +24,6 @@ const (
 )
 
 var (
-	KeyLastCodeID        =  []byte("lastCodeId")
-	KeyLastInstanceID    =  []byte("lastContractId")
-
 	WasmerKey            =  []byte("wasmer")
 
 	CodeKeyPrefix        =  []byte{0x01}
@@ -38,9 +35,8 @@ func GetWasmerKey() []byte {
 	return WasmerKey
 }
 
-func GetCodeKey(contractID uint64) []byte {
-	contractIDBz := sdk.Uint64ToBigEndian(contractID)
-	return append(CodeKeyPrefix, contractIDBz...)
+func GetCodeKey(codeHash []byte) []byte {
+	return append(CodeKeyPrefix, codeHash...)
 }
 
 func GetContractAddressKey(addr sdk.AccAddress) []byte {

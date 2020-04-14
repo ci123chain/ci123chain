@@ -13,6 +13,7 @@ import (
 	sdk "github.com/tanhuiya/ci123chain/sdk/wasm"
 	"io/ioutil"
 	"net/http"
+	"strings"
 )
 
 var cdc = app.MakeCodec()
@@ -57,10 +58,10 @@ func buildStoreCodeMsg(r *http.Request) ([]byte, error) {
 
 func buildInstantiateContractMsg(r *http.Request) ([]byte, error) {
 
-	codeId := r.FormValue("codeID")
-	codeID, err := util.CheckUint64(codeId)
+	codeHash := r.FormValue("codeHash")
+	hash, err := hex.DecodeString(strings.ToLower(codeHash))
 	if err != nil {
-		return nil, err
+		return nil, errors.New("decode codeHash fail")
 	}
 	label := r.FormValue("label")
 	if label == "" {
@@ -76,7 +77,7 @@ func buildInstantiateContractMsg(r *http.Request) ([]byte, error) {
 		return nil, err
 	}
 
-	txByte, err := sdk.SignInstantiateContractMsg(from, gas, nonce, codeID, priv, from, label, args)
+	txByte, err := sdk.SignInstantiateContractMsg(from, gas, nonce, hash, priv, from, label, args)
 	if err != nil {
 		return nil, err
 	}

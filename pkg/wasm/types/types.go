@@ -1,16 +1,18 @@
 package types
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
+	"strings"
 )
 
 type CodeInfo struct {
-	CodeHash    []byte          `json:"code_hash"`
+	CodeHash    string         `json:"code_hash"`
 	Creator     sdk.AccAddress  `json:"creator"`
 }
 
-func NewCodeInfo(codeHash []byte, creator sdk.AccAddress) CodeInfo {
+func NewCodeInfo(codeHash string, creator sdk.AccAddress) CodeInfo {
 
 	return CodeInfo{
 		CodeHash: codeHash,
@@ -19,9 +21,7 @@ func NewCodeInfo(codeHash []byte, creator sdk.AccAddress) CodeInfo {
 }
 
 type ContractInfo struct {
-
-	CodeID      uint64   `json:"code_id"`
-	Creator     sdk.AccAddress  `json:"creator"`
+	CodeInfo 	CodeInfo		`json:"code_info"`
 	Label       string          `json:"label"` //标签
 	InitMsg     json.RawMessage  `json:"init_msg"`
 	Created     *CreatedAt        `json:"created"`
@@ -56,14 +56,13 @@ func NewCreatedAt(ctx sdk.Context) *CreatedAt {
 	}
 }
 
-func NewContractInfo(CodeID uint64, creator sdk.AccAddress, initMsg []byte, label string, createdAt *CreatedAt) ContractInfo {
+func NewContractInfo(CodeHash []byte, creator sdk.AccAddress, initMsg []byte, label string, createdAt *CreatedAt) ContractInfo {
 
 	return ContractInfo{
-		CodeID:  CodeID,
-		Creator: creator,
-		Label:   label,
-		InitMsg: initMsg,
-		Created: createdAt,
+		CodeInfo:	NewCodeInfo(strings.ToUpper(hex.EncodeToString(CodeHash)),creator),
+		Label:   	label,
+		InitMsg: 	initMsg,
+		Created: 	createdAt,
 	}
 }
 

@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -16,6 +17,7 @@ import (
 	"io/ioutil"
 	"path"
 	"strconv"
+	"strings"
 )
 
 func init() {
@@ -27,7 +29,7 @@ func init() {
 	WasmCmd.Flags().String(helper.FlagFunds, "", "funds of contract")
 	WasmCmd.Flags().String(helper.FlagArgs, "", "args of call contract")
 	WasmCmd.Flags().String(helper.FlagFile, "", "the path of contract file")
-	WasmCmd.Flags().String(helper.FlagID, "", "id of contract code")
+	WasmCmd.Flags().String(helper.FlagHash, "", "hash of contract code")
 	WasmCmd.Flags().String(helper.FlagLabel, "", "label of contract")
 	WasmCmd.Flags().String(helper.FlagContractAddress, "", "address of contract account")
 
@@ -98,8 +100,11 @@ func initContract() error {
 	if err != nil {
 		return err
 	}
-	id := viper.GetString(helper.FlagID)
-	codeID, err := strconv.ParseUint(id, 10, 64)
+	hash := viper.GetString(helper.FlagHash)
+	Hash, err := hex.DecodeString(strings.ToLower(hash))
+	if err != nil {
+		return errors.New("decode codeHash fail")
+	}
 	if err != nil {
 		return err
 	}
@@ -108,7 +113,7 @@ func initContract() error {
 		label = "demo contract"
 	}
 
-	txByte, err := sdk.SignInstantiateContractMsg(from, gas, nonce, codeID, key, from, label, args)
+	txByte, err := sdk.SignInstantiateContractMsg(from, gas, nonce, Hash, key, from, label, args)
 	txid, err := ctx.BroadcastSignedData(txByte)
 	if err != nil {
 		return err

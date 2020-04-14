@@ -26,6 +26,7 @@ func handlerUpgradeTx(ctx types.Context,k *keeper.OrderKeeper, tx *order.Upgrade
 	if err != nil {
 		panic(err)
 	}
+
 	//现在是新添加一个分片
 	var action keeper.Actions
 	action.Name = tx.Name
@@ -33,15 +34,5 @@ func handlerUpgradeTx(ctx types.Context,k *keeper.OrderKeeper, tx *order.Upgrade
 	action.Type = tx.Type
 
 	k.UpdateOrderBook(ctx, orderbook, &action)
-
-	//交易成功，nonce+1
-	account := k.AccountKeeper.GetAccount(ctx, tx.From)
-	saveErr := account.SetSequence(account.GetSequence() + 1)
-	if saveErr != nil {
-		return types.ErrInvalidSequence("Unexpected nonce of transaction").Result()
-	}
-	k.AccountKeeper.SetAccount(ctx, account)
-	//
-
 	return types.Result{}
 }

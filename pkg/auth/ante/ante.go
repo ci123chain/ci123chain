@@ -48,8 +48,7 @@ func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, fck f
 		gas := stdTx.GetGas()//用户期望的gas值 g.limit
 		newCtx = SetGasMeter(simulate, ctx, gas)//设置为GasMeter的gasLimit,成为用户可承受的gas上限.
 		//pms.TxSizeCostPerByte*sdk.Gas(len(newCtx.TxBytes()))
-		fmt.Println("-------- newCtx init ----------")
-		fmt.Println(newCtx.GasMeter().GasConsumed())
+		
 		// AnteHandlers must have their own defer/recover in order for the BaseApp
 		// to know how much gas was used! This is because the GasMeter is created in
 		// the AnteHandler, but if it panics the context won't be set properly in
@@ -89,11 +88,12 @@ func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, fck f
 			return newCtx, res, true
 		}
 		//存储奖励金
-		fmt.Println("-------- before collectedFees ----------")
-		fmt.Println(newCtx.GasMeter().GasConsumed())
 		fck.AddCollectedFees(newCtx, getFee)
-		fmt.Println("-------- after collectedFees ----------")
-		fmt.Println(newCtx.GasMeter().GasConsumed())
+
+		//account sequence + 1
+		nowSequence := accountSequence + 1
+		acc.SetSequence(nowSequence)
+		ak.SetAccount(ctx, acc)
 		return newCtx, sdk.Result{GasWanted:gas,GasUsed:fee}, false
 	}
 }

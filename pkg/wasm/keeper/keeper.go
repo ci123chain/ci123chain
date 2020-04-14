@@ -1,7 +1,7 @@
 package keeper
 
 import (
-	"encoding/binary"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"github.com/tanhuiya/ci123chain/pkg/abci/codec"
@@ -10,10 +10,7 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/account/exported"
 	"github.com/tanhuiya/ci123chain/pkg/wasm/types"
 	"io/ioutil"
-)
-
-const (
-	RouteKey = "wasm"
+	"strings"
 )
 
 type Keeper struct {
@@ -37,16 +34,16 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, homeDir string, wasmConf
 }
 
 //　Create uploads and compiles a WASM contract, returning a short identifier for the contract
-func (k Keeper) Create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte) (codeID uint64, err error) {
+func (k Keeper) Create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte) (codeHash []byte, err error) {
 
 	wasmCode, err = uncompress(wasmCode)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 	//checks if the file contents are of wasm binary
 	ok := types.IsValidaWasmFile(wasmCode)
 	if ok != nil {
-		return 0, ok
+		return nil, ok
 	}
 	store := ctx.KVStore(k.storeKey)
 	var wasmer Wasmer
@@ -54,28 +51,27 @@ func (k Keeper) Create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte)
 	if wasmerBz != nil {
 		k.cdc.MustUnmarshalJSON(wasmerBz, &wasmer)
 		if wasmer.LastFileID == 0 {
-			return 0, sdk.ErrInternal("empty wasmer")
+			return nil, sdk.ErrInternal("empty wasmer")
 		}
 		k.wasmer = wasmer
 	}
 	newWasmer, codeHash, err := k.wasmer.Create(wasmCode)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 	bz := k.cdc.MustMarshalJSON(newWasmer)
 	if bz == nil {
-		return 0, sdk.ErrInternal("marshal json failed")
+		return nil, sdk.ErrInternal("marshal json failed")
 	}
-	codeID = k.autoIncrementID(ctx, types.KeyLastCodeID)
-	codeInfo := types.NewCodeInfo(codeHash, creator)
-	store.Set(types.GetCodeKey(codeID), k.cdc.MustMarshalBinaryBare(codeInfo))
+	codeInfo := types.NewCodeInfo(strings.ToUpper(hex.EncodeToString(codeHash)), creator)
+	store.Set(types.GetCodeKey(codeHash), k.cdc.MustMarshalBinaryBare(codeInfo))
 	store.Set(types.GetWasmerKey(), bz)
 	store.Set(codeHash, wasmCode)
-	return codeID, nil
+	return codeHash, nil
 }
 
 //
-func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator sdk.AccAddress, args json.RawMessage, label string) (sdk.AccAddress, error) {
+func (k Keeper) Instantiate(ctx sdk.Context, codeHash []byte, creator sdk.AccAddress, args json.RawMessage, label string) (sdk.AccAddress, error) {
 	var codeInfo types.CodeInfo
 	var wasmer Wasmer
 	var code []byte
@@ -86,7 +82,7 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator sdk.AccAddre
 			return sdk.AccAddress{}, sdk.ErrInternal("invalid instantiate message")
 		}
 	}
-	contractAddress := k.generateContractAddress(ctx, codeID)
+	contractAddress := k.generateContractAddress(codeHash)
 	existingAcct := k.AccountKeeper.GetAccount(ctx, contractAddress)
 	if existingAcct != nil {
 		return sdk.AccAddress{}, sdk.ErrInternal("account exists")
@@ -105,9 +101,9 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator sdk.AccAddre
 	k.AccountKeeper.SetAccount(ctx, contractAccount)
 
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.GetCodeKey(codeID))
+	bz := store.Get(types.GetCodeKey(codeHash))
 	if bz == nil {
-		return sdk.AccAddress{}, sdk.ErrInternal("codeID not found")
+		return sdk.AccAddress{}, sdk.ErrInternal("codeHash not found")
 	}
 	wasmerBz := store.Get(types.GetWasmerKey())
 	if wasmerBz != nil {
@@ -119,10 +115,9 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator sdk.AccAddre
 	}
 	k.cdc.MustUnmarshalBinaryBare(bz, &codeInfo)
 
-	//params := []string{"1", "2"}
-	wc, err := k.wasmer.GetWasmCode(codeInfo.CodeHash)
+	wc, err := k.wasmer.GetWasmCode(codeHash)
 	if err != nil {
-		wc = store.Get(codeInfo.CodeHash)
+		wc = store.Get(codeHash)
 
 		fileName := k.wasmer.FilePathMap[fmt.Sprintf("%x",codeInfo.CodeHash)]
 		err = ioutil.WriteFile(k.wasmer.HomeDir + "/" + fileName, wc, types.ModePerm)
@@ -142,7 +137,7 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator sdk.AccAddre
 	}
 	//save the contract info.
 	createdAt := types.NewCreatedAt(ctx)
-	contractInfo := types.NewContractInfo(codeID, creator, args, label, createdAt)
+	contractInfo := types.NewContractInfo(codeHash, creator, args, label, createdAt)
 	store.Set(types.GetContractAddressKey(contractAddress), k.cdc.MustMarshalBinaryBare(contractInfo))
 	//save contractAddress into account
 	Account := k.AccountKeeper.GetAccount(ctx, creator)
@@ -167,9 +162,10 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	}
 	store := ctx.KVStore(k.storeKey)
 	var code []byte
-	wc, err := k.wasmer.GetWasmCode(codeInfo.CodeHash)
+	codeHash, _ := hex.DecodeString(codeInfo.CodeHash)
+	wc, err := k.wasmer.GetWasmCode(codeHash)
 	if err != nil {
-		wc = store.Get(codeInfo.CodeHash)
+		wc = store.Get(codeHash)
 
 		fileName := k.wasmer.FilePathMap[fmt.Sprintf("%x",codeInfo.CodeHash)]
 		err = ioutil.WriteFile(k.wasmer.HomeDir + "/" + fileName, wc, types.ModePerm)
@@ -188,7 +184,7 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 		return sdk.Result{}, err
 	}
 	return sdk.Result{
-		Data:   []byte(fmt.Sprintf("executeResult:%s", res)),
+		Data:   []byte(fmt.Sprintf("%s", res)),
 	}, nil
 }
 
@@ -208,10 +204,10 @@ func (k Keeper) Query(ctx sdk.Context, contractAddress sdk.AccAddress, msg json.
 	}
 	var code []byte
 	store := ctx.KVStore(k.storeKey)
-	//params := []string{"1", "2"}
-	wc, err := k.wasmer.GetWasmCode(codeInfo.CodeHash)
+	codeHash, _ := hex.DecodeString(codeInfo.CodeHash)
+	wc, err := k.wasmer.GetWasmCode(codeHash)
 	if err != nil {
-		wc = store.Get(codeInfo.CodeHash)
+		wc = store.Get(codeHash)
 
 		fileName := k.wasmer.FilePathMap[fmt.Sprintf("%x",codeInfo.CodeHash)]
 		err = ioutil.WriteFile(k.wasmer.HomeDir + "/" + fileName, wc, types.ModePerm)
@@ -245,8 +241,8 @@ func (k *Keeper) contractInstance(ctx sdk.Context, contractAddress sdk.AccAddres
 	}
 	var contract types.ContractInfo
 	k.cdc.MustUnmarshalBinaryBare(contractBz, &contract)
-
-	bz := store.Get(types.GetCodeKey(contract.CodeID))
+	codeHash, _ := hex.DecodeString(contract.CodeInfo.CodeHash)
+	bz := store.Get(types.GetCodeKey(codeHash))
 	if bz == nil {
 		return types.CodeInfo{}, sdk.ErrInternal("get code key failed")
 	}
@@ -259,13 +255,8 @@ func (k *Keeper) contractInstance(ctx sdk.Context, contractAddress sdk.AccAddres
 		k.wasmer = wasmer
 	}
 
-	contractInfoBz := store.Get(types.GetCodeKey(contract.CodeID))
-	if contractInfoBz == nil {
-		return types.CodeInfo{}, sdk.ErrInternal("get contract info failed")
-	}
-
 	var codeInfo types.CodeInfo
-	k.cdc.MustUnmarshalBinaryBare(contractInfoBz, &codeInfo)
+	k.cdc.MustUnmarshalBinaryBare(bz, &codeInfo)
 	return codeInfo, nil
 }
 
@@ -286,10 +277,10 @@ func (k Keeper) SetContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress,
 	store.Set(types.GetContractAddressKey(contractAddress), k.cdc.MustMarshalBinaryBare(contract))
 }
 
-func (k Keeper) GetCodeInfo(ctx sdk.Context, codeID uint64) *types.CodeInfo {
+func (k Keeper) GetCodeInfo(ctx sdk.Context, codeHash []byte) *types.CodeInfo {
 	store := ctx.KVStore(k.storeKey)
 	var codeInfo types.CodeInfo
-	codeInfoBz := store.Get(types.GetCodeKey(codeID))
+	codeInfoBz := store.Get(types.GetCodeKey(codeHash))
 	if codeInfoBz == nil {
 		return nil
 	}
@@ -297,41 +288,7 @@ func (k Keeper) GetCodeInfo(ctx sdk.Context, codeID uint64) *types.CodeInfo {
 	return &codeInfo
 }
 
-
-func (k Keeper) GetByteCode(ctx sdk.Context, codeID uint64) ([]byte, error) {
-	store := ctx.KVStore(k.storeKey)
-	var codeInfo types.CodeInfo
-	codeInfoBz := store.Get(types.GetCodeKey(codeID))
-	if codeInfoBz == nil {
-		return nil, nil
-	}
-	k.cdc.MustUnmarshalBinaryBare(codeInfoBz, &codeInfo)
-	//get code???
-	return nil, nil
-}
-
-func (k Keeper) generateContractAddress(ctx sdk.Context, codeID uint64) sdk.AccAddress {
-	instanceID := k.autoIncrementID(ctx, types.KeyLastInstanceID)
-
-	contractID := codeID<<32 + instanceID
-	return addrFromUint64(contractID)
-}
-
-func (k Keeper) autoIncrementID(ctx sdk.Context, lastIDKey []byte) uint64 {
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(lastIDKey)
-	id := uint64(1)
-	if bz != nil {
-		id = binary.BigEndian.Uint64(bz)
-	}
-	bz = sdk.Uint64ToBigEndian(id + 1)
-	store.Set(lastIDKey, bz)
-	return id
-}
-
-func addrFromUint64(id uint64) sdk.AccAddress {
-	addr := make([]byte, 20)
-	addr[0] = 'C'
-	binary.PutUvarint(addr[1:], id)
-	return sdk.ToAccAddress(addr)
+func (k Keeper) generateContractAddress(codeHash []byte) sdk.AccAddress {
+	fmt.Println(sdk.ToAccAddress(codeHash))
+	return sdk.ToAccAddress(codeHash)
 }

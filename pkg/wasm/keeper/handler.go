@@ -28,41 +28,24 @@ func handleStoreCodeTx(ctx sdk.Context, k Keeper, msg wasm.StoreCodeTx) sdk.Resu
 		return wasm.ErrInvalidMsg(wasm.DefaultCodespace, err).Result()
 	}
 
-	codeID, Err := k.Create(ctx, msg.Sender, msg.WASMByteCode)
+	codeHash, Err := k.Create(ctx, msg.Sender, msg.WASMByteCode)
 	if Err != nil {
 		return wasm.ErrCreateFailed(wasm.DefaultCodespace, Err).Result()
 	}
 
-	//交易成功，nonce+1
-	account := k.AccountKeeper.GetAccount(ctx, msg.From)
-	saveErr := account.SetSequence(account.GetSequence() + 1)
-	if saveErr != nil {
-		return wasm.ErrSetNewAccountSequence(wasm.DefaultCodespace, saveErr).Result()
-	}
-	k.AccountKeeper.SetAccount(ctx, account)
-	//
 	return sdk.Result{
-		Data:   []byte(fmt.Sprintf("codeID:%d", codeID)),
+		Data:   codeHash,
 	}
 }
 
 func handleInstantiateContractTx(ctx sdk.Context, k Keeper, msg wasm.InstantiateContractTx) sdk.Result {
-
-	contractAddr , err := k.Instantiate(ctx, msg.CodeID, msg.Sender, msg.Args, msg.Label)
+	contractAddr, err := k.Instantiate(ctx, msg.CodeHash, msg.Sender, msg.Args, msg.Label)
 	if err != nil {
 		return wasm.ErrInstantiateFailed(wasm.DefaultCodespace, err).Result()
 	}
 
-	//交易成功，nonce+1
-	account := k.AccountKeeper.GetAccount(ctx, msg.From)
-	saveErr := account.SetSequence(account.GetSequence() + 1)
-	if saveErr != nil {
-		return wasm.ErrSetNewAccountSequence(wasm.DefaultCodespace, saveErr).Result()
-	}
-	k.AccountKeeper.SetAccount(ctx, account)
-
 	return sdk.Result{
-		Data:  []byte(fmt.Sprintf("contractAddress:%s", contractAddr.String())),
+		Data:  []byte(fmt.Sprintf("%s", contractAddr.String())),
 	}
 }
 
@@ -72,13 +55,5 @@ func handleExecuteContractTx(ctx sdk.Context, k Keeper, msg wasm.ExecuteContract
 		return wasm.ErrExecuteFailed(wasm.DefaultCodespace, err).Result()
 	}
 
-	//交易成功，nonce+1
-	account := k.AccountKeeper.GetAccount(ctx, msg.From)
-	saveErr := account.SetSequence(account.GetSequence() + 1)
-	if saveErr != nil {
-		return wasm.ErrSetNewAccountSequence(wasm.DefaultCodespace, saveErr).Result()
-	}
-	k.AccountKeeper.SetAccount(ctx, account)
-	//
 	return res
 }

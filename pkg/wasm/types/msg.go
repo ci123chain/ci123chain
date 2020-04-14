@@ -77,12 +77,12 @@ func (msg *StoreCodeTx) GetFromAddress() sdk.AccAddress {
 type InstantiateContractTx struct {
 	transaction.CommonTx
 	Sender       sdk.AccAddress       `json:"sender"`
-	CodeID       uint64               `json:"code_id"`
+	CodeHash      []byte              `json:"code_hash"`
 	Label        string               `json:"label"`
 	Args      json.RawMessage         `json:"args"`
 }
 
-func NewInstantiateContractTx(from sdk.AccAddress, gas, nonce, codeID uint64, sender sdk.AccAddress, label string,
+func NewInstantiateContractTx(from sdk.AccAddress, gas, nonce uint64, codeHash []byte, sender sdk.AccAddress, label string,
 	initMsg json.RawMessage) InstantiateContractTx{
 
 		return InstantiateContractTx{
@@ -92,7 +92,7 @@ func NewInstantiateContractTx(from sdk.AccAddress, gas, nonce, codeID uint64, se
 				Nonce: nonce,
 			},
 			Sender:    sender,
-			CodeID:    codeID,
+			CodeHash:    codeHash,
 			Label:     label,
 			Args:   initMsg,
 		}

@@ -31,7 +31,7 @@ const (
 	//FlagMsg = "msg"
 	FlagArgs = "args"
 	FlagLabel = "label"
-	FlagID = "codeID"
+	FlagHash = "codeHash"
 	FlagFunds = "funds"
 	FlagContractAddress = "contractAddress"
 )

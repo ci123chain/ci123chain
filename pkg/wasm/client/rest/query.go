@@ -9,7 +9,6 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/util"
 	"github.com/tanhuiya/ci123chain/pkg/wasm/types"
 	"net/http"
-	"strconv"
 )
 
 func registerQueryRoutes(cliCtx context.Context, r *mux.Router) {
@@ -30,18 +29,13 @@ func registerQueryRoutes(cliCtx context.Context, r *mux.Router) {
 func queryCodeHandlerFn(cliCtx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		codeId := r.FormValue("codeID")
-		codeID, err := strconv.ParseUint(codeId, 10, 64)
-		if err != nil {
-			//rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
-			return
-		}
+		codeHash := r.FormValue("codeHash")
 		cliCtx, ok, Err := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r, "")
 		if !ok {
 			rest.WriteErrorRes(w, Err)
 			return
 		}
-		params := types.NewQueryCodeInfoParams(codeID)
+		params := types.NewQueryCodeInfoParams(codeHash)
 		bz, Er := cliCtx.Cdc.MarshalJSON(params)
 		if Er != nil {
 			rest.WriteErrorRes(w, sdk.ErrInternal("marshal failed"))

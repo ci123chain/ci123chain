@@ -103,19 +103,19 @@ func (k IBCKeeper) ApplyIBCMsg(ctx sdk.Context, tx types.ApplyIBCTx) (*types.App
 
 			//-----------------
 			//余额不足，from 账户 nonce+1
-			fromAccount := k.AccountKeeper.GetAccount(ctx, ibcMsg.FromAddress)
-			 err = fromAccount.SetSequence(fromAccount.GetSequence() + 1)
-			 if err != nil {
-			 	return nil, errors.New("Failed to set sequence of from account: "+ ibcMsg.FromAddress.Hex() )
-			 }
-			 //observer nonce+1
-			observerAccount := k.AccountKeeper.GetAccount(ctx, tx.From)
-			saveErr := observerAccount.SetSequence(observerAccount.GetSequence() + 1)
-			if saveErr != nil {
-				return nil,errors.New("Failed to set sequence of observer account")
-			}
-			k.AccountKeeper.SetAccount(ctx, fromAccount)
-			k.AccountKeeper.SetAccount(ctx, observerAccount)
+			//fromAccount := k.AccountKeeper.GetAccount(ctx, ibcMsg.FromAddress)
+			// err = fromAccount.SetSequence(fromAccount.GetSequence() + 1)
+			// if err != nil {
+			// 	return nil, errors.New("Failed to set sequence of from account: "+ ibcMsg.FromAddress.Hex() )
+			// }
+			// //observer nonce+1
+			//observerAccount := k.AccountKeeper.GetAccount(ctx, tx.From)
+			//saveErr := observerAccount.SetSequence(observerAccount.GetSequence() + 1)
+			//if saveErr != nil {
+			//	return nil,errors.New("Failed to set sequence of observer account")
+			//}
+			//k.AccountKeeper.SetAccount(ctx, fromAccount)
+			//k.AccountKeeper.SetAccount(ctx, observerAccount)
 			//----------------
 			return nil, errors.New("Infficient balance of account: " + ibcMsg.FromAddress.Hex())
 
@@ -125,20 +125,20 @@ func (k IBCKeeper) ApplyIBCMsg(ctx sdk.Context, tx types.ApplyIBCTx) (*types.App
 			err = k.SetIBCMsg(ctx, *ibcMsg)
 			//------------------------
 			//转账失败，from 账户 nonce+1
-			fromAccount := k.AccountKeeper.GetAccount(ctx, ibcMsg.FromAddress)
-			saveErr := fromAccount.SetSequence(fromAccount.GetSequence() + 1)
-			if saveErr != nil {
-				return nil, errors.New("Failed to set nonce of account: "+ ibcMsg.FromAddress.Hex() )
-
-			}
-			//observer nonce+1
-			observerAccount := k.AccountKeeper.GetAccount(ctx, tx.From)
-			saveErr = observerAccount.SetSequence(observerAccount.GetSequence() + 1)
-			if saveErr != nil {
-				return nil,errors.New("Failed to set sequence of observer account")
-			}
-			k.AccountKeeper.SetAccount(ctx, fromAccount)
-			k.AccountKeeper.SetAccount(ctx, observerAccount)
+			//fromAccount := k.AccountKeeper.GetAccount(ctx, ibcMsg.FromAddress)
+			//saveErr := fromAccount.SetSequence(fromAccount.GetSequence() + 1)
+			//if saveErr != nil {
+			//	return nil, errors.New("Failed to set nonce of account: "+ ibcMsg.FromAddress.Hex() )
+			//
+			//}
+			////observer nonce+1
+			//observerAccount := k.AccountKeeper.GetAccount(ctx, tx.From)
+			//saveErr = observerAccount.SetSequence(observerAccount.GetSequence() + 1)
+			//if saveErr != nil {
+			//	return nil,errors.New("Failed to set sequence of observer account")
+			//}
+			//k.AccountKeeper.SetAccount(ctx, fromAccount)
+			//k.AccountKeeper.SetAccount(ctx, observerAccount)
 			//--------------------------
 
 			return nil, transaction.ErrSendCoin(types.DefaultCodespace, err1)
@@ -171,12 +171,12 @@ func (k IBCKeeper) ApplyIBCMsg(ctx sdk.Context, tx types.ApplyIBCTx) (*types.App
 	}
 	//-------------------
 	//apply成功 observer nonce+1，证明observer确实apply
-	observerAccount := k.AccountKeeper.GetAccount(ctx, tx.From)
-	saveErr := observerAccount.SetSequence(observerAccount.GetSequence() + 1)
-	if saveErr != nil {
-		return nil,errors.New("Failed to set sequence of observer account")
-	}
-	k.AccountKeeper.SetAccount(ctx, observerAccount)
+	//observerAccount := k.AccountKeeper.GetAccount(ctx, tx.From)
+	//saveErr := observerAccount.SetSequence(observerAccount.GetSequence() + 1)
+	//if saveErr != nil {
+	//	return nil,errors.New("Failed to set sequence of observer account")
+	//}
+	//k.AccountKeeper.SetAccount(ctx, observerAccount)
 	//--------------------------
 	return &signedIbcMsg, nil
 }
@@ -284,12 +284,12 @@ func (k IBCKeeper) ReceiveReceipt(ctx sdk.Context, receipt types.BankReceipt) (e
 	}
 
 	//交易成功，from 账户 nonce+1
-	account := k.AccountKeeper.GetAccount(ctx, ibcMsg.FromAddress)
-	saveErr := account.SetSequence(account.GetSequence() + 1)
-	if saveErr != nil {
-		return errors.New("Failed to set sequence")
-	}
-	k.AccountKeeper.SetAccount(ctx, account)
+	//account := k.AccountKeeper.GetAccount(ctx, ibcMsg.FromAddress)
+	//saveErr := account.SetSequence(account.GetSequence() + 1)
+	//if saveErr != nil {
+	//	return errors.New("Failed to set sequence")
+	//}
+	//k.AccountKeeper.SetAccount(ctx, account)
 	//
 
 	return nil

@@ -38,6 +38,7 @@ func queryContractInfo(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte
 	if contractInfo == nil {
 		return nil, nil
 	}
+
 	res := types.WasmCodec.MustMarshalBinaryBare(contractInfo)
 
 	return res, nil
@@ -51,7 +52,7 @@ func queryCodeInfo(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, sd
 		return nil, sdk.ErrInternal("unmarshal failed")
 	}
 
-	codeInfo := k.GetCodeInfo(ctx, params.ID)
+	codeInfo := k.GetCodeInfo(ctx, params.Hash)
 	if codeInfo == nil {
 		return nil, nil
 	}

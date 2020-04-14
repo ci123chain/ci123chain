@@ -1,7 +1,9 @@
 package types
 
 import (
+	"encoding/hex"
 	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
+	"strings"
 )
 
 type ContractInfoParams struct {
@@ -15,12 +17,12 @@ func NewQueryContractInfoParams(contractAddress sdk.AccAddress) ContractInfoPara
 }
 
 type CodeInfoParams struct {
-	ID   uint64   `json:"id"`
+	Hash   []byte   `json:"hash"`
 }
 
-func NewQueryCodeInfoParams(id uint64) CodeInfoParams {
-
-	params := CodeInfoParams{ID:id}
+func NewQueryCodeInfoParams(hashStr string) CodeInfoParams {
+	hash, _ := hex.DecodeString(strings.ToLower(hashStr))
+	params := CodeInfoParams{Hash: hash}
 	return params
 }
 

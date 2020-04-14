@@ -27,7 +27,7 @@ func SignStoreCodeMsg(from sdk.AccAddress, gas, nonce uint64, priv string, sende
 	return tx.Bytes(), nil
 }
 
-func SignInstantiateContractMsg(from sdk.AccAddress, gas, nonce, codeID uint64, priv string, sender sdk.AccAddress, label string,
+func SignInstantiateContractMsg(from sdk.AccAddress, gas, nonce uint64, codeHash []byte, priv string, sender sdk.AccAddress, label string,
 	initMsg json.RawMessage) ([]byte, error) {
 
 	privateKey, err := hex.DecodeString(priv)
@@ -35,7 +35,7 @@ func SignInstantiateContractMsg(from sdk.AccAddress, gas, nonce, codeID uint64, 
 		return nil, err
 	}
 
-	tx := wasm.NewInstantiateTx(from, gas, nonce, codeID, sender, label, initMsg)
+	tx := wasm.NewInstantiateTx(from, gas, nonce, codeHash, sender, label, initMsg)
 	sid := cryptosuit.NewFabSignIdentity()
 	pub, err  := sid.GetPubKey(privateKey)
 

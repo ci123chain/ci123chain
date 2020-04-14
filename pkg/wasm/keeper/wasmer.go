@@ -220,9 +220,9 @@ func MakeCodeHash(code []byte) []byte {
 	return Result
 }
 
-func (w *Wasmer) GetWasmCode(id []byte) ([]byte, error) {
-	hash := fmt.Sprintf("%x", id)
-	filePath := w.FilePathMap[hash]
+func (w *Wasmer) GetWasmCode(hash []byte) ([]byte, error) {
+	Hash := fmt.Sprintf("%x", hash)
+	filePath := w.FilePathMap[Hash]
 	code, err := ioutil.ReadFile(w.HomeDir + "/" + filePath)
 	if err != nil {
 		return nil, err
