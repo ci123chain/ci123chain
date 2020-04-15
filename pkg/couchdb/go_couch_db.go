@@ -63,7 +63,7 @@ func (cdb *GoCouchDB) Get(key []byte) []byte {
 					return nil
 				}
 			default:
-				panic(err)
+				continue
 			}
 		}
 		res, err := hex.DecodeString(doc.Value)

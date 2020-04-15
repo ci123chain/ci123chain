@@ -10,7 +10,6 @@ import (
 	"github.com/tanhuiya/ci123chain/pkg/wasm/keeper"
 	"github.com/tanhuiya/ci123chain/pkg/wasm/types"
 	"net/http"
-	"strconv"
 )
 
 func registerTxRoutes(cliCtx context.Context, r *mux.Router)  {
@@ -86,22 +85,17 @@ func instantiateContractHandler(cliCtx context.Context) http.HandlerFunc {
 		}
 
 		//check codeID
-		codeId := r.FormValue("codeID")
-		codeID, err := strconv.ParseUint(codeId, 10, 64)
+		codeHash := r.FormValue("codeHash")
+		params := types.NewQueryCodeInfoParams(codeHash)
+		bz, err := cliCtx.Cdc.MarshalJSON(params)
 		if err != nil {
-			rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace,"codeID parse fail"))
-			return
-		}
-		params := types.NewQueryCodeInfoParams(codeID)
-		bz, Er := cliCtx.Cdc.MarshalJSON(params)
-		if Er != nil {
 			rest.WriteErrorRes(w, sdk.ErrInternal("marshal failed"))
 			return
 		}
 
 		res, _, _ := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryCodeInfo, bz)
 		if res == nil {
-			rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace,"codeID does not exists"))
+			rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace,"codeHash does not exists"))
 			return
 		}
 
