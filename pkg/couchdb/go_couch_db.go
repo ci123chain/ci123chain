@@ -279,7 +279,7 @@ type goCouchDBBatch struct{
 func (mBatch *goCouchDBBatch) Set(key, value []byte) {
 	var newDoc KVWrite
 	value = nonNilBytes(value)
-id := hex.EncodeToString(key)
+	id := hex.EncodeToString(key)
 	rev := mBatch.cdb.GetRev(key)
 	newDoc = KVWrite{
 		Value:	hex.EncodeToString(value),
