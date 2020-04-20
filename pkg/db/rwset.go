@@ -2,8 +2,8 @@ package db
 
 import (
 	"errors"
-	"github.com/tanhuiya/ci123chain/pkg/abci/types"
-	"github.com/tanhuiya/ci123chain/pkg/util"
+	"github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/util"
 )
 
 type Read struct {

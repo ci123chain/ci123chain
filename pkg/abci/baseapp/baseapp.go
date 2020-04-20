@@ -13,10 +13,10 @@ import (
 	dbm "github.com/tendermint/tm-db"
 	"github.com/tendermint/tendermint/libs/log"
 
-	"github.com/tanhuiya/ci123chain/pkg/abci/codec"
-	"github.com/tanhuiya/ci123chain/pkg/abci/store"
-	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
-	"github.com/tanhuiya/ci123chain/pkg/abci/version"
+	"github.com/ci123chain/ci123chain/pkg/abci/codec"
+	"github.com/ci123chain/ci123chain/pkg/abci/store"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/abci/version"
 )
 
 // Key to store the header in the DB itself.
@@ -609,26 +609,19 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 		// writes do not happen if aborted/failed.  This may have some
 		// performance benefits, but it'll be more difficult to get right.
 		anteCtx, msCache = app.cacheTxContext(ctx, txBytes)
-		fmt.Println("-------- anteCtx gas1 ----------")
-		fmt.Println(anteCtx.GasMeter().GasConsumed())
 		newCtx, result, abort := app.anteHandler(anteCtx, tx, (mode == runTxModeSimulate))
-		fmt.Println("-------- anteCtx gas2 ----------")
-		fmt.Println(anteCtx.GasMeter().GasConsumed())
+
 		if abort {
 			ctx = newCtx
 			return result
 		}
-		fmt.Println("-------- newctx gas ----------")
-		fmt.Println(newCtx.GasMeter().GasConsumed())
+
 		if !newCtx.IsZero() {
 			// At this point, newCtx.MultiStore() is cache wrapped,
 			// or something else replaced by anteHandler.
 			// We want the original ms, not one which was cache-wrapped
 			// for the ante handler.
 			ctx = newCtx.WithMultiStore(ms)
-
-			fmt.Println("-------- ctx gas ----------")
-			fmt.Println(ctx.GasMeter().GasConsumed())
 		}
 		gasWanted = result.GasWanted
 		gasUsed = result.GasUsed
@@ -645,11 +638,8 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 
 	// Create a new context based off of the existing context with a cache wrapped
 	// multi-store in case message processing fails.
-	fmt.Println("-------- ctx gas ----------")
-	fmt.Println(ctx.GasMeter().GasConsumed())
+
 	runMsgCtx, msCache := app.cacheTxContext(ctx, txBytes)
-	fmt.Println("-------- runMsgCtx gas ----------")
-	fmt.Println(runMsgCtx.GasMeter().GasConsumed())
 	result = app.runMsgs(runMsgCtx, tx, mode)
 
 	if mode == runTxModeSimulate  { // XXX
@@ -675,7 +665,7 @@ func (app *BaseApp) EndBlock(req abci.RequestEndBlock) (res abci.ResponseEndBloc
 	if app.committer != nil {
 		app.committer(app.deliverState.ctx)
 	}
-	return
+	return res
 }
 
 // Implements ABCI
@@ -684,6 +674,8 @@ func (app *BaseApp) Commit() (res abci.ResponseCommit) {
 	/*
 		// Write the latest Header to the store
 			headerBytes, err := proto.Marshal(&header)
+
+
 			if err != nil {
 				panic(err)
 			}

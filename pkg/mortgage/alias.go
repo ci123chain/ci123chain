@@ -1,8 +1,8 @@
 package mortgage
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/mortgage/keeper"
-	"github.com/tanhuiya/ci123chain/pkg/mortgage/types"
+	"github.com/ci123chain/ci123chain/pkg/mortgage/keeper"
+	"github.com/ci123chain/ci123chain/pkg/mortgage/types"
 )
 
 type MortgageKeeper = keeper.MortgageKeeper

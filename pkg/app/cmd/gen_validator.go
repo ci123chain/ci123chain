@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/tanhuiya/ci123chain/pkg/app"
+	"github.com/ci123chain/ci123chain/pkg/app"
 )
 
 func genValidatorCmd(ctx *app.Context) *cobra.Command {

@@ -1,7 +1,7 @@
 package types
 
 import (
-	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 )
 
 type CodeType = sdk.CodeType
@@ -11,5 +11,5 @@ const (
 )
 
 func ErrTxValidateBasic(codespace sdk.CodespaceType, err error) sdk.Error {
-	return sdk.NewError(codespace, CodeTxValidateBasicError,"Validate basic Error", err)
+	return sdk.NewError(codespace, CodeTxValidateBasicError,"Validate basic Error: %s", err.Error())
 }

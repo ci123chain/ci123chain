@@ -1,6 +1,6 @@
 package types
 
-import "github.com/tanhuiya/ci123chain/pkg/params/subspace"
+import "github.com/ci123chain/ci123chain/pkg/params/subspace"
 
 const (
 	DefaultMaxMemoCharacters 	uint64 = 256

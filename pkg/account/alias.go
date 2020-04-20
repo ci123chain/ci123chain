@@ -1,8 +1,8 @@
 package account
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/account/keeper"
-	"github.com/tanhuiya/ci123chain/pkg/account/types"
+	"github.com/ci123chain/ci123chain/pkg/account/keeper"
+	"github.com/ci123chain/ci123chain/pkg/account/types"
 )
 
 const (

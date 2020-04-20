@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	sdk "github.com/tanhuiya/ci123chain/sdk/account"
+	sdk "github.com/ci123chain/ci123chain/sdk/account"
 )
 
 type Response struct {
@@ -11,6 +11,11 @@ type Response struct {
 	Data interface{} `json:"data"`
 	Message string   `json:"message"`
 }
+
+var (
+	reqUrl = "http://ciChain:3030/account/new"
+	proxy = "lb"
+)
 
 func main() {
 	var res Response
@@ -20,7 +25,7 @@ func main() {
 
 	if online == true {
 		fmt.Println("---------------在线生成新的账户----------------------")
-		b, err := sdk.NewAccountOnLine()
+		b, err := sdk.NewAccountOnLine(reqUrl, proxy)
 		if err != nil {
 			fmt.Println("---生成失败---")
 			fmt.Println(err)

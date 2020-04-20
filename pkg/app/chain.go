@@ -4,36 +4,40 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/spf13/viper"
-	"github.com/tanhuiya/ci123chain/pkg/abci/baseapp"
-	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
-	"github.com/tanhuiya/ci123chain/pkg/abci/types/module"
-	"github.com/tanhuiya/ci123chain/pkg/account"
-	"github.com/tanhuiya/ci123chain/pkg/account/keeper"
-	acc_types "github.com/tanhuiya/ci123chain/pkg/account/types"
-	app_types "github.com/tanhuiya/ci123chain/pkg/app/types"
-	"github.com/tanhuiya/ci123chain/pkg/auth"
-	"github.com/tanhuiya/ci123chain/pkg/auth/ante"
-	"github.com/tanhuiya/ci123chain/pkg/config"
-	"github.com/tanhuiya/ci123chain/pkg/couchdb"
-	"github.com/tanhuiya/ci123chain/pkg/db"
-	distr "github.com/tanhuiya/ci123chain/pkg/distribution"
-	k "github.com/tanhuiya/ci123chain/pkg/distribution/keeper"
-	"github.com/tanhuiya/ci123chain/pkg/fc"
-	"github.com/tanhuiya/ci123chain/pkg/ibc"
-	"github.com/tanhuiya/ci123chain/pkg/mortgage"
-	"github.com/tanhuiya/ci123chain/pkg/order"
-	orhandler "github.com/tanhuiya/ci123chain/pkg/order/handler"
-	"github.com/tanhuiya/ci123chain/pkg/params"
-	"github.com/tanhuiya/ci123chain/pkg/supply"
-	"github.com/tanhuiya/ci123chain/pkg/transaction"
-	"github.com/tanhuiya/ci123chain/pkg/transfer"
-	"github.com/tanhuiya/ci123chain/pkg/transfer/handler"
+	"github.com/ci123chain/ci123chain/pkg/abci/baseapp"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/abci/types/module"
+	"github.com/ci123chain/ci123chain/pkg/account"
+	"github.com/ci123chain/ci123chain/pkg/account/keeper"
+	acc_types "github.com/ci123chain/ci123chain/pkg/account/types"
+	app_types "github.com/ci123chain/ci123chain/pkg/app/types"
+	"github.com/ci123chain/ci123chain/pkg/auth"
+	"github.com/ci123chain/ci123chain/pkg/auth/ante"
+	"github.com/ci123chain/ci123chain/pkg/config"
+	"github.com/ci123chain/ci123chain/pkg/couchdb"
+	"github.com/ci123chain/ci123chain/pkg/db"
+	distr "github.com/ci123chain/ci123chain/pkg/distribution"
+	k "github.com/ci123chain/ci123chain/pkg/distribution/keeper"
+	"github.com/ci123chain/ci123chain/pkg/fc"
+	"github.com/ci123chain/ci123chain/pkg/ibc"
+	"github.com/ci123chain/ci123chain/pkg/mortgage"
+	"github.com/ci123chain/ci123chain/pkg/order"
+	orhandler "github.com/ci123chain/ci123chain/pkg/order/handler"
+	"github.com/ci123chain/ci123chain/pkg/params"
+	"github.com/ci123chain/ci123chain/pkg/staking"
+	stakingTypes "github.com/ci123chain/ci123chain/pkg/staking/types"
+	"github.com/ci123chain/ci123chain/pkg/supply"
+	"github.com/ci123chain/ci123chain/pkg/transaction"
+	"github.com/ci123chain/ci123chain/pkg/transfer"
+	"github.com/ci123chain/ci123chain/pkg/transfer/handler"
+	"github.com/ci123chain/ci123chain/pkg/wasm"
+	wasm_types "github.com/ci123chain/ci123chain/pkg/wasm/types"
 	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/crypto"
+	"github.com/tendermint/tendermint/libs/cli"
 	"github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/types"
-	tmtypes "github.com/tendermint/tendermint/types"
 	tmdb "github.com/tendermint/tm-db"
 	"io"
 	"os"
@@ -63,17 +67,23 @@ var (
 
 	fcStoreKey       = sdk.NewKVStoreKey(fc.FcStoreKey)
 	disrtStoreKey         = sdk.NewKVStoreKey(k.DisrtKey)
+	stakingStoreKey  = sdk.NewKVStoreKey(staking.StoreKey)
+	wasmStoreKey     = sdk.NewKVStoreKey(wasm.StoreKey)
 
 	ModuleBasics = module.NewBasicManager(
 		account.AppModuleBasic{},
 		auth.AppModuleBasic{},
 		supply.AppModuleBasic{},
 		order.AppModuleBasic{},
+		staking.AppModuleBasic{},
+		wasm.AppModuleBasic{},
 		)
 
 	maccPerms = map[string][]string{
 		//mortgage.ModuleName: nil,
 		ibc.ModuleName: nil,
+		stakingTypes.BondedPoolName: {supply.Burner, supply.Staking},
+		stakingTypes.NotBondedPoolName: {supply.Burner, supply.Staking},
 	}
 )
 
@@ -126,9 +136,14 @@ func NewChain(logger log.Logger, tmdb tmdb.DB, traceStore io.Writer) *Chain {
 
 	fcKeeper := fc.NewFcKeeper(cdc, fcStoreKey, accKeeper)
 	distrKeeper := k.NewKeeper(cdc, disrtStoreKey, fcKeeper, accKeeper)
+	stakingKeeper := staking.NewKeeper(cdc, stakingStoreKey, accKeeper,supplyKeeper, paramsKeeper.Subspace(params.ModuleName))
 
 	cdb := tmdb.(*couchdb.GoCouchDB)
-	orderKeeper := order.NewKeeper(cdb, OrderStoreKey)
+	orderKeeper := order.NewKeeper(cdb, OrderStoreKey, accKeeper)
+
+	homeDir := viper.GetString(cli.HomeFlag)
+	var wasmconfig wasm_types.WasmConfig
+	wasmKeeper := wasm.NewKeeper(cdc, wasmStoreKey,homeDir, wasmconfig, accKeeper)
 
 	// 设置modules
 	c.mm = module.NewManager(
@@ -136,17 +151,25 @@ func NewChain(logger log.Logger, tmdb tmdb.DB, traceStore io.Writer) *Chain {
 		account.AppModule{AccountKeeper: accKeeper},
 		distr.AppModule{DistributionKeeper: distrKeeper},
 		order.AppModule{OrderKeeper: &orderKeeper},
+		staking.AppModule{StakingKeeper:stakingKeeper, AccountKeeper:accKeeper, SupplyKeeper:supplyKeeper},
+		wasm.AppModule{WasmKeeper:wasmKeeper},
 		)
 	// invoke router
 	c.Router().AddRoute(transfer.RouteKey, handler.NewHandler(txm, accKeeper, sm))
 	c.Router().AddRoute(ibc.RouterKey, ibc.NewHandler(ibcKeeper))
 	c.Router().AddRoute(order.RouteKey, orhandler.NewHandler(&orderKeeper))
+	c.Router().AddRoute(staking.RouteKey, staking.NewHandler(stakingKeeper))
+	c.Router().AddRoute(wasm.RouteKey, wasm.NewHandler(wasmKeeper))
 	// query router
 	c.QueryRouter().AddRoute(ibc.RouterKey, ibc.NewQuerier(ibcKeeper))
 
 	c.QueryRouter().AddRoute(distr.RouteKey, distr.NewQuerier(distrKeeper))
 
 	c.QueryRouter().AddRoute(order.RouteKey, order.NewQuerier(&orderKeeper))
+
+	c.QueryRouter().AddRoute(staking.RouteKey, staking.NewQuerier(stakingKeeper))
+
+	c.QueryRouter().AddRoute(wasm.RouteKey, wasm.NewQuerier(wasmKeeper))
 
 	c.SetAnteHandler(ante.NewAnteHandler(c.authKeeper, accKeeper, fcKeeper))
 	c.SetBeginBlocker(c.BeginBlocker)
@@ -176,6 +199,8 @@ func (c *Chain) mountStores() error {
 		fcStoreKey,
 		disrtStoreKey,
 		OrderStoreKey,
+		stakingStoreKey,
+		wasmStoreKey,
 	}
 	c.MountStoresIAVL(keys...)
 
@@ -208,11 +233,11 @@ type AppInit struct {
 
 	// create the application genesis tx
 	AppGenTx func(cdc *amino.Codec, pk crypto.PubKey, genTxConfig config.GenTx) (
-		appGenTx, cliPrint json.RawMessage, validator tmtypes.GenesisValidator, err error)
+		appGenTx, cliPrint json.RawMessage, validator types.GenesisValidator, err error)
 
 	// AppGenState creates the core parameters initialization. It takes in a
 	// pubkey meant to represent the pubkey of the validator of this machine.
-	AppGenState func() (appState json.RawMessage, err error)
+	AppGenState func(validators []types.GenesisValidator) (appState json.RawMessage, err error)
 
 
 	GetValidator func(pk crypto.PubKey, name string) types.GenesisValidator

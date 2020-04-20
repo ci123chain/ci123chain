@@ -3,7 +3,7 @@ package store
 import (
 	"bytes"
 	"fmt"
-	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/tmhash"
 	cmn "github.com/tendermint/tendermint/libs/common"
@@ -116,16 +116,16 @@ func (ks *baseKVStore) CacheWrapWithTrace(w io.Writer, tc TraceContext) CacheWra
 
 // Implements KVStore.
 func (ks *baseKVStore) Iterator(start, end []byte) Iterator {
-	cstart := ks.getCombineKey(start)
-	cend := ks.getCombineKey(end)
-	return ks.iterator([]byte(cstart), []byte(cend), true)
+	//cstart := ks.getCombineKey(start)
+	//cend := ks.getCombineKey(end)
+	return ks.iterator([]byte(start), []byte(end), true)
 }
 
 // Implements KVStore.
 func (ks *baseKVStore) ReverseIterator(start, end []byte) Iterator {
-	cstart := ks.getCombineKey(start)
-	cend := ks.getCombineKey(end)
-	return ks.iterator([]byte(cstart), []byte(cend), false)
+	//cstart := ks.getCombineKey(start)
+	//cend := ks.getCombineKey(end)
+	return ks.iterator([]byte(start), []byte(end), false)
 }
 
 func (ks *baseKVStore) iterator(start, end []byte, ascending bool) Iterator {

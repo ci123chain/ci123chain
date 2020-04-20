@@ -3,13 +3,14 @@ package app
 import (
 	"encoding/json"
 	"errors"
-	"github.com/tanhuiya/ci123chain/pkg/abci"
-	"github.com/tanhuiya/ci123chain/pkg/app/types"
-	"github.com/tanhuiya/ci123chain/pkg/couchdb"
+	"github.com/spf13/viper"
+	"github.com/ci123chain/ci123chain/pkg/abci"
+	"github.com/ci123chain/ci123chain/pkg/app/types"
+	"github.com/ci123chain/ci123chain/pkg/couchdb"
 	sdk "github.com/tendermint/tendermint/abci/types"
 	"strings"
 
-	//"github.com/tanhuiya/ci123chain/pkg/couchdb"
+	//"github.com/ci123chain/ci123chain/pkg/couchdb"
 	"github.com/tendermint/tendermint/libs/log"
 	tmtypes "github.com/tendermint/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
@@ -18,6 +19,11 @@ import (
 	"path/filepath"
 )
 
+const DefaultDBName = "ci123"
+const DBAuthUser = "DBAuthUser"
+const DBAuthPwd = "DBAuthPwd"
+const DBAuth = "DBAuth"
+const DBName = "DBName"
 type (
 	AppCreator func(home string, logger log.Logger, statedb, traceStore string) (sdk.Application, error)
 
@@ -32,7 +38,7 @@ func ConstructAppCreator(appFn AppCreatorInit, name string) AppCreator {
 
 	return func(rootDir string, logger log.Logger, statedb, traceStore string) (sdk.Application, error) {
 		dataDir := filepath.Join(rootDir, "data")
-		db, err := GetStateDB(name, dataDir, statedb)
+		db, err := GetStateDB(dataDir, statedb)
 		if err != nil {
 			return nil, types.ErrNewDB(types.DefaultCodespace, err)
 		}
@@ -75,13 +81,17 @@ func ConstructAppExporter(appFn AppExporterInit, name string) AppExporter {
 	}
 }
 
-func GetStateDB(name, path, statedb string) (db dbm.DB, err error) {
+func GetStateDB(path, statedb string) (db dbm.DB, err error) {
+
+
+
+	var dbname string
 	if statedb == "leveldb" {
-		db, err = dbm.NewGoLevelDB(name, path)
+		db, err = dbm.NewGoLevelDB(DefaultDBName, path)
 		return
 	} else {
-		// couchdb://admin:password@192.168.2.89:5984
-		// couchdb://192.168.2.89:5984
+		// couchdb://admin:password@192.168.2.89:5984/dbname
+		// couchdb://192.168.2.89:5984/dbname
 		s := strings.Split(statedb, "://")
 		if len(s) < 2 {
 			return nil, errors.New("statedb format error")
@@ -91,18 +101,43 @@ func GetStateDB(name, path, statedb string) (db dbm.DB, err error) {
 		}
 		auths := strings.Split(s[1], "@")
 
-		if len(auths) < 2 {
-			db, err = couchdb.NewGoCouchDB(name, auths[0],nil)
-		} else {
+		if len(auths) < 2 { // 192.168.2.89:5984/dbname 无用户名 密码
 			info := auths[0]
-			userpass := strings.Split(info, ":")
-			if len(userpass) < 2 {
-				db, err = couchdb.NewGoCouchDB(name, auths[1],nil)
+			split := strings.Split(info, "/")
+			if len(split) < 2 {
+				dbname = DefaultDBName
+			} else {
+				dbname = split[1]
 			}
-			auth := &couchdb.BasicAuth{Username: userpass[0], Password: userpass[1]}
-			db, err = couchdb.NewGoCouchDB(name, auths[1], auth)
+			db, err = couchdb.NewGoCouchDB(dbname, split[0],nil)
+			viper.Set(DBName, dbname)
+		} else { // admin:password@192.168.2.89:5984/dbname
+			info := auths[0] // admin:password
+			userandpass := strings.Split(info, ":")
+			if len(userandpass) < 2 {
+				hostandpath := auths[1]
+				split := strings.Split(hostandpath, "/")
+				if len(split) < 2 {
+					dbname = DefaultDBName
+				} else {
+					dbname = split[1]
+				}
+				db, err = couchdb.NewGoCouchDB(dbname, split[0],nil)
+			} else {
+				auth := &couchdb.BasicAuth{Username: userandpass[0], Password: userandpass[1]}
+				hostandpath := auths[1]
+				split := strings.Split(hostandpath, "/")
+				if len(split) < 2 {
+					dbname = DefaultDBName
+				} else {
+					dbname = split[1]
+				}
+				db, err = couchdb.NewGoCouchDB(dbname, split[0], auth)
+				viper.Set(DBAuthUser, userandpass[0])
+				viper.Set(DBAuthPwd, userandpass[1])
+				viper.Set(DBName, dbname)
+			}
 		}
 		return
 	}
-	return nil, errors.New("statedb format error")
 }

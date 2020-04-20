@@ -1,8 +1,8 @@
 package transfer
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/abci/codec"
-	"github.com/tanhuiya/ci123chain/pkg/transaction"
+	"github.com/ci123chain/ci123chain/pkg/abci/codec"
+	"github.com/ci123chain/ci123chain/pkg/transaction"
 	"github.com/tendermint/go-amino"
 )
 

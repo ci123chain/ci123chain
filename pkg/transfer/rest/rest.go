@@ -3,15 +3,16 @@ package rest
 import (
 	"fmt"
 	"github.com/gorilla/mux"
-	"github.com/tanhuiya/ci123chain/pkg/abci/types/rest"
-	"github.com/tanhuiya/ci123chain/pkg/client/context"
-	"github.com/tanhuiya/ci123chain/pkg/transfer/rest/utils"
-	"github.com/tanhuiya/ci123chain/pkg/transfer/types"
+	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
+	"github.com/ci123chain/ci123chain/pkg/client/context"
+	"github.com/ci123chain/ci123chain/pkg/transfer/rest/utils"
+	"github.com/ci123chain/ci123chain/pkg/transfer/types"
+	"github.com/ci123chain/ci123chain/pkg/util"
 	"net/http"
 )
 
 func RegisterTxRoutes(cliCtx context.Context, r *mux.Router)  {
-	r.HandleFunc("/tx", QueryTxRequestHandlerFn(cliCtx)).Methods("POST")
+	r.HandleFunc("/tx/query", QueryTxRequestHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/tx/sign_transfer", SignTxRequestHandler(cliCtx)).Methods("POST")
 	r.HandleFunc("/tx/transfers", SendRequestHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/tx/broadcast", BroadcastTxRequest(cliCtx)).Methods("POST")
@@ -23,24 +24,14 @@ type TxRequestParams struct {
 	Height  string    `json:"height"`
 }
 
-/*type QueryTxRequestParams struct{
-	//
-	Data    TxRequestParams `json:"data"`
-}*/
-
 func QueryTxRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
-		//vars := mux.Vars(request)
 		hashHexStr := request.FormValue("hash")
-
-		/*
-		var params QueryTxRequestParams
-		b, readErr := ioutil.ReadAll(request.Body)
-		readErr = json.Unmarshal(b, &params)
-		if readErr != nil {
-			//
+		checkErr := util.CheckStringLength(1, 100, hashHexStr)
+		if checkErr != nil {
+			rest.WriteErrorRes(writer, types.ErrQueryTx(types.DefaultCodespace, checkErr.Error()))
+			return
 		}
-		*/
 
 		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(writer, cliCtx, request, "")
 		if !ok {

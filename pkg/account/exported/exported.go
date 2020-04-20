@@ -1,7 +1,7 @@
 package exported
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/tendermint/tendermint/crypto"
 	"time"
 )
@@ -28,4 +28,7 @@ type Account interface {
 	SpendableCoins(blockTime time.Time) types.Coin
 	// Ensure that account implements stringer
 	String() string
+
+	AddContract(contractAddress types.AccAddress)
+	GetContractList() []string
 }

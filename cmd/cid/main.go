@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/tanhuiya/ci123chain/pkg/app"
-	"github.com/tanhuiya/ci123chain/pkg/app/cmd"
-	"github.com/tanhuiya/ci123chain/pkg/logger"
+	"github.com/ci123chain/ci123chain/pkg/app"
+	"github.com/ci123chain/ci123chain/pkg/app/cmd"
+	"github.com/ci123chain/ci123chain/pkg/logger"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/cli"
 	"github.com/tendermint/tendermint/libs/log"
@@ -59,7 +59,6 @@ func main()  {
 		app.ConstructAppCreator(newApp, appName),
 		app.ConstructAppExporter(exportAppState, appName),
 		)
-
 	viper.SetEnvPrefix("CI")
 	viper.BindPFlags(rootCmd.Flags())
 	viper.BindPFlags(rootCmd.PersistentFlags())

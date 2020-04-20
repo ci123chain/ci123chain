@@ -10,9 +10,6 @@ import (
 	"net/url"
 	"strings"
 )
-const (
-	proxy = "lb"
-)
 
 //off line
 func NewAccountOffLine() (string, string, error) {
@@ -30,9 +27,8 @@ func NewAccountOffLine() (string, string, error) {
 }
 
 //on line
-func NewAccountOnLine() ([]byte, error) {
+func NewAccountOnLine(reqUrl, proxy string) ([]byte, error) {
 	cli := &http.Client{}
-	reqUrl := "http://ciChain:3030/account/new"
 	data := url.Values{}
 	data.Set("proxy", proxy)
 

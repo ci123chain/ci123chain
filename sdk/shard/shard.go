@@ -3,14 +3,14 @@ package shard
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/tanhuiya/ci123chain/pkg/client/helper"
-	"github.com/tanhuiya/ci123chain/pkg/cryptosuit"
+	"github.com/ci123chain/ci123chain/pkg/client/helper"
+	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
 
-	"github.com/tanhuiya/ci123chain/pkg/order"
+	"github.com/ci123chain/ci123chain/pkg/order"
 )
 
 //off line
@@ -39,9 +39,8 @@ func SignAddShardMsg(from string, gas, nonce uint64,t, name string, height int64
 }
 
 //on line
-func HttpAddShardTx(from, gas, nonce, Type, name, height, priv, proxy string) {
+func HttpAddShardTx(from, gas, nonce, Type, name, height, priv, proxy, reqUrl string) {
 	cli := &http.Client{}
-	reqUrl := "http://ciChain:3030/tx/addShard"
 	data := url.Values{}
 	data.Set("from", from)
 	data.Set("gas", gas)

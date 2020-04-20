@@ -1,8 +1,8 @@
 package auth
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/auth/keeper"
-	"github.com/tanhuiya/ci123chain/pkg/auth/types"
+	"github.com/ci123chain/ci123chain/pkg/auth/keeper"
+	"github.com/ci123chain/ci123chain/pkg/auth/types"
 )
 
 const (

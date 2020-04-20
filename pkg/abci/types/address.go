@@ -82,8 +82,8 @@ func (acca AccAddr) Bytes() []byte {
 	return acca
 }
 
-func GetConsAddress(pubKey crypto.PubKey) AccAddress {
-	return ToAccAddress(pubKey.Address())
+func GetConsAddress(pubKeyVal crypto.PubKey) AccAddress {
+
+	addr := ToAccAddress(pubKeyVal.Address())
+	return addr
 }
-
-

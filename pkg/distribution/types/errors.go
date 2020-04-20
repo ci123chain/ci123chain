@@ -1,7 +1,7 @@
 package types
 
 import (
-	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 )
 
 type CodeType = sdk.CodeType
@@ -15,9 +15,9 @@ const (
 
 
 func ErrBadHeight(codespace sdk.CodespaceType, err error) sdk.Error {
-	return sdk.NewError(codespace, CodeInvalidHeight, "param Height invalid", err)
+	return sdk.NewError(codespace, CodeInvalidHeight, "param Height invalid: %s", err.Error())
 }
 
 func ErrFailedMarshal(codespace sdk.CodespaceType, detailStr string) sdk.Error {
-	return sdk.NewError(codespace, CodeBadMarshal, "Marshal Error", detailStr)
+	return sdk.NewError(codespace, CodeBadMarshal, "Marshal Error: %s", detailStr)
 }

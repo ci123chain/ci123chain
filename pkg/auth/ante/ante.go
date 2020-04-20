@@ -2,16 +2,16 @@ package ante
 
 import (
 	"fmt"
-	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
-	"github.com/tanhuiya/ci123chain/pkg/account"
-	"github.com/tanhuiya/ci123chain/pkg/account/exported"
-	"github.com/tanhuiya/ci123chain/pkg/auth"
-	"github.com/tanhuiya/ci123chain/pkg/auth/types"
-	fc "github.com/tanhuiya/ci123chain/pkg/fc"
-	"github.com/tanhuiya/ci123chain/pkg/transaction"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/account"
+	"github.com/ci123chain/ci123chain/pkg/account/exported"
+	"github.com/ci123chain/ci123chain/pkg/auth"
+	"github.com/ci123chain/ci123chain/pkg/auth/types"
+	"github.com/ci123chain/ci123chain/pkg/fc"
+	"github.com/ci123chain/ci123chain/pkg/transaction"
 )
 const price uint64 = 1
-const unit = 1000
+//const unit = 1000
 func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, fck fc.FcKeeper) sdk.AnteHandler {
 	return func(ctx sdk.Context, tx sdk.Tx, simulate bool) (newCtx sdk.Context, res sdk.Result, abort bool) {
 
@@ -28,12 +28,12 @@ func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, fck f
 			newCtx := ctx.WithGasMeter(sdk.NewGasMeter(0))
 			return newCtx, transaction.ErrInvalidTx(types.DefaultCodespace, "Invalid account").Result(), true
 		}
-		/*accountSequence := acc.GetSequence()
+		accountSequence := acc.GetSequence()
 		txNonce := stdTx.GetNonce()
 		if txNonce != accountSequence {
 			newCtx := ctx.WithGasMeter(sdk.NewGasMeter(0))
 			return newCtx, transaction.ErrInvalidTx(types.DefaultCodespace, "Unexpected nonce ").Result(), true
-		}*/
+		}
 
 		params := authKeeper.GetParams(ctx)
 		// Ensure that the provided fees meet a minimum threshold for the validator,
@@ -48,8 +48,7 @@ func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, fck f
 		gas := stdTx.GetGas()//用户期望的gas值 g.limit
 		newCtx = SetGasMeter(simulate, ctx, gas)//设置为GasMeter的gasLimit,成为用户可承受的gas上限.
 		//pms.TxSizeCostPerByte*sdk.Gas(len(newCtx.TxBytes()))
-		fmt.Println("-------- newCtx init ----------")
-		fmt.Println(newCtx.GasMeter().GasConsumed())
+		
 		// AnteHandlers must have their own defer/recover in order for the BaseApp
 		// to know how much gas was used! This is because the GasMeter is created in
 		// the AnteHandler, but if it panics the context won't be set properly in
@@ -89,11 +88,12 @@ func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, fck f
 			return newCtx, res, true
 		}
 		//存储奖励金
-		fmt.Println("-------- before collectedFees ----------")
-		fmt.Println(newCtx.GasMeter().GasConsumed())
 		fck.AddCollectedFees(newCtx, getFee)
-		fmt.Println("-------- after collectedFees ----------")
-		fmt.Println(newCtx.GasMeter().GasConsumed())
+
+		//account sequence + 1
+		nowSequence := accountSequence + 1
+		acc.SetSequence(nowSequence)
+		ak.SetAccount(ctx, acc)
 		return newCtx, sdk.Result{GasWanted:gas,GasUsed:fee}, false
 	}
 }
@@ -131,7 +131,7 @@ func EnsureSufficientMempoolFees() sdk.Result {
 }
 
 
-func DeductFees(acc exported.Account, fee sdk.Coin, ak account.AccountKeeper, ctx sdk.Context) (sdk.Result) {
+func DeductFees(acc exported.Account, fee sdk.Coin, ak account.AccountKeeper, ctx sdk.Context) sdk.Result {
 	coin := acc.GetCoin()
 	newCoins, ok := coin.SafeSub(fee)
 	if !ok {

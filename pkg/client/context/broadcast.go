@@ -2,7 +2,7 @@ package context
 
 import (
 	//ctypes "github.com/tendermint/tendermint/rpc/core/types"
-	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 )
 
 // Broadcast the transfer bytes to Tendermint
@@ -30,7 +30,10 @@ func (ctx *Context) BroadcastTxAsync(tx []byte) (sdk.TxResponse, error) {
 	if err != nil {
 		return sdk.TxResponse{}, err
 	}
-	node.BroadcastTxAsync(tx)
+	res, err := node.BroadcastTxAsync(tx)
+	if err != nil {
+		return sdk.NewResponseFormatBroadcastTx(res), err
+	}
 
-	return sdk.TxResponse{Info:"success"}, nil
+	return sdk.NewResponseFormatBroadcastTx(res), nil
 }

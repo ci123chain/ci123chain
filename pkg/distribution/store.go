@@ -1,11 +1,11 @@
 package distribution
 //
 //import (
-//	"github.com/tanhuiya/ci123chain/pkg/abci/codec"
-//	"github.com/tanhuiya/ci123chain/pkg/abci/types"
-//	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
-//	"github.com/tanhuiya/ci123chain/pkg/account"
-//	"github.com/tanhuiya/ci123chain/pkg/fc"
+//	"github.com/ci123chain/ci123chain/pkg/abci/codec"
+//	"github.com/ci123chain/ci123chain/pkg/abci/types"
+//	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+//	"github.com/ci123chain/ci123chain/pkg/account"
+//	"github.com/ci123chain/ci123chain/pkg/fc"
 //)
 //
 //// keeper of the staking store

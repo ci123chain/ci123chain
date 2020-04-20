@@ -1,10 +1,10 @@
 package types
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/abci/types"
-	"github.com/tanhuiya/ci123chain/pkg/account"
-	types2 "github.com/tanhuiya/ci123chain/pkg/account/types"
-	"github.com/tanhuiya/ci123chain/pkg/supply/exported"
+	"github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/account"
+	types2 "github.com/ci123chain/ci123chain/pkg/account/types"
+	"github.com/ci123chain/ci123chain/pkg/supply/exported"
 	"github.com/tendermint/tendermint/crypto"
 )
 

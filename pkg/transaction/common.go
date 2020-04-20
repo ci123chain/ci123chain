@@ -2,18 +2,18 @@ package transaction
 
 import (
 	"errors"
-	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
-	"github.com/tanhuiya/ci123chain/pkg/cryptosuit"
-	"github.com/tanhuiya/ci123chain/pkg/transaction/types"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
+	"github.com/ci123chain/ci123chain/pkg/transaction/types"
 )
 
 type CommonTx struct {
-	Code      uint8
-	From      sdk.AccAddress
-	Nonce     uint64
-	Gas       uint64
-	PubKey 	  []byte
-	Signature []byte
+	Code      uint8				`json:"code"`
+	From      sdk.AccAddress	`json:"from"`
+	Nonce     uint64			`json:"nonce"`
+	Gas       uint64			`json:"gas"`
+	PubKey 	  []byte			`json:"pub_key"`
+	Signature []byte			`json:"signature"`
 }
 
 

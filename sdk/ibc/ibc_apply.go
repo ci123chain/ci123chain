@@ -1,10 +1,10 @@
 package ibc
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/client/helper"
-	"github.com/tanhuiya/ci123chain/pkg/cryptosuit"
-	"github.com/tanhuiya/ci123chain/pkg/ibc"
-	"github.com/tanhuiya/ci123chain/pkg/transaction"
+	"github.com/ci123chain/ci123chain/pkg/client/helper"
+	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
+	"github.com/ci123chain/ci123chain/pkg/ibc"
+	"github.com/ci123chain/ci123chain/pkg/transaction"
 )
 
 // 生成 MortgageDone 完成交易

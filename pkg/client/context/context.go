@@ -3,12 +3,12 @@ package context
 import (
 	"fmt"
 	"github.com/pkg/errors"
-	"github.com/tanhuiya/ci123chain/pkg/abci/codec"
-	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
-	"github.com/tanhuiya/ci123chain/pkg/account/exported"
-	acc_types "github.com/tanhuiya/ci123chain/pkg/account/types"
-	"github.com/tanhuiya/ci123chain/pkg/cryptosuit"
-	"github.com/tanhuiya/ci123chain/pkg/transaction"
+	"github.com/ci123chain/ci123chain/pkg/abci/codec"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/account/exported"
+	acc_types "github.com/ci123chain/ci123chain/pkg/account/types"
+	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
+	"github.com/ci123chain/ci123chain/pkg/transaction"
 	rpclient "github.com/tendermint/tendermint/rpc/client"
 )
 
@@ -172,7 +172,7 @@ func (ctx *Context) BroadcastSignedData(data []byte) (sdk.TxResponse, error) {
 }
 
 func (ctx *Context) BroadcastSignedDataAsync(data []byte) (sdk.TxResponse, error) {
-	ctx.BroadcastTxAsync(data)
+	_, _ = ctx.BroadcastTxAsync(data)
 
 	return sdk.TxResponse{}, nil
 }

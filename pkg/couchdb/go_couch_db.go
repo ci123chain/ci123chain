@@ -3,9 +3,16 @@ package couchdb
 import (
 	"encoding/hex"
 	"fmt"
+	"github.com/spf13/viper"
 	dbm "github.com/tendermint/tm-db"
+	"io"
+	"io/ioutil"
 )
 
+const DBAuthUser = "DBAuthUser"
+const DBAuthPwd = "DBAuthPwd"
+const DBAuth = "DBAuth"
+const DBName = "DBName"
 type GoCouchDB struct {
 	db 		*Database
 }
@@ -56,7 +63,7 @@ func (cdb *GoCouchDB) Get(key []byte) []byte {
 					return nil
 				}
 			default:
-				panic(err)
+				continue
 			}
 		}
 		res, err := hex.DecodeString(doc.Value)
@@ -122,6 +129,9 @@ func (cdb *GoCouchDB) Delete(key []byte) {
 		id := hex.EncodeToString(key)
 		// read oldDoc & now rev
 		rev := cdb.GetRev(key)
+		if rev == "" {
+			return
+		}
 		rev, err := cdb.db.Delete(id, rev)
 		if err != nil {
 			fmt.Println("***************Retry******************", retry)
@@ -131,8 +141,8 @@ func (cdb *GoCouchDB) Delete(key []byte) {
 		} else {
 			return
 		}
+		retry++
 	}
-	retry++
 }
 
 // Implements DB.
@@ -405,4 +415,57 @@ func (cdb *GoCouchDB) GetRevAndValue(key []byte) (string, []byte) {
 		return "", nil
 	}
 	return rev, res
+}
+
+func (cdb *GoCouchDB) ResetDB() error {
+	var auth *BasicAuth
+	name := viper.GetString(DBName)
+	user := viper.GetString(DBAuthUser)
+	pwd := viper.GetString(DBAuthPwd)
+	if user == "" && pwd == "" {
+		err := cdb.db.connection.DeleteDB(name, nil)
+		if err != nil {
+			return err
+		}
+		err = cdb.db.connection.CreateDB(name, nil)
+		if err != nil {
+			return err
+		}
+	} else {
+		auth = &BasicAuth{user,pwd}
+		err := cdb.db.connection.DeleteDB(name, auth)
+		if err != nil {
+			return err
+		}
+		err = cdb.db.connection.CreateDB(name, auth)
+		if err != nil {
+			return err
+		}
+	}
+
+
+	return nil
+}
+
+func (cdb *GoCouchDB) SaveAttachment(key []byte, rev, attName, attType string, attContent io.Reader) string {
+	key = nonNilBytes(key)
+	rev, err := cdb.db.SaveAttachment(hex.EncodeToString(key), rev, attName, attType, attContent)
+	if err != nil {
+		panic(err)
+	}
+	return rev
+}
+
+func (cdb *GoCouchDB) GetAttachment(key []byte, rev, attType, attName string) []byte {
+	key = nonNilBytes(key)
+	reader, err := cdb.db.GetAttachment(hex.EncodeToString(key), rev, attType, attName)
+	if err != nil {
+		panic(err)
+	}
+	defer reader.Close()
+	by, err := ioutil.ReadAll(reader)
+	if err != nil {
+		panic(err)
+	}
+	return by
 }

@@ -3,8 +3,8 @@ package types
 import (
 	"fmt"
 	"github.com/pkg/errors"
-	"github.com/tanhuiya/ci123chain/pkg/abci/types"
-	"github.com/tanhuiya/ci123chain/pkg/account/exported"
+	"github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/account/exported"
 	"github.com/tendermint/tendermint/crypto"
 	"time"
 )
@@ -21,6 +21,7 @@ type BaseAccount struct {
 	Sequence      	uint64         `json:"sequence_number" yaml:"sequence_number"`
 	AccountNumber 	uint64         `json:"account_number" yaml:"account_number"`
 	PubKey 			crypto.PubKey  `json:"pub_key" yaml:"pub_key"`
+	ContractList    []string        `json:"contract_list"`
 }
 
 // NewBaseAccount creates a new BaseAccount object
@@ -33,6 +34,7 @@ func NewBaseAccount(address types.AccAddress, coin types.Coin,
 		PubKey:        pubKey,
 		AccountNumber: accountNumber,
 		Sequence:      sequence,
+		ContractList:  []string{},
 	}
 }
 // NewBaseAccountWithAddress - returns a new base account with a given address
@@ -40,6 +42,15 @@ func NewBaseAccountWithAddress(addr types.AccAddress) BaseAccount {
 	return BaseAccount{
 		Address: addr,
 	}
+}
+
+func (acc *BaseAccount) AddContract(contractAddress types.AccAddress) {
+	contractAddrStr := contractAddress.String()
+	acc.ContractList = append(acc.ContractList, contractAddrStr)
+}
+
+func (acc BaseAccount) GetContractList() []string {
+	return acc.ContractList
 }
 
 // GetAddress - Implements sdk.Account.

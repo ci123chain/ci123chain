@@ -1,8 +1,8 @@
 package keeper
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/abci/types"
-	auth_types "github.com/tanhuiya/ci123chain/pkg/auth/types"
+	"github.com/ci123chain/ci123chain/pkg/abci/types"
+	auth_types "github.com/ci123chain/ci123chain/pkg/auth/types"
 )
 
 func (ak AuthKeeper) SetParams(ctx types.Context, params auth_types.Params) {

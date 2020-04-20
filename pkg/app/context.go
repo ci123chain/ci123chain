@@ -2,8 +2,8 @@ package app
 
 import (
 	"github.com/spf13/viper"
-	"github.com/tanhuiya/ci123chain/pkg/config"
-	"github.com/tanhuiya/ci123chain/pkg/logger"
+	"github.com/ci123chain/ci123chain/pkg/config"
+	"github.com/ci123chain/ci123chain/pkg/logger"
 	cfg "github.com/tendermint/tendermint/config"
 	"github.com/tendermint/tendermint/libs/cli"
 	"github.com/tendermint/tendermint/libs/common"

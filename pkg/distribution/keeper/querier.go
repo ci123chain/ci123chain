@@ -1,8 +1,8 @@
 package keeper
 
 import (
-	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
-	"github.com/tanhuiya/ci123chain/pkg/distribution/types"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/distribution/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"strconv"
 )

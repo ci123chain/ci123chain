@@ -3,10 +3,10 @@ package transfer
 import (
 	"encoding/hex"
 	"fmt"
-	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
-	"github.com/tanhuiya/ci123chain/pkg/client/helper"
-	"github.com/tanhuiya/ci123chain/pkg/cryptosuit"
-	"github.com/tanhuiya/ci123chain/pkg/transfer"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/client/helper"
+	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
+	"github.com/ci123chain/ci123chain/pkg/transfer"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -54,9 +54,8 @@ func SignTransferMsg(from, to string, amount, gas, nonce uint64, priv string, is
 }
 
 //on line
-func HttpTransferTx(from, to, gas, nonce, amount, priv, proxy string) {
+func HttpTransferTx(from, to, gas, nonce, amount, priv, proxy, reqUrl string) {
 	cli := &http.Client{}
-	reqUrl := "http://ciChain:3030/tx/transfers"
 	data := url.Values{}
 	data.Set("from", from)
 	data.Set("to", to)

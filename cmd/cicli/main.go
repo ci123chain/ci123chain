@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/client/cmd"
+	"github.com/ci123chain/ci123chain/pkg/client/cmd"
 	"github.com/spf13/cobra"
 )
 

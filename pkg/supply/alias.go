@@ -1,8 +1,8 @@
 package supply
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/supply/keeper"
-	"github.com/tanhuiya/ci123chain/pkg/supply/types"
+	"github.com/ci123chain/ci123chain/pkg/supply/keeper"
+	"github.com/ci123chain/ci123chain/pkg/supply/types"
 )
 
 type (

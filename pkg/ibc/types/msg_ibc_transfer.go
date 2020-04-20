@@ -1,9 +1,9 @@
 package types
 
 import (
-	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
-	"github.com/tanhuiya/ci123chain/pkg/transaction"
-	"github.com/tanhuiya/ci123chain/pkg/util"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/transaction"
+	"github.com/ci123chain/ci123chain/pkg/util"
 )
 
 type IBCTransfer struct {
@@ -13,7 +13,7 @@ type IBCTransfer struct {
 	Coin 	 sdk.Coin			`json:"coin"`
 }
 
-func NewIBCTransferMsg(from, to sdk.AccAddress, amout sdk.Coin, gas uint64, nonce uint64) *IBCTransfer {
+func NewIBCTransferMsg(from, to sdk.AccAddress, amount sdk.Coin, gas uint64, nonce uint64) *IBCTransfer {
 	return &IBCTransfer{
 		CommonTx: transaction.CommonTx{
 			From:  from,
@@ -21,7 +21,7 @@ func NewIBCTransferMsg(from, to sdk.AccAddress, amout sdk.Coin, gas uint64, nonc
 			Nonce: nonce,
 		},
 		ToAddress: to,
-		Coin: amout,
+		Coin: amount,
 	}
 }
 

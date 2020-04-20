@@ -1,9 +1,9 @@
 package order
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/order/client/rest"
-	"github.com/tanhuiya/ci123chain/pkg/order/keeper"
-	"github.com/tanhuiya/ci123chain/pkg/order/types"
+	"github.com/ci123chain/ci123chain/pkg/order/client/rest"
+	"github.com/ci123chain/ci123chain/pkg/order/keeper"
+	"github.com/ci123chain/ci123chain/pkg/order/types"
 )
 
 var (

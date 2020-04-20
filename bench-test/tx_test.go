@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/panjf2000/ants/v2"
 	"github.com/stretchr/testify/assert"
-	order "github.com/tanhuiya/ci123chain/pkg/order/types"
+	order "github.com/ci123chain/ci123chain/pkg/order/types"
 	"github.com/tanhuiya/fabric-crypto/cryptoutil"
 	"github.com/tendermint/tendermint/rpc/client"
 	"io/ioutil"

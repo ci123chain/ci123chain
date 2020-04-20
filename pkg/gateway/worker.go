@@ -1,17 +1,19 @@
 package gateway
 
 import (
+	"encoding/hex"
 	"encoding/json"
-	"github.com/tanhuiya/ci123chain/pkg/gateway/logger"
-	"github.com/tanhuiya/ci123chain/pkg/gateway/server"
-	"github.com/tanhuiya/ci123chain/pkg/gateway/types"
+	"github.com/ci123chain/ci123chain/pkg/gateway/logger"
+	"github.com/ci123chain/ci123chain/pkg/gateway/server"
+	"github.com/ci123chain/ci123chain/pkg/gateway/types"
+	"io/ioutil"
 	"net/http"
 )
 
 type SpecificJob struct {
 	Request        *http.Request
 	Proxy          types.Proxy
-	Backends       []types.Instance
+	BackEnds       []types.Instance
 	RequestParams    map[string]string
 
 	ResponseChan 	*chan []byte
@@ -19,15 +21,14 @@ type SpecificJob struct {
 
 
 func (sjob *SpecificJob) Do() {
-	if len(sjob.Backends) < 1 {
+	if len(sjob.BackEnds) < 1 {
 		res, _ := json.Marshal(types.ErrorResponse{
 			Err:  "service backend not found",
 		})
 		*sjob.ResponseChan <- res
 		return
 	}
-
-	resultBytes := sjob.Proxy.Handle(sjob.Request, sjob.Backends, sjob.RequestParams)
+	resultBytes := sjob.Proxy.Handle(sjob.Request, sjob.BackEnds, sjob.RequestParams)
 
 	logger.Info("===\n Request for : %s; Params: %v;  response: %v", sjob.Request.URL.String(), sjob.RequestParams, string(resultBytes))
 }
@@ -38,11 +39,10 @@ func NewSpecificJob(r *http.Request, backends []types.Instance) *SpecificJob {
 	if err != nil {
 		return nil
 	}
-
 	job := &SpecificJob{
 		Request: r,
 		Proxy:   proxy,
-		Backends:backends,
+		BackEnds:backends,
 		RequestParams:reqParams,
 	}
 	job.ResponseChan = proxy.Response()
@@ -51,37 +51,36 @@ func NewSpecificJob(r *http.Request, backends []types.Instance) *SpecificJob {
 }
 
 func ParseURL(r *http.Request) (types.Proxy, error, map[string]string){
-	//body, _ := ioutil.ReadAll(r.Body)
-	//data := r.Form
-
-	/*
-	var params types.RequestParams
-	err := json.Unmarshal(body, &params)
-	if err != nil {
-		return server.NewErrProxy("err"), err, nil
-	}
-
-	nrp := types.NewRequestParams{Data:params.Data}
-	newByte, err := json.Marshal(nrp)
-	if err != nil {
-		return server.NewErrProxy("err"), err, nil
-	}
-	*/
-	//data := r.PostForm
-	//data := url.Values{}
-	r.ParseForm()
 	var data = map[string]string{}
-
-	for k, v := range r.Form {
-		//fmt.Println("key is: ", k)
-		//fmt.Println("val is: ", v)
-		//data.Set(k, v[0])
-		key := k
-		value := v[0]
-		data[key] = value
+	var codeStr string
+	err := r.ParseMultipartForm(32 << 20)
+	if err != nil {
+		for k, v := range r.PostForm {
+			key := k
+			value := v[0]
+			data[key] = value
+		}
+	}else {
+		if r.MultipartForm != nil {
+			for k, v := range r.MultipartForm.Value {
+				key := k
+				value := v[0]
+				data[key] = value
+			}
+			file, _, err := r.FormFile("wasmCode")
+			if err != nil {
+				codeStr = ""
+			} else {
+				wasmcode, err := ioutil.ReadAll(file)
+				if err != nil {
+					codeStr = ""
+				}else {
+					codeStr = hex.EncodeToString(wasmcode)
+				}
+			}
+			data["wasmCodeStr"] = codeStr
+		}
 	}
-
-	//data.Set("height", "3")
 	params := r.FormValue("proxy")
 
 	pt := types.ProxyType(params)

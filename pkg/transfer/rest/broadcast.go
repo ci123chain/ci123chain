@@ -2,39 +2,26 @@ package rest
 
 import (
 	"encoding/hex"
-	"github.com/tanhuiya/ci123chain/pkg/abci/types/rest"
-	"github.com/tanhuiya/ci123chain/pkg/client"
-	"github.com/tanhuiya/ci123chain/pkg/client/context"
-	"github.com/tanhuiya/ci123chain/pkg/transfer/types"
+	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
+	"github.com/ci123chain/ci123chain/pkg/client"
+	"github.com/ci123chain/ci123chain/pkg/client/context"
+	"github.com/ci123chain/ci123chain/pkg/transfer/types"
+	"github.com/ci123chain/ci123chain/pkg/util"
 	"net/http"
 )
 
-/*
-type TxByte struct {
-	Tx     string   `json:"tx"`
-}
-
-type TxRequest struct {
-	//
-	Data   TxByte    `json:"data"`
-}
-*/
-
 func BroadcastTxRequest(cliCtx context.Context) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
-/*
-		var params TxRequest
-		b, readErr := ioutil.ReadAll(request.Body)
-		readErr = json.Unmarshal(b, &params)
-		if readErr != nil {
-			//
-		}
-		*/
 
 		data := request.FormValue("txByte")
+		err := util.CheckStringLength(1, 1000, data)
+		if err != nil {
+			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"error txByte length"))
+			return
+		}
 		txByte, err := hex.DecodeString(data)
 		if err != nil {
-			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"data error"))
+			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"error txByte"))
 			return
 		}
 
@@ -50,15 +37,6 @@ func BroadcastTxRequest(cliCtx context.Context) http.HandlerFunc {
 func BroadcastTxRequestAsync(cliCtx context.Context) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 
-		/*
-		var params TxRequest
-		b, readErr := ioutil.ReadAll(request.Body)
-		readErr = json.Unmarshal(b, &params)
-		if readErr != nil {
-			//
-		}
-		*/
-
 		data := request.FormValue("txByte")
 		txByte, err := hex.DecodeString(data)
 		if err != nil {
@@ -66,7 +44,7 @@ func BroadcastTxRequestAsync(cliCtx context.Context) http.HandlerFunc {
 			return
 		}
 
-		cliCtx.BroadcastSignedDataAsync(txByte)
+		_, _ = cliCtx.BroadcastSignedDataAsync(txByte)
 		/*
 		res, err := cliCtx.BroadcastSignedDataAsync(txByte)
 		if err != nil {

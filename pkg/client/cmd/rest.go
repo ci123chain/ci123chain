@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	accountRpc "github.com/tanhuiya/ci123chain/pkg/account/rest"
-	"github.com/tanhuiya/ci123chain/pkg/client"
-	"github.com/tanhuiya/ci123chain/pkg/client/cmd/rpc"
-	"github.com/tanhuiya/ci123chain/pkg/client/context"
-	"github.com/tanhuiya/ci123chain/pkg/client/helper"
-	"github.com/tanhuiya/ci123chain/pkg/ibc"
-	txRpc "github.com/tanhuiya/ci123chain/pkg/transfer/rest"
-	"github.com/tanhuiya/ci123chain/pkg/util"
+	accountRpc "github.com/ci123chain/ci123chain/pkg/account/rest"
+	"github.com/ci123chain/ci123chain/pkg/client"
+	"github.com/ci123chain/ci123chain/pkg/client/cmd/rpc"
+	"github.com/ci123chain/ci123chain/pkg/client/context"
+	"github.com/ci123chain/ci123chain/pkg/client/helper"
+	"github.com/ci123chain/ci123chain/pkg/ibc"
+	txRpc "github.com/ci123chain/ci123chain/pkg/transfer/rest"
+	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/rpc/lib/server"
 	"io/ioutil"
@@ -24,9 +24,11 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	distr "github.com/tanhuiya/ci123chain/pkg/distribution"
-	orQuery "github.com/tanhuiya/ci123chain/pkg/order"
-	order "github.com/tanhuiya/ci123chain/pkg/order/rest"
+	distr "github.com/ci123chain/ci123chain/pkg/distribution"
+	orQuery "github.com/ci123chain/ci123chain/pkg/order"
+	order "github.com/ci123chain/ci123chain/pkg/order/rest"
+	sRest "github.com/ci123chain/ci123chain/pkg/staking/client/rest"
+	wRest "github.com/ci123chain/ci123chain/pkg/wasm/client/rest"
 )
 
 const (
@@ -85,6 +87,9 @@ func NewRestServer() *RestServer {
 	distr.RegisterRoutes(cliCtx, r)
 	order.RegisterTxRoutes(cliCtx, r)
 	orQuery.RegisterTxRoutes(cliCtx, r)
+	sRest.RegisterRestTxRoutes(cliCtx, r)
+	sRest.RegisterTxRoutes(cliCtx, r)
+	wRest.RegisterRoutes(cliCtx, r)
 
 	return &RestServer{
 		Mux: r,
@@ -138,14 +143,6 @@ func Handle404() http.Handler {
 				//fmt.Println(j)
 				newData.Set(k, v)
 			}
-/*
-			body, err := ioutil.ReadAll(req.Body)
-			if err != nil {
-				//
-			}
-			var p QueryParams
-			err = json.Unmarshal(body, &p)
-			*/
 
 			proxyurl, _ := url.Parse(dest)
 			//proxy := httputil.NewSingleHostReverseProxy(proxyurl)

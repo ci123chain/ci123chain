@@ -4,11 +4,11 @@ import (
 	"crypto/ecdsa"
 	"crypto/md5"
 	"encoding/hex"
-	"github.com/tanhuiya/ci123chain/pkg/ibc/types"
-	"github.com/tanhuiya/ci123chain/pkg/transaction"
+	"github.com/ci123chain/ci123chain/pkg/ibc/types"
+	"github.com/ci123chain/ci123chain/pkg/transaction"
 	"github.com/tanhuiya/fabric-crypto/cryptoutil"
 	"strings"
-	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 )
 
 func GenerateUniqueID(b []byte) string {

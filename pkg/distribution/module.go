@@ -2,11 +2,12 @@ package distribution
 
 import (
 	"encoding/json"
-	"github.com/tanhuiya/ci123chain/pkg/abci/codec"
-	"github.com/tanhuiya/ci123chain/pkg/abci/types"
-	k "github.com/tanhuiya/ci123chain/pkg/distribution/keeper"
-	acc_types "github.com/tanhuiya/ci123chain/pkg/distribution/types"
+	"github.com/ci123chain/ci123chain/pkg/abci/codec"
+	"github.com/ci123chain/ci123chain/pkg/abci/types"
+	k "github.com/ci123chain/ci123chain/pkg/distribution/keeper"
+	acc_types "github.com/ci123chain/ci123chain/pkg/distribution/types"
 	abci "github.com/tendermint/tendermint/abci/types"
+	tmtypes "github.com/tendermint/tendermint/types"
 )
 
 type AppModule struct {
@@ -38,7 +39,7 @@ func (am AppModuleBasic) RegisterCodec(codec *codec.Codec) {
 }
 
 
-func (am AppModuleBasic) DefaultGenesis() json.RawMessage {
+func (am AppModuleBasic) DefaultGenesis(_ []tmtypes.GenesisValidator) json.RawMessage {
 	return ModuleCdc.MustMarshalJSON(GenesisState{})
 }
 

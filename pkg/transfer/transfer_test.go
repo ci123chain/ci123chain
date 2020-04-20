@@ -1,8 +1,8 @@
 package transfer
 //
 //import (
-//	"github.com/tanhuiya/ci123chain/pkg/client/helper"
-//	"github.com/tanhuiya/ci123chain/pkg/cryptosuit"
+//	"github.com/ci123chain/ci123chain/pkg/client/helper"
+//	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
 //	"fmt"
 //	"github.com/magiconair/properties/assert"
 //	"github.com/tanhuiya/fabric-crypto/cryptosuite"

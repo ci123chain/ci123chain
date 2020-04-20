@@ -3,9 +3,9 @@ package mortgage
 import (
 	"encoding/hex"
 	"fmt"
-	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
-	"github.com/tanhuiya/ci123chain/pkg/mortgage/types"
-	"github.com/tanhuiya/ci123chain/pkg/transaction"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/mortgage/types"
+	"github.com/ci123chain/ci123chain/pkg/transaction"
 )
 
 func NewHandler(k MortgageKeeper) sdk.Handler {

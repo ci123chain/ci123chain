@@ -1,7 +1,7 @@
 package types
 
 import (
-	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 )
 type CodeType = sdk.CodeType
 const (
@@ -10,5 +10,5 @@ const (
 )
 
 func ErrSetAccount(codespace sdk.CodespaceType, err error) sdk.Error {
-	return sdk.NewError(codespace, CodeSetAccountError,"Set Account Error", err)
+	return sdk.NewError(codespace, CodeSetAccountError,"Set Account Error:%s", err.Error())
 }

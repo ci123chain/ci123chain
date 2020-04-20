@@ -5,23 +5,29 @@ import (
 	"fmt"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/gorilla/mux"
-	"github.com/tanhuiya/ci123chain/pkg/abci/types/rest"
-	"github.com/tanhuiya/ci123chain/pkg/account/types"
-	"github.com/tanhuiya/ci123chain/pkg/client"
-	"github.com/tanhuiya/ci123chain/pkg/client/context"
-	"github.com/tanhuiya/ci123chain/pkg/client/helper"
-	"github.com/tanhuiya/ci123chain/pkg/transfer"
+	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
+	"github.com/ci123chain/ci123chain/pkg/account/types"
+	"github.com/ci123chain/ci123chain/pkg/client"
+	"github.com/ci123chain/ci123chain/pkg/client/context"
+	"github.com/ci123chain/ci123chain/pkg/client/helper"
+	"github.com/ci123chain/ci123chain/pkg/transfer"
+	"github.com/ci123chain/ci123chain/pkg/util"
 	"net/http"
 )
 
 // RegisterRoutes - Central function to define routes that get registered by the main application
 func RegisterRoutes(cliCtx context.Context, r *mux.Router) {
 	r.HandleFunc("/account/new", NewAccountRequestHandlerFn(cliCtx)).Methods("POST")
-	r.HandleFunc("/bank/balances", QueryBalancesRequestHandlerFn(cliCtx)).Methods("POST")
+	r.HandleFunc("/bank/balance", QueryBalancesRequestHandlerFn(cliCtx)).Methods("POST")
+	r.HandleFunc("/account/nonce", QueryNonceRequestHandleFn(cliCtx)).Methods("POST")
 }
 
 type BalanceData struct {
 	Balance uint64 `json:"balance"`
+}
+
+type NonceData struct {
+	Nonce   uint64   `json:"nonce"`
 }
 
 type AccountAddress struct {
@@ -34,23 +40,24 @@ type Account struct {
 	PrivKey string `json:"privKey"`
 }
 
-type QueryAddressParams struct {
-	Data AccountAddress `json:"data"`
-}
 func QueryBalancesRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, request *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
-		/*
-		var params QueryAddressParams
-		b, readErr := ioutil.ReadAll(request.Body)
-		readErr = json.Unmarshal(b, &params)
-		if readErr != nil {
-			//
-		}
-		*/
 		address := request.FormValue("address")
 		height := request.FormValue("height")
+		checkErr := util.CheckStringLength(42, 100, address)
+		if checkErr != nil {
+			rest.WriteErrorRes(w, client.ErrParseAddr(types.DefaultCodespace, checkErr))
+			return
+		}
+		if height != "" {
+			_, Err := util.CheckInt64(height)
+			if Err != nil {
+				rest.WriteErrorRes(w, client.ErrParseAddr(types.DefaultCodespace, Err))
+				return
+			}
+		}
 
 		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, request, height)
 		if !ok {
@@ -89,6 +96,37 @@ func NewAccountRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			Address:	address,
 			PrivKey:	privKey,
 		}
+		rest.PostProcessResponseBare(w, cliCtx, resp)
+	}
+}
+
+func QueryNonceRequestHandleFn(cliCtx context.Context) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
+		address := r.FormValue("address")
+		checkErr := util.CheckStringLength(42, 100, address)
+		if checkErr != nil {
+			rest.WriteErrorRes(w, client.ErrParseAddr(types.DefaultCodespace, checkErr))
+			return
+		}
+
+		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r, "")
+		if !ok {
+			rest.WriteErrorRes(w, err)
+			return
+		}
+		addrBytes, err2 := helper.ParseAddrs(address)
+		if len(addrBytes) < 1 || err2 != nil {
+			rest.WriteErrorRes(w, client.ErrParseAddr(types.DefaultCodespace, err2))
+			return
+		}
+		res, err2 := cliCtx.GetNonceByAddress(addrBytes[0])
+		if err2 != nil {
+			rest.WriteErrorRes(w, transfer.ErrQueryTx(types.DefaultCodespace, err2.Error()))
+			return
+		}
+		resp := NonceData{Nonce:res}
 		rest.PostProcessResponseBare(w, cliCtx, resp)
 	}
 }

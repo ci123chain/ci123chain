@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/tanhuiya/ci123chain/pkg/app"
-	"github.com/tanhuiya/ci123chain/pkg/config"
-	"github.com/tanhuiya/ci123chain/pkg/node"
-	"github.com/tanhuiya/ci123chain/pkg/validator"
+	"github.com/ci123chain/ci123chain/pkg/app"
+	"github.com/ci123chain/ci123chain/pkg/config"
+	"github.com/ci123chain/ci123chain/pkg/node"
+	"github.com/ci123chain/ci123chain/pkg/validator"
 	"github.com/tendermint/go-amino"
 	cfg "github.com/tendermint/tendermint/config"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
@@ -297,13 +297,15 @@ func CopyFile(src, dst string) error {
 }
 
 func getValidator(cdc *amino.Codec, c *cfg.Config, appInit app.AppInit) (*types.GenesisValidator, *json.RawMessage, error){
+	var validators []types.GenesisValidator
 	nodeKey, err := node.LoadNodeKey(c.NodeKeyFile())
 	if err != nil {
 		return  nil, nil, err
 	}
 
 	validator := appInit.GetValidator(nodeKey.PubKey(), viper.GetString(FlagName))
-	appState, err := appInit.AppGenState()
+	validators = append(validators, validator)
+	appState, err := appInit.AppGenState(validators)
 
 	if err != nil {
 		return  nil, nil, err

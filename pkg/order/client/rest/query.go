@@ -3,10 +3,10 @@ package rest
 import (
 	"encoding/json"
 	"github.com/gorilla/mux"
-	"github.com/tanhuiya/ci123chain/pkg/abci/types/rest"
-	"github.com/tanhuiya/ci123chain/pkg/client/context"
-	//"github.com/tanhuiya/ci123chain/pkg/order"
-	"github.com/tanhuiya/ci123chain/pkg/order/types"
+	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
+	"github.com/ci123chain/ci123chain/pkg/client/context"
+	//"github.com/ci123chain/ci123chain/pkg/order"
+	"github.com/ci123chain/ci123chain/pkg/order/types"
 	"net/http"
 )
 
@@ -46,7 +46,7 @@ type QueryShardStateParams struct {
 */
 
 func RegisterTxRoutes(cliCtx context.Context, r *mux.Router)  {
-	r.HandleFunc("/allShardState", QueryShardStatesRequestHandlerFn(cliCtx)).Methods("GET")
+	r.HandleFunc("/shared/status", QueryShardStatesRequestHandlerFn(cliCtx)).Methods("POST")
 }
 
 

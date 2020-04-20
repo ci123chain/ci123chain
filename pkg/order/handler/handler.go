@@ -1,9 +1,9 @@
 package handler
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/abci/types"
-	"github.com/tanhuiya/ci123chain/pkg/order/keeper"
-	order "github.com/tanhuiya/ci123chain/pkg/order/types"
+	"github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/order/keeper"
+	order "github.com/ci123chain/ci123chain/pkg/order/types"
 	"reflect"
 )
 
@@ -26,6 +26,7 @@ func handlerUpgradeTx(ctx types.Context,k *keeper.OrderKeeper, tx *order.Upgrade
 	if err != nil {
 		panic(err)
 	}
+
 	//现在是新添加一个分片
 	var action keeper.Actions
 	action.Name = tx.Name
@@ -33,6 +34,5 @@ func handlerUpgradeTx(ctx types.Context,k *keeper.OrderKeeper, tx *order.Upgrade
 	action.Type = tx.Type
 
 	k.UpdateOrderBook(ctx, orderbook, &action)
-
 	return types.Result{}
 }

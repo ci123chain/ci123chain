@@ -2,11 +2,11 @@ package keeper
 
 import (
 	"fmt"
-	"github.com/tanhuiya/ci123chain/pkg/abci/codec"
-	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
-	"github.com/tanhuiya/ci123chain/pkg/account"
-	"github.com/tanhuiya/ci123chain/pkg/supply/exported"
-	types2 "github.com/tanhuiya/ci123chain/pkg/supply/types"
+	"github.com/ci123chain/ci123chain/pkg/abci/codec"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/account"
+	"github.com/ci123chain/ci123chain/pkg/supply/exported"
+	types2 "github.com/ci123chain/ci123chain/pkg/supply/types"
 )
 
 type Keeper struct {

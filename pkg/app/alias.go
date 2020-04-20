@@ -1,6 +1,6 @@
 package app
 
-import "github.com/tanhuiya/ci123chain/pkg/app/types"
+import "github.com/ci123chain/ci123chain/pkg/app/types"
 
 var (
 	ErrGenesisFile 	= types.ErrGenesisFile

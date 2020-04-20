@@ -7,14 +7,15 @@ import (
 	"fmt"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	"github.com/tanhuiya/ci123chain/pkg/gateway/backend"
-	"github.com/tanhuiya/ci123chain/pkg/gateway/couchdbsource"
-	"github.com/tanhuiya/ci123chain/pkg/gateway/logger"
-	"github.com/tanhuiya/ci123chain/pkg/gateway/types"
+	"github.com/ci123chain/ci123chain/pkg/gateway/backend"
+	"github.com/ci123chain/ci123chain/pkg/gateway/couchdbsource"
+	"github.com/ci123chain/ci123chain/pkg/gateway/logger"
+	"github.com/ci123chain/ci123chain/pkg/gateway/types"
 	"log"
 	"net/http"
 	"regexp"
 	"strings"
+	"time"
 )
 
 const DefaultLogDir  = "$HOME/.gateway"
@@ -22,16 +23,14 @@ var serverPool *ServerPool
 
 func Start() {
 	var logDir, logLevel, serverList string
-	var statedb, dbname, urlreg string
+	var statedb, urlreg string
 	var port int
 	flag.String("logdir", DefaultLogDir, "log dir")
 	flag.StringVar(&logLevel, "loglevel", "DEBUG", "level for log")
 
-	flag.StringVar(&serverList, "backends", "", "Load balanced backends, use commas to separate")
-	flag.String("statedb", "couchdb://couchdb_service:5984", "server resource")
+	flag.StringVar(&serverList, "backends", "http://localhost:1317", "Load balanced backends, use commas to separate")
+	flag.String("statedb", "couchdb://couchdb_service:5984/ci123", "server resource")
 	flag.StringVar(&urlreg, "urlreg", "http://***:80", "reg for url connection to node")
-
-	flag.StringVar(&dbname, "db", "ci123", "db name")
 	flag.IntVar(&port, "port", 3030, "Port to serve")
 	//flag.Parse()
 
@@ -51,7 +50,7 @@ func Start() {
 	// 初始化logger
 	logger.Init(logDir, "gateway", "", logLevel)
 
-	svr := couchdbsource.NewCouchSource(dbname, statedb, urlreg)
+	svr := couchdbsource.NewCouchSource(statedb, urlreg)
 
 	serverPool = NewServerPool(backend.NewBackEnd, svr, 10)
 
@@ -60,9 +59,11 @@ func Start() {
 
 	serverPool.Run()
 	// create http server
+
+	h := http.TimeoutHandler(http.HandlerFunc(AllHandle), time.Second*60, "server timeout")
 	server := http.Server{
 		Addr:    fmt.Sprintf(":%d", port),
-		Handler: http.HandlerFunc(AllHandle),
+		Handler: h,
 	}
 
 	// start health checking
@@ -77,6 +78,7 @@ func Start() {
 }
 
 func AllHandle(w http.ResponseWriter, r *http.Request) {
+
 	//do something
 	w.Header().Set("Content-Type", "application/json")
 	job := NewSpecificJob(r, serverPool.backends)
@@ -87,10 +89,10 @@ func AllHandle(w http.ResponseWriter, r *http.Request) {
 		res, _ := json.Marshal(types.ErrorResponse{
 			Err:  err.Error(),
 		})
-		w.Write(res)
+		_, _ = w.Write(res)
 	}
 	select {
-	 case resp := <-*job.ResponseChan:
-		w.Write(resp)
+	 case resp := <- *job.ResponseChan:
+		_, _ = w.Write(resp)
 	}
 }

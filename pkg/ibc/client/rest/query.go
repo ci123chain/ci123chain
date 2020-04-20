@@ -5,10 +5,11 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/gorilla/mux"
-	"github.com/tanhuiya/ci123chain/pkg/abci/types/rest"
-	"github.com/tanhuiya/ci123chain/pkg/client/context"
-	"github.com/tanhuiya/ci123chain/pkg/ibc/types"
-	"github.com/tanhuiya/ci123chain/pkg/transfer"
+	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
+	"github.com/ci123chain/ci123chain/pkg/client/context"
+	"github.com/ci123chain/ci123chain/pkg/ibc/types"
+	"github.com/ci123chain/ci123chain/pkg/transfer"
+	"github.com/ci123chain/ci123chain/pkg/util"
 	"net/http"
 )
 
@@ -16,7 +17,6 @@ import (
 func RegisterTxRoutes(cliCtx context.Context, r *mux.Router)  {
 	r.HandleFunc("/ibctx", QueryTxByUniqueIDRequestHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/ibctx/state", QueryTxByStateRequestHandlerFn(cliCtx)).Methods("POST")
-	r.HandleFunc("/ibctx/nonce", QueryAccountNonceRequestHandlerFn(cliCtx)).Methods("POST")
 
 }
 
@@ -37,14 +37,6 @@ func QueryTxByStateRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		vars := mux.Vars(request)
 		ibcState := vars["ibcstate"]
-		/*
-		var params QueryStateParams
-		b, readErr := ioutil.ReadAll(request.Body)
-		readErr = json.Unmarshal(b, &params)
-		if readErr != nil {
-			//
-		}
-		*/
 
 		if err := types.ValidateState(ibcState); err != nil {
 			rest.WriteErrorRes(writer, err)
@@ -88,24 +80,19 @@ type QueryTxParams struct {
 
 func QueryTxByUniqueIDRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
-		//vars := mux.Vars(request)
-		uniqueidStr := request.FormValue("uniqueID")
-
-		/*
-		var params QueryTxParams
-		b, readErr := ioutil.ReadAll(request.Body)
-		readErr = json.Unmarshal(b, &params)
-		if readErr != nil {
-			//
+		UniqueidStr := request.FormValue("uniqueID")
+		checkErr := util.CheckStringLength(1, 100, UniqueidStr)
+		if checkErr != nil {
+			rest.WriteErrorRes(writer, transfer.ErrQueryTx(types.DefaultCodespace, "unexpected uniqueID"))
+			return
 		}
-		*/
 
 		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(writer, cliCtx, request, "")
 		if !ok {
 			rest.WriteErrorRes(writer, err)
 			return
 		}
-		uniqueBz := []byte(uniqueidStr)
+		uniqueBz := []byte(UniqueidStr)
 
 		res, _, err := cliCtx.Query("/store/" + types.StoreKey + "/types", uniqueBz)
 		if len(res) < 1 {
@@ -119,61 +106,10 @@ func QueryTxByUniqueIDRequestHandlerFn(cliCtx context.Context) http.HandlerFunc 
 			return
 		}
 		if !bytes.Equal(uniqueBz, ibcMsg.UniqueID) {
-			rest.WriteErrorRes(writer, transfer.ErrQueryTx(types.DefaultCodespace, fmt.Sprintf("different uniqueID get %s, expected %s", hex.EncodeToString(ibcMsg.UniqueID), uniqueidStr)))
+			rest.WriteErrorRes(writer, transfer.ErrQueryTx(types.DefaultCodespace, fmt.Sprintf("different uniqueID get %s, expected %s", hex.EncodeToString(ibcMsg.UniqueID), UniqueidStr)))
 			return
 		}
 		resp := &IBCTxStateData{State:ibcMsg.State}
-		rest.PostProcessResponseBare(writer, cliCtx, resp)
-	}
-}
-
-type NonceData struct {
-	Nonce 	uint64 `json:"nonce"`
-}
-
-type AccountNonceParams struct {
-	Address     string 	`json:"address"`
-	Height      string   `json:"height"`
-}
-
-type QueryAccountNonceParams struct {
-	//
-	Data        AccountNonceParams `json:"data"`
-}
-func QueryAccountNonceRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
-	return func(writer http.ResponseWriter, request *http.Request) {
-		vars := mux.Vars(request)
-		accountAddress := vars["accountAddress"]
-		/*
-		var params QueryAccountNonceParams
-		b, readErr := ioutil.ReadAll(request.Body)
-		readErr = json.Unmarshal(b, &params)
-		if readErr != nil {
-			//
-		}
-		*/
-		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(writer, cliCtx, request, "")
-		if !ok {
-			rest.WriteErrorRes(writer, err)
-			return
-		}
-
-		res, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/nonce/" + accountAddress, nil)
-		if err != nil {
-			rest.WriteErrorRes(writer, err)
-			return
-		}
-		if len(res) < 1 {
-			rest.WriteErrorRes(writer, transfer.ErrQueryTx(types.DefaultCodespace, "query response length less than 1"))
-			return
-		}
-		var nonce uint64
-		err2 := cliCtx.Cdc.UnmarshalBinaryLengthPrefixed(res, &nonce)
-		if err2 != nil {
-			rest.WriteErrorRes(writer, transfer.ErrQueryTx(types.DefaultCodespace, err2.Error()))
-			return
-		}
-		resp := &NonceData{Nonce:nonce}
 		rest.PostProcessResponseBare(writer, cliCtx, resp)
 	}
 }

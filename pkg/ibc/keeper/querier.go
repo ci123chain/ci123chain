@@ -1,16 +1,15 @@
 package keeper
 
 import (
-	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
-	"github.com/tanhuiya/ci123chain/pkg/ibc/types"
-	"github.com/tanhuiya/ci123chain/pkg/transfer"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/ibc/types"
+	"github.com/ci123chain/ci123chain/pkg/transfer"
 	abci "github.com/tendermint/tendermint/abci/types"
 )
 
 // query endpoints supported by the nameservice Querier
 const (
 	QueryState = "state"
-	QueryNonce = "nonce"
 )
 
 // NewQuerier is the module level router for state queries
@@ -19,8 +18,6 @@ func NewQuerier(keeper IBCKeeper) sdk.Querier {
 		switch path[0] {
 		case QueryState:
 			return queryResolve(ctx, path[1:], req, keeper)
-		case QueryNonce:
-			return queryAccountNonce(ctx, path[1:], req, keeper)
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown nameservice query endpoint")
 		}
@@ -28,7 +25,7 @@ func NewQuerier(keeper IBCKeeper) sdk.Querier {
 }
 
 // nolint: unparam
-func queryResolve(ctx sdk.Context, path []string, req abci.RequestQuery, keeper IBCKeeper) ([]byte, sdk.Error) {
+func queryResolve(ctx sdk.Context, path []string, _ abci.RequestQuery, keeper IBCKeeper) ([]byte, sdk.Error) {
 	if path[0] != types.StateReady {
 		return nil, transfer.ErrCheckParams(types.DefaultCodespace, "Parameter State Error")
 	}
@@ -44,7 +41,7 @@ func queryResolve(ctx sdk.Context, path []string, req abci.RequestQuery, keeper 
 	}
 	return retbz, nil
 }
-
+/*
 func queryAccountNonce(ctx sdk.Context, path []string, req abci.RequestQuery, keeper IBCKeeper) ([]byte, sdk.Error) {
 	accountAddr := path[0]
 	address := sdk.HexToAddress(accountAddr)
@@ -58,4 +55,4 @@ func queryAccountNonce(ctx sdk.Context, path []string, req abci.RequestQuery, ke
 		return nil, types.ErrFailedMarshal(types.DefaultCodespace, err.Error())
 	}
 	return retbz, nil
-}
+}*/

@@ -3,7 +3,7 @@ package cmd
 import (
 	"bytes"
 	"fmt"
-	"github.com/tanhuiya/ci123chain/pkg/validator"
+	"github.com/ci123chain/ci123chain/pkg/validator"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	"io"
 	"testing"

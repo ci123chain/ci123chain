@@ -1,6 +1,6 @@
 package main
 
-import "github.com/tanhuiya/ci123chain/pkg/gateway"
+import "github.com/ci123chain/ci123chain/pkg/gateway"
 
 func main() {
 	gateway.Start()

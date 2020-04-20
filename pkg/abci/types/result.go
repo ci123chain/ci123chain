@@ -67,7 +67,7 @@ type TxResponse struct {
 	Height    int64           `json:"height"`
 	TxHash    string          `json:"txhash"`
 	Code      uint32          `json:"code,omitempty"`
-	HexData	  string		  `json:"hex_data,omitempty"`
+	FormatData	string		  `json:"format_data,omitempty"`
 	Data      string          `json:"data,omitempty"`
 	RawLog    string          `json:"raw_log,omitempty"`
 	Logs      ABCIMessageLogs `json:"logs,omitempty"`
@@ -119,6 +119,19 @@ func NewResponseFormatBroadcastTxCommit(res *ctypes.ResultBroadcastTxCommit) TxR
 	return newTxResponseDeliverTx(res)
 }
 
+func NewResponseFormatBroadcastTx(res *ctypes.ResultBroadcastTx) TxResponse {
+	if res == nil {
+		return TxResponse{}
+	}
+	parsedLogs, _ := ParseABCILogs(res.Log)
+	return TxResponse{
+		Code:res.Code,
+		Data:strings.ToUpper(hex.EncodeToString(res.Data)),
+		TxHash:strings.ToUpper(hex.EncodeToString(res.Hash)),
+		Logs: parsedLogs,
+	}
+}
+
 func newTxResponseCheckTx(res *ctypes.ResultBroadcastTxCommit) TxResponse {
 	if res == nil {
 		return TxResponse{}
@@ -136,7 +149,7 @@ func newTxResponseCheckTx(res *ctypes.ResultBroadcastTxCommit) TxResponse {
 		TxHash:    txHash,
 		Code:      res.CheckTx.Code,
 		Data:      strings.ToUpper(hex.EncodeToString(res.CheckTx.Data)),
-		HexData:   string(res.CheckTx.Data),
+		FormatData:   string(res.CheckTx.Data),
 		RawLog:    res.CheckTx.Log,
 		Logs:      parsedLogs,
 		Info:      res.CheckTx.Info,
@@ -164,8 +177,8 @@ func newTxResponseDeliverTx(res *ctypes.ResultBroadcastTxCommit) TxResponse {
 		Height:    res.Height,
 		TxHash:    txHash,
 		Code:      res.DeliverTx.Code,
-		HexData:   strings.ToUpper(hex.EncodeToString(res.DeliverTx.Data)),
-		Data:      string(res.DeliverTx.Data),
+		FormatData:   string(res.DeliverTx.Data),
+		Data:      strings.ToUpper(hex.EncodeToString(res.DeliverTx.Data)),
 		RawLog:    res.DeliverTx.Log,
 		Logs:      parsedLogs,
 		Info:      res.DeliverTx.Info,
@@ -197,8 +210,8 @@ func (r TxResponse) String() string {
 		sb.WriteString(fmt.Sprintf("  Data: %s\n", r.Data))
 	}
 
-	if r.HexData != "" {
-		sb.WriteString(fmt.Sprintf("  HexData: %s\n", r.HexData))
+	if r.FormatData != "" {
+		sb.WriteString(fmt.Sprintf("  FormatData: %s\n", r.FormatData))
 	}
 
 	if r.RawLog != "" {

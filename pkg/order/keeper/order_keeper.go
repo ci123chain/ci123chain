@@ -2,10 +2,11 @@ package keeper
 
 import (
 	"errors"
-	"github.com/tanhuiya/ci123chain/pkg/abci/codec"
-	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
-	"github.com/tanhuiya/ci123chain/pkg/couchdb"
-	"github.com/tanhuiya/ci123chain/pkg/params/subspace"
+	"github.com/ci123chain/ci123chain/pkg/abci/codec"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/account"
+	"github.com/ci123chain/ci123chain/pkg/couchdb"
+	"github.com/ci123chain/ci123chain/pkg/params/subspace"
 	"time"
 )
 
@@ -17,9 +18,10 @@ const OrderBookKey = "OrderBook"
 const OpADD = "ADD"
 const NoOrderBookErr = "No OrderBook"
 type OrderKeeper struct {
-	cdb 		*couchdb.GoCouchDB
+	Cdb 		*couchdb.GoCouchDB
 	StoreKey	sdk.StoreKey
 	paramSubspace subspace.Subspace
+	AccountKeeper  account.AccountKeeper
 }
 
 type OrderBook struct {
@@ -46,10 +48,11 @@ type Actions struct {
 	Name	string	`json:"name"`
 }
 
-func NewOrderKeeper(cdb *couchdb.GoCouchDB, key sdk.StoreKey) OrderKeeper {
+func NewOrderKeeper(cdb *couchdb.GoCouchDB, key sdk.StoreKey, ak account.AccountKeeper) OrderKeeper {
 	return OrderKeeper{
-		cdb:		cdb,
+		Cdb:		cdb,
 		StoreKey:	key,
+		AccountKeeper:ak,
 	}
 }
 

@@ -8,9 +8,8 @@ import (
 )
 
 //异步
-func httpBroadcastAsyncTx(tx string) {
+func httpBroadcastAsyncTx(tx, reqUrl string) {
 	cli := &http.Client{}
-	reqUrl := "http://ciChain:3030/tx/broadcast_async"
 	data := url.Values{}
 	data.Set("txByte", tx)
 	data.Set("proxy", "lb")
@@ -26,21 +25,21 @@ func httpBroadcastAsyncTx(tx string) {
 	_, _ = cli.Do(req)
 }
 
-func SendTransaction(tx string, async bool, isIBC bool) ([]byte, retData, error) {
+func SendTransaction(tx string, async bool, isIBC bool, requestURL string) ([]byte, retData, error) {
 	//
 	if async == false {
 		if isIBC == false {
-			res, err := httpBroadcastTx(tx)
+			res, err := httpBroadcastTx(tx, requestURL)
 			if err != nil {
 				return nil, retData{}, err
 			}
 			return res, retData{}, nil
 		}else {
-			retData := httpIBCBroadcastTx(tx)
+			retData := httpIBCBroadcastTx(tx, requestURL)
 			return nil, retData, nil
 		}
 	}else {
-		httpBroadcastAsyncTx(tx)
+		httpBroadcastAsyncTx(tx, requestURL)
 		return nil, retData{}, nil
 	}
 }

@@ -2,10 +2,11 @@ package module
 
 import (
 	"encoding/json"
-	"github.com/tanhuiya/ci123chain/pkg/abci/codec"
-	"github.com/tanhuiya/ci123chain/pkg/abci/types"
-	"github.com/tanhuiya/ci123chain/pkg/order"
+	"github.com/ci123chain/ci123chain/pkg/abci/codec"
+	"github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/order"
 	abci "github.com/tendermint/tendermint/abci/types"
+	tmtypes "github.com/tendermint/tendermint/types"
 )
 
 type AppModuleGenesis interface {
@@ -23,7 +24,7 @@ type AppModuleBasic interface {
 	RegisterCodec(codec *codec.Codec)
 
 	// 默认的 genesis 配置
-	DefaultGenesis() json.RawMessage
+	DefaultGenesis(validators []tmtypes.GenesisValidator) json.RawMessage
 }
 
 
@@ -44,11 +45,11 @@ func (bm BasicManager)RegisterCodec(cdc *codec.Codec)  {
 	}
 }
 
-func (bm BasicManager) DefaultGenesis() map[string]json.RawMessage {
+func (bm BasicManager) DefaultGenesis(validators []tmtypes.GenesisValidator) map[string]json.RawMessage {
 	genesis := make(map[string]json.RawMessage)
 	for _, b := range bm {
-		if b.DefaultGenesis() != nil {
-			genesis[b.Name()] = b.DefaultGenesis()
+		if b.DefaultGenesis(validators) != nil {
+			genesis[b.Name()] = b.DefaultGenesis(validators)
 		}
 	}
 	return genesis
@@ -123,5 +124,5 @@ func (am AppManager) EndBlocker(ctx types.Context, req abci.RequestEndBlock) abc
 			validatorUpdates = moduleValUpdates
 		}
 	}
-	return abci.ResponseEndBlock{}
+	return abci.ResponseEndBlock{ValidatorUpdates:validatorUpdates}
 }

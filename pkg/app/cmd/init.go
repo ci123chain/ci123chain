@@ -6,14 +6,14 @@ import (
 	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/tanhuiya/ci123chain/pkg/abci"
-	"github.com/tanhuiya/ci123chain/pkg/app"
-	"github.com/tanhuiya/ci123chain/pkg/app/types"
-	"github.com/tanhuiya/ci123chain/pkg/config"
-	"github.com/tanhuiya/ci123chain/pkg/node"
-	order "github.com/tanhuiya/ci123chain/pkg/order/keeper"
-	ortypes "github.com/tanhuiya/ci123chain/pkg/order/types"
-	"github.com/tanhuiya/ci123chain/pkg/validator"
+	"github.com/ci123chain/ci123chain/pkg/abci"
+	"github.com/ci123chain/ci123chain/pkg/app"
+	"github.com/ci123chain/ci123chain/pkg/app/types"
+	"github.com/ci123chain/ci123chain/pkg/config"
+	"github.com/ci123chain/ci123chain/pkg/node"
+	order "github.com/ci123chain/ci123chain/pkg/order/keeper"
+	ortypes "github.com/ci123chain/ci123chain/pkg/order/types"
+	"github.com/ci123chain/ci123chain/pkg/validator"
 	"github.com/tendermint/go-amino"
 	cfg "github.com/tendermint/tendermint/config"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
@@ -37,7 +37,7 @@ var (
 	FlagIP = "ip"
 	FlagChainID = "chain_id"
 	FlagStateDB = "statedb"
-	FlagDBName = "dbname"
+	//FlagDBName = "dbname"
 	FlagWithValidator = "validator_key"
 )
 
@@ -154,8 +154,7 @@ func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Com
 	//cmd.Flags().AddFlagSet(appInit.FlagsAppGenState)
 	//cmd.Flags().AddFlagSet(appInit.FlagsAppGenTx) // need to add this flagset for when no GenTx's provided
 	//cmd.AddCommand(GenTxCmd(ctx, cdc, appInit))
-	cmd.Flags().String(FlagStateDB, "couchdb://couchdb-service:5984", "fetch new shard from db")
-	cmd.Flags().String(FlagDBName, "ci123", "the name of db that used for chain")
+	cmd.Flags().String(FlagStateDB, "couchdb://couchdb-service:5984/ci123", "fetch new shard from db")
 	cmd.Flags().String(FlagWithValidator, "", "the validator key")
 	return cmd
 }
@@ -220,9 +219,9 @@ func gentxWithConfig(cdc *amino.Codec, appInit app.AppInit, config *cfg.Config, 
 func GetChainID() (string, error){
 
 	var id string
-	dbname := viper.GetString(FlagDBName)
+
 	statedb := viper.GetString(FlagStateDB)
-	db, err := app.GetStateDB(dbname, "", statedb)
+	db, err := app.GetStateDB("", statedb)
 	key := ortypes.ModuleName + "//" + order.OrderBookKey
 	var ob order.OrderBook
 
@@ -291,7 +290,7 @@ func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initCo
 	validator := appInit.GetValidator(nodeKey.PubKey(), viper.GetString(FlagName))
 	validators := []tmtypes.GenesisValidator{validator}
 
-	appState, err := appInit.AppGenState()
+	appState, err := appInit.AppGenState(validators)
 
 	if err != nil {
 		return

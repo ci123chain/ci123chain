@@ -2,11 +2,12 @@ package account
 
 import (
 	"encoding/json"
-	"github.com/tanhuiya/ci123chain/pkg/abci/codec"
-	"github.com/tanhuiya/ci123chain/pkg/abci/types"
-	"github.com/tanhuiya/ci123chain/pkg/account/keeper"
-	acc_types "github.com/tanhuiya/ci123chain/pkg/account/types"
+	"github.com/ci123chain/ci123chain/pkg/abci/codec"
+	"github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/account/keeper"
+	acc_types "github.com/ci123chain/ci123chain/pkg/account/types"
 	abci "github.com/tendermint/tendermint/abci/types"
+	tmtypes "github.com/tendermint/tendermint/types"
 )
 
 
@@ -41,7 +42,7 @@ func (am AppModuleBasic) RegisterCodec(codec *codec.Codec) {
 }
 
 
-func (am AppModuleBasic) DefaultGenesis() json.RawMessage {
+func (am AppModuleBasic) DefaultGenesis(_ []tmtypes.GenesisValidator) json.RawMessage {
 	return ModuleCdc.MustMarshalJSON(GenesisState{})
 }
 

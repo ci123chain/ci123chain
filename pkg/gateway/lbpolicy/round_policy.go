@@ -1,12 +1,12 @@
 package lbpolicy
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/gateway/types"
+	"github.com/ci123chain/ci123chain/pkg/gateway/types"
 	"sync/atomic"
 )
 
 type RoundPolicy struct {
-	current uint64
+	current uint64    `json:"current"`
 }
 
 func NewRoundPolicy() *RoundPolicy {

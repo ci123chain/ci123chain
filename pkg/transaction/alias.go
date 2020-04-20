@@ -1,6 +1,6 @@
 package transaction
 
-import "github.com/tanhuiya/ci123chain/pkg/transaction/types"
+import "github.com/ci123chain/ci123chain/pkg/transaction/types"
 
 var (
 	ErrInvalidTx				= types.ErrInvalidTx
@@ -10,4 +10,5 @@ var (
 	ErrBadPrivkey				= types.ErrDecodePrivkey
 	ErrSetSequence				= types.ErrSetSequence
 	ErrSendCoin					= types.ErrSendCoin
+	ErrAmount					= types.ErrAmount
 )

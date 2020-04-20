@@ -1,10 +1,10 @@
 package types
 
 import (
-	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
-	"github.com/tanhuiya/ci123chain/pkg/order/keeper"
-	"github.com/tanhuiya/ci123chain/pkg/transaction"
-	"github.com/tanhuiya/ci123chain/pkg/util"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/order/keeper"
+	"github.com/ci123chain/ci123chain/pkg/transaction"
+	"github.com/ci123chain/ci123chain/pkg/util"
 )
 
 type UpgradeTx struct {
@@ -28,28 +28,10 @@ func NewUpgradeTx(from sdk.AccAddress, gas ,nonce uint64, t, name string, height
 	}
 }
 
-/*
-func SignUpgradeTx(from string, gas, nonce uint64,t, name string, height int64, priv []byte) ([]byte, error){
-
-	fromAddr, err := helper.StrToAddress(from)
-	if err != nil {
-		return nil, err
-	}
-	tx := NewUpgradeTx(fromAddr, gas, nonce, t, name, height)
-	sid := cryptosuit.NewFabSignIdentity()
-	pub, err  := sid.GetPubKey(priv)
-
-	tx.SetPubKey(pub)
-	signbyte := tx.GetSignBytes()
-	signature, err := sid.Sign(signbyte, priv)
-	tx.SetSignature(signature)
-	return tx.Bytes(), nil
-}
-*/
-
 
 
 func (msg *UpgradeTx) ValidateBasic() sdk.Error{
+	//return msg.CommonTx.VerifySignature(msg.Bytes(), msg.FabricMode)
 	return nil
 }
 
