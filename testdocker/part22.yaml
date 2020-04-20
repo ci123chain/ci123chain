@@ -1,7 +1,7 @@
 version: "3"
 services:
   ci0:
-    image: cichain:v1.1-test
+    image: cichain:v0.0.1
     container_name: ci0
     hostname: ci0
     environment:
@@ -22,7 +22,7 @@ services:
       testdocker_couchDB:
 
   ci1:
-    image: cichain:v1.1-test
+    image: cichain:v0.0.1
     container_name: ci1
     hostname: ci1
     environment:
@@ -41,7 +41,7 @@ services:
       testdocker_couchDB:
 
   ci2:
-    image: cichain:v1.1-test
+    image: cichain:v0.0.1
     container_name: ci2
     hostname: ci2
     environment:
@@ -60,7 +60,7 @@ services:
       testdocker_couchDB:
 
   gateway:
-    image: cichain:v1.1-test
+    image: cichain:v0.0.1
     container_name: cproxyservice
     hostname: cproxyservice
     volumes:
