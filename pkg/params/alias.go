@@ -1,8 +1,8 @@
 package params
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/params/subspace"
-	"github.com/tanhuiya/ci123chain/pkg/params/types"
+	"github.com/ci123chain/ci123chain/pkg/params/subspace"
+	"github.com/ci123chain/ci123chain/pkg/params/types"
 )
 
 const (

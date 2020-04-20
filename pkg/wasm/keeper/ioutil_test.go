@@ -2,7 +2,7 @@ package keeper
 
 import (
 	"fmt"
-	"github.com/tanhuiya/ci123chain/pkg/wasm/types"
+	"github.com/ci123chain/ci123chain/pkg/wasm/types"
 	"github.com/wasmerio/go-ext-wasm/wasmer"
 	"io/ioutil"
 	"path"

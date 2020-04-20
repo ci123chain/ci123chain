@@ -2,11 +2,11 @@ package rest
 
 import (
 	"github.com/gorilla/mux"
-	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
-	"github.com/tanhuiya/ci123chain/pkg/abci/types/rest"
-	"github.com/tanhuiya/ci123chain/pkg/client/context"
-	"github.com/tanhuiya/ci123chain/pkg/staking/types"
-	"github.com/tanhuiya/ci123chain/pkg/transfer"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
+	"github.com/ci123chain/ci123chain/pkg/client/context"
+	"github.com/ci123chain/ci123chain/pkg/staking/types"
+	"github.com/ci123chain/ci123chain/pkg/transfer"
 	"net/http"
 )
 

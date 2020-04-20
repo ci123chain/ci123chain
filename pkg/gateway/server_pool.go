@@ -1,8 +1,8 @@
 package gateway
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/gateway/logger"
-	"github.com/tanhuiya/ci123chain/pkg/gateway/types"
+	"github.com/ci123chain/ci123chain/pkg/gateway/logger"
+	"github.com/ci123chain/ci123chain/pkg/gateway/types"
 	"log"
 	"net/url"
 )

@@ -2,8 +2,8 @@ package keeper
 
 import (
 	"fmt"
-	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
-	wasm "github.com/tanhuiya/ci123chain/pkg/wasm/types"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	wasm "github.com/ci123chain/ci123chain/pkg/wasm/types"
 )
 
 func NewHandler(k Keeper) sdk.Handler {

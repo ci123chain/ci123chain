@@ -1,8 +1,8 @@
 package types
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/abci/codec"
-	"github.com/tanhuiya/ci123chain/pkg/supply/exported"
+	"github.com/ci123chain/ci123chain/pkg/abci/codec"
+	"github.com/ci123chain/ci123chain/pkg/supply/exported"
 )
 
 var ModuleCdc *codec.Codec

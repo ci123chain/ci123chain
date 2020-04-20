@@ -8,8 +8,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/mattn/go-isatty"
 	"github.com/spf13/viper"
-	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
-	"github.com/tanhuiya/ci123chain/pkg/client/types"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/client/types"
 	"os"
 	"strings"
 )

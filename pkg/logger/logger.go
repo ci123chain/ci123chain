@@ -2,7 +2,7 @@ package logger
 
 import (
 	"github.com/spf13/viper"
-	"github.com/tanhuiya/ci123chain/pkg/logger/spliter"
+	"github.com/ci123chain/ci123chain/pkg/logger/spliter"
 	cfg "github.com/tendermint/tendermint/config"
 	"github.com/tendermint/tendermint/libs/cli"
 	tmflags "github.com/tendermint/tendermint/libs/cli/flags"

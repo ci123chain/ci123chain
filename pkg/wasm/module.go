@@ -2,10 +2,10 @@ package wasm
 
 import (
 	"encoding/json"
-	"github.com/tanhuiya/ci123chain/pkg/abci/codec"
-	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
-	wasm "github.com/tanhuiya/ci123chain/pkg/wasm/keeper"
-	"github.com/tanhuiya/ci123chain/pkg/wasm/types"
+	"github.com/ci123chain/ci123chain/pkg/abci/codec"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	wasm "github.com/ci123chain/ci123chain/pkg/wasm/keeper"
+	"github.com/ci123chain/ci123chain/pkg/wasm/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 )

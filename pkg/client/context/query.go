@@ -1,9 +1,9 @@
 package context
 
 import (
-	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
-	"github.com/tanhuiya/ci123chain/pkg/client/types"
-	"github.com/tanhuiya/ci123chain/pkg/transfer"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/client/types"
+	"github.com/ci123chain/ci123chain/pkg/transfer"
 	"github.com/tendermint/tendermint/libs/common"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
 )

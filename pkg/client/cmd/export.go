@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/abci/types"
-	"github.com/tanhuiya/ci123chain/pkg/client/helper"
+	"github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/client/helper"
 	"encoding/hex"
 	"fmt"
 	"github.com/ethereum/go-ethereum/accounts"
@@ -11,7 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/tanhuiya/ci123chain/pkg/util"
+	"github.com/ci123chain/ci123chain/pkg/util"
 	"io/ioutil"
 )
 

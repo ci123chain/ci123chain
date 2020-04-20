@@ -1,6 +1,6 @@
 package client
 
-import "github.com/tanhuiya/ci123chain/pkg/client/types"
+import "github.com/ci123chain/ci123chain/pkg/client/types"
 
 var (
 	ErrNewClientCtx		= types.ErrNewClientCtx

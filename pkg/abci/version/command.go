@@ -3,7 +3,7 @@ package version
 import (
 	"fmt"
 
-	"github.com/tanhuiya/ci123chain/pkg/consts"
+	"github.com/ci123chain/ci123chain/pkg/consts"
 	"github.com/spf13/cobra"
 )
 

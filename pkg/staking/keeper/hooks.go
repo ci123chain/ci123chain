@@ -1,6 +1,6 @@
 package keeper
 
-import sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
+import sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 
 func (k StakingKeeper) AfterValidatorCreated(ctx sdk.Context, valAddr sdk.AccAddress) {
 	if k.hooks != nil {

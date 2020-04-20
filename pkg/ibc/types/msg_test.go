@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/stretchr/testify/assert"
-	"github.com/tanhuiya/ci123chain/pkg/cryptosuit"
+	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
 	"github.com/tanhuiya/fabric-crypto/cryptoutil"
 	"testing"
 )

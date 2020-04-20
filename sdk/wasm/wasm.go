@@ -3,9 +3,9 @@ package wasm
 import (
 	"encoding/hex"
 	"encoding/json"
-	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
-	"github.com/tanhuiya/ci123chain/pkg/cryptosuit"
-	"github.com/tanhuiya/ci123chain/pkg/wasm"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
+	"github.com/ci123chain/ci123chain/pkg/wasm"
 )
 
 

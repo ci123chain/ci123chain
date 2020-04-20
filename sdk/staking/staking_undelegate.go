@@ -3,8 +3,8 @@ package staking
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/tanhuiya/ci123chain/pkg/cryptosuit"
-	"github.com/tanhuiya/ci123chain/pkg/staking"
+	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
+	"github.com/ci123chain/ci123chain/pkg/staking"
 	"io/ioutil"
 	"net/http"
 	"net/url"

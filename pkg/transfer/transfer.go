@@ -2,12 +2,12 @@ package transfer
 
 import (
 	"errors"
-	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
-	"github.com/tanhuiya/ci123chain/pkg/client/helper"
-	"github.com/tanhuiya/ci123chain/pkg/cryptosuit"
-	"github.com/tanhuiya/ci123chain/pkg/transaction"
-	"github.com/tanhuiya/ci123chain/pkg/transfer/types"
-	"github.com/tanhuiya/ci123chain/pkg/util"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/client/helper"
+	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
+	"github.com/ci123chain/ci123chain/pkg/transaction"
+	"github.com/ci123chain/ci123chain/pkg/transfer/types"
+	"github.com/ci123chain/ci123chain/pkg/util"
 )
 
 const RouteKey = "Transfer"

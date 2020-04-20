@@ -1,6 +1,6 @@
 package types
 
-import "github.com/tanhuiya/ci123chain/pkg/abci/codec"
+import "github.com/ci123chain/ci123chain/pkg/abci/codec"
 
 var StakingCodec *codec.Codec
 

@@ -1,8 +1,8 @@
 package wasm
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/wasm/keeper"
-	"github.com/tanhuiya/ci123chain/pkg/wasm/types"
+	"github.com/ci123chain/ci123chain/pkg/wasm/keeper"
+	"github.com/ci123chain/ci123chain/pkg/wasm/types"
 )
 
 const (

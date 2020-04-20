@@ -3,9 +3,9 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
-	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
-	"github.com/tanhuiya/ci123chain/pkg/ibc/keeper"
-	"github.com/tanhuiya/ci123chain/pkg/ibc/types"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/ibc/keeper"
+	"github.com/ci123chain/ci123chain/pkg/ibc/types"
 )
 
 func NewHandler(k keeper.IBCKeeper) sdk.Handler {

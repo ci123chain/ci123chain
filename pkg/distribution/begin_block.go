@@ -3,8 +3,8 @@ package distribution
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/tanhuiya/ci123chain/pkg/abci/types"
-	k "github.com/tanhuiya/ci123chain/pkg/distribution/keeper"
+	"github.com/ci123chain/ci123chain/pkg/abci/types"
+	k "github.com/ci123chain/ci123chain/pkg/distribution/keeper"
 	abci "github.com/tendermint/tendermint/abci/types"
 )
 

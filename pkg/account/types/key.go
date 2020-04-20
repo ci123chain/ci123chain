@@ -1,6 +1,6 @@
 package types
 
-import "github.com/tanhuiya/ci123chain/pkg/abci/types"
+import "github.com/ci123chain/ci123chain/pkg/abci/types"
 
 const ModuleName  = "accounts"
 

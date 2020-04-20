@@ -2,8 +2,8 @@ package types
 
 import (
 	"encoding/json"
-	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
-	"github.com/tanhuiya/ci123chain/pkg/transaction"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/transaction"
 )
 
 type StoreCodeTx struct {

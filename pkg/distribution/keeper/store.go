@@ -3,11 +3,11 @@ package keeper
 import (
 	"errors"
 	"fmt"
-	"github.com/tanhuiya/ci123chain/pkg/abci/codec"
-	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
-	"github.com/tanhuiya/ci123chain/pkg/account"
-	types "github.com/tanhuiya/ci123chain/pkg/distribution/types"
-	"github.com/tanhuiya/ci123chain/pkg/fc"
+	"github.com/ci123chain/ci123chain/pkg/abci/codec"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/account"
+	types "github.com/ci123chain/ci123chain/pkg/distribution/types"
+	"github.com/ci123chain/ci123chain/pkg/fc"
 	"strconv"
 )
 

@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	sdk "github.com/tanhuiya/ci123chain/sdk/broadcast"
-	transfersdk "github.com/tanhuiya/ci123chain/sdk/transfer"
+	sdk "github.com/ci123chain/ci123chain/sdk/broadcast"
+	transfersdk "github.com/ci123chain/ci123chain/sdk/transfer"
 )
 
 

@@ -2,8 +2,8 @@ package supply
 
 import (
 	"encoding/json"
-	"github.com/tanhuiya/ci123chain/pkg/abci/codec"
-	"github.com/tanhuiya/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/abci/codec"
+	"github.com/ci123chain/ci123chain/pkg/abci/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 

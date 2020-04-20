@@ -3,9 +3,9 @@ package gateway
 import (
 	"encoding/hex"
 	"encoding/json"
-	"github.com/tanhuiya/ci123chain/pkg/gateway/logger"
-	"github.com/tanhuiya/ci123chain/pkg/gateway/server"
-	"github.com/tanhuiya/ci123chain/pkg/gateway/types"
+	"github.com/ci123chain/ci123chain/pkg/gateway/logger"
+	"github.com/ci123chain/ci123chain/pkg/gateway/server"
+	"github.com/ci123chain/ci123chain/pkg/gateway/types"
 	"io/ioutil"
 	"net/http"
 )

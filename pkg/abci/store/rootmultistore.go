@@ -2,7 +2,7 @@ package store
 
 import (
 	"fmt"
-	"github.com/tanhuiya/ci123chain/pkg/app/types"
+	"github.com/ci123chain/ci123chain/pkg/app/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/merkle"
 	"github.com/tendermint/tendermint/crypto/tmhash"
@@ -10,7 +10,7 @@ import (
 	"io"
 	"strings"
 
-	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 )
 
 // rootMultiStore is composed of many CommitStores. Name contrasts with

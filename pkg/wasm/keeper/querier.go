@@ -2,8 +2,8 @@ package keeper
 
 import (
 	"errors"
-	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
-	"github.com/tanhuiya/ci123chain/pkg/wasm/types"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/wasm/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 )
 

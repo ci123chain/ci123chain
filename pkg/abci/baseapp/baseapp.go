@@ -13,10 +13,10 @@ import (
 	dbm "github.com/tendermint/tm-db"
 	"github.com/tendermint/tendermint/libs/log"
 
-	"github.com/tanhuiya/ci123chain/pkg/abci/codec"
-	"github.com/tanhuiya/ci123chain/pkg/abci/store"
-	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
-	"github.com/tanhuiya/ci123chain/pkg/abci/version"
+	"github.com/ci123chain/ci123chain/pkg/abci/codec"
+	"github.com/ci123chain/ci123chain/pkg/abci/store"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/abci/version"
 )
 
 // Key to store the header in the DB itself.

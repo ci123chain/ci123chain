@@ -2,8 +2,8 @@ package types
 
 import (
 	"bytes"
-	"github.com/tanhuiya/ci123chain/pkg/abci/types"
-	"github.com/tanhuiya/ci123chain/pkg/account/exported"
+	"github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/account/exported"
 )
 
 // GenesisAccount is a struct for account initialization used exclusively during genesis

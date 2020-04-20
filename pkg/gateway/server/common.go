@@ -2,7 +2,7 @@ package server
 
 import (
 	"encoding/json"
-	"github.com/tanhuiya/ci123chain/pkg/gateway/types"
+	"github.com/ci123chain/ci123chain/pkg/gateway/types"
 	"io/ioutil"
 	"net/http"
 	"net/url"

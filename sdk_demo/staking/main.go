@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	sdk "github.com/tanhuiya/ci123chain/sdk/broadcast"
-	sSDK "github.com/tanhuiya/ci123chain/sdk/staking"
+	sdk "github.com/ci123chain/ci123chain/sdk/broadcast"
+	sSDK "github.com/ci123chain/ci123chain/sdk/staking"
 )
 
 var (

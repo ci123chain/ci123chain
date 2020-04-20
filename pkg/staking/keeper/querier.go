@@ -2,9 +2,9 @@ package keeper
 
 import (
 	"fmt"
-	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
-	"github.com/tanhuiya/ci123chain/pkg/staking/types"
-	s "github.com/tanhuiya/ci123chain/pkg/staking/types"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/staking/types"
+	s "github.com/ci123chain/ci123chain/pkg/staking/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"strings"
 )

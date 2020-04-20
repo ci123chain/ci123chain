@@ -1,7 +1,7 @@
 package keeper
 
 import (
-	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/tendermint/tendermint/libs/log")
 
 func Logger(ctx sdk.Context) log.Logger {

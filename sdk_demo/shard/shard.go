@@ -2,7 +2,7 @@ package main
 
 import (
 	"encoding/hex"
-	sdk "github.com/tanhuiya/ci123chain/sdk/shard"
+	sdk "github.com/ci123chain/ci123chain/sdk/shard"
 )
 
 func signAddShardTxDemo() (string, error) {

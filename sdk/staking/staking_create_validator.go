@@ -2,8 +2,8 @@ package staking
 
 import (
 	"encoding/hex"
-	"github.com/tanhuiya/ci123chain/pkg/cryptosuit"
-	"github.com/tanhuiya/ci123chain/pkg/staking"
+	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
+	"github.com/ci123chain/ci123chain/pkg/staking"
 	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/crypto"
 	cryptoAmino "github.com/tendermint/tendermint/crypto/encoding/amino"

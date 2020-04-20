@@ -3,8 +3,8 @@ package types
 import (
 	"errors"
 	"fmt"
-	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
-	params "github.com/tanhuiya/ci123chain/pkg/params/subspace"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	params "github.com/ci123chain/ci123chain/pkg/params/subspace"
 	"strings"
 	"time"
 )

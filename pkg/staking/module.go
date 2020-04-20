@@ -2,12 +2,12 @@ package staking
 
 import (
 	"encoding/json"
-	"github.com/tanhuiya/ci123chain/pkg/abci/codec"
-	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
-	ak "github.com/tanhuiya/ci123chain/pkg/account/keeper"
-	k "github.com/tanhuiya/ci123chain/pkg/staking/keeper"
-	"github.com/tanhuiya/ci123chain/pkg/staking/types"
-	sk "github.com/tanhuiya/ci123chain/pkg/supply/keeper"
+	"github.com/ci123chain/ci123chain/pkg/abci/codec"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	ak "github.com/ci123chain/ci123chain/pkg/account/keeper"
+	k "github.com/ci123chain/ci123chain/pkg/staking/keeper"
+	"github.com/ci123chain/ci123chain/pkg/staking/types"
+	sk "github.com/ci123chain/ci123chain/pkg/supply/keeper"
 	abci "github.com/tendermint/tendermint/abci/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 )

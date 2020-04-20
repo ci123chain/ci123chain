@@ -3,9 +3,9 @@ package cmd
 import (
 	"fmt"
 	"github.com/spf13/cobra"
-	"github.com/tanhuiya/ci123chain/pkg/client"
-	"github.com/tanhuiya/ci123chain/pkg/client/helper"
-	"github.com/tanhuiya/ci123chain/pkg/util"
+	"github.com/ci123chain/ci123chain/pkg/client"
+	"github.com/ci123chain/ci123chain/pkg/client/helper"
+	"github.com/ci123chain/ci123chain/pkg/util"
 )
 
 func init()  {

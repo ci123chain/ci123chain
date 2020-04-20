@@ -1,12 +1,12 @@
 package ibc
 
 import (
-	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
-	"github.com/tanhuiya/ci123chain/pkg/app"
-	"github.com/tanhuiya/ci123chain/pkg/client/helper"
-	"github.com/tanhuiya/ci123chain/pkg/cryptosuit"
-	"github.com/tanhuiya/ci123chain/pkg/ibc"
-	"github.com/tanhuiya/ci123chain/pkg/transaction"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/app"
+	"github.com/ci123chain/ci123chain/pkg/client/helper"
+	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
+	"github.com/ci123chain/ci123chain/pkg/ibc"
+	"github.com/ci123chain/ci123chain/pkg/transaction"
 )
 var cdc = app.MakeCodec()
 

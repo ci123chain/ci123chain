@@ -2,7 +2,7 @@ package main
 
 import (
 	"encoding/hex"
-	sdk "github.com/tanhuiya/ci123chain/sdk/staking"
+	sdk "github.com/ci123chain/ci123chain/sdk/staking"
 )
 
 func SignCreateValidatorTx(from string, amount, gas, nonce uint64, priv string, minSelfDelegation int64,

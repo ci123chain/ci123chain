@@ -2,7 +2,7 @@ package types
 
 import (
 	"bytes"
-	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/tendermint/go-amino"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto"

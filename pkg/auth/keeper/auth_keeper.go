@@ -1,10 +1,10 @@
 package keeper
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/abci/codec"
-	"github.com/tanhuiya/ci123chain/pkg/abci/types"
-	auth_types "github.com/tanhuiya/ci123chain/pkg/auth/types"
-	"github.com/tanhuiya/ci123chain/pkg/params/subspace"
+	"github.com/ci123chain/ci123chain/pkg/abci/codec"
+	"github.com/ci123chain/ci123chain/pkg/abci/types"
+	auth_types "github.com/ci123chain/ci123chain/pkg/auth/types"
+	"github.com/ci123chain/ci123chain/pkg/params/subspace"
 )
 
 type AuthKeeper struct {

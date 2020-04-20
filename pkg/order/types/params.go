@@ -1,8 +1,8 @@
 package types
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/order/keeper"
-	"github.com/tanhuiya/ci123chain/pkg/params/subspace"
+	"github.com/ci123chain/ci123chain/pkg/order/keeper"
+	"github.com/ci123chain/ci123chain/pkg/params/subspace"
 )
 
 var (

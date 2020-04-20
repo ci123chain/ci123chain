@@ -2,12 +2,12 @@ package utils
 
 import (
 	"encoding/hex"
-	"github.com/tanhuiya/ci123chain/pkg/abci/codec"
-	"github.com/tanhuiya/ci123chain/pkg/client/context"
-	"github.com/tanhuiya/ci123chain/pkg/transfer/types"
+	"github.com/ci123chain/ci123chain/pkg/abci/codec"
+	"github.com/ci123chain/ci123chain/pkg/client/context"
+	"github.com/ci123chain/ci123chain/pkg/transfer/types"
 	"time"
 
-	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 

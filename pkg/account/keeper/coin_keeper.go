@@ -2,10 +2,10 @@ package keeper
 
 import (
 	"fmt"
-	prefix "github.com/tanhuiya/ci123chain/pkg/abci/store"
-	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
-	"github.com/tanhuiya/ci123chain/pkg/account/types"
-	"github.com/tanhuiya/ci123chain/pkg/transaction"
+	prefix "github.com/ci123chain/ci123chain/pkg/abci/store"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/account/types"
+	"github.com/ci123chain/ci123chain/pkg/transaction"
 )
 
 func (ak AccountKeeper) GetBalance(ctx sdk.Context, addr sdk.AccAddress) sdk.Coin {

@@ -4,8 +4,8 @@ package baseapp
 import (
 	"fmt"
 
-	"github.com/tanhuiya/ci123chain/pkg/abci/store"
-	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/abci/store"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	dbm "github.com/tendermint/tm-db"
 )
 

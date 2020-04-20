@@ -1,9 +1,9 @@
 package keeper
 
 import (
-	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
-	"github.com/tanhuiya/ci123chain/pkg/ibc/types"
-	"github.com/tanhuiya/ci123chain/pkg/transfer"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/ibc/types"
+	"github.com/ci123chain/ci123chain/pkg/transfer"
 	abci "github.com/tendermint/tendermint/abci/types"
 )
 

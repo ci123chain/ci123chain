@@ -3,7 +3,7 @@ package server
 import (
 	"encoding/json"
 	"errors"
-	"github.com/tanhuiya/ci123chain/pkg/gateway/types"
+	"github.com/ci123chain/ci123chain/pkg/gateway/types"
 	"net/http"
 )
 

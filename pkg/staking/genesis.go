@@ -2,11 +2,11 @@ package staking
 
 import (
 	"fmt"
-	sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
-	account "github.com/tanhuiya/ci123chain/pkg/account/keeper"
-	"github.com/tanhuiya/ci123chain/pkg/staking/keeper"
-	"github.com/tanhuiya/ci123chain/pkg/staking/types"
-	"github.com/tanhuiya/ci123chain/pkg/supply"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	account "github.com/ci123chain/ci123chain/pkg/account/keeper"
+	"github.com/ci123chain/ci123chain/pkg/staking/keeper"
+	"github.com/ci123chain/ci123chain/pkg/staking/types"
+	"github.com/ci123chain/ci123chain/pkg/supply"
 	abci "github.com/tendermint/tendermint/abci/types"
 )
 

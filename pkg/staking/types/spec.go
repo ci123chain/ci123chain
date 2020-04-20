@@ -1,6 +1,6 @@
 package types
 
-import sdk "github.com/tanhuiya/ci123chain/pkg/abci/types"
+import sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 
 type DVPair struct {
 	DelegatorAddress   sdk.AccAddress   `json:"delegator_address"`

@@ -1,7 +1,7 @@
 package app
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/abci/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 )
 

@@ -1,10 +1,10 @@
 package ibc
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/ibc/client/rest"
-	"github.com/tanhuiya/ci123chain/pkg/ibc/handler"
-	"github.com/tanhuiya/ci123chain/pkg/ibc/keeper"
-	"github.com/tanhuiya/ci123chain/pkg/ibc/types"
+	"github.com/ci123chain/ci123chain/pkg/ibc/client/rest"
+	"github.com/ci123chain/ci123chain/pkg/ibc/handler"
+	"github.com/ci123chain/ci123chain/pkg/ibc/keeper"
+	"github.com/ci123chain/ci123chain/pkg/ibc/types"
 )
 
 var (

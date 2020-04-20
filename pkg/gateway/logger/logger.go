@@ -2,7 +2,7 @@ package logger
 
 import (
 	"fmt"
-	"github.com/tanhuiya/ci123chain/pkg/logger/spliter"
+	"github.com/ci123chain/ci123chain/pkg/logger/spliter"
 	"io"
 	"log"
 	"os"

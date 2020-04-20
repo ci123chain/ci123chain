@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/tanhuiya/ci123chain/pkg/couchdb"
-	"github.com/tanhuiya/ci123chain/pkg/gateway/logger"
+	"github.com/ci123chain/ci123chain/pkg/couchdb"
+	"github.com/ci123chain/ci123chain/pkg/gateway/logger"
 	"regexp"
 	"strings"
 )

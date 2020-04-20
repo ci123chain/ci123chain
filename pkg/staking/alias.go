@@ -1,9 +1,9 @@
 package staking
 
 import (
-	h "github.com/tanhuiya/ci123chain/pkg/staking/handler"
-	k "github.com/tanhuiya/ci123chain/pkg/staking/keeper"
-	"github.com/tanhuiya/ci123chain/pkg/staking/types"
+	h "github.com/ci123chain/ci123chain/pkg/staking/handler"
+	k "github.com/ci123chain/ci123chain/pkg/staking/keeper"
+	"github.com/ci123chain/ci123chain/pkg/staking/types"
 )
 
 const (

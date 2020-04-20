@@ -1,8 +1,8 @@
 package types
 
 import (
-	"github.com/tanhuiya/ci123chain/pkg/abci/codec"
-	"github.com/tanhuiya/ci123chain/pkg/order/keeper"
+	"github.com/ci123chain/ci123chain/pkg/abci/codec"
+	"github.com/ci123chain/ci123chain/pkg/order/keeper"
 )
 
 func RegisterCodec(cdc *codec.Codec) {
