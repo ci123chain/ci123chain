@@ -6,10 +6,9 @@ require (
 	github.com/allegro/bigcache v1.2.1 // indirect
 	github.com/aristanetworks/goarista v0.0.0-20191015010157-ce4ff66f8dba // indirect
 	github.com/bgentry/speakeasy v0.1.0
-	github.com/btcsuite/btcd v0.20.0-beta
-	github.com/btcsuite/btcutil v0.0.0-20190425235716-9e5f4b9a998d
+	github.com/btcsuite/btcd v0.20.1-beta
+	github.com/btcsuite/btcutil v1.0.2
 	github.com/cespare/cp v1.1.1 // indirect
-	github.com/confio/go-wasm v0.0.0-20190615152900-b224daa71c94
 	github.com/deckarep/golang-set v1.7.1 // indirect
 	github.com/elastic/gosigar v0.10.5 // indirect
 	github.com/ethereum/go-ethereum v1.9.6
@@ -39,6 +38,7 @@ require (
 	github.com/tendermint/tm-db v0.2.0
 	github.com/tyler-smith/go-bip39 v1.0.2
 	github.com/wasmerio/go-ext-wasm v0.0.0-20190612094245-722faa9f1b90
+	golang.org/x/crypto v0.0.0-20200414173820-0848c9571904 // indirect
 	gopkg.in/yaml.v2 v2.2.2
 
 )
