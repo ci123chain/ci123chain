@@ -25,6 +25,7 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, homeDir string, wasmConf
 	if err != nil {
 		panic(err)
 	}
+	SetAccountKeeper(accountKeeper)
 	return Keeper{
 		storeKey:      storeKey,
 		cdc:           cdc,
@@ -35,7 +36,6 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, homeDir string, wasmConf
 
 //　Create uploads and compiles a WASM contract, returning a short identifier for the contract
 func (k Keeper) Create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte) (codeHash []byte, err error) {
-
 	wasmCode, err = uncompress(wasmCode)
 	if err != nil {
 		return nil, err
@@ -71,7 +71,8 @@ func (k Keeper) Create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte)
 }
 
 //
-func (k Keeper) Instantiate(ctx sdk.Context, codeHash []byte, creator sdk.AccAddress, args json.RawMessage, label string) (sdk.AccAddress, error) {
+func (k Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAddress, args json.RawMessage, label string) (sdk.AccAddress, error) {
+	SetCtx(ctx)
 	var codeInfo types.CodeInfo
 	var wasmer Wasmer
 	var code []byte
@@ -87,6 +88,9 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeHash []byte, creator sdk.AccAdd
 	if existingAcct != nil {
 		return sdk.AccAddress{}, sdk.ErrInternal("account exists")
 	}
+	SetBlockHeader(ctx.BlockHeader())
+	SetInvoker(invoker.String())
+	SetCreator(contractAddress.String())
 	var contractAccount exported.Account
 	/*if !deposit.IsZero() {
 		sdkerr := k.AccountKeeper.Transfer(ctx, creator, contractAddress, deposit)
@@ -130,25 +134,27 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeHash []byte, creator sdk.AccAdd
 	prefixStoreKey := types.GetContractStorePrefixKey(contractAddress)
 	prefixStore := NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
 	SetStore(prefixStore)
-
 	_, err = k.wasmer.Instantiate(code,types.InitFunctionName, args)
 	if err != nil {
 		return sdk.AccAddress{}, err
 	}
 	//save the contract info.
 	createdAt := types.NewCreatedAt(ctx)
-	contractInfo := types.NewContractInfo(codeHash, creator, args, label, createdAt)
+	contractInfo := types.NewContractInfo(codeHash, invoker, args, label, createdAt)
 	store.Set(types.GetContractAddressKey(contractAddress), k.cdc.MustMarshalBinaryBare(contractInfo))
 	//save contractAddress into account
-	Account := k.AccountKeeper.GetAccount(ctx, creator)
+	Account := k.AccountKeeper.GetAccount(ctx, invoker)
 	Account.AddContract(contractAddress)
 	k.AccountKeeper.SetAccount(ctx, Account)
 	return contractAddress, nil
 }
 
 //
-func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, args json.RawMessage) (sdk.Result, error) {
-
+func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, invoker sdk.AccAddress, args json.RawMessage) (sdk.Result, error) {
+	SetBlockHeader(ctx.BlockHeader())
+	SetCreator(contractAddress.String())
+	SetInvoker(invoker.String())
+	SetCtx(ctx)
 	var params types.CallContractParam
 	if args != nil {
 		err := json.Unmarshal(args, &params)
@@ -190,7 +196,9 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 
 // query?
 func (k Keeper) Query(ctx sdk.Context, contractAddress sdk.AccAddress, msg json.RawMessage) (types.ContractState, error) {
-
+	SetBlockHeader(ctx.BlockHeader())
+	SetCreator(contractAddress.String())
+	SetInvoker("")
 	var params types.CallContractParam
 	if msg != nil {
 		err := json.Unmarshal(msg, &params)

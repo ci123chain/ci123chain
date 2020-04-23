@@ -70,7 +70,6 @@ func SetStore(kvStore Store) {
 	store = kvStore
 }
 
-
 //export read_db
 func readDB(context unsafe.Pointer, key, value int32) int32 {
 	var instanceContext = wasm.IntoInstanceContext(context)
