@@ -5,7 +5,7 @@ package keeper
 // extern int read_db(void *context, int key, int value);
 // extern void write_db(void *context, int key, int value);
 // extern void delete_db(void *context, int key);
-// extern int transfer(void *context, int fromPtr, int toPtr, int amountPtr);
+// extern int send(void *context, int toPtr, int amountPtr);
 // extern void get_creator(void *context, int creatorPtr);
 // extern void get_invoker(void *context, int invokerPtr);
 // extern void get_time(void *context, int timePtr);
@@ -52,9 +52,9 @@ func SetCtx(con sdk.Context) {
 	ctx = con
 }
 
-//export transfer
-func transfer(context unsafe.Pointer, fromPtr int32, toPtr int32, amountPtr int32) int32{
-	return perform_transfer(context, fromPtr, toPtr, amountPtr)
+//export send
+func send(context unsafe.Pointer, toPtr int32, amountPtr int32) int32{
+	return perform_send(context, toPtr, amountPtr)
 }
 
 //export get_creator
@@ -239,7 +239,7 @@ func getInstance(code []byte) (*wasmer.Instance, error) {
 	}
 
 	//api
-	imports, err = imports.Namespace("env").Append("transfer", transfer, C.transfer)
+	imports, err = imports.Namespace("env").Append("send", send, C.send)
 	if err != nil {
 		return &wasmer.Instance{}, err
 	}

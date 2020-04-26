@@ -8,14 +8,11 @@ import (
 	"unsafe"
 )
 
-func perform_transfer(context unsafe.Pointer, fromPtr int32, toPtr int32, amountPtr int32) int32 {
+func perform_send(context unsafe.Pointer, toPtr int32, amountPtr int32) int32 {
 	var err error
 
 	var instanceContext = wasm.IntoInstanceContext(context)
 	var memory = instanceContext.Memory().Data()
-
-	fromAddr := NewRegion(memory[fromPtr : fromPtr + RegionSize])
-	from := memory[fromAddr.Offset : fromAddr.Offset + fromAddr.Length]
 
 	toAddr := NewRegion(memory[toPtr : toPtr + RegionSize])
 	to := memory[toAddr.Offset : toAddr.Offset + toAddr.Length]
@@ -27,10 +24,12 @@ func perform_transfer(context unsafe.Pointer, fromPtr int32, toPtr int32, amount
 	if err != nil {
 		return 1
 	}
-	fromAcc, err := helper.StrToAddress(string(from))
+
+	fromAcc, err := helper.StrToAddress(creator)
 	if err != nil {
 		return 1
 	}
+
 	toAcc, err := helper.StrToAddress(string(to))
 	if err != nil {
 		return 1
