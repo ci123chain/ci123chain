@@ -45,6 +45,12 @@ func (k Keeper) Create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte)
 	if ok != nil {
 		return nil, ok
 	}
+	// addgas
+	wasmCode, err = tryAddgas(wasmCode)
+	if err != nil {
+		return nil, err
+	}
+
 	store := ctx.KVStore(k.storeKey)
 	var wasmer Wasmer
 	wasmerBz := store.Get(types.GetWasmerKey())
@@ -72,7 +78,8 @@ func (k Keeper) Create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte)
 
 //
 func (k Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAddress, args json.RawMessage, label string) (sdk.AccAddress, error) {
-	SetCtx(ctx)
+	SetGasUsed()
+	SetCtx(&ctx)
 	var codeInfo types.CodeInfo
 	var wasmer Wasmer
 	var code []byte
@@ -101,6 +108,8 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAdd
 		contractAccount = k.AccountKeeper.NewAccountWithAddress(ctx, contractAddress)
 		k.AccountKeeper.SetAccount(ctx, contractAccount)
 	}*/
+
+
 	contractAccount = k.AccountKeeper.NewAccountWithAddress(ctx, contractAddress)
 	k.AccountKeeper.SetAccount(ctx, contractAccount)
 
@@ -146,15 +155,18 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAdd
 	Account := k.AccountKeeper.GetAccount(ctx, invoker)
 	Account.AddContract(contractAddress)
 	k.AccountKeeper.SetAccount(ctx, Account)
+	ctx.GasMeter().ConsumeGas(sdk.Gas(GasUsed),"wasm cost")
 	return contractAddress, nil
 }
 
 //
 func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, invoker sdk.AccAddress, args json.RawMessage) (sdk.Result, error) {
+	SetGasUsed()
 	SetBlockHeader(ctx.BlockHeader())
 	SetCreator(contractAddress.String())
 	SetInvoker(invoker.String())
-	SetCtx(ctx)
+	SetCtx(&ctx)
+
 	var params types.CallContractParam
 	if args != nil {
 		err := json.Unmarshal(args, &params)
@@ -189,6 +201,7 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, invoker
 	if err != nil {
 		return sdk.Result{}, err
 	}
+	ctx.GasMeter().ConsumeGas(sdk.Gas(GasUsed),"wasm cost")
 	return sdk.Result{
 		Data:   []byte(fmt.Sprintf("%s", res)),
 	}, nil
@@ -300,3 +313,4 @@ func (k Keeper) generateContractAddress(codeHash []byte) sdk.AccAddress {
 	fmt.Println(sdk.ToAccAddress(codeHash))
 	return sdk.ToAccAddress(codeHash)
 }
+

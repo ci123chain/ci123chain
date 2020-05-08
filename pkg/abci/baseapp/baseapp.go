@@ -10,8 +10,8 @@ import (
 
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/tmhash"
-	dbm "github.com/tendermint/tm-db"
 	"github.com/tendermint/tendermint/libs/log"
+	dbm "github.com/tendermint/tm-db"
 
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	"github.com/ci123chain/ci123chain/pkg/abci/store"
@@ -498,7 +498,7 @@ func (app *BaseApp) getContextForTx(mode runTxMode, txBytes []byte) (ctx sdk.Con
 	return
 }
 
-func (app *BaseApp) runMsgs(ctx sdk.Context, tx sdk.Tx, mode runTxMode) (result sdk.Result) {
+func (app *BaseApp) runMsgs(ctx sdk.Context, tx sdk.Tx, mode runTxMode) sdk.Result {
 	var code      sdk.CodeType
 	var codespace sdk.CodespaceType
 
@@ -520,15 +520,21 @@ func (app *BaseApp) runMsgs(ctx sdk.Context, tx sdk.Tx, mode runTxMode) (result 
 	}
 
 	fmt.Println("-------- out handler ----------")
-	fmt.Println(ctx.GasMeter().GasConsumed())
+ 	fmt.Println(ctx.GasMeter().GasConsumed())
+
 	if !msgResult.IsOK() {
 		code = msgResult.Code
 		codespace = msgResult.Codespace
 	}
+	gasUsed := ctx.GasMeter().GasConsumed()
+	if msgResult.GasUsed != 0 {
+		gasUsed = msgResult.GasUsed
+	}
+
 	return sdk.Result{
 		Code: 		code,
 		Codespace: 	codespace,
-		GasUsed:   	ctx.GasMeter().GasConsumed(),
+		GasUsed:   	gasUsed,
 		Log: 		strings.TrimSpace(msgResult.Log),
 		Data: 		msgResult.Data,
 	}
@@ -574,7 +580,7 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 	// determined by the GasMeter. We need access to the context to get the gas
 	// meter so we initialize upfront.
 	var gasWanted uint64
-	var gasUsed uint64
+	//var gasUsed uint64
 	ctx := app.getContextForTx(mode, txBytes)
 	ms := ctx.MultiStore()
 
@@ -590,7 +596,7 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 			}
 		}
 		result.GasWanted = gasWanted
-		result.GasUsed = gasUsed
+		//result.GasUsed = gasUsed
 	}()
 
 		if err := tx.ValidateBasic(); err != nil {
@@ -624,7 +630,7 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 			ctx = newCtx.WithMultiStore(ms)
 		}
 		gasWanted = result.GasWanted
-		gasUsed = result.GasUsed
+		//gasUsed = result.GasUsed
 		if abort {
 			return result
 		}
@@ -640,6 +646,7 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 	// multi-store in case message processing fails.
 
 	runMsgCtx, msCache := app.cacheTxContext(ctx, txBytes)
+
 	result = app.runMsgs(runMsgCtx, tx, mode)
 
 	if mode == runTxModeSimulate  { // XXX

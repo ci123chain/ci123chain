@@ -9,6 +9,7 @@ package keeper
 // extern void get_creator(void *context, int creatorPtr);
 // extern void get_invoker(void *context, int invokerPtr);
 // extern void get_time(void *context, int timePtr);
+// extern void addgas(void *context, int gas);
 import "C"
 import (
 	"crypto/md5"
@@ -26,6 +27,25 @@ import (
 	"strconv"
 	"unsafe"
 )
+
+var GasUsed int64
+var GasWanted uint64
+func SetGasUsed(){
+	GasUsed = 0
+}
+
+func SetGasWanted(gaswanted uint64){
+	GasWanted = gaswanted
+}
+
+//export addgas
+func addgas(context unsafe.Pointer, gas int32) {
+	GasUsed += int64(gas)
+	if(GasUsed > int64(GasWanted)) {
+		panic("out of gas in location: vm")
+	}
+	return
+}
 
 var blockHeader abci.Header
 func SetBlockHeader(header abci.Header) {
@@ -47,9 +67,11 @@ func SetAccountKeeper(ac account.AccountKeeper) {
 	accountKeeper = ac
 }
 
-var ctx sdk.Context
-func SetCtx(con sdk.Context) {
+var ctx *sdk.Context
+var gasMeter sdk.GasMeter
+func SetCtx(con *sdk.Context) {
 	ctx = con
+	gasMeter = ctx.GasMeter()
 }
 
 //export send
@@ -154,7 +176,7 @@ func (w *Wasmer) Instantiate(code []byte, funcName string, args json.RawMessage)
 
 	res, err := wasmCall(*instance, init, args)
 	if err != nil {
-		return "", errors.New("init failed")
+		return "", err
 	}
 	if res.Err() {
 		errStr := fmt.Sprintf("err: [%s]\n", res.ParseError())
@@ -164,7 +186,6 @@ func (w *Wasmer) Instantiate(code []byte, funcName string, args json.RawMessage)
 		resStr := fmt.Sprintf("ok: [%s]\n", string(res.Parse().Data))
 		return resStr, nil
 	}
-
 }
 
 func (w *Wasmer) Execute(code []byte, funcName string, args json.RawMessage) (string, error) {
@@ -252,6 +273,12 @@ func getInstance(code []byte) (*wasmer.Instance, error) {
 		return &wasmer.Instance{}, err
 	}
 	imports, err = imports.Namespace("env").Append("get_time", get_time, C.get_time)
+	if err != nil {
+		return &wasmer.Instance{}, err
+	}
+
+	//gas
+	imports, err = imports.Namespace("env").Append("addgas", addgas, C.addgas)
 	if err != nil {
 		return &wasmer.Instance{}, err
 	}

@@ -10,7 +10,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/fc"
 	"github.com/ci123chain/ci123chain/pkg/transaction"
 )
-const price uint64 = 1
+const Price uint64 = 1
 //const unit = 1000
 func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, fck fc.FcKeeper) sdk.AnteHandler {
 	return func(ctx sdk.Context, tx sdk.Tx, simulate bool) (newCtx sdk.Context, res sdk.Result, abort bool) {
@@ -46,6 +46,11 @@ func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, fck f
 			}
 		}
 		gas := stdTx.GetGas()//用户期望的gas值 g.limit
+		//检查是否足够支付gas limit
+		if acc.GetCoin().Amount.Uint64() < gas {
+			return newCtx, sdk.ErrInsufficientCoins("Can't pay enough gasLimit").Result(),true
+		}
+
 		newCtx = SetGasMeter(simulate, ctx, gas)//设置为GasMeter的gasLimit,成为用户可承受的gas上限.
 		//pms.TxSizeCostPerByte*sdk.Gas(len(newCtx.TxBytes()))
 		
@@ -77,11 +82,13 @@ func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, fck f
 			return newCtx, types.ErrTxValidateBasic(types.DefaultCodespace, err).Result(), true
 		}
 		//计算fee
-		gasPrice := price
+		gasPrice := Price
 		newCtx.GasMeter().ConsumeGas(params.TxSizeCostPerByte*sdk.Gas(len(newCtx.TxBytes())), "txSize")
 		fee := newCtx.GasMeter().GasConsumed() * gasPrice
 		getFee := sdk.NewUInt64Coin(fee)
+		//实际扣gas
 		res = DeductFees(acc, getFee, ak, ctx)
+
 		fmt.Println("-------- consume gas by txSize ----------")
 		fmt.Println(newCtx.GasMeter().GasConsumed())
 		if !res.IsOK() {

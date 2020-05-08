@@ -31,7 +31,7 @@ func NewStore(parent types.KVStore, prefix []byte) Store {
 	}
 }
 
-// Implements KVStore
+// ImplemenmiddleIns.fun["allocate"] = allocatets KVStore
 func (s Store) Set(key, value []byte) {
 	AssertValidKey(key)
 	AssertValidValue(value)

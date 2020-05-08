@@ -35,7 +35,7 @@ func perform_send(context unsafe.Pointer, toPtr int32, amountPtr int32) int32 {
 		return 1
 	}
 	coin := types.NewUInt64Coin(coinUint)
-	err = accountKeeper.Transfer(ctx, fromAcc, toAcc, coin)
+	err = accountKeeper.Transfer(*ctx, fromAcc, toAcc, coin)
 	if err != nil {
 		return 1
 	}
