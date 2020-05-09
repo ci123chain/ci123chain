@@ -86,14 +86,10 @@ func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, fck f
 		newCtx.GasMeter().ConsumeGas(params.TxSizeCostPerByte*sdk.Gas(len(newCtx.TxBytes())), "txSize")
 		fee := newCtx.GasMeter().GasConsumed() * gasPrice
 		getFee := sdk.NewUInt64Coin(fee)
-		//实际扣gas
-		res = DeductFees(acc, getFee, ak, ctx)
 
 		fmt.Println("-------- consume gas by txSize ----------")
 		fmt.Println(newCtx.GasMeter().GasConsumed())
-		if !res.IsOK() {
-			return newCtx, res, true
-		}
+
 		//存储奖励金
 		fck.AddCollectedFees(newCtx, getFee)
 

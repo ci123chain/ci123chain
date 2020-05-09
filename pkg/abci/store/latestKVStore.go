@@ -23,13 +23,10 @@ type latestStore struct {
 	latestKeys  []string
 }
 
-func NewlatestStore(parent KVStore, storeEvery, numRecent int64, key sdk.StoreKey, latestKeys []string) *latestStore {
+func NewlatestStore(parent KVStore, latestKeys []string) *latestStore {
 	return &latestStore{
 		cache:  	make(map[string]cValue),
 		parent: 	parent,
-		storeEvery: storeEvery,
-		numRecent:	numRecent,
-		preKey:		key,
 		latestKeys: latestKeys,
 	}
 }
@@ -302,7 +299,8 @@ func (ks *latestStore) getCombineKey(key []byte) string {
 	//version = ks.LastCommitID().Version
 	//
 	//ckey := ks.preKey.Name() + "/" + strconv.FormatInt(version,10) + "/" + string(key)
-	ckey := ks.preKey.Name() + "/" + "/" + string(key)
+	//ckey := ks.preKey.Name() + "/" + "/" + string(key)
+	ckey := string(key)
 	return ckey
 }
 
@@ -312,7 +310,8 @@ func (ks *latestStore) setCombineKey(key []byte) string {
 	//version = ks.LastCommitID().Version + 1
 	//
 	//ckey := ks.preKey.Name() + "/" + strconv.FormatInt(version,10) + "/" + string(key)
-	ckey := ks.preKey.Name() + "/" + "/" + string(key)
+	//ckey := ks.preKey.Name() + "/" + "/" + string(key)
+	ckey := string(key)
 	return ckey
 }
 

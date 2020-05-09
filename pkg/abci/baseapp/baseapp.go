@@ -17,6 +17,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/abci/store"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/abci/version"
+	"github.com/ci123chain/ci123chain/pkg/transaction"
 )
 
 // Key to store the header in the DB itself.
@@ -53,6 +54,7 @@ type BaseApp struct {
 	txDecoder   sdk.TxDecoder // unmarshal []byte into sdk.Tx
 
 	anteHandler sdk.AnteHandler // ante handler for fee and auth
+	deferHandler sdk.DeferHandler // defer handler for fee and auth
 
 	// may be nil
 	initChainer      sdk.InitChainer  // initialize state with validators and state blob
@@ -526,10 +528,12 @@ func (app *BaseApp) runMsgs(ctx sdk.Context, tx sdk.Tx, mode runTxMode) sdk.Resu
 		code = msgResult.Code
 		codespace = msgResult.Codespace
 	}
+
 	gasUsed := ctx.GasMeter().GasConsumed()
 	if msgResult.GasUsed != 0 {
 		gasUsed = msgResult.GasUsed
 	}
+
 
 	return sdk.Result{
 		Code: 		code,
@@ -584,16 +588,28 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 	ctx := app.getContextForTx(mode, txBytes)
 	ms := ctx.MultiStore()
 
+	stdTx, ok := tx.(transaction.Transaction)
+	gasWanted = stdTx.GetGas()
+	if !ok {
+		return transaction.ErrInvalidTx(sdk.CodespaceRoot, "tx must be StdTx").Result()
+	}
 	defer func() {
+
 		if r := recover(); r != nil {
 			switch rType := r.(type) {
 			case sdk.ErrorOutOfGas:
+				app.deferHandler(ctx, tx, true)
 				log := fmt.Sprintf("out of gas in location: %v", rType.Descriptor)
 				result = sdk.ErrOutOfGas(log).Result()
+				result.GasUsed = gasWanted
 			default:
+				app.deferHandler(ctx, tx, false)
 				log := fmt.Sprintf("recovered: %v\nstack:\n%v", r, string(debug.Stack()))
 				result = sdk.ErrInternal(log).Result()
+				result.GasUsed = ctx.GasMeter().GasConsumed()
 			}
+		} else {
+			app.deferHandler(ctx, tx, false)
 		}
 		result.GasWanted = gasWanted
 		//result.GasUsed = gasUsed
@@ -629,7 +645,7 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 			// for the ante handler.
 			ctx = newCtx.WithMultiStore(ms)
 		}
-		gasWanted = result.GasWanted
+		//gasWanted = result.GasWanted
 		//gasUsed = result.GasUsed
 		if abort {
 			return result
@@ -669,6 +685,7 @@ func (app *BaseApp) EndBlock(req abci.RequestEndBlock) (res abci.ResponseEndBloc
 	if app.endBlocker != nil {
 		res = app.endBlocker(app.deliverState.ctx, req)
 	}
+
 	if app.committer != nil {
 		app.committer(app.deliverState.ctx)
 	}

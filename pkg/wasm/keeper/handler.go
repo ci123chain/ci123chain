@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	"github.com/ci123chain/ci123chain/pkg/auth/ante"
 	wasm "github.com/ci123chain/ci123chain/pkg/wasm/types"
 )
 
@@ -46,14 +45,10 @@ func handleInstantiateContractTx(ctx sdk.Context, k Keeper, msg wasm.Instantiate
 	SetGasWanted(gasWanted)
 
 	defer func() {
-		acc := k.AccountKeeper.GetAccount(ctx, msg.Sender)
 		if r := recover(); r != nil{
-			ante.DeductFees(acc, sdk.NewUInt64Coin(GasWanted), k.AccountKeeper, ctx)
 			res = wasm.ErrInstantiateFailed(wasm.DefaultCodespace, errors.New("Vm run out of gas")).Result()
 			res.GasUsed = gasLimit
 			res.GasWanted = gasLimit
-		} else {
-			ante.DeductFees(acc, sdk.NewUInt64Coin(uint64(GasUsed)), k.AccountKeeper, ctx)
 		}
 	}()
 
@@ -61,10 +56,10 @@ func handleInstantiateContractTx(ctx sdk.Context, k Keeper, msg wasm.Instantiate
 	if err != nil {
 		return wasm.ErrInstantiateFailed(wasm.DefaultCodespace, err).Result()
 	}
-
-	return sdk.Result{
+	res = sdk.Result{
 		Data:  []byte(fmt.Sprintf("%s", contractAddr.String())),
 	}
+	return
 }
 
 func handleExecuteContractTx(ctx sdk.Context, k Keeper, msg wasm.ExecuteContractTx) (res sdk.Result){
@@ -73,21 +68,16 @@ func handleExecuteContractTx(ctx sdk.Context, k Keeper, msg wasm.ExecuteContract
 	SetGasWanted(gasWanted)
 
 	defer func() {
-		acc := k.AccountKeeper.GetAccount(ctx, msg.Sender)
 		if r := recover(); r != nil{
-			ante.DeductFees(acc, sdk.NewUInt64Coin(GasWanted), k.AccountKeeper, ctx)
-			res = wasm.ErrExecuteFailed(wasm.DefaultCodespace, errors.New("Vm run out of gas")).Result()
+			res = wasm.ErrInstantiateFailed(wasm.DefaultCodespace, errors.New("Vm run out of gas")).Result()
 			res.GasUsed = gasLimit
 			res.GasWanted = gasLimit
-		} else {
-			ante.DeductFees(acc, sdk.NewUInt64Coin(uint64(GasUsed)), k.AccountKeeper, ctx)
 		}
 	}()
-
 
 	res, err := k.Execute(ctx, msg.Contract, msg.Sender,msg.Args)
 	if err != nil {
 		return wasm.ErrExecuteFailed(wasm.DefaultCodespace, err).Result()
 	}
-	return res
+	return
 }

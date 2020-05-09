@@ -81,7 +81,8 @@ func (gs *gasKVStore) Gas(meter GasMeter, config GasConfig) KVStore {
 
 // Implements KVStore
 func (gs *gasKVStore) Latest(keys []string) KVStore {
-	return nil
+	//return NewlatestStore(gs, gs.storeEvery, gs.numRecent, gs.preKey, keys)
+	return NewlatestStore(gs, keys)
 }
 
 // Implements KVStore
