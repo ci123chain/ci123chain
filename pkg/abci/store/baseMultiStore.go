@@ -241,7 +241,7 @@ func (bs *baseMultiStore) Query(req abci.RequestQuery) abci.ResponseQuery {
 		return err.QueryResult()
 	}
 
-	store := bs.getStoreByName(storeName).Prefix([]byte(storeName))
+	store := bs.getStoreByName(storeName).Prefix([]byte(storeName + "//"))
 	if store == nil {
 		msg := fmt.Sprintf("no such store: %s", storeName)
 		return sdk.ErrUnknownRequest(msg).QueryResult()
@@ -254,7 +254,7 @@ func (bs *baseMultiStore) Query(req abci.RequestQuery) abci.ResponseQuery {
 
 	// trim the path and make the query
 	req.Path = subpath
-	req.Data = append([]byte(storeName),req.Data...)
+	req.Data = append([]byte(storeName + "//"),req.Data...)
 	res := queryable.Query(req)
 
 	return res
