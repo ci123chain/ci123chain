@@ -117,87 +117,74 @@ func Handle404() http.Handler {
 	return http.HandlerFunc(func (w http.ResponseWriter, req *http.Request) {
 		//req.RequestURI = ""
 		cli := &http.Client{}
-
 		nodeUri := req.RequestURI
-		if strings.HasPrefix(nodeUri, CorePrefix) {
-			arr := strings.SplitAfter(nodeUri, CorePrefix)
-			arr = arr[1:]
-			newPath := strings.Join(arr, "")
-			dest := viper.GetString(helper.FlagNode)
-			dest = strings.ReplaceAll(dest, "tcp", "http")
-
-			req.ParseForm()
-			var data = map[string]string{}
-
-			for k, v := range req.Form {
-				//fmt.Println("key is: ", k)
-				//fmt.Println("val is: ", v)
-				//data.Set(k, v[0])
-				key := k
-				value := v[0]
-				data[key] = value
-			}
-
-			newData := url.Values{}
-			for k, v := range data {
-				//fmt.Println(j)
-				newData.Set(k, v)
-			}
-
-			proxyurl, _ := url.Parse(dest)
-			//proxy := httputil.NewSingleHostReverseProxy(proxyurl)
-
-
-			remote_addr := "http://" + proxyurl.Host + newPath
-
-			r, Err := http.NewRequest(req.Method, remote_addr, strings.NewReader(newData.Encode()))
-			if Err != nil {
-				panic(Err)
-			}
-			r.Body = ioutil.NopCloser(strings.NewReader(newData.Encode()))
-
-
-
-			r.URL.Host = proxyurl.Host
-			r.URL.Path = newPath
-			//req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-			//req.Header.Set("Content-Length", strconv.Itoa(len(data.Encode())))
-			//req.RequestURI = newPath
-			/*
-			r.URL.Host = proxyurl.Host
-			r.URL.Path = newPath
-			//r.RequestURI = newPath
-
-			r.Body = ioutil.NopCloser(strings.NewReader(data.Encode()))
-			r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-			r.Header.Set("Content-Length", strconv.Itoa(len(data.Encode())))
-			//req.Header.Add("Content-Length", strconv.Itoa(len(data.Encode())))
-			// Note that ServeHttp is non blocking and uses a go routine under the hood
-*/
-			r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-
-			rep, err := cli.Do(r)
-			if err != nil {
-				//return nil, nil, err
-			}
-			resBody, err := ioutil.ReadAll(rep.Body)
-
-			var tmResponse client.TMResponse
-			err = json.Unmarshal(resBody, &tmResponse)
-			ResultResponse := client.Response{
-				Ret:     0,
-				Data:    tmResponse,
-				Message: "",
-			}
-
-			ResultByte, _ := json.Marshal(ResultResponse)
-
-			w.Header().Set("Content-Type","application/json")
-			w.Write(ResultByte)
-
-			//w.Header().Set("Content-Type","application/json")
-			//proxy.ServeHTTP(w, req)
+		if !strings.HasPrefix(nodeUri, CorePrefix){
+			http.Error(w, "404 path not found", http.StatusNotFound)
+			return
 		}
+		arr := strings.SplitAfter(nodeUri, CorePrefix)
+		arr = arr[1:]
+		newPath := strings.Join(arr, "")
+		dest := viper.GetString(helper.FlagNode)
+		dest = strings.ReplaceAll(dest, "tcp", "http")
+
+		req.ParseForm()
+		var data = map[string]string{}
+
+		for k, v := range req.Form {
+			key := k
+			value := v[0]
+			data[key] = value
+		}
+
+		newData := url.Values{}
+		for k, v := range data {
+			newData.Set(k, v)
+		}
+
+		proxyurl, _ := url.Parse(dest)
+
+		remote_addr := "http://" + proxyurl.Host + newPath
+
+		r, Err := http.NewRequest(req.Method, remote_addr, strings.NewReader(newData.Encode()))
+		if Err != nil {
+			panic(Err)
+		}
+		r.Body = ioutil.NopCloser(strings.NewReader(newData.Encode()))
+
+		r.URL.Host = proxyurl.Host
+		r.URL.Path = newPath
+
+		r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+		rep, err := cli.Do(r)
+		if err != nil  || rep.StatusCode != http.StatusOK {
+			http.Error(w, rep.Status, rep.StatusCode)
+			return
+		}
+
+		resBody, err := ioutil.ReadAll(rep.Body)
+
+		var tmResponse client.TMResponse
+		err = json.Unmarshal(resBody, &tmResponse)
+		resultResponse := client.Response{
+			Ret:     0,
+			Data:    tmResponse,
+			Message: "",
+		}
+
+		resultByte, err := json.Marshal(resultResponse)
+		if err != nil {
+			http.Error(w, "http response marshal error " + err.Error(), rep.StatusCode)
+			return
+		}
+
+		w.Header().Set("Content-Type","application/json")
+		w.Write(resultByte)
+
+		//w.Header().Set("Content-Type","application/json")
+		//proxy.ServeHTTP(w, req)
+
 	})
 }
 
