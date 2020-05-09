@@ -12,7 +12,7 @@ import (
 	"io/ioutil"
 	"strings"
 )
-
+const UINT_MAX uint64 = ^uint64(0)
 type Keeper struct {
 	storeKey    sdk.StoreKey
 	cdc         *codec.Codec
@@ -212,6 +212,9 @@ func (k Keeper) Query(ctx sdk.Context, contractAddress sdk.AccAddress, msg json.
 	SetBlockHeader(ctx.BlockHeader())
 	SetCreator(contractAddress.String())
 	SetInvoker("")
+	SetCtx(&ctx)
+	SetGasUsed()
+	SetGasWanted(UINT_MAX)
 	var params types.CallContractParam
 	if msg != nil {
 		err := json.Unmarshal(msg, &params)
