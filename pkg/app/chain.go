@@ -3,6 +3,7 @@ package app
 import (
 	"encoding/json"
 	"errors"
+	_defer "github.com/ci123chain/ci123chain/pkg/auth/defer"
 	"github.com/spf13/viper"
 	"github.com/ci123chain/ci123chain/pkg/abci/baseapp"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
@@ -172,6 +173,7 @@ func NewChain(logger log.Logger, tmdb tmdb.DB, traceStore io.Writer) *Chain {
 	c.QueryRouter().AddRoute(wasm.RouteKey, wasm.NewQuerier(wasmKeeper))
 
 	c.SetAnteHandler(ante.NewAnteHandler(c.authKeeper, accKeeper, fcKeeper))
+	c.SetDeferHandler(_defer.NewDeferHandler(accKeeper))
 	c.SetBeginBlocker(c.BeginBlocker)
 	c.SetCommitter(c.Committer)
 	c.SetInitChainer(c.InitChainer)

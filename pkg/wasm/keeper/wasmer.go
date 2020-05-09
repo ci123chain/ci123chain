@@ -5,13 +5,21 @@ package keeper
 // extern int read_db(void *context, int key, int value);
 // extern void write_db(void *context, int key, int value);
 // extern void delete_db(void *context, int key);
+// extern int send(void *context, int toPtr, int amountPtr);
+// extern void get_creator(void *context, int creatorPtr);
+// extern void get_invoker(void *context, int invokerPtr);
+// extern void get_time(void *context, int timePtr);
+// extern void addgas(void *context, int gas);
 import "C"
 import (
 	"crypto/md5"
 	"encoding/json"
 	"errors"
 	"fmt"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/account"
 	"github.com/ci123chain/ci123chain/pkg/wasm/types"
+	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/wasmerio/go-ext-wasm/wasmer"
 	"io/ioutil"
 	"os"
@@ -19,6 +27,71 @@ import (
 	"strconv"
 	"unsafe"
 )
+
+var GasUsed int64
+var GasWanted uint64
+func SetGasUsed(){
+	GasUsed = 0
+}
+
+func SetGasWanted(gaswanted uint64){
+	GasWanted = gaswanted
+}
+
+//export addgas
+func addgas(context unsafe.Pointer, gas int32) {
+	GasUsed += int64(gas)
+	if(uint64(GasUsed) > GasWanted) {
+		panic("out of gas in location: vm")
+	}
+	return
+}
+
+var blockHeader abci.Header
+func SetBlockHeader(header abci.Header) {
+	blockHeader = header
+}
+
+var creator string
+func SetCreator(addr string) {
+	creator = addr
+}
+
+var invoker string
+func SetInvoker(addr string) {
+	invoker = addr
+}
+
+var accountKeeper account.AccountKeeper
+func SetAccountKeeper(ac account.AccountKeeper) {
+	accountKeeper = ac
+}
+
+var ctx *sdk.Context
+func SetCtx(con *sdk.Context) {
+	ctx = con
+}
+
+//export send
+func send(context unsafe.Pointer, toPtr int32, amountPtr int32) int32{
+	return perform_send(context, toPtr, amountPtr)
+}
+
+//export get_creator
+func get_creator(context unsafe.Pointer, creatorPtr int32) {
+	getCreator(context, creatorPtr)
+}
+
+//export get_invoker
+func get_invoker(context unsafe.Pointer, invokerPtr int32) {
+	getInvoker(context, invokerPtr)
+}
+
+//export get_time
+func get_time(context unsafe.Pointer, timePtr int32) {
+	getTime(context, timePtr)
+}
+
 
 //export read_db
 func read_db(context unsafe.Pointer, key, value int32) int32 {
@@ -101,7 +174,7 @@ func (w *Wasmer) Instantiate(code []byte, funcName string, args json.RawMessage)
 
 	res, err := wasmCall(*instance, init, args)
 	if err != nil {
-		return "", errors.New("init failed")
+		return "", err
 	}
 	if res.Err() {
 		errStr := fmt.Sprintf("err: [%s]\n", res.ParseError())
@@ -111,7 +184,6 @@ func (w *Wasmer) Instantiate(code []byte, funcName string, args json.RawMessage)
 		resStr := fmt.Sprintf("ok: [%s]\n", string(res.Parse().Data))
 		return resStr, nil
 	}
-
 }
 
 func (w *Wasmer) Execute(code []byte, funcName string, args json.RawMessage) (string, error) {
@@ -171,16 +243,40 @@ func (w *Wasmer) Query(code []byte, funcName string, args json.RawMessage) (stri
 }
 
 func getInstance(code []byte) (*wasmer.Instance, error) {
+	//store
 	imports, err := wasmer.NewImports().Namespace("env").Append("read_db", read_db, C.read_db)
 	if err != nil {
 		return &wasmer.Instance{}, err
 	}
-
 	imports, err = imports.Namespace("env").Append("write_db", write_db, C.write_db)
 	if err != nil {
 		return &wasmer.Instance{}, err
 	}
 	imports, err = imports.Namespace("env").Append("delete_db", delete_db, C.delete_db)
+	if err != nil {
+		return &wasmer.Instance{}, err
+	}
+
+	//api
+	imports, err = imports.Namespace("env").Append("send", send, C.send)
+	if err != nil {
+		return &wasmer.Instance{}, err
+	}
+	imports, err = imports.Namespace("env").Append("get_creator", get_creator, C.get_creator)
+	if err != nil {
+		return &wasmer.Instance{}, err
+	}
+	imports, err = imports.Namespace("env").Append("get_invoker", get_invoker, C.get_invoker)
+	if err != nil {
+		return &wasmer.Instance{}, err
+	}
+	imports, err = imports.Namespace("env").Append("get_time", get_time, C.get_time)
+	if err != nil {
+		return &wasmer.Instance{}, err
+	}
+
+	//gas
+	imports, err = imports.Namespace("env").Append("addgas", addgas, C.addgas)
 	if err != nil {
 		return &wasmer.Instance{}, err
 	}

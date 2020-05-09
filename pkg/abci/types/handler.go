@@ -6,3 +6,5 @@ type Handler func(ctx Context, tx Tx) Result
 // AnteHandler authenticates transactions, before their internal messages are handled.
 // If newCtx.IsZero(), ctx is used instead.
 type AnteHandler func(ctx Context, tx Tx, simulate bool) (newCtx Context, result Result, abort bool)
+
+type DeferHandler func(ctx Context, tx Tx, out bool) (result Result)

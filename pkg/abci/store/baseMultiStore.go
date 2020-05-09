@@ -114,25 +114,28 @@ func (bs *baseMultiStore) LastCommitID() CommitID {
 }
 
 func (bs *baseMultiStore) Commit() CommitID {
-	var commitInfo commitInfo
+	var CommitInfo commitInfo
 	version := bs.lastCommitID.Version + 1
 	cInfoKey := fmt.Sprintf(types.CommitInfoKeyFmt, version)
 	cInfoBytes := bs.db.Get([]byte(cInfoKey))
 	if cInfoBytes == nil {
 		// Commit stores.
-		commitInfo = commitBaseStores(version, bs.stores)
+		CommitInfo = commitBaseStores(version, bs.stores)
 		// Need to update atomically.
-		batch := bs.db.NewBatch()
-		setCommitInfo(batch, version, commitInfo)
-		setLatestVersion(batch, version)
-		batch.Write()
+
+		//batch := bs.db.NewBatch()
+		//setCommitInfo(batch, version, CommitInfo)
+		//setLatestVersion(batch, version)
+		//batch.Write()
+		SetCommitInfo(bs.db, version, CommitInfo)
+		SetLatestVersion(bs.db, version)
 	}else{
-		cdc.MustUnmarshalBinaryLengthPrefixed(cInfoBytes, &commitInfo)
+		cdc.MustUnmarshalBinaryLengthPrefixed(cInfoBytes, &CommitInfo)
 	}
 	// Prepare for next version.
 	commitID := CommitID{
 		Version: version,
-		Hash:    commitInfo.Hash(),
+		Hash:    CommitInfo.Hash(),
 	}
 	bs.lastCommitID = commitID
 	return commitID
@@ -219,7 +222,7 @@ func (bs *baseMultiStore) CacheMultiStore() CacheMultiStore {
 func (bs *baseMultiStore) loadCommitStoreFromParams(key sdk.StoreKey, id CommitID, params storeParams) error {
 	_, ok := bs.stores[key]
 	if !ok {
-		store := NewBaseKVStore(dbStoreAdapter{bs.db}, int64(0), int64(0), key)
+		store :=  NewBaseKVStore(dbStoreAdapter{bs.db}, int64(0), int64(0), key)
 		store.SetPruning(bs.pruning)
 		bs.stores[key] = store
 	}
@@ -238,12 +241,12 @@ func (bs *baseMultiStore) Query(req abci.RequestQuery) abci.ResponseQuery {
 		return err.QueryResult()
 	}
 
-	store := bs.getStoreByName(storeName)
+	store := bs.getStoreByName(storeName).Prefix([]byte(storeName + "//"))
 	if store == nil {
 		msg := fmt.Sprintf("no such store: %s", storeName)
 		return sdk.ErrUnknownRequest(msg).QueryResult()
 	}
-	queryable, ok := store.(Queryable)
+	queryable, ok := store.Parent().(Queryable)
 	if !ok {
 		msg := fmt.Sprintf("store %s doesn't support queries", storeName)
 		return sdk.ErrUnknownRequest(msg).QueryResult()
@@ -251,15 +254,26 @@ func (bs *baseMultiStore) Query(req abci.RequestQuery) abci.ResponseQuery {
 
 	// trim the path and make the query
 	req.Path = subpath
+	req.Data = append([]byte(storeName + "//"),req.Data...)
 	res := queryable.Query(req)
 
 	return res
 }
 
-func (bs *baseMultiStore) getStoreByName(name string) Store {
+func (bs *baseMultiStore) getStoreByName(name string) KVStore {
 	key := bs.keysByName[name]
 	if key == nil {
 		return nil
 	}
-	return bs.stores[key]
+	return bs.stores[key].(*baseKVStore)
+}
+
+func SetCommitInfo(db dbm.DB, version int64, info commitInfo) {
+	infoByte, _ := cdc.MarshalBinaryLengthPrefixed(info)
+	db.Set([]byte(fmt.Sprintf(types.CommitInfoKeyFmt, version)),infoByte)
+}
+
+func SetLatestVersion(db dbm.DB, version int64) {
+	versionByte, _ := cdc.MarshalBinaryLengthPrefixed(version)
+	db.Set([]byte(types.LatestVersionKey),versionByte)
 }

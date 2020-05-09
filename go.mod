@@ -12,6 +12,7 @@ require (
 	github.com/deckarep/golang-set v1.7.1 // indirect
 	github.com/elastic/gosigar v0.10.5 // indirect
 	github.com/ethereum/go-ethereum v1.9.6
+	github.com/go-interpreter/wagon v0.6.0
 	github.com/gogo/protobuf v1.3.0
 	github.com/golang/protobuf v1.3.3
 	github.com/gorilla/mux v1.7.3
@@ -38,3 +39,5 @@ require (
 	gopkg.in/yaml.v2 v2.2.8
 
 )
+
+replace github.com/tendermint/tendermint => github.com/ci123chain/tendermint v0.32.3-rc

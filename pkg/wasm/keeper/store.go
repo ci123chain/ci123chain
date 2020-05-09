@@ -31,7 +31,7 @@ func NewStore(parent types.KVStore, prefix []byte) Store {
 	}
 }
 
-// Implements KVStore
+// ImplemenmiddleIns.fun["allocate"] = allocatets KVStore
 func (s Store) Set(key, value []byte) {
 	AssertValidKey(key)
 	AssertValidValue(value)
@@ -69,7 +69,6 @@ func cloneAppend(bz []byte, tail []byte) (res []byte) {
 func SetStore(kvStore Store) {
 	store = kvStore
 }
-
 
 //export read_db
 func readDB(context unsafe.Pointer, key, value int32) int32 {

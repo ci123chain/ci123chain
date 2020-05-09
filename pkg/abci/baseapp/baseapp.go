@@ -10,13 +10,14 @@ import (
 
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/tmhash"
-	dbm "github.com/tendermint/tm-db"
 	"github.com/tendermint/tendermint/libs/log"
+	dbm "github.com/tendermint/tm-db"
 
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	"github.com/ci123chain/ci123chain/pkg/abci/store"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/abci/version"
+	"github.com/ci123chain/ci123chain/pkg/transaction"
 )
 
 // Key to store the header in the DB itself.
@@ -53,6 +54,7 @@ type BaseApp struct {
 	txDecoder   sdk.TxDecoder // unmarshal []byte into sdk.Tx
 
 	anteHandler sdk.AnteHandler // ante handler for fee and auth
+	deferHandler sdk.DeferHandler // defer handler for fee and auth
 
 	// may be nil
 	initChainer      sdk.InitChainer  // initialize state with validators and state blob
@@ -498,7 +500,7 @@ func (app *BaseApp) getContextForTx(mode runTxMode, txBytes []byte) (ctx sdk.Con
 	return
 }
 
-func (app *BaseApp) runMsgs(ctx sdk.Context, tx sdk.Tx, mode runTxMode) (result sdk.Result) {
+func (app *BaseApp) runMsgs(ctx sdk.Context, tx sdk.Tx, mode runTxMode) sdk.Result {
 	var code      sdk.CodeType
 	var codespace sdk.CodespaceType
 
@@ -520,15 +522,23 @@ func (app *BaseApp) runMsgs(ctx sdk.Context, tx sdk.Tx, mode runTxMode) (result 
 	}
 
 	fmt.Println("-------- out handler ----------")
-	fmt.Println(ctx.GasMeter().GasConsumed())
+ 	fmt.Println(ctx.GasMeter().GasConsumed())
+
 	if !msgResult.IsOK() {
 		code = msgResult.Code
 		codespace = msgResult.Codespace
 	}
+
+	gasUsed := ctx.GasMeter().GasConsumed()
+	if msgResult.GasUsed != 0 {
+		gasUsed = msgResult.GasUsed
+	}
+
+
 	return sdk.Result{
 		Code: 		code,
 		Codespace: 	codespace,
-		GasUsed:   	ctx.GasMeter().GasConsumed(),
+		GasUsed:   	gasUsed,
 		Log: 		strings.TrimSpace(msgResult.Log),
 		Data: 		msgResult.Data,
 	}
@@ -574,23 +584,35 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 	// determined by the GasMeter. We need access to the context to get the gas
 	// meter so we initialize upfront.
 	var gasWanted uint64
-	var gasUsed uint64
+	//var gasUsed uint64
 	ctx := app.getContextForTx(mode, txBytes)
 	ms := ctx.MultiStore()
 
+	stdTx, ok := tx.(transaction.Transaction)
+	gasWanted = stdTx.GetGas()
+	if !ok {
+		return transaction.ErrInvalidTx(sdk.CodespaceRoot, "tx must be StdTx").Result()
+	}
 	defer func() {
+
 		if r := recover(); r != nil {
 			switch rType := r.(type) {
 			case sdk.ErrorOutOfGas:
+				app.deferHandler(ctx, tx, true)
 				log := fmt.Sprintf("out of gas in location: %v", rType.Descriptor)
 				result = sdk.ErrOutOfGas(log).Result()
+				result.GasUsed = gasWanted
 			default:
+				app.deferHandler(ctx, tx, false)
 				log := fmt.Sprintf("recovered: %v\nstack:\n%v", r, string(debug.Stack()))
 				result = sdk.ErrInternal(log).Result()
+				result.GasUsed = ctx.GasMeter().GasConsumed()
 			}
+		} else {
+			app.deferHandler(ctx, tx, false)
 		}
 		result.GasWanted = gasWanted
-		result.GasUsed = gasUsed
+		//result.GasUsed = gasUsed
 	}()
 
 		if err := tx.ValidateBasic(); err != nil {
@@ -623,8 +645,8 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 			// for the ante handler.
 			ctx = newCtx.WithMultiStore(ms)
 		}
-		gasWanted = result.GasWanted
-		gasUsed = result.GasUsed
+		//gasWanted = result.GasWanted
+		//gasUsed = result.GasUsed
 		if abort {
 			return result
 		}
@@ -640,6 +662,7 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 	// multi-store in case message processing fails.
 
 	runMsgCtx, msCache := app.cacheTxContext(ctx, txBytes)
+
 	result = app.runMsgs(runMsgCtx, tx, mode)
 
 	if mode == runTxModeSimulate  { // XXX
@@ -662,6 +685,7 @@ func (app *BaseApp) EndBlock(req abci.RequestEndBlock) (res abci.ResponseEndBloc
 	if app.endBlocker != nil {
 		res = app.endBlocker(app.deliverState.ctx, req)
 	}
+
 	if app.committer != nil {
 		app.committer(app.deliverState.ctx)
 	}

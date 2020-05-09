@@ -86,6 +86,13 @@ func (app *BaseApp) SetAnteHandler(ah sdk.AnteHandler) {
 	app.anteHandler = ah
 }
 
+func (app *BaseApp) SetDeferHandler(de sdk.DeferHandler) {
+	if app.sealed {
+		panic("SetDeferHandler() on sealed BaseApp")
+	}
+	app.deferHandler = de
+}
+
 func (app *BaseApp) SetAddrPeerFilter(pf sdk.PeerFilter) {
 	if app.sealed {
 		panic("SetAddrPeerFilter() on sealed BaseApp")

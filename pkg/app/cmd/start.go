@@ -124,6 +124,7 @@ func StartInProcess(ctx *app.Context, appCreator app.AppCreator) (*node.Node, er
 	if err != nil {
 		return nil, err
 	}
+	ctx.Logger.Info("Starting Node Server Success")
 
 	// Sleep forever and then...
 	cmn.TrapSignal(ctx.Logger, func() {
