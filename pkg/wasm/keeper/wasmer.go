@@ -41,7 +41,7 @@ func SetGasWanted(gaswanted uint64){
 //export addgas
 func addgas(context unsafe.Pointer, gas int32) {
 	GasUsed += int64(gas)
-	if(GasUsed > int64(GasWanted)) {
+	if(uint64(GasUsed) > GasWanted) {
 		panic("out of gas in location: vm")
 	}
 	return
@@ -68,10 +68,8 @@ func SetAccountKeeper(ac account.AccountKeeper) {
 }
 
 var ctx *sdk.Context
-var gasMeter sdk.GasMeter
 func SetCtx(con *sdk.Context) {
 	ctx = con
-	gasMeter = ctx.GasMeter()
 }
 
 //export send
