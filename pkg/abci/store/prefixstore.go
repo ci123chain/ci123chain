@@ -35,7 +35,8 @@ func (s prefixStore) key(key []byte) (res []byte) {
 	if key == nil {
 		panic("nil types on prefixStore")
 	}
-	res = cloneAppend(s.prefix, key)
+	keystr := "//" + string(key)
+	res = cloneAppend(s.prefix, []byte(keystr))
 	return
 }
 
