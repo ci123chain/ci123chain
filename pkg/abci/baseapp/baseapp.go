@@ -572,7 +572,7 @@ func (app *BaseApp) cacheTxContext(ctx sdk.Context, txBytes []byte) (
 		).(sdk.CacheMultiStore)
 	}
 
-	return ctx.WithMultiStore(ms), msCache
+	return ctx.WithMultiStore(msCache), msCache
 }
 
 // runTx processes a transfer. The transactions is proccessed via an
@@ -598,18 +598,20 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 		if r := recover(); r != nil {
 			switch rType := r.(type) {
 			case sdk.ErrorOutOfGas:
-				app.deferHandler(ctx, tx, true)
+				app.deferHandler(ctx, tx, true, 0)
 				log := fmt.Sprintf("out of gas in location: %v", rType.Descriptor)
 				result = sdk.ErrOutOfGas(log).Result()
 				result.GasUsed = gasWanted
 			default:
-				app.deferHandler(ctx, tx, false)
+				app.deferHandler(ctx, tx, false, 0)
 				log := fmt.Sprintf("recovered: %v\nstack:\n%v", r, string(debug.Stack()))
 				result = sdk.ErrInternal(log).Result()
 				result.GasUsed = ctx.GasMeter().GasConsumed()
 			}
+		} else if result.GasUsed != 0{
+			app.deferHandler(ctx, tx, false, result.GasUsed)
 		} else {
-			app.deferHandler(ctx, tx, false)
+			app.deferHandler(ctx, tx, false, 0)
 		}
 		result.GasWanted = gasWanted
 		//result.GasUsed = gasUsed

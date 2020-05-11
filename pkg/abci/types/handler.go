@@ -7,4 +7,4 @@ type Handler func(ctx Context, tx Tx) Result
 // If newCtx.IsZero(), ctx is used instead.
 type AnteHandler func(ctx Context, tx Tx, simulate bool) (newCtx Context, result Result, abort bool)
 
-type DeferHandler func(ctx Context, tx Tx, out bool) (result Result)
+type DeferHandler func(ctx Context, tx Tx, out bool, gasUsed uint64 ) (result Result)

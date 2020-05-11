@@ -10,18 +10,26 @@ import (
 const Price uint64 = 1
 //const unit = 1000
 func NewDeferHandler( ak account.AccountKeeper) sdk.DeferHandler {
-	return func(ctx sdk.Context, tx sdk.Tx, out bool) (res sdk.Result) {
+	return func(ctx sdk.Context, tx sdk.Tx, out bool, used uint64) (res sdk.Result) {
 		if out {
 			return
 		}
 
 		//返还剩余gas
+		var gasused uint64
 		stdTx, _ := tx.(transaction.Transaction)
 		address := stdTx.GetFromAddress()
 		acc := ak.GetAccount(ctx, address)
 		gaswanted := stdTx.GetGas()
-		gasused := ctx.GasMeter().GasConsumed()
+		if used != 0 {
+			gasused = used
+		} else {
+			gasused = ctx.GasMeter().GasConsumed()
+		}
 		restgas := gaswanted - gasused
+		if restgas == 0 {
+			return 
+		}
 		restfee := sdk.NewUInt64Coin(restgas)
 		res = ante.ReturnFees(acc, restfee, ak, ctx)
 		return
