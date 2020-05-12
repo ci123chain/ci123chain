@@ -61,28 +61,30 @@ func (ks *latestStore) Get(key []byte) (value []byte) {
 		}
 	}
 
-	ckey := ks.getCombineKey(key)
-	value = ks.parent.Get([]byte(ckey))
+	value = ks.parent.Get(key)
 	return value
 }
 
 func (ks *latestStore) parentGet(key []byte) (value []byte) {
-	ckey := ks.getCombineKey(key)
-
+	oriKey := key
 	p := ks.parent
 	for {
 		if reflect.TypeOf(p) != reflect.TypeOf(dbStoreAdapter{}) {
 			p = p.Parent()
+			if reflect.TypeOf(p) == reflect.TypeOf(prefixStore{}) {
+				pre := p.(prefixStore).prefix
+				key = append(pre, key...)
+			}
 		} else {
 			break
 		}
 	}
 
-	value = p.Get([]byte(ckey))
+	value = p.Get([]byte(key))
 	if len(value) > 0 {
 		return
 	} else {
-		value = ks.parent.Get(key)
+		value = ks.parent.Get(oriKey)
 	}
 	return
 }
@@ -105,8 +107,7 @@ func (ks *latestStore) Delete(key []byte) {
 	ks.mtx.Lock()
 	defer ks.mtx.Unlock()
 	ks.assertValidKey(key)
-	ckey := ks.getCombineKey(key)
-	ks.setCacheValue([]byte(ckey), nil, true, true)
+	ks.setCacheValue([]byte(key), nil, true, true)
 }
 
 // Implements KVStore
@@ -144,31 +145,25 @@ func (ks *latestStore) CacheWrapWithTrace(w io.Writer, tc TraceContext) CacheWra
 
 // Implements KVStore.
 func (ks *latestStore) Iterator(start, end []byte) Iterator {
-	cstart := ks.getCombineKey(start)
-	cend := ks.getCombineKey(end)
-	return ks.iterator([]byte(cstart), []byte(cend), true)
+	return ks.iterator(start, end, true)
 }
 
 // Implements KVStore.
 func (ks *latestStore) ReverseIterator(start, end []byte) Iterator {
-	cstart := ks.getCombineKey(start)
-	cend := ks.getCombineKey(end)
-	return ks.iterator([]byte(cstart), []byte(cend), false)
+	return ks.iterator(start, end, false)
 }
 
 func (ks *latestStore) iterator(start, end []byte, ascending bool) Iterator {
 	var parent, cache Iterator
-	cstart := ks.getCombineKey(start)
-	cend := ks.getCombineKey(end)
 
 	if ascending {
-		parent = ks.parent.Iterator([]byte(cstart), []byte(cend))
+		parent = ks.parent.Iterator(start, end)
 	} else {
-		parent = ks.parent.ReverseIterator([]byte(cstart), []byte(cend))
+		parent = ks.parent.ReverseIterator(start, end)
 	}
 
 	items := ks.dirtyItems(ascending)
-	cache = newMemIterator([]byte(cstart), []byte(cend), items)
+	cache = newMemIterator(start, end, items)
 
 	return newCacheMergeIterator(parent, cache, ascending)
 }
@@ -293,16 +288,16 @@ func (ks *latestStore) LastCommitID() CommitID {
 	return cInfo.CommitID()
 }
 
-func (ks *latestStore) getCombineKey(key []byte) string {
-	//var version int64
-	//
-	//version = ks.LastCommitID().Version
-	//
-	//ckey := ks.preKey.Name() + "/" + strconv.FormatInt(version,10) + "/" + string(key)
-	//ckey := ks.preKey.Name() + "/" + "/" + string(key)
-	ckey := string(key)
-	return ckey
-}
+//func (ks *latestStore) getCombineKey(key []byte) string {
+//	//var version int64
+//	//
+//	//version = ks.LastCommitID().Version
+//	//
+//	//ckey := ks.preKey.Name() + "/" + strconv.FormatInt(version,10) + "/" + string(key)
+//	//ckey := ks.preKey.Name() + "/" + "/" + string(key)
+//	ckey := string(key)
+//	return ckey
+//}
 
 func (ks *latestStore) setCombineKey(key []byte) string {
 	//var version int64
