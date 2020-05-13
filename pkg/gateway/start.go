@@ -61,6 +61,8 @@ func Start() {
 	// create http server
 
 	h := http.TimeoutHandler(http.HandlerFunc(AllHandle), time.Second*60, "server timeout")
+	http.HandleFunc("/createChannel", createChannelHandle)
+
 	server := http.Server{
 		Addr:    fmt.Sprintf(":%d", port),
 		Handler: h,
@@ -77,7 +79,13 @@ func Start() {
 	}
 }
 
+func createChannelHandle(w http.ResponseWriter, r *http.Request) {
+
+}
+
 func AllHandle(w http.ResponseWriter, r *http.Request) {
+
+
 
 	//do something
 	w.Header().Set("Content-Type", "application/json")

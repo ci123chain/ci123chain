@@ -20,6 +20,7 @@ require (
 	github.com/panjf2000/ants/v2 v2.2.2
 	github.com/pborman/uuid v1.2.0 // indirect
 	github.com/pkg/errors v0.9.1
+	github.com/pretty66/gosdk v1.0.3 // indirect
 	github.com/rjeczalik/notify v0.9.2 // indirect
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/pflag v1.0.3
