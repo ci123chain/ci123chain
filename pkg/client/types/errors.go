@@ -63,3 +63,7 @@ func ErrPhrasesNotMatch(codespace sdk.CodespaceType, err error) sdk.Error {
 func ErrNode(codespace sdk.CodespaceType, err error) sdk.Error {
 	return sdk.NewError(codespace, CodeNodeError,"Node status Error: %s", err.Error())
 }
+
+func ErrGenValidatorKey(codespace sdk.CodespaceType, err error) sdk.Error {
+	return sdk.NewError(codespace, CodeNodeError,"Gen Validator Key Error: %s", err.Error())
+}
