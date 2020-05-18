@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -20,8 +21,9 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 	"net"
 	"path/filepath"
-	"time"
 	"regexp"
+	"time"
+	//"regexp"
 )
 
 var (
@@ -255,34 +257,24 @@ func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initCo
 	nodeKey, err := node.LoadNodeKey(c.NodeKeyFile())
 	privBz := viper.GetString(FlagWithValidator)
 	if len(privBz) > 0 {
-		//正则匹配
-		rule := `^[0-9a-zA-Z]{43}$`
-		reg := regexp.MustCompile(rule)
+		//1.match length
 		priByt := []byte(privBz)
 		length := len(priByt)
-		var noEqualSign bool
-		if priByt[length-1] != 61 {
-			noEqualSign = true
-		}
-		var ss string
-		var validaLength bool
 		if length != 44 {
-			ss = string(priByt[:])
-		}else {
-			validaLength = true
-			ss = string(priByt[:length-1])
+			panic(errors.New(fmt.Sprintf("length of validator key does not match, expected %d, got %d",44 ,length)))
 		}
-		if !validaLength {
-			if noEqualSign{
-				panic(errors.New("insufficient private key length and the end of the private key string should be an equal sign"))
-			}
-			panic(errors.New("insufficient private key length"))
+
+		//2.regex match
+		rule := `=$`
+		reg := regexp.MustCompile(rule)
+		if !reg.MatchString(privBz) {
+			panic(errors.New("the end of the validator key string should be an equal sign"))
 		}
-		if noEqualSign{
-			panic(errors.New("the end of the private key string should be an equal sign"))
-		}
-		if !reg.MatchString(ss) {
-			panic(errors.New("invalid string"))
+
+		//3.match base64 encoding
+		_,err := base64.StdEncoding.DecodeString(privBz)
+		if err != nil {
+			panic(err)
 		}
 
 		privStr = fmt.Sprintf(`{"type":"%s","value":"%s"}`, secp256k1.PrivKeyAminoName, privBz)
@@ -303,6 +295,9 @@ func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initCo
 	)
 
 	nodeKey, err = node.GenNodeKeyByPrivKey(c.NodeKeyFile(), pv.Key.PrivKey)
+	if err != nil {
+		panic(err)
+	}
 	nodeID = string(nodeKey.ID())
 
 	/*
