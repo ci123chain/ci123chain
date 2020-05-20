@@ -1,19 +1,18 @@
 package cmd
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"github.com/ci123chain/ci123chain/pkg/abci"
 	"github.com/ci123chain/ci123chain/pkg/app"
 	"github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/config"
 	"github.com/ci123chain/ci123chain/pkg/node"
-	order "github.com/ci123chain/ci123chain/pkg/order/keeper"
-	ortypes "github.com/ci123chain/ci123chain/pkg/order/types"
 	"github.com/ci123chain/ci123chain/pkg/validator"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"github.com/tendermint/go-amino"
 	cfg "github.com/tendermint/tendermint/config"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
@@ -22,7 +21,9 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 	"net"
 	"path/filepath"
+	"regexp"
 	"time"
+	//"regexp"
 )
 
 var (
@@ -125,6 +126,9 @@ func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Com
 				Overwrite: viper.GetBool(FlagOverwrite),
 				//tmtime.Now(),
 			}
+			if initConfig.ChainID == "" {
+				panic(errors.New("chain id can not be empty"))
+			}
 			chainID, nodeID, appMessage, err := InitWithConfig(cdc, appInit, config, initConfig)
 			if err != nil {
 				return types.ErrInitWithCfg(types.DefaultCodespace, err)
@@ -215,7 +219,7 @@ func gentxWithConfig(cdc *amino.Codec, appInit app.AppInit, config *cfg.Config, 
 	return
 }
 
-
+/*
 func GetChainID() (string, error){
 
 	var id string
@@ -245,7 +249,7 @@ func GetChainID() (string, error){
 	}
 	return id, nil
 }
-
+*/
 func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initConfig InitConfig)(
 	chainID string, nodeID string, appMessage json.RawMessage, err error) {
 	var validatorKey secp256k1.PrivKeySecp256k1
@@ -253,13 +257,35 @@ func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initCo
 	nodeKey, err := node.LoadNodeKey(c.NodeKeyFile())
 	privBz := viper.GetString(FlagWithValidator)
 	if len(privBz) > 0 {
+		//1.match length
+		priByt := []byte(privBz)
+		length := len(priByt)
+		if length != 44 {
+			panic(errors.New(fmt.Sprintf("length of validator key does not match, expected %d, got %d",44 ,length)))
+		}
+
+		//2.regex match
+		rule := `=$`
+		reg := regexp.MustCompile(rule)
+		if !reg.MatchString(privBz) {
+			panic(errors.New("the end of the validator key string should be an equal sign"))
+		}
+
+		//3.match base64 encoding
+		_,err := base64.StdEncoding.DecodeString(privBz)
+		if err != nil {
+			panic(err)
+		}
+
 		privStr = fmt.Sprintf(`{"type":"%s","value":"%s"}`, secp256k1.PrivKeyAminoName, privBz)
 		err = cdc.UnmarshalJSON([]byte(privStr), &validatorKey)
 		if err != nil {
 			panic(err)
 		}
 	}else {
-		validatorKey = secp256k1.GenPrivKey()
+		/*validatorKey = secp256k1.GenPrivKey()
+		*/
+		panic(errors.New("validator key can not be empty"))
 	}
 
 	pv := validator.GenFilePV(
@@ -269,8 +295,12 @@ func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initCo
 	)
 
 	nodeKey, err = node.GenNodeKeyByPrivKey(c.NodeKeyFile(), pv.Key.PrivKey)
+	if err != nil {
+		panic(err)
+	}
 	nodeID = string(nodeKey.ID())
 
+	/*
 	if initConfig.ChainID == "" {
 		ChainID, err := GetChainID()
 		if err != nil {
@@ -279,6 +309,7 @@ func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initCo
 		initConfig.ChainID = ChainID
 		chainID = ChainID
 	}
+	*/
 	chainID = initConfig.ChainID
 
 	genFile := c.GenesisFile()

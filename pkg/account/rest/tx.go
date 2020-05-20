@@ -3,8 +3,6 @@ package rest
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/gorilla/mux"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
 	"github.com/ci123chain/ci123chain/pkg/account/types"
 	"github.com/ci123chain/ci123chain/pkg/client"
@@ -12,6 +10,10 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/client/helper"
 	"github.com/ci123chain/ci123chain/pkg/transfer"
 	"github.com/ci123chain/ci123chain/pkg/util"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/gorilla/mux"
+	"github.com/tendermint/go-amino"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
 	"net/http"
 )
 
@@ -20,6 +22,7 @@ func RegisterRoutes(cliCtx context.Context, r *mux.Router) {
 	r.HandleFunc("/account/new", NewAccountRequestHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/bank/balance", QueryBalancesRequestHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/account/nonce", QueryNonceRequestHandleFn(cliCtx)).Methods("POST")
+	r.HandleFunc("/account/new_validator", CreateNewValidatorKeyHandleFn(cliCtx)).Methods("GET")
 }
 
 type BalanceData struct {
@@ -38,6 +41,10 @@ type AccountAddress struct {
 type Account struct {
 	Address string `json:"address"`
 	PrivKey string `json:"privKey"`
+}
+
+type Key struct {
+	ValidatorKey string `json:"validator_key"`
 }
 
 func QueryBalancesRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
@@ -127,6 +134,22 @@ func QueryNonceRequestHandleFn(cliCtx context.Context) http.HandlerFunc {
 			return
 		}
 		resp := NonceData{Nonce:res}
+		rest.PostProcessResponseBare(w, cliCtx, resp)
+	}
+}
+
+func CreateNewValidatorKeyHandleFn(cliCtx context.Context) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		validatorKey := secp256k1.GenPrivKey()
+
+		cdc := amino.NewCodec()
+		keyByte, err := cdc.MarshalJSON(validatorKey)
+		if err != nil {
+			rest.WriteErrorRes(w, client.ErrGenValidatorKey(types.DefaultCodespace, err))
+		}
+		resp := Key{ValidatorKey:string(keyByte[1:len(keyByte)-1])}
+
 		rest.PostProcessResponseBare(w, cliCtx, resp)
 	}
 }

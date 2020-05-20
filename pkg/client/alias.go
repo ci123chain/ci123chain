@@ -14,6 +14,7 @@ var (
 	ErrGetPassword		= types.ErrGetPassword
 	ErrPhrasesNotMatch	= types.ErrPhrasesNotMatch
 	ErrNode				= types.ErrNode
+	ErrGenValidatorKey  = types.ErrGenValidatorKey
 )
 
 type TMResponse struct {
