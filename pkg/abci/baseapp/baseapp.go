@@ -635,11 +635,6 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 		anteCtx, msCache = app.cacheTxContext(ctx, txBytes)
 		newCtx, result, abort := app.anteHandler(anteCtx, tx, (mode == runTxModeSimulate))
 
-		if abort {
-			ctx = newCtx
-			return result
-		}
-
 		if !newCtx.IsZero() {
 			// At this point, newCtx.MultiStore() is cache wrapped,
 			// or something else replaced by anteHandler.
