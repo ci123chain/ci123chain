@@ -91,6 +91,8 @@ func ParseURL(r *http.Request) (types.Proxy, error, map[string]string){
 		return server.NewConcretProxy(pt), nil, data
 	case types.Filter:
 		return server.NewFilterProxy(pt), nil, data
+	case types.Deploy:
+		return server.NewDeployProxy(pt), nil, data
 	default:
 		return server.NewLBProxy(pt), nil, data
 	}

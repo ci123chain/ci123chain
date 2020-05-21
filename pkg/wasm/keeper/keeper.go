@@ -313,7 +313,7 @@ func (k Keeper) GetCodeInfo(ctx sdk.Context, codeHash []byte) *types.CodeInfo {
 }
 
 func (k Keeper) generateContractAddress(codeHash []byte) sdk.AccAddress {
-	fmt.Println(sdk.ToAccAddress(codeHash))
+	//fmt.Println(sdk.ToAccAddress(codeHash))
 	return sdk.ToAccAddress(codeHash)
 }
 
