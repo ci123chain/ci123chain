@@ -23,6 +23,7 @@ import (
 	"github.com/wasmerio/go-ext-wasm/wasmer"
 	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 	"strconv"
 	"unsafe"
@@ -131,20 +132,35 @@ func NewWasmer(homeDir string, _ types.WasmConfig) (Wasmer, error){
 	}, nil
 }
 
+func FileExist(path string) bool {
+	_, err := os.Lstat(path)
+	return !os.IsNotExist(err)
+}
 
 func (w *Wasmer) Create(code []byte) (Wasmer,[]byte, error) {
 
 	codeHash := MakeCodeHash(code)
 	hash := fmt.Sprintf("%x", codeHash)
-	if Str := w.FilePathMap[hash]; Str != "" {
-		return Wasmer{}, nil, errors.New("the contract file has existed")
+	if fName := w.FilePathMap[hash]; fName != "" {
+		if FileExist(path.Join(w.HomeDir, fName)) {
+			//file exist, remove file and delete
+			err := os.Remove(path.Join(w.HomeDir, fName))
+			if err != nil {
+				return Wasmer{}, nil, err
+			}
+			delete(w.FilePathMap, hash)
+		}else {
+			//file not exist, delete
+			delete(w.FilePathMap, hash)
+		}
 	}
-
 	id, fileName := makeFilePath(w.LastFileID)
+/*
 	err := ioutil.WriteFile(w.HomeDir + "/" + fileName, code, types.ModePerm)
 	if err != nil {
 		return Wasmer{}, nil, err
 	}
+*/
 	w.FilePathMap[hash] = fileName
 	newWasmer := Wasmer{
 		HomeDir:     w.HomeDir,

@@ -24,12 +24,13 @@ func SendRequest(requestUrl *url.URL,r *http.Request, RequestParams map[string]s
 		data.Set(k, v)
 	}
 
-
 	req2, err := http.NewRequest(r.Method, reqUrl, strings.NewReader(data.Encode()))
 	if err != nil {
 		return nil, nil, err
 	}
 	req2.Body = ioutil.NopCloser(strings.NewReader(data.Encode()))
+	//not use one connection
+	req2.Close = true
 
 	// set request content type
 	req2.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -40,8 +41,9 @@ func SendRequest(requestUrl *url.URL,r *http.Request, RequestParams map[string]s
 	}
 	b, err := ioutil.ReadAll(rep2.Body)
 	if err != nil {
-		panic(err)
+		return nil, nil, err
 	}
+	defer rep2.Body.Close()
 	return b, rep2, nil
 }
 

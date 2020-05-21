@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"bytes"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -10,8 +11,11 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/account/exported"
 	"github.com/ci123chain/ci123chain/pkg/wasm/types"
 	"io/ioutil"
+	"os"
+	"path"
 	"strings"
 )
+
 const UINT_MAX uint64 = ^uint64(0)
 type Keeper struct {
 	storeKey    sdk.StoreKey
@@ -61,18 +65,59 @@ func (k Keeper) Create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte)
 		}
 		k.wasmer = wasmer
 	}
+	codeHash = MakeCodeHash(wasmCode)
+	//check if it has been saved in couchDB.
+	codeByte := store.Get(codeHash)
+	if codeByte != nil {
+		hash := fmt.Sprintf("%x", codeHash)
+		filePath := path.Join(k.wasmer.HomeDir, k.wasmer.FilePathMap[hash])
+		if FileExist(filePath) {
+			//the file content needs to be one
+			localCode, err := ioutil.ReadFile(filePath)
+			if err != nil {
+				return nil, err
+			}
+			localFileHash := MakeCodeHash(localCode)
+			//the content if different, delete local file and save remote file.
+			if !bytes.Equal(localFileHash, codeHash) {
+				err = os.Remove(filePath)
+				if err != nil {
+					return nil, err
+				}
+			}
+			err = ioutil.WriteFile(filePath, wasmCode, types.ModePerm)
+			if err != nil {
+				return nil, err
+			}
+			return codeHash, nil
+		}else {
+			err = ioutil.WriteFile(filePath, wasmCode, types.ModePerm)
+			if err != nil {
+				return nil, err
+			}
+			return codeHash,nil
+		}
+	}
 	newWasmer, codeHash, err := k.wasmer.Create(wasmCode)
 	if err != nil {
-		return nil, err
+		return codeHash, err
 	}
 	bz := k.cdc.MustMarshalJSON(newWasmer)
 	if bz == nil {
 		return nil, sdk.ErrInternal("marshal json failed")
 	}
+	store.Set(codeHash, wasmCode)
 	codeInfo := types.NewCodeInfo(strings.ToUpper(hex.EncodeToString(codeHash)), creator)
 	store.Set(types.GetCodeKey(codeHash), k.cdc.MustMarshalBinaryBare(codeInfo))
 	store.Set(types.GetWasmerKey(), bz)
-	store.Set(codeHash, wasmCode)
+
+	//store code in local.
+	hash := fmt.Sprintf("%x", codeHash)
+	err = ioutil.WriteFile(newWasmer.HomeDir + "/" + newWasmer.FilePathMap[hash], wasmCode, types.ModePerm)
+	if err != nil {
+		return nil, err
+	}
+
 	return codeHash, nil
 }
 

@@ -58,7 +58,7 @@ func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, fck f
 		// to know how much gas was used! This is because the GasMeter is created in
 		// the AnteHandler, but if it panics the context won't be set properly in
 		// runTx's recover call.
-		defer func() {
+		/*defer func() {
 			if r := recover(); r != nil {
 				switch rType := r.(type) {
 				case sdk.ErrorOutOfGas:
@@ -77,7 +77,7 @@ func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, fck f
 					panic(r)
 				}
 			}
-		}()
+		}()*/
 		if err := tx.ValidateBasic(); err != nil {
 			return newCtx, types.ErrTxValidateBasic(types.DefaultCodespace, err).Result(), true
 		}
