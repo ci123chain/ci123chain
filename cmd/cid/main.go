@@ -71,13 +71,13 @@ func main()  {
 	exector.Execute()
 }
 
-func newApp(lg log.Logger, db db.DB, traceStore io.Writer) abci.Application{
+func newApp(lg log.Logger, db, commitDB db.DB, traceStore io.Writer) abci.Application{
 	logger.SetLogger(lg)
 	//将ibc的logger设置为ibc module.
-	return app.NewChain(lg.With("module", "ibc"), db, traceStore)
+	return app.NewChain(lg.With("module", "ibc"), db, commitDB, traceStore)
 }
 
-func exportAppState(lg log.Logger, db db.DB, traceStore io.Writer) (json.RawMessage, []types.GenesisValidator, error) {
+func exportAppState(lg log.Logger, db, commitDB db.DB, traceStore io.Writer) (json.RawMessage, []types.GenesisValidator, error) {
 	logger.SetLogger(lg)
-	return app.NewChain(lg, db, traceStore).ExportAppStateJSON()
+	return app.NewChain(lg, db, commitDB, traceStore).ExportAppStateJSON()
 }

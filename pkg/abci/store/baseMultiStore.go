@@ -11,6 +11,7 @@ import (
 
 type baseMultiStore struct {
 	db           dbm.DB
+	commitDB     dbm.DB
 	lastCommitID CommitID
 	pruning      sdk.PruningStrategy
 	storesParams map[StoreKey]storeParams
@@ -18,9 +19,10 @@ type baseMultiStore struct {
 	keysByName   map[string]StoreKey
 }
 
-func NewBaseMultiStore(db dbm.DB) *baseMultiStore {
+func NewBaseMultiStore(db, commitDB dbm.DB) *baseMultiStore {
 	return &baseMultiStore{
 		db:           db,
+		commitDB:     commitDB,
 		storesParams: make(map[StoreKey]storeParams),
 		stores:       make(map[StoreKey]CommitStore),
 		keysByName:   make(map[string]StoreKey),
@@ -117,7 +119,8 @@ func (bs *baseMultiStore) Commit() CommitID {
 	var CommitInfo commitInfo
 	version := bs.lastCommitID.Version + 1
 	cInfoKey := fmt.Sprintf(types.CommitInfoKeyFmt, version)
-	cInfoBytes := bs.db.Get([]byte(cInfoKey))
+	//cInfoBytes := bs.db.Get([]byte(cInfoKey))
+	cInfoBytes := bs.commitDB.Get([]byte(cInfoKey))
 	if cInfoBytes == nil {
 		// Commit stores.
 		CommitInfo = commitBaseStores(version, bs.stores)
@@ -127,8 +130,11 @@ func (bs *baseMultiStore) Commit() CommitID {
 		//setCommitInfo(batch, version, CommitInfo)
 		//setLatestVersion(batch, version)
 		//batch.Write()
-		SetCommitInfo(bs.db, version, CommitInfo)
-		SetLatestVersion(bs.db, version)
+		//SetCommitInfo(bs.db, version, CommitInfo)
+		//SetLatestVersion(bs.db, version)
+
+		SetCommitInfo(bs.commitDB, version, CommitInfo)
+		SetLatestVersion(bs.commitDB, version)
 	}else{
 		cdc.MustUnmarshalBinaryLengthPrefixed(cInfoBytes, &CommitInfo)
 	}

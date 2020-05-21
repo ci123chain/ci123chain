@@ -22,6 +22,7 @@ const (
 	flagPruning        = "pruning"
 	//flagLogLevel       = "log-level"
 	flagStateDB 	   = "statedb" // couchdb://admin:password@192.168.2.89:5984
+	flagCommitDB       = "commitinfodb"
 )
 
 func startCmd(ctx *app.Context, appCreator app.AppCreator) *cobra.Command {
@@ -47,6 +48,8 @@ func startCmd(ctx *app.Context, appCreator app.AppCreator) *cobra.Command {
 	cmd.Flags().String(flagTraceStore, "", "Enable KVStore tracing to an output file")
 	cmd.Flags().String(flagPruning, "syncable", "Pruning strategy: syncable, nothing, everything")
 	cmd.Flags().String(flagStateDB, "leveldb", "db of abci persistent")
+	//add commit db.
+	cmd.Flags().String(flagCommitDB, "leveldb", "db of data info")
 
 	//cmd.Flags().String(flagLogLevel, "debug", "Run abci app with different log level")
 	tcmd.AddNodeFlags(cmd)
@@ -59,7 +62,9 @@ func startStandAlone(ctx *app.Context, appCreator app.AppCreator) error {
 	traceStore := viper.GetString(flagTraceStore)
 	stateDB := viper.GetString(flagStateDB)
 
-	app, err := appCreator(home, ctx.Logger, stateDB, traceStore)
+	commitDB := viper.GetString(flagCommitDB)
+
+	app, err := appCreator(home, ctx.Logger, stateDB, commitDB, traceStore)
 	if err != nil {
 		return err
 	}
@@ -89,13 +94,15 @@ func StartInProcess(ctx *app.Context, appCreator app.AppCreator) (*node.Node, er
 	viper.SetEnvPrefix("CI")
 	traceStore := viper.GetString(flagTraceStore)
 	stateDB := viper.GetString(flagStateDB)
+
+	commitDB := viper.GetString(flagCommitDB)
 	gendoc, err := types.GenesisDocFromFile(cfg.GenesisFile())
 	if err != nil {
 		panic(err)
 	}
 	viper.Set("ShardID", gendoc.ChainID)
 
-	app, err := appCreator(home, ctx.Logger, stateDB, traceStore)
+	app, err := appCreator(home, ctx.Logger, stateDB, commitDB, traceStore)
 	if err != nil {
 		return nil, err
 	}

@@ -106,9 +106,9 @@ type Chain struct {
 	mm *module.AppManager
 }
 
-func NewChain(logger log.Logger, tmdb tmdb.DB, traceStore io.Writer) *Chain {
+func NewChain(logger log.Logger, tmdb, commitDB tmdb.DB, traceStore io.Writer) *Chain {
 	cdc := MakeCodec()
-	app := baseapp.NewBaseApp("ci123", logger, tmdb, transaction.DefaultTxDecoder(cdc))
+	app := baseapp.NewBaseApp("ci123", logger, tmdb, commitDB, transaction.DefaultTxDecoder(cdc))
 
 	c := &Chain{
 		BaseApp: 			app,

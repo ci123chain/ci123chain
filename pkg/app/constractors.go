@@ -3,10 +3,10 @@ package app
 import (
 	"encoding/json"
 	"errors"
-	"github.com/spf13/viper"
 	"github.com/ci123chain/ci123chain/pkg/abci"
 	"github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/couchdb"
+	"github.com/spf13/viper"
 	sdk "github.com/tendermint/tendermint/abci/types"
 	"strings"
 
@@ -20,27 +20,32 @@ import (
 )
 
 const DefaultDBName = "ci123"
+const DefaultDataDBName = "ci123_data"
 const DBAuthUser = "DBAuthUser"
 const DBAuthPwd = "DBAuthPwd"
 const DBAuth = "DBAuth"
 const DBName = "DBName"
 type (
-	AppCreator func(home string, logger log.Logger, statedb, traceStore string) (sdk.Application, error)
+	AppCreator func(home string, logger log.Logger, statedb, commitDB, traceStore string) (sdk.Application, error)
 
 	AppExporter func(home string, logger log.Logger, traceStore string) (json.RawMessage, []tmtypes.GenesisValidator, error)
 
-	AppCreatorInit func(logger log.Logger, db dbm.DB, writer io.Writer) sdk.Application
+	AppCreatorInit func(logger log.Logger, db, commitDB dbm.DB, writer io.Writer) sdk.Application
 
-	AppExporterInit func(logger log.Logger, db dbm.DB, writer io.Writer) (json.RawMessage, []tmtypes.GenesisValidator, error)
+	AppExporterInit func(logger log.Logger, db, commitDB dbm.DB, writer io.Writer) (json.RawMessage, []tmtypes.GenesisValidator, error)
 )
 
 func ConstructAppCreator(appFn AppCreatorInit, name string) AppCreator {
 
-	return func(rootDir string, logger log.Logger, statedb, traceStore string) (sdk.Application, error) {
+	return func(rootDir string, logger log.Logger, statedb, commitDB, traceStore string) (sdk.Application, error) {
 		dataDir := filepath.Join(rootDir, "data")
-		db, err := GetStateDB(dataDir, statedb)
+		db, err := GetStateDB(dataDir, statedb, true)
 		if err != nil {
 			return nil, types.ErrNewDB(types.DefaultCodespace, err)
+		}
+		cdb, cerr := GetStateDB(dataDir, commitDB, false)
+		if cerr != nil {
+			return nil, types.ErrNewDB(types.DefaultCodespace, cerr)
 		}
 		var traceStoreWriter io.Writer
 		if traceStore != "" {
@@ -53,7 +58,7 @@ func ConstructAppCreator(appFn AppCreatorInit, name string) AppCreator {
 				return nil, abci.ErrInternal("Open file failed")
 			}
 		}
-		app := appFn(logger, db, traceStoreWriter)
+		app := appFn(logger, db, cdb, traceStoreWriter)
 		return app, nil
 	}
 }
@@ -66,6 +71,10 @@ func ConstructAppExporter(appFn AppExporterInit, name string) AppExporter {
 		if err != nil {
 			return nil, nil, types.ErrNewDB(types.DefaultCodespace, err)
 		}
+		cdb, cerr := dbm.NewGoLevelDB(name, dataDir)
+		if cerr != nil {
+			return nil, nil, types.ErrNewDB(types.DefaultCodespace, cerr)
+		}
 		var traceStoreWriter io.Writer
 		if traceStore != "" {
 			traceStoreWriter, err = os.OpenFile(
@@ -77,17 +86,22 @@ func ConstructAppExporter(appFn AppExporterInit, name string) AppExporter {
 				return nil, nil, abci.ErrInternal("Open file failed")
 			}
 		}
-		return appFn(logger, db, traceStoreWriter)
+		return appFn(logger, db, cdb, traceStoreWriter)
 	}
 }
 
-func GetStateDB(path, statedb string) (db dbm.DB, err error) {
+func GetStateDB(path, statedb string, isDataDB bool) (db dbm.DB, err error) {
 
-
+	var DeFaultName string
+	if isDataDB {
+		DeFaultName = DefaultDataDBName
+	}else {
+		DeFaultName = DefaultDBName
+	}
 
 	var dbname string
 	if statedb == "leveldb" {
-		db, err = dbm.NewGoLevelDB(DefaultDBName, path)
+		db, err = dbm.NewGoLevelDB(DeFaultName, path)
 		return
 	} else {
 		// couchdb://admin:password@192.168.2.89:5984/dbname
@@ -105,7 +119,7 @@ func GetStateDB(path, statedb string) (db dbm.DB, err error) {
 			info := auths[0]
 			split := strings.Split(info, "/")
 			if len(split) < 2 {
-				dbname = DefaultDBName
+				dbname = DeFaultName
 			} else {
 				dbname = split[1]
 			}
@@ -118,7 +132,7 @@ func GetStateDB(path, statedb string) (db dbm.DB, err error) {
 				hostandpath := auths[1]
 				split := strings.Split(hostandpath, "/")
 				if len(split) < 2 {
-					dbname = DefaultDBName
+					dbname = DeFaultName
 				} else {
 					dbname = split[1]
 				}
@@ -128,7 +142,7 @@ func GetStateDB(path, statedb string) (db dbm.DB, err error) {
 				hostandpath := auths[1]
 				split := strings.Split(hostandpath, "/")
 				if len(split) < 2 {
-					dbname = DefaultDBName
+					dbname = DeFaultName
 				} else {
 					dbname = split[1]
 				}

@@ -46,6 +46,7 @@ type BaseApp struct {
 	Logger      log.Logger
 	name        string               // application name from abci.Info
 	db          dbm.DB               // common DB backend
+	//commitDB    dbm.DB               //commit info DB
 	cms         sdk.CommitMultiStore // Main (uncached) state
 	queryRouter QueryRouter          // router for redirecting query calls
 	//handler     sdk.Handler
@@ -87,13 +88,13 @@ var _ abci.Application = (*BaseApp)(nil)
 // NOTE: The db is used to store the version number for now.
 // Accepts a user-defined txDecoder
 // Accepts variable number of option functions, which act on the BaseApp to set configuration choices
-func NewBaseApp(name string, logger log.Logger, db dbm.DB, txDecoder sdk.TxDecoder, options ...func(*BaseApp)) *BaseApp {
+func NewBaseApp(name string, logger log.Logger, db, commitDB dbm.DB, txDecoder sdk.TxDecoder, options ...func(*BaseApp)) *BaseApp {
 	app := &BaseApp{
 		Logger:      logger,
 		name:        name,
 		db:          db,
 		//cms:         store.NewCommitMultiStore(db),
-		cms:         store.NewBaseMultiStore(db),
+		cms:         store.NewBaseMultiStore(db, commitDB),
 		queryRouter: NewQueryRouter(),
 		router: 	 NewRouter(),
 		txDecoder:   txDecoder,
