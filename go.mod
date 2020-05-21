@@ -9,10 +9,10 @@ require (
 	github.com/btcsuite/btcd v0.20.1-beta
 	github.com/btcsuite/btcutil v1.0.2
 	github.com/cespare/cp v1.1.1 // indirect
+	github.com/ci123chain/wasm-util v0.0.0-20200521072525-1d518657c701
 	github.com/deckarep/golang-set v1.7.1 // indirect
 	github.com/elastic/gosigar v0.10.5 // indirect
 	github.com/ethereum/go-ethereum v1.9.6
-	github.com/go-interpreter/wagon v0.6.0
 	github.com/gogo/protobuf v1.3.0
 	github.com/golang/protobuf v1.3.3
 	github.com/gorilla/mux v1.7.3
