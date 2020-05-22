@@ -106,7 +106,7 @@ func (ci *cacheKVStore) Latest(keys []string) KVStore {
 }
 
 func (ci *cacheKVStore) Parent() KVStore {
-	return nil
+	return ci.parent
 }
 
 // Implements CacheKVStore.
