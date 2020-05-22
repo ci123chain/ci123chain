@@ -9,9 +9,12 @@ const (
 	LBType = "lb"
 	ConcretType = "concret"
 	FilterType = "filter"
+	DeployType = "deploy"
 	LB = LBType
 	Concret = ConcretType
 	Filter = FilterType
+	Deploy = DeployType
+
 	ValidCode int = 200
 
 	ErrGetErrorResponse uint32 = 101

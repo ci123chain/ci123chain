@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/client"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
@@ -14,6 +12,8 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/util"
 	wasm "github.com/ci123chain/ci123chain/pkg/wasm/types"
 	sdk "github.com/ci123chain/ci123chain/sdk/wasm"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"io/ioutil"
 	"path"
 	"strconv"
@@ -104,9 +104,6 @@ func initContract() error {
 	Hash, err := hex.DecodeString(strings.ToLower(hash))
 	if err != nil {
 		return errors.New("decode codeHash fail")
-	}
-	if err != nil {
-		return err
 	}
 	label := viper.GetString(helper.FlagLabel)
 	if label == "" {

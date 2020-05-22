@@ -2,11 +2,11 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"github.com/ci123chain/ci123chain/pkg/app"
 	"github.com/ci123chain/ci123chain/pkg/app/cmd"
 	"github.com/ci123chain/ci123chain/pkg/logger"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/cli"
 	"github.com/tendermint/tendermint/libs/log"
