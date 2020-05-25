@@ -139,7 +139,8 @@ func NewChain(logger log.Logger, tmdb, commitDB tmdb.DB, traceStore io.Writer) *
 	distrKeeper := k.NewKeeper(cdc, disrtStoreKey, fcKeeper, accKeeper)
 	stakingKeeper := staking.NewKeeper(cdc, stakingStoreKey, accKeeper,supplyKeeper, paramsKeeper.Subspace(params.ModuleName))
 
-	cdb := tmdb.(*couchdb.GoCouchDB)
+	//cdb := tmdb.(*couchdb.GoCouchDB)
+	cdb := commitDB.(*couchdb.GoCouchDB)
 	orderKeeper := order.NewKeeper(cdb, OrderStoreKey, accKeeper)
 
 	homeDir := viper.GetString(cli.HomeFlag)
