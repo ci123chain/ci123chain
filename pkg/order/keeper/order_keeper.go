@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"errors"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	//"github.com/ci123chain/ci123chain/pkg/abci/store"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
@@ -132,22 +131,22 @@ func (ok *OrderKeeper) UpdateOrderBook(ctx sdk.Context, orderbook OrderBook, act
 }
 
 func (ok *OrderKeeper) GetOrderBook(ctx sdk.Context) (OrderBook, error) {
-	//store := ctx.KVStore(ok.StoreKey).Latest([]string{OrderBookKey})
+	store := ctx.KVStore(ok.StoreKey).Latest([]string{OrderBookKey})
 	var orderbook OrderBook
-	isExist := ok.ExistOrderBook(ctx)
+	/*isExist := ok.ExistOrderBook(ctx)
 	if !isExist {
 		return orderbook, errors.New(NoOrderBookErr)
 	}
-	bz := ok.Cdb.Get([]byte(OrderBookKey))
-	//bz := store.Get([]byte(OrderBookKey))
+	bz := ok.Cdb.Get([]byte(OrderBookKey))*/
+	bz := store.Get([]byte(OrderBookKey))
 	err := ModuleCdc.UnmarshalJSON(bz, &orderbook)
 	return orderbook, err
 }
 
 func (ok *OrderKeeper) ExistOrderBook(ctx sdk.Context) bool  {
-	//store := ctx.KVStore(ok.StoreKey).Latest([]string{OrderBookKey})
-	bz := ok.Cdb.Get([]byte(OrderBookKey))
-	//bz := store.Get([]byte(OrderBookKey))
+	store := ctx.KVStore(ok.StoreKey).Latest([]string{OrderBookKey})
+	//bz := ok.Cdb.Get([]byte(OrderBookKey))
+	bz := store.Get([]byte(OrderBookKey))
 	if len(bz) > 0 {
 		return true
 	}
@@ -155,13 +154,13 @@ func (ok *OrderKeeper) ExistOrderBook(ctx sdk.Context) bool  {
 }
 
 func (ok *OrderKeeper) SetOrderBook(ctx sdk.Context, orderbook OrderBook)  {
-	//store := ctx.KVStore(ok.StoreKey)
+	store := ctx.KVStore(ok.StoreKey)
 	bz, err := ModuleCdc.MarshalJSON(orderbook)
 	if err != nil {
 		panic(err)
 	}
-	ok.Cdb.Set([]byte(OrderBookKey), bz)
-	//store.Set([]byte(OrderBookKey), bz)
+	//ok.Cdb.Set([]byte(OrderBookKey), bz)
+	store.Set([]byte(OrderBookKey), bz)
 }
 
 func (ok *OrderKeeper) isReady(orderbook OrderBook, shardID string, height int64) bool {

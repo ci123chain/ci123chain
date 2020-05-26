@@ -55,6 +55,14 @@ type iavlStore struct {
 	storeEvery int64
 }
 
+func (st *iavlStore) CommitStore() []byte {
+	return nil
+}
+
+func (st *iavlStore) CommitConfigStore([]byte) sdk.CommitID {
+	return sdk.CommitID{}
+}
+
 // CONTRACT: tree should be fully loaded.
 // nolint: unparam
 func newIAVLStore(tree *iavl.MutableTree, numRecent int64, storeEvery int64) *iavlStore {

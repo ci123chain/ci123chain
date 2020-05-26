@@ -3,12 +3,14 @@ package types
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"time"
 
 	"github.com/golang/protobuf/proto"
 
 	abci "github.com/tendermint/tendermint/abci/types"
+
 	"github.com/tendermint/tendermint/libs/log"
 )
 
@@ -32,13 +34,16 @@ type Context struct {
 }
 
 // create a new context
-func NewContext(ms MultiStore, header abci.Header, isCheckTx bool, logger log.Logger) Context {
+func NewContext(ms, cfms MultiStore,keys, configKeys []*KVStoreKey, header abci.Header, isCheckTx bool, logger log.Logger) Context {
 	c := Context{
 		Context: context.Background(),
 		pst:     newThePast(),
 		gen:     0,
 	}
 	c = c.WithMultiStore(ms)
+	c = c.WithMultiConfigStore(cfms)
+	c = c.WithKeys(keys)
+	c = c.WithConfigKeys(configKeys)
 	c = c.WithBlockHeader(header)
 	c = c.WithBlockHeight(header.Height)
 	c = c.WithChainID(header.ChainID)
@@ -70,10 +75,44 @@ func (c Context) Value(key interface{}) interface{} {
 	return value
 }
 
+func (c Context) IsKey(key StoreKey) bool {
+	keys := c.Keys()
+	configKeys := c.ConfigKeys()
+	var isKey bool
+	var isConfigKey bool
+	for _, bkey := range keys {
+		if bkey.Equal(key) {
+			isKey = true
+			break
+		}
+	}
+	if !isKey {
+		for _, bKey := range configKeys {
+			if bKey.Equal(key) {
+				isConfigKey = true
+				break
+			}
+		}
+		if !isConfigKey {
+			panic(errors.New("no such key"))
+		}else {
+			return false
+		}
+	}
+	return true
+}
+
 // KVStore fetches a KVStore from the MultiStore.
 func (c Context) KVStore(key StoreKey) KVStore {
 	//return c.MultiStore().GetKVStore(key).Gas(c.GasMeter(), cachedKVGasConfig)
-	return c.MultiStore().GetKVStore(key).Prefix([]byte(key.Name() + "//")).Gas(c.GasMeter(), cachedKVGasConfig)
+	isKey := c.IsKey(key)
+	var store MultiStore
+	if isKey {
+		store = c.MultiStore()
+	}else {
+		store = c.MultiConfigStore()
+	}
+	return store.GetKVStore(key).Prefix([]byte(key.Name() + "//")).Gas(c.GasMeter(), cachedKVGasConfig)
 }
 
 // KVStore fetches a KVStore from the MultiStore.
@@ -140,6 +179,9 @@ type contextKey int // local to the context module
 
 const (
 	contextKeyMultiStore contextKey = iota
+	contextConfigKeyMultiStore
+	contextKeys
+	contextConfigKeys
 	contextKeyBlockHeader
 	contextKeyBlockHeight
 	contextKeyConsensusParams
@@ -157,12 +199,24 @@ func (c Context) MultiStore() MultiStore {
 	return c.Value(contextKeyMultiStore).(MultiStore)
 }
 
+func (c Context) MultiConfigStore() MultiStore {
+	return c.Value(contextConfigKeyMultiStore).(MultiStore)
+}
+
 func (c Context) BlockHeader() abci.Header { return c.Value(contextKeyBlockHeader).(abci.Header) }
 
 func (c Context) BlockHeight() int64 { return c.Value(contextKeyBlockHeight).(int64) }
 
 func (c Context) ConsensusParams() *abci.ConsensusParams {
 	return c.Value(contextKeyConsensusParams).(*abci.ConsensusParams)
+}
+
+func (c Context) Keys() []*KVStoreKey {
+	return c.Value(contextKeys).([]*KVStoreKey)
+}
+
+func (c Context) ConfigKeys() []*KVStoreKey {
+	return c.Value(contextConfigKeys).([]*KVStoreKey)
 }
 
 func (c Context) ChainID() string { return c.Value(contextKeyChainID).(string) }
@@ -185,6 +239,18 @@ func (c Context) TxIndex() uint32 {
 
 func (c Context) WithMultiStore(ms MultiStore) Context {
 	return c.withValue(contextKeyMultiStore, ms)
+}
+
+func (c Context) WithMultiConfigStore(ms MultiStore) Context {
+	return c.withValue(contextConfigKeyMultiStore, ms)
+}
+
+func (c Context) WithKeys(keys []*KVStoreKey) Context {
+	return c.withValue(contextKeys, keys)
+}
+
+func (c Context) WithConfigKeys(configKeys []*KVStoreKey) Context {
+	return c.withValue(contextConfigKeys, configKeys)
 }
 
 func (c Context) WithBlockHeader(header abci.Header) Context {

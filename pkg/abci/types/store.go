@@ -33,6 +33,8 @@ type Store interface { //nolint
 
 // something that can persist to disk
 type Committer interface {
+	CommitStore() []byte
+	CommitConfigStore([]byte) CommitID
 	Commit() CommitID
 	LastCommitID() CommitID
 	SetPruning(PruningStrategy)
@@ -302,6 +304,7 @@ const (
 type StoreKey interface {
 	Name() string
 	String() string
+	Equal(key StoreKey) bool
 }
 
 // KVStoreKey is used for accessing substores.
@@ -324,6 +327,10 @@ func (key *KVStoreKey) Name() string {
 
 func (key *KVStoreKey) String() string {
 	return fmt.Sprintf("KVStoreKey{%p, %s}", key, key.name)
+}
+
+func (key *KVStoreKey) Equal(bkey StoreKey) bool {
+	return key.name == bkey.Name()
 }
 
 // PrefixEndBytes returns the []byte that would end a
@@ -362,6 +369,10 @@ func InclusiveEndBytes(inclusiveBytes []byte) (exclusiveBytes []byte) {
 // TransientStoreKey is used for indexing transient stores in a MultiStore
 type TransientStoreKey struct {
 	name string
+}
+
+func (key *TransientStoreKey) Equal(key2 StoreKey) bool {
+	return true
 }
 
 // Constructs new TransientStoreKey

@@ -20,6 +20,14 @@ type baseKVStore struct {
 	numRecent 	int64
 }
 
+func (ks *baseKVStore) CommitStore() []byte {
+	panic("implement me")
+}
+
+func (ks *baseKVStore) CommitConfigStore([]byte) sdk.CommitID {
+	panic("implement me")
+}
+
 func NewBaseKVStore(parent KVStore, storeEvery, numRecent int64, key sdk.StoreKey) *baseKVStore {
 	return &baseKVStore{
 		cache:  	make(map[string]cValue),

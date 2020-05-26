@@ -28,6 +28,14 @@ type rootMultiStore struct {
 	traceContext TraceContext
 }
 
+func (rs *rootMultiStore) CommitStore() []byte {
+	return nil
+}
+
+func (rs *rootMultiStore) CommitConfigStore([]byte) sdk.CommitID {
+	return sdk.CommitID{}
+}
+
 var _ CommitMultiStore = (*rootMultiStore)(nil)
 var _ Queryable = (*rootMultiStore)(nil)
 

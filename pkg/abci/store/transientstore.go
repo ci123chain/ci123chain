@@ -12,6 +12,14 @@ type transientStore struct {
 	dbStoreAdapter
 }
 
+func (ts *transientStore) CommitStore() []byte {
+	return nil
+}
+
+func (ts *transientStore) CommitConfigStore([]byte) sdk.CommitID {
+	return sdk.CommitID{}
+}
+
 // Constructs new MemDB adapter
 func newTransientStore() *transientStore {
 	return &transientStore{dbStoreAdapter{dbm.NewMemDB()}}

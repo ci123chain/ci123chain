@@ -11,7 +11,7 @@ import (
 
 type baseMultiStore struct {
 	db           dbm.DB
-	commitDB     dbm.DB
+	//commitDB     dbm.DB
 	lastCommitID CommitID
 	pruning      sdk.PruningStrategy
 	storesParams map[StoreKey]storeParams
@@ -19,10 +19,10 @@ type baseMultiStore struct {
 	keysByName   map[string]StoreKey
 }
 
-func NewBaseMultiStore(db, commitDB dbm.DB) *baseMultiStore {
+func NewBaseMultiStore(db dbm.DB) *baseMultiStore {
 	return &baseMultiStore{
 		db:           db,
-		commitDB:     commitDB,
+		//commitDB:     commitDB,
 		storesParams: make(map[StoreKey]storeParams),
 		stores:       make(map[StoreKey]CommitStore),
 		keysByName:   make(map[string]StoreKey),
@@ -72,12 +72,13 @@ func (bs *baseMultiStore) GetStore(key StoreKey) Store {
 
 func (bs *baseMultiStore) GetKVStore(key StoreKey) KVStore {
 	store := bs.stores[key].(*baseKVStore)
-
+	//store := bs.stores[key].(*sdk.CommitStore)
 	return store
 }
 
 func (bs *baseMultiStore) LoadLatestVersion() error {
 
+	//ver := getLatestVersion(dbStoreAdapter{bs.db})
 	ver := getLatestVersion(dbStoreAdapter{bs.db})
 	err := bs.LoadVersion(ver)
 	return err
@@ -103,6 +104,7 @@ func (bs *baseMultiStore) LoadVersion(ver int64) error {
 			return fmt.Errorf("failed to load rootMultiStore: %v", err)
 		}
 	}
+	//cInfo, err := getCommitInfo(dbStoreAdapter{bs.db}, ver)
 	cInfo, err := getCommitInfo(dbStoreAdapter{bs.db}, ver)
 	if err != nil {
 		return err
@@ -112,23 +114,86 @@ func (bs *baseMultiStore) LoadVersion(ver int64) error {
 }
 
 func (bs *baseMultiStore) LastCommitID() CommitID {
-	version := GetLastVersion(bs.commitDB)
-	InfoHash := GetLastCommitInfo(bs.commitDB, version)
+	/*version := GetLastVersion(bs.db)
+	InfoHash := GetLastCommitInfo(bs.db, version)
 	commitID := CommitID{
 		Version:version,
 		Hash:InfoHash,
 	}
-	return commitID
-	//return bs.lastCommitID
+	return commitID*/
+	return bs.lastCommitID
 }
+
+func (bs *baseMultiStore) CommitStore() []byte {
+
+	var CommitInfo commitInfo
+	version := bs.lastCommitID.Version + 1
+	cInfoKey := fmt.Sprintf(types.CommitInfoKeyFmt, version)
+	cInfoBytes := bs.db.Get([]byte(cInfoKey))
+	if cInfoBytes == nil {
+		CommitInfo = commitBaseStores(version, bs.stores)
+		cInfoBytes = cdc.MustMarshalBinaryLengthPrefixed(CommitInfo)
+	}
+	return cInfoBytes
+}
+
+func (bs *baseMultiStore) CommitConfigStore(CommitInfo []byte) CommitID {
+	var cInfo commitInfo
+	var configInfo commitInfo
+	cdc.MustUnmarshalBinaryLengthPrefixed(CommitInfo, &cInfo)
+	cInfoBytes := bs.CommitStore()
+	cdc.MustUnmarshalBinaryLengthPrefixed(cInfoBytes, &configInfo)
+
+	storeInfos := make([]storeInfo, 0, len(configInfo.StoreInfos) + len(cInfo.StoreInfos))
+	for _, info := range cInfo.StoreInfos {
+		storeInfos = append(storeInfos, info)
+	}
+	for _, info := range configInfo.StoreInfos {
+		storeInfos = append(storeInfos, info)
+	}
+
+	allCommitInfo := commitInfo{
+		Version:    configInfo.Version,
+		StoreInfos: storeInfos,
+	}
+	SetCommitInfo(bs.db, configInfo.Version, allCommitInfo)
+	SetLatestVersion(bs.db, configInfo.Version)
+
+	commitID := CommitID{
+		Version: configInfo.Version,
+		Hash:    allCommitInfo.Hash(),
+	}
+	bs.lastCommitID = commitID
+	return commitID
+	/*if cInfo.Version != configInfo.Version {
+		panic(errors.New("version dismatch"))
+	}else {
+		storeInfos := make([]storeInfo, 0, len(configInfo.StoreInfos) + len(cInfo.StoreInfos))
+		for _, info := range configInfo.StoreInfos {
+			storeInfos = append(storeInfos, info)
+		}
+		for _, info := range cInfo.StoreInfos {
+			storeInfos = append(storeInfos, info)
+		}
+		SetCommitInfo(bs.db, configInfo.Version, configInfo)
+		SetLatestVersion(bs.db, configInfo.Version)
+		commitID := CommitID{
+			Version: configInfo.Version,
+			Hash:    configInfo.Hash(),
+		}
+		bs.lastCommitID = commitID
+		return commitID
+	}*/
+}
+
 
 func (bs *baseMultiStore) Commit() CommitID {
 	var CommitInfo commitInfo
-	//version := bs.lastCommitID.Version + 1
-	version := GetLastVersion(bs.commitDB) + 1
+	version := bs.lastCommitID.Version + 1
+	//version := GetLastVersion(bs.commitDB) + 1
 	cInfoKey := fmt.Sprintf(types.CommitInfoKeyFmt, version)
-	//cInfoBytes := bs.db.Get([]byte(cInfoKey))
-	cInfoBytes := bs.commitDB.Get([]byte(cInfoKey))
+	cInfoBytes := bs.db.Get([]byte(cInfoKey))
+	//cInfoBytes := bs.commitDB.Get([]byte(cInfoKey))
 	if cInfoBytes == nil {
 		// Commit stores.
 		CommitInfo = commitBaseStores(version, bs.stores)
@@ -138,8 +203,8 @@ func (bs *baseMultiStore) Commit() CommitID {
 		//setCommitInfo(batch, version, CommitInfo)
 		//setLatestVersion(batch, version)
 		//batch.Write()
-		//SetCommitInfo(bs.db, version, CommitInfo)
-		//SetLatestVersion(bs.db, version)
+		SetCommitInfo(bs.db, version, CommitInfo)
+		SetLatestVersion(bs.db, version)
 
 		//SetCommitInfo(bs.commitDB, version, CommitInfo)
 		//SetLatestVersion(bs.commitDB, version)
@@ -151,11 +216,12 @@ func (bs *baseMultiStore) Commit() CommitID {
 		Version: version,
 		Hash:    CommitInfo.Hash(),
 	}
-	SetCommitInfo(bs.commitDB, version, CommitInfo)
-	SetLatestVersion(bs.commitDB, version)
+	//SetCommitInfo(bs.commitDB, version, CommitInfo)
+	//SetLatestVersion(bs.commitDB, version)
 	bs.lastCommitID = commitID
 	return commitID
 }
+
 
 func (bs *baseMultiStore) Write() {
 	return
@@ -232,13 +298,15 @@ func (bs *baseMultiStore) CacheMultiStore() CacheMultiStore {
 	for key, store := range bs.stores {
 		nbs.stores[key] = store.CacheWrap()
 	}
+
 	return nbs
 }
 
 func (bs *baseMultiStore) loadCommitStoreFromParams(key sdk.StoreKey, id CommitID, params storeParams) error {
 	_, ok := bs.stores[key]
 	if !ok {
-		store :=  NewBaseKVStore(dbStoreAdapter{bs.db}, int64(0), int64(0), key)
+		//store :=  NewBaseKVStore(dbStoreAdapter{bs.db}, int64(0), int64(0), key)
+		store :=  NewBaseKVStore(dbStoreAdapter{params.db}, int64(0), int64(0), key)
 		store.SetPruning(bs.pruning)
 		bs.stores[key] = store
 	}
@@ -294,6 +362,7 @@ func SetLatestVersion(db dbm.DB, version int64) {
 	db.Set([]byte(types.LatestVersionKey),versionByte)
 }
 
+/*
 func GetLastVersion(db dbm.DB) int64 {
 	var version int64
 	versionByte := db.Get([]byte(types.LatestVersionKey))
@@ -315,3 +384,4 @@ func GetLastCommitInfo(db dbm.DB, version int64) []byte {
 		return info.Hash()
 	}
 }
+*/

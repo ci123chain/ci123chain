@@ -3,8 +3,6 @@ package app
 import (
 	"encoding/json"
 	"errors"
-	_defer "github.com/ci123chain/ci123chain/pkg/auth/defer"
-	"github.com/spf13/viper"
 	"github.com/ci123chain/ci123chain/pkg/abci/baseapp"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/module"
@@ -14,6 +12,7 @@ import (
 	app_types "github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/auth"
 	"github.com/ci123chain/ci123chain/pkg/auth/ante"
+	_defer "github.com/ci123chain/ci123chain/pkg/auth/defer"
 	"github.com/ci123chain/ci123chain/pkg/config"
 	"github.com/ci123chain/ci123chain/pkg/couchdb"
 	"github.com/ci123chain/ci123chain/pkg/db"
@@ -33,6 +32,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/transfer/handler"
 	"github.com/ci123chain/ci123chain/pkg/wasm"
 	wasm_types "github.com/ci123chain/ci123chain/pkg/wasm/types"
+	"github.com/spf13/viper"
 	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/libs/cli"
@@ -107,8 +107,27 @@ type Chain struct {
 }
 
 func NewChain(logger log.Logger, tmdb, commitDB tmdb.DB, traceStore io.Writer) *Chain {
+
+	keys := []*sdk.KVStoreKey{
+		MainStoreKey,
+		ContractStoreKey,
+		ParamStoreKey,
+		AuthStoreKey,
+		MortgageStoreKey,
+		IBCStoreKey,
+		fcStoreKey,
+		disrtStoreKey,
+		//OrderStoreKey,
+		stakingStoreKey,
+		wasmStoreKey,
+	}
+
+	configKeys := []*sdk.KVStoreKey{
+		OrderStoreKey,
+	}
+
 	cdc := MakeCodec()
-	app := baseapp.NewBaseApp("ci123", logger, tmdb, commitDB, transaction.DefaultTxDecoder(cdc))
+	app := baseapp.NewBaseApp("ci123", logger, tmdb, commitDB,keys, configKeys, transaction.DefaultTxDecoder(cdc))
 
 	c := &Chain{
 		BaseApp: 			app,
@@ -139,8 +158,8 @@ func NewChain(logger log.Logger, tmdb, commitDB tmdb.DB, traceStore io.Writer) *
 	distrKeeper := k.NewKeeper(cdc, disrtStoreKey, fcKeeper, accKeeper)
 	stakingKeeper := staking.NewKeeper(cdc, stakingStoreKey, accKeeper,supplyKeeper, paramsKeeper.Subspace(params.ModuleName))
 
-	//cdb := tmdb.(*couchdb.GoCouchDB)
-	cdb := commitDB.(*couchdb.GoCouchDB)
+	cdb := tmdb.(*couchdb.GoCouchDB)
+	//cdb := commitDB.(*couchdb.GoCouchDB)
 	orderKeeper := order.NewKeeper(cdb, OrderStoreKey, accKeeper)
 
 	homeDir := viper.GetString(cli.HomeFlag)
@@ -183,7 +202,7 @@ func NewChain(logger log.Logger, tmdb, commitDB tmdb.DB, traceStore io.Writer) *
 	app_types.CommitInfoKeyFmt = shardID + "s/%d"
 	app_types.LatestVersionKey = shardID + "s/latest"
 
-	err := c.mountStores()
+	err := c.mountStores(keys, configKeys)
 	if err != nil {
 		common.Exit(err.Error())
 	}
@@ -191,8 +210,8 @@ func NewChain(logger log.Logger, tmdb, commitDB tmdb.DB, traceStore io.Writer) *
 	return c
 }
 
-func (c *Chain) mountStores() error {
-	keys := []*sdk.KVStoreKey{
+func (c *Chain) mountStores(keys, configKeys []*sdk.KVStoreKey) error {
+	/*keys := []*sdk.KVStoreKey{
 		c.capKeyMainStore,
 		c.contractStore,
 		ParamStoreKey,
@@ -201,17 +220,29 @@ func (c *Chain) mountStores() error {
 		IBCStoreKey,
 		fcStoreKey,
 		disrtStoreKey,
-		OrderStoreKey,
+		//OrderStoreKey,
 		stakingStoreKey,
 		wasmStoreKey,
 	}
-	c.MountStoresIAVL(keys...)
+
+	configKeys := []*sdk.KVStoreKey{
+		OrderStoreKey,
+	}*/
+
+	//c.MountStoresIAVL(keys...)
+	c.MountStoreIAVLWithDB(false, keys...)
+	c.MountStoreIAVLWithDB(true, configKeys...)
 
 	c.MountStoresTransient(c.txIndexStore, ParamTransStoreKey)
 
+	for _, key := range configKeys {
+		if err := c.LoadLatestVersion(key, true); err != nil {
+			return err
+		}
+	}
 
 	for _, key := range keys {
-		if err := c.LoadLatestVersion(key); err != nil {
+		if err := c.LoadLatestVersion(key, false); err != nil {
 			return err
 		}
 	}

@@ -46,8 +46,11 @@ type BaseApp struct {
 	Logger      log.Logger
 	name        string               // application name from abci.Info
 	db          dbm.DB               // common DB backend
-	//commitDB    dbm.DB               //commit info DB
+	commitDB    dbm.DB               //commit info DB
 	cms         sdk.CommitMultiStore // Main (uncached) state
+	cfcms       sdk.CommitMultiStore  //commitInfo
+	keys        []*sdk.KVStoreKey        //normal key
+	configKeys  []*sdk.KVStoreKey        //config key
 	queryRouter QueryRouter          // router for redirecting query calls
 	//handler     sdk.Handler
 	router 		Router
@@ -88,13 +91,17 @@ var _ abci.Application = (*BaseApp)(nil)
 // NOTE: The db is used to store the version number for now.
 // Accepts a user-defined txDecoder
 // Accepts variable number of option functions, which act on the BaseApp to set configuration choices
-func NewBaseApp(name string, logger log.Logger, db, commitDB dbm.DB, txDecoder sdk.TxDecoder, options ...func(*BaseApp)) *BaseApp {
+func NewBaseApp(name string, logger log.Logger, db, commitDB dbm.DB, keys, configKeys []*sdk.KVStoreKey, txDecoder sdk.TxDecoder, options ...func(*BaseApp)) *BaseApp {
 	app := &BaseApp{
 		Logger:      logger,
 		name:        name,
 		db:          db,
+		commitDB:    commitDB,
+		keys:        keys,
+		configKeys:  configKeys,
 		//cms:         store.NewCommitMultiStore(db),
-		cms:         store.NewBaseMultiStore(db, commitDB),
+		cms:         store.NewBaseMultiStore(db),
+		cfcms:       store.NewBaseMultiStore(commitDB),
 		queryRouter: NewQueryRouter(),
 		router: 	 NewRouter(),
 		txDecoder:   txDecoder,
@@ -124,10 +131,26 @@ func (app *BaseApp) MountStoresIAVL(keys ...*sdk.KVStoreKey) {
 	}
 }
 
+func (app *BaseApp) MountStoreIAVLWithDB(isConfigKey bool,keys ...*sdk.KVStoreKey) {
+	var db dbm.DB
+	if isConfigKey {
+		db = app.commitDB
+		for _, key := range keys {
+			app.MountStoreWithConfigDB(key, sdk.StoreTypeIAVL, db)
+		}
+	}else {
+		db = app.db
+		for _, key := range keys {
+			app.MountStoreWithDB(key, sdk.StoreTypeIAVL, db)
+		}
+	}
+}
+
 // Mount stores to the provided keys in the BaseApp multistore
 func (app *BaseApp) MountStoresTransient(keys ...*sdk.TransientStoreKey) {
 	for _, key := range keys {
-		app.MountStore(key, sdk.StoreTypeTransient)
+		//app.MountStore(key, sdk.StoreTypeTransient)
+		app.MountStoreWithDB(key, sdk.StoreTypeTransient, app.db)
 	}
 }
 
@@ -136,27 +159,41 @@ func (app *BaseApp) MountStoreWithDB(key sdk.StoreKey, typ sdk.StoreType, db dbm
 	app.cms.MountStoreWithDB(key, typ, db)
 }
 
+func (app *BaseApp) MountStoreWithConfigDB(key sdk.StoreKey, typ sdk.StoreType, db dbm.DB) {
+	app.cfcms.MountStoreWithDB(key, typ, db)
+}
+
 // Mount a store to the provided types in the BaseApp multistore, using the default DB
 func (app *BaseApp) MountStore(key sdk.StoreKey, typ sdk.StoreType) {
 	app.cms.MountStoreWithDB(key, typ, nil)
 }
 
 // load latest application version
-func (app *BaseApp) LoadLatestVersion(mainKey sdk.StoreKey) error {
-	err := app.cms.LoadLatestVersion()
+func (app *BaseApp) LoadLatestVersion(mainKey sdk.StoreKey, isConfigKey bool) error {
+	var err error
+	if isConfigKey {
+		err = app.cfcms.LoadLatestVersion()
+	}else {
+		err = app.cms.LoadLatestVersion()
+	}
 	if err != nil {
 		return err
 	}
-	return app.initFromStore(mainKey)
+	return app.initFromStore(mainKey, isConfigKey)
 }
 
 // load application version
-func (app *BaseApp) LoadVersion(version int64, mainKey sdk.StoreKey) error {
-	err := app.cms.LoadVersion(version)
+func (app *BaseApp) LoadVersion(version int64, mainKey sdk.StoreKey, isConfigKey bool) error {
+	var err error
+	if isConfigKey {
+		err = app.cfcms.LoadVersion(version)
+	}else {
+		err = app.cms.LoadVersion(version)
+	}
 	if err != nil {
 		return err
 	}
-	return app.initFromStore(mainKey)
+	return app.initFromStore(mainKey, isConfigKey)
 }
 
 // the last CommitID of the multistore
@@ -175,11 +212,16 @@ func (app *BaseApp) LastBlockHeight() int64 {
 //}
 
 // initializes the remaining logic from app.cms
-func (app *BaseApp) initFromStore(mainKey sdk.StoreKey) error {
+func (app *BaseApp) initFromStore(mainKey sdk.StoreKey, isConfigKey bool) error {
 	// main store should exist.
 	// TODO: we don't actually need the main store here
-	main := app.cms.GetKVStore(mainKey)
-		if main == nil {
+	var main sdk.KVStore
+	if isConfigKey {
+		main = app.cfcms.GetKVStore(mainKey)
+	}else {
+		main = app.cms.GetKVStore(mainKey)
+	}
+	if main == nil {
 		return errors.New("baseapp expects MultiStore with 'main' KVStore")
 	}
 	// Needed for `gaiad export`, which inits from store but never calls initchain
@@ -193,13 +235,14 @@ func (app *BaseApp) initFromStore(mainKey sdk.StoreKey) error {
 // NewContext returns a new Context with the correct store, the given header, and nil txBytes.
 func (app *BaseApp) NewContext(isCheckTx bool, header abci.Header) sdk.Context {
 	if isCheckTx {
-		return sdk.NewContext(app.checkState.ms, header, true, app.Logger)
+		return sdk.NewContext(app.checkState.ms, app.checkState.cfms, app.keys, app.configKeys, header, true, app.Logger)
 	}
-	return sdk.NewContext(app.deliverState.ms, header, false, app.Logger)
+	return sdk.NewContext(app.deliverState.ms, app.checkState.cfms, app.keys, app.configKeys, header, false, app.Logger)
 }
 
 type state struct {
 	ms  sdk.CacheMultiStore
+	cfms  sdk.CacheMultiStore
 	ctx sdk.Context
 }
 
@@ -213,17 +256,21 @@ func (st *state) Context() sdk.Context {
 
 func (app *BaseApp) setCheckState(header abci.Header) {
 	ms := app.cms.CacheMultiStore()
+	cfms := app.cfcms.CacheMultiStore()
 	app.checkState = &state{
 		ms:  ms,
-		ctx: sdk.NewContext(ms, header, true, app.Logger),
+		cfms: cfms,
+		ctx: sdk.NewContext(ms, cfms, app.keys, app.configKeys, header, true, app.Logger),
 	}
 }
 
 func (app *BaseApp) setDeliverState(header abci.Header) {
 	ms := app.cms.(sdk.CacheMultiStore)
+	cfms := app.cfcms.(sdk.CacheMultiStore)
 	app.deliverState = &state{
 		ms:  ms,
-		ctx: sdk.NewContext(ms, header, false, app.Logger),
+		cfms: cfms,
+		ctx: sdk.NewContext(ms, cfms, app.keys, app.configKeys, header, false, app.Logger),
 	}
 }
 
@@ -233,7 +280,7 @@ func (app *BaseApp) setDeliverState(header abci.Header) {
 
 // Implements ABCI
 func (app *BaseApp) Info(req abci.RequestInfo) abci.ResponseInfo {
-	lastCommitID := app.cms.LastCommitID()
+	lastCommitID := app.cfcms.LastCommitID()
 
 	return abci.ResponseInfo{
 		Data:             app.name,
@@ -395,7 +442,7 @@ func handleQueryCustom(app *BaseApp, path []string, req abci.RequestQuery) (res 
 	}
 
 	// Cache wrap the commit-multistore for safety.
-	ctx := sdk.NewContext(app.cms, app.checkState.ctx.BlockHeader(), true, app.Logger)
+	ctx := sdk.NewContext(app.cms, app.cfcms, app.keys, app.configKeys, app.checkState.ctx.BlockHeader(), true, app.Logger)
 
 	// Passes the rest of the path as an argument to the querier.
 	// For example, in the path "custom/gov/proposal/test", the gov querier gets []string{"proposal", "test"} as the path
@@ -705,7 +752,10 @@ func (app *BaseApp) Commit() (res abci.ResponseCommit) {
 	*/
 	// Write the Deliver state and commit the MultiStore
 	//app.deliverState.ms.Write()
-	commitID := app.cms.Commit()
+	//commitID := app.cms.Commit()
+	infoByte := app.cms.CommitStore()
+	commitID := app.cfcms.CommitConfigStore(infoByte)
+
 
 	// TODO: this is missing a module identifier and dumps byte array
 	app.Logger.Debug("Commit synced",
