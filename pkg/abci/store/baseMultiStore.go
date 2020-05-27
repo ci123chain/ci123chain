@@ -72,13 +72,10 @@ func (bs *baseMultiStore) GetStore(key StoreKey) Store {
 
 func (bs *baseMultiStore) GetKVStore(key StoreKey) KVStore {
 	store := bs.stores[key].(*baseKVStore)
-	//store := bs.stores[key].(*sdk.CommitStore)
 	return store
 }
 
 func (bs *baseMultiStore) LoadLatestVersion() error {
-
-	//ver := getLatestVersion(dbStoreAdapter{bs.db})
 	ver := getLatestVersion(dbStoreAdapter{bs.db})
 	err := bs.LoadVersion(ver)
 	return err
@@ -104,7 +101,6 @@ func (bs *baseMultiStore) LoadVersion(ver int64) error {
 			return fmt.Errorf("failed to load rootMultiStore: %v", err)
 		}
 	}
-	//cInfo, err := getCommitInfo(dbStoreAdapter{bs.db}, ver)
 	cInfo, err := getCommitInfo(dbStoreAdapter{bs.db}, ver)
 	if err != nil {
 		return err
@@ -114,13 +110,6 @@ func (bs *baseMultiStore) LoadVersion(ver int64) error {
 }
 
 func (bs *baseMultiStore) LastCommitID() CommitID {
-	/*version := GetLastVersion(bs.db)
-	InfoHash := GetLastCommitInfo(bs.db, version)
-	commitID := CommitID{
-		Version:version,
-		Hash:InfoHash,
-	}
-	return commitID*/
 	return bs.lastCommitID
 }
 
@@ -165,25 +154,6 @@ func (bs *baseMultiStore) CommitConfigStore(CommitInfo []byte) CommitID {
 	}
 	bs.lastCommitID = commitID
 	return commitID
-	/*if cInfo.Version != configInfo.Version {
-		panic(errors.New("version dismatch"))
-	}else {
-		storeInfos := make([]storeInfo, 0, len(configInfo.StoreInfos) + len(cInfo.StoreInfos))
-		for _, info := range configInfo.StoreInfos {
-			storeInfos = append(storeInfos, info)
-		}
-		for _, info := range cInfo.StoreInfos {
-			storeInfos = append(storeInfos, info)
-		}
-		SetCommitInfo(bs.db, configInfo.Version, configInfo)
-		SetLatestVersion(bs.db, configInfo.Version)
-		commitID := CommitID{
-			Version: configInfo.Version,
-			Hash:    configInfo.Hash(),
-		}
-		bs.lastCommitID = commitID
-		return commitID
-	}*/
 }
 
 
@@ -362,8 +332,8 @@ func SetLatestVersion(db dbm.DB, version int64) {
 	db.Set([]byte(types.LatestVersionKey),versionByte)
 }
 
-/*
-func GetLastVersion(db dbm.DB) int64 {
+
+/*func GetLastVersion(db dbm.DB) int64 {
 	var version int64
 	versionByte := db.Get([]byte(types.LatestVersionKey))
 	if versionByte == nil {
@@ -383,5 +353,4 @@ func GetLastCommitInfo(db dbm.DB, version int64) []byte {
 		_ = cdc.UnmarshalBinaryLengthPrefixed(infoByte, &info)
 		return info.Hash()
 	}
-}
-*/
+}*/

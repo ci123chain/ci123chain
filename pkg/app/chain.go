@@ -122,9 +122,7 @@ func NewChain(logger log.Logger, tmdb, commitDB tmdb.DB, traceStore io.Writer) *
 		wasmStoreKey,
 	}
 
-	configKeys := []*sdk.KVStoreKey{
-		OrderStoreKey,
-	}
+	configKeys := []*sdk.KVStoreKey{OrderStoreKey,}
 
 	cdc := MakeCodec()
 	app := baseapp.NewBaseApp("ci123", logger, tmdb, commitDB,keys, configKeys, transaction.DefaultTxDecoder(cdc))
@@ -230,23 +228,40 @@ func (c *Chain) mountStores(keys, configKeys []*sdk.KVStoreKey) error {
 	}*/
 
 	//c.MountStoresIAVL(keys...)
-	c.MountStoreIAVLWithDB(false, keys...)
-	c.MountStoreIAVLWithDB(true, configKeys...)
+	keyLength := len(keys)
+	configKeyLength := len(configKeys)
+	if keyLength != 0 {
+		c.MountStoreIAVLWithDB(false, keys...)
+	}
+	if configKeyLength != 0 {
+		c.MountStoreIAVLWithDB(true, configKeys...)
+	}
 
 	c.MountStoresTransient(c.txIndexStore, ParamTransStoreKey)
 
-	for _, key := range configKeys {
-		if err := c.LoadLatestVersion(key, true); err != nil {
+	if configKeyLength == 0 {
+		if err := c.LoadLatestVersion(nil,  true); err != nil {
 			return err
+		}
+	}else {
+		for _, key := range configKeys {
+			if err := c.LoadLatestVersion(key, true); err != nil {
+				return err
+			}
 		}
 	}
 
-	for _, key := range keys {
-		if err := c.LoadLatestVersion(key, false); err != nil {
+	if keyLength == 0 {
+		if err := c.LoadLatestVersion(nil, false); err != nil {
 			return err
 		}
+	}else {
+		for _, key := range keys {
+			if err := c.LoadLatestVersion(key, false); err != nil {
+				return err
+			}
+		}
 	}
-
 	return nil
 }
 

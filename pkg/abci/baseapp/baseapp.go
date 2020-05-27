@@ -2,6 +2,7 @@ package baseapp
 
 import (
 	"fmt"
+	"github.com/ci123chain/ci123chain/pkg/app/types"
 	"io"
 	"runtime/debug"
 	"strings"
@@ -179,7 +180,11 @@ func (app *BaseApp) LoadLatestVersion(mainKey sdk.StoreKey, isConfigKey bool) er
 	if err != nil {
 		return err
 	}
-	return app.initFromStore(mainKey, isConfigKey)
+	if mainKey == nil {
+		return nil
+	}else {
+		return app.initFromStore(mainKey, isConfigKey)
+	}
 }
 
 // load application version
@@ -280,7 +285,14 @@ func (app *BaseApp) setDeliverState(header abci.Header) {
 
 // Implements ABCI
 func (app *BaseApp) Info(req abci.RequestInfo) abci.ResponseInfo {
-	lastCommitID := app.cfcms.LastCommitID()
+	var lastCommitID sdk.CommitID
+	normalBytes := app.db.Get([]byte(types.LatestVersionKey))
+	//configBytes := app.commitDB.Get([]byte(types.LatestVersionKey))
+	if normalBytes != nil {
+		lastCommitID = app.cms.LastCommitID()
+	}else {
+		lastCommitID = app.cfcms.LastCommitID()
+	}
 
 	return abci.ResponseInfo{
 		Data:             app.name,

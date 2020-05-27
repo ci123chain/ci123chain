@@ -78,19 +78,25 @@ func (c Context) Value(key interface{}) interface{} {
 func (c Context) IsKey(key StoreKey) bool {
 	keys := c.Keys()
 	configKeys := c.ConfigKeys()
+	keyLength := len(keys)
+	configKeyLength := len(configKeys)
 	var isKey bool
 	var isConfigKey bool
-	for _, bkey := range keys {
-		if bkey.Equal(key) {
-			isKey = true
-			break
+	if keyLength != 0 {
+		for _, bkey := range keys {
+			if bkey.Equal(key) {
+				isKey = true
+				break
+			}
 		}
 	}
 	if !isKey {
-		for _, bKey := range configKeys {
-			if bKey.Equal(key) {
-				isConfigKey = true
-				break
+		if configKeyLength != 0 {
+			for _, bKey := range configKeys {
+				if bKey.Equal(key) {
+					isConfigKey = true
+					break
+				}
 			}
 		}
 		if !isConfigKey {
