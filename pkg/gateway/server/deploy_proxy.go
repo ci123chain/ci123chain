@@ -14,6 +14,7 @@ const GATEWAY_URL = "kong:http://127.0.0.1:13800"
 const CONTENT_TYPE_FORM = "application/x-www-form-urlencoded"
 const CONTENT_TYPE_JSON = "application/json"
 const CONTENT_TYPE_MULTIPART = "multipart/form-data"
+const APPID = "cc2535f30a87457b91649ecbed0245e6"
 const TARGETAPPID = "hedlzgp1u48kjf50xtcvwdklminbqe9a"
 const DPSPACEKEY = "mdocxiqnl43hu68a2lrayv9p5fttm0vf"
 const METHOD = "POST"
@@ -44,7 +45,6 @@ func (dp *DeployProxy) Handle(r *http.Request, backends []types.Instance, Reques
 		return res
 	}
 
-
 	client, err := gosdk.GetClientInstance(r.Header)
 	if err != nil {
 		res := dp.ErrorRes(err)
@@ -55,7 +55,7 @@ func (dp *DeployProxy) Handle(r *http.Request, backends []types.Instance, Reques
 	channel := RequestParams["channel"]
 	version := RequestParams["version"]
 
-	err = client.SetAppInfo(TARGETAPPID, appkey, channel, version)
+	err = client.SetAppInfo(APPID, appkey, channel, version)
 	if err != nil {
 		res := dp.ErrorRes(err)
 		return res
@@ -66,7 +66,7 @@ func (dp *DeployProxy) Handle(r *http.Request, backends []types.Instance, Reques
 		res := dp.ErrorRes(err)
 		return res
 	}
-
+	
 	dp.ResponseChannel <- res
 	return res
 }

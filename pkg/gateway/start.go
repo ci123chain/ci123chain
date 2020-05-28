@@ -5,13 +5,12 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/ci123chain/ci123chain/pkg/gateway/dynamic"
-	"github.com/spf13/pflag"
-	"github.com/spf13/viper"
 	"github.com/ci123chain/ci123chain/pkg/gateway/backend"
 	"github.com/ci123chain/ci123chain/pkg/gateway/couchdbsource"
 	"github.com/ci123chain/ci123chain/pkg/gateway/logger"
 	"github.com/ci123chain/ci123chain/pkg/gateway/types"
+	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
 	"log"
 	"net/http"
 	"regexp"
@@ -62,8 +61,7 @@ func Start() {
 	// create http server
 
 	timeoutHandler := http.TimeoutHandler(http.HandlerFunc(AllHandle), time.Second*60, "server timeout")
-	http.HandleFunc("/createChannel", createChannelHandle)
-	http.HandleFunc("/testCall", testCallHandle)
+
 	http.Handle("/", timeoutHandler)
 
 	// start health checking
@@ -73,20 +71,6 @@ func Start() {
 
 	logger.Info("Load Balancer started at :%d\n", port)
 	if err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil); err != nil {
-		log.Fatal(err)
-	}
-}
-
-func createChannelHandle(w http.ResponseWriter, r *http.Request) {
-	err := dynamic.CreateChannel(dynamic.APP_ID, dynamic.APP_KEY, dynamic.CHANNEL,"", r.Header)
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-func testCallHandle(w http.ResponseWriter, r *http.Request) {
-	err := dynamic.TestCall(dynamic.APP_ID, dynamic.APP_KEY, dynamic.CHANNEL,"", r.Header)
-	if err != nil {
 		log.Fatal(err)
 	}
 }
