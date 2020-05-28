@@ -3,7 +3,7 @@
 
 rm -rf ~/.ci123
 
-./build/cid init --home ~/.ci123 --chain_id ci0
+./build/cid init --home ~/.ci123 --chain_id ci0 --validator_key=oQLmM5pM5wL78a6LJntQY8tPGQPpp050udIA5YZMkCc=
 
 ./build/cid add-genesis-account 0xD1a14962627fAc768Fe885Eeb9FF072706B54c19 100000000000 --home ~/.ci123
 
