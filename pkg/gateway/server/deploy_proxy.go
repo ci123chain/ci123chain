@@ -66,7 +66,7 @@ func (dp *DeployProxy) Handle(r *http.Request, backends []types.Instance, Reques
 		res := dp.ErrorRes(err)
 		return res
 	}
-
+	
 	dp.ResponseChannel <- res
 	return res
 }

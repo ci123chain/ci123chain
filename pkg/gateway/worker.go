@@ -8,6 +8,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/gateway/types"
 	"io/ioutil"
 	"net/http"
+	"reflect"
 )
 
 type SpecificJob struct {
@@ -21,12 +22,14 @@ type SpecificJob struct {
 
 
 func (sjob *SpecificJob) Do() {
-	if len(sjob.BackEnds) < 1 {
-		res, _ := json.Marshal(types.ErrorResponse{
-			Err:  "service backend not found",
-		})
-		*sjob.ResponseChan <- res
-		return
+	if reflect.TypeOf(sjob.Proxy).Elem() != reflect.TypeOf(server.DeployProxy{}) {
+		if len(sjob.BackEnds) < 1 {
+			res, _ := json.Marshal(types.ErrorResponse{
+				Err:  "service backend not found",
+			})
+			*sjob.ResponseChan <- res
+			return
+		}
 	}
 	resultBytes := sjob.Proxy.Handle(sjob.Request, sjob.BackEnds, sjob.RequestParams)
 
