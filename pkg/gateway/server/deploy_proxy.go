@@ -5,7 +5,6 @@ import (
 	"errors"
 	"github.com/ci123chain/ci123chain/pkg/gateway/types"
 	"github.com/pretty66/gosdk"
-	"github.com/pretty66/gosdk/cienv"
 	"net/http"
 )
 
@@ -31,10 +30,10 @@ func NewDeployProxy(pt types.ProxyType) *DeployProxy {
 		ProxyType: pt,
 		ResponseChannel:make(chan []byte),
 	}
-	err := cienv.SetEnv(GATEWAY_SERVICE_KEY, GATEWAY_URL)
-	if err != nil {
-		panic(err)
-	}
+	//err := cienv.SetEnv(GATEWAY_SERVICE_KEY, GATEWAY_URL)
+	//if err != nil {
+	//	panic(err)
+	//}
 	return dp
 }
 
