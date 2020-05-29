@@ -3,22 +3,12 @@ package server
 import (
 	"encoding/json"
 	"errors"
+	"github.com/ci123chain/ci123chain/pkg/gateway/dynamic"
 	"github.com/ci123chain/ci123chain/pkg/gateway/types"
-	"github.com/pretty66/gosdk"
 	"net/http"
 )
 
-const GATEWAY_SERVICE_KEY = "GATEWAY_HOST_SERVICE"
-const GATEWAY_URL = "kong:http://127.0.0.1:13800"
-const CONTENT_TYPE_FORM = "application/x-www-form-urlencoded"
-const CONTENT_TYPE_JSON = "application/json"
-const CONTENT_TYPE_MULTIPART = "multipart/form-data"
-const APPID = "cc2535f30a87457b91649ecbed0245e6"
 const TARGETAPPID = "hedlzgp1u48kjf50xtcvwdklminbqe9a"
-const DPSPACEKEY = "mdocxiqnl43hu68a2lrayv9p5fttm0vf"
-const METHOD = "POST"
-const API = "Channel/assignChannel"
-const ALIAS = "deployment"
 
 type DeployProxy struct {
 	ProxyType types.ProxyType
@@ -30,10 +20,6 @@ func NewDeployProxy(pt types.ProxyType) *DeployProxy {
 		ProxyType: pt,
 		ResponseChannel:make(chan []byte),
 	}
-	//err := cienv.SetEnv(GATEWAY_SERVICE_KEY, GATEWAY_URL)
-	//if err != nil {
-	//	panic(err)
-	//}
 	return dp
 }
 
@@ -44,28 +30,7 @@ func (dp *DeployProxy) Handle(r *http.Request, backends []types.Instance, Reques
 		return res
 	}
 
-	client, err := gosdk.GetClientInstance(r.Header)
-	if err != nil {
-		res := dp.ErrorRes(err)
-		return res
-	}
-
-	appkey := RequestParams["appkey"]
-	channel := RequestParams["channel"]
-	version := RequestParams["version"]
-
-	err = client.SetAppInfo(APPID, appkey, channel, version)
-	if err != nil {
-		res := dp.ErrorRes(err)
-		return res
-	}
-
-	res, err := client.Call(DPSPACEKEY, METHOD, API, params, ALIAS, CONTENT_TYPE_FORM, nil)
-	if err != nil {
-		res := dp.ErrorRes(err)
-		return res
-	}
-	
+	res, err := dynamic.CreateChannel(params)
 	dp.ResponseChannel <- res
 	return res
 }
@@ -100,15 +65,7 @@ func handleDeployParams(deployParams map[string]string) (map[string]interface{},
 }
 
 func checkDeployParams(deployParams map[string]string) error {
-	_, ok := deployParams["appkey"]
-	if !ok {
-		return errors.New("missing instance_name")
-	}
-	_, ok = deployParams["channel"]
-	if !ok {
-		return errors.New("missing instance_name")
-	}
-	_, ok = deployParams["instance_name"]
+	_, ok := deployParams["instance_name"]
 	if !ok {
 		return errors.New("missing instance_name")
 	}
