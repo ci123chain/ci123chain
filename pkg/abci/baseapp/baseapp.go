@@ -541,6 +541,7 @@ func (app *BaseApp) runMsgs(ctx sdk.Context, tx sdk.Tx, mode runTxMode) sdk.Resu
 		GasUsed:   	gasUsed,
 		Log: 		strings.TrimSpace(msgResult.Log),
 		Data: 		msgResult.Data,
+		Events: 	msgResult.Events,
 	}
 }
 

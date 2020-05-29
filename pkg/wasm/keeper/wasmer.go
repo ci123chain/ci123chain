@@ -73,6 +73,24 @@ func SetCtx(con *sdk.Context) {
 	ctx = con
 }
 
+//export notify
+// eventPtr event 字符串起始地址
+// eventLength event 字符串长度
+func notify(context unsafe.Pointer, eventPtr int32, eventLength int32) {
+
+}
+
+// 获取 Address 类型长度
+func getAddressLength(context unsafe.Pointer) int32 {
+	return 0
+}
+
+// 获取参数长度
+func getInputLength(context unsafe.Pointer) int32 {
+	return 0
+}
+
+
 //export send
 func send(context unsafe.Pointer, toPtr int32, amountPtr int32) int32{
 	return perform_send(context, toPtr, amountPtr)
