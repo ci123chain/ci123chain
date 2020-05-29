@@ -1,4 +1,4 @@
-FROM pretty66/cn-alpine:3.9
+From harbor.oneitfarm.com/library/golang:1.12
 
 COPY ./build/cproxy-linux /opt
 
