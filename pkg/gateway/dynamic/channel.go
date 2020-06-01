@@ -16,8 +16,9 @@ const ALIAS = "deployment"
 
 var client gosdk.Client
 func init() {
+	var err error
 	h := http.Header{}
-	client, err := gosdk.GetClientInstance(h)
+	client, err = gosdk.GetClientInstance(h)
 	if err != nil {
 		panic(err)
 	}
