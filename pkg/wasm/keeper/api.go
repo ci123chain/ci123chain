@@ -1,36 +1,54 @@
 package keeper
 
 import (
+	"encoding/hex"
+	"encoding/json"
+	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/client/helper"
-	wasm "github.com/wasmerio/go-ext-wasm/wasmer"
 	"strconv"
 	"unsafe"
+
+	wasm "github.com/wasmerio/go-ext-wasm/wasmer"
 )
 
-func perform_send(context unsafe.Pointer, toPtr int32, amountPtr int32) int32 {
-	var err error
+const AddressSize = 20
+var inputData []byte
+type Address [AddressSize]byte
 
+func (addr *Address) ToString() string {
+	return hex.EncodeToString(addr[:])
+}
+
+func getInputLength(context unsafe.Pointer) int32 {
+	return int32(len([]byte(inputData)))
+}
+
+func getInput(context unsafe.Pointer, ptr int32, size int32) {
 	var instanceContext = wasm.IntoInstanceContext(context)
 	var memory = instanceContext.Memory().Data()
 
-	toAddr := NewRegion(memory[toPtr : toPtr + RegionSize])
-	to := memory[toAddr.Offset : toAddr.Offset + toAddr.Length]
+	copy(memory[ptr:ptr+size], inputData)
+}
 
-	amountAddr := NewRegion(memory[amountPtr : amountPtr + RegionSize])
-	amount := memory[amountAddr.Offset : amountAddr.Offset + amountAddr.Length]
+func performSend(context unsafe.Pointer, to int32, amount int64) int32 {
+	var instanceContext = wasm.IntoInstanceContext(context)
+	var memory = instanceContext.Memory().Data()
+
+	var toAddr Address
+	copy(toAddr[:], memory[to: to + AddressSize])
+
+	fmt.Println("send to: " + toAddr.ToString())
+	fmt.Printf("send amount: %d\n", amount)
 
 	coinUint, err := strconv.ParseUint(string(amount),10,64)
 	if err != nil {
 		return 1
 	}
 
-	fromAcc, err := helper.StrToAddress(creator)
-	if err != nil {
-		return 1
-	}
+	fromAcc := creator
 
-	toAcc, err := helper.StrToAddress(string(to))
+	toAcc, err := helper.StrToAddress(toAddr.ToString())
 	if err != nil {
 		return 1
 	}
@@ -42,71 +60,72 @@ func perform_send(context unsafe.Pointer, toPtr int32, amountPtr int32) int32 {
 	return 0
 }
 
-func getCreator(context unsafe.Pointer, creatorPtr int32) {
-	creatorStr := creator //contractAddress
-	size := len(creatorStr)
+func getCreator(context unsafe.Pointer, CreatorPtr int32) {
+	creatorAddr := Address{} //contractAddress
+	copy(creatorAddr[:], creator.String())
 
 	var instanceContext = wasm.IntoInstanceContext(context)
 	var memory = instanceContext.Memory().Data()
-	allocate, exist := middleIns.fun["allocate"]
-	if !exist {
-		panic("allocate not found")
-	}
-	valueOffset, err := allocate(size)
-	if err != nil {
-		panic(err)
-	}
-	copy(memory[valueOffset.ToI32():valueOffset.ToI32()+int32(size)], creatorStr)
-	region := Region{
-		Offset:   uint32(valueOffset.ToI32()),
-		Capacity: uint32(size),
-		Length:   uint32(size),
-	}
-	copy(memory[creatorPtr:creatorPtr+RegionSize], region.ToBytes())
+
+	copy(memory[CreatorPtr: CreatorPtr + AddressSize], creatorAddr[:])
 }
 
 func getInvoker(context unsafe.Pointer, invokerPtr int32) {
-	invokerStr := invoker //invokerAddress
-	size := len(invokerStr)
+	invokerAddr := Address{}//contractAddress
+	copy(invokerAddr[:], invoker.String())
 
 	var instanceContext = wasm.IntoInstanceContext(context)
 	var memory = instanceContext.Memory().Data()
-	allocate, exist := middleIns.fun["allocate"]
-	if !exist {
-		panic("allocate not found")
-	}
-	valueOffset, err := allocate(size)
-	if err != nil {
-		panic(err)
-	}
-	copy(memory[valueOffset.ToI32():valueOffset.ToI32()+int32(size)], invokerStr)
-	region := Region{
-		Offset:   uint32(valueOffset.ToI32()),
-		Capacity: uint32(size),
-		Length:   uint32(size),
-	}
-	copy(memory[invokerPtr:invokerPtr+RegionSize], region.ToBytes())
+
+	copy(memory[invokerPtr: invokerPtr + AddressSize], invokerAddr[:])
 }
 
-func getTime(context unsafe.Pointer, timePtr int32) {
-	tStr := blockHeader.Time.Format("2006-01-02 15:04:05")
-	size := len(tStr)
+func getTime(context unsafe.Pointer) int64 {
+	blockTime := blockHeader.Time //blockHeader.Time
+	return blockTime.Unix()
+}
 
+func notifyContract(context unsafe.Pointer, ptr, size int32) {
 	var instanceContext = wasm.IntoInstanceContext(context)
 	var memory = instanceContext.Memory().Data()
-	allocate, exist := middleIns.fun["allocate"]
-	if !exist {
-		panic("allocate not found")
+
+	type Event struct {
+		Type string                 `json:"type"`
+		Attr map[string]interface{} `json:"attr"`
 	}
-	valueOffset, err := allocate(size)
+
+	var event Event
+	err := json.Unmarshal(memory[ptr: ptr + size], &event)
 	if err != nil {
 		panic(err)
 	}
-	copy(memory[valueOffset.ToI32():valueOffset.ToI32()+int32(size)], tStr)
-	region := Region{
-		Offset:   uint32(valueOffset.ToI32()),
-		Capacity: uint32(size),
-		Length:   uint32(size),
+	fmt.Println(event)
+}
+
+var RES string
+func returnContract(context unsafe.Pointer, ptr, size int32) {
+	var instanceContext = wasm.IntoInstanceContext(context)
+	var memory = instanceContext.Memory().Data()
+
+	result := memory[ptr: ptr + size]
+
+	var resp RespW
+	err := json.Unmarshal(result, &resp)
+	if err != nil {
+		fmt.Println(err)
 	}
-	copy(memory[timePtr:timePtr+RegionSize], region.ToBytes())
+	if resp.Err != "" {
+		RES = resp.Err
+	}else{
+		RES = string(resp.Ok.Data)
+	}
+}
+
+type RespW struct {
+	Ok  RespN   `json:"ok"`
+	Err string 	`json:"err"`
+}
+
+type RespN struct {
+	Data []byte `json:"data"`
 }
