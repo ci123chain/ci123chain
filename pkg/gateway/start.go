@@ -43,6 +43,8 @@ func Start() {
 	//viper.BindEnv("logdir")
 	statedb = viper.GetString("statedb")
 	logDir = viper.GetString("logdir")
+	port = viper.GetInt("port")
+	urlreg = viper.GetString("urlreg")
 
 	if ok, err :=  regexp.MatchString("[*]+", urlreg); !ok {
 		panic(err)
