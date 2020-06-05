@@ -102,7 +102,7 @@ func notifyContract(context unsafe.Pointer, ptr, size int32) {
 	fmt.Println(event)
 }
 
-var RES string
+var invokeResult string
 func returnContract(context unsafe.Pointer, ptr, size int32) {
 	var instanceContext = wasm.IntoInstanceContext(context)
 	var memory = instanceContext.Memory().Data()
@@ -112,12 +112,12 @@ func returnContract(context unsafe.Pointer, ptr, size int32) {
 	var resp RespW
 	err := json.Unmarshal(result, &resp)
 	if err != nil {
-		fmt.Println(err)
+		panic(err)
 	}
 	if resp.Err != "" {
-		RES = resp.Err
+		invokeResult = resp.Err
 	}else{
-		RES = string(resp.Ok.Data)
+		invokeResult = string(resp.Ok.Data)
 	}
 }
 

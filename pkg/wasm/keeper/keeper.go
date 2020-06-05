@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
@@ -125,6 +126,7 @@ func (k Keeper) Create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte)
 func (k Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAddress, args json.RawMessage, label string) (sdk.AccAddress, error) {
 	SetGasUsed()
 	SetCtx(&ctx)
+	ResetResult()
 	var codeInfo types.CodeInfo
 	var wasmer Wasmer
 	var code []byte
@@ -138,7 +140,7 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAdd
 	contractAddress := k.generateContractAddress(codeHash)
 	existingAcct := k.AccountKeeper.GetAccount(ctx, contractAddress)
 	if existingAcct != nil {
-		return sdk.AccAddress{}, sdk.ErrInternal("account exists")
+		return sdk.AccAddress{}, sdk.ErrInternal("Contract account exists")
 	}
 	SetBlockHeader(ctx.BlockHeader())
 	SetInvoker(invoker)
@@ -211,7 +213,7 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, invoker
 	SetCreator(contractAddress)
 	SetInvoker(invoker)
 	SetCtx(&ctx)
-
+	ResetResult()
 	var params types.CallContractParam
 	if args != nil {
 		err := json.Unmarshal(args, &params)
@@ -248,7 +250,7 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, invoker
 	}
 	ctx.GasMeter().ConsumeGas(sdk.Gas(GasUsed),"wasm cost")
 	return sdk.Result{
-		Data:   []byte(fmt.Sprintf("%s", RES)),
+		Data:   []byte(fmt.Sprintf("%s", invokeResult)),
 	}, nil
 }
 
@@ -260,6 +262,7 @@ func (k Keeper) Query(ctx sdk.Context, contractAddress sdk.AccAddress, msg json.
 	SetCtx(&ctx)
 	SetGasUsed()
 	SetGasWanted(UINT_MAX)
+	ResetResult()
 	var params types.CallContractParam
 	if msg != nil {
 		err := json.Unmarshal(msg, &params)
@@ -295,7 +298,10 @@ func (k Keeper) Query(ctx sdk.Context, contractAddress sdk.AccAddress, msg json.
 	if err != nil {
 		return types.ContractState{}, err
 	}
-	contractState := types.ContractState{Result:RES}
+	if invokeResult == "" {
+		return types.ContractState{}, errors.New("no query result")
+	}
+	contractState := types.ContractState{Result: invokeResult}
 	return contractState, nil
 }
 
