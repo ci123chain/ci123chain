@@ -248,7 +248,7 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, invoker
 	}
 	ctx.GasMeter().ConsumeGas(sdk.Gas(GasUsed),"wasm cost")
 	return sdk.Result{
-		Data:   []byte(fmt.Sprintf("%s", RES)),
+		Data:   []byte(fmt.Sprintf("%s", InvokeResult)),
 	}, nil
 }
 
@@ -295,7 +295,7 @@ func (k Keeper) Query(ctx sdk.Context, contractAddress sdk.AccAddress, msg json.
 	if err != nil {
 		return types.ContractState{}, err
 	}
-	contractState := types.ContractState{Result:RES}
+	contractState := types.ContractState{Result:InvokeResult}
 	return contractState, nil
 }
 

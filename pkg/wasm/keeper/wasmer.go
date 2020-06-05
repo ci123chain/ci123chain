@@ -258,7 +258,6 @@ func getInstance(code []byte) (*wasmer.Instance, error) {
 	if err != nil {
 		panic(err)
 	}
-	//defer instance.Close()
 	return &instance, nil
 }
 
@@ -286,43 +285,4 @@ func (w *Wasmer) GetWasmCode(hash []byte) ([]byte, error) {
 	}
 	//the file may be not exist.
 	return code, nil
-}
-
-func readCString(memory []byte) string {
-	var res []byte
-	for i := range memory {
-		if memory[i] == 0 {
-			break
-		}
-		res = append(res, memory[i])
-	}
-	return string(res)
-}
-
-func wasmCall(instance wasmer.Instance, fun func(...interface{}) (wasmer.Value, error), msg json.RawMessage) (ContractResult, error) {
-	allocate, exist := middleIns.fun["allocate"]
-	if !exist {
-		panic("allocate not found")
-	}
-
-	var data []byte
-	data = msg
-	data = append(data, 0) // c str, + \0
-
-	offset, err := allocate(len(data))
-	if err != nil {
-		return ContractResult{}, err
-	}
-	copy(instance.Memory.Data()[offset.ToI32():offset.ToI32()+int32(len(data))], data)
-
-	res, err := fun(offset)
-	if err != nil {
-		return ContractResult{}, err
-	}
-	 str := readCString(instance.Memory.Data()[res.ToI32():])
-	 resultMap := make(map[string]interface{})
-	 if err := json.Unmarshal([]byte(str), &resultMap); err != nil {
-	 	return ContractResult{}, err
-	 }
-	 return ContractResult{ resultMap, nil}, nil
 }

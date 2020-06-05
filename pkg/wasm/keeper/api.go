@@ -8,7 +8,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/client/helper"
 	"strconv"
 	"unsafe"
-
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	wasm "github.com/wasmerio/go-ext-wasm/wasmer"
 )
 
@@ -99,14 +99,21 @@ func notifyContract(context unsafe.Pointer, ptr, size int32) {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(event)
+	attrs := []sdk.Attribute{}
+	for key, value := range event.Attr {
+		attrs = append(attrs, sdk.NewAttribute(key, toString(value)))
+	}
+	if ctx != nil {
+		ctx.EventManager().EmitEvent(
+			sdk.NewEvent(event.Type, attrs...),
+		)
+	}
 }
 
-var RES string
+var InvokeResult string
 func returnContract(context unsafe.Pointer, ptr, size int32) {
 	var instanceContext = wasm.IntoInstanceContext(context)
 	var memory = instanceContext.Memory().Data()
-
 	result := memory[ptr: ptr + size]
 
 	var resp RespW
@@ -115,10 +122,11 @@ func returnContract(context unsafe.Pointer, ptr, size int32) {
 		fmt.Println(err)
 	}
 	if resp.Err != "" {
-		RES = resp.Err
+		InvokeResult = resp.Err
 	}else{
-		RES = string(resp.Ok.Data)
+		InvokeResult = string(resp.Ok.Data)
 	}
+
 }
 
 type RespW struct {
@@ -128,4 +136,30 @@ type RespW struct {
 
 type RespN struct {
 	Data []byte `json:"data"`
+}
+
+
+func toString(a interface{}) string {
+	if v, p := a.(int); p {
+		return strconv.Itoa(v)
+	}
+	if v, p := a.(int16); p {
+		return strconv.Itoa(int(v))
+	}
+	if v, p := a.(int32); p {
+		return strconv.Itoa(int(v))
+	}
+	if v, p := a.(uint); p {
+		return strconv.Itoa(int(v))
+	}
+	if v, p := a.(float32); p {
+		return strconv.FormatFloat(float64(v), 'f', -1, 32)
+	}
+	if v, p := a.(float64); p {
+		return strconv.FormatFloat(v, 'f', -1, 32)
+	}
+	if v, p := a.(string); p {
+		return v
+	}
+	return ""
 }
