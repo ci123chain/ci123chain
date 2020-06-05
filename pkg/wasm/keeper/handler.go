@@ -9,6 +9,7 @@ import (
 
 func NewHandler(k Keeper) sdk.Handler {
 	return func(ctx sdk.Context, tx sdk.Tx) sdk.Result {
+		ctx = ctx.WithEventManager(sdk.NewEventManager())
 		switch tx := tx.(type) {
 		case *wasm.StoreCodeTx:
 			return handleStoreCodeTx(ctx, k, *tx)
@@ -36,6 +37,7 @@ func handleStoreCodeTx(ctx sdk.Context, k Keeper, msg wasm.StoreCodeTx) sdk.Resu
 
 	return sdk.Result{
 		Data:   codeHash,
+		Events: ctx.EventManager().Events(),
 	}
 }
 
@@ -72,6 +74,7 @@ func handleInstantiateContractTx(ctx sdk.Context, k Keeper, msg wasm.Instantiate
 	}
 	res = sdk.Result{
 		Data:  []byte(fmt.Sprintf("%s", contractAddr.String())),
+		Events: ctx.EventManager().Events(),
 	}
 	return
 }
@@ -107,5 +110,6 @@ func handleExecuteContractTx(ctx sdk.Context, k Keeper, msg wasm.ExecuteContract
 	if err != nil {
 		return wasm.ErrExecuteFailed(wasm.DefaultCodespace, err).Result()
 	}
+	res.Events = ctx.EventManager().Events()
 	return
 }

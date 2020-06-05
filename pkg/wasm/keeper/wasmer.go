@@ -256,7 +256,6 @@ func getInstance(code []byte) (*wasmer.Instance, error) {
 	if err != nil {
 		panic(err)
 	}
-	//defer instance.Close()
 	return &instance, nil
 }
 
@@ -285,3 +284,4 @@ func (w *Wasmer) GetWasmCode(hash []byte) ([]byte, error) {
 	//the file may be not exist.
 	return code, nil
 }
+

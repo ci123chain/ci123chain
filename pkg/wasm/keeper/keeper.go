@@ -302,6 +302,7 @@ func (k Keeper) Query(ctx sdk.Context, contractAddress sdk.AccAddress, msg json.
 		return types.ContractState{}, errors.New("no query result")
 	}
 	contractState := types.ContractState{Result: invokeResult}
+
 	return contractState, nil
 }
 
