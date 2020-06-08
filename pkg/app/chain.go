@@ -124,8 +124,10 @@ func NewChain(logger log.Logger, tmdb, commitDB tmdb.DB, traceStore io.Writer) *
 
 	configKeys := []*sdk.KVStoreKey{OrderStoreKey,}
 
+	transientKeys := []*sdk.TransientStoreKey{TxIndexStoreKey, ParamTransStoreKey}
+
 	cdc := MakeCodec()
-	app := baseapp.NewBaseApp("ci123", logger, tmdb, commitDB,keys, configKeys, transaction.DefaultTxDecoder(cdc))
+	app := baseapp.NewBaseApp("ci123", logger, tmdb, commitDB,keys, configKeys, transientKeys, transaction.DefaultTxDecoder(cdc))
 
 	c := &Chain{
 		BaseApp: 			app,
@@ -200,7 +202,7 @@ func NewChain(logger log.Logger, tmdb, commitDB tmdb.DB, traceStore io.Writer) *
 	app_types.CommitInfoKeyFmt = shardID + "s/%d"
 	app_types.LatestVersionKey = shardID + "s/latest"
 
-	err := c.mountStores(keys, configKeys)
+	err := c.mountStores(keys, configKeys, transientKeys)
 	if err != nil {
 		common.Exit(err.Error())
 	}
@@ -208,7 +210,7 @@ func NewChain(logger log.Logger, tmdb, commitDB tmdb.DB, traceStore io.Writer) *
 	return c
 }
 
-func (c *Chain) mountStores(keys, configKeys []*sdk.KVStoreKey) error {
+func (c *Chain) mountStores(keys, configKeys []*sdk.KVStoreKey, TransientKeys []*sdk.TransientStoreKey) error {
 	/*keys := []*sdk.KVStoreKey{
 		c.capKeyMainStore,
 		c.contractStore,
@@ -237,7 +239,10 @@ func (c *Chain) mountStores(keys, configKeys []*sdk.KVStoreKey) error {
 		c.MountStoreIAVLWithDB(true, configKeys...)
 	}
 
-	c.MountStoresTransient(c.txIndexStore, ParamTransStoreKey)
+	if len(TransientKeys) != 0 {
+		c.MountStoresTransient(TransientKeys...)
+	}
+	//c.MountStoresTransient(c.txIndexStore, ParamTransStoreKey)
 
 	if configKeyLength == 0 {
 		if err := c.LoadLatestVersion(nil,  true); err != nil {

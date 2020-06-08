@@ -52,6 +52,7 @@ type BaseApp struct {
 	cfcms       sdk.CommitMultiStore  //commitInfo
 	keys        []*sdk.KVStoreKey        //normal key
 	configKeys  []*sdk.KVStoreKey        //config key
+	transientKeys []*sdk.TransientStoreKey  //transientStoreKey
 	queryRouter QueryRouter          // router for redirecting query calls
 	//handler     sdk.Handler
 	router 		Router
@@ -92,7 +93,7 @@ var _ abci.Application = (*BaseApp)(nil)
 // NOTE: The db is used to store the version number for now.
 // Accepts a user-defined txDecoder
 // Accepts variable number of option functions, which act on the BaseApp to set configuration choices
-func NewBaseApp(name string, logger log.Logger, db, commitDB dbm.DB, keys, configKeys []*sdk.KVStoreKey, txDecoder sdk.TxDecoder, options ...func(*BaseApp)) *BaseApp {
+func NewBaseApp(name string, logger log.Logger, db, commitDB dbm.DB, keys, configKeys []*sdk.KVStoreKey, transientKeys []*sdk.TransientStoreKey, txDecoder sdk.TxDecoder, options ...func(*BaseApp)) *BaseApp {
 	app := &BaseApp{
 		Logger:      logger,
 		name:        name,
@@ -100,6 +101,7 @@ func NewBaseApp(name string, logger log.Logger, db, commitDB dbm.DB, keys, confi
 		commitDB:    commitDB,
 		keys:        keys,
 		configKeys:  configKeys,
+		transientKeys: transientKeys,
 		//cms:         store.NewCommitMultiStore(db),
 		cms:         store.NewBaseMultiStore(db),
 		cfcms:       store.NewBaseMultiStore(commitDB),
@@ -240,9 +242,9 @@ func (app *BaseApp) initFromStore(mainKey sdk.StoreKey, isConfigKey bool) error 
 // NewContext returns a new Context with the correct store, the given header, and nil txBytes.
 func (app *BaseApp) NewContext(isCheckTx bool, header abci.Header) sdk.Context {
 	if isCheckTx {
-		return sdk.NewContext(app.checkState.ms, app.checkState.cfms, app.keys, app.configKeys, header, true, app.Logger)
+		return sdk.NewContext(app.checkState.ms, app.checkState.cfms, app.keys, app.configKeys, app.transientKeys, header, true, app.Logger)
 	}
-	return sdk.NewContext(app.deliverState.ms, app.checkState.cfms, app.keys, app.configKeys, header, false, app.Logger)
+	return sdk.NewContext(app.deliverState.ms, app.checkState.cfms, app.keys, app.configKeys, app.transientKeys, header, false, app.Logger)
 }
 
 type state struct {
@@ -265,7 +267,7 @@ func (app *BaseApp) setCheckState(header abci.Header) {
 	app.checkState = &state{
 		ms:  ms,
 		cfms: cfms,
-		ctx: sdk.NewContext(ms, cfms, app.keys, app.configKeys, header, true, app.Logger),
+		ctx: sdk.NewContext(ms, cfms, app.keys, app.configKeys, app.transientKeys, header, true, app.Logger),
 	}
 }
 
@@ -275,7 +277,7 @@ func (app *BaseApp) setDeliverState(header abci.Header) {
 	app.deliverState = &state{
 		ms:  ms,
 		cfms: cfms,
-		ctx: sdk.NewContext(ms, cfms, app.keys, app.configKeys, header, false, app.Logger),
+		ctx: sdk.NewContext(ms, cfms, app.keys, app.configKeys, app.transientKeys, header, false, app.Logger),
 	}
 }
 
@@ -454,7 +456,7 @@ func handleQueryCustom(app *BaseApp, path []string, req abci.RequestQuery) (res 
 	}
 
 	// Cache wrap the commit-multistore for safety.
-	ctx := sdk.NewContext(app.cms, app.cfcms, app.keys, app.configKeys, app.checkState.ctx.BlockHeader(), true, app.Logger)
+	ctx := sdk.NewContext(app.cms, app.cfcms, app.keys, app.configKeys, app.transientKeys, app.checkState.ctx.BlockHeader(), true, app.Logger)
 
 	// Passes the rest of the path as an argument to the querier.
 	// For example, in the path "custom/gov/proposal/test", the gov querier gets []string{"proposal", "test"} as the path

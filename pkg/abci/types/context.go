@@ -34,7 +34,7 @@ type Context struct {
 }
 
 // create a new context
-func NewContext(ms, cfms MultiStore,keys, configKeys []*KVStoreKey, header abci.Header, isCheckTx bool, logger log.Logger) Context {
+func NewContext(ms, cfms MultiStore,keys, configKeys []*KVStoreKey, transientStoreKeys []*TransientStoreKey, header abci.Header, isCheckTx bool, logger log.Logger) Context {
 	c := Context{
 		Context: context.Background(),
 		pst:     newThePast(),
@@ -44,6 +44,7 @@ func NewContext(ms, cfms MultiStore,keys, configKeys []*KVStoreKey, header abci.
 	c = c.WithMultiConfigStore(cfms)
 	c = c.WithKeys(keys)
 	c = c.WithConfigKeys(configKeys)
+	c = c.WithTransientStoreKeys(transientStoreKeys)
 	c = c.WithBlockHeader(header)
 	c = c.WithBlockHeight(header.Height)
 	c = c.WithChainID(header.ChainID)
@@ -78,6 +79,7 @@ func (c Context) Value(key interface{}) interface{} {
 func (c Context) IsKey(key StoreKey) bool {
 	keys := c.Keys()
 	configKeys := c.ConfigKeys()
+	transientKeys := c.TransientKeys()
 	keyLength := len(keys)
 	configKeyLength := len(configKeys)
 	var isKey bool
@@ -85,6 +87,14 @@ func (c Context) IsKey(key StoreKey) bool {
 	if keyLength != 0 {
 		for _, bkey := range keys {
 			if bkey.Equal(key) {
+				isKey = true
+				break
+			}
+		}
+	}
+	if len(transientKeys) != 0 {
+		for _, tkey := range transientKeys {
+			if tkey.name == key.Name() {
 				isKey = true
 				break
 			}
@@ -188,6 +198,7 @@ const (
 	contextConfigKeyMultiStore
 	contextKeys
 	contextConfigKeys
+	contextTransientKeys
 	contextKeyBlockHeader
 	contextKeyBlockHeight
 	contextKeyConsensusParams
@@ -225,6 +236,10 @@ func (c Context) ConfigKeys() []*KVStoreKey {
 	return c.Value(contextConfigKeys).([]*KVStoreKey)
 }
 
+func (c Context) TransientKeys() []*TransientStoreKey {
+	return c.Value(contextTransientKeys).([]*TransientStoreKey)
+}
+
 func (c Context) ChainID() string { return c.Value(contextKeyChainID).(string) }
 
 func (c Context) TxBytes() []byte { return c.Value(contextKeyTxBytes).([]byte) }
@@ -257,6 +272,10 @@ func (c Context) WithKeys(keys []*KVStoreKey) Context {
 
 func (c Context) WithConfigKeys(configKeys []*KVStoreKey) Context {
 	return c.withValue(contextConfigKeys, configKeys)
+}
+
+func (c Context) WithTransientStoreKeys(keys []*TransientStoreKey) Context{
+	return c.withValue(contextTransientKeys, keys)
 }
 
 func (c Context) WithBlockHeader(header abci.Header) Context {
