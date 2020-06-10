@@ -23,7 +23,10 @@
 `docker-compose -f testdocker/couchdb-single.yaml up -d`
 
 ### 5. 启动节点
-`CI_STATEDB=couchdb://admin:password@192.168.2.89:5994/ci1 ./build/cid start`
+
+couchdb 地址填上面启动的地址
+
+`CI_STATEDB=couchdb://admin:password@#couchdb地址#/ci1 ./build/cid start`
 
 ### 6. 转账
 新建账户B => `0x6207826Ee35e69e7aAFD3C4049f6863Cd91dEd1b `
