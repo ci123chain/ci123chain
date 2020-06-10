@@ -24,6 +24,7 @@ func init()  {
 	transferCmd.Flags().Uint(flagGas, 0, "gas for tx")
 	transferCmd.Flags().String(helper.FlagAddress, "", "Address to sign with")
 	transferCmd.Flags().String(flagPassword, "", "passphrase")
+
 	util.CheckRequiredFlag(transferCmd, flagAmount)
 	util.CheckRequiredFlag(transferCmd, flagGas)
 }
@@ -32,6 +33,11 @@ var transferCmd = &cobra.Command{
 	Use: "transfer",
 	Short: "Build, Sign, and send transfer",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		err := viper.BindPFlags(cmd.Flags())
+		if err != nil {
+			panic(err)
+		}
+
 		ctx, err := client.NewClientContextFromViper(cdc)
 		if err != nil {
 			return err

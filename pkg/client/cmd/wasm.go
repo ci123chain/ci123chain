@@ -21,31 +21,28 @@ import (
 )
 
 func init() {
-	rootCmd.AddCommand(WasmCmd)
+	rootCmd.AddCommand(wasmCmd)
 
-	WasmCmd.Flags().String(helper.FlagAddress, "", "the address of your account")
-	WasmCmd.Flags().String(helper.FlagGas, "", "expected gas of transaction")
-	WasmCmd.Flags().String(helper.FlagPrivateKey, "", "the privateKey of account")
-	WasmCmd.Flags().String(helper.FlagFunds, "", "funds of contract")
-	WasmCmd.Flags().String(helper.FlagArgs, "", "args of call contract")
-	WasmCmd.Flags().String(helper.FlagFile, "", "the path of contract file")
-	WasmCmd.Flags().String(helper.FlagHash, "", "hash of contract code")
-	WasmCmd.Flags().String(helper.FlagLabel, "", "label of contract")
-	WasmCmd.Flags().String(helper.FlagContractAddress, "", "address of contract account")
+	wasmCmd.Flags().String(helper.FlagAddress, "", "the address of your account")
+	wasmCmd.Flags().String(helper.FlagGas, "", "expected gas of transaction")
+	wasmCmd.Flags().String(helper.FlagPrivateKey, "", "the privateKey of account")
+	wasmCmd.Flags().String(helper.FlagFunds, "", "funds of contract")
+	wasmCmd.Flags().String(helper.FlagArgs, "", "args of call contract")
+	wasmCmd.Flags().String(helper.FlagFile, "", "the path of contract file")
+	wasmCmd.Flags().String(helper.FlagHash, "", "hash of contract code")
+	wasmCmd.Flags().String(helper.FlagLabel, "", "label of contract")
+	wasmCmd.Flags().String(helper.FlagContractAddress, "", "address of contract account")
 
-	util.CheckRequiredFlag(WasmCmd, helper.FlagGas)
-	util.CheckRequiredFlag(WasmCmd, helper.FlagPrivateKey)
-	util.CheckRequiredFlag(WasmCmd, helper.FlagAddress)
-	err := viper.BindPFlags(WasmCmd.Flags())
-	if err != nil {
-		panic(err)
-	}
+	util.CheckRequiredFlag(wasmCmd, helper.FlagGas)
+	util.CheckRequiredFlag(wasmCmd, helper.FlagPrivateKey)
+	util.CheckRequiredFlag(wasmCmd, helper.FlagAddress)
 }
 
-var WasmCmd = &cobra.Command{
+var wasmCmd = &cobra.Command{
 	Use: "wasm [functionName]",
 	Short: "Wasm transaction subcommands",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		viper.BindPFlags(cmd.Flags())
 
 		funcName := args[0]
 		switch funcName {
