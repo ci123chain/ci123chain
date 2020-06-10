@@ -9,7 +9,7 @@ require (
 	github.com/btcsuite/btcd v0.20.1-beta
 	github.com/btcsuite/btcutil v1.0.2
 	github.com/cespare/cp v1.1.1 // indirect
-	github.com/ci123chain/wasm-util v1.0.0
+	github.com/ci123chain/wasm-util v1.0.1
 	github.com/deckarep/golang-set v1.7.1 // indirect
 	github.com/elastic/gosigar v0.10.5 // indirect
 	github.com/ethereum/go-ethereum v1.9.6
@@ -20,7 +20,7 @@ require (
 	github.com/panjf2000/ants/v2 v2.2.2
 	github.com/pborman/uuid v1.2.0 // indirect
 	github.com/pkg/errors v0.9.1
-	github.com/pretty66/gosdk v1.0.3 // indirect
+	github.com/pretty66/gosdk v1.0.3
 	github.com/rjeczalik/notify v0.9.2 // indirect
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/pflag v1.0.3

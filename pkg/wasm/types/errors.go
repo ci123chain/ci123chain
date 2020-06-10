@@ -42,6 +42,10 @@ func ErrExecuteFailed(codespce sdk.CodespaceType, err error) sdk.Error {
 	return sdk.NewError(codespce, CodeHandleMsgFailedError, "execute failed: %s", err.Error())
 }
 
+func ErrQueryFailed(codespce sdk.CodespaceType, err error) sdk.Error {
+	return sdk.NewError(codespce, CodeHandleMsgFailedError, "query failed: %s", err.Error())
+}
+
 func ErrSetNewAccountSequence(codespce sdk.CodespaceType, err error) sdk.Error {
 	return sdk.NewError(codespce, CodeSetSequenceFailedError, "set sequence of account failed: %s", err.Error())
 }

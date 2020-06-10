@@ -108,38 +108,37 @@ func (k StakingKeeper) RemoveDelegation(ctx sdk.Context, delegation types.Delega
 }
 
 
-func (k StakingKeeper) ValidateUnbondAmount(
-	ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.AccAddress, amt sdk.Int,
-	) (shares sdk.Dec, err error) {
-		validator, found := k.GetValidator(ctx, valAddr)
-		if !found {
-			return shares, types.ErrNoExpectedValidator(types.StakingCodespace, err)
-		}
-		shares, err = validator.SharesFromTokens(amt)
-		if err != nil {
-			return shares, err
-		}
+func (k StakingKeeper) ValidateUnbondAmount(ctx sdk.Context, delAddr sdk.AccAddress,
+	valAddr sdk.AccAddress, amt sdk.Int) (shares sdk.Dec, err error) {
+	validator, found := k.GetValidator(ctx, valAddr)
+	if !found {
+		return shares, types.ErrNoExpectedValidator(types.StakingCodespace, err)
+	}
+	shares, err = validator.SharesFromTokens(amt)
+	if err != nil {
+		return shares, err
+	}
 
-		del, found := k.GetDelegation(ctx, delAddr, valAddr)
-		if !found {
-			return shares, types.ErrNoDelegation
+	del, found := k.GetDelegation(ctx, delAddr, valAddr)
+	if !found {
+		return shares, types.ErrNoDelegation
 
-		}
-		sharesTruncated, err := validator.SharesFromTokensTruncated(amt)
-		if err != nil {
-			return shares, err
-		}
-		delShares := del.GetShares()
+	}
+	sharesTruncated, err := validator.SharesFromTokensTruncated(amt)
+	if err != nil {
+		return shares, err
+	}
+	delShares := del.GetShares()
 
-		if sharesTruncated.GT(delShares) {
-			return shares, types.ErrBadSharesAmount
-		}
+	if sharesTruncated.GT(delShares) {
+		return shares, types.ErrBadSharesAmount
+	}
 
-		if shares.GT(delShares) {
-			shares = delShares
-		}
+	if shares.GT(delShares) {
+		shares = delShares
+	}
 
-		return shares, nil
+	return shares, nil
 }
 
 func (k StakingKeeper) Redelegate(ctx sdk.Context, delAddr sdk.AccAddress, valSrcAddr, valDstAddr sdk.AccAddress,
@@ -152,44 +151,44 @@ func (k StakingKeeper) Redelegate(ctx sdk.Context, delAddr sdk.AccAddress, valSr
 	if !found {
 		return time.Time{}, types.ErrBadRedelegationDst
 	}
-	 srcValidator, found := k.GetValidator(ctx, valSrcAddr)
-	 if !found {
-		 return time.Time{}, types.ErrBadRedelegationDst
-	 }
+	srcValidator, found := k.GetValidator(ctx, valSrcAddr)
+	if !found {
+		return time.Time{}, types.ErrBadRedelegationDst
+	}
 
-	 if k.HasReceivingRedelegation(ctx, delAddr, valSrcAddr) {
-		 return time.Time{}, types.ErrTransitiveRedelegation
-	 }
+	if k.HasReceivingRedelegation(ctx, delAddr, valSrcAddr) {
+		return time.Time{}, types.ErrTransitiveRedelegation
+	}
 
-	 if k.HasMaxRedelegationEntries(ctx, delAddr, valSrcAddr, valDstAddr) {
-		 return time.Time{}, types.ErrMaxRedelegationEntries
-	 }
+	if k.HasMaxRedelegationEntries(ctx, delAddr, valSrcAddr, valDstAddr) {
+		return time.Time{}, types.ErrMaxRedelegationEntries
+	}
 
-	 returnAmount, err := k.unbond(ctx, delAddr, valSrcAddr, sharesAmount)
-	 if err != nil {
-		 return time.Time{}, err
-	 }
+	returnAmount, err := k.unbond(ctx, delAddr, valSrcAddr, sharesAmount)
+	if err != nil {
+		return time.Time{}, err
+	}
 
-	 if returnAmount.IsZero() {
-		 return time.Time{}, types.ErrTinyRedelegationAmount
-	 }
+	if returnAmount.IsZero() {
+		return time.Time{}, types.ErrTinyRedelegationAmount
+	}
 
-	 sharesCreated, err := k.Delegate(ctx, delAddr, returnAmount, srcValidator.GetStatus(), dstValidator, false)
-	 if err != nil {
-		 return time.Time{}, err
-	 }
+	sharesCreated, err := k.Delegate(ctx, delAddr, returnAmount, srcValidator.GetStatus(), dstValidator, false)
+	if err != nil {
+		return time.Time{}, err
+	}
 
-	 completionTime, height, completeNow := k.getBeginInfo(ctx, valSrcAddr)
+	completionTime, height, completeNow := k.getBeginInfo(ctx, valSrcAddr)
 
-	 if completeNow {
-		 return completionTime, nil
-	 }
+	if completeNow {
+		return completionTime, nil
+	}
 
-	 red := k.SetRedelegationEntry(ctx, delAddr, valSrcAddr, valDstAddr,
-	 	height, completionTime, returnAmount, sharesAmount, sharesCreated)
+	red := k.SetRedelegationEntry(ctx, delAddr, valSrcAddr, valDstAddr,
+		height, completionTime, returnAmount, sharesAmount, sharesCreated)
 
-	 k.InsertRedelegationQueue(ctx, red, completionTime)
-	 return completionTime, nil
+	k.InsertRedelegationQueue(ctx, red, completionTime)
+	return completionTime, nil
 }
 
 func (k StakingKeeper) Undelegate(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.AccAddress, sharesAmount sdk.Dec) (time.Time, error) {

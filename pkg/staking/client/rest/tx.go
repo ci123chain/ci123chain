@@ -234,20 +234,33 @@ func ParseArgs(request *http.Request) (uint64,uint64, int64, int64, int64, int64
 		return 0, 0, 0, 0, 0, 0, "", "", "", "", "", "", "", "", "", "", 0, errors.New("minSelfDelegation error")
 	}
 	rate := request.FormValue("rate")
-	r, err := strconv.ParseInt(rate, 10, 64)
-	if err != nil || r < 0 {
-		return 0, 0, 0, 0, 0, 0, "", "", "", "", "", "", "", "", "", "", 0, errors.New("rate error")
+	var r, mr, mcr int64
+	if rate == "" {
+		r = 1
+	}else {
+		r, err = strconv.ParseInt(rate, 10, 64)
+		if err != nil || r < 0 {
+			return 0, 0, 0, 0, 0, 0, "", "", "", "", "", "", "", "", "", "", 0, errors.New("rate error")
+		}
 	}
 	maxRate := request.FormValue("maxRate")
-	mr, err := strconv.ParseInt(maxRate, 10, 64)
-	if err != nil || mr < 0 {
-		return 0, 0, 0, 0, 0, 0, "", "", "", "", "", "", "", "", "", "", 0, errors.New("max rate error")
+	if maxRate == "" {
+		mr = 1
+	}else {
+		mr, err = strconv.ParseInt(maxRate, 10, 64)
+		if err != nil || mr < 0 {
+			return 0, 0, 0, 0, 0, 0, "", "", "", "", "", "", "", "", "", "", 0, errors.New("max rate error")
+		}
 	}
 
 	maxChangeRate := request.FormValue("maxChangeRate")
-	mcr, err := strconv.ParseInt(maxChangeRate, 10, 64)
-	if err != nil || mcr < 0 {
-		return 0, 0, 0, 0, 0, 0, "", "", "", "", "", "", "", "", "", "", 0, errors.New("max change rate error")
+	if maxChangeRate == "" {
+		mcr = 1
+	}else {
+		mcr, err = strconv.ParseInt(maxChangeRate, 10, 64)
+		if err != nil || mcr < 0 {
+			return 0, 0, 0, 0, 0, 0, "", "", "", "", "", "", "", "", "", "", 0, errors.New("max change rate error")
+		}
 	}
 	moniker := request.FormValue("moniker")
 	if moniker == "" {

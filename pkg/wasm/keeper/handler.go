@@ -9,6 +9,7 @@ import (
 
 func NewHandler(k Keeper) sdk.Handler {
 	return func(ctx sdk.Context, tx sdk.Tx) sdk.Result {
+		ctx = ctx.WithEventManager(sdk.NewEventManager())
 		switch tx := tx.(type) {
 		case *wasm.StoreCodeTx:
 			return handleStoreCodeTx(ctx, k, *tx)
@@ -36,6 +37,7 @@ func handleStoreCodeTx(ctx sdk.Context, k Keeper, msg wasm.StoreCodeTx) sdk.Resu
 
 	return sdk.Result{
 		Data:   codeHash,
+		Events: ctx.EventManager().Events(),
 	}
 }
 
@@ -46,9 +48,23 @@ func handleInstantiateContractTx(ctx sdk.Context, k Keeper, msg wasm.Instantiate
 
 	defer func() {
 		if r := recover(); r != nil{
-			res = wasm.ErrInstantiateFailed(wasm.DefaultCodespace, errors.New("Vm run out of gas")).Result()
-			res.GasUsed = gasLimit
-			res.GasWanted = gasLimit
+			var err error
+			switch x := r.(type) {
+			case string:
+				err = errors.New(x)
+				res = wasm.ErrInstantiateFailed(wasm.DefaultCodespace, err).Result()
+			case error:
+				err = x
+				res = wasm.ErrInstantiateFailed(wasm.DefaultCodespace, err).Result()
+			case sdk.ErrorOutOfGas:
+				err = errors.New(x.Descriptor)
+				res = wasm.ErrInstantiateFailed(wasm.DefaultCodespace, err).Result()
+				res.GasUsed = gasLimit
+				res.GasWanted = gasLimit
+			default:
+				err = errors.New("")
+				res = wasm.ErrInstantiateFailed(wasm.DefaultCodespace, err).Result()
+			}
 		}
 	}()
 
@@ -58,6 +74,7 @@ func handleInstantiateContractTx(ctx sdk.Context, k Keeper, msg wasm.Instantiate
 	}
 	res = sdk.Result{
 		Data:  []byte(fmt.Sprintf("%s", contractAddr.String())),
+		Events: ctx.EventManager().Events(),
 	}
 	return
 }
@@ -69,9 +86,23 @@ func handleExecuteContractTx(ctx sdk.Context, k Keeper, msg wasm.ExecuteContract
 
 	defer func() {
 		if r := recover(); r != nil{
-			res = wasm.ErrInstantiateFailed(wasm.DefaultCodespace, errors.New("Vm run out of gas")).Result()
-			res.GasUsed = gasLimit
-			res.GasWanted = gasLimit
+			var err error
+			switch x := r.(type) {
+			case string:
+				err = errors.New(x)
+				res = wasm.ErrExecuteFailed(wasm.DefaultCodespace, err).Result()
+			case error:
+				err = x
+				res = wasm.ErrExecuteFailed(wasm.DefaultCodespace, err).Result()
+			case sdk.ErrorOutOfGas:
+				err = errors.New(x.Descriptor)
+				res = wasm.ErrExecuteFailed(wasm.DefaultCodespace, err).Result()
+				res.GasUsed = gasLimit
+				res.GasWanted = gasLimit
+			default:
+				err = errors.New("")
+				res = wasm.ErrExecuteFailed(wasm.DefaultCodespace, err).Result()
+			}
 		}
 	}()
 
@@ -79,5 +110,6 @@ func handleExecuteContractTx(ctx sdk.Context, k Keeper, msg wasm.ExecuteContract
 	if err != nil {
 		return wasm.ErrExecuteFailed(wasm.DefaultCodespace, err).Result()
 	}
+	res.Events = ctx.EventManager().Events()
 	return
 }

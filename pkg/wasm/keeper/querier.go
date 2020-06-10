@@ -73,7 +73,7 @@ func queryContractState(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byt
 	//query
 	contractState, err := k.Query(ctx, params.ContractAddress, params.QueryMessage)
 	if err != nil {
-		return nil, sdk.ErrInternal("get contract state failed")
+		return nil, types.ErrQueryFailed(types.DefaultCodespace, err)
 	}
 	res := types.WasmCodec.MustMarshalJSON(contractState)
 

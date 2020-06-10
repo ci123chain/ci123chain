@@ -46,6 +46,9 @@ func (ctx *Context) GetInputAddresses() ([]sdk.AccAddress, error) {
 func (ctx *Context) GetBalanceByAddress(addr sdk.AccAddress) (uint64, error) {
 	addrByte := acc_types.AddressStoreKey(addr)
 	res, _, err := ctx.Query("/store/main/types", addrByte)
+	if err != nil {
+		return 0, err
+	}
 	if res == nil{
 		return 0, errors.New("The account does not exist")
 	}
