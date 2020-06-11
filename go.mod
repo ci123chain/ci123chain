@@ -36,7 +36,7 @@ require (
 	github.com/tendermint/tm-db v0.2.0
 	github.com/tyler-smith/go-bip39 v1.0.2
 	github.com/wasmerio/go-ext-wasm v0.0.0-20190612094245-722faa9f1b90
-	golang.org/x/crypto v0.0.0-20200414173820-0848c9571904 // indirect
+	golang.org/x/crypto v0.0.0-20200414173820-0848c9571904
 	gopkg.in/yaml.v2 v2.2.8
 
 )
