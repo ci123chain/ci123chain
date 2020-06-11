@@ -5,7 +5,7 @@ import (
 	"io"
 	"sync"
 
-	"github.com/tendermint/iavl"
+	"github.com/ci123chain/ci123chain/pkg/iavl"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/merkle"
 	cmn "github.com/tendermint/tendermint/libs/common"

@@ -69,7 +69,7 @@ func (ks *latestStore) parentGet(key []byte) (value []byte) {
 	oriKey := key
 	p := ks.parent
 	for {
-		if reflect.TypeOf(p) != reflect.TypeOf(dbStoreAdapter{}) {
+		if reflect.TypeOf(p) != reflect.TypeOf(iavlStore{}) {
 			p = p.Parent()
 			if reflect.TypeOf(p) == reflect.TypeOf(prefixStore{}) {
 				pre := p.(prefixStore).prefix
@@ -79,8 +79,7 @@ func (ks *latestStore) parentGet(key []byte) (value []byte) {
 			break
 		}
 	}
-
-	value = p.Get([]byte(key))
+	_, value = p.(*iavlStore).tree.Get(key)
 	if len(value) > 0 {
 		return
 	} else {

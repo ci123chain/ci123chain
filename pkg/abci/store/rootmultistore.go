@@ -17,7 +17,9 @@ import (
 // cacheMultiStore which is for cache-wrapping other MultiStores. It implements
 // the CommitMultiStore interface.
 type rootMultiStore struct {
-	db           dbm.DB
+	ldb          dbm.DB  //localDB
+	cdb			 dbm.DB	 //originDB like couchDB
+
 	lastCommitID CommitID
 	pruning      sdk.PruningStrategy
 	storesParams map[StoreKey]storeParams
@@ -32,9 +34,10 @@ var _ CommitMultiStore = (*rootMultiStore)(nil)
 var _ Queryable = (*rootMultiStore)(nil)
 
 // nolint
-func NewCommitMultiStore(db dbm.DB) *rootMultiStore {
+func NewCommitMultiStore(ldb dbm.DB, cdb dbm.DB) *rootMultiStore {
 	return &rootMultiStore{
-		db:           db,
+		ldb:          ldb,
+		cdb:		  cdb,
 		storesParams: make(map[StoreKey]storeParams),
 		stores:       make(map[StoreKey]CommitStore),
 		keysByName:   make(map[string]StoreKey),
@@ -85,7 +88,7 @@ func (rs *rootMultiStore) GetCommitKVStore(key StoreKey) CommitKVStore {
 
 // Implements CommitMultiStore.
 func (rs *rootMultiStore) LoadLatestVersion() error {
-	ver := getLatestVersion(dbStoreAdapter{rs.db})
+	ver := getLatestVersion(dbStoreAdapter{rs.ldb})
 	return rs.LoadVersion(ver)
 }
 
@@ -109,7 +112,7 @@ func (rs *rootMultiStore) LoadVersion(ver int64) error {
 	// Otherwise, version is 1 or greater
 
 	// Get commitInfo
-	cInfo, err := getCommitInfo(dbStoreAdapter{rs.db}, ver)
+	cInfo, err := getCommitInfo(dbStoreAdapter{rs.ldb}, ver)
 	if err != nil {
 		return err
 	}
@@ -189,12 +192,12 @@ func (rs *rootMultiStore) Commit() CommitID {
 	var commitInfo commitInfo
 	version := rs.lastCommitID.Version + 1
 	cInfoKey := fmt.Sprintf(types.CommitInfoKeyFmt, version)
-	cInfoBytes := rs.db.Get([]byte(cInfoKey))
+	cInfoBytes := rs.ldb.Get([]byte(cInfoKey))
 	if cInfoBytes == nil {
 		// Commit stores.
 		commitInfo = commitStores(version, rs.stores)
 		// Need to update atomically.
-		batch := rs.db.NewBatch()
+		batch := rs.ldb.NewBatch()
 		setCommitInfo(batch, version, commitInfo)
 		setLatestVersion(batch, version)
 		batch.Write()
@@ -298,7 +301,7 @@ func (rs *rootMultiStore) Query(req abci.RequestQuery) abci.ResponseQuery {
 		return sdk.ErrInternal("substore proof was nil/empty when it should never be").QueryResult()
 	}
 
-	commitInfo, errMsg := getCommitInfo(dbStoreAdapter{rs.db}, res.Height)
+	commitInfo, errMsg := getCommitInfo(dbStoreAdapter{rs.ldb}, res.Height)
 	if errMsg != nil {
 		return sdk.ErrInternal(errMsg.Error()).QueryResult()
 	}
@@ -340,7 +343,7 @@ func (rs *rootMultiStore) loadCommitStoreFromParams(key sdk.StoreKey, id CommitI
 	if params.db != nil {
 		db = dbm.NewPrefixDB(params.db, []byte("s/_/"))
 	} else {
-		db = dbm.NewPrefixDB(rs.db, []byte("s/k:"+params.key.Name()+"/"))
+		db = dbm.NewPrefixDB(rs.cdb, []byte("s/k:"+params.key.Name()+"/"))
 	}
 	switch params.typ {
 	case sdk.StoreTypeMulti:

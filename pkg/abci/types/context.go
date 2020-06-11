@@ -72,8 +72,8 @@ func (c Context) Value(key interface{}) interface{} {
 
 // KVStore fetches a KVStore from the MultiStore.
 func (c Context) KVStore(key StoreKey) KVStore {
-	//return c.MultiStore().GetKVStore(key).Gas(c.GasMeter(), cachedKVGasConfig)
-	return c.MultiStore().GetKVStore(key).Prefix([]byte(key.Name() + "//")).Gas(c.GasMeter(), cachedKVGasConfig)
+	return c.MultiStore().GetKVStore(key).Gas(c.GasMeter(), cachedKVGasConfig)
+	//return c.MultiStore().GetKVStore(key).Prefix([]byte(key.Name() + "//")).Gas(c.GasMeter(), cachedKVGasConfig)
 }
 
 // KVStore fetches a KVStore from the MultiStore.

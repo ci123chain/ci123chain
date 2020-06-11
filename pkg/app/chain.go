@@ -106,9 +106,9 @@ type Chain struct {
 	mm *module.AppManager
 }
 
-func NewChain(logger log.Logger, tmdb tmdb.DB, traceStore io.Writer) *Chain {
+func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer) *Chain {
 	cdc := MakeCodec()
-	app := baseapp.NewBaseApp("ci123", logger, tmdb, transaction.DefaultTxDecoder(cdc))
+	app := baseapp.NewBaseApp("ci123", logger, ldb, cdb, transaction.DefaultTxDecoder(cdc))
 
 	c := &Chain{
 		BaseApp: 			app,
@@ -139,8 +139,8 @@ func NewChain(logger log.Logger, tmdb tmdb.DB, traceStore io.Writer) *Chain {
 	distrKeeper := k.NewKeeper(cdc, disrtStoreKey, fcKeeper, accKeeper)
 	stakingKeeper := staking.NewKeeper(cdc, stakingStoreKey, accKeeper,supplyKeeper, paramsKeeper.Subspace(params.ModuleName))
 
-	cdb := tmdb.(*couchdb.GoCouchDB)
-	orderKeeper := order.NewKeeper(cdb, OrderStoreKey, accKeeper)
+	odb := cdb.(*couchdb.GoCouchDB)
+	orderKeeper := order.NewKeeper(odb, OrderStoreKey, accKeeper)
 
 	homeDir := viper.GetString(cli.HomeFlag)
 	var wasmconfig wasm_types.WasmConfig

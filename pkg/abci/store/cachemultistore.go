@@ -26,7 +26,7 @@ var _ CacheMultiStore = cacheMultiStore{}
 
 func newCacheMultiStoreFromRMS(rms *rootMultiStore) cacheMultiStore {
 	cms := cacheMultiStore{
-		db:           NewCacheKVStore(dbStoreAdapter{rms.db}),
+		db:           NewCacheKVStore(dbStoreAdapter{rms.ldb}),
 		stores:       make(map[StoreKey]CacheWrap, len(rms.stores)),
 		keysByName:   rms.keysByName,
 		traceWriter:  rms.traceWriter,

@@ -2,6 +2,7 @@ package baseapp
 
 import (
 	"fmt"
+	"github.com/ci123chain/ci123chain/pkg/abci/store"
 	"io"
 	"runtime/debug"
 	"strings"
@@ -14,7 +15,6 @@ import (
 	dbm "github.com/tendermint/tm-db"
 
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
-	"github.com/ci123chain/ci123chain/pkg/abci/store"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/abci/version"
 	"github.com/ci123chain/ci123chain/pkg/transaction"
@@ -87,13 +87,12 @@ var _ abci.Application = (*BaseApp)(nil)
 // NOTE: The db is used to store the version number for now.
 // Accepts a user-defined txDecoder
 // Accepts variable number of option functions, which act on the BaseApp to set configuration choices
-func NewBaseApp(name string, logger log.Logger, db dbm.DB, txDecoder sdk.TxDecoder, options ...func(*BaseApp)) *BaseApp {
+func NewBaseApp(name string, logger log.Logger, ldb dbm.DB, cdb dbm.DB, txDecoder sdk.TxDecoder, options ...func(*BaseApp)) *BaseApp {
 	app := &BaseApp{
 		Logger:      logger,
 		name:        name,
-		db:          db,
-		//cms:         store.NewCommitMultiStore(db),
-		cms:         store.NewBaseMultiStore(db),
+		cms:         store.NewCommitMultiStore(ldb, cdb),
+		//cms:         store.NewBaseMultiStore(db),
 		queryRouter: NewQueryRouter(),
 		router: 	 NewRouter(),
 		txDecoder:   txDecoder,
@@ -219,7 +218,7 @@ func (app *BaseApp) setCheckState(header abci.Header) {
 }
 
 func (app *BaseApp) setDeliverState(header abci.Header) {
-	ms := app.cms.(sdk.CacheMultiStore)
+	ms := app.cms.CacheMultiStore()
 	app.deliverState = &state{
 		ms:  ms,
 		ctx: sdk.NewContext(ms, header, false, app.Logger),
