@@ -4,6 +4,8 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/app"
 	"github.com/spf13/cobra"
 	"github.com/tendermint/go-amino"
+	tcmd "github.com/tendermint/tendermint/cmd/tendermint/commands"
+
 )
 
 var LineBreak = &cobra.Command{Run: func(cmd *cobra.Command, args []string) {}}
@@ -26,6 +28,7 @@ func AddServerCommands(
 		//showValidatorCmd(ctx),
 		//showAddressCmd(ctx),
 		//validatorCmd(ctx),
+		tcmd.LiteCmd,
 		)
 
 	rootCmd.AddCommand(
