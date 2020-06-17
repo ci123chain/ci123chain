@@ -55,7 +55,6 @@ func (cdb *GoCouchDB) Get(key []byte) []byte {
 		var doc KVRead
 
 		_, err := cdb.db.Read(hex.EncodeToString(key), &doc,nil)
-
 		if err != nil {
 			switch t := err.(type) {
 			case *Error:

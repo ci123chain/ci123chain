@@ -27,6 +27,7 @@ type Context struct {
 	context.Context
 	pst *thePast
 	gen int
+	eventManager *EventManager
 	// Don't add any other fields here,
 	// it's probably not what you want to do.
 }
@@ -89,6 +90,7 @@ func (c Context) LoadLatestVersion() {
 func (c Context) TransientStore(key StoreKey) KVStore {
 	return c.MultiStore().GetKVStore(key).Gas(c.GasMeter(), cachedTransientGasConfig)
 }
+func (c Context) EventManager() *EventManager { return c.eventManager }
 
 //----------------------------------------
 // With* (setting a value)
@@ -132,6 +134,7 @@ func (c Context) withValue(key interface{}, value interface{}) Context {
 		gen:     c.gen + 1,
 	}
 }
+
 
 //----------------------------------------
 // Values that require no types.
@@ -218,6 +221,11 @@ func (c Context) WithConsensusParams(params *abci.ConsensusParams) Context {
 	// TODO: Do we need to handle invalid MaxGas values?
 	return c.withValue(contextKeyConsensusParams, params).
 		WithGasMeter(NewGasMeter(uint64(params.Block.MaxGas)))
+}
+
+func (c Context) WithEventManager(em *EventManager) Context {
+	c.eventManager = em
+	return c
 }
 
 func (c Context) WithChainID(chainID string) Context { return c.withValue(contextKeyChainID, chainID) }

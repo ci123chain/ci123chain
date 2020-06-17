@@ -10,7 +10,7 @@ import (
 )
 
 // If value is nil but deleted is false, it means the parent doesn't have the
-// types.  (No need to delete upon Write())
+// key.  (No need to delete upon Write())
 type cValue struct {
 	value   []byte
 	deleted bool
@@ -99,14 +99,6 @@ func (ci *cacheKVStore) Prefix(prefix []byte) KVStore {
 // Implements KVStore
 func (ci *cacheKVStore) Gas(meter GasMeter, config GasConfig) KVStore {
 	return NewGasKVStore(meter, config, ci)
-}
-
-func (ci *cacheKVStore) Latest(keys []string) KVStore {
-	return nil
-}
-
-func (ci *cacheKVStore) Parent() KVStore {
-	return ci.parent
 }
 
 // Implements CacheKVStore.
@@ -211,7 +203,7 @@ func (ci *cacheKVStore) dirtyItems(ascending bool) []cmn.KVPair {
 
 func (ci *cacheKVStore) assertValidKey(key []byte) {
 	if key == nil {
-		panic("types is nil")
+		panic("key is nil")
 	}
 }
 
@@ -228,4 +220,14 @@ func (ci *cacheKVStore) setCacheValue(key, value []byte, deleted bool, dirty boo
 		deleted: deleted,
 		dirty:   dirty,
 	}
+}
+
+// Implements KVStore
+func (ci *cacheKVStore) Latest(keys []string) KVStore {
+	return nil
+}
+
+// Implements KVStore
+func (ci *cacheKVStore) Parent() KVStore {
+	return ci.parent
 }

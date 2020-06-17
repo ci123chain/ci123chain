@@ -4,18 +4,13 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/panjf2000/ants/v2"
-	"github.com/stretchr/testify/assert"
-	order "github.com/ci123chain/ci123chain/pkg/order/types"
 	"github.com/tanhuiya/fabric-crypto/cryptoutil"
 	"github.com/tendermint/tendermint/rpc/client"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
-	"sync"
 	"testing"
-	"time"
 )
 
 var testPrivKey = `-----BEGIN PRIVATE KEY-----
@@ -40,31 +35,31 @@ func makePrivateKey() []byte {
 	return privByte
 }
 
-func MakeParams(i int, pri []byte) string{
-	nonce := uint64(i)
-	privByte := pri
-	signdata, err := order.SignUpgradeTx("0x204bCC42559Faf6DFE1485208F7951aaD800B313",
-		20000, nonce, "ADD", "ty8", 8000, privByte)
+//func MakeParams(i int, pri []byte) string{
+//	nonce := uint64(i)
+//	privByte := pri
+//	signdata, err := order.SignUpgradeTx("0x204bCC42559Faf6DFE1485208F7951aaD800B313",
+//		20000, nonce, "ADD", "ty8", 8000, privByte)
+//
+//
+//
+//	/*signdata, err := transfer.SignTransferTx("0x204bCC42559Faf6DFE1485208F7951aaD800B313", "0x505A74675dc9C71eF3CB5DF309256952917E801e", 1, 20000,
+//		nonce, privByte)*/
+//	if err != nil {
+//		panic(err)
+//	}
+//
+//	//assert.NoError(t, err)
+//	req := hex.EncodeToString(signdata)
+//
+//	return req
+//}
 
-
-
-	/*signdata, err := transfer.SignTransferTx("0x204bCC42559Faf6DFE1485208F7951aaD800B313", "0x505A74675dc9C71eF3CB5DF309256952917E801e", 1, 20000,
-		nonce, privByte)*/
-	if err != nil {
-		panic(err)
-	}
-
-	//assert.NoError(t, err)
-	req := hex.EncodeToString(signdata)
-
-	return req
-}
-
-func TestSign(t *testing.T) {
-	key := makePrivateKey()
-	res := MakeParams(18, key)
-	fmt.Println(res)
-}
+//func TestSign(t *testing.T) {
+//	key := makePrivateKey()
+//	res := MakeParams(18, key)
+//	fmt.Println(res)
+//}
 
 
 func myFunc(i interface{}, ph string) {
@@ -100,121 +95,121 @@ func myFunc2(i interface{}, ph string) {
 	Client2.BroadcastTxAsync(param)
 }
 
-func TestProcess(t *testing.T) {
-	var wg sync.WaitGroup
-	var ph = "0"
-	privateKey := makePrivateKey()
-	for j := Start; j <= End; j++ {
-		TxRequestParam[j] = MakeParams(j, privateKey)
-	}
-	p1, _ := ants.NewPoolWithFunc(100, func(i interface{}) {
-		myFunc(i, ph)
-		wg.Done()
-	})
-	defer p1.Release()
-	// Submit tasks one by one.
-	time1 := time.Now()
-	for i := Start; i < End; i++ {
-		wg.Add(1)
-		_ = p1.Invoke(i)
-	}
-	time2 := time.Now().Sub(time1).Seconds()
-	fmt.Println(time2)
-	wg.Wait()
-}
+//func TestProcess(t *testing.T) {
+//	var wg sync.WaitGroup
+//	var ph = "0"
+//	privateKey := makePrivateKey()
+//	for j := Start; j <= End; j++ {
+//		TxRequestParam[j] = MakeParams(j, privateKey)
+//	}
+//	p1, _ := ants.NewPoolWithFunc(100, func(i interface{}) {
+//		myFunc(i, ph)
+//		wg.Done()
+//	})
+//	defer p1.Release()
+//	// Submit tasks one by one.
+//	time1 := time.Now()
+//	for i := Start; i < End; i++ {
+//		wg.Add(1)
+//		_ = p1.Invoke(i)
+//	}
+//	time2 := time.Now().Sub(time1).Seconds()
+//	fmt.Println(time2)
+//	wg.Wait()
+//}
 
-func TestProcessOne(t *testing.T) {
+//func TestProcessOne(t *testing.T) {
+//
+//	var wg sync.WaitGroup
+//	var ph = "1"
+//	privateKey := makePrivateKey()
+//	for j := Start; j <= End; j++ {
+//		TxRequestParam[j] = MakeParams(j, privateKey)
+//	}
+//	p1, _ := ants.NewPoolWithFunc(100, func(i interface{}) {
+//		myFunc1(i, ph)
+//		wg.Done()
+//	})
+//	defer p1.Release()
+//	// Submit tasks one by one.
+//	time1 := time.Now()
+//	for i := Start; i < End; i++ {
+//		wg.Add(1)
+//		_ = p1.Invoke(i)
+//	}
+//	time2 := time.Now().Sub(time1).Seconds()
+//	fmt.Println(time2)
+//	wg.Wait()
+//}
 
-	var wg sync.WaitGroup
-	var ph = "1"
-	privateKey := makePrivateKey()
-	for j := Start; j <= End; j++ {
-		TxRequestParam[j] = MakeParams(j, privateKey)
-	}
-	p1, _ := ants.NewPoolWithFunc(100, func(i interface{}) {
-		myFunc1(i, ph)
-		wg.Done()
-	})
-	defer p1.Release()
-	// Submit tasks one by one.
-	time1 := time.Now()
-	for i := Start; i < End; i++ {
-		wg.Add(1)
-		_ = p1.Invoke(i)
-	}
-	time2 := time.Now().Sub(time1).Seconds()
-	fmt.Println(time2)
-	wg.Wait()
-}
+//func TestProcessTwo(t *testing.T) {
+//	var wg sync.WaitGroup
+//	var ph = "2"
+//	privateKey := makePrivateKey()
+//	for j := Start; j <= End; j++ {
+//		TxRequestParam[j] = MakeParams(j, privateKey)
+//	}
+//	p1, _ := ants.NewPoolWithFunc(100, func(i interface{}) {
+//		myFunc2(i, ph)
+//		wg.Done()
+//	})
+//	defer p1.Release()
+//	// Submit tasks one by one.
+//	time1 := time.Now()
+//	for i := Start; i < End; i++ {
+//		wg.Add(1)
+//		_ = p1.Invoke(i)
+//	}
+//	time2 := time.Now().Sub(time1).Seconds()
+//	fmt.Println(time2)
+//	wg.Wait()
+//}
 
-func TestProcessTwo(t *testing.T) {
-	var wg sync.WaitGroup
-	var ph = "2"
-	privateKey := makePrivateKey()
-	for j := Start; j <= End; j++ {
-		TxRequestParam[j] = MakeParams(j, privateKey)
-	}
-	p1, _ := ants.NewPoolWithFunc(100, func(i interface{}) {
-		myFunc2(i, ph)
-		wg.Done()
-	})
-	defer p1.Release()
-	// Submit tasks one by one.
-	time1 := time.Now()
-	for i := Start; i < End; i++ {
-		wg.Add(1)
-		_ = p1.Invoke(i)
-	}
-	time2 := time.Now().Sub(time1).Seconds()
-	fmt.Println(time2)
-	wg.Wait()
-}
+//func TestProcessThree(t *testing.T) {
+//	var wg sync.WaitGroup
+//	var ph = "3"
+//	privateKey := makePrivateKey()
+//	for j := Start; j <= End; j++ {
+//		TxRequestParam[j] = MakeParams(j, privateKey)
+//	}
+//	p1, _ := ants.NewPoolWithFunc(100, func(i interface{}) {
+//		myFunc(i, ph)
+//		wg.Done()
+//	})
+//	defer p1.Release()
+//	// Submit tasks one by one.
+//	time1 := time.Now()
+//	for i := Start; i < End; i++ {
+//		wg.Add(1)
+//		_ = p1.Invoke(i)
+//	}
+//	time2 := time.Now().Sub(time1).Seconds()
+//	fmt.Println(time2)
+//	wg.Wait()
+//}
 
-func TestProcessThree(t *testing.T) {
-	var wg sync.WaitGroup
-	var ph = "3"
-	privateKey := makePrivateKey()
-	for j := Start; j <= End; j++ {
-		TxRequestParam[j] = MakeParams(j, privateKey)
-	}
-	p1, _ := ants.NewPoolWithFunc(100, func(i interface{}) {
-		myFunc(i, ph)
-		wg.Done()
-	})
-	defer p1.Release()
-	// Submit tasks one by one.
-	time1 := time.Now()
-	for i := Start; i < End; i++ {
-		wg.Add(1)
-		_ = p1.Invoke(i)
-	}
-	time2 := time.Now().Sub(time1).Seconds()
-	fmt.Println(time2)
-	wg.Wait()
-}
-
-func TestProcessFour(t *testing.T) {
-	var wg sync.WaitGroup
-	var ph = "4"
-	privateKey := makePrivateKey()
-	for j := Start; j <= End; j++ {
-		TxRequestParam[j] = MakeParams(j, privateKey)
-	}
-	p1, _ := ants.NewPoolWithFunc(100, func(i interface{}) {
-		myFunc(i, ph)
-		wg.Done()
-	})
-	defer p1.Release()
-	// Submit tasks one by one.
-	time1 := time.Now()
-	for i := Start; i < End; i++ {
-		wg.Add(1)
-		_ = p1.Invoke(i)
-	}
-	time2 := time.Now().Sub(time1).Seconds()
-	fmt.Println(time2)
-	wg.Wait()
-}
+//func TestProcessFour(t *testing.T) {
+//	var wg sync.WaitGroup
+//	var ph = "4"
+//	privateKey := makePrivateKey()
+//	for j := Start; j <= End; j++ {
+//		TxRequestParam[j] = MakeParams(j, privateKey)
+//	}
+//	p1, _ := ants.NewPoolWithFunc(100, func(i interface{}) {
+//		myFunc(i, ph)
+//		wg.Done()
+//	})
+//	defer p1.Release()
+//	// Submit tasks one by one.
+//	time1 := time.Now()
+//	for i := Start; i < End; i++ {
+//		wg.Add(1)
+//		_ = p1.Invoke(i)
+//	}
+//	time2 := time.Now().Sub(time1).Seconds()
+//	fmt.Println(time2)
+//	wg.Wait()
+//}
 
 func TestHexToString(t *testing.T) {
 
@@ -222,21 +217,21 @@ func TestHexToString(t *testing.T) {
 	fmt.Println(string(b))
 }
 
-func TestAddShard(t *testing.T) {
-
-	priKey, err := cryptoutil.DecodePriv([]byte(testPrivKey))
-	assert.NoError(t, err)
-	privByte := cryptoutil.MarshalPrivateKey(priKey)
-
-
-	signdata, err := order.SignUpgradeTx("0x204bCC42559Faf6DFE1485208F7951aaD800B313",
-
-		20000, 1, "ADD", "ci123chain-shared4", 1000, privByte)
-
-
-	assert.NoError(t, err)
-	httpPostUpgradeTx(hex.EncodeToString(signdata))
-}
+//func TestAddShard(t *testing.T) {
+//
+//	priKey, err := cryptoutil.DecodePriv([]byte(testPrivKey))
+//	assert.NoError(t, err)
+//	privByte := cryptoutil.MarshalPrivateKey(priKey)
+//
+//
+//	signdata, err := order.SignUpgradeTx("0x204bCC42559Faf6DFE1485208F7951aaD800B313",
+//
+//		20000, 1, "ADD", "ci123chain-shared4", 1000, privByte)
+//
+//
+//	assert.NoError(t, err)
+//	httpPostUpgradeTx(hex.EncodeToString(signdata))
+//}
 
 type retData struct {
 	Data string `json:"data"`
@@ -297,4 +292,13 @@ func TestFomate(t *testing.T) {
 	fmt.Println(userpass[0])
 	fmt.Println(userpass[1])
 
+}
+
+func TestHex(t *testing.T) {
+	fmt.Println(hex.EncodeToString([]byte("ci0s/OrderBook")))
+}
+
+func TestHex1(t *testing.T) {
+	a, _ := hex.DecodeString("6e0e302e2e2f9618524a65675b8dc3d98f8b6d5aac6da8ddc78aa5595ac8f55b0a")
+	fmt.Println(string(a))
 }

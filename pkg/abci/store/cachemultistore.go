@@ -14,7 +14,8 @@ import (
 // NOTE: a cacheMultiStore (and MultiStores in general) should never expose the
 // keys for the substores.
 type cacheMultiStore struct {
-	db         CacheKVStore
+	ldb        CacheKVStore
+	cdb		   CacheKVStore
 	stores     map[StoreKey]CacheWrap
 	keysByName map[string]StoreKey
 
@@ -26,7 +27,8 @@ var _ CacheMultiStore = cacheMultiStore{}
 
 func newCacheMultiStoreFromRMS(rms *rootMultiStore) cacheMultiStore {
 	cms := cacheMultiStore{
-		db:           NewCacheKVStore(dbStoreAdapter{rms.ldb}),
+		ldb:          NewCacheKVStore(dbStoreAdapter{rms.ldb}),
+		cdb:		  NewCacheKVStore(dbStoreAdapter{rms.cdb}),
 		stores:       make(map[StoreKey]CacheWrap, len(rms.stores)),
 		keysByName:   rms.keysByName,
 		traceWriter:  rms.traceWriter,
@@ -46,7 +48,8 @@ func newCacheMultiStoreFromRMS(rms *rootMultiStore) cacheMultiStore {
 
 func newCacheMultiStoreFromCMS(cms cacheMultiStore) cacheMultiStore {
 	cms2 := cacheMultiStore{
-		db:           NewCacheKVStore(cms.db),
+		ldb:          NewCacheKVStore(cms.ldb),
+		cdb:		  cms.cdb,
 		stores:       make(map[StoreKey]CacheWrap, len(cms.stores)),
 		traceWriter:  cms.traceWriter,
 		traceContext: cms.traceContext,
@@ -71,7 +74,7 @@ func (cms cacheMultiStore) WithTracer(w io.Writer) MultiStore {
 }
 
 // WithTracingContext updates the tracing context for the MultiStore by merging
-// the given context with the existing context by types. Any existing keys will
+// the given context with the existing context by key. Any existing keys will
 // be overwritten. It is implied that the caller should update the context when
 // necessary between tracing operations. It returns a modified MultiStore.
 func (cms cacheMultiStore) WithTracingContext(tc TraceContext) MultiStore {
@@ -104,7 +107,8 @@ func (cms cacheMultiStore) GetStoreType() StoreType {
 
 // Implements CacheMultiStore.
 func (cms cacheMultiStore) Write() {
-	cms.db.Write()
+	cms.ldb.Write()
+	cms.cdb.Write()
 	for _, store := range cms.stores {
 		store.Write()
 	}

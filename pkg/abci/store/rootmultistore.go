@@ -189,21 +189,17 @@ func (rs *rootMultiStore) LastCommitID() CommitID {
 
 // Implements Committer/CommitStore.
 func (rs *rootMultiStore) Commit() CommitID {
-	var commitInfo commitInfo
+
+	// Commit stores.
 	version := rs.lastCommitID.Version + 1
-	cInfoKey := fmt.Sprintf(types.CommitInfoKeyFmt, version)
-	cInfoBytes := rs.ldb.Get([]byte(cInfoKey))
-	if cInfoBytes == nil {
-		// Commit stores.
-		commitInfo = commitStores(version, rs.stores)
-		// Need to update atomically.
-		batch := rs.ldb.NewBatch()
-		setCommitInfo(batch, version, commitInfo)
-		setLatestVersion(batch, version)
-		batch.Write()
-	}else{
-		cdc.MustUnmarshalBinaryLengthPrefixed(cInfoBytes, &commitInfo)
-	}
+	commitInfo := commitStores(version, rs.stores)
+
+	// Need to update atomically.
+	batch := rs.ldb.NewBatch()
+	setCommitInfo(batch, version, commitInfo)
+	setLatestVersion(batch, version)
+	batch.Write()
+
 	// Prepare for next version.
 	commitID := CommitID{
 		Version: version,
@@ -339,19 +335,13 @@ func parsePath(path string) (storeName string, subpath string, err sdk.Error) {
 //----------------------------------------
 
 func (rs *rootMultiStore) loadCommitStoreFromParams(key sdk.StoreKey, id CommitID, params storeParams) (store CommitStore, err error) {
-	var db dbm.DB
-	if params.db != nil {
-		db = dbm.NewPrefixDB(params.db, []byte("s/_/"))
-	} else {
-		db = dbm.NewPrefixDB(rs.cdb, []byte("s/k:"+params.key.Name()+"/"))
-	}
 	switch params.typ {
 	case sdk.StoreTypeMulti:
 		panic("recursive MultiStores not yet supported")
 		// TODO: id?
 		// return NewCommitMultiStore(db, id)
 	case sdk.StoreTypeIAVL:
-		store, err = LoadIAVLStore(db, id, rs.pruning)
+		store, err = LoadIAVLStore(rs.ldb, rs.cdb, id, rs.pruning)
 		return
 	case sdk.StoreTypeDB:
 		panic("dbm.DB is not a CommitStore")

@@ -19,13 +19,13 @@ const (
 )
 
 // load the iavl store
-func LoadIAVLStore(db dbm.DB, id CommitID, pruning sdk.PruningStrategy) (CommitStore, error) {
-	tree := iavl.NewMutableTree(db, defaultIAVLCacheSize)
-	_, err := tree.LoadVersion(id.Version)
+func LoadIAVLStore(ldb dbm.DB, cdb dbm.DB, id CommitID, pruning sdk.PruningStrategy) (CommitStore, error) {
+	tree := iavl.NewMutableTree(ldb, cdb, defaultIAVLCacheSize)
+	_, err := tree.LoadVersion(id.Version, true)
 	if err != nil {
 		return nil, err
 	}
-	iavl := newIAVLStore(tree, int64(0), int64(0))
+	iavl := newIAVLStore(dbStoreAdapter{cdb}, tree, int64(0), int64(0))
 	iavl.SetPruning(pruning)
 	return iavl, nil
 }
@@ -53,15 +53,19 @@ type iavlStore struct {
 	// By default this value should be set the same across all nodes,
 	// so that nodes can know the waypoints their peers store.
 	storeEvery int64
+
+	//sth saved in shared db
+	parent		KVStore
 }
 
 // CONTRACT: tree should be fully loaded.
 // nolint: unparam
-func newIAVLStore(tree *iavl.MutableTree, numRecent int64, storeEvery int64) *iavlStore {
+func newIAVLStore(parent KVStore, tree *iavl.MutableTree, numRecent int64, storeEvery int64) *iavlStore {
 	st := &iavlStore{
 		tree:       tree,
 		numRecent:  numRecent,
 		storeEvery: storeEvery,
+		parent:		parent,
 	}
 	return st
 }
@@ -171,7 +175,7 @@ func (st *iavlStore) Latest(keys []string) KVStore {
 }
 
 func (st *iavlStore) Parent() KVStore {
-	return nil
+	return st.parent
 }
 
 // Implements KVStore.

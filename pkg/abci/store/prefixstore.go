@@ -12,6 +12,7 @@ var _ KVStore = prefixStore{}
 // prefixStore is similar with tendermint/tendermint/libs/db/prefix_db
 // both gives access only to the limited subset of the store
 // for convinience or safety
+
 func NewPrefixStore(parent KVStore, prefix []byte) prefixStore {
 	return prefixStore{
 		parent: parent,
@@ -33,7 +34,7 @@ func cloneAppend(bz []byte, tail []byte) (res []byte) {
 
 func (s prefixStore) key(key []byte) (res []byte) {
 	if key == nil {
-		panic("nil types on prefixStore")
+		panic("nil key on prefixStore")
 	}
 	res = cloneAppend(s.prefix, key)
 	return
@@ -81,16 +82,18 @@ func (s prefixStore) Prefix(prefix []byte) KVStore {
 }
 
 // Implements KVStore
-func (s prefixStore) Gas(meter GasMeter, config GasConfig) KVStore {
-	return NewGasKVStore(meter, config, s)
-}
-
 func (s prefixStore) Latest(keys []string) KVStore {
 	return nil
 }
 
+// Implements KVStore
 func (s prefixStore) Parent() KVStore {
 	return s.parent
+}
+
+// Implements KVStore
+func (s prefixStore) Gas(meter GasMeter, config GasConfig) KVStore {
+	return NewGasKVStore(meter, config, s)
 }
 
 // Implements KVStore
@@ -230,3 +233,4 @@ func skipOne(iter Iterator, skipKey []byte) {
 		}
 	}
 }
+

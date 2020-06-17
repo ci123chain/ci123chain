@@ -39,6 +39,8 @@ var signCmd = &cobra.Command{
 	Use: "sign",
 	Short: "Build, Sign transfer",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		viper.BindPFlags(cmd.Flags())
+
 		ctx, err := client.NewClientContextFromViper(cdc)
 		if err != nil {
 			return types.ErrNewClientCtx(types.DefaultCodespace, err)

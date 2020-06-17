@@ -540,6 +540,7 @@ func (app *BaseApp) runMsgs(ctx sdk.Context, tx sdk.Tx, mode runTxMode) sdk.Resu
 		GasUsed:   	gasUsed,
 		Log: 		strings.TrimSpace(msgResult.Log),
 		Data: 		msgResult.Data,
+		Events: 	msgResult.Events,
 	}
 }
 
@@ -702,7 +703,7 @@ func (app *BaseApp) Commit() (res abci.ResponseCommit) {
 			app.db.SetSync(dbHeaderKey, headerBytes)
 	*/
 	// Write the Deliver state and commit the MultiStore
-	//app.deliverState.ms.Write()
+	app.deliverState.ms.Write()
 	commitID := app.cms.Commit()
 
 	// TODO: this is missing a module identifier and dumps byte array

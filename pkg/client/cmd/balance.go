@@ -13,10 +13,7 @@ import (
 func init()  {
 	rootCmd.AddCommand(balanceCmd)
 	balanceCmd.Flags().String(helper.FlagAddress,"", "address")
-	err := viper.BindPFlags(balanceCmd.Flags())
-	if err != nil {
-		panic(err)
-	}
+
 	util.CheckRequiredFlag(balanceCmd, helper.FlagAddress)
 }
 
@@ -24,6 +21,11 @@ var balanceCmd = &cobra.Command{
 	Use: "balance",
 	Short: "",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		err := viper.BindPFlags(cmd.Flags())
+		if err != nil {
+			panic(err)
+		}
+
 		ctx, err := client.NewClientContextFromViper(cdc)
 		if err != nil {
 			return  err

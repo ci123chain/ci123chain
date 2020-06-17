@@ -17,14 +17,14 @@ type ImmutableTree struct {
 }
 
 // NewImmutableTree creates both in-memory and persistent instances
-func NewImmutableTree(db dbm.DB, cacheSize int) *ImmutableTree {
-	if db == nil {
+func NewImmutableTree(ldb dbm.DB, cdb dbm.DB, cacheSize int) *ImmutableTree {
+	if ldb == nil || cdb == nil{
 		// In-memory Tree.
 		return &ImmutableTree{}
 	}
 	return &ImmutableTree{
 		// NodeDB-backed Tree.
-		ndb: newNodeDB(db, cacheSize),
+		ndb: newNodeDB(ldb, cdb, cacheSize),
 	}
 }
 

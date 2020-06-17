@@ -208,7 +208,7 @@ func (bs *baseMultiStore) CacheWrapWithTrace(_ io.Writer, _ TraceContext) CacheW
 // Implements MultiStore.
 func (bs *baseMultiStore) CacheMultiStore() CacheMultiStore {
 	nbs := cacheMultiStore{
-		db:           NewCacheKVStore(dbStoreAdapter{bs.db}),
+		//db:           NewCacheKVStore(dbStoreAdapter{bs.db})
 		stores:       make(map[StoreKey]CacheWrap, len(bs.stores)),
 		keysByName:   bs.keysByName,
 	}
