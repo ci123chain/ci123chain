@@ -69,7 +69,7 @@ func QueryShardStatesRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			return
 		}
 
-		res, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/shardState", nil)
+		res, _, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/shardState", nil)
 		if err != nil {
 			rest.WriteErrorRes(writer, err)
 			return

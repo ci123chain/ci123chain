@@ -78,7 +78,7 @@ func AddShardTxRequest(cliCtx context.Context) http.HandlerFunc{
 				rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"new client context error"))
 				return
 			}
-			nonce, err = ctx.GetNonceByAddress(froms[0])
+			nonce, _, err = ctx.GetNonceByAddress(froms[0])
 			if err != nil {
 				rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"get nonce error"))
 				return

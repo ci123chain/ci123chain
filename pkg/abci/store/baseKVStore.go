@@ -18,6 +18,7 @@ type baseKVStore struct {
 	parent 		KVStore
 	storeEvery 	int64
 	numRecent 	int64
+	key			sdk.StoreKey
 }
 
 func NewBaseKVStore(parent KVStore, storeEvery, numRecent int64, key sdk.StoreKey) *baseKVStore {
@@ -26,6 +27,7 @@ func NewBaseKVStore(parent KVStore, storeEvery, numRecent int64, key sdk.StoreKe
 		parent: 	parent,
 		storeEvery: storeEvery,
 		numRecent:	numRecent,
+		key:		key,
 	}
 }
 

@@ -45,16 +45,6 @@ func (ci *cacheKVStore) Get(key []byte) (value []byte) {
 	defer ci.mtx.Unlock()
 	ci.assertValidKey(key)
 
-	var OrderBookKey = "OrderBook"
-	if bytes.Equal(key, []byte(OrderBookKey)) {
-		value = ci.parent.Get(key)
-		if value == nil {
-			cacheValue, _ := ci.cache[string(key)]
-			value = cacheValue.value
-		}
-		return value
-	}
-
 	cacheValue, ok := ci.cache[string(key)]
 	if !ok {
 		value = ci.parent.Get(key)
@@ -213,6 +203,14 @@ func (ci *cacheKVStore) assertValidValue(value []byte) {
 	}
 }
 
+func (ci *cacheKVStore) Parent() KVStore {
+	return ci.parent
+}
+
+func (ci *cacheKVStore) Latest(keys []string) KVStore {
+	return nil
+}
+
 // Only entrypoint to mutate ci.cache.
 func (ci *cacheKVStore) setCacheValue(key, value []byte, deleted bool, dirty bool) {
 	ci.cache[string(key)] = cValue{
@@ -220,14 +218,4 @@ func (ci *cacheKVStore) setCacheValue(key, value []byte, deleted bool, dirty boo
 		deleted: deleted,
 		dirty:   dirty,
 	}
-}
-
-// Implements KVStore
-func (ci *cacheKVStore) Latest(keys []string) KVStore {
-	return nil
-}
-
-// Implements KVStore
-func (ci *cacheKVStore) Parent() KVStore {
-	return ci.parent
 }

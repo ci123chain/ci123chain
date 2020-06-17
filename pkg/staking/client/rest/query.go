@@ -50,7 +50,7 @@ func delegatorDelegationsHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			return
 		}
 
-		res, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryDelegatorDelegations, bz)
+		res, _, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryDelegatorDelegations, bz)
 		if err != nil {
 			rest.WriteErrorRes(writer, err)
 			return
@@ -93,7 +93,7 @@ func validatorsHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			return
 		}
 
-		res, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryValidators, bz)
+		res, _, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryValidators, bz)
 		if err != nil {
 			rest.WriteErrorRes(writer, err)
 			return
@@ -134,7 +134,7 @@ func validatorHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			return
 		}
 
-		res, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryValidator, bz)
+		res, _, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryValidator, bz)
 		if err != nil {
 			rest.WriteErrorRes(writer, err)
 			return
@@ -170,7 +170,7 @@ func validatorDelegationsHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			return
 		}
 
-		res, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryValidatorDelegations, bz)
+		res, _, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryValidatorDelegations, bz)
 		if err != nil {
 			rest.WriteErrorRes(writer, err)
 			return
@@ -207,7 +207,7 @@ func delegatorValidatorsHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			return
 		}
 
-		res, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryDelegatorValidators, bz)
+		res, _, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryDelegatorValidators, bz)
 		if err != nil {
 			rest.WriteErrorRes(writer, err)
 			return
@@ -247,7 +247,7 @@ func delegatorValidatorHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			return
 		}
 
-		res, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryDelegatorValidator, bz)
+		res, _, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryDelegatorValidator, bz)
 		if err != nil {
 			rest.WriteErrorRes(writer, err)
 			return
@@ -288,7 +288,7 @@ func delegationHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			return
 		}
 
-		res, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryDelegation, bz)
+		res, _, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryDelegation, bz)
 		if err != nil {
 			rest.WriteErrorRes(writer, err)
 			return
@@ -335,7 +335,7 @@ func redelegationsHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			return
 		}
 
-		res, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryRedelegations, bz)
+		res, _, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryRedelegations, bz)
 		if err != nil {
 			rest.WriteErrorRes(w, err)
 			return

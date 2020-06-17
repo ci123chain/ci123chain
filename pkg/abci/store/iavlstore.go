@@ -5,7 +5,8 @@ import (
 	"io"
 	"sync"
 
-	"github.com/ci123chain/ci123chain/pkg/iavl"
+	"github.com/pkg/errors"
+	"github.com/tendermint/iavl"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/merkle"
 	cmn "github.com/tendermint/tendermint/libs/common"
@@ -19,13 +20,13 @@ const (
 )
 
 // load the iavl store
-func LoadIAVLStore(ldb dbm.DB, cdb dbm.DB, id CommitID, pruning sdk.PruningStrategy) (CommitStore, error) {
-	tree := iavl.NewMutableTree(ldb, cdb, defaultIAVLCacheSize)
-	_, err := tree.LoadVersion(id.Version, true)
+func LoadIAVLStore(ldb ,cdb dbm.DB, id CommitID, pruning sdk.PruningStrategy, key sdk.StoreKey) (CommitStore, error) {
+	tree := iavl.NewMutableTree(ldb, defaultIAVLCacheSize)
+	_, err := tree.LoadVersion(id.Version)
 	if err != nil {
 		return nil, err
 	}
-	iavl := newIAVLStore(dbStoreAdapter{cdb}, tree, int64(0), int64(0))
+	iavl := newIAVLStore(cdb, tree, int64(0), int64(0), key)
 	iavl.SetPruning(pruning)
 	return iavl, nil
 }
@@ -54,18 +55,18 @@ type iavlStore struct {
 	// so that nodes can know the waypoints their peers store.
 	storeEvery int64
 
-	//sth saved in shared db
-	parent		KVStore
+	// KVStore save to shared DB
+	store CommitStore
 }
 
 // CONTRACT: tree should be fully loaded.
 // nolint: unparam
-func newIAVLStore(parent KVStore, tree *iavl.MutableTree, numRecent int64, storeEvery int64) *iavlStore {
+func newIAVLStore(db dbm.DB, tree *iavl.MutableTree, numRecent int64, storeEvery int64, key sdk.StoreKey) *iavlStore {
 	st := &iavlStore{
 		tree:       tree,
 		numRecent:  numRecent,
 		storeEvery: storeEvery,
-		parent:		parent,
+		store: 		NewBaseKVStore(dbStoreAdapter{db}, storeEvery, numRecent, key),
 	}
 	return st
 }
@@ -73,6 +74,7 @@ func newIAVLStore(parent KVStore, tree *iavl.MutableTree, numRecent int64, store
 // Implements Committer.
 func (st *iavlStore) Commit() CommitID {
 	// Save a new version.
+	st.store.Commit()
 	hash, version, err := st.tree.SaveVersion()
 	if err != nil {
 		// TODO: Do we want to extend Commit to allow returning errors?
@@ -85,7 +87,7 @@ func (st *iavlStore) Commit() CommitID {
 		toRelease := previous - st.numRecent
 		if st.storeEvery == 0 || toRelease%st.storeEvery != 0 {
 			err := st.tree.DeleteVersion(toRelease)
-			if err != nil && err.(cmn.Error).Data() != iavl.ErrVersionDoesNotExist {
+			if errCause := errors.Cause(err); errCause != nil && errCause != iavl.ErrVersionDoesNotExist {
 				panic(err)
 			}
 		}
@@ -141,22 +143,24 @@ func (st *iavlStore) CacheWrapWithTrace(w io.Writer, tc TraceContext) CacheWrap 
 
 // Implements KVStore.
 func (st *iavlStore) Set(key, value []byte) {
+	st.store.(KVStore).Set(key, value)
 	st.tree.Set(key, value)
 }
 
 // Implements KVStore.
 func (st *iavlStore) Get(key []byte) (value []byte) {
-	_, v := st.tree.Get(key)
+	v := st.store.(KVStore).Get(key)
 	return v
 }
 
 // Implements KVStore.
 func (st *iavlStore) Has(key []byte) (exists bool) {
-	return st.tree.Has(key)
+	return st.store.(KVStore).Has(key)
 }
 
 // Implements KVStore.
 func (st *iavlStore) Delete(key []byte) {
+	st.store.(KVStore).Delete(key)
 	st.tree.Remove(key)
 }
 
@@ -170,12 +174,14 @@ func (st *iavlStore) Gas(meter GasMeter, config GasConfig) KVStore {
 	return NewGasKVStore(meter, config, st)
 }
 
+// Implements KVStore
 func (st *iavlStore) Latest(keys []string) KVStore {
-	return nil
+	return NewlatestStore(st, keys)
 }
 
+// Implements KVStore
 func (st *iavlStore) Parent() KVStore {
-	return st.parent
+	return st.store.(KVStore)
 }
 
 // Implements KVStore.
@@ -222,8 +228,8 @@ func (st *iavlStore) Query(req abci.RequestQuery) (res abci.ResponseQuery) {
 	res.Height = getHeight(tree, req)
 
 	switch req.Path {
-	case "/types": // get by types
-		key := req.Data // data holds the types bytes
+	case "/types": // get by key
+		key := req.Data // data holds the key bytes
 
 		res.Key = key
 		if !st.VersionExists(res.Height) {
@@ -231,7 +237,7 @@ func (st *iavlStore) Query(req abci.RequestQuery) (res abci.ResponseQuery) {
 			break
 		}
 
-		if req.Prove {
+		if  !req.Prove {
 			value, proof, err := tree.GetVersionedWithProof(key, res.Height)
 			if err != nil {
 				res.Log = err.Error()
@@ -305,7 +311,7 @@ type iavlIterator struct {
 	mtx sync.Mutex
 
 	invalid bool   // True once, true forever
-	key     []byte // The current types
+	key     []byte // The current key
 	value   []byte // The current value
 }
 

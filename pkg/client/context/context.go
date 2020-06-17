@@ -9,6 +9,7 @@ import (
 	acc_types "github.com/ci123chain/ci123chain/pkg/account/types"
 	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
 	"github.com/ci123chain/ci123chain/pkg/transaction"
+	"github.com/tendermint/tendermint/crypto/merkle"
 	rpclient "github.com/tendermint/tendermint/rpc/client"
 )
 
@@ -43,43 +44,43 @@ func (ctx *Context) GetInputAddresses() ([]sdk.AccAddress, error) {
 	return ctx.InputAddressed, nil
 }
 
-func (ctx *Context) GetBalanceByAddress(addr sdk.AccAddress) (uint64, error) {
+func (ctx *Context) GetBalanceByAddress(addr sdk.AccAddress) (uint64, *merkle.Proof, error) {
 	addrByte := acc_types.AddressStoreKey(addr)
-	res, _, err := ctx.Query("/store/main/types", addrByte)
+	res, _, proof, err := ctx.Query("/store/main/types", addrByte)
 	if err != nil {
-		return 0, err
+		return 0, nil, err
 	}
 	if res == nil{
-		return 0, errors.New("The account does not exist")
+		return 0, nil, errors.New("The account does not exist")
 	}
 	if err != nil {
-		return 0, err
+		return 0, nil, err
 	}
 	var acc exported.Account
 	err2 := ctx.Cdc.UnmarshalBinaryLengthPrefixed(res, &acc)
 	if err2 != nil {
-		return 0, err2
+		return 0, nil, err2
 	}
 	balance := uint64(acc.GetCoin().Amount.Int64())
-	return balance, nil
+	return balance, proof, nil
 }
 
-func (ctx *Context) GetNonceByAddress(addr sdk.AccAddress) (uint64, error) {
+func (ctx *Context) GetNonceByAddress(addr sdk.AccAddress) (uint64, *merkle.Proof, error) {
 	addrByte := acc_types.AddressStoreKey(addr)
-	res, _, err := ctx.Query("/store/main/types", addrByte)
+	res, _, proof, err := ctx.Query("/store/main/types", addrByte)
 	if res == nil{
-		return 0, errors.New("The account does not exist")
+		return 0, nil, errors.New("The account does not exist")
 	}
 	if err != nil {
-		return 0, err
+		return 0, nil, err
 	}
 	var acc exported.Account
 	err2 := ctx.Cdc.UnmarshalBinaryLengthPrefixed(res, &acc)
 	if err2 != nil {
-		return 0, err2
+		return 0, nil, err2
 	}
 	nonce := acc.GetSequence()
-	return nonce, nil
+	return nonce, proof, nil
 }
 
 // PrintOutput prints output while respecting output and indent flags

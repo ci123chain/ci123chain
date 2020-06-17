@@ -80,31 +80,7 @@ func (ks *latestStore) parentGet(key []byte) (value []byte) {
 		}
 	}
 
-	//oldStore := p.(*iavlStore)
-	//ndb := oldStore.tree.GetNodeDB()
-	//_, cdb := ndb.GetDBs()
-	//tree := iavl.NewMutableTree(ldb, cdb, defaultIAVLCacheSize)
-	//fmt.Println(oldStore.tree.Version())
-	//tree.LoadVersion(oldStore.tree.Version())
-	//iavl := newIAVLStore(tree, int64(0), int64(0))
-	//iavl.numRecent = oldStore.numRecent
-	//iavl.storeEvery = oldStore.storeEvery
-	//value = oldStore.Get(key)
-	//buf := cdb.Get(ndb.GetNodeKey(hash))
-	//if buf == nil {
-	//	panic(fmt.Sprintf("Value missing for hash %x corresponding to nodeKey %s", hash, ndb.nodeKey(hash)))
-	//}
-	//
-	//node, err := MakeNode(buf)
-	//if err != nil {
-	//	panic(fmt.Sprintf("Error reading Node. bytes: %x, error: %v", buf, err))
-	//}
-	//
-	//node.hash = hash
-	//node.persisted = true
-	//ndb.cacheNode(node)
 	value = p.Get(key)
-
 	if len(value) > 0 {
 		return
 	} else {

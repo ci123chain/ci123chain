@@ -48,8 +48,8 @@ func newCacheMultiStoreFromRMS(rms *rootMultiStore) cacheMultiStore {
 
 func newCacheMultiStoreFromCMS(cms cacheMultiStore) cacheMultiStore {
 	cms2 := cacheMultiStore{
-		ldb:          NewCacheKVStore(cms.ldb),
-		cdb:		  cms.cdb,
+		ldb:           NewCacheKVStore(cms.ldb),
+		cdb:           NewCacheKVStore(cms.cdb),
 		stores:       make(map[StoreKey]CacheWrap, len(cms.stores)),
 		traceWriter:  cms.traceWriter,
 		traceContext: cms.traceContext,

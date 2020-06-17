@@ -76,7 +76,7 @@ func CheckBalanceFromParams(ctx context.Context, r *http.Request) bool {
 	amount := r.FormValue("amount")
 
 	acc, _ := helper.StrToAddress(from)
-	balance, err := ctx.GetBalanceByAddress(acc)
+	balance, _, err := ctx.GetBalanceByAddress(acc)
 	if err != nil {
 		return false
 	}

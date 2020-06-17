@@ -140,7 +140,7 @@ func getArgs(r *http.Request) (types.AccAddress, uint64, uint64, string, json.Ra
 		if err != nil {
 			return types.AccAddress{}, 0, 0, "", nil, err
 		}
-		nonce, err = ctx.GetNonceByAddress(froms[0])
+		nonce, _, err = ctx.GetNonceByAddress(froms[0])
 		if err != nil {
 			return types.AccAddress{}, 0, 0, "", nil, err
 		}

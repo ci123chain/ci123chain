@@ -13,6 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/gorilla/mux"
 	"github.com/tendermint/go-amino"
+	"github.com/tendermint/tendermint/crypto/merkle"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	"net/http"
 )
@@ -26,11 +27,13 @@ func RegisterRoutes(cliCtx context.Context, r *mux.Router) {
 }
 
 type BalanceData struct {
-	Balance uint64 `json:"balance"`
+	Balance uint64 		`json:"balance"`
+	Proof *merkle.Proof `json:"proof"`
 }
 
 type NonceData struct {
 	Nonce   uint64   `json:"nonce"`
+	Proof *merkle.Proof `json:"proof"`
 }
 
 type AccountAddress struct {
@@ -77,12 +80,12 @@ func QueryBalancesRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			return
 		}
 		//params := types.NewQueryBalanceParams(addr)
-		res, err2 := cliCtx.GetBalanceByAddress(addrBytes[0])
+		res, proof, err2 := cliCtx.GetBalanceByAddress(addrBytes[0])
 		if err2 != nil {
 			rest.WriteErrorRes(w, transfer.ErrQueryTx(types.DefaultCodespace, err2.Error()))
 			return
 		}
-		resp := BalanceData{Balance:res}
+		resp := BalanceData{Balance:res, Proof: proof}
 		rest.PostProcessResponseBare(w, cliCtx, resp)
 	}
 }
@@ -128,12 +131,12 @@ func QueryNonceRequestHandleFn(cliCtx context.Context) http.HandlerFunc {
 			rest.WriteErrorRes(w, client.ErrParseAddr(types.DefaultCodespace, err2))
 			return
 		}
-		res, err2 := cliCtx.GetNonceByAddress(addrBytes[0])
+		res, proof, err2 := cliCtx.GetNonceByAddress(addrBytes[0])
 		if err2 != nil {
 			rest.WriteErrorRes(w, transfer.ErrQueryTx(types.DefaultCodespace, err2.Error()))
 			return
 		}
-		resp := NonceData{Nonce:res}
+		resp := NonceData{Nonce:res, Proof:proof}
 		rest.PostProcessResponseBare(w, cliCtx, resp)
 	}
 }

@@ -42,7 +42,7 @@ func storeCodeHandler(cliCtx context.Context) http.HandlerFunc {
 			rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "marshal failed"))
 			return
 		}
-		_, _, err = cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryContractExist, bz)
+		_, _, _, err = cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryContractExist, bz)
 		if err != nil {
 			rest.WriteErrorRes(w, err.(sdk.Error))
 			return
@@ -93,7 +93,7 @@ func instantiateContractHandler(cliCtx context.Context) http.HandlerFunc {
 			return
 		}
 
-		res, _, _ := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryCodeInfo, bz)
+		res, _, _, _ := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryCodeInfo, bz)
 		if res == nil {
 			rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace,"codeHash does not exists"))
 			return
@@ -144,7 +144,7 @@ func executeContractHandler(cliCtx context.Context) http.HandlerFunc {
 			return
 		}
 
-		res, _, _ := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryContractInfo, bz)
+		res, _, _, _:= cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryContractInfo, bz)
 		if res == nil {
 			rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "contract does not exist"))
 			return

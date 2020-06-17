@@ -56,7 +56,7 @@ var transferCmd = &cobra.Command{
 		}
 		//直接getNonce
 		//todo err
-		nonce, err := ctx.GetNonceByAddress(from)
+		nonce, _, err := ctx.GetNonceByAddress(from)
 		if err != nil {
 			return err
 		}

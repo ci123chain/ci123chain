@@ -7,6 +7,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/distribution/types"
 	"github.com/ci123chain/ci123chain/pkg/transfer"
 	"github.com/ci123chain/ci123chain/pkg/util"
+	"github.com/tendermint/tendermint/crypto/merkle"
 	"net/http"
 )
 
@@ -16,6 +17,7 @@ func RegisterTxRoutes(cliCtx context.Context, r *mux.Router)  {
 
 type RewardsData struct {
 	Rewards 	uint64 `json:"rewards"`
+	Proof *merkle.Proof `json:"proof"`
 }
 
 type RewardsParams struct {
@@ -54,7 +56,7 @@ func QueryValidatorRewardsRequestHandlerFn(cliCtx context.Context) http.HandlerF
 			return
 		}
 
-		res, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/rewards/" + accountAddress + "/" + height, nil)
+		res, _, proof, err := cliCtx.Query("/custom/" + types.ModuleName + "/rewards/" + accountAddress + "/" + height, nil)
 		if err != nil {
 			rest.WriteErrorRes(writer, err)
 			return
@@ -69,7 +71,7 @@ func QueryValidatorRewardsRequestHandlerFn(cliCtx context.Context) http.HandlerF
 			rest.WriteErrorRes(writer, transfer.ErrQueryTx(types.DefaultCodespace, err2.Error()))
 			return
 		}
-		resp := &RewardsData{Rewards:rewards}
+		resp := &RewardsData{Rewards:rewards, Proof: proof}
 		rest.PostProcessResponseBare(writer, cliCtx, resp)
 	}
 }

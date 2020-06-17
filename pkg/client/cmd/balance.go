@@ -32,7 +32,7 @@ var balanceCmd = &cobra.Command{
 		}
 		address := viper.GetString(helper.FlagAddress)
 		addr := sdk.HexToAddress(address)
-		v, err := ctx.GetBalanceByAddress(addr)
+		v, _, err := ctx.GetBalanceByAddress(addr)
 		if err != nil {
 			return err
 		}

@@ -42,7 +42,7 @@ func queryCodeHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			return
 		}
 
-		res, _, Err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryCodeInfo, bz)
+		res, _, _, Err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryCodeInfo, bz)
 		if Err != nil {
 			rest.WriteErrorRes(w, Err)
 			return
@@ -70,7 +70,7 @@ func listContractsByCodeHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			return
 		}
 
-		res, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryContractList, bz)
+		res, _, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryContractList, bz)
 		if err != nil {
 			rest.WriteErrorRes(w, err)
 			return
@@ -105,7 +105,7 @@ func queryContractHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			return
 		}
 
-		res, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryContractInfo, bz)
+		res, _, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryContractInfo, bz)
 		if err != nil {
 			rest.WriteErrorRes(w, err)
 			return
@@ -152,7 +152,7 @@ func queryContractStateAllHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			return
 		}
 
-		res, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryContractState, bz)
+		res, _, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryContractState, bz)
 		if err != nil {
 			rest.WriteErrorRes(w, err)
 			return

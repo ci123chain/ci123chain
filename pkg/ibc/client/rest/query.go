@@ -10,6 +10,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/ibc/types"
 	"github.com/ci123chain/ci123chain/pkg/transfer"
 	"github.com/ci123chain/ci123chain/pkg/util"
+	"github.com/tendermint/tendermint/crypto/merkle"
 	"net/http"
 )
 
@@ -22,6 +23,7 @@ func RegisterTxRoutes(cliCtx context.Context, r *mux.Router)  {
 
 type IBCUniqueIDData struct {
 	UniqueID	string	`json:"uniqueID"`
+	Proof *merkle.Proof `json:"proof"`
 }
 
 type StateParams struct {
@@ -49,7 +51,7 @@ func QueryTxByStateRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			return
 		}
 
-		res, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/state/" + ibcState, nil)
+		res, _, proof, err := cliCtx.Query("/custom/" + types.ModuleName + "/state/" + ibcState, nil)
 		if len(res) < 1 {
 			rest.WriteErrorRes(writer, transfer.ErrQueryTx(types.DefaultCodespace, "There is no ibctx ready"))
 			return
@@ -60,13 +62,14 @@ func QueryTxByStateRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			rest.WriteErrorRes(writer, transfer.ErrCheckParams(types.DefaultCodespace, err2.Error()))
 			return
 		}
-		resp := &IBCUniqueIDData{UniqueID:string(ibcMsg.UniqueID)}
+		resp := &IBCUniqueIDData{UniqueID:string(ibcMsg.UniqueID), Proof: proof}
 		rest.PostProcessResponseBare(writer, cliCtx, resp)
 	}
 }
 
 type IBCTxStateData struct {
 	State	string	`json:"state"`
+	Proof *merkle.Proof `json:"proof"`
 }
 
 type Txparams struct {
@@ -94,7 +97,7 @@ func QueryTxByUniqueIDRequestHandlerFn(cliCtx context.Context) http.HandlerFunc 
 		}
 		uniqueBz := []byte(UniqueidStr)
 
-		res, _, err := cliCtx.Query("/store/" + types.StoreKey + "/types", uniqueBz)
+		res, _, proof, err := cliCtx.Query("/store/" + types.StoreKey + "/types", uniqueBz)
 		if len(res) < 1 {
 			rest.WriteErrorRes(writer, transfer.ErrQueryTx(types.DefaultCodespace, "this uniqueID is not exist"))
 			return
@@ -109,7 +112,7 @@ func QueryTxByUniqueIDRequestHandlerFn(cliCtx context.Context) http.HandlerFunc 
 			rest.WriteErrorRes(writer, transfer.ErrQueryTx(types.DefaultCodespace, fmt.Sprintf("different uniqueID get %s, expected %s", hex.EncodeToString(ibcMsg.UniqueID), UniqueidStr)))
 			return
 		}
-		resp := &IBCTxStateData{State:ibcMsg.State}
+		resp := &IBCTxStateData{State:ibcMsg.State, Proof: proof}
 		rest.PostProcessResponseBare(writer, cliCtx, resp)
 	}
 }

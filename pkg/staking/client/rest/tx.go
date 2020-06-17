@@ -205,7 +205,7 @@ func ParseNonce(from, userNonce string) (uint64, error) {
 		if err != nil {
 			return nonce, err
 		}
-		nonce, err = ctx.GetNonceByAddress(froms)
+		nonce, _, err = ctx.GetNonceByAddress(froms)
 		if err != nil {
 			return nonce, err
 		}
