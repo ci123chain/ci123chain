@@ -223,7 +223,7 @@ func TestInitChainer(t *testing.T) {
 	}
 
 	query := abci.RequestQuery{
-		Path: "/store/main/types",
+		Path: "/store/main/key",
 		Data: key,
 	}
 

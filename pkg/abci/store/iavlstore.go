@@ -228,7 +228,7 @@ func (st *iavlStore) Query(req abci.RequestQuery) (res abci.ResponseQuery) {
 	res.Height = getHeight(tree, req)
 
 	switch req.Path {
-	case "/types": // get by key
+	case "/key": // get by key
 		key := req.Data // data holds the key bytes
 
 		res.Key = key
@@ -237,7 +237,7 @@ func (st *iavlStore) Query(req abci.RequestQuery) (res abci.ResponseQuery) {
 			break
 		}
 
-		if  !req.Prove {
+		if  req.Prove {
 			value, proof, err := tree.GetVersionedWithProof(key, res.Height)
 			if err != nil {
 				res.Log = err.Error()

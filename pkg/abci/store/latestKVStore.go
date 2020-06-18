@@ -322,8 +322,8 @@ func (ks *latestStore) Query(req abci.RequestQuery) (res abci.ResponseQuery) {
 	// latest height
 
 	switch req.Path {
-	case "/types": // get by types
-		key := req.Data // data holds the types bytes
+	case "/key": // get by key
+		key := req.Data // data holds the key bytes
 
 		res.Key = key
 		value := ks.Get(key)
