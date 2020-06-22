@@ -75,8 +75,8 @@ func CheckHeightAndProve(w http.ResponseWriter, height, prove string, codespace 
 			return
 		}
 	}
-	if prove != "" && prove != "true"{
-		WriteErrorRes(w, client.ErrParseParam(codespace, errors.New("request prove but not true")))
+	if prove != "" && prove != "true" && prove != "false"{
+		WriteErrorRes(w, client.ErrParseParam(codespace, errors.New("prove need true or false")))
 		isValid = false
 		return
 	}
