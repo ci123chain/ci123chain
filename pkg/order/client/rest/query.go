@@ -62,6 +62,8 @@ func QueryShardStatesRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			//
 		}
 		*/
+		height := request.FormValue("height")
+		prove := request.FormValue("prove")
 
 		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(writer, cliCtx, request, "")
 		if !ok {
@@ -69,7 +71,14 @@ func QueryShardStatesRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			return
 		}
 
-		res, _, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/shardState", nil)
+		if !rest.CheckHeightAndProve(writer, height, prove, types.DefaultCodespace) {
+			return
+		}
+		isProve := false
+		if prove == "true" {
+			isProve = true
+		}
+		res, _, proof, err := cliCtx.Query("/custom/" + types.ModuleName + "/shardState", nil, isProve)
 		if err != nil {
 			rest.WriteErrorRes(writer, err)
 			return
@@ -84,7 +93,8 @@ func QueryShardStatesRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			//rest.WriteErrorRes(writer, order.ErrQueryTx(types.DefaultCodespace, err2.Error()))
 			return
 		}
-		resp := shardState
+		value := shardState
+		resp := rest.BuildQueryRes(height, isProve, value, proof)
 		rest.PostProcessResponseBare(writer, cliCtx, resp)
 	}
 }

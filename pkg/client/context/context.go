@@ -44,9 +44,9 @@ func (ctx *Context) GetInputAddresses() ([]sdk.AccAddress, error) {
 	return ctx.InputAddressed, nil
 }
 
-func (ctx *Context) GetBalanceByAddress(addr sdk.AccAddress) (uint64, *merkle.Proof, error) {
+func (ctx *Context) GetBalanceByAddress(addr sdk.AccAddress, isProve bool) (uint64, *merkle.Proof, error) {
 	addrByte := acc_types.AddressStoreKey(addr)
-	res, _, proof, err := ctx.Query("/store/main/key", addrByte)
+	res, _, proof, err := ctx.Query("/store/main/key", addrByte, isProve)
 	if err != nil {
 		return 0, nil, err
 	}
@@ -65,9 +65,9 @@ func (ctx *Context) GetBalanceByAddress(addr sdk.AccAddress) (uint64, *merkle.Pr
 	return balance, proof, nil
 }
 
-func (ctx *Context) GetNonceByAddress(addr sdk.AccAddress) (uint64, *merkle.Proof, error) {
+func (ctx *Context) GetNonceByAddress(addr sdk.AccAddress, isProve bool) (uint64, *merkle.Proof, error) {
 	addrByte := acc_types.AddressStoreKey(addr)
-	res, _, proof, err := ctx.Query("/store/main/key", addrByte)
+	res, _, proof, err := ctx.Query("/store/main/key", addrByte, isProve)
 	if res == nil{
 		return 0, nil, errors.New("The account does not exist")
 	}

@@ -6,6 +6,7 @@ var (
 	ErrNewClientCtx		= types.ErrNewClientCtx
 	ErrGetInputAddr		= types.ErrGetInputAddrCtx
 	ErrParseAddr		= types.ErrParseAddr
+	ErrParseParam		= types.ErrParseParam
 	ErrNoAddr       	= types.ErrNoAddr
 	ErrGetPassPhrase	= types.ErrGetPassPhrase
 	ErrGetSignData		= types.ErrGetSignData

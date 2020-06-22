@@ -59,7 +59,7 @@ var signCmd = &cobra.Command{
 		}
 		//直接getNonce
 		// todo err
-		nonce, _, err := ctx.GetNonceByAddress(from)
+		nonce, _, err := ctx.GetNonceByAddress(from, false)
 		if err != nil {
 			return err
 		}

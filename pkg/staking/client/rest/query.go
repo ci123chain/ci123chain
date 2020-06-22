@@ -1,12 +1,12 @@
 package rest
 
 import (
-	"github.com/gorilla/mux"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/staking/types"
 	"github.com/ci123chain/ci123chain/pkg/transfer"
+	"github.com/gorilla/mux"
 	"net/http"
 )
 
@@ -37,6 +37,8 @@ func delegatorDelegationsHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		//vars := mux.Vars(request)
 		//delegatorAddress := vars["delegatorAddr"]
 		delegatorAddress := request.FormValue("delegatorAddr")
+		height := request.FormValue("height")
+		prove := request.FormValue("prove")
 		delegatorAddr := sdk.HexToAddress(delegatorAddress)
 		params := types.NewQueryDelegatorParams(delegatorAddr)
 		bz, Err := cliCtx.Cdc.MarshalJSON(params)
@@ -49,8 +51,15 @@ func delegatorDelegationsHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			rest.WriteErrorRes(writer, err)
 			return
 		}
+		if !rest.CheckHeightAndProve(writer, height, prove, types.DefaultCodespace) {
+			return
+		}
 
-		res, _, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryDelegatorDelegations, bz)
+		isProve := false
+		if prove == "true" {
+			isProve = true
+		}
+		res, _, proof, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryDelegatorDelegations, bz, isProve)
 		if err != nil {
 			rest.WriteErrorRes(writer, err)
 			return
@@ -61,17 +70,22 @@ func delegatorDelegationsHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		}
 		var delegations types.DelegationResponses
 		cliCtx.Cdc.MustUnmarshalJSON(res, &delegations)
-		resp := delegations
+		value := delegations
+		resp := rest.BuildQueryRes(height, isProve, value, proof)
 		rest.PostProcessResponseBare(writer, cliCtx, resp)
 	}
 }
 
 func validatorsHandlerFn(cliCtx context.Context) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
-
+		height := request.FormValue("height")
+		prove := request.FormValue("prove")
 		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(writer, cliCtx, request, "")
 		if !ok {
 			rest.WriteErrorRes(writer, err)
+			return
+		}
+		if !rest.CheckHeightAndProve(writer, height, prove, types.DefaultCodespace) {
 			return
 		}
 
@@ -93,7 +107,11 @@ func validatorsHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			return
 		}
 
-		res, _, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryValidators, bz)
+		isProve := false
+		if prove == "true" {
+			isProve = true
+		}
+		res, _, proof, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryValidators, bz, isProve)
 		if err != nil {
 			rest.WriteErrorRes(writer, err)
 			return
@@ -109,7 +127,8 @@ func validatorsHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			//rest.WriteErrorRes(writer, transfer.ErrQueryTx(types.DefaultCodespace, "unmarshal failed"))
 			//return
 		}*/
-		resp := validators
+		value := validators
+		resp := rest.BuildQueryRes(height, isProve, value, proof)
 		rest.PostProcessResponseBare(writer, cliCtx, resp)
 	}
 }
@@ -117,12 +136,17 @@ func validatorsHandlerFn(cliCtx context.Context) http.HandlerFunc {
 // HTTP request handler to query the validator information from a given validator address
 func validatorHandlerFn(cliCtx context.Context) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
-
+		height := request.FormValue("height")
+		prove := request.FormValue("prove")
 		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(writer, cliCtx, request, "")
 		if !ok {
 			rest.WriteErrorRes(writer, err)
 			return
 		}
+		if !rest.CheckHeightAndProve(writer, height, prove, types.DefaultCodespace) {
+			return
+		}
+
 		//vars := mux.Vars(request)
 		//validatorAddress := vars["validatorAddr"]
 		validatorAddress := request.FormValue("validatorAddr")
@@ -134,7 +158,11 @@ func validatorHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			return
 		}
 
-		res, _, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryValidator, bz)
+		isProve := false
+		if prove == "true" {
+			isProve = true
+		}
+		res, _, proof, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryValidator, bz, isProve)
 		if err != nil {
 			rest.WriteErrorRes(writer, err)
 			return
@@ -145,7 +173,8 @@ func validatorHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		}
 		var validator types.Validator
 		cliCtx.Cdc.MustUnmarshalJSON(res, &validator)
-		resp := validator
+		value := validator
+		resp := rest.BuildQueryRes(height, isProve, value, proof)
 		rest.PostProcessResponseBare(writer, cliCtx, resp)
 	}
 }
@@ -153,7 +182,8 @@ func validatorHandlerFn(cliCtx context.Context) http.HandlerFunc {
 // HTTP request handler to query all unbonding delegations from a validator
 func validatorDelegationsHandlerFn(cliCtx context.Context) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
-
+		height := request.FormValue("height")
+		prove := request.FormValue("prove")
 		//vars := mux.Vars(request)
 		validatorAddress := request.FormValue("validatorAddr")
 		validatorAddr := sdk.HexToAddress(validatorAddress)
@@ -169,8 +199,15 @@ func validatorDelegationsHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			rest.WriteErrorRes(writer, err)
 			return
 		}
+		if !rest.CheckHeightAndProve(writer, height, prove, types.DefaultCodespace) {
+			return
+		}
 
-		res, _, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryValidatorDelegations, bz)
+		isProve := false
+		if prove == "true" {
+			isProve = true
+		}
+		res, _, proof, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryValidatorDelegations, bz, isProve)
 		if err != nil {
 			rest.WriteErrorRes(writer, err)
 			return
@@ -181,7 +218,8 @@ func validatorDelegationsHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		}
 		var delegations types.DelegationResponses
 		cliCtx.Cdc.MustUnmarshalJSON(res, &delegations)
-		resp := delegations
+		value := delegations
+		resp := rest.BuildQueryRes(height, isProve, value, proof)
 		rest.PostProcessResponseBare(writer, cliCtx, resp)
 	}
 }
@@ -192,6 +230,8 @@ func delegatorValidatorsHandlerFn(cliCtx context.Context) http.HandlerFunc {
 
 		//vars := mux.Vars(request)
 		//delegatorAddress := vars["delegatorAddr"]
+		height := request.FormValue("height")
+		prove := request.FormValue("prove")
 		delegatorAddress := request.FormValue("delegatorAddr")
 		delegatorAddr := sdk.HexToAddress(delegatorAddress)
 		params := types.NewQueryDelegatorParams(delegatorAddr)
@@ -206,8 +246,15 @@ func delegatorValidatorsHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			rest.WriteErrorRes(writer, err)
 			return
 		}
+		if !rest.CheckHeightAndProve(writer, height, prove, types.DefaultCodespace) {
+			return
+		}
 
-		res, _, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryDelegatorValidators, bz)
+		isProve := false
+		if prove == "true" {
+			isProve = true
+		}
+		res, _, proof, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryDelegatorValidators, bz, isProve)
 		if err != nil {
 			rest.WriteErrorRes(writer, err)
 			return
@@ -218,7 +265,8 @@ func delegatorValidatorsHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		}
 		var validators []types.Validator
 		cliCtx.Cdc.MustUnmarshalJSON(res, &validators)
-		resp := validators
+		value := validators
+		resp := rest.BuildQueryRes(height, isProve, value, proof)
 		rest.PostProcessResponseBare(writer, cliCtx, resp)
 	}
 }
@@ -232,6 +280,8 @@ func delegatorValidatorHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		//delegatorAddress := vars["delegatorAddr"]
 		validatorAddress := request.FormValue("validatorAddr")
 		delegatorAddress := request.FormValue("delegatorAddr")
+		height := request.FormValue("height")
+		prove := request.FormValue("prove")
 		validatorAddr := sdk.HexToAddress(validatorAddress)
 		delegatorAddr := sdk.HexToAddress(delegatorAddress)
 		params := types.NewQueryBondsParams(delegatorAddr, validatorAddr)
@@ -246,8 +296,14 @@ func delegatorValidatorHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			rest.WriteErrorRes(writer, err)
 			return
 		}
-
-		res, _, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryDelegatorValidator, bz)
+		if !rest.CheckHeightAndProve(writer, height, prove, types.DefaultCodespace) {
+			return
+		}
+		isProve := false
+		if prove == "true" {
+			isProve = true
+		}
+		res, _, proof, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryDelegatorValidator, bz, isProve)
 		if err != nil {
 			rest.WriteErrorRes(writer, err)
 			return
@@ -258,7 +314,8 @@ func delegatorValidatorHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		}
 		var validator types.Validator
 		cliCtx.Cdc.MustUnmarshalJSON(res, &validator)
-		resp := validator
+		value := validator
+		resp := rest.BuildQueryRes(height, isProve, value, proof)
 		rest.PostProcessResponseBare(writer, cliCtx, resp)
 	}
 }
@@ -271,6 +328,8 @@ func delegationHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		//vars := mux.Vars(request)
 		//validatorAddress := vars["validatorAddr"]
 		//delegatorAddress := vars["delegatorAddr"]
+		height := request.FormValue("height")
+		prove := request.FormValue("prove")
 		validatorAddress := request.FormValue("validatorAddr")
 		delegatorAddress := request.FormValue("delegatorAddr")
 		validatorAddr := sdk.HexToAddress(validatorAddress)
@@ -287,8 +346,14 @@ func delegationHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			rest.WriteErrorRes(writer, err)
 			return
 		}
-
-		res, _, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryDelegation, bz)
+		if !rest.CheckHeightAndProve(writer, height, prove, types.DefaultCodespace) {
+			return
+		}
+		isProve := false
+		if prove == "true" {
+			isProve = true
+		}
+		res, _, proof, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryDelegation, bz, isProve)
 		if err != nil {
 			rest.WriteErrorRes(writer, err)
 			return
@@ -299,7 +364,8 @@ func delegationHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		}
 		var delegation types.DelegationResponse
 		cliCtx.Cdc.MustUnmarshalJSON(res, &delegation)
-		resp := delegation
+		value := delegation
+		resp := rest.BuildQueryRes(height, isProve, value, proof)
 		rest.PostProcessResponseBare(writer, cliCtx, resp)
 	}
 }
@@ -318,6 +384,8 @@ func redelegationsHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		//delegatorAddress := vars["delegatorAddr"]
 		//validatorSrc := vars["validatorSrcAddr"]
 		//validatorDst := vars["validatorDsrAddr"]
+		height := r.FormValue("height")
+		prove := r.FormValue("prove")
 		delegatorAddress := r.FormValue("delegatorAddr")
 		validatorSrc := r.FormValue("validatorSrcAddr")
 		validatorDst := r.FormValue("validatorDsrAddr")
@@ -334,8 +402,14 @@ func redelegationsHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			rest.WriteErrorRes(w, sdk.ErrInternal("marshal failed"))
 			return
 		}
-
-		res, _, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryRedelegations, bz)
+		if !rest.CheckHeightAndProve(w, height, prove, types.DefaultCodespace) {
+			return
+		}
+		isProve := false
+		if prove == "true" {
+			isProve = true
+		}
+		res, _, proof, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryRedelegations, bz, isProve)
 		if err != nil {
 			rest.WriteErrorRes(w, err)
 			return
@@ -346,7 +420,8 @@ func redelegationsHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		}
 		var redelegations types.RedelegationResponses
 		cliCtx.Cdc.MustUnmarshalJSON(res, &redelegations)
-		resp := redelegations
+		value := redelegations
+		resp := rest.BuildQueryRes(height, isProve, value, proof)
 		rest.PostProcessResponseBare(w, cliCtx, resp)
 	}
 }

@@ -5,8 +5,11 @@ import (
 	"errors"
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/client"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/transfer"
+	"github.com/ci123chain/ci123chain/pkg/util"
+	"github.com/tendermint/tendermint/crypto/merkle"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/types"
 	"net/http"
@@ -42,6 +45,43 @@ type Response struct {
 //	w.WriteHeader(status)
 //	_, _ = w.Write(codec.Cdc.MustMarshalJSON(NewErrorResponse(0, err)))
 //}
+
+type QueryRes struct {
+	Value interface{}   `json:"value"`
+	Height int64		`json:"height,omitempty"`
+	Proof *merkle.Proof	`json:"proof,omitempty"`
+}
+
+func BuildQueryRes(height string, isProve bool, value interface{}, proof *merkle.Proof) QueryRes {
+	resp := QueryRes{
+		Value: value,
+	}
+	if height != "" {
+		queryHeight, _ := strconv.ParseInt(height, 10, 64)
+		resp.Height = queryHeight
+	}
+	if isProve {
+		resp.Proof = proof
+	}
+	return resp
+}
+
+func CheckHeightAndProve(w http.ResponseWriter, height, prove string, codespace sdk.CodespaceType) (isValid bool) {
+	if height != "" {
+		_, Err := util.CheckInt64(height)
+		if Err != nil {
+			WriteErrorRes(w, client.ErrParseParam(codespace, Err))
+			isValid = false
+			return
+		}
+	}
+	if prove != "" && prove != "true"{
+		WriteErrorRes(w, client.ErrParseParam(codespace, errors.New("request prove but not true")))
+		isValid = false
+		return
+	}
+	return true
+}
 
 func NewErrorRes(err sdk.Error) Response {
 	return Response{

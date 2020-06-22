@@ -143,7 +143,7 @@ func GetArgs(ctx context.Context) (types.AccAddress, uint64, uint64, string, jso
 	addrs := viper.GetString(helper.FlagAddress)
 	address := types.HexToAddress(addrs)
 
-	nonce, _, err := ctx.GetNonceByAddress(address)
+	nonce, _, err := ctx.GetNonceByAddress(address, false)
 	if err != nil {
 		return types.AccAddress{}, 0, 0, "", nil, err
 	}

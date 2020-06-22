@@ -29,7 +29,7 @@ var nonceCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		v, _, err := ctx.GetNonceByAddress(addrs[0])
+		v, _, err := ctx.GetNonceByAddress(addrs[0], false)
 		if err != nil {
 			return err
 		}

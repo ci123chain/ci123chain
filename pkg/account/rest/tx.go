@@ -13,7 +13,6 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/gorilla/mux"
 	"github.com/tendermint/go-amino"
-	"github.com/tendermint/tendermint/crypto/merkle"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	"net/http"
 )
@@ -27,13 +26,11 @@ func RegisterRoutes(cliCtx context.Context, r *mux.Router) {
 }
 
 type BalanceData struct {
-	Balance uint64 		`json:"balance"`
-	Proof *merkle.Proof `json:"proof"`
+	Balance uint64 	 `json:"balance"`
 }
 
 type NonceData struct {
 	Nonce   uint64   `json:"nonce"`
-	Proof *merkle.Proof `json:"proof"`
 }
 
 type AccountAddress struct {
@@ -56,17 +53,14 @@ func QueryBalancesRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 
 		address := request.FormValue("address")
 		height := request.FormValue("height")
+		prove := request.FormValue("prove")
 		checkErr := util.CheckStringLength(42, 100, address)
 		if checkErr != nil {
-			rest.WriteErrorRes(w, client.ErrParseAddr(types.DefaultCodespace, checkErr))
+			rest.WriteErrorRes(w, client.ErrParseParam(types.DefaultCodespace, checkErr))
 			return
 		}
-		if height != "" {
-			_, Err := util.CheckInt64(height)
-			if Err != nil {
-				rest.WriteErrorRes(w, client.ErrParseAddr(types.DefaultCodespace, Err))
-				return
-			}
+		if !rest.CheckHeightAndProve(w, height, prove, types.DefaultCodespace) {
+			return
 		}
 
 		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, request, height)
@@ -80,12 +74,17 @@ func QueryBalancesRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			return
 		}
 		//params := types.NewQueryBalanceParams(addr)
-		res, proof, err2 := cliCtx.GetBalanceByAddress(addrBytes[0])
+		isProve := false
+		if prove == "true" {
+			isProve = true
+		}
+		res, proof, err2 := cliCtx.GetBalanceByAddress(addrBytes[0], isProve)
 		if err2 != nil {
 			rest.WriteErrorRes(w, transfer.ErrQueryTx(types.DefaultCodespace, err2.Error()))
 			return
 		}
-		resp := BalanceData{Balance:res, Proof: proof}
+		value := BalanceData{Balance:res}
+		resp := rest.BuildQueryRes(height, isProve, value, proof)
 		rest.PostProcessResponseBare(w, cliCtx, resp)
 	}
 }
@@ -115,9 +114,14 @@ func QueryNonceRequestHandleFn(cliCtx context.Context) http.HandlerFunc {
 		w.Header().Set("Content-Type", "application/json")
 
 		address := r.FormValue("address")
+		height := r.FormValue("height")
+		prove := r.FormValue("prove")
 		checkErr := util.CheckStringLength(42, 100, address)
 		if checkErr != nil {
 			rest.WriteErrorRes(w, client.ErrParseAddr(types.DefaultCodespace, checkErr))
+			return
+		}
+		if !rest.CheckHeightAndProve(w, height, prove, types.DefaultCodespace) {
 			return
 		}
 
@@ -131,12 +135,17 @@ func QueryNonceRequestHandleFn(cliCtx context.Context) http.HandlerFunc {
 			rest.WriteErrorRes(w, client.ErrParseAddr(types.DefaultCodespace, err2))
 			return
 		}
-		res, proof, err2 := cliCtx.GetNonceByAddress(addrBytes[0])
+		isProve := false
+		if prove == "true" {
+			isProve = true
+		}
+		res, proof, err2 := cliCtx.GetNonceByAddress(addrBytes[0], isProve)
 		if err2 != nil {
 			rest.WriteErrorRes(w, transfer.ErrQueryTx(types.DefaultCodespace, err2.Error()))
 			return
 		}
-		resp := NonceData{Nonce:res, Proof:proof}
+		value := NonceData{Nonce:res}
+		resp := rest.BuildQueryRes(height, isProve, value, proof)
 		rest.PostProcessResponseBare(w, cliCtx, resp)
 	}
 }

@@ -29,10 +29,15 @@ func registerQueryRoutes(cliCtx context.Context, r *mux.Router) {
 func queryCodeHandlerFn(cliCtx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
+		height := r.FormValue("height")
+		prove := r.FormValue("prove")
 		codeHash := r.FormValue("codeHash")
 		cliCtx, ok, Err := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r, "")
 		if !ok {
 			rest.WriteErrorRes(w, Err)
+			return
+		}
+		if !rest.CheckHeightAndProve(w, height, prove, types.DefaultCodespace) {
 			return
 		}
 		params := types.NewQueryCodeInfoParams(codeHash)
@@ -42,7 +47,11 @@ func queryCodeHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			return
 		}
 
-		res, _, _, Err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryCodeInfo, bz)
+		isProve := false
+		if prove == "true" {
+			isProve = true
+		}
+		res, _, proof, Err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryCodeInfo, bz, isProve)
 		if Err != nil {
 			rest.WriteErrorRes(w, Err)
 			return
@@ -53,14 +62,17 @@ func queryCodeHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		}
 		var codeInfo types.CodeInfo
 		cliCtx.Cdc.MustUnmarshalBinaryBare(res, &codeInfo)
-		rest.PostProcessResponseBare(w, cliCtx, codeInfo)
+		value := codeInfo
+		resp := rest.BuildQueryRes(height, isProve, value, proof)
+		rest.PostProcessResponseBare(w, cliCtx, resp)
 	}
 }
 
 
 func listContractsByCodeHandlerFn(cliCtx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
+		height := r.FormValue("height")
+		prove := r.FormValue("prove")
 		accountAddr := r.FormValue("accountAddress")
 		accountAddress := sdk.HexToAddress(accountAddr)
 		params := types.NewContractListParams(accountAddress)
@@ -69,8 +81,14 @@ func listContractsByCodeHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			rest.WriteErrorRes(w, sdk.ErrInternal("marshal failed"))
 			return
 		}
-
-		res, _, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryContractList, bz)
+		if !rest.CheckHeightAndProve(w, height, prove, types.DefaultCodespace) {
+			return
+		}
+		isProve := false
+		if prove == "true" {
+			isProve = true
+		}
+		res, _, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryContractList, bz, isProve)
 		if err != nil {
 			rest.WriteErrorRes(w, err)
 			return
@@ -88,13 +106,17 @@ func listContractsByCodeHandlerFn(cliCtx context.Context) http.HandlerFunc {
 
 func queryContractHandlerFn(cliCtx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
+		height := r.FormValue("height")
+		prove := r.FormValue("prove")
 		contractAddr := r.FormValue("contractAddress")
 		contractAddress := sdk.HexToAddress(contractAddr)
 
 		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r, "")
 		if !ok {
 			rest.WriteErrorRes(w, err)
+			return
+		}
+		if !rest.CheckHeightAndProve(w, height, prove, types.DefaultCodespace) {
 			return
 		}
 
@@ -105,7 +127,11 @@ func queryContractHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			return
 		}
 
-		res, _, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryContractInfo, bz)
+		isProve := false
+		if prove == "true" {
+			isProve = true
+		}
+		res, _, proof, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryContractInfo, bz, isProve)
 		if err != nil {
 			rest.WriteErrorRes(w, err)
 			return
@@ -116,7 +142,9 @@ func queryContractHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		}
 		var contractInfo types.ContractInfo
 		cliCtx.Cdc.MustUnmarshalBinaryBare(res, &contractInfo)
-		rest.PostProcessResponseBare(w, cliCtx, contractInfo)
+		value := contractInfo
+		resp := rest.BuildQueryRes(height, isProve, value, proof)
+		rest.PostProcessResponseBare(w, cliCtx, resp)
 	}
 }
 
@@ -126,7 +154,8 @@ func queryContractStateAllHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		contractAddr := r.FormValue("contractAddress")
 		contractAddress := sdk.HexToAddress(contractAddr)
 		msg := r.FormValue("args")
-
+		height := r.FormValue("height")
+		prove := r.FormValue("prove")
 		if msg == "" {
 			queryParam = nil
 		}else {
@@ -144,7 +173,9 @@ func queryContractStateAllHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			rest.WriteErrorRes(w, err)
 			return
 		}
-
+		if !rest.CheckHeightAndProve(w, height, prove, types.DefaultCodespace) {
+			return
+		}
 		params := types.NewContractStateParam(contractAddress, queryParam)
 		bz, Er := cliCtx.Cdc.MarshalJSON(params)
 		if Er != nil {
@@ -152,7 +183,11 @@ func queryContractStateAllHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			return
 		}
 
-		res, _, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryContractState, bz)
+		isProve := false
+		if prove == "true" {
+			isProve = true
+		}
+		res, _, proof, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryContractState, bz, isProve)
 		if err != nil {
 			rest.WriteErrorRes(w, err)
 			return
@@ -163,6 +198,8 @@ func queryContractStateAllHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		}
 		var contractState types.ContractState
 		cliCtx.Cdc.MustUnmarshalJSON(res, &contractState)
-		rest.PostProcessResponseBare(w, cliCtx, contractState)
+		value := contractState
+		resp := rest.BuildQueryRes(height, isProve, value, proof)
+		rest.PostProcessResponseBare(w, cliCtx, resp)
 	}
 }

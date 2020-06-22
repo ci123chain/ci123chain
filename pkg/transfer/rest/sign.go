@@ -91,7 +91,7 @@ func buildTransferTx(r *http.Request, isFabric bool, priv string) ([]byte, error
 		if err != nil {
 			return nil, client.ErrNewClientCtx(types.DefaultCodespace, err)
 		}
-		nonce, _, err = ctx.GetNonceByAddress(froms[0])
+		nonce, _, err = ctx.GetNonceByAddress(froms[0],false)
 		if err != nil {
 			return nil, types.ErrCheckParams(types.DefaultCodespace, "nonce error")
 		}

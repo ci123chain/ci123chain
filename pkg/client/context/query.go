@@ -9,7 +9,7 @@ import (
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
 )
 
-func (ctx Context) Query(path string, key common.HexBytes) ([]byte, int64, *merkle.Proof, sdk.Error) {
+func (ctx Context) Query(path string, key common.HexBytes, isProve bool) ([]byte, int64, *merkle.Proof, sdk.Error) {
 	var res []byte
 	var height int64
 	node, err := ctx.GetNode()
@@ -19,6 +19,9 @@ func (ctx Context) Query(path string, key common.HexBytes) ([]byte, int64, *merk
 
 	opt := rpcclient.ABCIQueryOptions{
 		Height: ctx.Height,
+	}
+	if isProve {
+		opt.Prove = true
 	}
    	result, err := node.ABCIQueryWithOptions(path, key, opt)
 	if err != nil {

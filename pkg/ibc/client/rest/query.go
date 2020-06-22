@@ -4,13 +4,12 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
-	"github.com/gorilla/mux"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/ibc/types"
 	"github.com/ci123chain/ci123chain/pkg/transfer"
 	"github.com/ci123chain/ci123chain/pkg/util"
-	"github.com/tendermint/tendermint/crypto/merkle"
+	"github.com/gorilla/mux"
 	"net/http"
 )
 
@@ -23,7 +22,6 @@ func RegisterTxRoutes(cliCtx context.Context, r *mux.Router)  {
 
 type IBCUniqueIDData struct {
 	UniqueID	string	`json:"uniqueID"`
-	Proof *merkle.Proof `json:"proof"`
 }
 
 type StateParams struct {
@@ -37,11 +35,15 @@ type QueryStateParams struct {
 }
 func QueryTxByStateRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
-		vars := mux.Vars(request)
-		ibcState := vars["ibcstate"]
-
+		ibcState := request.FormValue("ibcstate")
+		height := request.FormValue("height")
+		prove := request.FormValue("prove")
 		if err := types.ValidateState(ibcState); err != nil {
 			rest.WriteErrorRes(writer, err)
+			return
+		}
+
+		if !rest.CheckHeightAndProve(writer, height, prove, types.DefaultCodespace) {
 			return
 		}
 
@@ -51,7 +53,11 @@ func QueryTxByStateRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			return
 		}
 
-		res, _, proof, err := cliCtx.Query("/custom/" + types.ModuleName + "/state/" + ibcState, nil)
+		isProve := false
+		if prove == "true" {
+			isProve = true
+		}
+		res, _, proof, err := cliCtx.Query("/custom/" + types.ModuleName + "/state/" + ibcState, nil, isProve)
 		if len(res) < 1 {
 			rest.WriteErrorRes(writer, transfer.ErrQueryTx(types.DefaultCodespace, "There is no ibctx ready"))
 			return
@@ -62,14 +68,14 @@ func QueryTxByStateRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			rest.WriteErrorRes(writer, transfer.ErrCheckParams(types.DefaultCodespace, err2.Error()))
 			return
 		}
-		resp := &IBCUniqueIDData{UniqueID:string(ibcMsg.UniqueID), Proof: proof}
+		value := &IBCUniqueIDData{UniqueID:string(ibcMsg.UniqueID)}
+		resp := rest.BuildQueryRes(height, isProve, value, proof)
 		rest.PostProcessResponseBare(writer, cliCtx, resp)
 	}
 }
 
 type IBCTxStateData struct {
 	State	string	`json:"state"`
-	Proof *merkle.Proof `json:"proof"`
 }
 
 type Txparams struct {
@@ -84,9 +90,14 @@ type QueryTxParams struct {
 func QueryTxByUniqueIDRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		UniqueidStr := request.FormValue("uniqueID")
+		height := request.FormValue("height")
+		prove := request.FormValue("prove")
 		checkErr := util.CheckStringLength(1, 100, UniqueidStr)
 		if checkErr != nil {
 			rest.WriteErrorRes(writer, transfer.ErrQueryTx(types.DefaultCodespace, "unexpected uniqueID"))
+			return
+		}
+		if !rest.CheckHeightAndProve(writer, height, prove, types.DefaultCodespace) {
 			return
 		}
 
@@ -97,7 +108,11 @@ func QueryTxByUniqueIDRequestHandlerFn(cliCtx context.Context) http.HandlerFunc 
 		}
 		uniqueBz := []byte(UniqueidStr)
 
-		res, _, proof, err := cliCtx.Query("/store/" + types.StoreKey + "/types", uniqueBz)
+		isProve := false
+		if prove == "true" {
+			isProve = true
+		}
+		res, _, proof, err := cliCtx.Query("/store/" + types.StoreKey + "/types", uniqueBz, isProve)
 		if len(res) < 1 {
 			rest.WriteErrorRes(writer, transfer.ErrQueryTx(types.DefaultCodespace, "this uniqueID is not exist"))
 			return
@@ -112,7 +127,8 @@ func QueryTxByUniqueIDRequestHandlerFn(cliCtx context.Context) http.HandlerFunc 
 			rest.WriteErrorRes(writer, transfer.ErrQueryTx(types.DefaultCodespace, fmt.Sprintf("different uniqueID get %s, expected %s", hex.EncodeToString(ibcMsg.UniqueID), UniqueidStr)))
 			return
 		}
-		resp := &IBCTxStateData{State:ibcMsg.State, Proof: proof}
+		value := &IBCTxStateData{State:ibcMsg.State}
+		resp := rest.BuildQueryRes(height, isProve, value, proof)
 		rest.PostProcessResponseBare(writer, cliCtx, resp)
 	}
 }

@@ -7,7 +7,6 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/distribution/types"
 	"github.com/ci123chain/ci123chain/pkg/transfer"
 	"github.com/ci123chain/ci123chain/pkg/util"
-	"github.com/tendermint/tendermint/crypto/merkle"
 	"net/http"
 )
 
@@ -17,7 +16,6 @@ func RegisterTxRoutes(cliCtx context.Context, r *mux.Router)  {
 
 type RewardsData struct {
 	Rewards 	uint64 `json:"rewards"`
-	Proof *merkle.Proof `json:"proof"`
 }
 
 type RewardsParams struct {
@@ -31,9 +29,9 @@ type QueryRewardsParams struct {
 
 func QueryValidatorRewardsRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
-		vars := mux.Vars(request)
-		accountAddress := vars["accountAddress"]
-		height := vars["height"]
+		accountAddress := request.FormValue("accountAddress")
+		height := request.FormValue("height")
+		prove := request.FormValue("prove")
 		checkErr := util.CheckStringLength(42, 100, accountAddress)
 		if checkErr != nil {
 			rest.WriteErrorRes(writer,types.ErrBadHeight(types.DefaultCodespace, checkErr))
@@ -42,12 +40,10 @@ func QueryValidatorRewardsRequestHandlerFn(cliCtx context.Context) http.HandlerF
 
 		if height == "" {
 			height = "now"
-		}else {
-			_, Err := util.CheckInt64(height)
-			if Err != nil {
-				rest.WriteErrorRes(writer,types.ErrBadHeight(types.DefaultCodespace, Err))
-				return
-			}
+		}
+
+		if !rest.CheckHeightAndProve(writer, height, prove, types.DefaultCodespace) {
+			return
 		}
 
 		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(writer, cliCtx, request, "")
@@ -56,7 +52,11 @@ func QueryValidatorRewardsRequestHandlerFn(cliCtx context.Context) http.HandlerF
 			return
 		}
 
-		res, _, proof, err := cliCtx.Query("/custom/" + types.ModuleName + "/rewards/" + accountAddress + "/" + height, nil)
+		isProve := false
+		if prove == "true" {
+			isProve = true
+		}
+		res, _, proof, err := cliCtx.Query("/custom/" + types.ModuleName + "/rewards/" + accountAddress + "/" + height, nil, isProve)
 		if err != nil {
 			rest.WriteErrorRes(writer, err)
 			return
@@ -71,7 +71,11 @@ func QueryValidatorRewardsRequestHandlerFn(cliCtx context.Context) http.HandlerF
 			rest.WriteErrorRes(writer, transfer.ErrQueryTx(types.DefaultCodespace, err2.Error()))
 			return
 		}
-		resp := &RewardsData{Rewards:rewards, Proof: proof}
+		value := &RewardsData{Rewards:rewards}
+		if height == "now" {
+			height = ""
+		}
+		resp := rest.BuildQueryRes(height, isProve, value, proof)
 		rest.PostProcessResponseBare(writer, cliCtx, resp)
 	}
 }
