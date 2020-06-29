@@ -6,8 +6,6 @@ import (
 	"github.com/ci123chain/wasm-util/wasm"
 )
 
-const ADDGAS = "addgas"
-
 func tryAddgas(raw []byte) ([]byte, error) {
 	r := bytes.NewReader(raw)
 	m, pos, err := wasm.DecodeModuleAddGas(r)

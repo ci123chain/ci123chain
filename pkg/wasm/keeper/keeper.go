@@ -30,13 +30,16 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, homeDir string, wasmConf
 	if err != nil {
 		panic(err)
 	}
-	SetAccountKeeper(accountKeeper)
-	return Keeper{
+
+	wk := Keeper{
 		storeKey:      storeKey,
 		cdc:           cdc,
 		wasmer:        wasmer,
 		AccountKeeper: accountKeeper,
 	}
+	SetAccountKeeper(accountKeeper)
+	SetWasmKeeper(wk)
+	return wk
 }
 
 //　Create uploads and compiles a WASM contract, returning a short identifier for the contract

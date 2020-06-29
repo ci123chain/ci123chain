@@ -7,21 +7,12 @@ import (
 	"unsafe"
 )
 
-
-//要在import函数中调用export函数，需要中转函数
-type middle struct {
-	fun map[string]func(...interface{}) (wasm.Value, error)
-}
-
-const RegionSize = 12
-
 type Store struct {
 	parent types.KVStore
 	prefix []byte
 }
 
 var store Store
-var middleIns = middle{fun: make(map[string]func(...interface{}) (wasm.Value, error))}
 func NewStore(parent types.KVStore, prefix []byte) Store {
 	return Store{
 		parent: parent,

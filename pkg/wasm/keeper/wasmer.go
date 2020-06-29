@@ -15,6 +15,7 @@ package keeper
 // extern void get_input(void*, int, int);
 // extern void notify_contract(void*, int, int);
 // extern void return_contract(void*, int, int);
+// extern int call_contract(void*, int, int, int);
 //
 // extern void addgas(void*, int);
 import "C"
@@ -91,13 +92,16 @@ func return_contract(context unsafe.Pointer, ptr, size int32) {
 	returnContract(context, ptr, size)
 }
 
-type Param struct {
-	Method string   `json:"method"`
-	Args   []string `json:"args"`
+//export call_contract
+func call_contract(context unsafe.Pointer, addrPtr, paramPtr, paramSize int32) int32 {
+	return callContract(context, addrPtr, paramPtr, paramSize)
 }
 
+var inputData []byte
 var GasUsed int64
 var GasWanted uint64
+var invokeResult string
+
 func SetGasUsed(){
 	GasUsed = 0
 }
@@ -132,6 +136,11 @@ func SetCreator(addr sdk.AccAddress) {
 var invoker sdk.AccAddress
 func SetInvoker(addr sdk.AccAddress) {
 	invoker = addr
+}
+
+var keeper Keeper
+func SetWasmKeeper(wk Keeper) {
+	keeper = wk
 }
 
 var accountKeeper account.AccountKeeper
@@ -216,9 +225,20 @@ func (w *Wasmer) Call(code []byte, args json.RawMessage) error {
 		fmt.Println(exist)
 		return errors.New("no expected function")
 	}
+	//var param Param
+	//inputByte, _ := args.MarshalJSON()
+	//fmt.Println(args)
+	//err = json.Unmarshal(inputByte, &param)
+	//if err != nil {
+	//	return err
+	//}
 
-	param := args
-	inputData, _ = json.Marshal(param)
+	param := Param{
+		Method: "init",
+		Args: []string{"tokenName", "addr1","2200"},
+	}
+	inputData = param.Serialize()
+	fmt.Println(inputData)
 	_, err = invoke()
 	if err != nil {
 		return err
@@ -244,6 +264,7 @@ func getInstance(code []byte) (*wasmer.Instance, error) {
 	_, _ = imports.Append("get_input", get_input, C.get_input)
 	_, _ = imports.Append("return_contract", return_contract, C.return_contract)
 	_, _ = imports.Append("notify_contract", notify_contract, C.notify_contract)
+	_, _ = imports.Append("call_contract", call_contract, C.call_contract)
 
 	_, _ = imports.Append("addgas", addgas, C.addgas)
 	module, err := wasmer.Compile(code)
