@@ -33,4 +33,6 @@ var (
 	NewDelegateMsg = types.NewDelegateTx
 	NewRedelegateMsg = types.NewRedelegateTx
 	NewUndelegateMsg = types.NewUndelegateTx
+
+	NewMultiStakingHooks  = types.NewMultiStakingHooks
 )

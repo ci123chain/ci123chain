@@ -3,8 +3,6 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	accountRpc "github.com/ci123chain/ci123chain/pkg/account/rest"
 	"github.com/ci123chain/ci123chain/pkg/client"
 	"github.com/ci123chain/ci123chain/pkg/client/cmd/rpc"
@@ -13,6 +11,8 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/ibc"
 	txRpc "github.com/ci123chain/ci123chain/pkg/transfer/rest"
 	"github.com/ci123chain/ci123chain/pkg/util"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/rpc/lib/server"
 	"io/ioutil"
@@ -23,12 +23,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gorilla/mux"
-	distr "github.com/ci123chain/ci123chain/pkg/distribution"
+	dRest "github.com/ci123chain/ci123chain/pkg/distribution/client/rest"
 	orQuery "github.com/ci123chain/ci123chain/pkg/order"
 	order "github.com/ci123chain/ci123chain/pkg/order/rest"
 	sRest "github.com/ci123chain/ci123chain/pkg/staking/client/rest"
 	wRest "github.com/ci123chain/ci123chain/pkg/wasm/client/rest"
+	"github.com/gorilla/mux"
 )
 
 const (
@@ -84,12 +84,12 @@ func NewRestServer() *RestServer {
 	accountRpc.RegisterRoutes(cliCtx, r)
 	txRpc.RegisterTxRoutes(cliCtx, r)
 	ibc.RegisterRoutes(cliCtx, r)
-	distr.RegisterRoutes(cliCtx, r)
+	//distr.RegisterRoutes(cliCtx, r)
 	order.RegisterTxRoutes(cliCtx, r)
 	orQuery.RegisterTxRoutes(cliCtx, r)
-	sRest.RegisterRestTxRoutes(cliCtx, r)
-	sRest.RegisterTxRoutes(cliCtx, r)
+	sRest.RegisterRoutes(cliCtx, r)
 	wRest.RegisterRoutes(cliCtx, r)
+	dRest.RegisterRoutes(cliCtx, r)
 
 	return &RestServer{
 		Mux: r,

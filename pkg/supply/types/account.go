@@ -23,7 +23,7 @@ func (macc ModuleAccount) GetName() string {
 	return macc.Name
 }
 
-func (macc ModuleAccount) GetPermission() []string {
+func (macc ModuleAccount) GetPermissions() []string {
 	return macc.Permissions
 }
 

@@ -43,6 +43,11 @@ func NewSubspace(cdc *codec.Codec, key types.StoreKey, tkey types.StoreKey, name
 	return
 }
 
+// HasKeyTable returns if the Subspace has a KeyTable registered.
+func (s Subspace) HasKeyTable() bool {
+	return len(s.table.m) > 0
+}
+
 
 // WithKeyTable initializes KeyTable and returns modified Subspace
 func (s Subspace) WithKeyTable(table KeyTable) Subspace {

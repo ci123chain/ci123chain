@@ -2,13 +2,11 @@ package handler
 
 import (
 	"fmt"
-	gogotypes "github.com/gogo/protobuf/types"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/staking/keeper"
 	"github.com/ci123chain/ci123chain/pkg/staking/types"
 	staking "github.com/ci123chain/ci123chain/pkg/staking/types"
-	//tmtypes "github.com/tendermint/tendermint/types"
-	//tmstrings "github.com/tendermint/tendermint/libs/strings"
+	gogotypes "github.com/gogo/protobuf/types"
 	"time"
 )
 

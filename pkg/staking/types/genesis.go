@@ -44,6 +44,7 @@ func DefaultValidators(validators []tmtypes.GenesisValidator) []Validator {
 			genesisValidator.Address = validators[i].PubKey.Address()
 			genesisValidator.ConsensusKey = validators[i].PubKey
 			genesisValidator.Status = 1
+			genesisValidator.Commission = NewCommission(sdk.NewDecWithPrec(1, 2), sdk.NewDecWithPrec(4, 2), sdk.NewDecWithPrec(5, 1))
 			//genesisValidator.DelegatorShares = sdk.NewDec(100)
 			//genesisValidator.Tokens = sdk.NewInt(100)
 			genesisValidators = append(genesisValidators, genesisValidator)
@@ -55,6 +56,5 @@ func DefaultValidators(validators []tmtypes.GenesisValidator) []Validator {
 // DefaultGenesisState gets the raw genesis raw message for testing
 func DefaultGenesisState(validators []tmtypes.GenesisValidator) GenesisState {
 	genesisValidators := DefaultValidators(validators)
-	//return GenesisState{Params:DefaultParams(), Validators:genesisValidators}
 	return NewGenesisState(DefaultParams(), genesisValidators, nil)
 }

@@ -8,6 +8,7 @@ import (
 
 // permissions
 const (
+	Minter  = "minter"
 	Burner  = "burner"
 	Staking = "staking"
 )
@@ -22,6 +23,16 @@ func NewPermissionForAddress(name string, permissions []string) PermissionsForAd
 		permissions: 	permissions,
 		address: 		NewModuleAddress(name),
 	}
+}
+
+// HasPermission returns whether the PermissionsForAddress contains permission.
+func (pa PermissionsForAddress) HasPermission(permission string) bool {
+	for _, perm := range pa.permissions {
+		if perm == permission {
+			return true
+		}
+	}
+	return false
 }
 
 

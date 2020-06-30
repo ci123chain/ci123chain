@@ -12,6 +12,14 @@ const (
 	ModuleName 		= types.ModuleName
 )
 
+var (
+	NewParamSetPair = subspace.NewParamSetPair
+	NewKeyTable     = subspace.NewKeyTable
+)
+
 type (
 	Subspace 		= subspace.Subspace
+	ParamSetPair  = subspace.ParamSetPair
+	ParamSetPairs = subspace.ParamSetPairs
+	KeyTable      = subspace.KeyTable
 )

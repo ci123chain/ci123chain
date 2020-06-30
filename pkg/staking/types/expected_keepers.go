@@ -3,7 +3,7 @@ package types
 import sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 
 type StakingHooks interface {
-	AferValidatorCreated(ctx sdk.Context, valAddr sdk.AccAddress)
+	AfterValidatorCreated(ctx sdk.Context, valAddr sdk.AccAddress)
 	BeforeValidatorModified(ctx sdk.Context, valAddr sdk.AccAddress)
 	AfterValidatorRemoved(ctx sdk.Context, consAddr sdk.AccAddress, valAddr sdk.AccAddress)
 

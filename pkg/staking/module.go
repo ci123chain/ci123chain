@@ -19,12 +19,6 @@ type AppModule struct {
 	SupplyKeeper  sk.Keeper
 }
 
-/*
-func (am AppModule) DefaultGenesis() json.RawMessage {
-	return ModuleCdc.MustMarshalJSON(DefaultGenesisState())
-}
-*/
-
 func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.ValidatorUpdate {
 	//
 	var genesisState types.GenesisState

@@ -3,8 +3,6 @@ package app
 import (
 	"encoding/json"
 	"errors"
-	_defer "github.com/ci123chain/ci123chain/pkg/auth/defer"
-	"github.com/spf13/viper"
 	"github.com/ci123chain/ci123chain/pkg/abci/baseapp"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/module"
@@ -14,13 +12,14 @@ import (
 	app_types "github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/auth"
 	"github.com/ci123chain/ci123chain/pkg/auth/ante"
+	_defer "github.com/ci123chain/ci123chain/pkg/auth/defer"
 	"github.com/ci123chain/ci123chain/pkg/config"
 	"github.com/ci123chain/ci123chain/pkg/couchdb"
 	"github.com/ci123chain/ci123chain/pkg/db"
 	distr "github.com/ci123chain/ci123chain/pkg/distribution"
 	k "github.com/ci123chain/ci123chain/pkg/distribution/keeper"
-	"github.com/ci123chain/ci123chain/pkg/fc"
 	"github.com/ci123chain/ci123chain/pkg/ibc"
+	"github.com/ci123chain/ci123chain/pkg/mint"
 	"github.com/ci123chain/ci123chain/pkg/mortgage"
 	"github.com/ci123chain/ci123chain/pkg/order"
 	orhandler "github.com/ci123chain/ci123chain/pkg/order/handler"
@@ -33,6 +32,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/transfer/handler"
 	"github.com/ci123chain/ci123chain/pkg/wasm"
 	wasm_types "github.com/ci123chain/ci123chain/pkg/wasm/types"
+	"github.com/spf13/viper"
 	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/libs/cli"
@@ -66,10 +66,10 @@ var (
 	IBCStoreKey 	 = sdk.NewKVStoreKey(ibc.StoreKey)
 	OrderStoreKey	 = sdk.NewKVStoreKey(order.StoreKey)
 
-	fcStoreKey       = sdk.NewKVStoreKey(fc.FcStoreKey)
-	disrtStoreKey         = sdk.NewKVStoreKey(k.DisrtKey)
+	disrtStoreKey    = sdk.NewKVStoreKey(k.DisrtKey)
 	stakingStoreKey  = sdk.NewKVStoreKey(staking.StoreKey)
 	wasmStoreKey     = sdk.NewKVStoreKey(wasm.StoreKey)
+	mintStoreKey     = sdk.NewKVStoreKey(mint.StoreKey)
 
 	ModuleBasics = module.NewBasicManager(
 		account.AppModuleBasic{},
@@ -78,10 +78,15 @@ var (
 		order.AppModuleBasic{},
 		staking.AppModuleBasic{},
 		wasm.AppModuleBasic{},
+		mint.AppModuleBasic{},
+		distr.AppModuleBasic{},
 		)
 
 	maccPerms = map[string][]string{
 		//mortgage.ModuleName: nil,
+		auth.FeeCollectorName: nil,
+		distr.ModuleName:      nil,
+		mint.ModuleName:       {supply.Minter},
 		ibc.ModuleName: nil,
 		stakingTypes.BondedPoolName: {supply.Burner, supply.Staking},
 		stakingTypes.NotBondedPoolName: {supply.Burner, supply.Staking},
@@ -135,9 +140,14 @@ func NewChain(logger log.Logger, tmdb tmdb.DB, traceStore io.Writer) *Chain {
 
 	ibcKeeper := ibc.NewKeeper(IBCStoreKey, accKeeper, supplyKeeper)
 
-	fcKeeper := fc.NewFcKeeper(cdc, fcStoreKey, accKeeper)
-	distrKeeper := k.NewKeeper(cdc, disrtStoreKey, fcKeeper, accKeeper)
+	//fcKeeper := fc.NewFcKeeper(cdc, fcStoreKey, accKeeper)
+
 	stakingKeeper := staking.NewKeeper(cdc, stakingStoreKey, accKeeper,supplyKeeper, paramsKeeper.Subspace(params.ModuleName))
+
+	distrKeeper := k.NewKeeper(cdc, disrtStoreKey, supplyKeeper, accKeeper, auth.FeeCollectorName, paramsKeeper.Subspace(distr.DefaultCodespace), stakingKeeper)
+
+	mintSubspace := paramsKeeper.Subspace(mint.DefaultCodeSpce)
+	mintKeeper := mint.NewKeeper(cdc, mintStoreKey, mintSubspace, stakingKeeper, supplyKeeper, auth.FeeCollectorName)
 
 	cdb := tmdb.(*couchdb.GoCouchDB)
 	orderKeeper := order.NewKeeper(cdb, OrderStoreKey, accKeeper)
@@ -146,14 +156,18 @@ func NewChain(logger log.Logger, tmdb tmdb.DB, traceStore io.Writer) *Chain {
 	var wasmconfig wasm_types.WasmConfig
 	wasmKeeper := wasm.NewKeeper(cdc, wasmStoreKey,homeDir, wasmconfig, accKeeper)
 
+	stakingKeeper.SetHooks(staking.NewMultiStakingHooks(distrKeeper.Hooks()))
+
 	// 设置modules
 	c.mm = module.NewManager(
 		auth.AppModule{AuthKeeper: c.authKeeper},
 		account.AppModule{AccountKeeper: accKeeper},
-		distr.AppModule{DistributionKeeper: distrKeeper},
+		supply.AppModule{Keeper:supplyKeeper},
+		distr.AppModule{DistributionKeeper: distrKeeper, AccountKeeper:accKeeper, SupplyKeeper:supplyKeeper},
 		order.AppModule{OrderKeeper: &orderKeeper},
 		staking.AppModule{StakingKeeper:stakingKeeper, AccountKeeper:accKeeper, SupplyKeeper:supplyKeeper},
 		wasm.AppModule{WasmKeeper:wasmKeeper},
+		mint.AppModule{Keeper:mintKeeper},
 		)
 	// invoke router
 	c.Router().AddRoute(transfer.RouteKey, handler.NewHandler(txm, accKeeper, sm))
@@ -172,7 +186,7 @@ func NewChain(logger log.Logger, tmdb tmdb.DB, traceStore io.Writer) *Chain {
 
 	c.QueryRouter().AddRoute(wasm.RouteKey, wasm.NewQuerier(wasmKeeper))
 
-	c.SetAnteHandler(ante.NewAnteHandler(c.authKeeper, accKeeper, fcKeeper))
+	c.SetAnteHandler(ante.NewAnteHandler(c.authKeeper, accKeeper, supplyKeeper))
 	c.SetDeferHandler(_defer.NewDeferHandler(accKeeper))
 	c.SetBeginBlocker(c.BeginBlocker)
 	c.SetCommitter(c.Committer)
@@ -196,18 +210,18 @@ func (c *Chain) mountStores() error {
 		c.contractStore,
 		ParamStoreKey,
 		AuthStoreKey,
+		SupplyStoreKey,
 		MortgageStoreKey,
 		IBCStoreKey,
-		fcStoreKey,
 		disrtStoreKey,
 		OrderStoreKey,
 		stakingStoreKey,
 		wasmStoreKey,
+		mintStoreKey,
 	}
 	c.MountStoresIAVL(keys...)
 
 	c.MountStoresTransient(c.txIndexStore, ParamTransStoreKey)
-
 
 	for _, key := range keys {
 		if err := c.LoadLatestVersion(key); err != nil {

@@ -1,3 +1,7 @@
 package types
 
-const ModuleName = "Supply"
+const ModuleName = "supply"
+
+var (
+	SupplyKey = []byte{0x00}
+)

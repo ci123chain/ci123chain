@@ -1,8 +1,8 @@
 package rest
 
 import (
-	"github.com/gorilla/mux"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
+	"github.com/gorilla/mux"
 )
 
 func RegisterRoutes(cliCtx context.Context, r *mux.Router) {

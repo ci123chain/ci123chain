@@ -2,7 +2,6 @@ package rest
 
 import (
 	"errors"
-	"github.com/gorilla/mux"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
 	"github.com/ci123chain/ci123chain/pkg/app"
 	"github.com/ci123chain/ci123chain/pkg/client"
@@ -11,11 +10,12 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/staking/types"
 	tRest "github.com/ci123chain/ci123chain/pkg/transfer/rest"
 	sSdk "github.com/ci123chain/ci123chain/sdk/staking"
+	"github.com/gorilla/mux"
 	"net/http"
 	"strconv"
 )
 
-func RegisterRestTxRoutes(cliCtx context.Context, r *mux.Router)  {
+func RegisterTxRoutes(cliCtx context.Context, r *mux.Router)  {
 	r.HandleFunc("/staking/validator/create", CreateValidatorRequest(cliCtx)).Methods("POST")
 	r.HandleFunc("/staking/delegate", DelegateTX(cliCtx)).Methods("POST")
 	r.HandleFunc("/staking/redelegate", RedelegateTX(cliCtx)).Methods("POST")

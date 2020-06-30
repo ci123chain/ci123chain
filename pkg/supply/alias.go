@@ -7,6 +7,7 @@ import (
 
 type (
 	Keeper = keeper.Keeper
+	GenesisState = types.GenesisState
 )
 
 var (
@@ -16,9 +17,12 @@ var (
 	ModuleName = types.ModuleName
 
 	RegisterCodec = types.RegisterCodec
+
+	ModuleCdc   = types.ModuleCdc
 )
 
 const (
+	Minter   = types.Minter
 	Burner   = types.Burner
 	Staking  = types.Staking
 )
