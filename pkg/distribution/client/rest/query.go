@@ -15,7 +15,8 @@ func RegisterQueryRoutes(cliCtx context.Context, r *mux.Router)  {
 	r.HandleFunc("/distribution/validator/outstanding_rewards", QueryValidatorOutstandingRewardsHandleFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/distribution/query_community_pool", QueryCommunityPoolHandleFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/distribution/delegator/withdraw_address", QueryWithDrawAddress(cliCtx)).Methods("POST")
-	r.HandleFunc("/distribution/validator/rewards", validatorInfoHandleFn(cliCtx)).Methods("POST")
+	r.HandleFunc("/distribution/validator/commission", validatorCommissionInfoHandleFn(cliCtx)).Methods("POST")
+	r.HandleFunc("/distribution/delegator/rewards", queryDelegatorRewardsHandleFn(cliCtx)).Methods("POST")
 }
 
 type RewardsData struct {
@@ -84,10 +85,11 @@ func QueryValidatorOutstandingRewardsHandleFn(cliCtx context.Context) http.Handl
 		if !ok {
 			return
 		}
-		b := cliCtx.Cdc.MustMarshalJSON(types.NewQueryValidatorOutstandingRewardsParams(validatorAddress))
+		b := cliCtx.Cdc.MustMarshalJSON(types.NewQueryValidatorOutstandingRewardsParams(sdk.HexToAddress(validatorAddress)))
 		res, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryValidatorOutstandingRewards, b)
 		if err != nil {
 			rest.WriteErrorRes(writer, err)
+			return
 		}
 		var rewards types.ValidatorOutstandingRewards
 		cliCtx.Cdc.MustUnmarshalJSON(res, &rewards)
@@ -114,10 +116,11 @@ func QueryWithDrawAddress(cliCtx context.Context) http.HandlerFunc {
 		if !ok {
 			return
 		}
-		b := cliCtx.Cdc.MustMarshalJSON(types.NewQueryDelegatorWithdrawAddrParams(delegatorAddr))
+		b := cliCtx.Cdc.MustMarshalJSON(types.NewQueryDelegatorWithdrawAddrParams(sdk.HexToAddress(delegatorAddr)))
 		res, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryWithdrawAddress, b)
 		if err != nil {
 			rest.WriteErrorRes(w, err)
+			return
 		}
 		var result sdk.AccAddress
 		cliCtx.Cdc.MustUnmarshalJSON(res, &result)
@@ -143,29 +146,58 @@ func NewValidatorDistInfo(operatorAddr sdk.AccAddress, rewards sdk.DecCoin,
 	}
 }
 
-func validatorInfoHandleFn(cliCtx context.Context) http.HandlerFunc {
+func validatorCommissionInfoHandleFn(cliCtx context.Context) http.HandlerFunc {
 	return func(writer http.ResponseWriter, req *http.Request) {
 		validatorAddr, ok := checkValidatorAddressVar(writer, req)
 		if !ok {
 			return
 		}
+		val := sdk.HexToAddress(validatorAddr)
 		//commission
-		res, err := common.QueryValidatorCommission(cliCtx, types.ModuleName, validatorAddr)
+		res, err := common.QueryValidatorCommission(cliCtx, types.ModuleName, val)
 		if err != nil {
 			rest.WriteErrorRes(writer, types.ErrInternalServer(types.DefaultCodespace))
+			return
 		}
 		var commission types.ValidatorAccumulatedCommission
 		cliCtx.Cdc.MustUnmarshalJSON(res, &commission)
 
-		//self bonded rewards
-		delAddr := validatorAddr
-		resp, Err := common.QueryDelegationRewards(cliCtx, types.ModuleName, validatorAddr, delAddr)
+		/*//self bonded rewards
+		delAddr := val
+		resp, Err := common.QueryDelegationRewards(cliCtx, types.ModuleName, val, delAddr)
 		if Err != nil {
 			rest.WriteErrorRes(writer, types.ErrInternalServer(types.DefaultCodespace))
+			return
+		}
+		var rewards sdk.DecCoin
+		cliCtx.Cdc.MustUnmarshalJSON(resp, &rewards)*/
+
+		rest.PostProcessResponseBare(writer, cliCtx, commission)
+	}
+}
+
+func queryDelegatorRewardsHandleFn(cliCtx context.Context) http.HandlerFunc {
+	return func(writer http.ResponseWriter, req *http.Request) {
+		validatorAddr, ok := checkValidatorAddressVar(writer, req)
+		if !ok {
+			return
+		}
+		val := sdk.HexToAddress(validatorAddr)
+		delegator, ok := checkDelegatorAddressVar(writer, req)
+		if !ok {
+			return
+		}
+		del := sdk.HexToAddress(delegator)
+
+		//delegator rewards
+		resp, Err := common.QueryDelegationRewards(cliCtx, types.ModuleName, val, del)
+		if Err != nil {
+			rest.WriteErrorRes(writer, types.ErrInternalServer(types.DefaultCodespace))
+			return
 		}
 		var rewards sdk.DecCoin
 		cliCtx.Cdc.MustUnmarshalJSON(resp, &rewards)
 
-		rest.PostProcessResponseBare(writer, cliCtx, NewValidatorDistInfo(validatorAddr, rewards, commission))
+		rest.PostProcessResponseBare(writer, cliCtx, rewards)
 	}
 }

@@ -24,6 +24,8 @@ func (k StakingKeeper) BlockValidatorUpdates(ctx sdk.Context) []abcitypes.Valida
 
 	validatorUpdates := k.ApplyAndReturnValidatorSetUpdates(ctx)
 
+	//fmt.Printf("validatorUpdates is %v\n", validatorUpdates)
+
 	k.UnbondAllMatureValidatorQueue(ctx)
 
 	matureUnbonds := k.DequeueAllMatureUBDQueue(ctx, ctx.BlockHeader().Time)
@@ -93,6 +95,7 @@ func (k StakingKeeper) ApplyAndReturnValidatorSetUpdates(ctx sdk.Context) (updat
 		if validator.Jailed {
 			panic("should never retrieve a jailed validator from the power store")
 		}
+		//fmt.Printf("validator.power = %d\n", validator.PotentialConsensusPower())
 
 		// if we get to a zero-power validator (which we don't bond),
 		// there are no more possible bonded validators
@@ -286,7 +289,10 @@ func (k StakingKeeper) getLastValidatorsByAddr(ctx sdk.Context) validatorsByAddr
 	for ; iterator.Valid(); iterator.Next() {
 		var valAddr [sdk.AddrLen]byte
 		// extract the validator address from the key (prefix is 1-byte)
-		copy(valAddr[:], iterator.Key()[10:])
+		/*a := iterator.Key()
+		b := sdk.ToAccAddress(a[1:])
+		fmt.Printf("validator %s\n", b)*/
+		copy(valAddr[:], iterator.Key()[1:])
 		powerBytes := iterator.Value()
 		last[valAddr] = make([]byte, len(powerBytes))
 		copy(last[valAddr], powerBytes)

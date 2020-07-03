@@ -33,3 +33,9 @@ func (k DistrKeeper) GetCommunityTax(ctx sdk.Context) (percent sdk.Dec) {
 	return percent
 }
 
+// GetWithdrawAddrEnabled returns the current distribution withdraw address
+// enabled parameter.
+func (k DistrKeeper) GetWithdrawAddrEnabled(ctx sdk.Context) (enabled bool) {
+	k.ParamSpace.Get(ctx, types.ParamStoreKeyWithdrawAddrEnabled, &enabled)
+	return enabled
+}

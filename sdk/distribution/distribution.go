@@ -27,3 +27,73 @@ func SignFundCommunityPoolTx(from string, amount int64, gas, nonce uint64, priv 
 
 	return tx.Bytes(), nil
 }
+
+
+func SignSetWithdrawAddressTx(from, withdrawAddress string, gas, nonce uint64, priv string) ([]byte, error) {
+
+	privateKey, err := hex.DecodeString(priv)
+	if err != nil {
+		return nil, err
+	}
+	accountAddr := sdk.HexToAddress(from)
+	withdrawAddr := sdk.HexToAddress(withdrawAddress)
+
+	tx := types.NewSetWithdrawAddressTx(accountAddr, withdrawAddr, accountAddr, gas, nonce)
+
+	sid := cryptosuit.NewFabSignIdentity()
+	pub, err  := sid.GetPubKey(privateKey)
+
+	tx.SetPubKey(pub)
+	signbyte := tx.GetSignBytes()
+	signature, err := sid.Sign(signbyte, privateKey)
+	tx.SetSignature(signature)
+
+	return tx.Bytes(), nil
+}
+
+func SignWithdrawDelegatorRewardTx(from, validatorAddress, delegatorAddress string, gas, nonce uint64, priv string) ([]byte, error) {
+	privateKey, err := hex.DecodeString(priv)
+	if err != nil {
+		return nil, err
+	}
+	accountAddr := sdk.HexToAddress(from)
+	valAddr := sdk.HexToAddress(validatorAddress)
+	delAddr := sdk.HexToAddress(delegatorAddress)
+
+	tx := types.NewWithdrawDelegatorRewardTx(accountAddr, valAddr, delAddr, gas, nonce)
+	sid := cryptosuit.NewFabSignIdentity()
+	pub, err  := sid.GetPubKey(privateKey)
+	if err != nil {
+		return nil, err
+	}
+
+	tx.SetPubKey(pub)
+	signbyte := tx.GetSignBytes()
+	signature, err := sid.Sign(signbyte, privateKey)
+	tx.SetSignature(signature)
+
+	return tx.Bytes(), nil
+}
+
+func SignWithdrawValidatorCommissionTx(from, validatorAddress string, gas, nonce uint64, priv string) ([]byte, error) {
+	privateKey, err := hex.DecodeString(priv)
+	if err != nil {
+		return nil, err
+	}
+	accountAddr := sdk.HexToAddress(from)
+	valAddr := sdk.HexToAddress(validatorAddress)
+
+	tx := types.NewWithdrawValidatorCommissionTx(accountAddr, valAddr, gas, nonce)
+	sid := cryptosuit.NewFabSignIdentity()
+	pub, err  := sid.GetPubKey(privateKey)
+	if err != nil {
+		return nil, err
+	}
+
+	tx.SetPubKey(pub)
+	signbyte := tx.GetSignBytes()
+	signature, err := sid.Sign(signbyte, privateKey)
+	tx.SetSignature(signature)
+
+	return tx.Bytes(), nil
+}

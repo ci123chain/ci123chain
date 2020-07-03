@@ -15,4 +15,8 @@ func init()  {
 
 func RegisterCodec(cdc *codec.Codec)  {
 
+	cdc.RegisterConcrete(&SetWithdrawAddressTx{}, "ci123chain/SetWithdrawAddressTx", nil)
+	cdc.RegisterConcrete(&WithdrawDelegatorRewardTx{}, "ci123chain/WithdrawDelegatorRewardTx", nil)
+	cdc.RegisterConcrete(&WithdrawValidatorCommissionTx{}, "ci123chain/WithdrawValidatorCommissionTx", nil)
+	cdc.RegisterConcrete(&FundCommunityPoolTx{}, "ci123chain/FundCommunityPoolTx", nil)
 }

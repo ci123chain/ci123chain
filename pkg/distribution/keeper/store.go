@@ -393,3 +393,105 @@ func (k DistrKeeper) DeleteValidatorSlashEvents(ctx sdk.Context, val sdk.AccAddr
 		store.Delete(iter.Key())
 	}
 }
+
+// FundCommunityPool allows an account to directly fund the community fund pool.
+// The amount is first added to the distribution module account and then directly
+// added to the pool. An error is returned if the amount cannot be sent to the
+// module account.
+func (k DistrKeeper) FundCommunityPool(ctx sdk.Context, amount sdk.Coin, sender sdk.AccAddress) error {
+
+	if err := k.SupplyKeeper.SendCoinsFromAccountToModule(ctx, sender, types.ModuleName, amount); err != nil {
+		return err
+	}
+	feePool := k.GetFeePool(ctx)
+	feePool.CommunityPool = feePool.CommunityPool.Add(sdk.NewDecCoinFromCoin(amount))
+	k.SetFeePool(ctx, feePool)
+	return nil
+}
+
+// withdraw validator commission
+func (k DistrKeeper) WithdrawValidatorCommission(ctx sdk.Context, valAddr sdk.AccAddress) (sdk.Coin, error) {
+	// fetch validator accumulated commission
+	accumCommission := k.GetValidatorAccumulatedCommission(ctx, valAddr)
+	if accumCommission.Commission.IsZero() {
+		return sdk.NewEmptyCoin(), types.ErrNoValidatorCommission(types.DefaultCodespace)
+	}
+
+	commission, remainder := accumCommission.Commission.TruncateDecimal()
+	k.SetValidatorAccumulatedCommission(ctx, valAddr, types.ValidatorAccumulatedCommission{Commission: remainder}) // leave remainder to withdraw later
+
+	// update outstanding
+	outstanding := k.GetValidatorOutstandingRewards(ctx, valAddr).Rewards
+	k.SetValidatorOutstandingRewards(ctx, valAddr, types.ValidatorOutstandingRewards{Rewards: outstanding.Sub(sdk.NewDecCoinFromCoin(commission))})
+
+	if !commission.IsZero() {
+		accAddr := valAddr
+		withdrawAddr := k.GetDelegatorWithdrawAddr(ctx, accAddr)
+		err := k.SupplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, withdrawAddr, commission)
+		if err != nil {
+			return sdk.NewEmptyCoin(), err
+		}
+	}
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeWithdrawCommission,
+			sdk.NewAttribute(sdk.AttributeKeyAmount, commission.String()),
+		),
+	)
+
+	return commission, nil
+}
+
+
+// withdraw rewards from a delegation
+func (k DistrKeeper) WithdrawDelegationRewards(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.AccAddress) (sdk.Coin, error) {
+	val := k.StakingKeeper.Validator(ctx, valAddr)
+	if val == nil {
+		return sdk.NewEmptyCoin(), types.ErrNoValidatorDistInfo(types.DefaultCodespace)
+	}
+
+	del := k.StakingKeeper.Delegation(ctx, delAddr, valAddr)
+	if del == nil {
+		return sdk.NewEmptyCoin(), types.ErrEmptyDelegationDistInfo(types.DefaultCodespace)
+	}
+
+	// withdraw rewards
+	rewards, err := k.withdrawDelegationRewards(ctx, val, del)
+	if err != nil {
+		return sdk.NewEmptyCoin(), err
+	}
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeWithdrawRewards,
+			sdk.NewAttribute(sdk.AttributeKeyAmount, rewards.String()),
+			sdk.NewAttribute(types.AttributeKeyValidator, valAddr.String()),
+		),
+	)
+
+	// reinitialize the delegation
+	k.initializeDelegation(ctx, valAddr, delAddr)
+	return rewards, nil
+}
+
+// SetWithdrawAddr sets a new address that will receive the rewards upon withdrawal
+func (k DistrKeeper) SetWithdrawAddr(ctx sdk.Context, delegatorAddr sdk.AccAddress, withdrawAddr sdk.AccAddress) error {
+	/*if k.blacklistedAddrs[withdrawAddr.String()] {
+		return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "%s is blacklisted from receiving external funds", withdrawAddr)
+	}*/
+
+	if !k.GetWithdrawAddrEnabled(ctx) {
+		return types.ErrSetWithdrawAddrDisabled(types.DefaultCodespace)
+	}
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeSetWithdrawAddress,
+			sdk.NewAttribute(types.AttributeKeyWithdrawAddress, withdrawAddr.String()),
+		),
+	)
+
+	k.SetDelegatorWithdrawAddr(ctx, delegatorAddr, withdrawAddr)
+	return nil
+}

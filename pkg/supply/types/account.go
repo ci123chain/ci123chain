@@ -2,6 +2,7 @@ package types
 
 import (
 	"github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/account"
 	types2 "github.com/ci123chain/ci123chain/pkg/account/types"
 	"github.com/ci123chain/ci123chain/pkg/supply/exported"
@@ -38,6 +39,9 @@ func NewModuleAddress(name string) types.AccAddress {
 func NewEmptyModuleAccount(name string, permissions ...string) *ModuleAccount {
 	moduleAddress := NewModuleAddress(name)
 	baseAcc := types2.NewBaseAccountWithAddress(moduleAddress)
+	if name == "bonded_tokens_pool" || name == "not_bonded_tokens_pool" {
+		baseAcc.Coin = sdk.NewCoin(sdk.NewInt(10000))
+	}
 
 	if err := validatePermissions(permissions...); err != nil {
 		panic(err)

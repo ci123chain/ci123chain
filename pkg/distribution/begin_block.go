@@ -23,7 +23,9 @@ func BeginBlock(ctx sdk.Context, req abci.RequestBeginBlock, distr k.DistrKeeper
 
 		feeCollector := distr.SupplyKeeper.GetModuleAccount(ctx, distr.FeeCollectorName)
 		feeCollectedInt := distr.AccountKeeper.GetBalance(ctx, feeCollector.GetAddress())
+		//fmt.Printf("feeCollectedInt = %s\n", feeCollectedInt.String())
 		feeCollected := sdk.NewDecCoinFromCoin(feeCollectedInt)
+		//fmt.Printf("feeCollected = %s\n", feeCollected.String())
 
 		err := distr.SupplyKeeper.SendCoinsFromModuleToModule(ctx, distr.FeeCollectorName, ModuleName, feeCollectedInt)
 		if err != nil {
@@ -43,12 +45,15 @@ func BeginBlock(ctx sdk.Context, req abci.RequestBeginBlock, distr k.DistrKeeper
 		bonuseProposerReward := distr.GetBonusProposerReward(ctx)
 
 		proposerMultiplier := baseProposerReward.Add(bonuseProposerReward.MulTruncate(previousFractionVotes))
+		//fmt.Printf("proposer multiplier = %s\n", proposerMultiplier.String())
 		proposerReward := feeCollected.MulDecTruncate(proposerMultiplier)
 
 		// pay previous proposer
 		remainning := feeCollected
 		//拿到validator
 		proposerAddress := distr.GetPreviousProposerAddr(ctx)
+		//fmt.Printf("proposerAddress = %s\n", sdk.ToAccAddress(proposerAddress).String())
+		//fmt.Printf("proposer reward = %s\n", proposerReward.Amount.String())
 		proposerValidator, found := distr.StakingKeeper.GetValidatorByConsAddr(ctx, sdk.ToAccAddress(proposerAddress))
 		if found {
 			distr.AllocateTokensToValidator(ctx, proposerValidator, proposerReward)
@@ -71,9 +76,14 @@ func BeginBlock(ctx sdk.Context, req abci.RequestBeginBlock, distr k.DistrKeeper
 		for _, vote := range previousVotes {
 			//拿到validator.
 			validator, _ := distr.StakingKeeper.GetValidatorByConsAddr(ctx, sdk.ToAccAddress(vote.Validator.Address))
+			//fmt.Printf("voting validator = %s\n", sdk.ToAccAddress(vote.Validator.Address).String())
 
 			powerFraction := sdk.NewDec(vote.Validator.Power).QuoTruncate(sdk.NewDec(previousTotalPower))
 			reward := feeCollected.MulDecTruncate(voteMultiplier).MulDecTruncate(powerFraction)
+			//fmt.Printf("voteMultiplier = %s\n", voteMultiplier.String())
+			//fmt.Printf("feeCollected = %s\n", feeCollected.String())
+			//fmt.Printf("powerFraction = %s\n", powerFraction.String())
+			//fmt.Printf("validator reward = %s\n", reward.Amount.String())
 			distr.AllocateTokensToValidator(ctx, validator, reward)
 			remainning = remainning.Sub(reward)
 		}
@@ -96,6 +106,7 @@ func BeginBlock(ctx sdk.Context, req abci.RequestBeginBlock, distr k.DistrKeeper
 		}*/
 		// allocate community funding
 		feePool.CommunityPool = feePool.CommunityPool.Add(remainning)
+		//fmt.Printf("fee pool community = %s\n", remainning.Amount.String())
 		distr.SetFeePool(ctx, feePool)
 	}
 	proposerAddr := sdk.AccAddr(req.Header.ProposerAddress)

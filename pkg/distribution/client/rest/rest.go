@@ -18,25 +18,38 @@ func RegisterRoutes(cliCtx context.Context, r *mux.Router) {
 	registerTxRoutes(cliCtx, r)
 }
 
-func checkDelegatorAddressVar(w http.ResponseWriter, r *http.Request) (sdk.AccAddress, bool) {
+func checkDelegatorAddressVar(w http.ResponseWriter, r *http.Request) (string, bool) {
 	address := r.FormValue("delegatorAddress")
 	checkErr := util.CheckStringLength(42, 100, address)
 	if checkErr != nil {
 		rest.WriteErrorRes(w,types.ErrBadAddress(types.DefaultCodespace, checkErr))
-		return sdk.AccAddress{}, false
+		return "", false
 	}
-	return sdk.HexToAddress(address), true
+	return address, true
 }
 
-func checkValidatorAddressVar(w http.ResponseWriter, r *http.Request) (sdk.AccAddress, bool) {
+func checkValidatorAddressVar(w http.ResponseWriter, r *http.Request) (string, bool) {
 	address := r.FormValue("validatorAddress")
 	checkErr := util.CheckStringLength(42, 100, address)
 	if checkErr != nil {
 		rest.WriteErrorRes(w,types.ErrBadAddress(types.DefaultCodespace, checkErr))
-		return sdk.AccAddress{}, false
+		return "", false
 	}
-	return sdk.HexToAddress(address), true
+	return address, true
 }
+
+
+func checkWithdrawAddressVar(w http.ResponseWriter, r *http.Request) (string, bool) {
+	address := r.FormValue("withdrawAddress")
+	checkErr := util.CheckStringLength(42, 100, address)
+	if checkErr != nil {
+		rest.WriteErrorRes(w,types.ErrBadAddress(types.DefaultCodespace, checkErr))
+		return "", false
+	}
+	return address, true
+}
+
+
 
 /*func checkAccountAddressVar(w http.ResponseWriter, r *http.Request) (sdk.AccAddress, bool) {
 	address := r.FormValue("accountAddress")
