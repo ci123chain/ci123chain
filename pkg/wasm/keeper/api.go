@@ -257,45 +257,39 @@ func callContract(context unsafe.Pointer, addrPtr, inputPtr, inputSize int32) in
 }
 
 func destroyContract(context unsafe.Pointer) {
-	fmt.Println("destroy contract")
-	//var instanceContext = wasm.IntoInstanceContext(context)
-	//var memory = instanceContext.Memory().Data()
-	//
-	//var addr Address
-	//copy(addr[:], memory[addrPtr:addrPtr+AddressSize])
-	//
-	//fmt.Printf("destroy contract: %s\n", addr.ToString())
-	//
-	//contractAddr := sdk.ToAccAddress(addr[:])
-	//var wasmer Wasmer
-	//store := ctx.KVStore(keeper.storeKey)
-	//contractBz := store.Get(wasmtypes.GetContractAddressKey(contractAddr))
-	//if contractBz == nil {
-	//	panic(errors.New("get contract address failed"))
-	//}
-	//var contract wasmtypes.ContractInfo
-	//keeper.cdc.MustUnmarshalBinaryBare(contractBz, &contract)
-	//
-	//codeHash, _ := hex.DecodeString(contract.CodeInfo.CodeHash)
-	//store.Delete(wasmtypes.GetContractAddressKey(contractAddr))
-	//store.Delete(wasmtypes.GetCodeKey(codeHash))
-	//
-	//wasmerBz := store.Get(wasmtypes.GetWasmerKey())
-	//if wasmerBz != nil {
-	//	keeper.cdc.MustUnmarshalJSON(wasmerBz, &wasmer)
-	//	if wasmer.LastFileID == 0 {
-	//		panic(errors.New("unexpected wasmer info"))
-	//	}
-	//	keeper.wasmer = wasmer
-	//	err := keeper.wasmer.DeleteCode(codeHash)
-	//	if err != nil {
-	//		panic(err)
-	//	}
-	//	bz := keeper.cdc.MustMarshalJSON(keeper.wasmer)
-	//	store.Set(wasmtypes.GetWasmerKey(), bz)
-	//} else {
-	//	panic(errors.New("no wasmer"))
-	//}
+	fmt.Printf("destroy contract :%s", creator.String())
+
+	contractAddr := creator
+	var wasmer Wasmer
+	store := ctx.KVStore(keeper.storeKey)
+	contractBz := store.Get(wasmtypes.GetContractAddressKey(contractAddr))
+	if contractBz == nil {
+		panic(errors.New("get contract address failed"))
+	}
+	var contract wasmtypes.ContractInfo
+	keeper.cdc.MustUnmarshalBinaryBare(contractBz, &contract)
+
+	codeHash, _ := hex.DecodeString(contract.CodeInfo.CodeHash)
+	store.Delete(wasmtypes.GetContractAddressKey(contractAddr))
+	store.Delete(wasmtypes.GetCodeKey(codeHash))
+
+	wasmerBz := store.Get(wasmtypes.GetWasmerKey())
+	if wasmerBz != nil {
+		keeper.cdc.MustUnmarshalJSON(wasmerBz, &wasmer)
+		if wasmer.LastFileID == 0 {
+			panic(errors.New("unexpected wasmer info"))
+		}
+		keeper.wasmer = wasmer
+		err := keeper.wasmer.DeleteCode(codeHash)
+		if err != nil {
+			panic(err)
+		}
+		bz := keeper.cdc.MustMarshalJSON(keeper.wasmer)
+		store.Set(wasmtypes.GetWasmerKey(), bz)
+	} else {
+		panic(errors.New("no wasmer"))
+	}
+	return
 }
 
 func migrateContract(context unsafe.Pointer, codePtr, codeSize, namePtr, nameSize, verPtr, verSize,
