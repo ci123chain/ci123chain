@@ -42,8 +42,14 @@ func (am AppModuleBasic) RegisterCodec(codec *codec.Codec) {
 }
 
 
-func (am AppModuleBasic) DefaultGenesis(_ []tmtypes.GenesisValidator) json.RawMessage {
-	return ModuleCdc.MustMarshalJSON(GenesisState{})
+func (am AppModuleBasic) DefaultGenesis(_ []tmtypes.GenesisValidator, accAddress []string) json.RawMessage {
+	var genesisValidatorAccounts GenesisState
+	for _, addr := range accAddress {
+		account := acc_types.NewGenesisAccountRaw(types.HexToAddress(addr), types.NewCoin(types.NewInt(1000000)))
+		genesisValidatorAccounts = append(genesisValidatorAccounts, account)
+	}
+	//return ModuleCdc.MustMarshalJSON(GenesisState{})
+	return ModuleCdc.MustMarshalJSON(genesisValidatorAccounts)
 }
 
 func (am AppModuleBasic) Name() string {

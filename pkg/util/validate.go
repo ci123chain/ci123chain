@@ -3,6 +3,10 @@ package util
 import (
 	"encoding/json"
 	"errors"
+	"github.com/ci123chain/ci123chain/pkg/abci/codec"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/client"
+	"net/http"
 	"strconv"
 )
 
@@ -72,4 +76,62 @@ func CheckJsonArgs(str string, param interface{}) (bool, error) {
 		return false, errors.New("error byte")
 	}
 	return true, nil
+}
+
+func CheckFromAddressVar(r *http.Request) (string, bool) {
+	address := r.FormValue("from")
+	checkErr := CheckStringLength(42, 100, address)
+	if checkErr != nil {
+
+		return "", false
+	}
+	return address, true
+}
+
+func CheckAmountVar(r *http.Request) (int64, bool) {
+	amount := r.FormValue("amount")
+	amt, checkErr := CheckInt64(amount)
+	if checkErr != nil {
+		return 0, false
+	}
+	return amt, true
+}
+
+func CheckGasVar(r *http.Request) (uint64, bool) {
+	gas := r.FormValue("gas")
+	Gas, checkErr := CheckUint64(gas)
+	if checkErr != nil {
+		return 0, false
+	}
+	return Gas, true
+}
+
+func CheckNonce(r *http.Request, from sdk.AccAddress, cdc *codec.Codec) (uint64, bool) {
+	nonce := r.FormValue("nonce")
+	var Nonce uint64
+	if nonce == "" {
+		ctx, err := client.NewClientContextFromViper(cdc)
+		if err != nil {
+			return 0, false
+		}
+		Nonce, err = ctx.GetNonceByAddress(from)
+		if err != nil {
+			return 0, false
+		}
+	}else {
+		var checkErr error
+		Nonce, checkErr = CheckUint64(nonce)
+		if checkErr != nil {
+			return 0, false
+		}
+	}
+	return Nonce, true
+}
+
+func CheckPrivateKey(r *http.Request) (string, bool) {
+	privKey := r.FormValue("privateKey")
+	if privKey == "" {
+		return "", false
+	}
+	return privKey, true
 }

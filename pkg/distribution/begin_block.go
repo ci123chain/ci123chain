@@ -80,10 +80,10 @@ func BeginBlock(ctx sdk.Context, req abci.RequestBeginBlock, distr k.DistrKeeper
 
 			powerFraction := sdk.NewDec(vote.Validator.Power).QuoTruncate(sdk.NewDec(previousTotalPower))
 			reward := feeCollected.MulDecTruncate(voteMultiplier).MulDecTruncate(powerFraction)
-			//fmt.Printf("voteMultiplier = %s\n", voteMultiplier.String())
-			//fmt.Printf("feeCollected = %s\n", feeCollected.String())
-			//fmt.Printf("powerFraction = %s\n", powerFraction.String())
-			//fmt.Printf("validator reward = %s\n", reward.Amount.String())
+			/*fmt.Printf("voteMultiplier = %s\n", voteMultiplier.String())
+			fmt.Printf("feeCollected = %s\n", feeCollected.String())
+			fmt.Printf("powerFraction = %s\n", powerFraction.String())
+			fmt.Printf("validator reward = %s\n", reward.Amount.String())*/
 			distr.AllocateTokensToValidator(ctx, validator, reward)
 			remainning = remainning.Sub(reward)
 		}

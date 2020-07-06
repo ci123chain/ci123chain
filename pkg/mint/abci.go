@@ -14,8 +14,8 @@ func BeginBlocker(ctx sdk.Context, k keeper.MinterKeeper) {
 	totalStakingSupply := k.StakingTokenSupply(ctx)
 	bondedRatio := k.BondedRatio(ctx)
 	minter.Inflation = minter.NextInflationRate(params, bondedRatio)
-	//fmt.Printf("bonded ratio = %s\n", bondedRatio.String())
-	//fmt.Printf("minter.Inflation = %s\n", minter.Inflation.String())
+	/*fmt.Printf("bonded ratio = %s\n", bondedRatio.String())
+	fmt.Printf("minter.Inflation = %s\n", minter.Inflation.String())*/
 	minter.AnnualProvisions = minter.NextAnnualProvisions(params, totalStakingSupply)
 	//fmt.Printf("minter.AnnualProvisions = %s\n", minter.AnnualProvisions.String())
 	k.SetMinter(ctx, minter)

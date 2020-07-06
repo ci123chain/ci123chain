@@ -3,7 +3,6 @@ package context
 import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/client/types"
-	"github.com/ci123chain/ci123chain/pkg/transfer"
 	"github.com/tendermint/tendermint/libs/common"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
 )
@@ -13,7 +12,7 @@ func (ctx Context) Query(path string, key common.HexBytes) ([]byte, int64, sdk.E
 	var height int64
 	node, err := ctx.GetNode()
 	if err != nil {
-		return res, height, transfer.ErrQueryTx(types.DefaultCodespace, err.Error())
+		return res, height, types.ErrQueryTx(types.DefaultCodespace, err)
 	}
 
 	opt := rpcclient.ABCIQueryOptions{
@@ -21,12 +20,12 @@ func (ctx Context) Query(path string, key common.HexBytes) ([]byte, int64, sdk.E
 	}
    	result, err := node.ABCIQueryWithOptions(path, key, opt)
 	if err != nil {
-		return res, height, transfer.ErrQueryTx(types.DefaultCodespace, err.Error())
+		return res, height, types.ErrQueryTx(types.DefaultCodespace, err)
 	}
 
 	resp := result.Response
 	if !resp.IsOK() {
-		return res, resp.Height, transfer.ErrQueryTx(types.DefaultCodespace, resp.Log)
+		return res, resp.Height, types.ErrQueryTx(types.DefaultCodespace, err)
 	}
 
 	// todo verify proof

@@ -87,17 +87,17 @@ func NewGenesisState(
 }
 
 // get raw genesis raw message for testing
-func DefaultGenesisState(validators []tmtypes.GenesisValidator) GenesisState {
+func DefaultGenesisState(validators []tmtypes.GenesisValidator, accAddresses []string) GenesisState {
 	var OutstandingRewards []ValidatorOutstandingRewardsRecord
 	var CurrentRewards []ValidatorCurrentRewardsRecord
-	for _, val := range validators {
+	for i, val := range validators {
 		if val.PubKey != nil {
 			addValOutstandingRewards := ValidatorOutstandingRewardsRecord{
-				ValidatorAddress:  sdk.ToAccAddress(val.PubKey.Address()),
+				ValidatorAddress:  sdk.HexToAddress(accAddresses[i]),
 				OutstandingRewards: sdk.NewDecCoin(sdk.DefaultCoinDenom, sdk.NewInt(0)),
 			}
 			currentReward := ValidatorCurrentRewardsRecord{
-				ValidatorAddress:  sdk.ToAccAddress(val.PubKey.Address()),
+				ValidatorAddress:  sdk.HexToAddress(accAddresses[i]),
 				Rewards:ValidatorCurrentRewards{
 					Rewards: sdk.NewDecCoin(sdk.DefaultCoinDenom, sdk.NewInt(0)),
 					Period:  0,

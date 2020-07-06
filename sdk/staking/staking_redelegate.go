@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-func SignRedelegateMsg(from string, amount, gas, nonce uint64, priv string,
+func SignRedelegateMsg(from string, amount int64, gas, nonce uint64, priv string,
 	validatorSrcAddress, validatorDstAddress, delegatorAddress string) ([]byte, error) {
 	//
 	privateKey, err := hex.DecodeString(priv)

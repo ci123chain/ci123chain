@@ -2,8 +2,8 @@ package rest
 
 import (
 	"encoding/hex"
-	"github.com/pkg/errors"
 	"github.com/ci123chain/ci123chain/pkg/util"
+	"github.com/pkg/errors"
 
 	//sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"

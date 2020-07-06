@@ -13,7 +13,7 @@ type FeePool struct {
 
 func InitialFeePool() FeePool {
 	return FeePool{
-		CommunityPool: sdk.NewDecCoin(sdk.DefaultCoinDenom, sdk.NewInt(10)),
+		CommunityPool: sdk.NewDecCoin(sdk.DefaultCoinDenom, sdk.NewInt(0)),
 	}
 }
 

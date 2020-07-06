@@ -47,8 +47,8 @@ func (am AppModuleBasic) RegisterCodec(codec *codec.Codec) {
 	types.RegisterCodec(codec)
 }
 
-func (am AppModuleBasic) DefaultGenesis(validators []tmtypes.GenesisValidator) json.RawMessage {
-	p := types.DefaultGenesisState(validators)
+func (am AppModuleBasic) DefaultGenesis(validators []tmtypes.GenesisValidator, accAddresses []string) json.RawMessage {
+	p := types.DefaultGenesisState(validators, accAddresses)
 	b, err := types.StakingCodec.MarshalJSONIndent(p, "", "")
 	if err != nil{
 		panic(err)

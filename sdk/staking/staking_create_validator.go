@@ -9,7 +9,7 @@ import (
 	cryptoAmino "github.com/tendermint/tendermint/crypto/encoding/amino"
 )
 
-func SignCreateValidatorMSg(from string, amount, gas, nonce uint64, priv string, minSelfDelegation int64,
+func SignCreateValidatorMSg(from string, amount int64, gas, nonce uint64, priv string, minSelfDelegation int64,
 	validatorAddress, delegatorAddress string, rate, maxRate, maxChangeRate int64,
 	moniker, identity, website, securityContact, details string, publicKey string) ([]byte, error) {
 

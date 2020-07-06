@@ -24,7 +24,7 @@ type AppModuleBasic interface {
 	RegisterCodec(codec *codec.Codec)
 
 	// 默认的 genesis 配置
-	DefaultGenesis(validators []tmtypes.GenesisValidator) json.RawMessage
+	DefaultGenesis(validators []tmtypes.GenesisValidator, accAddress []string) json.RawMessage
 }
 
 
@@ -45,11 +45,11 @@ func (bm BasicManager)RegisterCodec(cdc *codec.Codec)  {
 	}
 }
 
-func (bm BasicManager) DefaultGenesis(validators []tmtypes.GenesisValidator) map[string]json.RawMessage {
+func (bm BasicManager) DefaultGenesis(validators []tmtypes.GenesisValidator, accAddresses []string) map[string]json.RawMessage {
 	genesis := make(map[string]json.RawMessage)
 	for _, b := range bm {
-		if b.DefaultGenesis(validators) != nil {
-			genesis[b.Name()] = b.DefaultGenesis(validators)
+		if b.DefaultGenesis(validators, accAddresses) != nil {
+			genesis[b.Name()] = b.DefaultGenesis(validators, accAddresses)
 		}
 	}
 	return genesis
@@ -63,15 +63,19 @@ type AppModule interface {
 
 type AppManager struct {
 	Modules 	map[string]AppModule
+	Orders     []string
 }
 
 func NewManager(modules ...AppModule) *AppManager {
 	moduleMap := make(map[string]AppModule)
+	var orders []string
 	for _, module := range modules {
 		moduleMap[module.Name()] = module
+		orders = append(orders, module.Name())
 	}
 	return &AppManager{
 		Modules: moduleMap,
+		Orders:  orders,
 	}
 }
 
@@ -91,12 +95,20 @@ func (am AppManager) BeginBlocker(ctx types.Context, req abci.RequestBeginBlock)
 		o.BeginBlocker(ctx, req)
 	}
 
-	for _, m := range am.Modules {
+	for _, name := range am.Orders {
+		if name == order.ModuleName {
+			continue
+		}
+		m := am.Modules[name]
+		m.BeginBlocker(ctx, req)
+	}
+
+	/*for _, m := range am.Modules {
 		if m == am.Modules[order.ModuleName] {
 			continue
 		}
 		m.BeginBlocker(ctx, req)
-	}
+	}*/
 	return abci.ResponseBeginBlock{}
 }
 

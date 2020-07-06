@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-func SignUndelegateMsg(from string, amount, gas, nonce uint64, priv string,
+func SignUndelegateMsg(from string, amount int64, gas, nonce uint64, priv string,
 	validatorAddress, delegatorAddress string) ([]byte, error) {
 
 	//

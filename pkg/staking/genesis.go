@@ -7,6 +7,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/staking/keeper"
 	"github.com/ci123chain/ci123chain/pkg/staking/types"
 	"github.com/ci123chain/ci123chain/pkg/supply"
+	"github.com/ci123chain/ci123chain/pkg/supply/exported"
 	abci "github.com/tendermint/tendermint/abci/types"
 )
 
@@ -34,8 +35,6 @@ func InitGenesis(
 	keeper.SetLastTotalPower(ctx, data.LastTotalPower)
 
 	for _, validator := range data.Validators {
-		opAddr := sdk.ToAccAddress(validator.GetConsPubKey().Address())
-		validator.OperatorAddress = opAddr
 		err := keeper.SetValidator(ctx, validator)
 		if err != nil {
 			panic(err)
@@ -94,7 +93,7 @@ func InitGenesis(
 	}
 
 	bondedCoins := sdk.NewCoins(sdk.NewCoin(bondedTokens))
-	notBondedCoins := sdk.NewCoins(sdk.NewCoin(notBondedTokens))
+	//notBondedCoins := sdk.NewCoins(sdk.NewCoin(notBondedTokens))
 
 	// check if the unbonded and bonded pools accounts exists
 	bondedPool := keeper.GetBondedPool(ctx)
@@ -117,12 +116,25 @@ func InitGenesis(
 	}
 
 	if ak.GetAllBalances(ctx, notBondedPool.GetAddress()).IsZero() {
-		if err := ak.SetBalances(ctx, notBondedPool.GetAddress(), notBondedCoins); err != nil {
+		ModuleAcc := ak.GetAccount(ctx, notBondedPool.GetAddress()).(exported.ModuleAccountI)
+		err := ModuleAcc.SetCoin(sdk.NewCoin(notBondedTokens))
+		if err != nil {
 			panic(err)
 		}
 
-		supplyKeeper.SetModuleAccount(ctx, notBondedPool)
+		/*if err := ak.SetBalances(ctx, notBondedPool.GetAddress(), notBondedCoins); err != nil {
+			panic(err)
+		}
+		ak.SetAccount(ctx, notBondedPool)*/
+		//ak.SetAccount(ctx, ModuleAcc)
+		supplyKeeper.SetModuleAccount(ctx, ModuleAcc)
+
+		//supplyKeeper.SetModuleAccount(ctx, notBondedPool)
 	}
+	ModuleAcc := ak.GetAccount(ctx, notBondedPool.GetAddress())
+	oldc := ModuleAcc.GetCoin()
+	fmt.Println(oldc)
+
 
 	// don't need to run Tendermint updates if we exported
 	if data.Exported {

@@ -67,3 +67,7 @@ func ErrNode(codespace sdk.CodespaceType, err error) sdk.Error {
 func ErrGenValidatorKey(codespace sdk.CodespaceType, err error) sdk.Error {
 	return sdk.NewError(codespace, CodeNodeError,"Gen Validator Key Error: %s", err.Error())
 }
+
+func ErrQueryTx(codespace sdk.CodespaceType, err error) sdk.Error {
+	return sdk.NewError(codespace, CodeNodeError,"query rrror: %s", err.Error())
+}

@@ -3,17 +3,17 @@ package app
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ci123chain/ci123chain/pkg/abci"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/app/types"
+	"github.com/ethereum/go-ethereum/common"
 	tmabci "github.com/tendermint/tendermint/abci/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
-func AppGenStateJSON(validators []tmtypes.GenesisValidator) (json.RawMessage, error) {
-	appState := ModuleBasics.DefaultGenesis(validators)
+func AppGenStateJSON(validators []tmtypes.GenesisValidator, privKeys []string) (json.RawMessage, error) {
+	appState := ModuleBasics.DefaultGenesis(validators, privKeys)
 	stateBytes, err := json.Marshal(appState)
 	if err != nil {
 		return nil, abci.ErrInternal("Marshal failed")

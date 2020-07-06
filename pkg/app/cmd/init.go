@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -11,6 +12,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/config"
 	"github.com/ci123chain/ci123chain/pkg/node"
 	"github.com/ci123chain/ci123chain/pkg/validator"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/tendermint/go-amino"
@@ -57,6 +59,12 @@ type InitConfig struct{
 	Overwrite 	bool
 	GenesisTime time.Time
 }
+
+type ValidatorAccount struct {
+	Address     string    `json:"address"`
+	PrivateKey  string    `json:"private_key"`
+}
+
 //
 //func GenTxCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Command {
 //	cmd := &cobra.Command{
@@ -129,19 +137,22 @@ func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Com
 			if initConfig.ChainID == "" {
 				panic(errors.New("chain id can not be empty"))
 			}
-			chainID, nodeID, appMessage, err := InitWithConfig(cdc, appInit, config, initConfig)
+			chainID, nodeID, appMessage, accounts,  err := InitWithConfig(cdc, appInit, config, initConfig)
 			if err != nil {
 				return types.ErrInitWithCfg(types.DefaultCodespace, err)
 			}
+
 			// print out some types information
 			toPrint := struct {
 				ChainID    string          `json:"chain_id"`
 				NodeID     string          `json:"node_id"`
 				AppMessage json.RawMessage `json:"app_message"`
+				ValidatorAccounts []ValidatorAccount `json:"validator_accounts"`
 			}{
 				chainID,
 				nodeID,
 				appMessage,
+				accounts,
 			}
 			out, err := app.MarshalJSONIndent(cdc, toPrint)
 			if err != nil {
@@ -251,7 +262,7 @@ func GetChainID() (string, error){
 }
 */
 func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initConfig InitConfig)(
-	chainID string, nodeID string, appMessage json.RawMessage, err error) {
+	chainID string, nodeID string, appMessage json.RawMessage, accounts []ValidatorAccount, err error) {
 	var validatorKey secp256k1.PrivKeySecp256k1
 	var privStr string
 	nodeKey, err := node.LoadNodeKey(c.NodeKeyFile())
@@ -321,7 +332,22 @@ func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initCo
 	validator := appInit.GetValidator(nodeKey.PubKey(), viper.GetString(FlagName))
 	validators := []tmtypes.GenesisValidator{validator}
 
-	appState, err := appInit.AppGenState(validators)
+	//new a validator account
+	key, err := crypto.GenerateKey()
+	if err != nil {
+		fmt.Println("Error: ", err.Error());
+	}
+
+	address := crypto.PubkeyToAddress(key.PublicKey).Hex()
+	privKey := hex.EncodeToString(key.D.Bytes())
+	accountAddresses := []string{address}
+	account := ValidatorAccount{
+		Address:    address,
+		PrivateKey: privKey,
+	}
+	accounts = []ValidatorAccount{account}
+
+	appState, err := appInit.AppGenState(validators, accountAddresses)
 
 	if err != nil {
 		return

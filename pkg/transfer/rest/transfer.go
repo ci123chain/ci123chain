@@ -1,10 +1,10 @@
 package rest
 
 import (
-	//"encoding/hex"
-	"github.com/pkg/errors"
 	"github.com/ci123chain/ci123chain/pkg/client/helper"
 	"github.com/ci123chain/ci123chain/pkg/util"
+	//"encoding/hex"
+	"github.com/pkg/errors"
 	"strconv"
 
 	///sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
@@ -14,6 +14,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/transaction"
 	"github.com/ci123chain/ci123chain/pkg/transfer/types"
 	"net/http"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 )
 
 
@@ -37,9 +38,9 @@ func SendRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			rest.WriteErrorRes(writer, transaction.ErrSignature(types.DefaultCodespace, errors.New("sign with tx error")))
 			return
 		}
-		isBalanceEnough := CheckBalanceFromParams(cliCtx, request)
+		isBalanceEnough := CheckAccountAndBalanceFromParams(cliCtx, request, writer)
 		if !isBalanceEnough {
-			rest.WriteErrorRes(writer, transaction.ErrAmount(types.DefaultCodespace, errors.New("The balance is not enough to pay the amount")) )
+			//rest.WriteErrorRes(writer, transaction.ErrAmount(types.DefaultCodespace, errors.New("The balance is not enough to pay the amount")) )
 			return
 		}
 		/*res, err := cliCtx.BroadcastSignedData(txByte)
@@ -71,17 +72,23 @@ func SendRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 
 // check balance from tranfer params
 
-func CheckBalanceFromParams(ctx context.Context, r *http.Request) bool {
+func CheckAccountAndBalanceFromParams(ctx context.Context, r *http.Request, w http.ResponseWriter) bool {
 	from := r.FormValue("from")
 	amount := r.FormValue("amount")
 
-	acc, _ := helper.StrToAddress(from)
+	acc, err := helper.StrToAddress(from)
+	if err != nil {
+		rest.WriteErrorRes(w, sdk.ErrInvalidAddress(err.Error()))
+		return false
+	}
 	balance, err := ctx.GetBalanceByAddress(acc)
 	if err != nil {
+		rest.WriteErrorRes(w, sdk.ErrInternal("get balances of from account failed"))
 		return false
 	}
 	amountU, _ := strconv.ParseUint(amount,10,64)
 	if balance < amountU {
+		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace,"The balance is not enough to pay the delegate"))
 		return false
 	}
 	return true
