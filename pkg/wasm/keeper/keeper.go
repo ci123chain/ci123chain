@@ -38,7 +38,7 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, homeDir string, wasmConf
 		AccountKeeper: accountKeeper,
 	}
 	SetAccountKeeper(accountKeeper)
-	SetWasmKeeper(wk)
+	SetWasmKeeper(&wk)
 	return wk
 }
 
@@ -145,7 +145,6 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAdd
 	if existingAcct != nil {
 		return sdk.AccAddress{}, sdk.ErrInternal("Contract account exists")
 	}
-	SetBlockHeader(ctx.BlockHeader())
 	SetInvoker(invoker)
 	SetCreator(contractAddress)
 	var contractAccount exported.Account
@@ -212,7 +211,6 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAdd
 //
 func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, invoker sdk.AccAddress, args json.RawMessage) (sdk.Result, error) {
 	SetGasUsed()
-	SetBlockHeader(ctx.BlockHeader())
 	SetCreator(contractAddress)
 	SetInvoker(invoker)
 	SetCtx(&ctx)
@@ -259,7 +257,6 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, invoker
 
 // query?
 func (k Keeper) Query(ctx sdk.Context, contractAddress sdk.AccAddress, msg json.RawMessage) (types.ContractState, error) {
-	SetBlockHeader(ctx.BlockHeader())
 	SetCreator(contractAddress)
 	SetInvoker(sdk.AccAddress{})
 	SetCtx(&ctx)
@@ -316,7 +313,7 @@ func (k *Keeper) contractInstance(ctx sdk.Context, contractAddress sdk.AccAddres
 	store := ctx.KVStore(k.storeKey)
 	contractBz := store.Get(types.GetContractAddressKey(contractAddress))
 	if contractBz == nil {
-		return types.CodeInfo{}, sdk.ErrInternal("get contract address failed")
+		return types.CodeInfo{}, sdk.ErrInternal(" get contract address failed")
 	}
 	var contract types.ContractInfo
 	k.cdc.MustUnmarshalBinaryBare(contractBz, &contract)

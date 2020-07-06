@@ -11,11 +11,14 @@ package keeper
 // extern void get_invoker(void*, int);
 // extern long long get_time(void*);
 //
-// extern int get_input_length(void*);
-// extern void get_input(void*, int, int);
+// extern int get_input_length(void*, int);
+// extern void get_input(void*, int, int, int);
 // extern void notify_contract(void*, int, int);
 // extern void return_contract(void*, int, int);
 // extern int call_contract(void*, int, int, int);
+// extern void destroy_contract(void*);
+// extern int migrate_contract(void*, int, int, int, int, int, int, int, int, int, int, int, int, int);
+// extern void panic_contract(void*, int, int);
 //
 // extern void addgas(void*, int);
 import "C"
@@ -27,15 +30,27 @@ import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/account"
 	"github.com/ci123chain/ci123chain/pkg/wasm/types"
-	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/wasmerio/go-ext-wasm/wasmer"
 	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
 	"strconv"
+	"unicode/utf8"
 	"unsafe"
 )
+
+var inputData = map[int32][]byte{}
+
+const (
+	InputDataTypeParam          = 0
+	InputDataTypeContractResult = 1
+)
+
+type Param struct {
+	Method string 	`json:"method"`
+	Args   []string	`json:"args"`
+}
 
 //export read_db
 func read_db(context unsafe.Pointer, keyPtr, keySize, valuePtr, valueSize, offset int32) int32 {
@@ -73,13 +88,13 @@ func get_time(context unsafe.Pointer) int64 {
 }
 
 //export get_input_length
-func get_input_length(context unsafe.Pointer) int32 {
-	return getInputLength(context)
+func get_input_length(context unsafe.Pointer, token int32) int32 {
+	return getInputLength(context, token)
 }
 
 //export get_input
-func get_input(context unsafe.Pointer, ptr, size int32) {
-	getInput(context, ptr, size)
+func get_input(context unsafe.Pointer, token, ptr, size int32) {
+	getInput(context, token, ptr, size)
 }
 
 //export notify_contract
@@ -97,10 +112,25 @@ func call_contract(context unsafe.Pointer, addrPtr, paramPtr, paramSize int32) i
 	return callContract(context, addrPtr, paramPtr, paramSize)
 }
 
-var inputData []byte
+//export migrate_contract
+func migrate_contract(context unsafe.Pointer, codePtr, codeSize, namePtr, nameSize, verPtr, verSize,
+	authorPtr, authorSize, emailPtr, emailSize, descPtr, descSize, newAddrPtr int32) int32 {
+	return migrateContract(context, codePtr, codeSize, namePtr, nameSize, verPtr, verSize,
+		authorPtr, authorSize, emailPtr, emailSize, descPtr, descSize, newAddrPtr)
+}
+
+//export destroy_contract
+func destroy_contract(context unsafe.Pointer) {
+	destroyContract(context)
+}
+
+//export panic_contract
+func panic_contract(context unsafe.Pointer, dataPtr, dataSize int32) {
+	panicContract(context, dataPtr, dataSize)
+}
+
 var GasUsed int64
 var GasWanted uint64
-var invokeResult string
 
 func SetGasUsed(){
 	GasUsed = 0
@@ -110,10 +140,6 @@ func SetGasWanted(gaswanted uint64){
 	GasWanted = gaswanted
 }
 
-func ResetResult() {
-	invokeResult = ""
-}
-
 //export addgas
 func addgas(context unsafe.Pointer, gas int32) {
 	GasUsed += int64(gas)
@@ -121,11 +147,6 @@ func addgas(context unsafe.Pointer, gas int32) {
 		panic(sdk.ErrorOutOfGas{Descriptor: "out of gas in location: vm"})
 	}
 	return
-}
-
-var blockHeader abci.Header
-func SetBlockHeader(header abci.Header) {
-	blockHeader = header
 }
 
 var creator sdk.AccAddress
@@ -138,9 +159,19 @@ func SetInvoker(addr sdk.AccAddress) {
 	invoker = addr
 }
 
-var keeper Keeper
-func SetWasmKeeper(wk Keeper) {
+var keeper *Keeper
+func SetWasmKeeper(wk *Keeper) {
 	keeper = wk
+}
+
+var invokeResult string
+func ResetResult() {
+	invokeResult = ""
+}
+
+var callResult []byte
+func ResetCallResult() {
+	callResult = []byte{}
 }
 
 var accountKeeper account.AccountKeeper
@@ -154,7 +185,7 @@ func SetCtx(con *sdk.Context) {
 }
 
 type Wasmer struct {
-	HomeDir      string              `json:"home_dir"`
+	HomeDir      string             `json:"home_dir"`
 	FilePathMap  map[string]string  `json:"file_path_map"`
 	LastFileID   int				`json:"last_file_id"`
 }
@@ -225,19 +256,49 @@ func (w *Wasmer) Call(code []byte, args json.RawMessage) error {
 		fmt.Println(exist)
 		return errors.New("no expected function")
 	}
-	//var param Param
-	//inputByte, _ := args.MarshalJSON()
-	//fmt.Println(args)
-	//err = json.Unmarshal(inputByte, &param)
-	//if err != nil {
-	//	return err
-	//}
-
-	param := Param{
-		Method: "init",
-		Args: []string{"tokenName", "addr1","2200"},
+	var param Param
+	inputByte, _ := args.MarshalJSON()
+	fmt.Println(args)
+	err = json.Unmarshal(inputByte, &param)
+	if err != nil {
+		return err
 	}
-	inputData = param.Serialize()
+
+	input := []interface{}{param.Method}
+	for i := 0; i < len(param.Args); i++ {
+		input = append(input, param.Args[i])
+	}
+
+	inputData[InputDataTypeParam] = serialize(input)
+
+	fmt.Println(inputData)
+	defer func() {
+		if err := recover(); err != nil {
+			fmt.Println(err)
+		}
+	}()
+
+	_, err = invoke()
+	if err != nil {
+		panic(err)
+	}
+	return nil
+}
+
+func (w *Wasmer) IndirectCall(code []byte, input []byte) error {
+	instance , err := getInstance(code)
+	if err != nil {
+		return err
+	}
+	defer instance.Close()
+
+	invoke, exist := instance.Exports["invoke"]
+	if !exist {
+		fmt.Println(exist)
+		return errors.New("no expected function")
+	}
+
+	inputData[InputDataTypeParam] = input
 	fmt.Println(inputData)
 	_, err = invoke()
 	if err != nil {
@@ -265,6 +326,9 @@ func getInstance(code []byte) (*wasmer.Instance, error) {
 	_, _ = imports.Append("return_contract", return_contract, C.return_contract)
 	_, _ = imports.Append("notify_contract", notify_contract, C.notify_contract)
 	_, _ = imports.Append("call_contract", call_contract, C.call_contract)
+	_, _ = imports.Append("destroy_contract", destroy_contract, C.destroy_contract)
+	_, _ = imports.Append("migrate_contract", migrate_contract, C.migrate_contract)
+	_, _ = imports.Append("panic_contract", panic_contract, C.panic_contract)
 
 	_, _ = imports.Append("addgas", addgas, C.addgas)
 	module, err := wasmer.Compile(code)
@@ -304,5 +368,63 @@ func (w *Wasmer) GetWasmCode(hash []byte) ([]byte, error) {
 	}
 	//the file may be not exist.
 	return code, nil
+}
+
+func (w *Wasmer) DeleteCode(hash []byte) error {
+	Hash := fmt.Sprintf("%x", hash)
+	filePath := w.FilePathMap[Hash]
+	_, err := os.Lstat(w.HomeDir + "/" + filePath)
+	if err == nil {
+		err := os.Remove(w.HomeDir + "/" + filePath)
+		if err != nil {
+			return err
+		}
+	}
+	delete(w.FilePathMap, Hash)
+
+	//splits := strings.Split(filePath, ".")
+	//idStr := splits[0]
+	//id, _ := strconv.ParseInt(idStr,10,64)
+	//files, err := ioutil.ReadDir(w.HomeDir)
+	//for index, f := range files {
+	//	if int64(index) >= id  {
+	//		_ = os.Rename(w.HomeDir + "/"  + f.Name(), w.HomeDir + "/" + fmt.Sprintf("%d.wasm", index))
+	//	}
+	//}
+	//w.LastFileID--
+
+	return nil
+}
+
+func serialize(raw []interface{}) (res []byte) {
+	sink := NewSink(res)
+
+	for i := range raw {
+		switch r := raw[i].(type) {
+		case string:
+			//字符串必须是合法的utf8字符串
+			if !utf8.ValidString(r) {
+				panic("invalid utf8 string")
+			}
+			sink.WriteString(r)
+
+		case uint64:
+			sink.WriteU64(r)
+
+		case uint32:
+			sink.WriteU32(r)
+
+		case []byte:
+			sink.WriteBytes(r)
+
+		case Address:
+			sink.WriteAddress(r)
+
+		default:
+			panic("unexpected type")
+		}
+	}
+
+	return sink.Bytes()
 }
 

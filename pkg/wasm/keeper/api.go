@@ -2,76 +2,29 @@ package keeper
 
 import (
 	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/ci123chain/ci123chain/pkg/abci/types"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/client/helper"
-	wasm "github.com/wasmerio/go-ext-wasm/wasmer"
 	wasmtypes "github.com/ci123chain/ci123chain/pkg/wasm/types"
+	wasm "github.com/wasmerio/go-ext-wasm/wasmer"
 	"io/ioutil"
 	"strconv"
-	"time"
-	"unicode/utf8"
 	"unsafe"
 )
-
-type Param struct {
-	Method string   `json:"method"`
-	Args   []string `json:"args"`
-}
-
-func NewParamFromSlice(raw []byte) (Param, error) {
-	var param Param
-
-	sink := NewSink(raw)
-	method, err := sink.ReadString()
-	if err != nil {
-		return param, err
-	}
-	param.Method = method
-
-	size, err := sink.ReadU32()
-	if err != nil {
-		return param, err
-	}
-
-	for i := 0; i < int(size); i++ {
-		arg, err := sink.ReadString()
-		if err != nil {
-			return param, err
-		}
-		param.Args = append(param.Args, arg)
-	}
-
-	return param, nil
-}
-
-func (param Param) Serialize() []byte {
-	// 参数必须是合法的UTF8字符串
-	if !utf8.ValidString(param.Method) {
-		panic("invalid string")
-	}
-	for i := range param.Args {
-		if !utf8.ValidString(param.Args[i]) {
-			panic("invalid string")
-		}
-	}
-
-	sink := NewSink([]byte{})
-	sink.WriteString(param.Method)
-	sink.WriteU32(uint32(len(param.Args)))
-	for i := range param.Args {
-		sink.WriteString(param.Args[i])
-	}
-
-	return sink.Bytes()
-}
 
 const AddressSize = 20
 
 type Address [AddressSize]byte
+
+func NewAddress(raw []byte) (addr Address) {
+	if len(raw) != AddressSize {
+		panic("mismatch size")
+	}
+
+	copy(addr[:], raw)
+	return
+}
 
 func (addr *Address) ToString() string {
 	return hex.EncodeToString(addr[:])
@@ -133,15 +86,15 @@ func NewEventFromSlice(raw []byte) (Event, error) {
 	return event, nil
 }
 
-func getInputLength(context unsafe.Pointer) int32 {
-	return int32(len([]byte(inputData)))
+func getInputLength(_ unsafe.Pointer, token int32) int32 {
+	return int32(len(inputData[token]))
 }
 
-func getInput(context unsafe.Pointer, ptr int32, size int32) {
+func getInput(context unsafe.Pointer, token, ptr int32, size int32) {
 	var instanceContext = wasm.IntoInstanceContext(context)
 	var memory = instanceContext.Memory().Data()
 
-	copy(memory[ptr:ptr+size], inputData)
+	copy(memory[ptr:ptr+size], inputData[token])
 }
 
 func performSend(context unsafe.Pointer, to int32, amount int64) int32 {
@@ -156,26 +109,26 @@ func performSend(context unsafe.Pointer, to int32, amount int64) int32 {
 
 	coinUint, err := strconv.ParseUint(string(amount),10,64)
 	if err != nil {
-		return 1
+		return 0
 	}
 
 	fromAcc := creator
 
 	toAcc, err := helper.StrToAddress(toAddr.ToString())
 	if err != nil {
-		return 1
+		return 0
 	}
-	coin := types.NewUInt64Coin(coinUint)
+	coin := sdk.NewUInt64Coin(coinUint)
 	err = accountKeeper.Transfer(*ctx, fromAcc, toAcc, coin)
 	if err != nil {
-		return 1
+		return 0
 	}
-	return 0
+	return 1
 }
 
 func getCreator(context unsafe.Pointer, CreatorPtr int32) {
 	creatorAddr := Address{} //contractAddress
-	copy(creatorAddr[:], "addr1111111111111111")
+	copy(creatorAddr[:], creator.String())
 
 	var instanceContext = wasm.IntoInstanceContext(context)
 	var memory = instanceContext.Memory().Data()
@@ -184,17 +137,17 @@ func getCreator(context unsafe.Pointer, CreatorPtr int32) {
 }
 
 func getInvoker(context unsafe.Pointer, invokerPtr int32) {
-	creatorAddr := Address{} //contractAddress
-	copy(creatorAddr[:], "addr2222222222222222")
+	invokerAddr := Address{} //contractAddress
+	copy(invokerAddr[:], invoker.String())
 
 	var instanceContext = wasm.IntoInstanceContext(context)
 	var memory = instanceContext.Memory().Data()
 
-	copy(memory[invokerPtr:invokerPtr+AddressSize], creatorAddr[:])
+	copy(memory[invokerPtr:invokerPtr+AddressSize], invokerAddr[:])
 }
 
-func getTime(context unsafe.Pointer) int64 {
-	now := time.Now() //blockHeader.Time
+func getTime(_ unsafe.Pointer) int64 {
+	now := ctx.BlockHeader().Time //blockHeader.Time
 	return now.Unix()
 }
 
@@ -219,6 +172,7 @@ func notifyContract(context unsafe.Pointer, ptr, size int32) {
 }
 
 func returnContract(context unsafe.Pointer, ptr, size int32) {
+	ResetCallResult()
 	var instanceContext = wasm.IntoInstanceContext(context)
 	var memory = instanceContext.Memory().Data()
 
@@ -230,16 +184,14 @@ func returnContract(context unsafe.Pointer, ptr, size int32) {
 		fmt.Println(err)
 		return
 	}
-	length, err := sink.ReadU32()
+	msg, _, err := sink.ReadBytes()
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	msg, _, err := sink.ReadBytes(int(length))
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+
+	callResult = msg
+
 	if ok {
 		invokeResult = fmt.Sprintf("ok msg: %s\n", string(msg))
 	} else {
@@ -247,29 +199,27 @@ func returnContract(context unsafe.Pointer, ptr, size int32) {
 	}
 }
 
-func callContract(context unsafe.Pointer, addrPtr, paramPtr, paramSize int32) int32 {
+func callContract(context unsafe.Pointer, addrPtr, inputPtr, inputSize int32) int32 {
 	var instanceContext = wasm.IntoInstanceContext(context)
 	var memory = instanceContext.Memory().Data()
 
 	var addr Address
 	copy(addr[:], memory[addrPtr: addrPtr + AddressSize])
 
-	param, err := NewParamFromSlice(memory[paramPtr: paramPtr+ paramSize])
-	if err != nil {
-		fmt.Println(err)
-		return 0
-	}
+	input := memory[inputPtr : inputPtr+inputSize]
+
+	fmt.Println("call contract: " + addr.ToString())
+	fmt.Print("call param: ")
+	fmt.Println(input)
 
 	contractAddress := sdk.HexToAddress(addr.ToString())
 	if contractAddress == creator {
-		fmt.Println(errors.New("don't call yourself"))
-		return 0
+		panic(errors.New("don't call yourself"))
 	}
 
 	codeInfo, err := keeper.contractInstance(*ctx, contractAddress)
 	if err != nil {
-		fmt.Println(err)
-		return 0
+		panic(err)
 	}
 	ccstore := ctx.KVStore(keeper.storeKey)
 	var code []byte
@@ -281,8 +231,7 @@ func callContract(context unsafe.Pointer, addrPtr, paramPtr, paramSize int32) in
 		fileName := keeper.wasmer.FilePathMap[fmt.Sprintf("%x",codeInfo.CodeHash)]
 		err = ioutil.WriteFile(keeper.wasmer.HomeDir + "/" + fileName, wc, wasmtypes.ModePerm)
 		if err != nil {
-			fmt.Println(err)
-			return 0
+			panic(err)
 		}
 	}
 	code = wc
@@ -295,15 +244,83 @@ func callContract(context unsafe.Pointer, addrPtr, paramPtr, paramSize int32) in
 	SetStore(prefixStore)
 	SetCreator(contractAddress)
 
-	err = keeper.wasmer.Call(code, param.Serialize())
+	err = keeper.wasmer.IndirectCall(code, input)
 	SetStore(tempStore)
 	SetCreator(tempCreator)
 	if err != nil {
-		fmt.Println(err)
-		return 0
+		panic(err)
 	}
-	
-	return 1
+
+	token := int32(InputDataTypeContractResult)
+	inputData[token] = callResult
+	return token
+}
+
+func destroyContract(context unsafe.Pointer) {
+	fmt.Println("destroy contract")
+	//var instanceContext = wasm.IntoInstanceContext(context)
+	//var memory = instanceContext.Memory().Data()
+	//
+	//var addr Address
+	//copy(addr[:], memory[addrPtr:addrPtr+AddressSize])
+	//
+	//fmt.Printf("destroy contract: %s\n", addr.ToString())
+	//
+	//contractAddr := sdk.ToAccAddress(addr[:])
+	//var wasmer Wasmer
+	//store := ctx.KVStore(keeper.storeKey)
+	//contractBz := store.Get(wasmtypes.GetContractAddressKey(contractAddr))
+	//if contractBz == nil {
+	//	panic(errors.New("get contract address failed"))
+	//}
+	//var contract wasmtypes.ContractInfo
+	//keeper.cdc.MustUnmarshalBinaryBare(contractBz, &contract)
+	//
+	//codeHash, _ := hex.DecodeString(contract.CodeInfo.CodeHash)
+	//store.Delete(wasmtypes.GetContractAddressKey(contractAddr))
+	//store.Delete(wasmtypes.GetCodeKey(codeHash))
+	//
+	//wasmerBz := store.Get(wasmtypes.GetWasmerKey())
+	//if wasmerBz != nil {
+	//	keeper.cdc.MustUnmarshalJSON(wasmerBz, &wasmer)
+	//	if wasmer.LastFileID == 0 {
+	//		panic(errors.New("unexpected wasmer info"))
+	//	}
+	//	keeper.wasmer = wasmer
+	//	err := keeper.wasmer.DeleteCode(codeHash)
+	//	if err != nil {
+	//		panic(err)
+	//	}
+	//	bz := keeper.cdc.MustMarshalJSON(keeper.wasmer)
+	//	store.Set(wasmtypes.GetWasmerKey(), bz)
+	//} else {
+	//	panic(errors.New("no wasmer"))
+	//}
+}
+
+func migrateContract(context unsafe.Pointer, codePtr, codeSize, namePtr, nameSize, verPtr, verSize,
+	authorPtr, authorSize, emailPtr, emailSize, descPtr, descSize, newAddrPtr int32) int32 {
+	var instanceContext = wasm.IntoInstanceContext(context)
+	var memory = instanceContext.Memory().Data()
+
+	var code, name, version, author, email, desc = memory[codePtr : codePtr+codeSize],
+		memory[namePtr : namePtr+nameSize],
+		memory[verPtr : verPtr+verSize],
+		memory[authorPtr : authorPtr+authorSize],
+		memory[emailPtr : emailPtr+emailSize],
+		memory[descPtr : descPtr+descSize]
+
+	fmt.Printf("code len: %d\n", len(code))
+	fmt.Printf("name: %s\n", string(name)) //实际需要判断utf8, 下同
+	fmt.Printf("version: %s\n", string(version))
+	fmt.Printf("author: %s\n", string(author))
+	fmt.Printf("email: %s\n", string(email))
+	fmt.Printf("desc: %s\n", string(desc))
+
+	var addr = memory[newAddrPtr : newAddrPtr+AddressSize]
+	copy(addr, "contract000000000002")
+
+	return 1 // bool
 }
 
 func toString(a interface{}) string {
@@ -329,4 +346,13 @@ func toString(a interface{}) string {
 		return v
 	}
 	return ""
+}
+
+func panicContract(context unsafe.Pointer, dataPtr, dataSize int32) {
+	var instanceContext = wasm.IntoInstanceContext(context)
+	var memory = instanceContext.Memory().Data()
+
+	data := memory[dataPtr: dataPtr + dataSize]
+	fmt.Printf("panic: %s\n", string(data))
+	panic(string(data))
 }

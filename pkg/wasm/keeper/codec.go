@@ -17,12 +17,33 @@ func NewSink(raw []byte) Sink {
 	}
 }
 
+func (sink Sink) WriteU32(i uint32) {
+	sink.writeLittleEndian(i)
+}
+
+func (sink Sink) WriteU64(i uint64) {
+	sink.writeLittleEndian(i)
+}
+
 func (sink Sink) WriteString(s string) {
 	sink.WriteU32(uint32(len(s)))
 	sink.buf.WriteString(s)
 }
 
-func (sink Sink) WriteU32(i uint32) {
+func (sink Sink) WriteBytes(b []byte) {
+	sink.WriteU32(uint32(len(b)))
+	sink.writeRawBytes(b)
+}
+
+func (sink Sink) WriteAddress(addr Address) {
+	sink.writeRawBytes(addr[:])
+}
+
+func (sink Sink) writeRawBytes(b []byte) {
+	sink.buf.Write(b)
+}
+
+func (sink Sink) writeLittleEndian(i interface{}) {
 	_ = binary.Write(sink.buf, binary.LittleEndian, i)
 }
 
@@ -55,22 +76,25 @@ func (sink Sink) ReadI64() (result int64, err error) {
 	return
 }
 
-func (sink Sink) ReadBytes(size int) ([]byte, int, error) {
-	result := make([]byte, size)
-	n, err := sink.buf.Read(result)
-	return result, n, err
+func (sink Sink) ReadBytes() ([]byte, int, error) {
+	size, err := sink.ReadU32()
+	if err != nil {
+		return nil, 0, err
+	}
+	return sink.nextBytes(int(size))
 }
 
 func (sink Sink) ReadString() (string, error) {
-	size, err := sink.ReadU32()
-	if err != nil {
-		return "", err
-	}
-
-	b, _, err := sink.ReadBytes(int(size))
+	b, _, err := sink.ReadBytes()
 	if err == nil && !utf8.Valid(b) {
 		return "", errors.New("invalid utf8 string")
 	}
 
 	return string(b), err
+}
+
+func (sink Sink) nextBytes(size int) ([]byte, int, error) {
+	result := make([]byte, size)
+	n, err := sink.buf.Read(result)
+	return result, n, err
 }
