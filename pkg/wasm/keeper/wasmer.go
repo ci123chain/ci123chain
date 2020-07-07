@@ -24,7 +24,6 @@ package keeper
 import "C"
 import (
 	"crypto/md5"
-	"encoding/json"
 	"errors"
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
@@ -164,10 +163,10 @@ func SetWasmKeeper(wk *Keeper) {
 	keeper = wk
 }
 
-var invokeResult string
-func ResetResult() {
-	invokeResult = ""
-}
+//var invokeResult string
+//func ResetResult() {
+//	invokeResult = ""
+//}
 
 var callResult []byte
 func ResetCallResult() {
@@ -244,67 +243,47 @@ func (w *Wasmer) Create(code []byte) (Wasmer,[]byte, error) {
 	return newWasmer,codeHash, nil
 }
 
-func (w *Wasmer) Call(code []byte, args json.RawMessage) error {
+func (w *Wasmer) Call(code []byte, input []byte) (res []byte, err error) {
 	instance , err := getInstance(code)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer instance.Close()
 
 	invoke, exist := instance.Exports["invoke"]
 	if !exist {
 		fmt.Println(exist)
-		return errors.New("no expected function")
-	}
-	var param Param
-	inputByte, _ := args.MarshalJSON()
-	fmt.Println(args)
-	err = json.Unmarshal(inputByte, &param)
-	if err != nil {
-		return err
-	}
-
-	input := []interface{}{param.Method}
-	for i := 0; i < len(param.Args); i++ {
-		input = append(input, param.Args[i])
-	}
-
-	inputData[InputDataTypeParam] = serialize(input)
-
-	fmt.Println(inputData)
-	defer func() {
-		if err := recover(); err != nil {
-			fmt.Println(err)
-		}
-	}()
-
-	_, err = invoke()
-	if err != nil {
-		panic(err)
-	}
-	return nil
-}
-
-func (w *Wasmer) IndirectCall(code []byte, input []byte) error {
-	instance , err := getInstance(code)
-	if err != nil {
-		return err
-	}
-	defer instance.Close()
-
-	invoke, exist := instance.Exports["invoke"]
-	if !exist {
-		fmt.Println(exist)
-		return errors.New("no expected function")
+		return nil, errors.New("no expected function")
 	}
 
 	inputData[InputDataTypeParam] = input
 	fmt.Println(inputData)
-	_, err = invoke()
+	defer func() {
+		if r := recover(); r != nil{
+			switch x := r.(type) {
+			case string:
+				err = errors.New(x)
+				res = nil
+			case error:
+				err = x
+				res = nil
+			case sdk.ErrorOutOfGas:
+				panic(x)
+			case VMRes:
+				res = x.res
+				err = nil
+			default:
+				err = errors.New("")
+				res = nil
+			}
+		}
+	}()
+
+		_, err = invoke()
 	if err != nil {
-		return err
+		panic(err)
 	}
-	return nil
+	return res, nil
 }
 
 func getInstance(code []byte) (*wasmer.Instance, error) {
@@ -396,7 +375,7 @@ func (w *Wasmer) DeleteCode(hash []byte) error {
 	return nil
 }
 
-func serialize(raw []interface{}) (res []byte) {
+func Serialize(raw []interface{}) (res []byte) {
 	sink := NewSink(res)
 
 	for i := range raw {
@@ -428,3 +407,6 @@ func serialize(raw []interface{}) (res []byte) {
 	return sink.Bytes()
 }
 
+type VMRes struct {
+	res []byte
+}

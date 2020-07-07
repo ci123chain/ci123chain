@@ -157,7 +157,7 @@ func notifyContract(context unsafe.Pointer, ptr, size int32) {
 
 	event, err := NewEventFromSlice(memory[ptr : ptr+size])
 	if err != nil {
-		fmt.Println(err)
+		panic(err)
 	}
 
 	attrs := []sdk.Attribute{}
@@ -179,24 +179,16 @@ func returnContract(context unsafe.Pointer, ptr, size int32) {
 	result := memory[ptr : ptr+size]
 
 	sink := NewSink(result)
-	ok, err := sink.ReadBool()
+	_, err := sink.ReadBool()
 	if err != nil {
-		fmt.Println(err)
-		return
+		panic(err)
 	}
 	msg, _, err := sink.ReadBytes()
 	if err != nil {
-		fmt.Println(err)
-		return
+		panic(err)
 	}
 
-	callResult = msg
-
-	if ok {
-		invokeResult = fmt.Sprintf("ok msg: %s\n", string(msg))
-	} else {
-		invokeResult = fmt.Sprintf("error msg: %s\n", string(msg))
-	}
+	panic(VMRes{res: msg})
 }
 
 func callContract(context unsafe.Pointer, addrPtr, inputPtr, inputSize int32) int32 {
@@ -244,7 +236,7 @@ func callContract(context unsafe.Pointer, addrPtr, inputPtr, inputSize int32) in
 	SetStore(prefixStore)
 	SetCreator(contractAddress)
 
-	err = keeper.wasmer.IndirectCall(code, input)
+	res, err := keeper.wasmer.Call(code, input)
 	SetStore(tempStore)
 	SetCreator(tempCreator)
 	if err != nil {
@@ -252,7 +244,7 @@ func callContract(context unsafe.Pointer, addrPtr, inputPtr, inputSize int32) in
 	}
 
 	token := int32(InputDataTypeContractResult)
-	inputData[token] = callResult
+	inputData[token] = res
 	return token
 }
 
