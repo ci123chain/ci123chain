@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"encoding/hex"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/wasm/types"
 	"github.com/wasmerio/go-ext-wasm/wasmer"
@@ -33,4 +34,54 @@ func TestCheckWasmFile(t *testing.T) {
 		fmt.Println("valid wasm file")
 		return
 	}
+}
+
+func TestPanic(t *testing.T) {
+	res := testPanic()
+	fmt.Printf("ressss:%s\n",res)
+}
+
+func testPanic() (res string){
+	res = "ee"
+	ch := make(chan string)
+	defer func() {
+		if err := recover(); err != nil {
+			ch <- "e"
+		}
+	}()
+
+	go func() {
+		select {
+		case data := <- ch:
+			fmt.Println(data)
+			res = data
+			break
+		}
+	}()
+	panik()
+	return "eee"
+}
+
+func panik() {
+	panic("b")
+}
+
+func TestAscii(t *testing.T) {
+	var c rune = 'a'
+	i1 := int(c)
+	fmt.Println(c)
+	fmt.Println(i1)
+	fmt.Println(string(c+1))
+}
+
+func TestHex(t *testing.T) {
+	x, _ := hex.DecodeString("313233343536")
+	fmt.Println(string(x))
+}
+
+func TestEndKey(t *testing.T) {
+	startKey := []byte("aaaaa")
+	endKey := EndKey(startKey)
+	fmt.Println(hex.EncodeToString(startKey))
+	fmt.Println(hex.EncodeToString(endKey))
 }

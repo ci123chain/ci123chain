@@ -1,10 +1,9 @@
 package store
 
 import (
-	"io"
-
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	dbm "github.com/tendermint/tm-db"
+	"io"
 )
 
 // Wrapper type for dbm.Db with implementation of KVStore
@@ -49,3 +48,18 @@ func (dsa dbStoreAdapter) Parent() KVStore {
 
 // dbm.DB implements KVStore so we can CacheKVStore it.
 var _ KVStore = dbStoreAdapter{}
+
+//func ParentGetDbStoreAdapter(p KVStore, oriKey []byte) (db KVStore, key []byte){
+//	for {
+//		if reflect.TypeOf(p) != reflect.TypeOf(dbStoreAdapter{}) {
+//			p = p.Parent()
+//			if reflect.TypeOf(p) == reflect.TypeOf(prefixStore{}) {
+//				pre := p.(prefixStore).prefix
+//				oriKey = append(pre, oriKey...)
+//			}
+//		} else {
+//			db = p
+//			return
+//		}
+//	}
+//}

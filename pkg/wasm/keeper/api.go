@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
@@ -10,6 +11,8 @@ import (
 	wasm "github.com/wasmerio/go-ext-wasm/wasmer"
 	"io/ioutil"
 	"strconv"
+	"strings"
+	"unicode/utf8"
 	"unsafe"
 )
 
@@ -172,7 +175,6 @@ func notifyContract(context unsafe.Pointer, ptr, size int32) {
 }
 
 func returnContract(context unsafe.Pointer, ptr, size int32) {
-	ResetCallResult()
 	var instanceContext = wasm.IntoInstanceContext(context)
 	var memory = instanceContext.Memory().Data()
 
@@ -252,59 +254,153 @@ func destroyContract(context unsafe.Pointer) {
 	fmt.Printf("destroy contract :%s", creator.String())
 
 	contractAddr := creator
-	var wasmer Wasmer
-	store := ctx.KVStore(keeper.storeKey)
-	contractBz := store.Get(wasmtypes.GetContractAddressKey(contractAddr))
+	ccstore := ctx.KVStore(keeper.storeKey)
+	ccstore.Delete(wasmtypes.GetContractAddressKey(contractAddr))
+	//contractBz := ccstore.Get(wasmtypes.GetContractAddressKey(contractAddr))
+	//if contractBz == nil {
+	//	panic(errors.New("get contract address failed"))
+	//}
+	//var contract wasmtypes.ContractInfo
+	//keeper.cdc.MustUnmarshalBinaryBare(contractBz, &contract)
+	//
+	//codeHash, _ := hex.DecodeString(contract.CodeInfo.CodeHash)
+	//
+	//ccstore.Delete(wasmtypes.GetCodeKey(codeHash))
+
+
+	//var wasmer Wasmer
+	//wasmerBz := ccstore.Get(wasmtypes.GetWasmerKey())
+	//if wasmerBz != nil {
+	//	keeper.cdc.MustUnmarshalJSON(wasmerBz, &wasmer)
+	//	if wasmer.LastFileID == 0 {
+	//		panic(errors.New("unexpected wasmer info"))
+	//	}
+	//	keeper.wasmer = wasmer
+	//	err := keeper.wasmer.DeleteCode(codeHash)
+	//	if err != nil {
+	//		panic(err)
+	//	}
+	//	bz := keeper.cdc.MustMarshalJSON(keeper.wasmer)
+	//	ccstore.Set(wasmtypes.GetWasmerKey(), bz)
+	//} else {
+	//	panic(errors.New("no wasmer"))
+	//}
+	return
+}
+
+func migrateContract(context unsafe.Pointer, codePtr, codeSize, namePtr, nameSize, verPtr, verSize,
+	authorPtr, authorSize, emailPtr, emailSize, descPtr, descSize, initPtr, initSize, newAddrPtr int32) int32 {
+	var instanceContext = wasm.IntoInstanceContext(context)
+	var memory = instanceContext.Memory().Data()
+
+	var code, name, version, author, email, desc, init = memory[codePtr : codePtr+codeSize],
+		memory[namePtr : namePtr+nameSize],
+		memory[verPtr : verPtr+verSize],
+		memory[authorPtr : authorPtr+authorSize],
+		memory[emailPtr : emailPtr+emailSize],
+		memory[descPtr : descPtr+descSize],
+		memory[initPtr : initPtr+initSize]
+
+	if !utf8.ValidString(string(name)) {
+		panic("invalid utf8 name")
+	}
+	if !utf8.ValidString(string(version)) {
+		panic("invalid utf8 version")
+	}
+	if !utf8.ValidString(string(author)) {
+		panic("invalid utf8 author")
+	}
+	if !utf8.ValidString(string(email)) {
+		panic("invalid utf8 email")
+	}
+	if !utf8.ValidString(string(desc)) {
+		panic("invalid utf8 desc")
+	}
+	if !utf8.ValidString(string(init)) {
+		panic("invalid utf8 desc")
+	}
+
+	newCodeHash, err := hex.DecodeString(string(code))
+	if err != nil {
+		panic(err)
+	}
+
+	oldContractAddr := creator
+	ccstore := ctx.KVStore(keeper.storeKey)
+	contractBz := ccstore.Get(wasmtypes.GetContractAddressKey(oldContractAddr))
 	if contractBz == nil {
 		panic(errors.New("get contract address failed"))
 	}
 	var contract wasmtypes.ContractInfo
 	keeper.cdc.MustUnmarshalBinaryBare(contractBz, &contract)
 
-	codeHash, _ := hex.DecodeString(contract.CodeInfo.CodeHash)
-	store.Delete(wasmtypes.GetContractAddressKey(contractAddr))
-	store.Delete(wasmtypes.GetCodeKey(codeHash))
+	newContractAddr := keeper.generateContractAddress(newCodeHash)
+	existingAcct := keeper.AccountKeeper.GetAccount(*ctx, newContractAddr)
+	if existingAcct != nil {
+		panic("Contract account exists")
+	}
 
-	wasmerBz := store.Get(wasmtypes.GetWasmerKey())
-	if wasmerBz != nil {
-		keeper.cdc.MustUnmarshalJSON(wasmerBz, &wasmer)
-		if wasmer.LastFileID == 0 {
-			panic(errors.New("unexpected wasmer info"))
+	prefix := "s/k:" + keeper.storeKey.Name() + "/"
+	oldKey := wasmtypes.GetContractStorePrefixKey(oldContractAddr)
+
+	startKey := append([]byte(prefix), oldKey...)
+	endKey := EndKey(startKey)
+
+	iter := keeper.cdb.Iterator(startKey, endKey)
+	defer iter.Close()
+
+	prefixStoreKey := wasmtypes.GetContractStorePrefixKey(newContractAddr)
+	prefixStore := NewStore(ctx.KVStore(keeper.storeKey), prefixStoreKey)
+
+	for iter.Valid() {
+		key := string(iter.Key())
+		realKey := strings.Split(key, string(startKey))
+		value := iter.Value()
+		prefixStore.Set([]byte(realKey[1]), value)
+		iter.Next()
+	}
+
+	codeInfo := wasmtypes.NewCodeInfo(strings.ToUpper(hex.EncodeToString(newCodeHash)), invoker)
+	ccstore.Set(wasmtypes.GetCodeKey(newCodeHash), keeper.cdc.MustMarshalBinaryBare(codeInfo))
+
+	var initMsg json.RawMessage
+	var createdAt *wasmtypes.CreatedAt
+	if len(init) != 0 {
+		initMsg = init
+		wc, err := keeper.wasmer.GetWasmCode(newCodeHash)
+		if err != nil {
+			wc = store.Get(newCodeHash)
+			fileName := keeper.wasmer.FilePathMap[fmt.Sprintf("%x", newCodeHash)]
+			err = ioutil.WriteFile(keeper.wasmer.HomeDir + "/" + fileName, wc, wasmtypes.ModePerm)
+			if err != nil {
+				panic(err)
+			}
 		}
-		keeper.wasmer = wasmer
-		err := keeper.wasmer.DeleteCode(codeHash)
+		code = wc
+		input, err := handleArgs(initMsg)
 		if err != nil {
 			panic(err)
 		}
-		bz := keeper.cdc.MustMarshalJSON(keeper.wasmer)
-		store.Set(wasmtypes.GetWasmerKey(), bz)
+		_, err = keeper.wasmer.Call(code, input)
+		if err != nil {
+			panic(err)
+		}
+		createdAt = wasmtypes.NewCreatedAt(*ctx)
 	} else {
-		panic(errors.New("no wasmer"))
+		initMsg = contract.InitMsg
+		createdAt = contract.Created
 	}
-	return
-}
+	contractInfo := wasmtypes.NewContractInfo(newCodeHash, invoker, initMsg, string(name), string(version), string(author), string(email), string(desc), createdAt)
+	ccstore.Set(wasmtypes.GetContractAddressKey(newContractAddr), keeper.cdc.MustMarshalBinaryBare(contractInfo))
 
-func migrateContract(context unsafe.Pointer, codePtr, codeSize, namePtr, nameSize, verPtr, verSize,
-	authorPtr, authorSize, emailPtr, emailSize, descPtr, descSize, newAddrPtr int32) int32 {
-	var instanceContext = wasm.IntoInstanceContext(context)
-	var memory = instanceContext.Memory().Data()
-
-	var code, name, version, author, email, desc = memory[codePtr : codePtr+codeSize],
-		memory[namePtr : namePtr+nameSize],
-		memory[verPtr : verPtr+verSize],
-		memory[authorPtr : authorPtr+authorSize],
-		memory[emailPtr : emailPtr+emailSize],
-		memory[descPtr : descPtr+descSize]
-
-	fmt.Printf("code len: %d\n", len(code))
-	fmt.Printf("name: %s\n", string(name)) //实际需要判断utf8, 下同
-	fmt.Printf("version: %s\n", string(version))
-	fmt.Printf("author: %s\n", string(author))
-	fmt.Printf("email: %s\n", string(email))
-	fmt.Printf("desc: %s\n", string(desc))
+	Account := keeper.AccountKeeper.GetAccount(*ctx, invoker)
+	Account.AddContract(newContractAddr)
+	keeper.AccountKeeper.SetAccount(*ctx, Account)
+	//ccstore.Delete(wasmtypes.GetContractAddressKey(oldContractAddr))
+	//ccstore.Delete(wasmtypes.GetCodeKey(codeHash))
 
 	var addr = memory[newAddrPtr : newAddrPtr+AddressSize]
-	copy(addr, "contract000000000002")
+	copy(addr, newContractAddr.Bytes())
 
 	return 1 // bool
 }
@@ -341,4 +437,13 @@ func panicContract(context unsafe.Pointer, dataPtr, dataSize int32) {
 	data := memory[dataPtr: dataPtr + dataSize]
 	fmt.Printf("panic: %s\n", string(data))
 	panic(string(data))
+}
+
+func EndKey(startKey []byte) (endKey []byte){
+	key := string(startKey)
+	length := len(key)
+	last := []rune(key[length-1:])
+	end := key[:length-1] + string(last[0] + 1)
+	endKey = []byte(end)
+	return
 }

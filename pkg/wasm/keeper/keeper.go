@@ -10,6 +10,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/account"
 	"github.com/ci123chain/ci123chain/pkg/account/exported"
 	"github.com/ci123chain/ci123chain/pkg/wasm/types"
+	dbm "github.com/tendermint/tm-db"
 	"io/ioutil"
 	"os"
 	"path"
@@ -18,13 +19,14 @@ import (
 
 const UINT_MAX uint64 = ^uint64(0)
 type Keeper struct {
-	storeKey    sdk.StoreKey
-	cdc         *codec.Codec
-	wasmer      Wasmer
-	AccountKeeper       account.AccountKeeper
+	storeKey    		sdk.StoreKey
+	cdc         		*codec.Codec
+	wasmer     	 		Wasmer
+	AccountKeeper 		account.AccountKeeper
+	cdb					dbm.DB
 }
 
-func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, homeDir string, wasmConfig types.WasmConfig,  accountKeeper account.AccountKeeper) Keeper {
+func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, homeDir string, wasmConfig types.WasmConfig,  accountKeeper account.AccountKeeper, cdb dbm.DB) Keeper {
 	wasmer, err := NewWasmer(homeDir, wasmConfig)
 	if err != nil {
 		panic(err)
@@ -35,6 +37,7 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, homeDir string, wasmConf
 		cdc:           cdc,
 		wasmer:        wasmer,
 		AccountKeeper: accountKeeper,
+		cdb:		   cdb,
 	}
 	SetAccountKeeper(accountKeeper)
 	SetWasmKeeper(&wk)
@@ -42,7 +45,7 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, homeDir string, wasmConf
 }
 
 //　Create uploads and compiles a WASM contract, returning a short identifier for the contract
-func (k Keeper) Create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte) (codeHash []byte, err error) {
+func (k Keeper) Create(ctx sdk.Context, invokerAddr sdk.AccAddress, wasmCode []byte) (codeHash []byte, err error) {
 	wasmCode, err = uncompress(wasmCode)
 	if err != nil {
 		return nil, err
@@ -110,7 +113,7 @@ func (k Keeper) Create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte)
 		return nil, sdk.ErrInternal("marshal json failed")
 	}
 	store.Set(codeHash, wasmCode)
-	codeInfo := types.NewCodeInfo(strings.ToUpper(hex.EncodeToString(codeHash)), creator)
+	codeInfo := types.NewCodeInfo(strings.ToUpper(hex.EncodeToString(codeHash)), invokerAddr)
 	store.Set(types.GetCodeKey(codeHash), k.cdc.MustMarshalBinaryBare(codeInfo))
 	store.Set(types.GetWasmerKey(), bz)
 
@@ -125,7 +128,7 @@ func (k Keeper) Create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte)
 }
 
 //
-func (k Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAddress, args json.RawMessage, label string) (sdk.AccAddress, error) {
+func (k Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAddress, args json.RawMessage, name, version, author, email, describe string) (sdk.AccAddress, error) {
 	SetGasUsed()
 	SetCtx(&ctx)
 	var codeInfo types.CodeInfo
@@ -187,6 +190,7 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAdd
 	}
 	code = wc
 	//create store
+
 	prefixStoreKey := types.GetContractStorePrefixKey(contractAddress)
 	prefixStore := NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
 	SetStore(prefixStore)
@@ -200,7 +204,7 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAdd
 	}
 	//save the contract info.
 	createdAt := types.NewCreatedAt(ctx)
-	contractInfo := types.NewContractInfo(codeHash, invoker, args, label, createdAt)
+	contractInfo := types.NewContractInfo(codeHash, invoker, args, name, version, author, email, describe, createdAt)
 	store.Set(types.GetContractAddressKey(contractAddress), k.cdc.MustMarshalBinaryBare(contractInfo))
 	//save contractAddress into account
 	Account := k.AccountKeeper.GetAccount(ctx, invoker)
@@ -257,7 +261,6 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, invoker
 	return sdk.Result{
 		Data:   []byte(fmt.Sprintf("%s", string(res))),
 	}, nil
-
 }
 
 // query?

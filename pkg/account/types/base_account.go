@@ -46,6 +46,11 @@ func NewBaseAccountWithAddress(addr types.AccAddress) BaseAccount {
 
 func (acc *BaseAccount) AddContract(contractAddress types.AccAddress) {
 	contractAddrStr := contractAddress.String()
+	for _,v := range acc.ContractList {
+		if v == contractAddrStr {
+			return
+		}
+	}
 	acc.ContractList = append(acc.ContractList, contractAddrStr)
 }
 

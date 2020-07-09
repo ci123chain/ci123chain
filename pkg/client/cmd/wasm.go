@@ -30,7 +30,11 @@ func init() {
 	wasmCmd.Flags().String(helper.FlagArgs, "", "args of call contract")
 	wasmCmd.Flags().String(helper.FlagFile, "", "the path of contract file")
 	wasmCmd.Flags().String(helper.FlagHash, "", "hash of contract code")
-	wasmCmd.Flags().String(helper.FlagLabel, "", "label of contract")
+	wasmCmd.Flags().String(helper.FlagName, "", "name of contract")
+	wasmCmd.Flags().String(helper.FlagVersion, "", "version of contract")
+	wasmCmd.Flags().String(helper.FlagAuthor, "", "author of contract")
+	wasmCmd.Flags().String(helper.FlagEmail, "", "email of contract author")
+	wasmCmd.Flags().String(helper.FlagDescribe, "", "describe of contract")
 	wasmCmd.Flags().String(helper.FlagContractAddress, "", "address of contract account")
 
 	util.CheckRequiredFlag(wasmCmd, helper.FlagGas)
@@ -102,12 +106,13 @@ func initContract() error {
 	if err != nil {
 		return errors.New("decode codeHash fail")
 	}
-	label := viper.GetString(helper.FlagLabel)
-	if label == "" {
-		label = "demo contract"
-	}
+	name := viper.GetString(helper.FlagName)
+	version := viper.GetString(helper.FlagVersion)
+	author := viper.GetString(helper.FlagAuthor)
+	email := viper.GetString(helper.FlagEmail)
+	describe := viper.GetString(helper.FlagDescribe)
 
-	txByte, err := sdk.SignInstantiateContractMsg(from, gas, nonce, Hash, key, from, label, args)
+	txByte, err := sdk.SignInstantiateContractMsg(from, gas, nonce, Hash, key, from, name, version, author, email, describe, args)
 	txid, err := ctx.BroadcastSignedData(txByte)
 	if err != nil {
 		return err

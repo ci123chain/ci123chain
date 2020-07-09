@@ -76,25 +76,33 @@ func (msg *StoreCodeTx) GetFromAddress() sdk.AccAddress {
 
 type InstantiateContractTx struct {
 	transaction.CommonTx
-	Sender       sdk.AccAddress       `json:"sender"`
-	CodeHash      []byte              `json:"code_hash"`
-	Label        string               `json:"label"`
-	Args      json.RawMessage         `json:"args"`
+	Sender      sdk.AccAddress      `json:"sender"`
+	CodeHash    []byte              `json:"code_hash"`
+	Name		string				`json:"name,omitempty"`
+	Version     string				`json:"version,omitempty"`
+	Author      string				`json:"author,omitempty"`
+	Email       string				`json:"email,omitempty"`
+	Describe	string				`json:"describe,omitempty"`
+	Args      	json.RawMessage     `json:"args"`
 }
 
-func NewInstantiateContractTx(from sdk.AccAddress, gas, nonce uint64, codeHash []byte, sender sdk.AccAddress, label string,
+func NewInstantiateContractTx(from sdk.AccAddress, gas, nonce uint64, codeHash []byte, sender sdk.AccAddress, name, version, author, email, describe string,
 	initMsg json.RawMessage) InstantiateContractTx{
 
 		return InstantiateContractTx{
 			CommonTx: transaction.CommonTx{
-				From:  from,
-				Gas:   gas,
-				Nonce: nonce,
+				From:  	from,
+				Gas:   	gas,
+				Nonce: 	nonce,
 			},
-			Sender:    sender,
-			CodeHash:    codeHash,
-			Label:     label,
-			Args:   initMsg,
+			Sender:    	sender,
+			CodeHash:  	codeHash,
+			Name:     	name,
+			Version: 	version,
+			Author: 	author,
+			Email:      email,
+			Describe:   describe,
+			Args:   	initMsg,
 		}
 }
 

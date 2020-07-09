@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/app"
 	"github.com/ci123chain/ci123chain/pkg/client"
@@ -50,21 +51,16 @@ func buildInstantiateContractMsg(r *http.Request) ([]byte, error) {
 	if err != nil {
 		return nil, errors.New("decode codeHash fail")
 	}
-	label := r.FormValue("label")
-	if label == "" {
-		label = "label"
-	}else {
-		err := util.CheckStringLength(1, 100, label)
-		if err != nil {
-			return nil, errors.New("error label")
-		}
+	name, version, author, email, describe, err := adjustInstantiateParams(r)
+	if err != nil {
+		return nil, err
 	}
 	from, gas, nonce, priv, args, err := getArgs(r)
 	if err != nil {
 		return nil, err
 	}
 
-	txByte, err := sdk.SignInstantiateContractMsg(from, gas, nonce, hash, priv, from, label, args)
+	txByte, err := sdk.SignInstantiateContractMsg(from, gas, nonce, hash, priv, from, name, version, author, email, describe, args)
 	if err != nil {
 		return nil, err
 	}
@@ -166,6 +162,43 @@ func getWasmCode(r *http.Request) (wasmcode []byte, err error){
 		wasmcode, err = ioutil.ReadAll(file)
 		if err != nil {
 			return nil, err
+		}
+	}
+	return
+}
+
+func adjustInstantiateParams(r *http.Request) (name, version, author, email, describe string, err error) {
+	name, err = validParam(r, "name")
+	if err != nil {
+		return
+	}
+	version, err = validParam(r, "version")
+	if err != nil {
+		return
+	}
+	author, err = validParam(r, "author")
+	if err != nil {
+		return
+	}
+	email, err = validParam(r, "email")
+	if err != nil {
+		return
+	}
+	describe, err = validParam(r, "describe")
+	if err != nil {
+		return
+	}
+	return
+}
+
+func validParam(r *http.Request, value string) (param string, err error) {
+	param = r.FormValue(value)
+	if param == "" {
+		param = value
+	}else {
+		err := util.CheckStringLength(1, 100, param)
+		if err != nil {
+			return "", errors.New(fmt.Sprintf("error %s", value))
 		}
 	}
 	return

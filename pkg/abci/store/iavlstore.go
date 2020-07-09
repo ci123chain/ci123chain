@@ -20,7 +20,7 @@ const (
 )
 
 // load the iavl store
-func LoadIAVLStore(ldb ,cdb dbm.DB, id CommitID, pruning sdk.PruningStrategy, key sdk.StoreKey) (CommitStore, error) {
+func LoadIAVLStore(ldb, cdb dbm.DB, id CommitID, pruning sdk.PruningStrategy, key sdk.StoreKey) (CommitStore, error) {
 	tree := iavl.NewMutableTree(ldb, defaultIAVLCacheSize)
 	_, err := tree.LoadVersion(id.Version)
 	if err != nil {
@@ -56,7 +56,7 @@ type iavlStore struct {
 	storeEvery int64
 
 	// KVStore save to shared DB
-	store CommitStore
+	parent CommitStore
 }
 
 // CONTRACT: tree should be fully loaded.
@@ -66,7 +66,7 @@ func newIAVLStore(db dbm.DB, tree *iavl.MutableTree, numRecent int64, storeEvery
 		tree:       tree,
 		numRecent:  numRecent,
 		storeEvery: storeEvery,
-		store: 		NewBaseKVStore(dbStoreAdapter{db}, storeEvery, numRecent, key),
+		parent: 	NewBaseKVStore(dbStoreAdapter{db}, storeEvery, numRecent, key),
 	}
 	return st
 }
@@ -74,7 +74,7 @@ func newIAVLStore(db dbm.DB, tree *iavl.MutableTree, numRecent int64, storeEvery
 // Implements Committer.
 func (st *iavlStore) Commit() CommitID {
 	// Save a new version.
-	st.store.Commit()
+	st.parent.Commit()
 	hash, version, err := st.tree.SaveVersion()
 	if err != nil {
 		// TODO: Do we want to extend Commit to allow returning errors?
@@ -143,24 +143,24 @@ func (st *iavlStore) CacheWrapWithTrace(w io.Writer, tc TraceContext) CacheWrap 
 
 // Implements KVStore.
 func (st *iavlStore) Set(key, value []byte) {
-	st.store.(KVStore).Set(key, value)
+	st.parent.(KVStore).Set(key, value)
 	st.tree.Set(key, value)
 }
 
 // Implements KVStore.
 func (st *iavlStore) Get(key []byte) (value []byte) {
-	v := st.store.(KVStore).Get(key)
+	v := st.parent.(KVStore).Get(key)
 	return v
 }
 
 // Implements KVStore.
 func (st *iavlStore) Has(key []byte) (exists bool) {
-	return st.store.(KVStore).Has(key)
+	return st.parent.(KVStore).Has(key)
 }
 
 // Implements KVStore.
 func (st *iavlStore) Delete(key []byte) {
-	st.store.(KVStore).Delete(key)
+	st.parent.(KVStore).Delete(key)
 	st.tree.Remove(key)
 }
 
@@ -181,7 +181,7 @@ func (st *iavlStore) Latest(keys []string) KVStore {
 
 // Implements KVStore
 func (st *iavlStore) Parent() KVStore {
-	return st.store.(KVStore)
+	return st.parent.(KVStore)
 }
 
 // Implements KVStore.

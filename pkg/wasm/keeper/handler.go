@@ -68,7 +68,7 @@ func handleInstantiateContractTx(ctx sdk.Context, k Keeper, msg wasm.Instantiate
 		}
 	}()
 
-	contractAddr, err := k.Instantiate(ctx, msg.CodeHash, msg.Sender, msg.Args, msg.Label)
+	contractAddr, err := k.Instantiate(ctx, msg.CodeHash, msg.Sender, msg.Args, msg.Name, msg.Version, msg.Author, msg.Email, msg.Describe)
 	if err != nil {
 		return wasm.ErrInstantiateFailed(wasm.DefaultCodespace, err).Result()
 	}

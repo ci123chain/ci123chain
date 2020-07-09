@@ -146,7 +146,7 @@ func executeContractHandler(cliCtx context.Context) http.HandlerFunc {
 
 		res, _, _, _:= cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryContractInfo, bz, false)
 		if res == nil {
-			rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "contract does not exist"))
+			rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "contract does not exist or get contract error"))
 			return
 		}
 

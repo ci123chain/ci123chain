@@ -22,7 +22,11 @@ func NewCodeInfo(codeHash string, creator sdk.AccAddress) CodeInfo {
 
 type ContractInfo struct {
 	CodeInfo 	CodeInfo		`json:"code_info"`
-	Label       string          `json:"label"` //标签
+	Name		string			`json:"name"`
+	Version     string			`json:"version"`
+	Author      string			`json:"author"`
+	Email       string			`json:"email"`
+	Describe	string			`json:"describe"`
 	InitMsg     json.RawMessage  `json:"init_msg"`
 	Created     *CreatedAt        `json:"created"`
 }
@@ -56,11 +60,15 @@ func NewCreatedAt(ctx sdk.Context) *CreatedAt {
 	}
 }
 
-func NewContractInfo(CodeHash []byte, creator sdk.AccAddress, initMsg []byte, label string, createdAt *CreatedAt) ContractInfo {
+func NewContractInfo(CodeHash []byte, creator sdk.AccAddress, initMsg []byte, name, version, author, email, describe string, createdAt *CreatedAt) ContractInfo {
 
 	return ContractInfo{
 		CodeInfo:	NewCodeInfo(strings.ToUpper(hex.EncodeToString(CodeHash)),creator),
-		Label:   	label,
+		Name:   	name,
+		Version:	version,
+		Author: 	author,
+		Email:      email,
+		Describe:   describe,
 		InitMsg: 	initMsg,
 		Created: 	createdAt,
 	}

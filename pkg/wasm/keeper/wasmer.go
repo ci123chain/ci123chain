@@ -17,7 +17,7 @@ package keeper
 // extern void return_contract(void*, int, int);
 // extern int call_contract(void*, int, int, int);
 // extern void destroy_contract(void*);
-// extern int migrate_contract(void*, int, int, int, int, int, int, int, int, int, int, int, int, int);
+// extern int migrate_contract(void*, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int);
 // extern void panic_contract(void*, int, int);
 //
 // extern void addgas(void*, int);
@@ -113,9 +113,9 @@ func call_contract(context unsafe.Pointer, addrPtr, paramPtr, paramSize int32) i
 
 //export migrate_contract
 func migrate_contract(context unsafe.Pointer, codePtr, codeSize, namePtr, nameSize, verPtr, verSize,
-	authorPtr, authorSize, emailPtr, emailSize, descPtr, descSize, newAddrPtr int32) int32 {
+	authorPtr, authorSize, emailPtr, emailSize, descPtr, descSize, initPtr, initSize, newAddrPtr int32) int32 {
 	return migrateContract(context, codePtr, codeSize, namePtr, nameSize, verPtr, verSize,
-		authorPtr, authorSize, emailPtr, emailSize, descPtr, descSize, newAddrPtr)
+		authorPtr, authorSize, emailPtr, emailSize, descPtr, descSize, initPtr, initSize, newAddrPtr)
 }
 
 //export destroy_contract
@@ -126,6 +126,11 @@ func destroy_contract(context unsafe.Pointer) {
 //export panic_contract
 func panic_contract(context unsafe.Pointer, dataPtr, dataSize int32) {
 	panicContract(context, dataPtr, dataSize)
+}
+
+
+type VMRes struct {
+	res []byte
 }
 
 var GasUsed int64
@@ -161,16 +166,6 @@ func SetInvoker(addr sdk.AccAddress) {
 var keeper *Keeper
 func SetWasmKeeper(wk *Keeper) {
 	keeper = wk
-}
-
-//var invokeResult string
-//func ResetResult() {
-//	invokeResult = ""
-//}
-
-var callResult []byte
-func ResetCallResult() {
-	callResult = []byte{}
 }
 
 var accountKeeper account.AccountKeeper
@@ -279,7 +274,7 @@ func (w *Wasmer) Call(code []byte, input []byte) (res []byte, err error) {
 		}
 	}()
 
-		_, err = invoke()
+	_, err = invoke()
 	if err != nil {
 		panic(err)
 	}
@@ -405,8 +400,4 @@ func Serialize(raw []interface{}) (res []byte) {
 	}
 
 	return sink.Bytes()
-}
-
-type VMRes struct {
-	res []byte
 }
