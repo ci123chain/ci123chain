@@ -17,12 +17,17 @@ func SignFundCommunityPoolTx(from string, amount int64, gas, nonce uint64, priv 
 	accountAddr := sdk.HexToAddress(from)
 	tx := types.NewMsgFundCommunityPool(accountAddr, Amount, gas, nonce, accountAddr)
 
-	sid := cryptosuit.NewFabSignIdentity()
+	/*sid := cryptosuit.NewFabSignIdentity()
 	pub, err  := sid.GetPubKey(privateKey)
 
 	tx.SetPubKey(pub)
 	signbyte := tx.GetSignBytes()
-	signature, err := sid.Sign(signbyte, privateKey)
+	signature, err := sid.Sign(signbyte, privateKey)*/
+	eth := cryptosuit.NewETHSignIdentity()
+	signature, err := eth.Sign(tx.GetSignBytes(), privateKey)
+	if err != nil {
+		return nil, err
+	}
 	tx.SetSignature(signature)
 
 	return tx.Bytes(), nil
@@ -40,12 +45,17 @@ func SignSetWithdrawAddressTx(from, withdrawAddress string, gas, nonce uint64, p
 
 	tx := types.NewSetWithdrawAddressTx(accountAddr, withdrawAddr, accountAddr, gas, nonce)
 
-	sid := cryptosuit.NewFabSignIdentity()
+	/*sid := cryptosuit.NewFabSignIdentity()
 	pub, err  := sid.GetPubKey(privateKey)
 
 	tx.SetPubKey(pub)
 	signbyte := tx.GetSignBytes()
-	signature, err := sid.Sign(signbyte, privateKey)
+	signature, err := sid.Sign(signbyte, privateKey)*/
+	eth := cryptosuit.NewETHSignIdentity()
+	signature, err := eth.Sign(tx.GetSignBytes(), privateKey)
+	if err != nil {
+		return nil, err
+	}
 	tx.SetSignature(signature)
 
 	return tx.Bytes(), nil
@@ -61,7 +71,7 @@ func SignWithdrawDelegatorRewardTx(from, validatorAddress, delegatorAddress stri
 	delAddr := sdk.HexToAddress(delegatorAddress)
 
 	tx := types.NewWithdrawDelegatorRewardTx(accountAddr, valAddr, delAddr, gas, nonce)
-	sid := cryptosuit.NewFabSignIdentity()
+	/*sid := cryptosuit.NewFabSignIdentity()
 	pub, err  := sid.GetPubKey(privateKey)
 	if err != nil {
 		return nil, err
@@ -69,7 +79,12 @@ func SignWithdrawDelegatorRewardTx(from, validatorAddress, delegatorAddress stri
 
 	tx.SetPubKey(pub)
 	signbyte := tx.GetSignBytes()
-	signature, err := sid.Sign(signbyte, privateKey)
+	signature, err := sid.Sign(signbyte, privateKey)*/
+	eth := cryptosuit.NewETHSignIdentity()
+	signature, err := eth.Sign(tx.GetSignBytes(), privateKey)
+	if err != nil {
+		return nil, err
+	}
 	tx.SetSignature(signature)
 
 	return tx.Bytes(), nil
@@ -84,7 +99,7 @@ func SignWithdrawValidatorCommissionTx(from, validatorAddress string, gas, nonce
 	valAddr := sdk.HexToAddress(validatorAddress)
 
 	tx := types.NewWithdrawValidatorCommissionTx(accountAddr, valAddr, gas, nonce)
-	sid := cryptosuit.NewFabSignIdentity()
+	/*sid := cryptosuit.NewFabSignIdentity()
 	pub, err  := sid.GetPubKey(privateKey)
 	if err != nil {
 		return nil, err
@@ -92,7 +107,12 @@ func SignWithdrawValidatorCommissionTx(from, validatorAddress string, gas, nonce
 
 	tx.SetPubKey(pub)
 	signbyte := tx.GetSignBytes()
-	signature, err := sid.Sign(signbyte, privateKey)
+	signature, err := sid.Sign(signbyte, privateKey)*/
+	eth := cryptosuit.NewETHSignIdentity()
+	signature, err := eth.Sign(tx.GetSignBytes(), privateKey)
+	if err != nil {
+		return nil, err
+	}
 	tx.SetSignature(signature)
 
 	return tx.Bytes(), nil

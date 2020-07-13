@@ -1,8 +1,10 @@
 package types
 
 import (
+	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/transaction"
+	"github.com/ci123chain/ci123chain/pkg/util"
 )
 
 
@@ -52,17 +54,24 @@ func (msg *FundCommunityPoolTx) SetPubKey(pub []byte) {
 func (msg *FundCommunityPoolTx) GetSignBytes() []byte {
 	tmsg := *msg
 	tmsg.Signature = nil
-	signBytes := tmsg.Bytes()
-	return signBytes
+	return util.TxHash(tmsg.Bytes())
 }
 
 // ValidateBasic performs basic MsgFundCommunityPool message validation.
 func (msg *FundCommunityPoolTx) ValidateBasic() sdk.Error {
+
+	err := msg.VerifySignature(msg.GetSignBytes(), false)
+	if err != nil {
+		return ErrInvalidSignature(DefaultCodespace, "invalid signature")
+	}
 	if !msg.Amount.IsValid() {
 		return ErrInvalidCoin(DefaultCodespace, msg.Amount.String())
 	}
 	if msg.Depositor.Empty() {
 		return ErrInvalidAddress(DefaultCodespace, msg.Depositor.String())
+	}
+	if !msg.From.Equal(msg.Depositor) {
+		return ErrInvalidAddress(DefaultCodespace, fmt.Sprintf("expected %s, got %s", msg.From.String(), msg.Depositor.String()))
 	}
 
 	return nil
@@ -95,6 +104,23 @@ func NewSetWithdrawAddressTx(from, withdraw, del sdk.AccAddress, gas, nonce uint
 func (tx *SetWithdrawAddressTx) Route() string { return RouteKey}
 
 func (tx *SetWithdrawAddressTx) ValidateBasic() sdk.Error {
+	err := tx.VerifySignature(tx.GetSignBytes(), false)
+	if err != nil {
+		return ErrInvalidSignature(DefaultCodespace, "invalid signature")
+	}
+	if tx.DelegatorAddress.Empty() {
+		return ErrInvalidAddress(DefaultCodespace, tx.DelegatorAddress.String())
+	}
+	if tx.WithdrawAddress.Empty() {
+		return ErrInvalidAddress(DefaultCodespace, tx.WithdrawAddress.String())
+	}
+	if tx.From.Empty() {
+		return ErrInvalidAddress(DefaultCodespace, tx.From.String())
+	}
+	//keep delegator address and from address the same.
+	if !tx.From.Equal(tx.DelegatorAddress) {
+		return ErrInvalidAddress(DefaultCodespace, fmt.Sprintf("expected %s, got %s", tx.From.String(), tx.DelegatorAddress.String()))
+	}
 	return nil
 }
 
@@ -118,8 +144,7 @@ func (tx *SetWithdrawAddressTx) SetPubKey(pubKey []byte) {
 func (tx *SetWithdrawAddressTx) GetSignBytes() []byte {
 	tmsg := *tx
 	tmsg.Signature = nil
-	signBytes := tmsg.Bytes()
-	return signBytes
+	return util.TxHash(tmsg.Bytes())
 }
 
 func (tx *SetWithdrawAddressTx) GetNonce() uint64 {
@@ -154,6 +179,23 @@ func NewWithdrawDelegatorRewardTx(from, val, del sdk.AccAddress, gas, nonce uint
 func (tx *WithdrawDelegatorRewardTx) Route() string { return RouteKey}
 
 func (tx *WithdrawDelegatorRewardTx) ValidateBasic() sdk.Error {
+	err := tx.VerifySignature(tx.GetSignBytes(), false)
+	if err != nil {
+		return ErrInvalidSignature(DefaultCodespace, "invalid signature")
+	}
+	if tx.ValidatorAddress.Empty() {
+		return ErrInvalidAddress(DefaultCodespace, tx.ValidatorAddress.String())
+	}
+	if tx.DelegatorAddress.Empty() {
+		return ErrInvalidAddress(DefaultCodespace, tx.DelegatorAddress.String())
+	}
+	if tx.From.Empty() {
+		return ErrInvalidAddress(DefaultCodespace, tx.From.String())
+	}
+	if !tx.From.Equal(tx.DelegatorAddress) {
+		return ErrInvalidAddress(DefaultCodespace, fmt.Sprintf("expected %s, got %s", tx.From.String(), tx.DelegatorAddress.String()))
+	}
+
 	return nil
 }
 
@@ -177,8 +219,7 @@ func (tx *WithdrawDelegatorRewardTx) SetPubKey(pubKey []byte) {
 func (tx *WithdrawDelegatorRewardTx) GetSignBytes() []byte {
 	tmsg := *tx
 	tmsg.Signature = nil
-	signBytes := tmsg.Bytes()
-	return signBytes
+	return util.TxHash(tmsg.Bytes())
 }
 
 func (tx *WithdrawDelegatorRewardTx) GetNonce() uint64 {
@@ -211,6 +252,20 @@ func NewWithdrawValidatorCommissionTx(from, val sdk.AccAddress, gas, nonce uint6
 func (tx *WithdrawValidatorCommissionTx) Route() string { return RouteKey}
 
 func (tx *WithdrawValidatorCommissionTx) ValidateBasic() sdk.Error {
+	err := tx.VerifySignature(tx.GetSignBytes(), false)
+	if err != nil {
+		return ErrInvalidSignature(DefaultCodespace, "invalid signature")
+	}
+	if tx.ValidatorAddress.Empty() {
+		return ErrInvalidAddress(DefaultCodespace, tx.ValidatorAddress.String())
+	}
+	if tx.From.Empty() {
+		return ErrInvalidAddress(DefaultCodespace, tx.From.String())
+	}
+	if !tx.From.Equal(tx.ValidatorAddress) {
+		return ErrInvalidAddress(DefaultCodespace, fmt.Sprintf("expected %s, got %s", tx.From.String(), tx.ValidatorAddress.String()))
+	}
+
 	return nil
 }
 
@@ -234,8 +289,7 @@ func (tx *WithdrawValidatorCommissionTx) SetPubKey(pubKey []byte) {
 func (tx *WithdrawValidatorCommissionTx) GetSignBytes() []byte {
 	tmsg := *tx
 	tmsg.Signature = nil
-	signBytes := tmsg.Bytes()
-	return signBytes
+	return util.TxHash(tmsg.Bytes())
 }
 
 func (tx *WithdrawValidatorCommissionTx) GetNonce() uint64 {

@@ -313,6 +313,10 @@ func (k DistrKeeper) DeleteDelegatorWithdrawAddr(ctx sdk.Context, delAddr, withd
 func (k DistrKeeper) GetValidatorHistoricalRewards(ctx sdk.Context, val sdk.AccAddress, period uint64) (rewards types.ValidatorHistoricalRewards) {
 	store := ctx.KVStore(k.storeKey)
 	b := store.Get(types.GetValidatorHistoricalRewardsKey(val, period))
+	if b == nil {
+		rewards = types.NewValidatorHistoricalRewards(sdk.NewEmptyDecCoin(), 1)
+		return
+	}
 	k.cdc.MustUnmarshalBinaryLengthPrefixed(b, &rewards)
 	return
 }

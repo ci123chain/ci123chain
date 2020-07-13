@@ -31,6 +31,7 @@ const (
 	CodeErrNoValidatorCommission            CodeType = 314
 	CodeErrWithdrawAddressInfoMismatch      CodeType = 315
 	CodeErrErrHandleTxFailed                CodeType = 316
+	CodeErrInvalidSignature                 CodeType = 317
 )
 
 
@@ -108,4 +109,8 @@ func ErrWithdrawAddressInfoMismatch(codespace sdk.CodespaceType, expectedAddr, g
 
 func ErrHandleTxFailed(codespace sdk.CodespaceType, err error) sdk.Error {
 	return sdk.NewError(codespace, CodeErrErrHandleTxFailed, err.Error())
+}
+
+func ErrInvalidSignature(codeSpace sdk.CodespaceType, msg string) sdk.Error {
+	return sdk.NewError(codeSpace, CodeErrInvalidSignature, msg)
 }

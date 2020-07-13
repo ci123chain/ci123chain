@@ -10,6 +10,7 @@ const (
 	DefaultCodeSpce = types.DefaultParamspace
 	ModuleName = types.ModuleName
 	StoreKey   = types.ModuleName
+	RouteKey = types.ModuleName
 )
 
 var (
@@ -19,6 +20,7 @@ var (
 
 	ModuleCdc = types.MintCdc
 	NewKeeper = keeper.NewMinterKeeper
+	NewQuerier = keeper.NewQuerier
 )
 
 type (

@@ -3,8 +3,8 @@ package cryptosuit
 import (
 	"bytes"
 	"crypto/ecdsa"
-	"github.com/pkg/errors"
 	"github.com/ci123chain/ci123chain/pkg/client/helper"
+	"github.com/pkg/errors"
 	"github.com/tanhuiya/fabric-crypto/cryptoutil"
 )
 

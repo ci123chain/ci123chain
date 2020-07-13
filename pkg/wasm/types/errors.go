@@ -15,6 +15,7 @@ const (
 	CodeInvalidMsgError     CodeType = 51
 	CodeHandleMsgFailedError  CodeType = 52
 	CodeSetSequenceFailedError CodeType = 53
+	CodeInvalidAddress        CodeType  = 54
 )
 
 func ErrCheckParams(codespace sdk.CodespaceType, keyname string) sdk.Error {
@@ -48,4 +49,8 @@ func ErrQueryFailed(codespce sdk.CodespaceType, err error) sdk.Error {
 
 func ErrSetNewAccountSequence(codespce sdk.CodespaceType, err error) sdk.Error {
 	return sdk.NewError(codespce, CodeSetSequenceFailedError, "set sequence of account failed: %s", err.Error())
+}
+
+func ErrInvalidAddress(codespce sdk.CodespaceType, msg string) sdk.Error {
+	return sdk.NewError(codespce, CodeInvalidAddress, msg)
 }

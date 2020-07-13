@@ -264,11 +264,17 @@ func parseBaseArgs(w http.ResponseWriter, req *http.Request) (string, string, st
 }
 
 func checkAccountExist(ctx context.Context, address... string) error {
-	for _, addr := range address {
+	for i := 0; i < len(address); i++ {
+		_, err := ctx.GetNonceByAddress(sdk.HexToAddress(address[i]))
+		if err != nil {
+			return errors.New(fmt.Sprintf("account of %s does not exist", address[i]))
+		}
+	}
+	/*for _, addr := range address {
 		_, err := ctx.GetNonceByAddress(sdk.HexToAddress(addr))
 		if err != nil {
 			return errors.New(fmt.Sprintf("account of %s does not exist", addr))
 		}
-	}
+	}*/
 	return nil
 }

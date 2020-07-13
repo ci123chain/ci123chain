@@ -17,12 +17,17 @@ func SignStoreCodeMsg(from sdk.AccAddress, gas, nonce uint64, priv string, sende
 	}
 
 	tx := wasm.NewStoreCodeTx(from, gas, nonce, sender, wasmcode)
-	sid := cryptosuit.NewFabSignIdentity()
+	/*sid := cryptosuit.NewFabSignIdentity()
 	pub, err  := sid.GetPubKey(privateKey)
 
 	tx.SetPubKey(pub)
 	signbyte := tx.GetSignBytes()
-	signature, err := sid.Sign(signbyte, privateKey)
+	signature, err := sid.Sign(signbyte, privateKey)*/
+	eth := cryptosuit.NewETHSignIdentity()
+	signature, err := eth.Sign(tx.GetSignBytes(), privateKey)
+	if err != nil {
+		return nil, err
+	}
 	tx.SetSignature(signature)
 	return tx.Bytes(), nil
 }
@@ -36,12 +41,17 @@ func SignInstantiateContractMsg(from sdk.AccAddress, gas, nonce uint64, codeHash
 	}
 
 	tx := wasm.NewInstantiateTx(from, gas, nonce, codeHash, sender, label, initMsg)
-	sid := cryptosuit.NewFabSignIdentity()
+	/*sid := cryptosuit.NewFabSignIdentity()
 	pub, err  := sid.GetPubKey(privateKey)
 
 	tx.SetPubKey(pub)
 	signbyte := tx.GetSignBytes()
-	signature, err := sid.Sign(signbyte, privateKey)
+	signature, err := sid.Sign(signbyte, privateKey)*/
+	eth := cryptosuit.NewETHSignIdentity()
+	signature, err := eth.Sign(tx.GetSignBytes(), privateKey)
+	if err != nil {
+		return nil, err
+	}
 	tx.SetSignature(signature)
 	return tx.Bytes(), nil
 }
@@ -55,12 +65,17 @@ func SignExecuteContractMsg(from sdk.AccAddress, gas, nonce uint64, priv string,
 	}
 
 	tx := wasm.NewExecuteTx(from, gas, nonce, sender, contractAddress, msg)
-	sid := cryptosuit.NewFabSignIdentity()
+	/*sid := cryptosuit.NewFabSignIdentity()
 	pub, err  := sid.GetPubKey(privateKey)
 
 	tx.SetPubKey(pub)
 	signbyte := tx.GetSignBytes()
-	signature, err := sid.Sign(signbyte, privateKey)
+	signature, err := sid.Sign(signbyte, privateKey)*/
+	eth := cryptosuit.NewETHSignIdentity()
+	signature, err := eth.Sign(tx.GetSignBytes(), privateKey)
+	if err != nil {
+		return nil, err
+	}
 	tx.SetSignature(signature)
 	return tx.Bytes(), nil
 }

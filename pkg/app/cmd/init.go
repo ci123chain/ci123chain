@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"crypto/ecdsa"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
@@ -15,6 +16,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/tanhuiya/fabric-crypto/cryptoutil"
 	"github.com/tendermint/go-amino"
 	cfg "github.com/tendermint/tendermint/config"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
@@ -329,17 +331,23 @@ func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initCo
 		return
 	}
 
-	validator := appInit.GetValidator(nodeKey.PubKey(), viper.GetString(FlagName))
-	validators := []tmtypes.GenesisValidator{validator}
+	val := appInit.GetValidator(nodeKey.PubKey(), viper.GetString(FlagName))
+	validators := []tmtypes.GenesisValidator{val}
 
 	//new a validator account
 	key, err := crypto.GenerateKey()
 	if err != nil {
 		fmt.Println("Error: ", err.Error());
 	}
+	if key == nil {
+		panic(errors.New("generate account failed"))
+	}
 
-	address := crypto.PubkeyToAddress(key.PublicKey).Hex()
-	privKey := hex.EncodeToString(key.D.Bytes())
+	address, err := cryptoutil.PublicKeyToAddress(key.Public().(*ecdsa.PublicKey))
+	if err != nil {
+		panic(err)
+	}
+	privKey := hex.EncodeToString(cryptoutil.MarshalPrivateKey(key))
 	accountAddresses := []string{address}
 	account := ValidatorAccount{
 		Address:    address,

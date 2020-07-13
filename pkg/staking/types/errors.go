@@ -11,20 +11,22 @@ const (
 	DefaultCodespace  sdk.CodespaceType = "staking"
 	StakingCodespace = "staking"
 
-	CodeValidatorExisted CodeType = 26
-	CodeGetPubKeyFromAddressFailed CodeType = 27
-	CodeDescriptionOutOfLength CodeType = 28
-	CodeSetCommissionFailed CodeType = 29
-	CodeSetValidatorFailed CodeType = 30
-	CodeDelegateFailed CodeType = 31
-	CodeNoExpectedValidator CodeType = 32
-	CodeUnexpectedDeom CodeType = 33
-	CodeRedelegateFailed CodeType = 34
-	CodeGotTimeFailed CodeType = 35
-	CodeUndelegateFailed CodeType = 36
-	CodeValidateUnbondAmountFailed CodeType = 37
-	CodeNoUnbondingDelegation CodeType = 38
-	CodeCheckParamsError	CodeType = 39
+	CodeValidatorExisted CodeType = 66
+
+	CodeDescriptionOutOfLength CodeType = 68
+	CodeSetCommissionFailed CodeType = 69
+	CodeSetValidatorFailed CodeType = 70
+	CodeDelegateFailed CodeType = 71
+	CodeNoExpectedValidator CodeType = 72
+	CodeUnexpectedDeom CodeType = 73
+	CodeRedelegateFailed CodeType = 74
+	CodeGotTimeFailed CodeType = 75
+	CodeUndelegateFailed CodeType = 76
+	CodeValidateUnbondAmountFailed CodeType = 77
+
+	CodeCheckParamsError	CodeType = 79
+	CodeInvalidAddress      CodeType = 80
+	CodeEmptyPublicKey      CodeType = 81
 )
 
 var (
@@ -163,10 +165,6 @@ func ErrValidatorExisted(codespace sdk.CodespaceType, err error) sdk.Error {
 	return sdk.NewError(codespace, CodeValidatorExisted, "Validator existed: %s", err.Error())
 }
 
-func ErrGetPubKeyFromAddress(codespace sdk.CodespaceType, err error) sdk.Error {
-	return sdk.NewError(codespace, CodeGetPubKeyFromAddressFailed, "Get pubKey from address failed: %s", err.Error())
-}
-
 func ErrDescriptionOutOfLength(codespace sdk.CodespaceType, err error) sdk.Error {
 	return sdk.NewError(codespace, CodeDescriptionOutOfLength, "Description out of length: %s", err.Error())
 }
@@ -203,13 +201,17 @@ func ErrUndelegateFailed(codespace sdk.CodespaceType, err error) sdk.Error {
 }
 
 func ErrValidateUnBondAmountFailed(codespace sdk.CodespaceType, err error) sdk.Error {
-return sdk.NewError(codespace, CodeValidateUnbondAmountFailed, "Validate unbond amount failed: %s", err.Error())
-}
-
-func ErrNoUnbondingDelegation(codespace sdk.CodespaceType, err error) sdk.Error {
-	return sdk.NewError(codespace, CodeNoUnbondingDelegation, "No unbonding delegation: %s", err.Error())
+	return sdk.NewError(codespace, CodeValidateUnbondAmountFailed, "Validate unbond amount failed: %s", err.Error())
 }
 
 func ErrCheckParams(codespace sdk.CodespaceType, str string) sdk.Error {
 	return sdk.NewError(codespace, CodeCheckParamsError, "param invalid: %s", str)
+}
+
+func ErrInvalidAddress(codespace sdk.CodespaceType, msg string) sdk.Error {
+	return sdk.NewError(codespace, CodeInvalidAddress, msg)
+}
+
+func ErrEmptyPublicKey(codespace sdk.CodespaceType, msg string) sdk.Error {
+	return sdk.NewError(codespace, CodeEmptyPublicKey, msg)
 }

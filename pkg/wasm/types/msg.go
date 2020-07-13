@@ -2,8 +2,10 @@ package types
 
 import (
 	"encoding/json"
+	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/transaction"
+	"github.com/ci123chain/ci123chain/pkg/util"
 )
 
 type StoreCodeTx struct {
@@ -32,6 +34,12 @@ func (msg *StoreCodeTx) ValidateBasic() sdk.Error {
 		return err
 	}
 	return msg.VerifySignature(msg.GetSignBytes(), true)*/
+	if err := msg.VerifySignature(msg.GetSignBytes(), true); err != nil {
+		return err
+	}
+	if !msg.From.Equal(msg.Sender) {
+		return ErrInvalidAddress(DefaultCodespace, fmt.Sprintf("expected %s, got %s", msg.From.String(), msg.Sender.String()))
+	}
 
 	return nil
 }
@@ -39,8 +47,7 @@ func (msg *StoreCodeTx) ValidateBasic() sdk.Error {
 func (msg *StoreCodeTx) GetSignBytes() []byte {
 	tmsg := *msg
 	tmsg.Signature = nil
-	signBytes := tmsg.Bytes()
-	return signBytes
+	return util.TxHash(tmsg.Bytes())
 }
 
 func (msg *StoreCodeTx) SetSignature(sig []byte) {}
@@ -105,6 +112,13 @@ func (msg *InstantiateContractTx) ValidateBasic() sdk.Error {
 		return err
 	}
 	return msg.VerifySignature(msg.GetSignBytes(), true)*/
+	if err := msg.VerifySignature(msg.GetSignBytes(), true); err != nil {
+		return err
+	}
+	if !msg.From.Equal(msg.Sender) {
+		return ErrInvalidAddress(DefaultCodespace, fmt.Sprintf("expected %s, got %s", msg.From.String(), msg.Sender.String()))
+	}
+
 
 	return nil
 }
@@ -112,8 +126,7 @@ func (msg *InstantiateContractTx) ValidateBasic() sdk.Error {
 func (msg *InstantiateContractTx) GetSignBytes() []byte {
 	tmsg := *msg
 	tmsg.Signature = nil
-	signBytes := tmsg.Bytes()
-	return signBytes
+	return util.TxHash(tmsg.Bytes())
 }
 
 func (msg *InstantiateContractTx) SetSignature(sig []byte) {
@@ -179,14 +192,19 @@ func (msg *ExecuteContractTx) ValidateBasic() sdk.Error {
 		return err
 	}
 	return msg.VerifySignature(msg.GetSignBytes(), true)*/
+	if err := msg.VerifySignature(msg.GetSignBytes(), true); err != nil {
+		return err
+	}
+	if !msg.From.Equal(msg.Sender) {
+		return ErrInvalidAddress(DefaultCodespace, fmt.Sprintf("expected %s, got %s", msg.From.String(), msg.Sender.String()))
+	}
 	return nil
 }
 
 func (msg *ExecuteContractTx) GetSignBytes() []byte {
 	tmsg := *msg
 	tmsg.Signature = nil
-	signBytes := tmsg.Bytes()
-	return signBytes
+	return util.TxHash(tmsg.Bytes())
 }
 
 func (msg *ExecuteContractTx) SetSignature(sig []byte) {

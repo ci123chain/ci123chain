@@ -90,6 +90,8 @@ func NewGenesisState(
 func DefaultGenesisState(validators []tmtypes.GenesisValidator, accAddresses []string) GenesisState {
 	var OutstandingRewards []ValidatorOutstandingRewardsRecord
 	var CurrentRewards []ValidatorCurrentRewardsRecord
+	//var validatorHistoricalRewardsRecord []ValidatorHistoricalRewardsRecord
+	//var validatorAccumulatedCommisssionRecords []ValidatorAccumulatedCommissionRecord
 	for i, val := range validators {
 		if val.PubKey != nil {
 			addValOutstandingRewards := ValidatorOutstandingRewardsRecord{
@@ -103,8 +105,20 @@ func DefaultGenesisState(validators []tmtypes.GenesisValidator, accAddresses []s
 					Period:  0,
 				},
 			}
+			/*historicalReward := ValidatorHistoricalRewards{CumulativeRewardRatio:sdk.NewEmptyDecCoin(), }
+			historicalRewardRecord := ValidatorHistoricalRewardsRecord{
+				ValidatorAddress: sdk.HexToAddress(accAddresses[i]),
+				Period:           0,
+				Rewards:          historicalReward,
+			}
+			valAccumulatedCommission := ValidatorAccumulatedCommissionRecord{
+				ValidatorAddress: sdk.HexToAddress(accAddresses[i]),
+				Accumulated:      ValidatorAccumulatedCommission{Commission: sdk.NewEmptyDecCoin()},
+			}*/
 			OutstandingRewards = append(OutstandingRewards, addValOutstandingRewards)
 			CurrentRewards = append(CurrentRewards, currentReward)
+			//validatorHistoricalRewardsRecord = append(validatorHistoricalRewardsRecord, historicalRewardRecord)
+			//validatorAccumulatedCommisssionRecords = append(validatorAccumulatedCommisssionRecords, valAccumulatedCommission)
 		}
 	}
 

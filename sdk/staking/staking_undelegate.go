@@ -25,12 +25,17 @@ func SignUndelegateMsg(from string, amount int64, gas, nonce uint64, priv string
 	}
 	tx := staking.NewUndelegateMsg(fromAddr, gas, nonce, delegatorAddr, validatorAddr,amt)
 
-	sid := cryptosuit.NewFabSignIdentity()
+	/*sid := cryptosuit.NewFabSignIdentity()
 	pub, err  := sid.GetPubKey(privateKey)
 
 	tx.SetPubKey(pub)
 	signbyte := tx.GetSignBytes()
-	signature, err := sid.Sign(signbyte, privateKey)
+	signature, err := sid.Sign(signbyte, privateKey)*/
+	eth := cryptosuit.NewETHSignIdentity()
+	signature, err := eth.Sign(tx.GetSignBytes(), privateKey)
+	if err != nil {
+		return nil, err
+	}
 	tx.SetSignature(signature)
 
 	return tx.Bytes(), nil
