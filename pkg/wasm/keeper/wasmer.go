@@ -148,7 +148,7 @@ func SetGasWanted(gaswanted uint64){
 func addgas(context unsafe.Pointer, gas int32) {
 	GasUsed += int64(gas)
 	if(uint64(GasUsed) > GasWanted) {
-		panic(sdk.ErrorOutOfGas{Descriptor: "out of gas in location: vm"})
+		panic(sdk.ErrorOutOfGas{Descriptor: "run vm"})
 	}
 	return
 }
