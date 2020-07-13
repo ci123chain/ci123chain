@@ -19,8 +19,16 @@ func NewDeferHandler( ak account.AccountKeeper) sdk.DeferHandler {
 		var gasused uint64
 		stdTx, _ := tx.(transaction.Transaction)
 		address := stdTx.GetFromAddress()
-		acc := ak.GetAccount(ctx, address)
 		gaswanted := stdTx.GetGas()
+
+		defer func() {
+			if r := recover(); r != nil {
+				res.GasUsed = gaswanted
+				return
+			}
+		}()
+
+		acc := ak.GetAccount(ctx, address)
 		if used != 0 {
 			gasused = used
 		} else {
