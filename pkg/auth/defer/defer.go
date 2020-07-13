@@ -32,6 +32,7 @@ func NewDeferHandler( ak account.AccountKeeper) sdk.DeferHandler {
 		}
 		restfee := sdk.NewUInt64Coin(restgas)
 		res = ante.ReturnFees(acc, restfee, ak, ctx)
+		res.GasUsed = gasused
 		return
 	}
 }

@@ -41,7 +41,7 @@ func (ak AccountKeeper) NewAccount(ctx types.Context, acc exported.Account) expo
 
 func (ak AccountKeeper) SetAccount(ctx types.Context, acc exported.Account) {
 	addr := acc.GetAddress()
-	store := ctx.KVStore(ak.key)
+	store := ctx.KVStoreWithoutGas(ak.key)
 	//bz, err := ak.cdc.MarshalBinaryBare(acc)
 	bz, err := ak.cdc.MarshalBinaryLengthPrefixed(acc)
 	if err != nil {
@@ -51,7 +51,7 @@ func (ak AccountKeeper) SetAccount(ctx types.Context, acc exported.Account) {
 }
 
 func (ak AccountKeeper) GetAccount(ctx types.Context, addr types.AccAddress) exported.Account {
-	store := ctx.KVStore(ak.key)
+	store := ctx.KVStoreWithoutGas(ak.key)
 	bz := store.Get(acc_types.AddressStoreKey(addr))
 	if bz == nil {
 		return nil

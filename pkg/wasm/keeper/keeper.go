@@ -150,7 +150,7 @@ func (k Keeper) Uninstall(ctx sdk.Context, invokerAddr sdk.AccAddress, codeHash 
 			if err != nil {
 				panic(err)
 			}
-			bz := k.cdc.MustMarshalJSON(keeper.wasmer)
+			bz := k.cdc.MustMarshalJSON(k.wasmer)
 			store.Set(types.GetWasmerKey(), bz)
 		} else {
 			panic(errors.New("no wasmer"))

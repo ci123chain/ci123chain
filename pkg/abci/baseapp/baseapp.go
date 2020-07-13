@@ -603,15 +603,13 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 				result = sdk.ErrOutOfGas(log).Result()
 				result.GasUsed = gasWanted
 			default:
-				app.deferHandler(ctx, tx, false, 0)
+				res := app.deferHandler(ctx, tx, false, 0)
 				log := fmt.Sprintf("recovered: %v\nstack:\n%v", r, string(debug.Stack()))
 				result = sdk.ErrInternal(log).Result()
-				result.GasUsed = ctx.GasMeter().GasConsumed()
+				result.GasUsed = res.GasUsed
 			}
-		} else if result.GasUsed != 0{
-			app.deferHandler(ctx, tx, false, result.GasUsed)
 		} else {
-			app.deferHandler(ctx, tx, false, 0)
+			app.deferHandler(ctx, tx, false, result.GasUsed)
 		}
 		result.GasWanted = gasWanted
 		//result.GasUsed = gasUsed

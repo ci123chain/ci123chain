@@ -78,6 +78,12 @@ func (c Context) KVStore(key StoreKey) KVStore {
 }
 
 // KVStore fetches a KVStore from the MultiStore.
+func (c Context) KVStoreWithoutGas(key StoreKey) KVStore {
+	return c.MultiStore().GetKVStore(key)
+	//return c.MultiStore().GetKVStore(key).Prefix([]byte(key.Name() + "//")).Gas(c.GasMeter(), cachedKVGasConfig)
+}
+
+// KVStore fetches a KVStore from the MultiStore.
 func (c Context) LoadLatestVersion() {
 	err := c.MultiStore().(CommitMultiStore).LoadLatestVersion()
 	if err != nil {
