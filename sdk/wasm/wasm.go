@@ -27,6 +27,24 @@ func SignStoreCodeMsg(from sdk.AccAddress, gas, nonce uint64, priv string, sende
 	return tx.Bytes(), nil
 }
 
+func SignUninstallMsg(from sdk.AccAddress, gas, nonce uint64, priv string, sender sdk.AccAddress, codeHash []byte) ([]byte, error) {
+
+	privateKey, err := hex.DecodeString(priv)
+	if err != nil {
+		return nil, err
+	}
+
+	tx := wasm.NewUninstallTx(from, gas, nonce, sender, codeHash)
+	sid := cryptosuit.NewFabSignIdentity()
+	pub, err  := sid.GetPubKey(privateKey)
+
+	tx.SetPubKey(pub)
+	signbyte := tx.GetSignBytes()
+	signature, err := sid.Sign(signbyte, privateKey)
+	tx.SetSignature(signature)
+	return tx.Bytes(), nil
+}
+
 func SignInstantiateContractMsg(from sdk.AccAddress, gas, nonce uint64, codeHash []byte, priv string, sender sdk.AccAddress, name, version, author, email, describe string,
 	initMsg json.RawMessage) ([]byte, error) {
 

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
@@ -44,8 +45,8 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, homeDir string, wasmConf
 	return wk
 }
 
-//　Create uploads and compiles a WASM contract, returning a short identifier for the contract
-func (k Keeper) Create(ctx sdk.Context, invokerAddr sdk.AccAddress, wasmCode []byte) (codeHash []byte, err error) {
+//　Install uploads and compiles a WASM contract, returning a short identifier for the contract
+func (k Keeper) Install(ctx sdk.Context, invokerAddr sdk.AccAddress, wasmCode []byte) (codeHash []byte, err error) {
 	wasmCode, err = uncompress(wasmCode)
 	if err != nil {
 		return nil, err
@@ -127,6 +128,36 @@ func (k Keeper) Create(ctx sdk.Context, invokerAddr sdk.AccAddress, wasmCode []b
 	return codeHash, nil
 }
 
+//　Uninstall remove a WASM contract, returning an error or nil
+func (k Keeper) Uninstall(ctx sdk.Context, invokerAddr sdk.AccAddress, codeHash []byte) error {
+	store := ctx.KVStore(k.storeKey)
+	codeByte := store.Get(codeHash)
+	if codeByte == nil {
+		return errors.New("uninstall failed: error codeHash")
+	}
+
+	store.Delete(types.GetCodeKey(codeHash))
+
+	var wasmer Wasmer
+	wasmerBz := store.Get(types.GetWasmerKey())
+	if wasmerBz != nil {
+		k.cdc.MustUnmarshalJSON(wasmerBz, &wasmer)
+			if wasmer.LastFileID == 0 {
+				panic(errors.New("unexpected wasmer info"))
+			}
+			k.wasmer = wasmer
+			err := k.wasmer.DeleteCode(codeHash)
+			if err != nil {
+				panic(err)
+			}
+			bz := k.cdc.MustMarshalJSON(keeper.wasmer)
+			store.Set(types.GetWasmerKey(), bz)
+		} else {
+			panic(errors.New("no wasmer"))
+	}
+	return nil
+}
+
 //
 func (k Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAddress, args json.RawMessage, name, version, author, email, describe string) (sdk.AccAddress, error) {
 	SetGasUsed()
@@ -194,13 +225,15 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAdd
 	prefixStoreKey := types.GetContractStorePrefixKey(contractAddress)
 	prefixStore := NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
 	SetStore(prefixStore)
-	input, err := handleArgs(args)
-	if err != nil {
-		return sdk.AccAddress{}, err
-	}
-	_, err = k.wasmer.Call(code, input)
-	if err != nil {
-		return sdk.AccAddress{}, err
+	if len(args) != 0 {
+		input, err := handleArgs(args)
+		if err != nil {
+			return sdk.AccAddress{}, err
+		}
+		_, err = k.wasmer.Call(code, input)
+		if err != nil {
+			return sdk.AccAddress{}, err
+		}
 	}
 	//save the contract info.
 	createdAt := types.NewCreatedAt(ctx)

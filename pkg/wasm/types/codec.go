@@ -16,6 +16,7 @@ func init() {
 func RegisterCodec(cdc *codec.Codec) {
 	//
 	cdc.RegisterConcrete(&StoreCodeTx{}, "ci123Chain/StoreCodeTx", nil)
+	cdc.RegisterConcrete(&UninstallCodeTx{}, "ci123Chain/UninstallTx", nil)
 	cdc.RegisterConcrete(&InstantiateContractTx{}, "ci123Chain/InstantiateContractTx", nil)
 	cdc.RegisterConcrete(&ExecuteContractTx{}, "ci123Chain/ExecuteContractTx", nil)
 }

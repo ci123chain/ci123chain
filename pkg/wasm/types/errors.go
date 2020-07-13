@@ -29,6 +29,10 @@ func ErrCreateFailed(codespce sdk.CodespaceType, err error) sdk.Error {
 	return sdk.NewError(codespce, CodeHandleMsgFailedError, "create failed: %s", err.Error())
 }
 
+func ErrUninstallFailed(codespce sdk.CodespaceType, err error) sdk.Error {
+	return sdk.NewError(codespce, CodeHandleMsgFailedError, "uninstall failed: %s", err.Error())
+}
+
 /*func ErrCheckWasmCode(codespce sdk.CodespaceType, err error) sdk.Error {
 	return sdk.NewError(codespce, CodeHandleMsgFailedError, "uncompress code failed", err)
 }*/

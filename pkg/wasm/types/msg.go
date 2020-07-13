@@ -62,11 +62,11 @@ func (msg *StoreCodeTx) Route() string {
 	return RouteKey
 }
 
-func (msg *StoreCodeTx)GetGas() uint64 {
+func (msg *StoreCodeTx) GetGas() uint64 {
 	return msg.Gas
 }
 
-func (msg *StoreCodeTx)GetNonce() uint64 {
+func (msg *StoreCodeTx) GetNonce() uint64 {
 	return msg.Nonce
 }
 
@@ -83,7 +83,7 @@ type InstantiateContractTx struct {
 	Author      string				`json:"author,omitempty"`
 	Email       string				`json:"email,omitempty"`
 	Describe	string				`json:"describe,omitempty"`
-	Args      	json.RawMessage     `json:"args"`
+	Args      	json.RawMessage     `json:"args,omitempty"`
 }
 
 func NewInstantiateContractTx(from sdk.AccAddress, gas, nonce uint64, codeHash []byte, sender sdk.AccAddress, name, version, author, email, describe string,
@@ -227,5 +227,73 @@ func (msg *ExecuteContractTx) GetNonce() uint64 {
 }
 
 func (msg *ExecuteContractTx) GetFromAddress() sdk.AccAddress {
+	return msg.From
+}
+
+type UninstallCodeTx struct {
+	transaction.CommonTx
+	Sender      sdk.AccAddress   `json:"sender"`
+	CodeHash 	[]byte           `json:"code_hash"`
+}
+
+func NewUninstallTx(from sdk.AccAddress, gas, nonce uint64, sender sdk.AccAddress, codeHash []byte) UninstallCodeTx{
+
+	return UninstallCodeTx{
+		CommonTx:     transaction.CommonTx{
+			From:  from,
+			Gas:   gas,
+			Nonce: nonce,
+		},
+		Sender:     sender,
+		CodeHash:	codeHash,
+	}
+}
+
+func (msg *UninstallCodeTx) ValidateBasic() sdk.Error {
+
+	/*if err := msg.CommonTx.ValidateBasic(); err != nil {
+		return err
+	}
+	return msg.VerifySignature(msg.GetSignBytes(), true)*/
+	return nil
+}
+
+func (msg *UninstallCodeTx) GetSignBytes() []byte {
+	tmsg := *msg
+	tmsg.Signature = nil
+	signBytes := tmsg.Bytes()
+	return signBytes
+}
+
+func (msg *UninstallCodeTx) SetSignature(sig []byte) {
+	msg.Signature = sig
+}
+
+func (msg *UninstallCodeTx) Bytes() []byte {
+	bytes, err := WasmCodec.MarshalBinaryLengthPrefixed(msg)
+	if err != nil {
+		panic(err)
+	}
+
+	return bytes
+}
+
+func (msg *UninstallCodeTx) SetPubKey(pub []byte) {
+	msg.PubKey = pub
+}
+
+func (msg *UninstallCodeTx) Route() string {
+	return RouteKey
+}
+
+func (msg *UninstallCodeTx) GetGas() uint64 {
+	return msg.Gas
+}
+
+func (msg *UninstallCodeTx) GetNonce() uint64 {
+	return msg.Nonce
+}
+
+func (msg *UninstallCodeTx) GetFromAddress() sdk.AccAddress {
 	return msg.From
 }

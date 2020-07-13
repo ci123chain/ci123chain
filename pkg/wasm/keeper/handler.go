@@ -13,6 +13,8 @@ func NewHandler(k Keeper) sdk.Handler {
 		switch tx := tx.(type) {
 		case *wasm.StoreCodeTx:
 			return handleStoreCodeTx(ctx, k, *tx)
+		case *wasm.UninstallCodeTx:
+			return handleUninstallCodeTx(ctx, k, *tx)
 		case *wasm.InstantiateContractTx:
 			return handleInstantiateContractTx(ctx, k, *tx)
 		case *wasm.ExecuteContractTx:
@@ -30,13 +32,29 @@ func handleStoreCodeTx(ctx sdk.Context, k Keeper, msg wasm.StoreCodeTx) sdk.Resu
 		return wasm.ErrInvalidMsg(wasm.DefaultCodespace, err).Result()
 	}
 
-	codeHash, Err := k.Create(ctx, msg.Sender, msg.WASMByteCode)
+	codeHash, Err := k.Install(ctx, msg.Sender, msg.WASMByteCode)
 	if Err != nil {
 		return wasm.ErrCreateFailed(wasm.DefaultCodespace, Err).Result()
 	}
 
 	return sdk.Result{
 		Data:   codeHash,
+		Events: ctx.EventManager().Events(),
+	}
+}
+
+func handleUninstallCodeTx(ctx sdk.Context, k Keeper, msg wasm.UninstallCodeTx) sdk.Result {
+	err := msg.ValidateBasic()
+	if err != nil {
+		return wasm.ErrInvalidMsg(wasm.DefaultCodespace, err).Result()
+	}
+
+	Err := k.Uninstall(ctx, msg.Sender, msg.CodeHash)
+	if Err != nil {
+		return wasm.ErrUninstallFailed(wasm.DefaultCodespace, Err).Result()
+	}
+
+	return sdk.Result{
 		Events: ctx.EventManager().Events(),
 	}
 }

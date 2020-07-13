@@ -18,6 +18,7 @@ var (
 	NewQuerier = keeper.NewQuerier
 
 	NewStoreCodeTx = types.NewStoreCodeTx
+	NewUninstallTx = types.NewUninstallTx
 	NewInstantiateTx = types.NewInstantiateContractTx
 	NewExecuteTx = types.NewExecuteContractTx
 )

@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"encoding/hex"
 	"github.com/gorilla/mux"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
@@ -14,6 +15,7 @@ import (
 
 func registerTxRoutes(cliCtx context.Context, r *mux.Router)  {
 	r.HandleFunc("/wasm/contract/install", storeCodeHandler(cliCtx)).Methods("POST")
+	r.HandleFunc("/wasm/contract/uninstall", uninstallHandler(cliCtx)).Methods("POST")
 	r.HandleFunc("/wasm/contract/init", instantiateContractHandler(cliCtx)).Methods("POST")
 	r.HandleFunc("/wasm/contract/execute", executeContractHandler(cliCtx)).Methods("POST")
 }
@@ -49,6 +51,50 @@ func storeCodeHandler(cliCtx context.Context) http.HandlerFunc {
 		}
 
 		txByte, err := buildStoreCodeMsg(r)
+		if err != nil {
+			rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
+			return
+		}
+		if ok {
+			//async
+			res, err := cliCtx.BroadcastTxAsync(txByte)
+			if err != nil {
+				rest.WriteErrorRes(w, client.ErrBroadcast(types.DefaultCodespace, err))
+				return
+			}
+			rest.PostProcessResponseBare(w, cliCtx, res)
+		}else {
+			//sync
+			res, err := cliCtx.BroadcastSignedData(txByte)
+			if err != nil {
+				rest.WriteErrorRes(w, client.ErrBroadcast(types.DefaultCodespace, err))
+				return
+			}
+			rest.PostProcessResponseBare(w, cliCtx, res)
+		}
+
+	}
+}
+
+func uninstallHandler(cliCtx context.Context) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		async := r.FormValue("async")
+		ok, err := util.CheckBool(async)  //default async
+		if err != nil {
+			rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace,"error async"))
+			return
+		}
+
+		codeHash := r.FormValue("codeHash")
+		//checkContractIsExist
+		hash, err := hex.DecodeString(codeHash)
+		if err != nil {
+			rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace,"error codeHash"))
+			return
+		}
+
+		txByte, err := buildUninstallMsg(r, hash)
 		if err != nil {
 			rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
 			return

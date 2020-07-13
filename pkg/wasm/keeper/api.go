@@ -317,7 +317,7 @@ func migrateContract(context unsafe.Pointer, codePtr, codeSize, namePtr, nameSiz
 		panic("invalid utf8 desc")
 	}
 	if !utf8.ValidString(string(init)) {
-		panic("invalid utf8 desc")
+		panic("invalid utf8 init")
 	}
 
 	newCodeHash, err := hex.DecodeString(string(code))

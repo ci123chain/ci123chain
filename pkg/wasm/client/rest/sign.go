@@ -44,6 +44,20 @@ func buildStoreCodeMsg(r *http.Request) ([]byte, error) {
 	return txByte, nil
 }
 
+func buildUninstallMsg(r *http.Request, hash []byte) ([]byte, error) {
+	//check params
+	from, gas, nonce,  priv, _, err := getArgs(r)
+	if err != nil {
+		return nil, err
+	}
+
+	txByte, err := sdk.SignUninstallMsg(from, gas, nonce, priv, from, hash)
+	if err != nil {
+		return nil, err
+	}
+	return txByte, nil
+}
+
 func buildInstantiateContractMsg(r *http.Request) ([]byte, error) {
 
 	codeHash := r.FormValue("codeHash")
