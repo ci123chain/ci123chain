@@ -12,8 +12,8 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
-func AppGenStateJSON(validators []tmtypes.GenesisValidator, privKeys []string) (json.RawMessage, error) {
-	appState := ModuleBasics.DefaultGenesis(validators, privKeys)
+func AppGenStateJSON(validators []tmtypes.GenesisValidator) (json.RawMessage, error) {
+	appState := ModuleBasics.DefaultGenesis(validators)
 	stateBytes, err := json.Marshal(appState)
 	if err != nil {
 		return nil, abci.ErrInternal("Marshal failed")

@@ -16,7 +16,7 @@ func (am AppModuleBasic) RegisterCodec(codec *codec.Codec) {
 }
 
 
-func (am AppModuleBasic) DefaultGenesis(_ []tmtypes.GenesisValidator, _ []string) json.RawMessage {
+func (am AppModuleBasic) DefaultGenesis(_ []tmtypes.GenesisValidator) json.RawMessage {
 	return ModuleCdc.MustMarshalJSON(DefaultGenesisState())
 }
 

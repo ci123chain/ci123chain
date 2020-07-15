@@ -33,6 +33,7 @@ func AddServerCommands(
 		//createCmd(ctx),
 		startCmd(ctx, appCreator),
 		AddGenesisAccountCmd(ctx, cdc),
+		AddGenesisValidatorCmd(ctx, cdc),
 		AddGenesisShardCmd(ctx, cdc),
 		testnetGenCmd(ctx, cdc, appInit),
 		testnetAddCmd(ctx, cdc, appInit),

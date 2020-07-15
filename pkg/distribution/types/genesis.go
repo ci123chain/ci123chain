@@ -87,8 +87,8 @@ func NewGenesisState(
 }
 
 // get raw genesis raw message for testing
-func DefaultGenesisState(validators []tmtypes.GenesisValidator, accAddresses []string) GenesisState {
-	var OutstandingRewards []ValidatorOutstandingRewardsRecord
+func DefaultGenesisState(_ []tmtypes.GenesisValidator) GenesisState {
+	/*var OutstandingRewards []ValidatorOutstandingRewardsRecord
 	var CurrentRewards []ValidatorCurrentRewardsRecord
 	//var validatorHistoricalRewardsRecord []ValidatorHistoricalRewardsRecord
 	//var validatorAccumulatedCommisssionRecords []ValidatorAccumulatedCommissionRecord
@@ -105,32 +105,22 @@ func DefaultGenesisState(validators []tmtypes.GenesisValidator, accAddresses []s
 					Period:  0,
 				},
 			}
-			/*historicalReward := ValidatorHistoricalRewards{CumulativeRewardRatio:sdk.NewEmptyDecCoin(), }
-			historicalRewardRecord := ValidatorHistoricalRewardsRecord{
-				ValidatorAddress: sdk.HexToAddress(accAddresses[i]),
-				Period:           0,
-				Rewards:          historicalReward,
-			}
-			valAccumulatedCommission := ValidatorAccumulatedCommissionRecord{
-				ValidatorAddress: sdk.HexToAddress(accAddresses[i]),
-				Accumulated:      ValidatorAccumulatedCommission{Commission: sdk.NewEmptyDecCoin()},
-			}*/
 			OutstandingRewards = append(OutstandingRewards, addValOutstandingRewards)
 			CurrentRewards = append(CurrentRewards, currentReward)
 			//validatorHistoricalRewardsRecord = append(validatorHistoricalRewardsRecord, historicalRewardRecord)
 			//validatorAccumulatedCommisssionRecords = append(validatorAccumulatedCommisssionRecords, valAccumulatedCommission)
 		}
-	}
+	}*/
 
 	return GenesisState{
 		FeePool:                         InitialFeePool(),
 		Params:                          DefaultParams(),
 		DelegatorWithdrawInfos:          []DelegatorWithdrawInfo{},
 		PreviousProposer:                nil,
-		OutstandingRewards:              OutstandingRewards,//[]ValidatorOutstandingRewardsRecord{},
+		OutstandingRewards:              []ValidatorOutstandingRewardsRecord{},
 		ValidatorAccumulatedCommissions: []ValidatorAccumulatedCommissionRecord{},
 		ValidatorHistoricalRewards:      []ValidatorHistoricalRewardsRecord{},
-		ValidatorCurrentRewards:         CurrentRewards,//[]ValidatorCurrentRewardsRecord{},
+		ValidatorCurrentRewards:         []ValidatorCurrentRewardsRecord{},
 		DelegatorStartingInfos:          []DelegatorStartingInfoRecord{},
 		ValidatorSlashEvents:            []ValidatorSlashEventRecord{},
 	}

@@ -26,7 +26,7 @@ func (AppModuleBasic) Name() string {
 	return types.ModuleName
 }
 
-func (AppModuleBasic) DefaultGenesis(_ []tmtypes.GenesisValidator, _ []string) json.RawMessage {
+func (AppModuleBasic) DefaultGenesis(_ []tmtypes.GenesisValidator) json.RawMessage {
 	return types.ModuleCdc.MustMarshalJSON(types.DefaultGenesisState())
 }
 

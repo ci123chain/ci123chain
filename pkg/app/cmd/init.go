@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"crypto/ecdsa"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
@@ -13,10 +12,8 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/config"
 	"github.com/ci123chain/ci123chain/pkg/node"
 	"github.com/ci123chain/ci123chain/pkg/validator"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/tanhuiya/fabric-crypto/cryptoutil"
 	"github.com/tendermint/go-amino"
 	cfg "github.com/tendermint/tendermint/config"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
@@ -64,6 +61,7 @@ type InitConfig struct{
 
 type ValidatorAccount struct {
 	Address     string    `json:"address"`
+	PublicKey   string     `json:"public_key"`
 	PrivateKey  string    `json:"private_key"`
 }
 
@@ -139,7 +137,7 @@ func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Com
 			if initConfig.ChainID == "" {
 				panic(errors.New("chain id can not be empty"))
 			}
-			chainID, nodeID, appMessage, accounts,  err := InitWithConfig(cdc, appInit, config, initConfig)
+			chainID, nodeID, appMessage, pubKey, err := InitWithConfig(cdc, appInit, config, initConfig)
 			if err != nil {
 				return types.ErrInitWithCfg(types.DefaultCodespace, err)
 			}
@@ -149,12 +147,12 @@ func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Com
 				ChainID    string          `json:"chain_id"`
 				NodeID     string          `json:"node_id"`
 				AppMessage json.RawMessage `json:"app_message"`
-				ValidatorAccounts []ValidatorAccount `json:"validator_accounts"`
+				PubKey     string          `json:"pub_key"`
 			}{
 				chainID,
 				nodeID,
 				appMessage,
-				accounts,
+				pubKey,
 			}
 			out, err := app.MarshalJSONIndent(cdc, toPrint)
 			if err != nil {
@@ -192,15 +190,15 @@ func gentxWithConfig(cdc *amino.Codec, appInit app.AppInit, config *cfg.Config, 
 	}
 	nodeID := string(nodeKey.ID())
 
-	appGenTx, cliPrint, validator, err := appInit.AppGenTx(cdc, pv.GetPubKey(), genTxConfig)
+	appGenTx, cliPrint, val, err := appInit.AppGenTx(cdc, pv.GetPubKey(), genTxConfig)
 	if err != nil {
 		return
 	}
 	tx := app.GenesisTx{
-		NodeID: nodeID,
-		IP: 	genTxConfig.IP,
-		Validator: validator,
-		AppGenTx: 	appGenTx,
+		NodeID:    nodeID,
+		IP:        genTxConfig.IP,
+		Validator: val,
+		AppGenTx:  appGenTx,
 	}
 
 	bz, err := app.MarshalJSONIndent(cdc, tx)
@@ -208,10 +206,10 @@ func gentxWithConfig(cdc *amino.Codec, appInit app.AppInit, config *cfg.Config, 
 		return
 	}
 
-	genTxFile = json.RawMessage(bz)
+	/*genTxFile = json.RawMessage(bz)
 	if err != nil {
 		return
-	}
+	}*/
 
 	genTxFile = json.RawMessage(bz)
 	name := fmt.Sprintf("gentx-%v.json", nodeID)
@@ -264,7 +262,7 @@ func GetChainID() (string, error){
 }
 */
 func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initConfig InitConfig)(
-	chainID string, nodeID string, appMessage json.RawMessage, accounts []ValidatorAccount, err error) {
+	chainID string, nodeID string, appMessage json.RawMessage, pubKey string, err error) {
 	var validatorKey secp256k1.PrivKeySecp256k1
 	var privStr string
 	nodeKey, err := node.LoadNodeKey(c.NodeKeyFile())
@@ -334,7 +332,7 @@ func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initCo
 	val := appInit.GetValidator(nodeKey.PubKey(), viper.GetString(FlagName))
 	validators := []tmtypes.GenesisValidator{val}
 
-	//new a validator account
+	/*//new a validator account
 	key, err := crypto.GenerateKey()
 	if err != nil {
 		fmt.Println("Error: ", err.Error());
@@ -353,9 +351,10 @@ func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initCo
 		Address:    address,
 		PrivateKey: privKey,
 	}
-	accounts = []ValidatorAccount{account}
+	accounts = []ValidatorAccount{account}*/
+	pubKey = hex.EncodeToString(cdc.MustMarshalJSON(nodeKey.PubKey()))
 
-	appState, err := appInit.AppGenState(validators, accountAddresses)
+	appState, err := appInit.AppGenState(validators)
 
 	if err != nil {
 		return

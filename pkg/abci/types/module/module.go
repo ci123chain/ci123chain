@@ -24,7 +24,7 @@ type AppModuleBasic interface {
 	RegisterCodec(codec *codec.Codec)
 
 	// 默认的 genesis 配置
-	DefaultGenesis(validators []tmtypes.GenesisValidator, accAddress []string) json.RawMessage
+	DefaultGenesis(validators []tmtypes.GenesisValidator) json.RawMessage
 }
 
 
@@ -45,11 +45,11 @@ func (bm BasicManager)RegisterCodec(cdc *codec.Codec)  {
 	}
 }
 
-func (bm BasicManager) DefaultGenesis(validators []tmtypes.GenesisValidator, accAddresses []string) map[string]json.RawMessage {
+func (bm BasicManager) DefaultGenesis(validators []tmtypes.GenesisValidator) map[string]json.RawMessage {
 	genesis := make(map[string]json.RawMessage)
 	for _, b := range bm {
-		if b.DefaultGenesis(validators, accAddresses) != nil {
-			genesis[b.Name()] = b.DefaultGenesis(validators, accAddresses)
+		if b.DefaultGenesis(validators) != nil {
+			genesis[b.Name()] = b.DefaultGenesis(validators)
 		}
 	}
 	return genesis
