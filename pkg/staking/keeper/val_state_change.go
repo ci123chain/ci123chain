@@ -71,6 +71,19 @@ func (k StakingKeeper) BlockValidatorUpdates(ctx sdk.Context) []abcitypes.Valida
 	return validatorUpdates
 }
 
+// Apply and return accumulated updates to the bonded validator set. Also,
+// * Updates the active valset as keyed by LastValidatorPowerKey.
+// * Updates the total power as keyed by LastTotalPowerKey.
+// * Updates validator status' according to updated powers.
+// * Updates the fee pool bonded vs not-bonded tokens.
+// * Updates relevant indices.
+// It gets called once after genesis, another time maybe after genesis transactions,
+// then once at every EndBlock.
+//
+// CONTRACT: Only validators with non-zero power or zero-power that were bonded
+// at the previous block height or were removed from the validator set entirely
+// are returned to Tendermint.
+
 func (k StakingKeeper) ApplyAndReturnValidatorSetUpdates(ctx sdk.Context) (updates []abcitypes.ValidatorUpdate) {
 	maxValidators := k.GetParams(ctx).MaxValidators
 	totalPower := sdk.ZeroInt()

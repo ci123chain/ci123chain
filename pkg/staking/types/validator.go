@@ -14,7 +14,6 @@ import (
 
 type Validator struct {
 	OperatorAddress    sdk.AccAddress	`json:"operator_address"`
-	//Address            cmn.HexBytes     `json:"address"`
 	ConsensusKey       crypto.PubKey    `json:"pub_key"`
 	Jailed             bool             `json:"jailed"`
 	Status             sdk.BondStatus   `json:"status"`

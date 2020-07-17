@@ -7,6 +7,10 @@ import (
 	"time"
 )
 
+//CreationHeight:  创建的高度
+//CompletionTime:  完成时间
+//InitialBalance:   二次抵押的Token数量
+//SharesDst:   二次抵押的shares数量；由Token数量计算得来；
 type RedelegationEntry struct {
 	CreationHeight   int64       `json:"creation_height"`
 	CompletionTime   time.Time	 `json:"completion_time"`
@@ -14,6 +18,7 @@ type RedelegationEntry struct {
 	SharesDst        sdk.Dec	 `json:"shares_dst"`
 }
 
+//表示一个 特定的委托者 从SrcVal 更换绑定到 DstVal 的时间列表；
 type Redelegation struct {
 	DelegatorAddress sdk.AccAddress		`json:"delegator_address"`
 	ValidatorSrcAddress sdk.AccAddress	`json:"validator_src_address"`

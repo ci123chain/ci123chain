@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/distribution/types"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -147,6 +148,7 @@ func queryDelegationRewards(ctx sdk.Context, req abci.RequestQuery, k DistrKeepe
 	}
 
 	endingPeriod := k.incrementValidatorPeriod(ctx, val)
+	fmt.Printf("endingPeriod: %d", endingPeriod)
 	rewards := k.calculateDelegationRewards(ctx, val, del, endingPeriod)
 	res := types.DistributionCdc.MustMarshalJSON(rewards)
 	return res, nil

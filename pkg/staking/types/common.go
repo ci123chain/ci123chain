@@ -14,6 +14,9 @@ const (
 	MaxDetailsLength         = 280
 )
 
+//Rate:   佣金收取率；0-100;
+//maxRate:  佣金最大收取率；
+//maxChangeRate: 每日最大变动百分比
 type CommissionRates struct {
 	Rate           sdk.Dec     `json:"rate"`
 	MaxRate        sdk.Dec     `json:"max_rate"`

@@ -5,6 +5,10 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
+//CommunityTax :   增发货币 流向社区的百分比
+//BaseProposerReward:  基础提块奖励百分比
+//BonusProposerReward:  绑定提案奖励百分比
+//WithdrawAddrEnabled:  是否能更改提起奖金地址
 type Params struct {
 	CommunityTax         sdk.Dec    `json:"community_tax"`
 	BaseProposerReward   sdk.Dec    `json:"base_proposer_reward"`
@@ -17,28 +21,30 @@ type DelegatorWithdrawInfo struct {
 	WithdrawAddress      sdk.AccAddress    `json:"withdraw_address"`
 }
 
+//OutstandingRewards 代表这个Validator所拥有的所有奖金；
 type ValidatorOutstandingRewardsRecord struct {
 	ValidatorAddress     sdk.AccAddress    `json:"validator_address"`
 	OutstandingRewards   sdk.DecCoin       `json:"outstanding_rewards"`
 }
-
+//Accumulated 代表这个validator所拥有的佣金；
 type ValidatorAccumulatedCommissionRecord struct {
 	ValidatorAddress     sdk.AccAddress    `json:"validator_address"`
 	Accumulated          ValidatorAccumulatedCommission   `json:"accumulated"`
 }
 
-
+//Rewards  指代 到当前这个时期为止，一个Token所拥有的价值；
 type ValidatorHistoricalRewardsRecord struct {
 	ValidatorAddress    sdk.AccAddress      `json:"validator_address"`
 	Period              uint64              `json:"period"`
 	Rewards             ValidatorHistoricalRewards  `json:"rewards"`
 }
-
+//ValidatorCurrentRewardsRecord  包含一个Period 时期，其中的Rewards 只代表 这个时期到目前的块高度为止，所积累的奖金数；
 type ValidatorCurrentRewardsRecord struct {
 	ValidatorAddress    sdk.AccAddress      `json:"validator_address"`
 	Rewards             ValidatorCurrentRewards  `json:"rewards"`
 }
 
+//StartingInfo 包含上一次操作的时期，比如 抵押或提取奖金； 包含 Delegator拥有的令牌数，即token数量； Height指上一次操作的高度；
 type DelegatorStartingInfoRecord struct {
 	DelegatorAddress    sdk.AccAddress      `json:"delegator_address"`
 	ValidatorAddress    sdk.AccAddress      `json:"validator_address"`

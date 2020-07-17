@@ -6,6 +6,8 @@ import (
 	"sort"
 )
 
+// HistoricalInfo contains the historical information that gets stored at
+// each height.
 type HistoricalInfo struct {
 	Header    types.Header   `json:"header"`
 	Valset    []Validator	 `json:"valset"`

@@ -2,6 +2,8 @@ package types
 
 import sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 
+
+// StakingHooks event hooks for staking validator object
 type StakingHooks interface {
 	AfterValidatorCreated(ctx sdk.Context, valAddr sdk.AccAddress)
 	BeforeValidatorModified(ctx sdk.Context, valAddr sdk.AccAddress)

@@ -7,11 +7,14 @@ import (
 	"time"
 )
 
+
+//Shares:  委托者抵押给验证者之后，形成的抵押证明中表现委托者拥有的股权；  Shares = validator.DelegatorShares/validator.Tokens * DelegateTokens
 type Delegation struct {
 	DelegatorAddress  sdk.AccAddress  	`json:"delegator_address"`
 	ValidatorAddress  sdk.AccAddress    `json:"validator_address"`
 	Shares            sdk.Dec           `json:"shares"`
 }
+
 // IsMature - is the current entry mature
 func (e RedelegationEntry) IsMature(currentTime time.Time) bool {
 	return !e.CompletionTime.After(currentTime)
@@ -43,12 +46,18 @@ type Delegations []Delegation
 
 func (d Delegation) GetShares() sdk.Dec {return d.Shares}
 
+//需要解绑的 Delegator和Validator对；
+// 一对 Delegator和Validator可能有多次解绑，用Entries标志；
 type UnbondingDelegation struct {
 	DelegatorAddress   sdk.AccAddress   `json:"delegator_address"`
 	ValidatorAddress   sdk.AccAddress	`json:"validator_address"`
-	Entries            []UnbondingDelegationEntry `json:"entries"'`
+	Entries            []UnbondingDelegationEntry `json:"entries"`
 }
 
+//CreationHeight:  创建时间
+//CompletionTime:  完成时间
+//InitialBalance:  与惩罚有关
+//Balance:         Unbonding的Token数量;
 type UnbondingDelegationEntry struct {
 	CreationHeight    int64			`json:"creation_height"`
 	CompletionTime    time.Time		`json:"completion_time"`

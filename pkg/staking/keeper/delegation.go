@@ -181,7 +181,7 @@ func (k StakingKeeper) Redelegate(ctx sdk.Context, delAddr sdk.AccAddress, valSr
 
 	 completionTime, height, completeNow := k.getBeginInfo(ctx, valSrcAddr)
 
-	 if completeNow {
+	 if completeNow {  // no need to create the redelegation object
 		 return completionTime, nil
 	 }
 
