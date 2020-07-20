@@ -137,6 +137,10 @@ func queryDelegationRewards(ctx sdk.Context, req abci.RequestQuery, k DistrKeepe
 	if err != nil {
 		return nil, types.ErrFailedMarshal(types.DefaultCodespace, err.Error())
 	}
+
+	// cache-wrap context as to not persist state changes during querying
+	ctx, _ = ctx.CacheContext()
+
 	val := k.StakingKeeper.Validator(ctx, params.ValidatorAddress)
 	if val == nil {
 		return nil, types.ErrNoValidatorExist(types.DefaultCodespace, params.ValidatorAddress.String())
