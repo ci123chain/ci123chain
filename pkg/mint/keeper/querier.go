@@ -27,10 +27,7 @@ func QueryParams(ctx sdk.Context,k MinterKeeper) ([]byte, sdk.Error) {
 
 	params := k.GetParams(ctx)
 
-	res, err := types.MintCdc.MarshalBinaryLengthPrefixed(params)
-	if err != nil {
-		return nil, types.ErrFailedMarshal(types.DefaultCodespace, err.Error())
-	}
+	res := types.MintCdc.MustMarshalJSON(params)
 	return res, nil
 }
 
@@ -38,10 +35,7 @@ func QueryParams(ctx sdk.Context,k MinterKeeper) ([]byte, sdk.Error) {
 func QueryInflation(ctx sdk.Context,k MinterKeeper) ([]byte, sdk.Error) {
 
 	minter := k.GetMinter(ctx)
-	res, err := types.MintCdc.MarshalBinaryLengthPrefixed(minter.Inflation)
-	if err != nil {
-		return nil, types.ErrFailedMarshal(types.DefaultCodespace, err.Error())
-	}
+	res := types.MintCdc.MustMarshalJSON(minter.Inflation)
 
 	return res, nil
 }
@@ -49,10 +43,7 @@ func QueryInflation(ctx sdk.Context,k MinterKeeper) ([]byte, sdk.Error) {
 
 func queryAnnualProvisions(ctx sdk.Context,k MinterKeeper) ([]byte, sdk.Error) {
 	minter := k.GetMinter(ctx)
-	res, err := types.MintCdc.MarshalBinaryLengthPrefixed(minter.AnnualProvisions)
-	if err != nil {
-		return nil, types.ErrFailedMarshal(types.DefaultCodespace, err.Error())
-	}
+	res := types.MintCdc.MustMarshalJSON(minter.AnnualProvisions)
 
 	return res, nil
 }
