@@ -12,11 +12,11 @@ import (
 
 func RegisterQueryRoutes(cliCtx context.Context, r *mux.Router)  {
 	//r.HandleFunc("/rewards", QueryValidatorRewardsRequestHandlerFn(cliCtx)).Methods("POST")
-	r.HandleFunc("/distribution/validator/outstanding_rewards", QueryValidatorOutstandingRewardsHandleFn(cliCtx)).Methods("POST")
+	r.HandleFunc("/distribution/validator/query_outstanding_rewards", QueryValidatorOutstandingRewardsHandleFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/distribution/query_community_pool", QueryCommunityPoolHandleFn(cliCtx)).Methods("POST")
-	r.HandleFunc("/distribution/delegator/withdraw_address", QueryWithDrawAddress(cliCtx)).Methods("POST")
-	r.HandleFunc("/distribution/validator/commission", validatorCommissionInfoHandleFn(cliCtx)).Methods("POST")
-	r.HandleFunc("/distribution/delegator/rewards", queryDelegatorRewardsHandleFn(cliCtx)).Methods("POST")
+	r.HandleFunc("/distribution/delegator/query_withdraw_address", QueryWithDrawAddress(cliCtx)).Methods("POST")
+	r.HandleFunc("/distribution/validator/query_commission", validatorCommissionInfoHandleFn(cliCtx)).Methods("POST")
+	r.HandleFunc("/distribution/delegator/query_rewards", queryDelegatorRewardsHandleFn(cliCtx)).Methods("POST")
 }
 
 type RewardsData struct {

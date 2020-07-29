@@ -86,7 +86,6 @@ func (k StakingKeeper) Delegate(ctx sdk.Context, delAddr sdk.AccAddress, bondAmt
 	}
 
 	validator, newShares = k.AddValidatorTokensAndShares(ctx, validator, bondAmt)
-
 	//update delegation
 	delegation.Shares = delegation.Shares.Add(newShares)
 	k.SetDelegation(ctx, delegation)
@@ -358,7 +357,6 @@ func (k StakingKeeper) unbond(ctx sdk.Context, delAddr sdk.AccAddress, valAddr s
 		k.jailValidator(ctx, validator)
 		validator = k.mustGetValidator(ctx, validator.OperatorAddress)
 	}
-
 	if delegation.Shares.IsZero() {
 		k.RemoveDelegation(ctx, delegation)
 	} else {
@@ -651,9 +649,9 @@ func (k StakingKeeper) GetValidatorDelegations(ctx sdk.Context, valAddr sdk.AccA
 	store := ctx.KVStore(k.storeKey)
 	iterator := sdk.KVStorePrefixIterator(store, types.DelegationKey)
 	defer iterator.Close()
-	var delegation types.Delegation
 
 	for ; iterator.Valid(); iterator.Next() {
+		var delegation types.Delegation
 		//delegation := types.MustUnmarshalDelegation(k.cdc, iterator.Value())
 		types.StakingCodec.MustUnmarshalBinaryLengthPrefixed(iterator.Value(), &delegation)
 		if delegation.GetValidatorAddr().Equals(valAddr) {

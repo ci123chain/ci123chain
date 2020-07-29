@@ -87,7 +87,7 @@ func (k StakingKeeper) GetAllRedelegations(
 // return all delegations for a delegator
 func (k StakingKeeper) GetAllDelegatorDelegations(ctx sdk.Context, delegator sdk.AccAddress) []types.Delegation {
 	delegations := make([]types.Delegation, 0)
-	var delegation types.Delegation
+
 	store := ctx.KVStore(k.storeKey)
 	delegatorPrefixKey := types.GetDelegationsKey(delegator)
 	iterator := sdk.KVStorePrefixIterator(store, delegatorPrefixKey) //smallest to largest
@@ -95,6 +95,7 @@ func (k StakingKeeper) GetAllDelegatorDelegations(ctx sdk.Context, delegator sdk
 
 	i := 0
 	for ; iterator.Valid(); iterator.Next() {
+		var delegation types.Delegation
 		types.StakingCodec.MustUnmarshalBinaryLengthPrefixed(iterator.Value(), &delegation)
 		delegations = append(delegations, delegation)
 		i++

@@ -121,20 +121,8 @@ func InitGenesis(
 		if err != nil {
 			panic(err)
 		}
-
-		/*if err := ak.SetBalances(ctx, notBondedPool.GetAddress(), notBondedCoins); err != nil {
-			panic(err)
-		}
-		ak.SetAccount(ctx, notBondedPool)*/
-		//ak.SetAccount(ctx, ModuleAcc)
 		supplyKeeper.SetModuleAccount(ctx, ModuleAcc)
-
-		//supplyKeeper.SetModuleAccount(ctx, notBondedPool)
 	}
-	ModuleAcc := ak.GetAccount(ctx, notBondedPool.GetAddress())
-	oldc := ModuleAcc.GetCoin()
-	fmt.Println(oldc)
-
 
 	// don't need to run Tendermint updates if we exported
 	if data.Exported {

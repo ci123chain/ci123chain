@@ -41,15 +41,14 @@ func CreateValidatorRequest(cliCtx context.Context) http.HandlerFunc {
 		if !ok {
 			return
 		}
-		validatorAddr := request.FormValue("validatorAddress")
 		//verify account exists
-		err = checkAccountExist(cliCtx, from, validatorAddr)
+		err = checkAccountExist(cliCtx, from)
 		if err != nil {
 			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
 		}
 
 
-		txByte, err := sSdk.SignCreateValidatorMSg(from, amount, gas, nonce, key, msd, validatorAddr,
+		txByte, err := sSdk.SignCreateValidatorMSg(from, amount, gas, nonce, key, msd, from,
 			delegatorAddr, r, mr, mcr, moniker, identity, website, securityContact, details, publicKey)
 		if err != nil {
 			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"data error"))

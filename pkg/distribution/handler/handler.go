@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/distribution/keeper"
@@ -10,6 +11,8 @@ import (
 
 func NewHandler(k keeper.DistrKeeper) sdk.Handler {
 	return func(ctx sdk.Context, tx sdk.Tx) sdk.Result {
+		ctx = ctx.WithEventManager(sdk.NewEventManager())
+
 		switch tx := tx.(type) {
 		case *types.SetWithdrawAddressTx:
 			return handleMsgModifyWithdrawAddress(ctx, *tx, k)
@@ -32,6 +35,11 @@ func handleMsgModifyWithdrawAddress(ctx sdk.Context, msg types.SetWithdrawAddres
 	//verify identity
 	if !msg.From.Equal(msg.DelegatorAddress) {
 		return types.ErrWithdrawAddressInfoMismatch(types.DefaultCodespace, msg.From, msg.DelegatorAddress).Result()
+	}
+	//check validator that is bonded to delegator account.
+	validators, Err := k.StakingKeeper.GetDelegatorValidators(ctx, msg.DelegatorAddress, 3)
+	if Err != nil || validators == nil {
+		return types.ErrBadAddress(types.DefaultCodespace, errors.New(fmt.Sprintf("got no validator that is bonded to %s", msg.DelegatorAddress.String()))).Result()
 	}
 
 	err := k.SetWithdrawAddr(ctx, msg.DelegatorAddress, msg.WithdrawAddress)
@@ -78,6 +86,12 @@ func handleMsgWithdrawValidatorCommission(ctx sdk.Context, msg types.WithdrawVal
 	if !msg.From.Equal(msg.ValidatorAddress) {
 		return types.ErrWithdrawAddressInfoMismatch(types.DefaultCodespace, msg.From, msg.ValidatorAddress).Result()
 	}
+
+	_, ok := k.StakingKeeper.GetValidator(ctx, msg.ValidatorAddress)
+	if !ok {
+		return types.ErrNoValidatorExist(types.DefaultCodespace, msg.ValidatorAddress.String()).Result()
+	}
+
 	_, err := k.WithdrawValidatorCommission(ctx, msg.ValidatorAddress)
 	if err != nil {
 		return types.ErrHandleTxFailed(types.DefaultCodespace, err).Result()
@@ -94,7 +108,7 @@ func handleMsgWithdrawValidatorCommission(ctx sdk.Context, msg types.WithdrawVal
 	return sdk.Result{Events: ctx.EventManager().Events()}
 }
 
-
+//send funds from personal account to communityPool.
 func handleMsgFundCommunityPool(ctx sdk.Context, msg types.FundCommunityPoolTx, k keeper.DistrKeeper) sdk.Result {
 	if err := k.FundCommunityPool(ctx, msg.Amount, msg.Depositor); err != nil {
 		return types.ErrHandleTxFailed(types.DefaultCodespace, err).Result()

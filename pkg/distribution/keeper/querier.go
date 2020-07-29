@@ -98,28 +98,6 @@ func queryDelegatorWithdrawAddress(ctx sdk.Context, req abci.RequestQuery, k Dis
 	return res, nil
 }
 
-/*
-func queryDelegatorValidators(ctx sdk.Context, req abci.RequestQuery, k DistrKeeper) ([]byte, sdk.Error) {
-	var params types.QueryDelegatorParams
-	err := k.cdc.UnmarshalJSON(req.Data, &params)
-	if err != nil {
-		return nil, types.ErrFailedMarshal(types.DefaultCodespace, err.Error())
-	}
-
-	var validators []sdk.AccAddress
-
-	k.StakingKeeper.IterateDelegations(
-		ctx, params.DelegatorAddress,
-		func(_ int64, del exported.DelegationI) (stop bool) {
-			validators = append(validators, del.GetValidatorAddr())
-			return false
-		},
-	)
-	res := types.DistributionCdc.MustMarshalJSON(validators)
-	return res, nil
-}
-*/
-
 func queryValidatorCommission(ctx sdk.Context, req abci.RequestQuery, k DistrKeeper) ([]byte, sdk.Error) {
 	var params types.QueryValidatorCommissionParams
 	err := k.cdc.UnmarshalJSON(req.Data, &params)

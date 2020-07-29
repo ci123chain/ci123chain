@@ -174,6 +174,7 @@ func NewChain(logger log.Logger, tmdb tmdb.DB, traceStore io.Writer) *Chain {
 	c.Router().AddRoute(ibc.RouterKey, ibc.NewHandler(ibcKeeper))
 	c.Router().AddRoute(order.RouteKey, orhandler.NewHandler(&orderKeeper))
 	c.Router().AddRoute(staking.RouteKey, staking.NewHandler(stakingKeeper))
+	c.Router().AddRoute(distr.RouteKey, distr.NewHandler(distrKeeper))
 	c.Router().AddRoute(wasm.RouteKey, wasm.NewHandler(wasmKeeper))
 	// query router
 	c.QueryRouter().AddRoute(ibc.RouterKey, ibc.NewQuerier(ibcKeeper))

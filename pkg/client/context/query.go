@@ -1,6 +1,7 @@
 package context
 
 import (
+	"errors"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/client/types"
 	"github.com/tendermint/tendermint/libs/common"
@@ -25,7 +26,7 @@ func (ctx Context) Query(path string, key common.HexBytes) ([]byte, int64, sdk.E
 
 	resp := result.Response
 	if !resp.IsOK() {
-		return res, resp.Height, types.ErrQueryTx(types.DefaultCodespace, err)
+		return res, resp.Height, types.ErrQueryTx(types.DefaultCodespace, errors.New(resp.Log))
 	}
 
 	// todo verify proof

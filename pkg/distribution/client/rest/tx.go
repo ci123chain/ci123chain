@@ -13,9 +13,9 @@ import (
 
 func registerTxRoutes(cliCtx context.Context, r *mux.Router) {
 	r.HandleFunc("/distribution/tx_community_pool", fundCommunityPoolHandlerFn(cliCtx)).Methods("POST")
-	r.HandleFunc("/distribution/validator/commission", withdrawValidatorCommissionsHandlerFn(cliCtx)).Methods("POST")
-	r.HandleFunc("/distribution/delegator/rewards", withdrawDelegationRewardsHandlerFn(cliCtx)).Methods("POST")
-	r.HandleFunc("/distribution/delegator/withdraw_address", setDelegatorWithdrawalAddrHandlerFn(cliCtx)).Methods("POST")
+	r.HandleFunc("/distribution/validator/withdraw_commission", withdrawValidatorCommissionsHandlerFn(cliCtx)).Methods("POST")
+	r.HandleFunc("/distribution/delegator/withdraw_rewards", withdrawDelegationRewardsHandlerFn(cliCtx)).Methods("POST")
+	r.HandleFunc("/distribution/delegator/set_withdraw_address", setDelegatorWithdrawalAddrHandlerFn(cliCtx)).Methods("POST")
 }
 
 
@@ -63,10 +63,7 @@ func withdrawValidatorCommissionsHandlerFn(cliCtx context.Context) http.HandlerF
 		if !ok {
 			return
 		}
-		validatorAddress, ok := checkValidatorAddressVar(writer, req)
-		if !ok {
-			return
-		}
+		validatorAddress := from
 
 		txByte, err := sSDK.SignWithdrawValidatorCommissionTx(from, validatorAddress, gas, nonce, priv)
 		res, err := cliCtx.BroadcastSignedData(txByte)
@@ -89,10 +86,7 @@ func withdrawDelegationRewardsHandlerFn(cliCtx context.Context) http.HandlerFunc
 		if !ok {
 			return
 		}
-		delegator, ok := checkDelegatorAddressVar(writer, req)
-		if !ok {
-			return
-		}
+		delegator := from
 		txByte, err := sSDK.SignWithdrawDelegatorRewardTx(from, validator, delegator, gas, nonce, priv)
 		if err != nil {
 			rest.WriteErrorRes(writer, types.ErrSignTx(types.DefaultCodespace,err))

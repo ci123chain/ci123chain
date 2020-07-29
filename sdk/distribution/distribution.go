@@ -45,12 +45,6 @@ func SignSetWithdrawAddressTx(from, withdrawAddress string, gas, nonce uint64, p
 
 	tx := types.NewSetWithdrawAddressTx(accountAddr, withdrawAddr, accountAddr, gas, nonce)
 
-	/*sid := cryptosuit.NewFabSignIdentity()
-	pub, err  := sid.GetPubKey(privateKey)
-
-	tx.SetPubKey(pub)
-	signbyte := tx.GetSignBytes()
-	signature, err := sid.Sign(signbyte, privateKey)*/
 	eth := cryptosuit.NewETHSignIdentity()
 	signature, err := eth.Sign(tx.GetSignBytes(), privateKey)
 	if err != nil {

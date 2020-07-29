@@ -17,7 +17,6 @@ import (
 type DistrKeeper struct {
 	storeKey            sdk.StoreKey
 	cdc                 *codec.Codec
-	//FeeCollectionKeeper fc.FcKeeper
 	SupplyKeeper        supply.Keeper
 	FeeCollectorName    string
 	AccountKeeper       account.AccountKeeper

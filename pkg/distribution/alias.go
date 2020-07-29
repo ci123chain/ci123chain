@@ -1,6 +1,7 @@
 package distribution
 
 import (
+	h "github.com/ci123chain/ci123chain/pkg/distribution/handler"
 	"github.com/ci123chain/ci123chain/pkg/distribution/keeper"
 	"github.com/ci123chain/ci123chain/pkg/distribution/types"
 )
@@ -16,6 +17,7 @@ const (
 var (
 	ModuleCdc 	= types.DistributionCdc
 	NewQuerier = keeper.NewQuerier
+	NewHandler = h.NewHandler
 )
 
 type (

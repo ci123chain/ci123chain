@@ -5,7 +5,7 @@ import (
 	sdk "github.com/ci123chain/ci123chain/sdk/staking"
 )
 
-func SignCreateValidatorTx(from string, amount, gas, nonce uint64, priv string, minSelfDelegation int64,
+func SignCreateValidatorTx(from string, amount int64, gas, nonce uint64, priv string, minSelfDelegation int64,
 	validatorAddress, delegatorAddress string, rate, maxRate, maxChangeRate int64,
 	moniker, identity, website, securityContact, details string, publicKey string) (string, error) {
 	//
@@ -19,9 +19,7 @@ func SignCreateValidatorTx(from string, amount, gas, nonce uint64, priv string, 
 	return hex.EncodeToString(txBytes), nil
 }
 
-func SignDelegateTx(from string, amount, gas, nonce uint64, priv string, validatorAddress, delegatorAddress string) (string, error) {
-
-	//
+func SignDelegateTx(from string, amount int64, gas, nonce uint64, priv string, validatorAddress, delegatorAddress string) (string, error) {
 
 	txBytes, err := sdk.SignDelegateMsg(from, amount, gas, nonce, priv, validatorAddress, delegatorAddress)
 	if err != nil {
@@ -30,7 +28,7 @@ func SignDelegateTx(from string, amount, gas, nonce uint64, priv string, validat
 	return hex.EncodeToString(txBytes), nil
 }
 
-func SignRelegateTx(from string, amount, gas, nonce uint64, priv string, validatorSrcAddress, validatorDstAddress, delegatorAddress string) (string, error) {
+func SignRelegateTx(from string, amount int64, gas, nonce uint64, priv string, validatorSrcAddress, validatorDstAddress, delegatorAddress string) (string, error) {
 
 	//
 	txBytes, err := sdk.SignRedelegateMsg(from, amount, gas, nonce, priv, validatorSrcAddress, validatorDstAddress, delegatorAddress)
@@ -40,9 +38,8 @@ func SignRelegateTx(from string, amount, gas, nonce uint64, priv string, validat
 	return hex.EncodeToString(txBytes), nil
 }
 
-func SignUndelegate(from string, amount, gas, nonce uint64, priv string, validatorAddress, delegatorAddress string) (string, error) {
+func SignUndelegate(from string, amount int64, gas, nonce uint64, priv string, validatorAddress, delegatorAddress string) (string, error) {
 
-	//
 
 	txBytes, err := sdk.SignUndelegateMsg(from, amount, gas, nonce, priv, validatorAddress, delegatorAddress)
 	if err != nil {

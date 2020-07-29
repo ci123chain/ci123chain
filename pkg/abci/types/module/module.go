@@ -82,7 +82,15 @@ func NewManager(modules ...AppModule) *AppManager {
 func (am AppManager) InitGenesis(ctx types.Context, data map[string]json.RawMessage) abci.ResponseInitChain {
 	var validatorUpdates []abci.ValidatorUpdate
 	for _, m := range am.Modules {
-		m.InitGenesis(ctx, data[m.Name()])
+		moduleValUpdates := m.InitGenesis(ctx, data[m.Name()])
+		// use these validator updates if provided, the module manager assumes
+		// only one module will update the validator set
+		if len(moduleValUpdates) > 0 {
+			if len(validatorUpdates) > 0 {
+				panic("validator InitGenesis updates already set by a previous module")
+			}
+			validatorUpdates = moduleValUpdates
+		}
 	}
 	return abci.ResponseInitChain{
 		Validators: validatorUpdates,

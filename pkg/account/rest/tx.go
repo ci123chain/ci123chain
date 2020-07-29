@@ -22,7 +22,7 @@ func RegisterRoutes(cliCtx context.Context, r *mux.Router) {
 	r.HandleFunc("/account/new", NewAccountRequestHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/bank/balance", QueryBalancesRequestHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/account/nonce", QueryNonceRequestHandleFn(cliCtx)).Methods("POST")
-	r.HandleFunc("/account/new_validator", CreateNewValidatorKeyHandleFn(cliCtx)).Methods("GET")
+	r.HandleFunc("/node/new_validator", CreateNewValidatorKeyHandleFn(cliCtx)).Methods("GET")
 }
 
 type BalanceData struct {
