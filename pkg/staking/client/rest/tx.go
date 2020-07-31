@@ -19,6 +19,7 @@ import (
 
 func RegisterTxRoutes(cliCtx context.Context, r *mux.Router)  {
 	r.HandleFunc("/staking/validator/create", CreateValidatorRequest(cliCtx)).Methods("POST")
+	r.HandleFunc("/staking/validator/edit", EditValidatorRequest(cliCtx)).Methods("POST")
 	r.HandleFunc("/staking/delegate", DelegateTX(cliCtx)).Methods("POST")
 	r.HandleFunc("/staking/redelegate", RedelegateTX(cliCtx)).Methods("POST")
 	r.HandleFunc("/staking/undelegate", UndelegateTX(cliCtx)).Methods("POST")
@@ -62,6 +63,38 @@ func CreateValidatorRequest(cliCtx context.Context) http.HandlerFunc {
 		}
 		rest.PostProcessResponseBare(writer, cliCtx, res)
 
+	}
+}
+
+func EditValidatorRequest(cliCtx context.Context) http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		from, gas, nonce, priv, ok := parseBasicArgs(writer, request)
+		if !ok {
+			return
+		}
+		//verify account exists
+		err := checkAccountExist(cliCtx, from)
+		if err != nil {
+			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
+			return
+		}
+		moniker, identity, website, secu, details := getDescription(request)
+		minSelf, newRate, ok := getMinSelfAndNewRate(writer, request)
+		if !ok {
+			return
+		}
+
+		txByte, err := sSdk.SignEditValidator(from,gas, nonce, priv, moniker, identity, website, secu, details, minSelf, newRate)
+		if err != nil {
+			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"data error"))
+			return
+		}
+		res, err := cliCtx.BroadcastSignedData(txByte)
+		if err != nil {
+			rest.WriteErrorRes(writer, client.ErrBroadcast(types.DefaultCodespace, err))
+			return
+		}
+		rest.PostProcessResponseBare(writer, cliCtx, res)
 	}
 }
 
@@ -227,15 +260,93 @@ func parseOtherArgs(request *http.Request) (int64, int64, int64, int64, string,
 }
 
 
+func parseBasicArgs(w http.ResponseWriter, req *http.Request) (string, uint64, uint64, string, bool) {
+	from, ok := util.CheckFromAddressVar(req)
+	if !ok {
+		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "invalid from address"))
+		return "", 0, 0, "", false
+	}
+	gas, ok := util.CheckGasVar(req)
+	if !ok {
+		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "invalid gas"))
+		return "", 0, 0, "", false
+	}
+	nonce, ok := util.CheckNonce(req, sdk.HexToAddress(from), cdc)
+	if !ok {
+		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "invalid nonce"))
+		return "", 0, 0, "", false
+	}
+	privateKey, ok := util.CheckPrivateKey(req)
+	if !ok {
+		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "invalid private key"))
+		return "", 0, 0, "", false
+	}
+	return from, gas, nonce, privateKey, true
+}
+
+func getMinSelfAndNewRate(w http.ResponseWriter, req *http.Request) (int64, int64, bool) {
+	//
+	var minSelf, newRate int64
+	var err error
+	ms := req.FormValue("minSelfDelegation")
+	if ms != "" {
+		minSelf, err = util.CheckInt64(ms)
+		if err != nil || minSelf <= 0 {
+			rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "invalid minSelfDelegation"))
+			return 0, 0, false
+		}
+	}else {
+		minSelf = -1
+	}
+	nr := req.FormValue("newRate")
+	if nr != "" {
+		newRate, err = util.CheckInt64(nr)
+		if err != nil || newRate > 100 || newRate <= 0 {
+			rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "invalid newRate"))
+			return 0, 0, false
+		}
+	}else {
+		newRate = -1
+	}
+	return minSelf, newRate, true
+}
+
+func getDescription(req *http.Request) (string, string, string, string, string) {
+	moniker := req.FormValue("moniker")
+	if moniker == "" {
+		moniker = types.DoNotModifyDesc
+	}
+	identity := req.FormValue("identity")
+	if identity == "" {
+		identity = types.DoNotModifyDesc
+	}
+	website := req.FormValue("website")
+	if website == "" {
+		website = types.DoNotModifyDesc
+	}
+	secu := req.FormValue("securityContact")
+	if secu == "" {
+		secu = types.DoNotModifyDesc
+	}
+	details := req.FormValue("details")
+	if details == "" {
+		details = types.DoNotModifyDesc
+	}
+	return moniker, identity, website, secu, details
+}
 
 func parseBaseArgs(w http.ResponseWriter, req *http.Request) (string, string, string, int64, uint64, uint64, bool) {
 
 	//为了确保 createValidator交易是from账户发出的，validator的地址就直接是这个from;
 	//只能是 设置 提取奖金的地址；那么就要保证 from validator delegator是一致的；但是 又没有验证；因为它本身就是使用相同的值；
 	//要保证delegator跟from一致；
-	from, ok := util.CheckFromAddressVar(req)
+	/*from, ok := util.CheckFromAddressVar(req)
 	if !ok {
 		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "invalid from address"))
+		return "", "", "", 0, 0, 0, false
+	}*/
+	from, gas, nonce, privateKey, ok := parseBasicArgs(w, req)
+	if !ok {
 		return "", "", "", 0, 0, 0, false
 	}
 	amount, ok := util.CheckAmountVar(req)
@@ -243,7 +354,7 @@ func parseBaseArgs(w http.ResponseWriter, req *http.Request) (string, string, st
 		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "invalid amount"))
 		return "", "", "", 0, 0, 0, false
 	}
-	gas, ok := util.CheckGasVar(req)
+	/*gas, ok := util.CheckGasVar(req)
 	if !ok {
 		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "invalid gas"))
 		return "", "", "", 0, 0, 0, false
@@ -257,7 +368,7 @@ func parseBaseArgs(w http.ResponseWriter, req *http.Request) (string, string, st
 	if !ok {
 		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "invalid private key"))
 		return "", "", "", 0, 0, 0, false
-	}
+	}*/
 	delegatorAddrStr := from
 	return from, delegatorAddrStr, privateKey, amount, gas, nonce, true
 }

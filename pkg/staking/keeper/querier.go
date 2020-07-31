@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/staking/types"
 	s "github.com/ci123chain/ci123chain/pkg/staking/types"
@@ -98,7 +97,6 @@ func queryValidators(ctx sdk.Context, req abci.RequestQuery, k StakingKeeper) ([
 	}
 
 	validators := k.GetAllValidators(ctx)
-	fmt.Println(validators)
 	filteredVals := make([]types.Validator, 0, len(validators))
 
 	for _, val := range validators {

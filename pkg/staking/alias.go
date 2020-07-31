@@ -30,6 +30,7 @@ var (
 	DefaultGenesisState                = types.DefaultGenesisState
 
 	NewCreateValidatorMsg = types.NewCreateValidatorTx
+	NewEditValidatorMsg = types.NewEditValidatorTx
 	NewDelegateMsg = types.NewDelegateTx
 	NewRedelegateMsg = types.NewRedelegateTx
 	NewUndelegateMsg = types.NewUndelegateTx

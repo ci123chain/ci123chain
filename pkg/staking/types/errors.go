@@ -30,6 +30,7 @@ const (
 )
 
 var (
+	ErrCommissionUpdateTime = Register(StakingCodespace, 17, "new rate cannot be changed more than once within 24 hours")
 	ErrInvalidRequest = Register(StakingCodespace, 18, "invalid request")
 	ErrCommissionNegative = Register(StakingCodespace, 19, "commission must be positive" )
 	ErrCommissionHuge = Register(StakingCodespace, 20, "commission cannot be more than 100%")
