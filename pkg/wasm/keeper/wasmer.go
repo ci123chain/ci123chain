@@ -382,11 +382,17 @@ func Serialize(raw []interface{}) (res []byte) {
 			}
 			sink.WriteString(r)
 
+		case uint32:
+			sink.WriteU32(r)
+
 		case uint64:
 			sink.WriteU64(r)
 
-		case uint32:
-			sink.WriteU32(r)
+		case int32:
+			sink.WriteI32(r)
+
+		case int64:
+			sink.WriteI64(r)
 
 		case []byte:
 			sink.WriteBytes(r)

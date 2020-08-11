@@ -25,6 +25,14 @@ func (sink Sink) WriteU64(i uint64) {
 	sink.writeLittleEndian(i)
 }
 
+func (sink Sink) WriteI32(i int32) {
+	sink.writeLittleEndian(i)
+}
+
+func (sink Sink) WriteI64(i int64) {
+	sink.writeLittleEndian(i)
+}
+
 func (sink Sink) WriteString(s string) {
 	sink.WriteU32(uint32(len(s)))
 	sink.buf.WriteString(s)
