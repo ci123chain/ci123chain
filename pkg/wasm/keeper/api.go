@@ -131,7 +131,7 @@ func performSend(context unsafe.Pointer, to int32, amount int64) int32 {
 
 func getCreator(context unsafe.Pointer, CreatorPtr int32) {
 	creatorAddr := Address{} //contractAddress
-	copy(creatorAddr[:], creator.String())
+	copy(creatorAddr[:], creator.Bytes())
 
 	var instanceContext = wasm.IntoInstanceContext(context)
 	var memory = instanceContext.Memory().Data()
@@ -141,7 +141,7 @@ func getCreator(context unsafe.Pointer, CreatorPtr int32) {
 
 func getInvoker(context unsafe.Pointer, invokerPtr int32) {
 	invokerAddr := Address{} //contractAddress
-	copy(invokerAddr[:], invoker.String())
+	copy(invokerAddr[:], invoker.Bytes())
 
 	var instanceContext = wasm.IntoInstanceContext(context)
 	var memory = instanceContext.Memory().Data()
@@ -238,7 +238,13 @@ func callContract(context unsafe.Pointer, addrPtr, inputPtr, inputSize int32) in
 	SetStore(prefixStore)
 	SetCreator(contractAddress)
 
+	//preContract := ""
+	//tempPreContract := preContract
+	//SetPreContract(tempCreator)
+
 	res, err := keeper.wasmer.Call(code, input)
+
+	//SetPreContract(tempPreContract)
 	SetStore(tempStore)
 	SetCreator(tempCreator)
 	if err != nil {
