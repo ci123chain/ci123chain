@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
@@ -11,8 +10,6 @@ import (
 	wasm "github.com/wasmerio/go-ext-wasm/wasmer"
 	"io/ioutil"
 	"strconv"
-	"strings"
-	"unicode/utf8"
 	"unsafe"
 )
 
@@ -107,9 +104,6 @@ func performSend(context unsafe.Pointer, to int32, amount int64) int32 {
 	var toAddr Address
 	copy(toAddr[:], memory[to:to+AddressSize])
 
-	fmt.Println("send to: " + toAddr.ToString())
-	fmt.Printf("send amount: %d\n", amount)
-
 	coinUint, err := strconv.ParseUint(string(amount),10,64)
 	if err != nil {
 		return 0
@@ -127,6 +121,16 @@ func performSend(context unsafe.Pointer, to int32, amount int64) int32 {
 		return 0
 	}
 	return 1
+}
+
+func getPreCaller(context unsafe.Pointer, callerPtr int32) {
+	precallerAddress := Address{}
+	copy(precallerAddress[:], precaller.Bytes())
+
+	var instanceContext = wasm.IntoInstanceContext(context)
+	var memory = instanceContext.Memory().Data()
+
+	copy(memory[callerPtr:callerPtr+AddressSize], precallerAddress[:])
 }
 
 func getCreator(context unsafe.Pointer, CreatorPtr int32) {
@@ -148,6 +152,17 @@ func getInvoker(context unsafe.Pointer, invokerPtr int32) {
 
 	copy(memory[invokerPtr:invokerPtr+AddressSize], invokerAddr[:])
 }
+
+func selfAddress(context unsafe.Pointer, contractPtr int32) {
+	contractAddress := Address{}
+	copy(contractAddress[:], selfAddr.Bytes())
+
+	var instanceContext = wasm.IntoInstanceContext(context)
+	var memory = instanceContext.Memory().Data()
+
+	copy(memory[contractPtr:contractPtr+AddressSize], contractAddress[:])
+}
+
 
 func getTime(_ unsafe.Pointer) int64 {
 	now := ctx.BlockHeader().Time //blockHeader.Time
@@ -202,12 +217,8 @@ func callContract(context unsafe.Pointer, addrPtr, inputPtr, inputSize int32) in
 
 	input := memory[inputPtr : inputPtr+inputSize]
 
-	fmt.Println("call contract: " + addr.ToString())
-	fmt.Print("call param: ")
-	fmt.Println(input)
-
-	contractAddress := sdk.HexToAddress(addr.ToString())
-	if contractAddress == creator {
+	contractAddress := sdk.ToAccAddress(addr[:])
+	if contractAddress == selfAddr {
 		panic(errors.New("don't call yourself"))
 	}
 
@@ -233,20 +244,23 @@ func callContract(context unsafe.Pointer, addrPtr, inputPtr, inputSize int32) in
 	prefixStoreKey := wasmtypes.GetContractStorePrefixKey(contractAddress)
 	prefixStore := NewStore(ctx.KVStore(keeper.storeKey), prefixStoreKey)
 
+	newcreator := keeper.GetCreator(*ctx, contractAddress)
+
+	tempSelfAddr := selfAddr
 	tempCreator := creator
 	tempStore := store
+	tempPreCaller := precaller
 	SetStore(prefixStore)
-	SetCreator(contractAddress)
-
-	//preContract := ""
-	//tempPreContract := preContract
-	//SetPreContract(tempCreator)
+	SetCreator(newcreator)
+	SetPreCaller(selfAddr)
+	SetSelfAddr(contractAddress)
 
 	res, err := keeper.wasmer.Call(code, input)
 
-	//SetPreContract(tempPreContract)
 	SetStore(tempStore)
 	SetCreator(tempCreator)
+	SetSelfAddr(tempSelfAddr)
+	SetPreCaller(tempPreCaller)
 	if err != nil {
 		panic(err)
 	}
@@ -294,122 +308,6 @@ func destroyContract(context unsafe.Pointer) {
 	return
 }
 
-func migrateContract(context unsafe.Pointer, codePtr, codeSize, namePtr, nameSize, verPtr, verSize,
-	authorPtr, authorSize, emailPtr, emailSize, descPtr, descSize, initPtr, initSize, newAddrPtr int32) int32 {
-	var instanceContext = wasm.IntoInstanceContext(context)
-	var memory = instanceContext.Memory().Data()
-
-	var code, name, version, author, email, desc, init = memory[codePtr : codePtr+codeSize],
-		memory[namePtr : namePtr+nameSize],
-		memory[verPtr : verPtr+verSize],
-		memory[authorPtr : authorPtr+authorSize],
-		memory[emailPtr : emailPtr+emailSize],
-		memory[descPtr : descPtr+descSize],
-		memory[initPtr : initPtr+initSize]
-
-	if !utf8.ValidString(string(name)) {
-		panic("invalid utf8 name")
-	}
-	if !utf8.ValidString(string(version)) {
-		panic("invalid utf8 version")
-	}
-	if !utf8.ValidString(string(author)) {
-		panic("invalid utf8 author")
-	}
-	if !utf8.ValidString(string(email)) {
-		panic("invalid utf8 email")
-	}
-	if !utf8.ValidString(string(desc)) {
-		panic("invalid utf8 desc")
-	}
-	if !utf8.ValidString(string(init)) {
-		panic("invalid utf8 init")
-	}
-
-	newCodeHash, err := hex.DecodeString(string(code))
-	if err != nil {
-		panic(err)
-	}
-
-	oldContractAddr := creator
-	ccstore := ctx.KVStore(keeper.storeKey)
-	contractBz := ccstore.Get(wasmtypes.GetContractAddressKey(oldContractAddr))
-	if contractBz == nil {
-		panic(errors.New("get contract address failed"))
-	}
-	var contract wasmtypes.ContractInfo
-	keeper.cdc.MustUnmarshalBinaryBare(contractBz, &contract)
-
-	newContractAddr := keeper.generateContractAddress(newCodeHash)
-	existingAcct := keeper.AccountKeeper.GetAccount(*ctx, newContractAddr)
-	if existingAcct != nil {
-		panic("Contract account exists")
-	}
-
-	prefix := "s/k:" + keeper.storeKey.Name() + "/"
-	oldKey := wasmtypes.GetContractStorePrefixKey(oldContractAddr)
-
-	startKey := append([]byte(prefix), oldKey...)
-	endKey := EndKey(startKey)
-
-	iter := keeper.cdb.Iterator(startKey, endKey)
-	defer iter.Close()
-
-	prefixStoreKey := wasmtypes.GetContractStorePrefixKey(newContractAddr)
-	prefixStore := NewStore(ctx.KVStore(keeper.storeKey), prefixStoreKey)
-
-	for iter.Valid() {
-		key := string(iter.Key())
-		realKey := strings.Split(key, string(startKey))
-		value := iter.Value()
-		prefixStore.Set([]byte(realKey[1]), value)
-		iter.Next()
-	}
-
-	codeInfo := wasmtypes.NewCodeInfo(strings.ToUpper(hex.EncodeToString(newCodeHash)), invoker)
-	ccstore.Set(wasmtypes.GetCodeKey(newCodeHash), keeper.cdc.MustMarshalBinaryBare(codeInfo))
-
-	var initMsg json.RawMessage
-	var createdAt *wasmtypes.CreatedAt
-	if len(init) != 0 {
-		initMsg = init
-		wc, err := keeper.wasmer.GetWasmCode(newCodeHash)
-		if err != nil {
-			wc = store.Get(newCodeHash)
-			fileName := keeper.wasmer.FilePathMap[fmt.Sprintf("%x", newCodeHash)]
-			err = ioutil.WriteFile(keeper.wasmer.HomeDir + "/" + fileName, wc, wasmtypes.ModePerm)
-			if err != nil {
-				panic(err)
-			}
-		}
-		code = wc
-		input, err := handleArgs(initMsg)
-		if err != nil {
-			panic(err)
-		}
-		_, err = keeper.wasmer.Call(code, input)
-		if err != nil {
-			panic(err)
-		}
-		createdAt = wasmtypes.NewCreatedAt(*ctx)
-	} else {
-		initMsg = contract.InitMsg
-		createdAt = contract.Created
-	}
-	contractInfo := wasmtypes.NewContractInfo(newCodeHash, invoker, initMsg, string(name), string(version), string(author), string(email), string(desc), createdAt)
-	ccstore.Set(wasmtypes.GetContractAddressKey(newContractAddr), keeper.cdc.MustMarshalBinaryBare(contractInfo))
-
-	Account := keeper.AccountKeeper.GetAccount(*ctx, invoker)
-	Account.AddContract(newContractAddr)
-	keeper.AccountKeeper.SetAccount(*ctx, Account)
-	//ccstore.Delete(wasmtypes.GetContractAddressKey(oldContractAddr))
-	//ccstore.Delete(wasmtypes.GetCodeKey(codeHash))
-
-	var addr = memory[newAddrPtr : newAddrPtr+AddressSize]
-	copy(addr, newContractAddr.Bytes())
-
-	return 1 // bool
-}
 
 func toString(a interface{}) string {
 	if v, p := a.(int); p {
@@ -441,15 +339,6 @@ func panicContract(context unsafe.Pointer, dataPtr, dataSize int32) {
 	var memory = instanceContext.Memory().Data()
 
 	data := memory[dataPtr: dataPtr + dataSize]
-	fmt.Printf("panic: %s\n", string(data))
 	panic(string(data))
 }
 
-func EndKey(startKey []byte) (endKey []byte){
-	key := string(startKey)
-	length := len(key)
-	last := []rune(key[length-1:])
-	end := key[:length-1] + string(last[0] + 1)
-	endKey = []byte(end)
-	return
-}

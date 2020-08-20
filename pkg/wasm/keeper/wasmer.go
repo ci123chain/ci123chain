@@ -7,8 +7,10 @@ package keeper
 // extern void delete_db(void*, int, int);
 //
 // extern int send(void*, int, long long);
+// extern void get_pre_caller(void*, int);
 // extern void get_creator(void*, int);
 // extern void get_invoker(void*, int);
+// extern void self_address(void*, int);
 // extern long long get_time(void*);
 //
 // extern int get_input_length(void*, int);
@@ -17,7 +19,6 @@ package keeper
 // extern void return_contract(void*, int, int);
 // extern int call_contract(void*, int, int, int);
 // extern void destroy_contract(void*);
-// extern int migrate_contract(void*, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int);
 // extern void panic_contract(void*, int, int);
 //
 // extern void addgas(void*, int);
@@ -71,6 +72,11 @@ func send(context unsafe.Pointer, to int32, amount int64) int32 {
 	return performSend(context, to, amount)
 }
 
+//export get_pre_caller
+func get_pre_caller(context unsafe.Pointer, callerPtr int32) {
+	getPreCaller(context, callerPtr)
+}
+
 //export get_creator
 func get_creator(context unsafe.Pointer, creatorPtr int32) {
 	getCreator(context, creatorPtr)
@@ -79,6 +85,11 @@ func get_creator(context unsafe.Pointer, creatorPtr int32) {
 //export get_invoker
 func get_invoker(context unsafe.Pointer, invokerPtr int32) {
 	getInvoker(context, invokerPtr)
+}
+
+//export self_address
+func self_address(context unsafe.Pointer, contractPtr int32) {
+	selfAddress(context, contractPtr)
 }
 
 //export get_time
@@ -109,13 +120,6 @@ func return_contract(context unsafe.Pointer, ptr, size int32) {
 //export call_contract
 func call_contract(context unsafe.Pointer, addrPtr, paramPtr, paramSize int32) int32 {
 	return callContract(context, addrPtr, paramPtr, paramSize)
-}
-
-//export migrate_contract
-func migrate_contract(context unsafe.Pointer, codePtr, codeSize, namePtr, nameSize, verPtr, verSize,
-	authorPtr, authorSize, emailPtr, emailSize, descPtr, descSize, initPtr, initSize, newAddrPtr int32) int32 {
-	return migrateContract(context, codePtr, codeSize, namePtr, nameSize, verPtr, verSize,
-		authorPtr, authorSize, emailPtr, emailSize, descPtr, descSize, initPtr, initSize, newAddrPtr)
 }
 
 //export destroy_contract
@@ -153,6 +157,11 @@ func addgas(context unsafe.Pointer, gas int32) {
 	return
 }
 
+var precaller sdk.AccAddress
+func SetPreCaller(addr sdk.AccAddress) {
+	precaller = addr
+}
+
 var creator sdk.AccAddress
 func SetCreator(addr sdk.AccAddress) {
 	creator = addr
@@ -161,6 +170,11 @@ func SetCreator(addr sdk.AccAddress) {
 var invoker sdk.AccAddress
 func SetInvoker(addr sdk.AccAddress) {
 	invoker = addr
+}
+
+var selfAddr sdk.AccAddress
+func SetSelfAddr(addr sdk.AccAddress) {
+	selfAddr = addr
 }
 
 var keeper *Keeper
@@ -252,7 +266,6 @@ func (w *Wasmer) Call(code []byte, input []byte) (res []byte, err error) {
 	}
 
 	inputData[InputDataTypeParam] = input
-	fmt.Println(inputData)
 	defer func() {
 		if r := recover(); r != nil{
 			switch x := r.(type) {
@@ -291,6 +304,8 @@ func getInstance(code []byte) (*wasmer.Instance, error) {
 	_, _ = imports.Append("write_db", write_db, C.write_db)
 	_, _ = imports.Append("delete_db", delete_db, C.delete_db)
 
+	_, _ = imports.Append("get_pre_caller", get_pre_caller, C.get_pre_caller)
+	_, _ = imports.Append("self_address", selfAddress, C.self_address)
 	_, _ = imports.Append("get_creator", get_creator, C.get_creator)
 	_, _ = imports.Append("get_invoker", get_invoker, C.get_invoker)
 	_, _ = imports.Append("get_time", get_time, C.get_time)
@@ -301,7 +316,6 @@ func getInstance(code []byte) (*wasmer.Instance, error) {
 	_, _ = imports.Append("notify_contract", notify_contract, C.notify_contract)
 	_, _ = imports.Append("call_contract", call_contract, C.call_contract)
 	_, _ = imports.Append("destroy_contract", destroy_contract, C.destroy_contract)
-	_, _ = imports.Append("migrate_contract", migrate_contract, C.migrate_contract)
 	_, _ = imports.Append("panic_contract", panic_contract, C.panic_contract)
 
 	_, _ = imports.Append("addgas", addgas, C.addgas)

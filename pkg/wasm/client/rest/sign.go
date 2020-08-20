@@ -14,56 +14,14 @@ import (
 	sdk "github.com/ci123chain/ci123chain/sdk/wasm"
 	"io/ioutil"
 	"net/http"
-	"strings"
 )
 
 var cdc = app.MakeCodec()
 
-func buildStoreCodeMsg(r *http.Request) ([]byte, error) {
-	var wasmcode []byte
-	//check params
-	from, gas, nonce,  priv, _, err := getArgs(r)
-	if err != nil {
-		return nil, err
-	}
-	wasmcode, err = getWasmCode(r)
-	if err != nil {
-		return nil, err
-	}
-	if wasmcode == nil {
-		return nil, errors.New("wasmcode can not be empty")
-	}
-	ok := wasm.IsValidaWasmFile(wasmcode)
-	if ok != nil {
-		return nil, ok
-	}
-	txByte, err := sdk.SignStoreCodeMsg(from, gas, nonce, priv, from, wasmcode)
-	if err != nil {
-		return nil, err
-	}
-	return txByte, nil
-}
-
-func buildUninstallMsg(r *http.Request, hash []byte) ([]byte, error) {
-	//check params
-	from, gas, nonce,  priv, _, err := getArgs(r)
-	if err != nil {
-		return nil, err
-	}
-
-	txByte, err := sdk.SignUninstallMsg(from, gas, nonce, priv, from, hash)
-	if err != nil {
-		return nil, err
-	}
-	return txByte, nil
-}
-
 func buildInstantiateContractMsg(r *http.Request) ([]byte, error) {
-
-	codeHash := r.FormValue("codeHash")
-	hash, err := hex.DecodeString(strings.ToLower(codeHash))
-	if err != nil {
-		return nil, errors.New("decode codeHash fail")
+	wasmCode, err := getWasmCode(r)
+	if err != nil || wasmCode == nil {
+		return nil, errors.New("get wasmCode error")
 	}
 	name, version, author, email, describe, err := adjustInstantiateParams(r)
 	if err != nil {
@@ -74,7 +32,7 @@ func buildInstantiateContractMsg(r *http.Request) ([]byte, error) {
 		return nil, err
 	}
 
-	txByte, err := sdk.SignInstantiateContractMsg(from, gas, nonce, hash, priv, from, name, version, author, email, describe, args)
+	txByte, err := sdk.SignInstantiateContractMsg(wasmCode, from, gas, nonce, priv, from, name, version, author, email, describe, args)
 	if err != nil {
 		return nil, err
 	}
@@ -96,6 +54,30 @@ func buildExecuteContractMsg(r *http.Request) ([]byte, error) {
 	}
 
 	txByte, err := sdk.SignExecuteContractMsg(from, gas, nonce, priv, from, contractAddress, args)
+	if err != nil {
+		return nil, err
+	}
+	return txByte, nil
+}
+
+func buildMigrateContractMsg(r *http.Request) ([]byte, error) {
+	wasmCode, err := getWasmCode(r)
+	if err != nil || wasmCode == nil {
+		return nil, errors.New("get wasmCode error")
+	}
+	name, version, author, email, describe, err := adjustInstantiateParams(r)
+	if err != nil {
+		return nil, err
+	}
+	from, gas, nonce, priv, args, err := getArgs(r)
+	if err != nil {
+		return nil, err
+	}
+
+	contract := r.FormValue("contractAddress")
+	contractAddr := types.HexToAddress(contract)
+
+	txByte, err := sdk.SignMigrateContractMsg(wasmCode, from, gas, nonce, priv, from, name, version, author, email, describe, contractAddr, args)
 	if err != nil {
 		return nil, err
 	}

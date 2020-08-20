@@ -28,12 +28,14 @@ func NewQueryCodeInfoParams(hashStr string) CodeInfoParams {
 
 type ContractStateParam struct {
 	ContractAddress  sdk.AccAddress  `json:"contract_address"`
+	InvokerAddress	 sdk.AccAddress	 `json:"invoker_address"`
 	QueryMessage     []byte          `json:"query_message"`
 }
 
-func NewContractStateParam(addr sdk.AccAddress, msg []byte) ContractStateParam {
+func NewContractStateParam(addr, invokerAddr sdk.AccAddress,msg []byte) ContractStateParam {
 	param := ContractStateParam{
 		ContractAddress: addr,
+		InvokerAddress:  invokerAddr,
 		QueryMessage:    msg,
 	}
 	return param

@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -17,7 +16,6 @@ import (
 	"io/ioutil"
 	"path"
 	"strconv"
-	"strings"
 )
 
 func init() {
@@ -50,46 +48,16 @@ var wasmCmd = &cobra.Command{
 
 		funcName := args[0]
 		switch funcName {
-		case "install":
-			return installContract()
 		case "init":
 			return initContract()
-		case "invoke":
-			return invokeContract()
+		case "execute":
+			return executeContract()
+		case "migrate":
+			return migrateContract()
 		}
 
 		return nil
 	},
-}
-
-func installContract() error {
-	ctx, err := client.NewClientContextFromViper(cdc)
-	if err != nil {
-		return  err
-	}
-	fpath := viper.GetString(helper.FlagFile)
-	fext := path.Ext(fpath)
-	if fext != ".wasm" {
-		return errors.New("unexpected file")
-	}
-	code, err := ioutil.ReadFile(fpath)
-	if err != nil {
-		return err
-	}
-	if ok := wasm.IsValidaWasmFile(code); ok != nil {
-		return ok
-	}
-	from, gas, nonce, key, _, err := GetArgs(ctx)
-	if err != nil {
-		return err
-	}
-	txByte, err := sdk.SignStoreCodeMsg(from, gas, nonce, key, from, code)
-	txid, err := ctx.BroadcastSignedData(txByte)
-	if err != nil {
-		return err
-	}
-	fmt.Println(txid)
-	return nil
 }
 
 func initContract() error {
@@ -101,10 +69,14 @@ func initContract() error {
 	if err != nil {
 		return err
 	}
-	hash := viper.GetString(helper.FlagHash)
-	Hash, err := hex.DecodeString(strings.ToLower(hash))
+	fpath := viper.GetString(helper.FlagFile)
+	fext := path.Ext(fpath)
+	if fext != ".wasm" {
+		return errors.New("unexpected file")
+	}
+	code, err := ioutil.ReadFile(fpath)
 	if err != nil {
-		return errors.New("decode codeHash fail")
+		return err
 	}
 	name := viper.GetString(helper.FlagName)
 	version := viper.GetString(helper.FlagVersion)
@@ -112,7 +84,7 @@ func initContract() error {
 	email := viper.GetString(helper.FlagEmail)
 	describe := viper.GetString(helper.FlagDescribe)
 
-	txByte, err := sdk.SignInstantiateContractMsg(from, gas, nonce, Hash, key, from, name, version, author, email, describe, args)
+	txByte, err := sdk.SignInstantiateContractMsg(code, from, gas, nonce, key, from, name, version, author, email, describe, args)
 	txid, err := ctx.BroadcastSignedData(txByte)
 	if err != nil {
 		return err
@@ -121,7 +93,7 @@ func initContract() error {
 	return nil
 }
 
-func invokeContract() error {
+func executeContract() error {
 	ctx, err := client.NewClientContextFromViper(cdc)
 	if err != nil {
 		return  err
@@ -142,6 +114,39 @@ func invokeContract() error {
 	return nil
 }
 
+func migrateContract() error {
+	ctx, err := client.NewClientContextFromViper(cdc)
+	if err != nil {
+		return  err
+	}
+	from, gas, nonce, key, args, err := GetArgs(ctx)
+	if err != nil {
+		return err
+	}
+	fpath := viper.GetString(helper.FlagFile)
+	fext := path.Ext(fpath)
+	if fext != ".wasm" {
+		return errors.New("unexpected file")
+	}
+	code, err := ioutil.ReadFile(fpath)
+	if err != nil {
+		return err
+	}
+	name := viper.GetString(helper.FlagName)
+	version := viper.GetString(helper.FlagVersion)
+	author := viper.GetString(helper.FlagAuthor)
+	email := viper.GetString(helper.FlagEmail)
+	describe := viper.GetString(helper.FlagDescribe)
+	contract := viper.GetString(helper.FlagContractAddress)
+	contractAddr := types.HexToAddress(contract)
+	txByte, err := sdk.SignMigrateContractMsg(code, from, gas, nonce, key, from, name, version, author, email, describe, contractAddr, args)
+	txid, err := ctx.BroadcastSignedData(txByte)
+	if err != nil {
+		return err
+	}
+	fmt.Println(txid)
+	return nil
+}
 
 func GetArgs(ctx context.Context) (types.AccAddress, uint64, uint64, string, json.RawMessage,  error) {
 	var args json.RawMessage

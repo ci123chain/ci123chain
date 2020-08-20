@@ -176,7 +176,7 @@ func queryContractStateAllHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		if !rest.CheckHeightAndProve(w, height, prove, types.DefaultCodespace) {
 			return
 		}
-		params := types.NewContractStateParam(contractAddress, queryParam)
+		params := types.NewContractStateParam(contractAddress, sdk.AccAddress{}, queryParam)
 		bz, Er := cliCtx.Cdc.MarshalJSON(params)
 		if Er != nil {
 			rest.WriteErrorRes(w, sdk.ErrInternal("marshal failed"))

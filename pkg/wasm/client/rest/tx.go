@@ -1,147 +1,29 @@
 package rest
 
 import (
-	"encoding/hex"
-	"github.com/gorilla/mux"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
 	"github.com/ci123chain/ci123chain/pkg/client"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/util"
-	"github.com/ci123chain/ci123chain/pkg/wasm/keeper"
 	"github.com/ci123chain/ci123chain/pkg/wasm/types"
+	"github.com/gorilla/mux"
 	"net/http"
 )
 
+const CAN_MIGRATE string = `{"method":"canMigrate","args": [""]}`
 func registerTxRoutes(cliCtx context.Context, r *mux.Router)  {
-	r.HandleFunc("/wasm/contract/install", storeCodeHandler(cliCtx)).Methods("POST")
-	r.HandleFunc("/wasm/contract/uninstall", uninstallHandler(cliCtx)).Methods("POST")
 	r.HandleFunc("/wasm/contract/init", instantiateContractHandler(cliCtx)).Methods("POST")
 	r.HandleFunc("/wasm/contract/execute", executeContractHandler(cliCtx)).Methods("POST")
-}
-
-func storeCodeHandler(cliCtx context.Context) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-
-		async := r.FormValue("async")
-		ok, err := util.CheckBool(async)  //default async
-		if err != nil {
-			rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace,"error async"))
-
-			return
-		}
-
-		wasmCode, err := getWasmCode(r)
-		if err != nil || wasmCode == nil {
-			rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "get wasmCode error"))
-			return
-		}
-		//checkContractIsExist
-		hash := keeper.MakeCodeHash(wasmCode)
-		params := types.NewContractExistParams(hash)
-		bz, Er := cliCtx.Cdc.MarshalJSON(params)
-		if Er != nil {
-			rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "marshal failed"))
-			return
-		}
-		_, _, _, err = cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryContractExist, bz, false)
-		if err != nil {
-			rest.WriteErrorRes(w, err.(sdk.Error))
-			return
-		}
-
-		txByte, err := buildStoreCodeMsg(r)
-		if err != nil {
-			rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
-			return
-		}
-		if ok {
-			//async
-			res, err := cliCtx.BroadcastTxAsync(txByte)
-			if err != nil {
-				rest.WriteErrorRes(w, client.ErrBroadcast(types.DefaultCodespace, err))
-				return
-			}
-			rest.PostProcessResponseBare(w, cliCtx, res)
-		}else {
-			//sync
-			res, err := cliCtx.BroadcastSignedData(txByte)
-			if err != nil {
-				rest.WriteErrorRes(w, client.ErrBroadcast(types.DefaultCodespace, err))
-				return
-			}
-			rest.PostProcessResponseBare(w, cliCtx, res)
-		}
-
-	}
-}
-
-func uninstallHandler(cliCtx context.Context) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-
-		async := r.FormValue("async")
-		ok, err := util.CheckBool(async)  //default async
-		if err != nil {
-			rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace,"error async"))
-			return
-		}
-
-		codeHash := r.FormValue("codeHash")
-		//checkContractIsExist
-		hash, err := hex.DecodeString(codeHash)
-		if err != nil {
-			rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace,"error codeHash"))
-			return
-		}
-
-		txByte, err := buildUninstallMsg(r, hash)
-		if err != nil {
-			rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
-			return
-		}
-		if ok {
-			//async
-			res, err := cliCtx.BroadcastTxAsync(txByte)
-			if err != nil {
-				rest.WriteErrorRes(w, client.ErrBroadcast(types.DefaultCodespace, err))
-				return
-			}
-			rest.PostProcessResponseBare(w, cliCtx, res)
-		}else {
-			//sync
-			res, err := cliCtx.BroadcastSignedData(txByte)
-			if err != nil {
-				rest.WriteErrorRes(w, client.ErrBroadcast(types.DefaultCodespace, err))
-				return
-			}
-			rest.PostProcessResponseBare(w, cliCtx, res)
-		}
-
-	}
+	r.HandleFunc("/wasm/contract/migrate", migrateContractHandler(cliCtx)).Methods("POST")
 }
 
 func instantiateContractHandler(cliCtx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		async := r.FormValue("async")
 		ok, err := util.CheckBool(async)  //default async
 		if err != nil {
 			rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace,"error async"))
-			return
-		}
-
-		//check codeID
-		codeHash := r.FormValue("codeHash")
-		params := types.NewQueryCodeInfoParams(codeHash)
-		bz, err := cliCtx.Cdc.MarshalJSON(params)
-		if err != nil {
-			rest.WriteErrorRes(w, sdk.ErrInternal("marshal failed"))
-			return
-		}
-
-		res, _, _, _ := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryCodeInfo, bz, false)
-		if res == nil {
-			rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace,"codeHash does not exists"))
 			return
 		}
 
@@ -172,7 +54,6 @@ func instantiateContractHandler(cliCtx context.Context) http.HandlerFunc {
 }
 
 func executeContractHandler(cliCtx context.Context) http.HandlerFunc {
-
 	return func(w http.ResponseWriter, r *http.Request) {
 		async := r.FormValue("async")
 		ok, err := util.CheckBool(async)  //default async
@@ -201,6 +82,59 @@ func executeContractHandler(cliCtx context.Context) http.HandlerFunc {
 			rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace,"data error"))
 			return
 		}
+		if ok {
+			//async
+			res, err := cliCtx.BroadcastTxAsync(txByte)
+			if err != nil {
+				rest.WriteErrorRes(w, client.ErrBroadcast(types.DefaultCodespace, err))
+				return
+			}
+			rest.PostProcessResponseBare(w, cliCtx, res)
+		}else {
+			//sync
+			res, err := cliCtx.BroadcastSignedData(txByte)
+			if err != nil {
+				rest.WriteErrorRes(w, client.ErrBroadcast(types.DefaultCodespace, err))
+				return
+			}
+			rest.PostProcessResponseBare(w, cliCtx, res)
+		}
+	}
+}
+
+func migrateContractHandler(cliCtx context.Context) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		async := r.FormValue("async")
+		ok, err := util.CheckBool(async)  //default async
+		if err != nil {
+			rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace,"error async"))
+			return
+		}
+		from := r.FormValue("from")
+		sender := sdk.HexToAddress(from)
+		contractAddr := r.FormValue("contractAddress")
+		contractAddress := sdk.HexToAddress(contractAddr)
+		queryParam := []byte(CAN_MIGRATE)
+		params := types.NewContractStateParam(contractAddress, sender, queryParam)
+		bz, Er := cliCtx.Cdc.MarshalJSON(params)
+		if Er != nil {
+			rest.WriteErrorRes(w, sdk.ErrInternal("marshal failed"))
+			return
+		}
+
+		res, _, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryContractState, bz, false)
+		var contractState types.ContractState
+		cliCtx.Cdc.MustUnmarshalJSON(res, &contractState)
+		if contractState.Result != "true" {
+			rest.WriteErrorRes(w, sdk.ErrInternal("No permissions to migrate contracts"))
+			return
+		}
+		txByte, err := buildMigrateContractMsg(r)
+		if err != nil {
+			rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace,"data error"))
+			return
+		}
+
 		if ok {
 			//async
 			res, err := cliCtx.BroadcastTxAsync(txByte)

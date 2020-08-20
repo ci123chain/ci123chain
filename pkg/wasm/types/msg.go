@@ -6,78 +6,10 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/transaction"
 )
 
-type StoreCodeTx struct {
-	transaction.CommonTx
-	Sender      sdk.AccAddress    `json:"sender"`
-	WASMByteCode []byte           `json:"wasm_byte_code"`
-}
-
-func NewStoreCodeTx(from sdk.AccAddress, gas, nonce uint64, sender sdk.AccAddress, wasmCode []byte) StoreCodeTx{
-
-	return StoreCodeTx{
-		CommonTx:     transaction.CommonTx{
-			From:  from,
-			Gas:   gas,
-			Nonce: nonce,
-		},
-		Sender:       sender,
-		WASMByteCode: wasmCode,
-	}
-}
-
-//TODO
-func (msg *StoreCodeTx) ValidateBasic() sdk.Error {
-
-	/*if err := msg.CommonTx.ValidateBasic(); err != nil {
-		return err
-	}
-	return msg.VerifySignature(msg.GetSignBytes(), true)*/
-
-	return nil
-}
-
-func (msg *StoreCodeTx) GetSignBytes() []byte {
-	tmsg := *msg
-	tmsg.Signature = nil
-	signBytes := tmsg.Bytes()
-	return signBytes
-}
-
-func (msg *StoreCodeTx) SetSignature(sig []byte) {}
-
-func (msg *StoreCodeTx) Bytes() []byte {
-	bytes, err := WasmCodec.MarshalBinaryLengthPrefixed(msg)
-	if err != nil {
-		panic(err)
-	}
-
-	return bytes
-}
-
-func (msg *StoreCodeTx) SetPubKey(pub []byte) {
-	msg.PubKey = pub
-}
-
-func (msg *StoreCodeTx) Route() string {
-	return RouteKey
-}
-
-func (msg *StoreCodeTx) GetGas() uint64 {
-	return msg.Gas
-}
-
-func (msg *StoreCodeTx) GetNonce() uint64 {
-	return msg.Nonce
-}
-
-func (msg *StoreCodeTx) GetFromAddress() sdk.AccAddress {
-	return msg.From
-}
-
 type InstantiateContractTx struct {
 	transaction.CommonTx
+	Code    	[]byte              `json:"code"`
 	Sender      sdk.AccAddress      `json:"sender"`
-	CodeHash    []byte              `json:"code_hash"`
 	Name		string				`json:"name,omitempty"`
 	Version     string				`json:"version,omitempty"`
 	Author      string				`json:"author,omitempty"`
@@ -86,7 +18,7 @@ type InstantiateContractTx struct {
 	Args      	json.RawMessage     `json:"args,omitempty"`
 }
 
-func NewInstantiateContractTx(from sdk.AccAddress, gas, nonce uint64, codeHash []byte, sender sdk.AccAddress, name, version, author, email, describe string,
+func NewInstantiateContractTx(code []byte, from sdk.AccAddress, gas, nonce uint64, sender sdk.AccAddress, name, version, author, email, describe string,
 	initMsg json.RawMessage) InstantiateContractTx{
 
 		return InstantiateContractTx{
@@ -95,8 +27,8 @@ func NewInstantiateContractTx(from sdk.AccAddress, gas, nonce uint64, codeHash [
 				Gas:   	gas,
 				Nonce: 	nonce,
 			},
+			Code:       code,
 			Sender:    	sender,
-			CodeHash:  	codeHash,
 			Name:     	name,
 			Version: 	version,
 			Author: 	author,
@@ -230,46 +162,63 @@ func (msg *ExecuteContractTx) GetFromAddress() sdk.AccAddress {
 	return msg.From
 }
 
-type UninstallCodeTx struct {
+type MigrateContractTx struct {
 	transaction.CommonTx
-	Sender      sdk.AccAddress   `json:"sender"`
-	CodeHash 	[]byte           `json:"code_hash"`
+	Code    	[]byte              `json:"code"`
+	Sender      sdk.AccAddress      `json:"sender"`
+	Contract	sdk.AccAddress		`json:"contract"`
+	Name		string				`json:"name,omitempty"`
+	Version     string				`json:"version,omitempty"`
+	Author      string				`json:"author,omitempty"`
+	Email       string				`json:"email,omitempty"`
+	Describe	string				`json:"describe,omitempty"`
+	Args      	json.RawMessage     `json:"args,omitempty"`
 }
 
-func NewUninstallTx(from sdk.AccAddress, gas, nonce uint64, sender sdk.AccAddress, codeHash []byte) UninstallCodeTx{
+func NewMigrateContractTx(code []byte, from sdk.AccAddress, gas, nonce uint64, sender sdk.AccAddress, name, version, author, email, describe string,
+	contract sdk.AccAddress, initMsg json.RawMessage) MigrateContractTx{
 
-	return UninstallCodeTx{
-		CommonTx:     transaction.CommonTx{
-			From:  from,
-			Gas:   gas,
-			Nonce: nonce,
+	return MigrateContractTx{
+		CommonTx: transaction.CommonTx{
+			From:  	from,
+			Gas:   	gas,
+			Nonce: 	nonce,
 		},
-		Sender:     sender,
-		CodeHash:	codeHash,
+		Code:       code,
+		Sender:    	sender,
+		Contract: 	contract,
+		Name:     	name,
+		Version: 	version,
+		Author: 	author,
+		Email:      email,
+		Describe:   describe,
+		Args:   	initMsg,
 	}
 }
 
-func (msg *UninstallCodeTx) ValidateBasic() sdk.Error {
 
+//TODO
+func (msg *MigrateContractTx) ValidateBasic() sdk.Error {
 	/*if err := msg.CommonTx.ValidateBasic(); err != nil {
 		return err
 	}
 	return msg.VerifySignature(msg.GetSignBytes(), true)*/
+
 	return nil
 }
 
-func (msg *UninstallCodeTx) GetSignBytes() []byte {
+func (msg *MigrateContractTx) GetSignBytes() []byte {
 	tmsg := *msg
 	tmsg.Signature = nil
 	signBytes := tmsg.Bytes()
 	return signBytes
 }
 
-func (msg *UninstallCodeTx) SetSignature(sig []byte) {
+func (msg *MigrateContractTx) SetSignature(sig []byte) {
 	msg.Signature = sig
 }
 
-func (msg *UninstallCodeTx) Bytes() []byte {
+func (msg *MigrateContractTx) Bytes() []byte {
 	bytes, err := WasmCodec.MarshalBinaryLengthPrefixed(msg)
 	if err != nil {
 		panic(err)
@@ -278,22 +227,22 @@ func (msg *UninstallCodeTx) Bytes() []byte {
 	return bytes
 }
 
-func (msg *UninstallCodeTx) SetPubKey(pub []byte) {
+func (msg *MigrateContractTx) SetPubKey(pub []byte) {
 	msg.PubKey = pub
 }
 
-func (msg *UninstallCodeTx) Route() string {
+func (msg *MigrateContractTx) Route() string {
 	return RouteKey
 }
 
-func (msg *UninstallCodeTx) GetGas() uint64 {
+func (msg *MigrateContractTx) GetGas() uint64 {
 	return msg.Gas
 }
 
-func (msg *UninstallCodeTx) GetNonce() uint64 {
+func (msg *MigrateContractTx) GetNonce() uint64 {
 	return msg.Nonce
 }
 
-func (msg *UninstallCodeTx) GetFromAddress() sdk.AccAddress {
+func (msg *MigrateContractTx) GetFromAddress() sdk.AccAddress {
 	return msg.From
 }
