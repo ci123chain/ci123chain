@@ -31,7 +31,19 @@ func NewUpgradeTx(from sdk.AccAddress, gas ,nonce uint64, t, name string, height
 
 
 func (msg *UpgradeTx) ValidateBasic() sdk.Error{
-	//return msg.CommonTx.VerifySignature(msg.Bytes(), msg.FabricMode)
+	if err := msg.CommonTx.ValidateBasic(); err != nil {
+		return err
+	}
+
+	if len(msg.Type) == 0 {
+		return ErrCheckParams(DefaultCodespace, "type is invalid")
+	}
+	if msg.Height < 0 {
+		return ErrCheckParams(DefaultCodespace, "height is invalid")
+	}
+	if len(msg.Name) == 0 {
+		return ErrCheckParams(DefaultCodespace, "name is invalid")
+	}
 	return nil
 }
 

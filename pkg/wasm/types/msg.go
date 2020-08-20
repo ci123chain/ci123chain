@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/json"
+	"errors"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/transaction"
 )
@@ -41,10 +42,17 @@ func NewInstantiateContractTx(code []byte, from sdk.AccAddress, gas, nonce uint6
 
 //TODO
 func (msg *InstantiateContractTx) ValidateBasic() sdk.Error {
-	/*if err := msg.CommonTx.ValidateBasic(); err != nil {
+	if err := msg.CommonTx.ValidateBasic(); err != nil {
 		return err
 	}
-	return msg.VerifySignature(msg.GetSignBytes(), true)*/
+
+	if msg.Code == nil {
+		return ErrInvalidMsg(DefaultCodespace, errors.New("code is invalid"))
+	}
+
+	if msg.Sender.Empty() {
+		return ErrInvalidMsg(DefaultCodespace, errors.New("sender is invalid"))
+	}
 
 	return nil
 }
@@ -115,10 +123,21 @@ func NewExecuteContractTx(from sdk.AccAddress, gas, nonce uint64, sender sdk.Acc
 //TODO
 func (msg *ExecuteContractTx) ValidateBasic() sdk.Error {
 
-	/*if err := msg.CommonTx.ValidateBasic(); err != nil {
+	if err := msg.CommonTx.ValidateBasic(); err != nil {
 		return err
 	}
-	return msg.VerifySignature(msg.GetSignBytes(), true)*/
+
+	if msg.Contract.Empty() {
+		return ErrInvalidMsg(DefaultCodespace, errors.New("contractAddress is invalid"))
+	}
+
+	if msg.Sender.Empty() {
+		return ErrInvalidMsg(DefaultCodespace, errors.New("sender is invalid"))
+	}
+
+	if msg.Args == nil {
+		return ErrInvalidMsg(DefaultCodespace, errors.New("args is invalid"))
+	}
 	return nil
 }
 
@@ -196,14 +215,22 @@ func NewMigrateContractTx(code []byte, from sdk.AccAddress, gas, nonce uint64, s
 	}
 }
 
-
-//TODO
 func (msg *MigrateContractTx) ValidateBasic() sdk.Error {
-	/*if err := msg.CommonTx.ValidateBasic(); err != nil {
+	if err := msg.CommonTx.ValidateBasic(); err != nil {
 		return err
 	}
-	return msg.VerifySignature(msg.GetSignBytes(), true)*/
 
+	if msg.Code == nil {
+		return ErrInvalidMsg(DefaultCodespace, errors.New("code is invalid"))
+	}
+
+	if msg.Sender.Empty() {
+		return ErrInvalidMsg(DefaultCodespace, errors.New("sender is invalid"))
+	}
+
+	if msg.Contract.Empty() {
+		return ErrInvalidMsg(DefaultCodespace, errors.New("contract is invalid"))
+	}
 	return nil
 }
 
