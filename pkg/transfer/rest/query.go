@@ -2,22 +2,13 @@ package rest
 
 import (
 	"fmt"
-	"github.com/gorilla/mux"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
+	"github.com/ci123chain/ci123chain/pkg/transfer/types"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/transfer/rest/utils"
-	"github.com/ci123chain/ci123chain/pkg/transfer/types"
 	"github.com/ci123chain/ci123chain/pkg/util"
 	"net/http"
 )
-
-func RegisterTxRoutes(cliCtx context.Context, r *mux.Router)  {
-	r.HandleFunc("/tx/query", QueryTxRequestHandlerFn(cliCtx)).Methods("POST")
-	r.HandleFunc("/tx/sign_transfer", SignTxRequestHandler(cliCtx)).Methods("POST")
-	r.HandleFunc("/tx/transfers", SendRequestHandlerFn(cliCtx)).Methods("POST")
-	r.HandleFunc("/tx/broadcast", BroadcastTxRequest(cliCtx)).Methods("POST")
-	r.HandleFunc("/tx/broadcast_async", BroadcastTxRequestAsync(cliCtx)).Methods("POST")
-}
 
 type TxRequestParams struct {
 	Hash    string    `json:"hash"`

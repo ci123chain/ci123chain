@@ -7,16 +7,11 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/ci123chain/ci123chain/pkg/wasm/types"
-	"github.com/gorilla/mux"
 	"net/http"
 )
 
 const CAN_MIGRATE string = `{"method":"canMigrate","args": [""]}`
-func registerTxRoutes(cliCtx context.Context, r *mux.Router)  {
-	r.HandleFunc("/wasm/contract/init", instantiateContractHandler(cliCtx)).Methods("POST")
-	r.HandleFunc("/wasm/contract/execute", executeContractHandler(cliCtx)).Methods("POST")
-	r.HandleFunc("/wasm/contract/migrate", migrateContractHandler(cliCtx)).Methods("POST")
-}
+
 
 func instantiateContractHandler(cliCtx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

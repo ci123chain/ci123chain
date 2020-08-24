@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"github.com/gorilla/mux"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
@@ -10,14 +9,6 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/wasm/types"
 	"net/http"
 )
-
-func registerQueryRoutes(cliCtx context.Context, r *mux.Router) {
-	//r.HandleFunc("/wasm/codeSearch/list", listCodesHandlerFn(cliCtx)).Methods("POST")
-	r.HandleFunc("/wasm/contract/meta", queryCodeHandlerFn(cliCtx)).Methods("POST")
-	r.HandleFunc("/wasm/contract/list", listContractsByCodeHandlerFn(cliCtx)).Methods("POST")
-	r.HandleFunc("/wasm/contract/info", queryContractHandlerFn(cliCtx)).Methods("POST")
-	r.HandleFunc("/wasm/contract/query", queryContractStateAllHandlerFn(cliCtx)).Methods("POST")
-}
 
 //func listCodesHandlerFn(cliCtx context.Context) http.HandlerFunc {
 //	return func(w http.ResponseWriter, r *http.Request) {
