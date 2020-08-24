@@ -164,6 +164,7 @@ func (ctx *Context) SignWithTx(tx transaction.Transaction, privKey []byte, fabri
 	return tx, nil
 }
 
+// 消息确认 同步
 func (ctx *Context) BroadcastSignedData(data []byte) (sdk.TxResponse, error) {
 	res, err := ctx.BroadcastTx(data)
 	if err != nil {
@@ -175,8 +176,9 @@ func (ctx *Context) BroadcastSignedData(data []byte) (sdk.TxResponse, error) {
 	return res, nil
 }
 
+// 内部调用 BroadcastTxSync，同步等待checktx 消息，消息确认还是异步的
 func (ctx *Context) BroadcastSignedDataAsync(data []byte) (sdk.TxResponse, error) {
-	_, _ = ctx.BroadcastTxAsync(data)
+	_, _ = ctx.BroadcastTxSync(data)
 
 	return sdk.TxResponse{}, nil
 }

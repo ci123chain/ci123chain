@@ -35,7 +35,7 @@ func instantiateContractHandler(cliCtx context.Context) http.HandlerFunc {
 
 		if ok {
 			//async
-			res, err := cliCtx.BroadcastTxAsync(txByte)
+			res, err := cliCtx.BroadcastTxSync(txByte)
 			if err != nil {
 				rest.WriteErrorRes(w, client.ErrBroadcast(types.DefaultCodespace, err))
 				return
@@ -84,7 +84,7 @@ func executeContractHandler(cliCtx context.Context) http.HandlerFunc {
 		}
 		if ok {
 			//async
-			res, err := cliCtx.BroadcastTxAsync(txByte)
+			res, err := cliCtx.BroadcastTxSync(txByte)
 			if err != nil {
 				rest.WriteErrorRes(w, client.ErrBroadcast(types.DefaultCodespace, err))
 				return
@@ -137,7 +137,7 @@ func migrateContractHandler(cliCtx context.Context) http.HandlerFunc {
 
 		if ok {
 			//async
-			res, err := cliCtx.BroadcastTxAsync(txByte)
+			res, err := cliCtx.BroadcastTxSync(txByte)
 			if err != nil {
 				rest.WriteErrorRes(w, client.ErrBroadcast(types.DefaultCodespace, err))
 				return

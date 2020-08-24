@@ -34,7 +34,7 @@ func SendRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		}
 		txByte, err := buildTransferTx(request, false, priv)
 		if err != nil {
-			rest.WriteErrorRes(writer, transaction.ErrSignature(types.DefaultCodespace, errors.New("sign with tx error")))
+			rest.WriteErrorRes(writer, transaction.ErrSignature(types.DefaultCodespace, err))
 			return
 		}
 		isBalanceEnough := CheckBalanceFromParams(cliCtx, request)
@@ -51,7 +51,7 @@ func SendRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 
 		if ok {
 			//async
-			res, err := cliCtx.BroadcastTxAsync(txByte)
+			res, err := cliCtx.BroadcastTxSync(txByte)
 			if err != nil {
 				rest.WriteErrorRes(writer, client.ErrBroadcast(types.DefaultCodespace, err))
 				return

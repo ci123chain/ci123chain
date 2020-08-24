@@ -15,6 +15,7 @@ const (
 type Transaction interface {
 	types.Tx
 	GetSignBytes() []byte
+	GetSignature() []byte
 	SetSignature([]byte)
 	Bytes() []byte
 	SetPubKey([]byte)

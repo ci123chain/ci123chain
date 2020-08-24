@@ -7,6 +7,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/account/exported"
 	"github.com/ci123chain/ci123chain/pkg/auth"
 	"github.com/ci123chain/ci123chain/pkg/auth/types"
+	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
 	"github.com/ci123chain/ci123chain/pkg/fc"
 	"github.com/ci123chain/ci123chain/pkg/transaction"
 )
@@ -22,6 +23,15 @@ func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, fck f
 			newCtx = SetGasMeter(simulate, ctx, 0)
 			return newCtx, transaction.ErrInvalidTx(types.DefaultCodespace, "tx must be StdTx").Result(), true
 		}
+
+		// check sign
+		eth := cryptosuit.NewETHSignIdentity()
+		valid, err := eth.Verifier(stdTx.GetSignBytes(), stdTx.GetSignature(), nil, stdTx.GetFromAddress().Bytes())
+		if !valid || err != nil {
+			return newCtx, transaction.ErrInvalidTx(types.DefaultCodespace, "tx signature invalid").Result(), true
+		}
+
+
 		address := stdTx.GetFromAddress()
 		acc := ak.GetAccount(ctx, address)
 		if acc == nil {

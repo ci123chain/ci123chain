@@ -29,7 +29,8 @@ func (msg *IBCReceiveReceiptMsg) ValidateBasic() sdk.Error {
 		return err
 	}
 	// todo unmarshal to signedIBCMsg
-	return msg.CommonTx.VerifySignature(msg.GetSignBytes(), true)
+	return nil
+	//return msg.CommonTx.VerifySignature(msg.GetSignBytes(), true)
 }
 
 

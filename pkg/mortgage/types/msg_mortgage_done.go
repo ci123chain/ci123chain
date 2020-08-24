@@ -35,7 +35,8 @@ func (msg *MsgMortgageDone) ValidateBasic() sdk.Error {
 	if len(msg.UniqueID) < 1 {
 		return transfer.ErrCheckParams(DefaultCodespace, "param mortgageRecord missing")
 	}
-	return msg.CommonTx.VerifySignature(msg.GetSignBytes(), true)
+	return nil
+	//return msg.CommonTx.VerifySignature(msg.GetSignBytes(), true)
 }
 
 

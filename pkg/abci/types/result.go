@@ -128,6 +128,7 @@ func NewResponseFormatBroadcastTx(res *ctypes.ResultBroadcastTx) TxResponse {
 		Code:res.Code,
 		Data:strings.ToUpper(hex.EncodeToString(res.Data)),
 		TxHash:strings.ToUpper(hex.EncodeToString(res.Hash)),
+		RawLog: res.Log,
 		Logs: parsedLogs,
 	}
 }
