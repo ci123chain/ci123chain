@@ -11,7 +11,7 @@ func RegisterRoutes(cliCtx context.Context, r *mux.Router) {
 	registerQueryRoutes(cliCtx, r)
 }
 
-func registerTxRoutes(cliCtx context.Context, r *mux.Router)  {
+func registerTxRoutes(cliCtx context.Context, r *mux.Router) {
 	r.HandleFunc("/wasm/contract/init", instantiateContractHandler(cliCtx)).Methods("POST")
 	r.HandleFunc("/wasm/contract/execute", executeContractHandler(cliCtx)).Methods("POST")
 	r.HandleFunc("/wasm/contract/migrate", migrateContractHandler(cliCtx)).Methods("POST")

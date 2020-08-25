@@ -10,7 +10,6 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/transfer"
 	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/tendermint/tendermint/crypto/merkle"
-	cmn "github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/types"
 	"net/http"
 	"net/url"
@@ -22,9 +21,9 @@ const (
 )
 
 type Response struct {
-	Ret 	uint32 	`json:"ret"`
-	Data 	interface{}	`json:"data"`
-	Message	string	`json:"message"`
+	Code 	uint32 	`json:"code"`
+	CodeSpace string `json:"codespace"`
+	Log	string	`json:"log"`
 }
 
 // ErrorResponse defines the attributes of a JSON error response.
@@ -85,9 +84,9 @@ func CheckHeightAndProve(w http.ResponseWriter, height, prove string, codespace 
 
 func NewErrorRes(err sdk.Error) Response {
 	return Response{
-		Ret:		uint32(err.Code()),
-		Data:		"",
-		Message:	err.Data().(cmn.FmtError).Error(),
+		Code:		uint32(err.Code()),
+		CodeSpace:  string(err.Codespace()),
+		Log:		err.ABCILog(),
 	}
 }
 
@@ -99,22 +98,22 @@ func WriteErrorRes(w http.ResponseWriter, err sdk.Error) {
 }
 
 func PostProcessResponseBare(w http.ResponseWriter, ctx context.Context, body interface{}) {
-	var res Response
-	dataJson, err := json.Marshal(body)
-	if err != nil {
-		res = Response{
-			Ret:     0,
-			Data:    string(dataJson),
-			Message: "",
-		}
-	} else {
-		res = Response{
-			Ret:     0,
-			Data:    body,
-			Message: "",
-		}
-	}
-	resp, _ := json.Marshal(res)
+	//var res Response
+	//dataJson, err := json.Marshal(body)
+	//if err != nil {
+	//	res = Response{
+	//		Ret:     0,
+	//		Data:    string(dataJson),
+	//		Message: "",
+	//	}
+	//} else {
+	//	res = Response{
+	//		Ret:     0,
+	//		Data:    body,
+	//		Message: "",
+	//	}
+	//}
+	resp, _ := json.Marshal(body)
 	w.Header().Set("Content-Type", "application/json")
 	_, _ = w.Write(resp)
 }
