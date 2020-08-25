@@ -21,9 +21,9 @@ const (
 )
 
 type Response struct {
-	Code 	uint32 	`json:"code"`
-	CodeSpace string `json:"codespace"`
-	Log	string	`json:"log"`
+	Ret 	int64 	`json:"ret"`
+	Data    json.RawMessage `json:"data"`
+	Message	string	`json:"message"`
 }
 
 // ErrorResponse defines the attributes of a JSON error response.
@@ -83,10 +83,18 @@ func CheckHeightAndProve(w http.ResponseWriter, height, prove string, codespace 
 }
 
 func NewErrorRes(err sdk.Error) Response {
+	buildData := struct {
+		Code sdk.CodeType `json:"code"`
+		CodeSpace sdk.CodespaceType `json:"code_space"`
+	}{
+		err.Code(),
+		err.Codespace(),
+	}
+	data, _ := json.Marshal(buildData)
 	return Response{
-		Code:		uint32(err.Code()),
-		CodeSpace:  string(err.Codespace()),
-		Log:		err.ABCILog(),
+		Ret:		-1,
+		Data:       data,
+		Message:	err.ABCILog(),
 	}
 }
 
@@ -98,22 +106,33 @@ func WriteErrorRes(w http.ResponseWriter, err sdk.Error) {
 }
 
 func PostProcessResponseBare(w http.ResponseWriter, ctx context.Context, body interface{}) {
-	//var res Response
-	//dataJson, err := json.Marshal(body)
-	//if err != nil {
-	//	res = Response{
-	//		Ret:     0,
-	//		Data:    string(dataJson),
-	//		Message: "",
-	//	}
-	//} else {
-	//	res = Response{
-	//		Ret:     0,
-	//		Data:    body,
-	//		Message: "",
-	//	}
-	//}
-	resp, _ := json.Marshal(body)
+	var res Response
+	dataJson, _ := json.Marshal(body)
+	switch body.(type) {
+	case sdk.TxResponse:
+		b := body.(sdk.TxResponse)
+		if b.Code == 0 {
+			res = Response{
+				Ret:     1,
+				Data:    dataJson,
+			}
+		} else {
+			res = Response{
+				Ret:     -1,
+				Data:    dataJson,
+				Message: b.Log,
+			}
+		}
+
+
+	default:
+		res = Response{
+			Ret:     1,
+			Data:    dataJson,
+		}
+	}
+
+	resp, _ := json.Marshal(res)
 	w.Header().Set("Content-Type", "application/json")
 	_, _ = w.Write(resp)
 }

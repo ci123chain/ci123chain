@@ -21,6 +21,7 @@ type Context struct {
 	Verbose 	bool
 	Height 		int64
 	Cdc 		*codec.Codec
+	Code 		int64
 }
 
 func (ctx *Context) GetNode() (rpclient.Client, error) {
@@ -28,6 +29,11 @@ func (ctx *Context) GetNode() (rpclient.Client, error) {
 		return nil, errors.New("must define node URL")
 	}
 	return ctx.Client, nil
+}
+
+func (ctx Context) WithCode (code int64) Context {
+	ctx.Code = code
+	return ctx
 }
 
 func (ctx Context) WithCodec(cdc *codec.Codec) Context {
