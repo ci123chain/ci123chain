@@ -13,10 +13,6 @@ func SignCreateValidatorMSg(from string, amount, gas, nonce uint64, priv string,
 	validatorAddress, delegatorAddress string, rate, maxRate, maxChangeRate int64,
 	moniker, identity, website, securityContact, details string, publicKey string) ([]byte, error) {
 
-	privateKey, err := hex.DecodeString(priv)
-	if err != nil {
-		return nil, err
-	}
 	by, err := hex.DecodeString(publicKey)
 	if err != nil {
 		return nil, err
@@ -35,13 +31,13 @@ func SignCreateValidatorMSg(from string, amount, gas, nonce uint64, priv string,
 	selfDelegation, r, mr, mxr := CreateParseArgs(minSelfDelegation, rate, maxRate, maxChangeRate)
 	tx := staking.NewCreateValidatorMsg(fromAddr, gas, nonce, amt,selfDelegation,validatorAddr, delegatorAddr,r,mr,mxr,
 	moniker, identity, website, securityContact, details, public)
-
-	sid := cryptosuit.NewFabSignIdentity()
-	pub, err  := sid.GetPubKey(privateKey)
-
-	tx.SetPubKey(pub)
-	signbyte := tx.GetSignBytes()
-	signature, err := sid.Sign(signbyte, privateKey)
+	var signature []byte
+	privPub, err := hex.DecodeString(priv)
+	eth := cryptosuit.NewETHSignIdentity()
+	signature, err = eth.Sign(tx.GetSignBytes(), privPub)
+	if err != nil {
+		return nil, err
+	}
 	tx.SetSignature(signature)
 
 	return tx.Bytes(), nil

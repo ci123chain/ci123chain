@@ -28,8 +28,6 @@ func NewUpgradeTx(from sdk.AccAddress, gas ,nonce uint64, t, name string, height
 	}
 }
 
-
-
 func (msg *UpgradeTx) ValidateBasic() sdk.Error{
 	if err := msg.CommonTx.ValidateBasic(); err != nil {
 		return err

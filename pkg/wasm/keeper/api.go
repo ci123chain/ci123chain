@@ -104,7 +104,7 @@ func performSend(context unsafe.Pointer, to int32, amount int64) int32 {
 	var toAddr Address
 	copy(toAddr[:], memory[to:to+AddressSize])
 
-	coinUint, err := strconv.ParseUint(string(amount),10,64)
+	coinUint, err := strconv.ParseUint(strconv.FormatInt(amount, 10),10,64)
 	if err != nil {
 		return 0
 	}

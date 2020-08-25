@@ -16,57 +16,31 @@ import (
 	"net/http"
 )
 
-
-
-func SendRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
-	return func(writer http.ResponseWriter, request *http.Request) {
-		priv := request.FormValue("privateKey")
-		err := util.CheckStringLength(1, 100, priv)
-		if err != nil {
-			rest.WriteErrorRes(writer, transaction.ErrBadPrivkey(types.DefaultCodespace, errors.New("param privateKey not found")) )
-			return
-		}
-		async := request.FormValue("async")
-		ok, err := util.CheckBool(async)  //default async
-		if err != nil {
-			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"error async"))
-			return
-		}
-		txByte, err := buildTransferTx(request, false, priv)
-		if err != nil {
-			rest.WriteErrorRes(writer, transaction.ErrSignature(types.DefaultCodespace, err))
-			return
-		}
-		isBalanceEnough := CheckBalanceFromParams(cliCtx, request)
-		if !isBalanceEnough {
-			rest.WriteErrorRes(writer, transaction.ErrAmount(types.DefaultCodespace, errors.New("The balance is not enough to pay the amount")) )
-			return
-		}
-		/*res, err := cliCtx.BroadcastSignedData(txByte)
-		if err != nil {
-			rest.WriteErrorRes(writer, client.ErrBroadcast(types.DefaultCodespace, err))
-			return
-		}
-		rest.PostProcessResponseBare(writer, cliCtx, res)*/
-
-		if ok {
-			//async
-			res, err := cliCtx.BroadcastTxSync(txByte)
-			if err != nil {
-				rest.WriteErrorRes(writer, client.ErrBroadcast(types.DefaultCodespace, err))
-				return
-			}
-			rest.PostProcessResponseBare(writer, cliCtx, res)
-		}else {
-			//sync
-			res, err := cliCtx.BroadcastSignedData(txByte)
-			if err != nil {
-				rest.WriteErrorRes(writer, client.ErrBroadcast(types.DefaultCodespace, err))
-				return
-			}
-			rest.PostProcessResponseBare(writer, cliCtx, res)
-		}
+func SendRequestHandlerFn(cliCtx context.Context, writer http.ResponseWriter, request *http.Request) {
+	priv := request.FormValue("privateKey")
+	err := util.CheckStringLength(1, 100, priv)
+	if err != nil {
+		rest.WriteErrorRes(writer, transaction.ErrBadPrivkey(types.DefaultCodespace, errors.New("param privateKey not found")) )
+		return
 	}
+
+	txByte, err := buildTransferTx(request, false, priv)
+	if err != nil {
+		rest.WriteErrorRes(writer, transaction.ErrSignature(types.DefaultCodespace, err))
+		return
+	}
+	isBalanceEnough := CheckBalanceFromParams(cliCtx, request)
+	if !isBalanceEnough {
+		rest.WriteErrorRes(writer, transaction.ErrAmount(types.DefaultCodespace, errors.New("The balance is not enough to pay the amount")) )
+		return
+	}
+
+	res, err := cliCtx.BroadcastTx(txByte)
+	if err != nil {
+		rest.WriteErrorRes(writer, client.ErrBroadcast(types.DefaultCodespace, err))
+		return
+	}
+	rest.PostProcessResponseBare(writer, cliCtx, res)
 }
 
 // check balance from tranfer params

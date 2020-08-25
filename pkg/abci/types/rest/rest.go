@@ -7,6 +7,7 @@ import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/client"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
+	"github.com/ci123chain/ci123chain/pkg/client/helper"
 	"github.com/ci123chain/ci123chain/pkg/transfer"
 	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/tendermint/tendermint/crypto/merkle"
@@ -188,4 +189,24 @@ func ParseHTTPArgsWithLimit(r *http.Request, defaultLimit int) (tags []string, p
 	}
 
 	return tags, page, limit, nil
+}
+
+func MiddleHandler(ctx context.Context, f func(clictx context.Context, w http.ResponseWriter, r *http.Request), codeSpace sdk.CodespaceType) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		async, err := util.CheckBool(r.FormValue("async"))
+		if err != nil {
+			WriteErrorRes(w, client.ErrParseParam(codeSpace, errors.New("error async")))
+			return
+		}
+		from_str := r.FormValue("from")
+		from, err := helper.StrToAddress(from_str)
+		if err != nil {
+			WriteErrorRes(w, client.ErrParseParam(codeSpace, errors.New("error from")))
+			return
+		}
+		ctx = ctx.WithBlocked(async)
+		ctx = ctx.WithFrom(from)
+
+		f(ctx, w, r)
+	}
 }
