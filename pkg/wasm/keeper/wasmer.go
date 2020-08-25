@@ -252,14 +252,14 @@ func (w *Wasmer) Create(code []byte) (Wasmer,[]byte, error) {
 	return newWasmer,codeHash, nil
 }
 
-func (w *Wasmer) Call(code []byte, input []byte) (res []byte, err error) {
+func (w *Wasmer) Call(code []byte, input []byte, method string) (res []byte, err error) {
 	instance , err := getInstance(code)
 	if err != nil {
 		return nil, err
 	}
 	defer instance.Close()
 
-	invoke, exist := instance.Exports["invoke"]
+	call, exist := instance.Exports[method]
 	if !exist {
 		fmt.Println(exist)
 		return nil, errors.New("no expected function")
@@ -287,7 +287,7 @@ func (w *Wasmer) Call(code []byte, input []byte) (res []byte, err error) {
 		}
 	}()
 
-	_, err = invoke()
+	_, err = call()
 	if err != nil {
 		panic(err)
 	}

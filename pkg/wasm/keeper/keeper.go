@@ -20,6 +20,8 @@ import (
 )
 
 const UINT_MAX uint64 = ^uint64(0)
+const INIT string = "init"
+const INVOKE string = "invoke"
 type Keeper struct {
 	storeKey    		sdk.StoreKey
 	cdc         		*codec.Codec
@@ -114,7 +116,7 @@ func (k Keeper) Instantiate(ctx sdk.Context, wasmCode []byte, invoker sdk.AccAdd
 		if err != nil {
 			return sdk.AccAddress{}, err
 		}
-		_, err = k.wasmer.Call(code, input)
+		_, err = k.wasmer.Call(code, input, INIT)
 		if err != nil {
 			return sdk.AccAddress{}, err
 		}
@@ -186,7 +188,7 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, invoker
 	if err != nil {
 		return sdk.Result{}, err
 	}
-	res, err := k.wasmer.Call(code, input)
+	res, err := k.wasmer.Call(code, input, INVOKE)
 	if err != nil {
 		return sdk.Result{}, err
 	}
@@ -268,7 +270,7 @@ func (k Keeper) Query(ctx sdk.Context, contractAddress, invokerAddress sdk.AccAd
 	if err != nil {
 		return types.ContractState{}, err
 	}
-	res, err := k.wasmer.Call(code, input)
+	res, err := k.wasmer.Call(code, input, INVOKE)
 	if err != nil {
 		return types.ContractState{}, err
 	}

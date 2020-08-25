@@ -255,7 +255,7 @@ func callContract(context unsafe.Pointer, addrPtr, inputPtr, inputSize int32) in
 	SetPreCaller(selfAddr)
 	SetSelfAddr(contractAddress)
 
-	res, err := keeper.wasmer.Call(code, input)
+	res, err := keeper.wasmer.Call(code, input, INVOKE)
 
 	SetStore(tempStore)
 	SetCreator(tempCreator)
