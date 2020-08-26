@@ -36,7 +36,8 @@ func (msg *MsgMortgage) ValidateBasic() sdk.Error {
 	if !msg.Coin.IsValid() {
 		return transfer.ErrCheckParams(DefaultCodespace, "coin is invalid" + msg.Coin.String())
 	}
-	return msg.CommonTx.VerifySignature(msg.GetSignBytes(), true)
+	return nil
+	//return msg.CommonTx.VerifySignature(msg.GetSignBytes(), true)
 }
 
 func NewMsgMortgage(from, to sdk.AccAddress, gas, nonce uint64, coin sdk.Coin, uniqueID []byte) *MsgMortgage {

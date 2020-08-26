@@ -3,7 +3,7 @@ package shard
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/ci123chain/ci123chain/pkg/client/helper"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
 	"io/ioutil"
 	"net/http"
@@ -14,26 +14,16 @@ import (
 )
 
 //off line
-func SignAddShardMsg(from string, gas, nonce uint64,t, name string, height int64, priv string) ([]byte, error){
+func SignAddShardMsg(from sdk.AccAddress, gas, nonce uint64,t, name string, height int64, priv string) ([]byte, error){
+	tx := order.NewAddShardTx(from, gas, nonce, t, name, height)
 
-	fromAddr, err := helper.StrToAddress(from)
-	if err != nil {
-		return nil, err
-	}
-	tx := order.NewAddShardTx(fromAddr, gas, nonce, t, name, height)
-	sid := cryptosuit.NewFabSignIdentity()
+	var signature []byte
 	privPub, err := hex.DecodeString(priv)
+	eth := cryptosuit.NewETHSignIdentity()
+	signature, err = eth.Sign(tx.GetSignBytes(), privPub)
 	if err != nil {
 		return nil, err
 	}
-	pub, err  := sid.GetPubKey(privPub)
-	if err != nil {
-		return nil, err
-	}
-
-	tx.SetPubKey(pub)
-	signbyte := tx.GetSignBytes()
-	signature, err := sid.Sign(signbyte, privPub)
 	tx.SetSignature(signature)
 	return tx.Bytes(), nil
 }

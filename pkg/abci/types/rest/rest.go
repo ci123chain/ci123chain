@@ -7,10 +7,10 @@ import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/client"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
+	"github.com/ci123chain/ci123chain/pkg/client/helper"
 	"github.com/ci123chain/ci123chain/pkg/transfer"
 	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/tendermint/tendermint/crypto/merkle"
-	cmn "github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/types"
 	"net/http"
 	"net/url"
@@ -22,8 +22,8 @@ const (
 )
 
 type Response struct {
-	Ret 	uint32 	`json:"ret"`
-	Data 	interface{}	`json:"data"`
+	Ret 	int64 	`json:"ret"`
+	Data    json.RawMessage `json:"data"`
 	Message	string	`json:"message"`
 }
 
@@ -84,10 +84,18 @@ func CheckHeightAndProve(w http.ResponseWriter, height, prove string, codespace 
 }
 
 func NewErrorRes(err sdk.Error) Response {
+	buildData := struct {
+		Code sdk.CodeType `json:"code"`
+		CodeSpace sdk.CodespaceType `json:"code_space"`
+	}{
+		err.Code(),
+		err.Codespace(),
+	}
+	data, _ := json.Marshal(buildData)
 	return Response{
-		Ret:		uint32(err.Code()),
-		Data:		"",
-		Message:	err.Data().(cmn.FmtError).Error(),
+		Ret:		-1,
+		Data:       data,
+		Message:	err.ABCILog(),
 	}
 }
 
@@ -100,20 +108,31 @@ func WriteErrorRes(w http.ResponseWriter, err sdk.Error) {
 
 func PostProcessResponseBare(w http.ResponseWriter, ctx context.Context, body interface{}) {
 	var res Response
-	dataJson, err := json.Marshal(body)
-	if err != nil {
-		res = Response{
-			Ret:     0,
-			Data:    string(dataJson),
-			Message: "",
+	dataJson, _ := json.Marshal(body)
+	switch body.(type) {
+	case sdk.TxResponse:
+		b := body.(sdk.TxResponse)
+		if b.Code == 0 {
+			res = Response{
+				Ret:     1,
+				Data:    dataJson,
+			}
+		} else {
+			res = Response{
+				Ret:     -1,
+				Data:    dataJson,
+				Message: b.Log,
+			}
 		}
-	} else {
+
+
+	default:
 		res = Response{
-			Ret:     0,
-			Data:    body,
-			Message: "",
+			Ret:     1,
+			Data:    dataJson,
 		}
 	}
+
 	resp, _ := json.Marshal(res)
 	w.Header().Set("Content-Type", "application/json")
 	_, _ = w.Write(resp)
@@ -188,4 +207,24 @@ func ParseHTTPArgsWithLimit(r *http.Request, defaultLimit int) (tags []string, p
 	}
 
 	return tags, page, limit, nil
+}
+
+func MiddleHandler(ctx context.Context, f func(clictx context.Context, w http.ResponseWriter, r *http.Request), codeSpace sdk.CodespaceType) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		async, err := util.CheckBool(r.FormValue("async"))
+		if err != nil {
+			WriteErrorRes(w, client.ErrParseParam(codeSpace, errors.New("error async")))
+			return
+		}
+		from_str := r.FormValue("from")
+		from, err := helper.StrToAddress(from_str)
+		if err != nil {
+			WriteErrorRes(w, client.ErrParseParam(codeSpace, errors.New("error from")))
+			return
+		}
+		ctx = ctx.WithBlocked(async)
+		ctx = ctx.WithFrom(from)
+
+		f(ctx, w, r)
+	}
 }

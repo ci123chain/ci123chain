@@ -11,7 +11,6 @@ type ContractInfoParams struct {
 }
 
 func NewQueryContractInfoParams(contractAddress sdk.AccAddress) ContractInfoParams {
-
 	params := ContractInfoParams{ContractAddress:contractAddress}
 	return params
 }

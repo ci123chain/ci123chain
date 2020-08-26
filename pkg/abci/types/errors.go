@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	cmn "github.com/tendermint/tendermint/libs/common"
 
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -67,7 +66,7 @@ const (
 	// Notice that 0 is an "unset" codespace, which can be overridden with
 	// Error.WithDefaultCodespace().
 	CodespaceUndefined CodespaceType = ""
-	CodespaceRoot      CodespaceType = "sdk"
+	CodespaceRoot      CodespaceType = "default"
 )
 
 func unknownCodeMsg(code CodeType) string {
@@ -329,19 +328,21 @@ func (err *sdkError) Code() CodeType {
 
 // Implements ABCIError.
 func (err *sdkError) ABCILog() string {
-	cdc := codec.New()
-	errMsg := err.cmnError.Error()
-	jsonErr := humanReadableError{
-		Codespace: err.codespace,
-		Code:      err.code,
-		Message:   errMsg,
-	}
-	bz, er := cdc.MarshalJSON(jsonErr)
-	if er != nil {
-		panic(er)
-	}
-	stringifiedJSON := string(bz)
-	return stringifiedJSON
+	//cdc := codec.New()
+	//errMsg := err.cmnError.Error()
+	//jsonErr := humanReadableError{
+	//	Codespace: err.codespace,
+	//	Code:      err.code,
+	//	Message:   errMsg,
+	//}
+	//bz, er := cdc.MarshalJSON(jsonErr)
+	//if er != nil {
+	//	panic(er)
+	//}
+	//stringifiedJSON := string(bz)
+	//return stringifiedJSON
+
+	return err.cmnError.Error()
 }
 
 func (err *sdkError) Result() Result {

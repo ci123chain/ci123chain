@@ -35,7 +35,8 @@ func (msg *IBCTransfer) ValidateBasic() sdk.Error {
 	if !msg.Coin.IsValid() {
 		return sdk.ErrInvalidCoins("coin is invalid" + msg.Coin.String())
 	}
-	return msg.CommonTx.VerifySignature(msg.GetSignBytes(), true)
+	return nil
+	//return msg.CommonTx.VerifySignature(msg.GetSignBytes(), true)
 }
 
 func (msg *IBCTransfer)GetSignBytes() []byte {
