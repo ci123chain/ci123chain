@@ -126,32 +126,6 @@ func (ctx Context) PrintOutput(toPrint fmt.Stringer) (err error) {
 	return
 }
 
-//
-//func (ctx *Context) SignAndBroadcastTx(tx transaction.Transaction, addr types.AccAddress) (types.TxResponse, error) {
-//	sig, err := ctx.Sign(tx.GetSignBytes(), addr)
-//	if err != nil {
-//		return types.TxResponse{}, err
-//	}
-//	tx.SetSignature(sig)
-//	res, err := ctx.BroadcastTx(tx.Bytes())
-//
-//	if err != nil {
-//		return res, err
-//	}
-//	if ctx.Verbose {
-//		fmt.Printf("txHash=%v BlockHeight=%v\n", res.TxHash, res.Height)
-//	}
-//	return res, nil
-//}
-
-//func (ctx *Context) SignTx(tx transfer.Transaction, addr types.AccAddress) (transfer.Transaction, error) {
-//	sig, err := ctx.Sign(tx.GetSignBytes(), addr)
-//	if err != nil {
-//		return nil, err
-//	}
-//	tx.SetSignature(sig)
-//	return tx, nil
-//}
 
 func (ctx *Context) SignWithTx(tx transaction.Transaction, privKey []byte, fabricMode bool) (transaction.Transaction, error) {
 
@@ -183,7 +157,7 @@ func (ctx *Context) SignWithTx(tx transaction.Transaction, privKey []byte, fabri
 }
 
 // broadcastTx
-func (ctx *Context) BroadcastTx(data []byte) (sdk.TxResponse, error) {
+func (ctx *Context) BroadcastSignedTx(data []byte) (sdk.TxResponse, error) {
 	async := ctx.Blocked
 	if async {
 		return ctx.BroadcastSignedDataAsync(data)
@@ -204,11 +178,10 @@ func (ctx *Context) BroadcastSignedData(data []byte) (sdk.TxResponse, error) {
 	return res, nil
 }
 
+
 // 内部调用 BroadcastTxSync，同步等待checktx 消息，消息确认还是异步的
 func (ctx *Context) BroadcastSignedDataAsync(data []byte) (sdk.TxResponse, error) {
-	_, _ = ctx.broadcastTxSync(data)
-
-	return sdk.TxResponse{}, nil
+	return ctx.broadcastTxSync(data)
 }
 
 // Broadcast the transfer bytes to Tendermint
@@ -244,16 +217,3 @@ func (ctx *Context) broadcastTxSync(tx []byte) (sdk.TxResponse, error) {
 	return sdk.NewResponseFormatBroadcastTx(res), nil
 }
 
-//func (ctx *Context) SignTx2(tx transfer.Transaction, priKey string) (transfer.Transaction, error) {
-//	pubkey, err := ctx.CryptoSuit.GetPubKey([]byte(priKey))
-//	if err != nil {
-//		return nil, err
-//	}
-//	tx.SetPubKey(pubkey)
-//	sig, err := ctx.CryptoSuit.Sign(tx.GetSignBytes(), []byte(priKey))
-//	if err != nil {
-//		return nil, err
-//	}
-//	tx.SetSignature(sig)
-//	return tx, nil
-//}

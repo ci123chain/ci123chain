@@ -18,7 +18,7 @@ func instantiateContractHandler(cliCtx context.Context,w http.ResponseWriter, r 
 		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace,"data error"))
 		return
 	}
-	res, err := cliCtx.BroadcastTx(txByte)
+	res, err := cliCtx.BroadcastSignedTx(txByte)
 	if err != nil {
 		rest.WriteErrorRes(w, client.ErrBroadcast(types.DefaultCodespace, err))
 		return
@@ -47,7 +47,7 @@ func executeContractHandler(cliCtx context.Context,w http.ResponseWriter, r *htt
 		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace,"data error"))
 		return
 	}
-	resTx, err := cliCtx.BroadcastTx(txByte)
+	resTx, err := cliCtx.BroadcastSignedTx(txByte)
 	if err != nil {
 		rest.WriteErrorRes(w, client.ErrBroadcast(types.DefaultCodespace, err))
 		return
@@ -79,7 +79,7 @@ func migrateContractHandler(cliCtx context.Context,w http.ResponseWriter, r *htt
 		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace,"data error"))
 		return
 	}
-	resTx, err := cliCtx.BroadcastTx(txByte)
+	resTx, err := cliCtx.BroadcastSignedTx(txByte)
 	if err != nil {
 		rest.WriteErrorRes(w, client.ErrBroadcast(types.DefaultCodespace, err))
 		return

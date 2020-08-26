@@ -35,7 +35,7 @@ func SendRequestHandlerFn(cliCtx context.Context, writer http.ResponseWriter, re
 		return
 	}
 
-	res, err := cliCtx.BroadcastTx(txByte)
+	res, err := cliCtx.BroadcastSignedTx(txByte)
 	if err != nil {
 		rest.WriteErrorRes(writer, client.ErrBroadcast(types.DefaultCodespace, err))
 		return
