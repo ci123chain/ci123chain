@@ -342,3 +342,10 @@ func panicContract(context unsafe.Pointer, dataPtr, dataSize int32) {
 	panic(string(data))
 }
 
+func debugPrint(context unsafe.Pointer, msgPtr, msgSize int32) {
+	var instanceContext = wasm.IntoInstanceContext(context)
+	var memory = instanceContext.Memory().Data()
+
+	data := memory[msgPtr : msgPtr+msgSize]
+	println(string(data))
+}
