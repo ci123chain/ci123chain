@@ -45,11 +45,7 @@ var signCmd = &cobra.Command{
 		if err != nil {
 			return types.ErrNewClientCtx(types.DefaultCodespace, err)
 		}
-		addrs, err := ctx.GetInputAddresses()
-		if err != nil {
-			return types.ErrGetInputAddrCtx(types.DefaultCodespace, err)
-		}
-		from := addrs[0]
+		from := ctx.GetFromAddresses()
 		tos, err := helper.ParseAddrs(viper.GetString(flagTo))
 		if err != nil {
 			return types.ErrParseAddr(types.DefaultCodespace, err)

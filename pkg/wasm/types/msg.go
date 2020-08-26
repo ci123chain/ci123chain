@@ -5,6 +5,7 @@ import (
 	"errors"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/transaction"
+	"github.com/ci123chain/ci123chain/pkg/util"
 )
 
 type InstantiateContractTx struct {
@@ -58,10 +59,9 @@ func (msg *InstantiateContractTx) ValidateBasic() sdk.Error {
 }
 
 func (msg *InstantiateContractTx) GetSignBytes() []byte {
-	tmsg := *msg
-	tmsg.Signature = nil
-	signBytes := tmsg.Bytes()
-	return signBytes
+	ntx := *msg
+	ntx.SetSignature(nil)
+	return util.TxHash(ntx.Bytes())
 }
 
 func (msg *InstantiateContractTx) SetSignature(sig []byte) {
@@ -142,10 +142,9 @@ func (msg *ExecuteContractTx) ValidateBasic() sdk.Error {
 }
 
 func (msg *ExecuteContractTx) GetSignBytes() []byte {
-	tmsg := *msg
-	tmsg.Signature = nil
-	signBytes := tmsg.Bytes()
-	return signBytes
+	ntx := *msg
+	ntx.SetSignature(nil)
+	return util.TxHash(ntx.Bytes())
 }
 
 func (msg *ExecuteContractTx) SetSignature(sig []byte) {
@@ -235,10 +234,9 @@ func (msg *MigrateContractTx) ValidateBasic() sdk.Error {
 }
 
 func (msg *MigrateContractTx) GetSignBytes() []byte {
-	tmsg := *msg
-	tmsg.Signature = nil
-	signBytes := tmsg.Bytes()
-	return signBytes
+	ntx := *msg
+	ntx.SetSignature(nil)
+	return util.TxHash(ntx.Bytes())
 }
 
 func (msg *MigrateContractTx) SetSignature(sig []byte) {

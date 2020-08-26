@@ -17,6 +17,7 @@ import (
 const (
 	MinPassLength = 4
 
+	FlagBlocked = "blocked"
 	FlagHeight = "height"
 	FlagHomeDir = "clihome"
 	FlagVerbose = "verbose"

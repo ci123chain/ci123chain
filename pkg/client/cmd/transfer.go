@@ -42,11 +42,7 @@ var transferCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		addrs, err := ctx.GetInputAddresses()
-		if err != nil {
-			return nil
-		}
-		from := addrs[0]
+		from := ctx.GetFromAddresses()
 		tos, err := helper.ParseAddrs(viper.GetString(flagTo))
 		if err != nil {
 			return types.ErrParseAddr(types.DefaultCodespace, err)

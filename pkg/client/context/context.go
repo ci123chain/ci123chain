@@ -2,13 +2,13 @@ package context
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/account/exported"
 	acc_types "github.com/ci123chain/ci123chain/pkg/account/types"
 	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
 	"github.com/ci123chain/ci123chain/pkg/transaction"
+	"github.com/pkg/errors"
 	"github.com/tendermint/tendermint/crypto/merkle"
 	rpclient "github.com/tendermint/tendermint/rpc/client"
 )
@@ -16,7 +16,8 @@ import (
 type Context struct {
 	HomeDir 	string
 	NodeURI 	string
-	InputAddressed []sdk.AccAddress
+	FromAddr 	sdk.AccAddress
+	Blocked     bool
 	Client 		rpclient.Client
 	Verbose 	bool
 	Height 		int64
@@ -46,8 +47,22 @@ func (ctx Context) WithHeight(height int64) Context {
 	return ctx
 }
 
-func (ctx *Context) GetInputAddresses() ([]sdk.AccAddress, error) {
-	return ctx.InputAddressed, nil
+func (ctx Context) WithFrom(from sdk.AccAddress) Context {
+	ctx.FromAddr = from
+	return ctx
+}
+
+func (ctx Context) WithBlocked(blocked bool) Context {
+	ctx.Blocked = blocked
+	return ctx
+}
+
+func (ctx *Context) GetFromAddresses() (sdk.AccAddress) {
+	return ctx.FromAddr
+}
+
+func (ctx *Context) GetBlocked() (bool) {
+	return ctx.Blocked
 }
 
 func (ctx *Context) GetBalanceByAddress(addr sdk.AccAddress, isProve bool) (uint64, *merkle.Proof, error) {
@@ -58,9 +73,6 @@ func (ctx *Context) GetBalanceByAddress(addr sdk.AccAddress, isProve bool) (uint
 	}
 	if res == nil{
 		return 0, nil, errors.New("The account does not exist")
-	}
-	if err != nil {
-		return 0, nil, err
 	}
 	var acc exported.Account
 	err2 := ctx.Cdc.UnmarshalBinaryLengthPrefixed(res, &acc)
@@ -170,9 +182,19 @@ func (ctx *Context) SignWithTx(tx transaction.Transaction, privKey []byte, fabri
 	return tx, nil
 }
 
+// broadcastTx
+func (ctx *Context) BroadcastTx(data []byte) (sdk.TxResponse, error) {
+	async := ctx.Blocked
+	if async {
+		return ctx.BroadcastSignedDataAsync(data)
+	} else {
+		return ctx.BroadcastSignedData(data)
+	}
+}
+
 // 消息确认 同步
 func (ctx *Context) BroadcastSignedData(data []byte) (sdk.TxResponse, error) {
-	res, err := ctx.BroadcastTx(data)
+	res, err := ctx.broadcastTx(data)
 	if err != nil {
 		return sdk.TxResponse{}, err
 	}
@@ -184,11 +206,43 @@ func (ctx *Context) BroadcastSignedData(data []byte) (sdk.TxResponse, error) {
 
 // 内部调用 BroadcastTxSync，同步等待checktx 消息，消息确认还是异步的
 func (ctx *Context) BroadcastSignedDataAsync(data []byte) (sdk.TxResponse, error) {
-	_, _ = ctx.BroadcastTxSync(data)
+	_, _ = ctx.broadcastTxSync(data)
 
 	return sdk.TxResponse{}, nil
 }
 
+// Broadcast the transfer bytes to Tendermint
+func (ctx *Context) broadcastTx(tx []byte) (sdk.TxResponse, error) {
+	node, err := ctx.GetNode()
+	if err != nil {
+		return sdk.TxResponse{}, err
+	}
+	res, err := node.BroadcastTxCommit(tx)
+	if err != nil {
+		return sdk.NewResponseFormatBroadcastTxCommit(res), err
+	}
+	if res.CheckTx.Code != uint32(0) {
+		return sdk.NewResponseFormatBroadcastTxCommit(res), err
+	}
+	if res.DeliverTx.Code != uint32(0) {
+		return sdk.NewResponseFormatBroadcastTxCommit(res), err
+	}
+
+	return sdk.NewResponseFormatBroadcastTxCommit(res), nil
+}
+
+func (ctx *Context) broadcastTxSync(tx []byte) (sdk.TxResponse, error) {
+	node, err := ctx.GetNode()
+	if err != nil {
+		return sdk.TxResponse{}, err
+	}
+	res, err := node.BroadcastTxSync(tx)
+	if err != nil {
+		return sdk.NewResponseFormatBroadcastTx(res), err
+	}
+
+	return sdk.NewResponseFormatBroadcastTx(res), nil
+}
 
 //func (ctx *Context) SignTx2(tx transfer.Transaction, priKey string) (transfer.Transaction, error) {
 //	pubkey, err := ctx.CryptoSuit.GetPubKey([]byte(priKey))

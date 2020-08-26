@@ -14,27 +14,21 @@ import (
 func SignUndelegateMsg(from string, amount, gas, nonce uint64, priv string,
 	validatorAddress, delegatorAddress string) ([]byte, error) {
 
-	//
-	privateKey, err := hex.DecodeString(priv)
-	if err != nil {
-		return nil, err
-	}
 	fromAddr, amt, validatorAddr, delegatorAddr, err := CommonParseArgs(from, amount, validatorAddress, delegatorAddress)
 	if err != nil {
 		return nil, err
 	}
 	tx := staking.NewUndelegateMsg(fromAddr, gas, nonce, delegatorAddr, validatorAddr,amt)
-
-	sid := cryptosuit.NewFabSignIdentity()
-	pub, err  := sid.GetPubKey(privateKey)
-
-	tx.SetPubKey(pub)
-	signbyte := tx.GetSignBytes()
-	signature, err := sid.Sign(signbyte, privateKey)
+	var signature []byte
+	privPub, err := hex.DecodeString(priv)
+	eth := cryptosuit.NewETHSignIdentity()
+	signature, err = eth.Sign(tx.GetSignBytes(), privPub)
+	if err != nil {
+		return nil, err
+	}
 	tx.SetSignature(signature)
 
 	return tx.Bytes(), nil
-
 }
 
 func HttpUndelegateTx(from, gas, nonce, amount, priv, validatorAddr, delegatorAddr, proxy, reqUrl string) {
