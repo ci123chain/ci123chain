@@ -22,6 +22,7 @@ package keeper
 // extern void panic_contract(void*, int, int);
 //
 // extern void addgas(void*, int);
+// extern void debug_print(void*, int, int);
 import "C"
 import (
 	"crypto/md5"
@@ -130,6 +131,10 @@ func destroy_contract(context unsafe.Pointer) {
 //export panic_contract
 func panic_contract(context unsafe.Pointer, dataPtr, dataSize int32) {
 	panicContract(context, dataPtr, dataSize)
+}
+//export debug_print
+func debug_print(context unsafe.Pointer, dataPtr, dataSize int32) {
+	debugPrint(context, dataPtr, dataSize)
 }
 
 
@@ -319,6 +324,7 @@ func getInstance(code []byte) (*wasmer.Instance, error) {
 	_, _ = imports.Append("panic_contract", panic_contract, C.panic_contract)
 
 	_, _ = imports.Append("addgas", addgas, C.addgas)
+	_, _ = imports.Append("debug_print", debug_print, C.debug_print)
 	module, err := wasmer.Compile(code)
 	if err != nil {
 		panic(err)
@@ -385,6 +391,7 @@ func (w *Wasmer) DeleteCode(hash []byte) error {
 }
 
 func Serialize(raw []interface{}) (res []byte) {
+	//fmt.Println(raw)
 	sink := NewSink(res)
 
 	for i := range raw {

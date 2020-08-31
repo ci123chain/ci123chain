@@ -72,8 +72,11 @@ func readDB(context unsafe.Pointer, keyPtr, keySize, valuePtr, valueSize, offset
 	var valueStr string;
 	v := store.Get(realKey)
 	if v == nil {
+		/*
 		valueStr = ""
 		size = 0;
+		*/
+		return -1
 	} else {
 		valueStr = string(v)
 		size = len(valueStr)

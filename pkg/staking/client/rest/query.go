@@ -97,7 +97,7 @@ func validatorsHandlerFn(cliCtx context.Context) http.HandlerFunc {
 
 		status := request.FormValue("status")
 		if status == "" {
-			status = sdk.BondStatusBonded
+			status = sdk.BondStatusAll
 		}
 
 		params := types.NewQueryValidatorsParams(page, limit, status)
