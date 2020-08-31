@@ -616,7 +616,7 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 		//result.GasUsed = gasUsed
 	}()
 
-		if err := tx.ValidateBasic(); err != nil {
+	if err := tx.ValidateBasic(); err != nil {
 		return err.Result()
 	}
 
