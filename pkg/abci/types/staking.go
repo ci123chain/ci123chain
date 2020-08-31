@@ -25,6 +25,7 @@ const (
 	BondStatusUnbonded = "Unbonded"
 	BondStatusUnbonding = "Unbonding"
 	BondStatusBonded = "Bonded"
+	BondStatusAll = "all"
 )
 
 // Equal compares two BondStatus instances
