@@ -3,6 +3,7 @@ package types
 import (
 	"github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/transaction"
+	"github.com/ci123chain/ci123chain/pkg/util"
 )
 
 type UndelegateTx struct {
@@ -45,7 +46,7 @@ func (msg *UndelegateTx) GetSignBytes() []byte {
 	tmsg := *msg
 	tmsg.Signature = nil
 	signBytes := tmsg.Bytes()
-	return signBytes
+	return util.TxHash(signBytes)
 }
 func (msg *UndelegateTx) SetSignature(sig []byte) {
 	msg.Signature = sig
