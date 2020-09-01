@@ -2,6 +2,7 @@ package types
 
 import (
 	"bytes"
+	"encoding/hex"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/tendermint/go-amino"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -16,7 +17,7 @@ import (
 type Validator struct {
 	OperatorAddress    sdk.AccAddress	`json:"operator_address"`
 	Address            cmn.HexBytes     `json:"address"`
-	ConsensusKey       crypto.PubKey    `json:"pub_key"`
+	ConsensusKey       string           `json:"pub_key"`//crypto.PubKey    `json:"pub_key"`
 	Jailed             bool             `json:"jailed"`
 	Status             sdk.BondStatus   `json:"status"`
 	Tokens             sdk.Int          `json:"tokens"`
@@ -29,15 +30,21 @@ type Validator struct {
 }
 
 //crypto pubKey
-func NewValidator(operator sdk.AccAddress, pubKey crypto.PubKey, description Description) Validator {
+func NewValidator(operator sdk.AccAddress, pubKey crypto.PubKey, description Description)( Validator, error) {
 	/*var pkStr string
 	if pubKey != nil {
 		pkStr = string(pubKey)
 	}*/
+	pubByte, err := cdc.MarshalJSON(pubKey)
+	if err != nil {
+		//
+		return Validator{}, err
+	}
+	pubStr := hex.EncodeToString(pubByte)
 
 	return Validator{
 		OperatorAddress: operator,
-		ConsensusKey: pubKey,
+		ConsensusKey: pubStr,
 		Address: pubKey.Address(),
 		Jailed:          false,
 		Status:          sdk.Unbonded,
@@ -48,7 +55,7 @@ func NewValidator(operator sdk.AccAddress, pubKey crypto.PubKey, description Des
 		UnbondingTime:    time.Unix(0,0).UTC(),
 		Commission:        NewCommission(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
 		MinSelfDelegation:  sdk.OneInt(),
-	}
+	}, nil
 }
 
 func (v Validator) SetInitialCommission(commission Commission) (Validator, error) {
@@ -218,7 +225,11 @@ func (v Validator) GetMinSelfDelegation() sdk.Int { return v.MinSelfDelegation }
 func (v Validator) GetDelegatorShares() sdk.Dec   { return v.DelegatorShares }
 
 func (v Validator) GetConsPubKey() crypto.PubKey {
-	return v.ConsensusKey
+	var pubKey crypto.PubKey
+	pubByte, _ := hex.DecodeString(v.ConsensusKey)
+	_ = cdc.UnmarshalJSON(pubByte, &pubKey)
+	return pubKey
+	//return v.ConsensusKey
 }
 
 

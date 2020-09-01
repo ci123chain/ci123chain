@@ -1,6 +1,7 @@
 package types
 
 import (
+	"encoding/hex"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 )
@@ -42,7 +43,9 @@ func DefaultValidators(validators []tmtypes.GenesisValidator) []Validator {
 		for i := range validators {
 			genesisValidator.OperatorAddress = sdk.ToAccAddress(validators[i].PubKey.Address())
 			genesisValidator.Address = validators[i].PubKey.Address()
-			genesisValidator.ConsensusKey = validators[i].PubKey
+			pubByte, _ := cdc.MarshalJSON(validators[i].PubKey)
+			pubstr := hex.EncodeToString(pubByte)
+			genesisValidator.ConsensusKey = pubstr
 			genesisValidator.Status = 1
 			//genesisValidator.DelegatorShares = sdk.NewDec(100)
 			//genesisValidator.Tokens = sdk.NewInt(100)
