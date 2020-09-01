@@ -28,11 +28,15 @@ var cdc = app.MakeCodec()
 func CreateValidatorRequest(cliCtx context.Context, writer http.ResponseWriter, request *http.Request) {
 	gas, cAmt, msd, r, mr, mcr, moniker, identity, website, securityContact, details,
 	priv, from, validatorAddr, delegatorAddr, publicKey, nonce, err := ParseArgs(request)
+	if err != nil {
+		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
+		return
+	}
 
 	txByte, err := sSdk.SignCreateValidatorMSg(from, cAmt, gas, nonce, priv, msd, validatorAddr,
 		delegatorAddr, r, mr, mcr, moniker, identity, website, securityContact, details, publicKey)
 	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"data error"))
+		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
 		return
 	}
 	res, err := cliCtx.BroadcastSignedTx(txByte)
@@ -79,7 +83,7 @@ func DelegateTX(cliCtx context.Context, writer http.ResponseWriter, request *htt
 
 	txByte, err := sSdk.SignDelegateMsg(from,cAmt, UserGas, nonce, key, validatorAddr, delegatorAddr)
 	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"data error"))
+		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
 		return
 	}
 
@@ -120,7 +124,7 @@ func RedelegateTX(cliCtx context.Context, writer http.ResponseWriter, request *h
 
 	txByte, err := sSdk.SignRedelegateMsg(from,cAmt, UserGas, nonce, key, validatorSrcAddr, validatorDstAddr, delegatorAddr)
 	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"data error"))
+		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
 		return
 	}
 
@@ -161,7 +165,7 @@ func UndelegateTX(cliCtx context.Context, writer http.ResponseWriter, request *h
 
 	txByte, err := sSdk.SignUndelegateMsg(from,cAmt, UserGas, nonce, key, validatorAddr, delegatorAddr)
 	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"data error"))
+		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
 		return
 	}
 
@@ -284,14 +288,9 @@ func ParseArgs(request *http.Request) (uint64,uint64, int64, int64, int64, int64
 		return 0, 0, 0, 0, 0, 0, "", "", "", "", "", "", "", "", "", "", 0, errors.New("nonce error")
 	}
 
-	validatorAddr := request.FormValue("validatorAddr")
-	if validatorAddr == "" {
-		return 0, 0, 0, 0, 0, 0, "", "", "", "", "", "", "", "", "", "", 0, errors.New("validator address error")
-	}
-	delegatorAddr := from//request.FormValue("delegatorAddress")
-	/*if delegatorAddr == "" {
-		return 0, 0, 0, 0, 0, 0, "", "", "", "", "", "", "", "", "", "", 0, errors.New("delegator address error")
-	}*/
+	validatorAddr := from
+	delegatorAddr := from
+
 	publicKey := request.FormValue("publicKey")
 	if publicKey == "" {
 		return 0, 0, 0, 0, 0, 0, "", "", "", "", "", "", "", "", "", "", 0, errors.New("public key can't be empty")

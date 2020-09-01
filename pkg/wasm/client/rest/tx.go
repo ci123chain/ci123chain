@@ -15,7 +15,7 @@ const CAN_MIGRATE string = `{"method":"canMigrate","args": [""]}`
 func instantiateContractHandler(cliCtx context.Context,w http.ResponseWriter, r *http.Request) {
 	txByte, err := buildInstantiateContractMsg(r)
 	if err != nil {
-		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace,"data error"))
+		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
 		return
 	}
 	res, err := cliCtx.BroadcastSignedTx(txByte)
@@ -44,7 +44,7 @@ func executeContractHandler(cliCtx context.Context,w http.ResponseWriter, r *htt
 
 	txByte, err := buildExecuteContractMsg(r)
 	if err != nil {
-		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace,"data error"))
+		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
 		return
 	}
 	resTx, err := cliCtx.BroadcastSignedTx(txByte)
@@ -76,7 +76,7 @@ func migrateContractHandler(cliCtx context.Context,w http.ResponseWriter, r *htt
 	}
 	txByte, err := buildMigrateContractMsg(r)
 	if err != nil {
-		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace,"data error"))
+		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
 		return
 	}
 	resTx, err := cliCtx.BroadcastSignedTx(txByte)

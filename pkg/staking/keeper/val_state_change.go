@@ -282,11 +282,9 @@ func (k StakingKeeper) getLastValidatorsByAddr(ctx sdk.Context) validatorsByAddr
 	last := make(validatorsByAddr)
 	iterator := k.LastValidatorsIterator(ctx)
 	defer iterator.Close()
-
 	for ; iterator.Valid(); iterator.Next() {
 		var valAddr [sdk.AddrLen]byte
-		// extract the validator address from the key (prefix is 1-byte)
-		copy(valAddr[:], iterator.Key()[10:])
+		copy(valAddr[:], iterator.Key()[1:])
 		powerBytes := iterator.Value()
 		last[valAddr] = make([]byte, len(powerBytes))
 		copy(last[valAddr], powerBytes)

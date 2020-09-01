@@ -40,7 +40,7 @@ func BroadcastTxRequestAsync(cliCtx context.Context) http.HandlerFunc {
 		data := request.FormValue("txByte")
 		txByte, err := hex.DecodeString(data)
 		if err != nil {
-			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"data error"))
+			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
 			return
 		}
 

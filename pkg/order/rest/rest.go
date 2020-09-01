@@ -77,7 +77,7 @@ func AddShardTxRequest(cliCtx context.Context, writer http.ResponseWriter, reque
 		txByte, err := sdk.SignAddShardMsg(from,
 			UserGas, nonce, ty, name, Height, key)
 		if err != nil {
-			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"data error"))
+			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
 			return
 		}
 
