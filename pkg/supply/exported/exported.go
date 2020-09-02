@@ -1,6 +1,9 @@
 package exported
 
-import "github.com/ci123chain/ci123chain/pkg/account/exported"
+import (
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/account/exported"
+)
 
 type ModuleAccountI interface {
 	exported.Account
@@ -8,4 +11,17 @@ type ModuleAccountI interface {
 	GetName() string
 	GetPermission() []string
 	HasPermission(string) bool
+}
+
+// SupplyI defines an inflationary supply interface for modules that handle
+// token supply.
+type SupplyI interface {
+	GetTotal() sdk.Coin
+	SetTotal(total sdk.Coin) SupplyI
+
+	Inflate(amount sdk.Coin) SupplyI
+	Deflate(amount sdk.Coin) SupplyI
+
+	String() string
+	ValidateBasic() error
 }

@@ -1,5 +1,5 @@
 package fc
-
+/*
 import (
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	"github.com/ci123chain/ci123chain/pkg/abci/types"
@@ -60,3 +60,4 @@ func (fck *FcKeeper) SetCollectedFees(ctx types.Context, coin types.Coin) {
 func (fck *FcKeeper) ClearCollectedFees(ctx types.Context) {
 	fck.SetCollectedFees(ctx, types.NewCoin(sdk.NewInt(0)))
 }
+*/

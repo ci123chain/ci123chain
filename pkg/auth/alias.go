@@ -8,6 +8,8 @@ import (
 const (
 	DefaultCodespace = types.DefaultParamspace
 	StoreKey 		 = types.StoreKey
+
+	FeeCollectorName              = types.FeeCollectorName
 )
 
 var (

@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -129,19 +130,22 @@ func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Com
 			if initConfig.ChainID == "" {
 				panic(errors.New("chain id can not be empty"))
 			}
-			chainID, nodeID, appMessage, err := InitWithConfig(cdc, appInit, config, initConfig)
+			chainID, nodeID, appMessage, pubKey, err := InitWithConfig(cdc, appInit, config, initConfig)
 			if err != nil {
 				return types.ErrInitWithCfg(types.DefaultCodespace, err)
 			}
+
 			// print out some types information
 			toPrint := struct {
 				ChainID    string          `json:"chain_id"`
 				NodeID     string          `json:"node_id"`
 				AppMessage json.RawMessage `json:"app_message"`
+				PubKey     string          `json:"pub_key"`
 			}{
 				chainID,
 				nodeID,
 				appMessage,
+				pubKey,
 			}
 			out, err := app.MarshalJSONIndent(cdc, toPrint)
 			if err != nil {
@@ -250,6 +254,8 @@ func GetChainID() (string, error){
 	return id, nil
 }
 */
+
+/*
 func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initConfig InitConfig)(
 	chainID string, nodeID string, appMessage json.RawMessage, err error) {
 	var validatorKey secp256k1.PrivKeySecp256k1
@@ -283,8 +289,7 @@ func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initCo
 			panic(err)
 		}
 	}else {
-		/*validatorKey = secp256k1.GenPrivKey()
-		*/
+
 		panic(errors.New("validator key can not be empty"))
 	}
 
@@ -300,16 +305,7 @@ func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initCo
 	}
 	nodeID = string(nodeKey.ID())
 
-	/*
-	if initConfig.ChainID == "" {
-		ChainID, err := GetChainID()
-		if err != nil {
-			return "", "", nil, err
-		}
-		initConfig.ChainID = ChainID
-		chainID = ChainID
-	}
-	*/
+
 	chainID = initConfig.ChainID
 
 	genFile := c.GenesisFile()
@@ -332,6 +328,82 @@ func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initCo
 	}
 	return
 }
+
+*/
+func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initConfig InitConfig)(
+	chainID string, nodeID string, appMessage json.RawMessage, pubKey string, err error) {
+	var validatorKey secp256k1.PrivKeySecp256k1
+	var privStr string
+	nodeKey, err := node.LoadNodeKey(c.NodeKeyFile())
+	privBz := viper.GetString(FlagWithValidator)
+	if len(privBz) > 0 {
+		//1.match length
+		priByt := []byte(privBz)
+		length := len(priByt)
+		if length != 44 {
+			panic(errors.New(fmt.Sprintf("length of validator key does not match, expected %d, got %d",44 ,length)))
+		}
+
+		//2.regex match
+		rule := `=$`
+		reg := regexp.MustCompile(rule)
+		if !reg.MatchString(privBz) {
+			panic(errors.New("the end of the validator key string should be an equal sign"))
+		}
+
+		//3.match base64 encoding
+		_,err := base64.StdEncoding.DecodeString(privBz)
+		if err != nil {
+			panic(err)
+		}
+
+		privStr = fmt.Sprintf(`{"type":"%s","value":"%s"}`, secp256k1.PrivKeyAminoName, privBz)
+		err = cdc.UnmarshalJSON([]byte(privStr), &validatorKey)
+		if err != nil {
+			panic(err)
+		}
+	}else {
+
+		panic(errors.New("validator key can not be empty"))
+	}
+
+	pv := validator.GenFilePV(
+		c.PrivValidatorKeyFile(),
+		c.PrivValidatorStateFile(),
+		validatorKey,
+	)
+
+	nodeKey, err = node.GenNodeKeyByPrivKey(c.NodeKeyFile(), pv.Key.PrivKey)
+	if err != nil {
+		panic(err)
+	}
+	nodeID = string(nodeKey.ID())
+
+	chainID = initConfig.ChainID
+
+	genFile := c.GenesisFile()
+	if !initConfig.Overwrite && cmn.FileExists(genFile) {
+		err = fmt.Errorf("genesis.json file already exists: %v", genFile)
+		return
+	}
+
+	val := appInit.GetValidator(nodeKey.PubKey(), viper.GetString(FlagName))
+	validators := []tmtypes.GenesisValidator{val}
+
+	pubKey = hex.EncodeToString(cdc.MustMarshalJSON(nodeKey.PubKey()))
+
+	appState, err := appInit.AppGenState(validators)
+
+	if err != nil {
+		return
+	}
+	err = writeGenesisFile(cdc, genFile, initConfig.ChainID, validators, appState, initConfig.GenesisTime)
+	if err != nil {
+		return
+	}
+	return
+}
+
 
 
 func writeGenesisFile(cdc *amino.Codec, genesisFile string, chainID string,

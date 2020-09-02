@@ -2,7 +2,8 @@ package rest
 
 import (
 	"errors"
-	"github.com/gorilla/mux"
+	"fmt"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
 	"github.com/ci123chain/ci123chain/pkg/app"
 	"github.com/ci123chain/ci123chain/pkg/client"
@@ -10,7 +11,9 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/client/helper"
 	"github.com/ci123chain/ci123chain/pkg/staking/types"
 	tRest "github.com/ci123chain/ci123chain/pkg/transfer/rest"
+	"github.com/ci123chain/ci123chain/pkg/util"
 	sSdk "github.com/ci123chain/ci123chain/sdk/staking"
+	"github.com/gorilla/mux"
 	"net/http"
 	"strconv"
 )
@@ -20,6 +23,7 @@ func RegisterRestTxRoutes(cliCtx context.Context, r *mux.Router)  {
 	r.HandleFunc("/staking/delegate", rest.MiddleHandler(cliCtx, DelegateTX, types.DefaultCodespace)).Methods("POST")
 	r.HandleFunc("/staking/redelegate", rest.MiddleHandler(cliCtx, RedelegateTX, types.DefaultCodespace)).Methods("POST")
 	r.HandleFunc("/staking/undelegate", rest.MiddleHandler(cliCtx, UndelegateTX, types.DefaultCodespace)).Methods("POST")
+	r.HandleFunc("/staking/edit", rest.MiddleHandler(cliCtx, EditValidatorTX, types.DefaultCodespace)).Methods("POST")
 }
 
 var cdc = app.MakeCodec()
@@ -175,6 +179,123 @@ func UndelegateTX(cliCtx context.Context, writer http.ResponseWriter, request *h
 		return
 	}
 	rest.PostProcessResponseBare(writer, cliCtx, res)
+}
+
+func EditValidatorTX(cliCtx context.Context, writer http.ResponseWriter, request *http.Request) {
+	from, gas, nonce, priv, ok := parseBasicArgs(writer, request)
+	if !ok {
+		return
+	}
+	//verify account exists
+	err := checkAccountExist(cliCtx, from)
+	if err != nil {
+		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
+		return
+	}
+	moniker, identity, website, secu, details := getDescription(request)
+	minSelf, newRate, ok := getMinSelfAndNewRate(writer, request)
+	if !ok {
+		return
+	}
+
+	txByte, err := sSdk.SignEditValidator(from,gas, nonce, priv, moniker, identity, website, secu, details, minSelf, newRate)
+	if err != nil {
+		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"data error"))
+		return
+	}
+	res, err := cliCtx.BroadcastSignedData(txByte)
+	if err != nil {
+		rest.WriteErrorRes(writer, client.ErrBroadcast(types.DefaultCodespace, err))
+		return
+	}
+	rest.PostProcessResponseBare(writer, cliCtx, res)
+}
+
+func getMinSelfAndNewRate(w http.ResponseWriter, req *http.Request) (int64, int64, bool) {
+	//
+	var minSelf, newRate int64
+	var err error
+	ms := req.FormValue("minSelfDelegation")
+	if ms != "" {
+		minSelf, err = util.CheckInt64(ms)
+		if err != nil || minSelf <= 0 {
+			rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "invalid minSelfDelegation"))
+			return 0, 0, false
+		}
+	}else {
+		minSelf = -1
+	}
+	nr := req.FormValue("newRate")
+	if nr != "" {
+		newRate, err = util.CheckInt64(nr)
+		if err != nil || newRate > 100 || newRate <= 0 {
+			rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "invalid newRate"))
+			return 0, 0, false
+		}
+	}else {
+		newRate = -1
+	}
+	return minSelf, newRate, true
+}
+
+func getDescription(req *http.Request) (string, string, string, string, string) {
+	moniker := req.FormValue("moniker")
+	if moniker == "" {
+		moniker = types.DoNotModifyDesc
+	}
+	identity := req.FormValue("identity")
+	if identity == "" {
+		identity = types.DoNotModifyDesc
+	}
+	website := req.FormValue("website")
+	if website == "" {
+		website = types.DoNotModifyDesc
+	}
+	secu := req.FormValue("securityContact")
+	if secu == "" {
+		secu = types.DoNotModifyDesc
+	}
+	details := req.FormValue("details")
+	if details == "" {
+		details = types.DoNotModifyDesc
+	}
+	return moniker, identity, website, secu, details
+}
+
+func parseBasicArgs(w http.ResponseWriter, req *http.Request) (string, uint64, uint64, string, bool) {
+	from, ok := util.CheckFromAddressVar(req)
+	if !ok {
+		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "invalid from address"))
+		return "", 0, 0, "", false
+	}
+	gas, ok := util.CheckGasVar(req)
+	if !ok {
+		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "invalid gas"))
+		return "", 0, 0, "", false
+	}
+	userNonce := req.FormValue("nonce")
+	nonce, err := ParseNonce(from, userNonce)
+	if err != nil {
+		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace,"nonce error"))
+		return "", 0, 0, "", false
+	}
+	privateKey, ok := util.CheckPrivateKey(req)
+	if !ok {
+		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "invalid private key"))
+		return "", 0, 0, "", false
+	}
+	return from, gas, nonce, privateKey, true
+}
+
+
+func checkAccountExist(ctx context.Context, address... string) error {
+	for i := 0; i < len(address); i++ {
+		_,_,  err := ctx.GetNonceByAddress(sdk.HexToAddress(address[i]), false)
+		if err != nil {
+			return errors.New(fmt.Sprintf("account of %s does not exist", address[i]))
+		}
+	}
+	return nil
 }
 
 func ParseNonce(from, userNonce string) (uint64, error) {

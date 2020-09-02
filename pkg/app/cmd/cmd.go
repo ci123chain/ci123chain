@@ -32,6 +32,7 @@ func AddServerCommands(
 
 	rootCmd.AddCommand(
 		initCmd(ctx, cdc, appInit),
+		AddGenesisValidatorCmd(ctx, cdc),
 		//createCmd(ctx),
 		startCmd(ctx, appCreator),
 		AddGenesisAccountCmd(ctx, cdc),

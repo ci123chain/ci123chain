@@ -3,6 +3,7 @@ package transaction
 import (
 	"errors"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
 	"github.com/ci123chain/ci123chain/pkg/transaction/types"
 )
 
@@ -40,6 +41,24 @@ func (tx *CommonTx) GetSignature() []byte {
 
 func (tx *CommonTx) SetPubKey(pub []byte) {
 	tx.PubKey = pub
+}
+
+func (tx *CommonTx) VerifySignature(hash []byte, fabricMode bool) sdk.Error  {
+
+	if fabricMode {
+		fab := cryptosuit.NewFabSignIdentity()
+		valid, err := fab.Verifier(hash, tx.Signature, tx.PubKey, tx.From.Bytes())
+		if !valid || err != nil {
+			return types.ErrSignature(types.DefaultCodespace, errors.New("verifier failed"))
+		}
+	} else {
+		eth := cryptosuit.NewETHSignIdentity()
+		valid, err := eth.Verifier(hash, tx.Signature, nil, tx.From.Bytes())
+		if !valid || err != nil {
+			return types.ErrSignature(types.DefaultCodespace, errors.New("verifier failed"))
+		}
+	}
+	return nil
 }
 
 //

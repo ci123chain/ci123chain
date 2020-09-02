@@ -12,13 +12,6 @@ const (
 	ModuleName = types.ModuleName
 	DefaultCodespace = types.DefaultCodespace
 
-	/*QueryDelegation = "delegation"
-	QueryAllDelegation = "allDelegation"
-	QueryValidators = "validators"
-	QueryValidator = "validator"
-	QueryDelegatorValidators = "delegator_validators"
-	QueryDelegatorValidator = "delegator_validator"
-	QueryRedelegations = "redelegations"*/
 )
 
 var (
@@ -30,7 +23,10 @@ var (
 	DefaultGenesisState                = types.DefaultGenesisState
 
 	NewCreateValidatorMsg = types.NewCreateValidatorTx
+	NewEditValidatorMsg = types.NewEditValidatorTx
 	NewDelegateMsg = types.NewDelegateTx
 	NewRedelegateMsg = types.NewRedelegateTx
 	NewUndelegateMsg = types.NewUndelegateTx
+
+	NewMultiStakingHooks  = types.NewMultiStakingHooks
 )

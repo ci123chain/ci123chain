@@ -8,6 +8,7 @@ import (
 
 // permissions
 const (
+	Minter  = "minter"
 	Burner  = "burner"
 	Staking = "staking"
 )

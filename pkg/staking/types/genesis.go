@@ -56,8 +56,8 @@ func DefaultValidators(validators []tmtypes.GenesisValidator) []Validator {
 }
 
 // DefaultGenesisState gets the raw genesis raw message for testing
-func DefaultGenesisState(validators []tmtypes.GenesisValidator) GenesisState {
-	genesisValidators := DefaultValidators(validators)
+func DefaultGenesisState(_ []tmtypes.GenesisValidator) GenesisState {
+	//genesisValidators := DefaultValidators(validators)
 	//return GenesisState{Params:DefaultParams(), Validators:genesisValidators}
-	return NewGenesisState(DefaultParams(), genesisValidators, nil)
+	return NewGenesisState(DefaultParams(), nil, nil)
 }

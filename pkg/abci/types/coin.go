@@ -13,6 +13,7 @@ type Coin struct {
 }
 const (
 	blankCoin = ""
+	DefaultCoinDenom = "stake"
 )
 
 func NewCoin(amount Int) Coin {
@@ -197,6 +198,20 @@ func (coins Coins) Sort() Coins {
 	return coins
 }
 
+func mustValidateDenom(denom string) {
+	if err := ValidateDenom(denom); err != nil {
+		panic(err)
+	}
+}
+
+func NewEmptyCoin() Coin {
+	res := Coin{
+		Denom:  DefaultCoinDenom,
+		Amount: NewInt(0),
+	}
+	return res
+}
+
 // safeAdd will perform addition of two coins sets. If both coin sets are
 // empty, then an empty set is returned. If only a single set is empty, the
 // other set is returned. Otherwise, the coins are compared in order of their
@@ -260,6 +275,13 @@ func (coins Coins) IsZero() bool {
 	return true
 }
 
+func (c Coin) AmountOf(denom string) Int {
+	if c.Denom != denom {
+		panic(fmt.Errorf("denom does not match"))
+	}
+	return c.Amount
+}
+
 func (coins Coins) Add(coinsB ...Coin) Coins {
 	return coins.safeAdd(coinsB)
 }
@@ -294,5 +316,19 @@ func ValidateDenom(denom string) error {
 	if !reDnm.MatchString(denom) {
 		return fmt.Errorf("invalid denom: %s", denom)
 	}
+	return nil
+}
+
+// validate returns an error if the Coin has a negative amount or if
+// the denom is invalid.
+func validate(denom string, amount Int) error {
+	if err := ValidateDenom(denom); err != nil {
+		return err
+	}
+
+	if amount.IsNegative() {
+		return fmt.Errorf("negative coin amount: %v", amount)
+	}
+
 	return nil
 }

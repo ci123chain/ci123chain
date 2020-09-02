@@ -1,4 +1,4 @@
 package types
 
 
-type GenesisState GenesisAccounts
+///type GenesisState GenesisAccounts

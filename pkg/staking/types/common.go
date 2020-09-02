@@ -1,6 +1,7 @@
 package types
 
 import (
+	"encoding/json"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"time"
 )
@@ -12,8 +13,14 @@ const (
 	MaxWebsiteLength         = 140
 	MaxSecurityContactLength = 140
 	MaxDetailsLength         = 280
+
+	// constant used in flags to indicate that description field should not be updated
+	DoNotModifyDesc = "[do-not-modify]"
 )
 
+//Rate:   佣金收取率；0-100;
+//maxRate:  佣金最大收取率；
+//maxChangeRate: 每日最大变动百分比
 type CommissionRates struct {
 	Rate           sdk.Dec     `json:"rate"`
 	MaxRate        sdk.Dec     `json:"max_rate"`
@@ -84,6 +91,32 @@ func (m *Description) GetMoniker() string {
 	return ""
 }
 
+func (m Description) UpdateDescription(d2 Description) (Description, error) {
+	if d2.Moniker == DoNotModifyDesc {
+		d2.Moniker = m.Moniker
+	}
+	if d2.Identity == DoNotModifyDesc {
+		d2.Identity = m.Identity
+	}
+	if d2.Website == DoNotModifyDesc {
+		d2.Website = m.Website
+	}
+	if d2.SecurityContact == DoNotModifyDesc {
+		d2.SecurityContact = m.SecurityContact
+	}
+	if d2.Details == DoNotModifyDesc {
+		d2.Details = m.Details
+	}
+
+	return NewDescription(
+		d2.Moniker,
+		d2.Identity,
+		d2.Website,
+		d2.SecurityContact,
+		d2.Details,
+	).EnsureLength()
+}
+
 func (m *Description) GetIdentity() string {
 	if m != nil {
 		return m.Identity
@@ -137,6 +170,30 @@ type Commission struct {
 }
 
 func (m *Commission) Reset()      { *m = Commission{} }
+
+func (m Commission) String() string {
+	out, _ := json.Marshal(m)
+	return string(out)
+}
+
+func (m Commission) ValidateNewRate(newRate sdk.Dec, blockTime time.Time) error {
+	switch {
+	case blockTime.Sub(m.UpdateTime).Hours() < 24:
+		// new rate cannot be changed more than once within 24 hours
+		return ErrCommissionUpdateTime
+	case newRate.IsNegative():
+		// new rate cannot be negative
+		return ErrCommissionNegative
+	case newRate.GT(m.CommissionRates.MaxRate):
+		// new rate cannot be greater than the max rate
+		return ErrCommissionGTMaxRate
+	case newRate.Sub(m.CommissionRates.Rate).GT(m.CommissionRates.MaxChangeRate):
+		// new rate % points change cannot be greater than the max change rate
+		return ErrCommissionChangeRateGTMaxRate
+	}
+	return nil
+}
+
 
 func NewCommission(rate, maxRate, maxChangeRate sdk.Dec) Commission {
 	return Commission{

@@ -4,7 +4,7 @@ import sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 
 func (k StakingKeeper) AfterValidatorCreated(ctx sdk.Context, valAddr sdk.AccAddress) {
 	if k.hooks != nil {
-		k.hooks.AferValidatorCreated(ctx, valAddr)
+		k.hooks.AfterValidatorCreated(ctx, valAddr)
 	}
 }
 
@@ -12,6 +12,13 @@ func (k StakingKeeper) AfterValidatorCreated(ctx sdk.Context, valAddr sdk.AccAdd
 func (k StakingKeeper) AfterValidatorRemoved(ctx sdk.Context, consAddr sdk.AccAddress, valAddr sdk.AccAddress) {
 	if k.hooks != nil {
 		k.hooks.AfterValidatorRemoved(ctx, consAddr, valAddr)
+	}
+}
+
+// BeforeValidatorModified - call hook if registered
+func (k StakingKeeper) BeforeValidatorModified(ctx sdk.Context, valAddr sdk.AccAddress) {
+	if k.hooks != nil {
+		k.hooks.BeforeValidatorModified(ctx, valAddr)
 	}
 }
 

@@ -1,14 +1,13 @@
 package handler
 
 import (
+	"errors"
 	"fmt"
-	gogotypes "github.com/gogo/protobuf/types"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/staking/keeper"
 	"github.com/ci123chain/ci123chain/pkg/staking/types"
 	staking "github.com/ci123chain/ci123chain/pkg/staking/types"
-	//tmtypes "github.com/tendermint/tendermint/types"
-	//tmstrings "github.com/tendermint/tendermint/libs/strings"
+	gogotypes "github.com/gogo/protobuf/types"
 	"time"
 )
 
@@ -19,6 +18,8 @@ func NewHandler(k keeper.StakingKeeper) sdk.Handler {
 		switch tx := tx.(type) {
 		case *staking.CreateValidatorTx:
 			return handleCreateValidatorTx(ctx, k, *tx)
+		case *staking.EditValidatorTx:
+			return handleEditValidatorTx(ctx, k, *tx)
 		case *staking.DelegateTx:
 			return handleDelegateTx(ctx, k, *tx)
 		case *staking.RedelegateTx:
@@ -57,11 +58,14 @@ func handleCreateValidatorTx(ctx sdk.Context, k keeper.StakingKeeper, tx staking
 		}*/
 	//}
 
-	validator := staking.NewValidator(tx.ValidatorAddress, tx.PublicKey, tx.Description)
+	validator, err := staking.NewValidator(tx.ValidatorAddress, tx.PublicKey, tx.Description)
+	if err != nil {
+		return types.ErrSetValidatorFailed(types.DefaultCodespace, err).Result()
+	}
 	commission := staking.NewCommissionWithTime(tx.Commission.Rate,
 		tx.Commission.MaxRate, tx.Commission.MaxChangeRate, ctx.BlockHeader().Time)
 
-	validator, err := validator.SetInitialCommission(commission)
+	validator, err = validator.SetInitialCommission(commission)
 	if err != nil {
 		return types.ErrSetCommissionFailed(types.DefaultCodespace, err).Result()
 	}
@@ -92,6 +96,60 @@ func handleCreateValidatorTx(ctx sdk.Context, k keeper.StakingKeeper, tx staking
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 			sdk.NewAttribute(sdk.AttributeKeySender, tx.DelegatorAddress.String()),
 			),
+	})
+
+	return sdk.Result{Events: em.Events()}
+}
+
+func handleEditValidatorTx(ctx sdk.Context, k keeper.StakingKeeper, tx staking.EditValidatorTx) sdk.Result {
+
+	validator, found := k.GetValidator(ctx, tx.ValidatorAddress)
+	if !found {
+		return types.ErrNoExpectedValidator(types.DefaultCodespace, errors.New(fmt.Sprintf("%s not found", validator.OperatorAddress.String()))).Result()
+	}
+	description, err := validator.Description.UpdateDescription(tx.Description)
+	if err != nil {
+		return types.ErrCheckParams(types.DefaultCodespace, err.Error()).Result()
+	}
+
+	validator.Description = description
+
+	//if commissionRate == nil, no change.
+	if tx.CommissionRate != nil {
+		commission, err := k.UpdateValidatorCommission(ctx, validator, *tx.CommissionRate)
+		if err != nil {
+			return types.ErrCheckParams(types.DefaultCodespace, err.Error()).Result()
+		}
+
+		k.BeforeValidatorModified(ctx, tx.ValidatorAddress)
+		validator.Commission = commission
+	}
+	//if minSelfDelegation == nil, no change.
+	if tx.MinSelfDelegation != nil {
+		if !tx.MinSelfDelegation.GT(validator.MinSelfDelegation) {
+			return types.ErrCheckParams(types.DefaultCodespace, fmt.Sprintf("new minSelfDelegation should be greater than before: %s", validator.MinSelfDelegation.String())).Result()
+		}
+		if tx.MinSelfDelegation.GT(validator.Tokens) {
+			return types.ErrCheckParams(types.DefaultCodespace, fmt.Sprintf("new minSelfDelegation can not be greater than tokens that you hold on")).Result()
+		}
+		validator.MinSelfDelegation = *tx.MinSelfDelegation
+	}
+	err = k.SetValidator(ctx, validator)
+	if err != nil {
+		return types.ErrSetValidatorFailed(types.DefaultCodespace, err).Result()
+	}
+	em := sdk.NewEventManager()
+	em.EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeEditValidator,
+			sdk.NewAttribute(types.AttributeKeyCommissionRate, validator.Commission.String()),
+			sdk.NewAttribute(types.AttributeKeyMinSelfDelegation, validator.MinSelfDelegation.String()),
+		),
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(sdk.AttributeKeySender, tx.ValidatorAddress.String()),
+		),
 	})
 
 	return sdk.Result{Events: em.Events()}

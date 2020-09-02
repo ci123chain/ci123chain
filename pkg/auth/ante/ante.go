@@ -8,12 +8,12 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/auth"
 	"github.com/ci123chain/ci123chain/pkg/auth/types"
 	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
-	"github.com/ci123chain/ci123chain/pkg/fc"
+	"github.com/ci123chain/ci123chain/pkg/supply"
 	"github.com/ci123chain/ci123chain/pkg/transaction"
 )
 const Price uint64 = 1
 //const unit = 1000
-func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, fck fc.FcKeeper) sdk.AnteHandler {
+func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, sk supply.Keeper) sdk.AnteHandler {
 	return func(ctx sdk.Context, tx sdk.Tx, simulate bool) (newCtx sdk.Context, res sdk.Result, abort bool) {
 
 		stdTx, ok := tx.(transaction.Transaction)
@@ -100,12 +100,20 @@ func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, fck f
 		fmt.Println("-------- consume gas by txSize ----------")
 		fmt.Println(newCtx.GasMeter().GasConsumed())
 
-		//存储奖励金
-		fck.AddCollectedFees(newCtx, getFee)
+		//存储奖励金到feeCollector Module账户
+		feeCollectorModuleAccount := sk.GetModuleAccount(ctx, auth.FeeCollectorName)
+		newFee := feeCollectorModuleAccount.GetCoin().Add(getFee)
+		err = feeCollectorModuleAccount.SetCoin(newFee)
+		if err != nil {
+			fmt.Println("fee_collector module account set coin failed")
+			panic(err)
+		}
+		ak.SetAccount(ctx, feeCollectorModuleAccount)
+		//fck.AddCollectedFees(newCtx, getFee)
 
 		//account sequence + 1
 		nowSequence := accountSequence + 1
-		acc.SetSequence(nowSequence)
+		_ = acc.SetSequence(nowSequence)
 		ak.SetAccount(ctx, acc)
 		return newCtx, sdk.Result{GasWanted:gas,GasUsed:fee}, false
 	}

@@ -1,5 +1,5 @@
 package types
-
+/*
 import (
 	"bytes"
 	"github.com/ci123chain/ci123chain/pkg/abci/types"
@@ -44,3 +44,4 @@ func (gaccs GenesisAccounts) Contains(acc types.AccAddress) bool {
 	}
 	return false
 }
+*/

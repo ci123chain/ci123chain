@@ -14,6 +14,7 @@ func init(){
 func RegisterCodec(cdc *codec.Codec) {
 	//
 	cdc.RegisterConcrete(&CreateValidatorTx{}, "ci123chain/CreateValidatorTx", nil)
+	cdc.RegisterConcrete(&EditValidatorTx{}, "ci123chain/EditValidatorTx", nil)
 	cdc.RegisterConcrete(&DelegateTx{}, "ci123chain/DelegateTx", nil)
 	cdc.RegisterConcrete(&UndelegateTx{}, "ci123chain/UndelegateTx", nil)
 	cdc.RegisterConcrete(&RedelegateTx{}, "ci123chain/RedelegateTx", nil)

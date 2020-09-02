@@ -293,3 +293,16 @@ func (k StakingKeeper) GetAllValidators(ctx sdk.Context) (validators []types.Val
 
 	return validators
 }
+
+func (k StakingKeeper) UpdateValidatorCommission(ctx sdk.Context, validator types.Validator, newRate sdk.Dec) (types.Commission, error) {
+
+	commission := validator.Commission
+	blockTime := ctx.BlockHeader().Time
+
+	if err := commission.ValidateNewRate(newRate, blockTime); err != nil {
+		return commission, err
+	}
+	commission.CommissionRates.Rate = newRate
+	commission.UpdateTime = blockTime
+	return commission, nil
+}

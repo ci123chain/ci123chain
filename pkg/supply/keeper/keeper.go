@@ -159,3 +159,52 @@ func (k Keeper) UndelegateCoinsFromModuleToAccount(
 //}
 
 ///-------------
+
+// GetSupply retrieves the Supply from store
+func (k Keeper) GetSupply(ctx sdk.Context) (supply exported.SupplyI) {
+	store := ctx.KVStore(k.storeKey)
+	b := store.Get(types2.SupplyKey)
+	if b == nil {
+		panic("stored supply should not have been nil")
+	}
+	k.cdc.MustUnmarshalBinaryLengthPrefixed(b, &supply)
+	return
+}
+
+// SetSupply sets the Supply to store
+func (k Keeper) SetSupply(ctx sdk.Context, supply exported.SupplyI) {
+	store := ctx.KVStore(k.storeKey)
+	b := k.cdc.MustMarshalBinaryLengthPrefixed(supply)
+	store.Set(types2.SupplyKey, b)
+}
+
+// MintCoins creates new coins from thin air and adds it to the module account.
+// It will panic if the module account does not exist or is unauthorized.
+func (k Keeper) MintCoins(ctx sdk.Context, moduleName string, amt sdk.Coin) error {
+	acc := k.GetModuleAccount(ctx, moduleName)
+	if acc == nil {
+		//panic(sdkerrors.Wrapf(sdkerrors.ErrUnknownAddress, "module account %s does not exist", moduleName))
+		panic(fmt.Errorf("module account %s does not exist", moduleName))
+	}
+
+	if !acc.HasPermission(types2.Minter) {
+		//panic(sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "module account %s does not have permissions to mint tokens", moduleName))
+		panic(fmt.Errorf( "module account %s does not have permissions to mint tokens", moduleName))
+	}
+
+	_, err := k.ak.AddBalance(ctx, acc.GetAddress(), amt)
+	if err != nil {
+		return err
+	}
+
+	// update total supply
+	supply := k.GetSupply(ctx)
+	supply = supply.Inflate(amt)
+
+	k.SetSupply(ctx, supply)
+
+	/*logger := k.Logger(ctx)
+	logger.Info(fmt.Sprintf("minted %s from %s module account", amt.String(), moduleName))*/
+
+	return nil
+}
