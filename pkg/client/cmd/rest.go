@@ -85,18 +85,11 @@ func NewRestServer() *RestServer {
 	accountRpc.RegisterRoutes(cliCtx, r)
 	txRpc.RegisterTxRoutes(cliCtx, r)
 	ibc.RegisterRoutes(cliCtx, r)
-<<<<<<< HEAD
 	dRest.RegisterRoutes(cliCtx, r)
-=======
->>>>>>> mint
 	order.RegisterTxRoutes(cliCtx, r)
 	orQuery.RegisterTxRoutes(cliCtx, r)
 	sRest.RegisterRoutes(cliCtx, r)
 	wRest.RegisterRoutes(cliCtx, r)
-<<<<<<< HEAD
-=======
-	dRest.RegisterRoutes(cliCtx, r)
->>>>>>> mint
 	mRest.RegisterRoutes(cliCtx, r)
 
 	return &RestServer{

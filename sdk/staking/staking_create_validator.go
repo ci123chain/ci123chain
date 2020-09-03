@@ -31,22 +31,12 @@ func SignCreateValidatorMSg(from string, amount int64, gas, nonce uint64, priv s
 	selfDelegation, r, mr, mxr := CreateParseArgs(minSelfDelegation, rate, maxRate, maxChangeRate)
 	tx := staking.NewCreateValidatorMsg(fromAddr, gas, nonce, amt,selfDelegation,validatorAddr, delegatorAddr,r,mr,mxr,
 	moniker, identity, website, securityContact, details, public)
-<<<<<<< HEAD
+
 	var signature []byte
 	privPub, err := hex.DecodeString(priv)
 	eth := cryptosuit.NewETHSignIdentity()
 	signature, err = eth.Sign(tx.GetSignBytes(), privPub)
-=======
 
-	/*sid := cryptosuit.NewFabSignIdentity()
-	pub, err  := sid.GetPubKey(privateKey)
-
-	tx.SetPubKey(pub)
-	signbyte := tx.GetSignBytes()
-	signature, err := sid.Sign(signbyte, privateKey)*/
-	eth := cryptosuit.NewETHSignIdentity()
-	signature, err := eth.Sign(tx.GetSignBytes(), privateKey)
->>>>>>> mint
 	if err != nil {
 		return nil, err
 	}

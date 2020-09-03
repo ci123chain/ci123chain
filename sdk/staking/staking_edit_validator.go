@@ -11,11 +11,7 @@ import (
 
 func SignEditValidator(from string, gas, nonce uint64, priv,
 	moniker, identity, website, secu, details string, minSelfDelegation, newRate int64) ([]byte, error) {
-<<<<<<< HEAD
-	//
-=======
-		//
->>>>>>> mint
+
 	privateKey, err := hex.DecodeString(priv)
 	if err != nil {
 		return nil, err

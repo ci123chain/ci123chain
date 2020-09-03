@@ -7,5 +7,5 @@ import (
 
 func RegisterRoutes(cliCtx context.Context, r *mux.Router) {
 	RegisterQueryRoutes(cliCtx, r)
-	RegisterTxRoutes(cliCtx, r)
+	RegisterRestTxRoutes(cliCtx, r)
 }
