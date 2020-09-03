@@ -31,21 +31,7 @@ var cdc = app.MakeCodec()
 
 
 func CreateValidatorRequest(cliCtx context.Context, writer http.ResponseWriter, request *http.Request) {
-	/*
-	gas, cAmt, msd, r, mr, mcr, moniker, identity, website, securityContact, details,
-	priv, from, validatorAddr, delegatorAddr, publicKey, nonce, err := ParseArgs(request)
-	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
-		return
-	}
 
-	txByte, err := sSdk.SignCreateValidatorMSg(from, cAmt, gas, nonce, priv, msd, validatorAddr,
-		delegatorAddr, r, mr, mcr, moniker, identity, website, securityContact, details, publicKey)
-	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
-		return
-	}
-	*/
 	msd, r, mr, mcr, moniker, identity, website, securityContact, details,
 	publicKey,err := parseOtherArgs(request)
 	if err != nil {
@@ -80,48 +66,7 @@ func CreateValidatorRequest(cliCtx context.Context, writer http.ResponseWriter, 
 }
 
 func DelegateTX(cliCtx context.Context, writer http.ResponseWriter, request *http.Request) {
-	/*
-	key := request.FormValue("privateKey")
-	from := request.FormValue("from")
-	gas := request.FormValue("gas")
-	Gas, err := strconv.ParseInt(gas, 10, 64)
-	if err != nil || Gas < 0 {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"gas error"))
-		return
-	}
 
-	isBalanceEnough := tRest.CheckBalanceFromParams(cliCtx, request)
-	if !isBalanceEnough {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"The balance is not enough to pay the delegate"))
-		return
-	}
-
-
-	UserGas := uint64(Gas)
-	userNonce := request.FormValue("nonce")
-
-	nonce, err := ParseNonce(from, userNonce)
-	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"nonce error"))
-		return
-	}
-	amount := request.FormValue("amount")
-	amt, err := strconv.ParseInt(amount, 10, 64)
-	if err != nil || amt < 0 {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"amount of coin error"))
-		return
-	}
-	cAmt := uint64(amt)
-	validatorAddr := request.FormValue("validatorAddr")
-	delegatorAddr := from//request.FormValue("delegatorAddr")
-
-
-	txByte, err := sSdk.SignDelegateMsg(from,cAmt, UserGas, nonce, key, validatorAddr, delegatorAddr)
-	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
-		return
-	}
-	*/
 	isOk := tRest.CheckAccountAndBalanceFromParams(cliCtx, request, writer)
 	if !isOk {
 		return
@@ -131,11 +76,12 @@ func DelegateTX(cliCtx context.Context, writer http.ResponseWriter, request *htt
 	if !ok {
 		return
 	}
-	validatorAddr := request.FormValue("validatorAddress")
+	validatorAddr := request.FormValue("validatorAddr")
 	//verify account exists
 	err := checkAccountExist(cliCtx, from, validatorAddr)
 	if err != nil {
 		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
+		return
 	}
 
 	txByte, err := sSdk.SignDelegateMsg(from, amount, gas, nonce, key, validatorAddr, delegatorAddr)
@@ -153,37 +99,7 @@ func DelegateTX(cliCtx context.Context, writer http.ResponseWriter, request *htt
 }
 
 func RedelegateTX(cliCtx context.Context, writer http.ResponseWriter, request *http.Request) {
-	/*key := request.FormValue("privateKey")
-	from := request.FormValue("from")
-	gas := request.FormValue("gas")
-	Gas, err := strconv.ParseInt(gas, 10, 64)
-	if err != nil || Gas < 0 {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"gas error"))
-		return
-	}
-	UserGas := uint64(Gas)
-	userNonce := request.FormValue("nonce")
-	nonce, err := ParseNonce(from, userNonce)
-	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"nonce error"))
-		return
-	}
-	amount := request.FormValue("amount")
-	amt, err := strconv.ParseInt(amount, 10, 64)
-	if err != nil || amt < 0 {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"amount of coin error"))
-		return
-	}
-	cAmt := uint64(amt)
-	validatorSrcAddr := request.FormValue("validatorSrcAddr")
-	validatorDstAddr := request.FormValue("validatorDstAddr")
-	delegatorAddr := from///request.FormValue("delegatorAddr")
 
-	txByte, err := sSdk.SignRedelegateMsg(from,cAmt, UserGas, nonce, key, validatorSrcAddr, validatorDstAddr, delegatorAddr)
-	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
-		return
-	}*/
 	validatorSrcAddr := request.FormValue("validatorSrcAddr")
 	validatorDstAddr := request.FormValue("validatorDstAddr")
 
@@ -213,44 +129,12 @@ func RedelegateTX(cliCtx context.Context, writer http.ResponseWriter, request *h
 }
 
 func UndelegateTX(cliCtx context.Context, writer http.ResponseWriter, request *http.Request) {
-	/*
-	key := request.FormValue("privateKey")
-	from := request.FormValue("from")
-	gas := request.FormValue("gas")
-	Gas, err := strconv.ParseInt(gas, 10, 64)
-	if err != nil || Gas < 0 {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"gas error"))
-		return
-	}
-	UserGas := uint64(Gas)
-	userNonce := request.FormValue("nonce")
 
-	nonce, err := ParseNonce(from, userNonce)
-	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"nonce error"))
-		return
-	}
-	amount := request.FormValue("amount")
-	amt, err := strconv.ParseInt(amount, 10, 64)
-	if err != nil || amt < 0 {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"amount of coin error"))
-		return
-	}
-	cAmt := uint64(amt)
-	validatorAddr := request.FormValue("validatorAddr")
-	delegatorAddr := from//request.FormValue("delegatorAddr")
-
-	txByte, err := sSdk.SignUndelegateMsg(from,cAmt, UserGas, nonce, key, validatorAddr, delegatorAddr)
-	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
-		return
-	}
-	*/
 	from, delegatorAddr, key, amount, gas, nonce, ok := parseBaseArgs(writer, request)
 	if !ok {
 		return
 	}
-	validatorAddr := request.FormValue("validatorAddress")
+	validatorAddr := request.FormValue("validatorAddr")
 	//verify account exists
 	err := checkAccountExist(cliCtx, from, validatorAddr)
 	if err != nil {
@@ -262,13 +146,6 @@ func UndelegateTX(cliCtx context.Context, writer http.ResponseWriter, request *h
 		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"data error"))
 		return
 	}
-
-
-	/*txByte, err := sSdk.SignRedelegateMsg(from, amount, gas, nonce, key, validatorSrcAddr, validatorDstAddr, delegatorAddr)
-	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"data error"))
-		return
-	}*/
 
 	res, err := cliCtx.BroadcastSignedTx(txByte)
 	if err != nil {
@@ -361,27 +238,7 @@ func getDescription(req *http.Request) (string, string, string, string, string) 
 }
 
 func parseBasicArgs(w http.ResponseWriter, req *http.Request) (string, uint64, uint64, string, bool) {
-	/*from, ok := util.CheckFromAddressVar(req)
-	if !ok {
-		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "invalid from address"))
-		return "", 0, 0, "", false
-	}
-	gas, ok := util.CheckGasVar(req)
-	if !ok {
-		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "invalid gas"))
-		return "", 0, 0, "", false
-	}
-	userNonce := req.FormValue("nonce")
-	nonce, err := ParseNonce(from, userNonce)
-	if err != nil {
-		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace,"nonce error"))
-		return "", 0, 0, "", false
-	}
-	privateKey, ok := util.CheckPrivateKey(req)
-	if !ok {
-		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "invalid private key"))
-		return "", 0, 0, "", false
-	}*/
+
 	from, ok := util.CheckFromAddressVar(req)
 	if !ok {
 		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "invalid from address"))
@@ -515,11 +372,6 @@ func parseBaseArgs(w http.ResponseWriter, req *http.Request) (string, string, st
 	//为了确保 createValidator交易是from账户发出的，validator的地址就直接是这个from;
 	//只能是 设置 提取奖金的地址；那么就要保证 from validator delegator是一致的；但是 又没有验证；因为它本身就是使用相同的值；
 	//要保证delegator跟from一致；
-	/*from, ok := util.CheckFromAddressVar(req)
-	if !ok {
-		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "invalid from address"))
-		return "", "", "", 0, 0, 0, false
-	}*/
 	from, gas, nonce, privateKey, ok := parseBasicArgs(w, req)
 	if !ok {
 		return "", "", "", 0, 0, 0, false
@@ -529,21 +381,6 @@ func parseBaseArgs(w http.ResponseWriter, req *http.Request) (string, string, st
 		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "invalid amount"))
 		return "", "", "", 0, 0, 0, false
 	}
-	/*gas, ok := util.CheckGasVar(req)
-	if !ok {
-		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "invalid gas"))
-		return "", "", "", 0, 0, 0, false
-	}
-	nonce, ok := util.CheckNonce(req, sdk.HexToAddress(from), cdc)
-	if !ok {
-		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "invalid nonce"))
-		return "", "", "", 0, 0, 0, false
-	}
-	privateKey, ok := util.CheckPrivateKey(req)
-	if !ok {
-		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "invalid private key"))
-		return "", "", "", 0, 0, 0, false
-	}*/
 	delegatorAddrStr := from
 	return from, delegatorAddrStr, privateKey, amount, gas, nonce, true
 }

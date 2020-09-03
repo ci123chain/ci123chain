@@ -19,7 +19,7 @@ func RegisterRoutes(cliCtx context.Context, r *mux.Router) {
 }
 
 func checkDelegatorAddressVar(w http.ResponseWriter, r *http.Request) (string, bool) {
-	address := r.FormValue("delegatorAddress")
+	address := r.FormValue("delegatorAddr")
 	checkErr := util.CheckStringLength(42, 100, address)
 	if checkErr != nil {
 		rest.WriteErrorRes(w,types.ErrBadAddress(types.DefaultCodespace, checkErr))
@@ -29,7 +29,7 @@ func checkDelegatorAddressVar(w http.ResponseWriter, r *http.Request) (string, b
 }
 
 func checkValidatorAddressVar(w http.ResponseWriter, r *http.Request) (string, bool) {
-	address := r.FormValue("validatorAddress")
+	address := r.FormValue("validatorAddr")
 	checkErr := util.CheckStringLength(42, 100, address)
 	if checkErr != nil {
 		rest.WriteErrorRes(w,types.ErrBadAddress(types.DefaultCodespace, checkErr))
