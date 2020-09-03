@@ -55,9 +55,9 @@ func RedelegateParseArgs(from string, amount int64, validatorSrcAddr, validatorD
 
 func CreateParseArgs(selfDelegation int64, rate, maxRate, maxChangeRate int64) (sdk.Int, sdk.Dec, sdk.Dec, sdk.Dec) {
 	minSelfDelegation := sdk.NewInt(selfDelegation)
-	r := sdk.NewDec(rate)
-	mr := sdk.NewDec(maxRate)
-	mxr := sdk.NewDec(maxChangeRate)
+	r := sdk.NewDecWithPrec(rate, 2)
+	mr := sdk.NewDecWithPrec(maxRate, 2)
+	mxr := sdk.NewDecWithPrec(maxChangeRate, 2)
 
 	return minSelfDelegation, r, mr, mxr
 }
