@@ -100,14 +100,10 @@ func checkNonce(w http.ResponseWriter, r *http.Request, from sdk.AccAddress) (ui
 		if err != nil {
 			return 0, false
 		}
-<<<<<<< HEAD
 		var Err error
 		Nonce, _, Err = ctx.GetNonceByAddress(from, false)
 		if Err != nil {
-=======
-		Nonce, err = ctx.GetNonceByAddress(from)
-		if err != nil {
->>>>>>> mint
+
 			return 0, false
 		}
 	}else {

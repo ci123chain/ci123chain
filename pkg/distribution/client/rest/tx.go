@@ -12,7 +12,6 @@ import (
 )
 
 func registerTxRoutes(cliCtx context.Context, r *mux.Router) {
-<<<<<<< HEAD
 	r.HandleFunc("/distribution/tx_community_pool", rest.MiddleHandler(cliCtx, fundCommunityPoolHandler, types.DefaultCodespace)).Methods("POST")
 	r.HandleFunc("/distribution/validator/withdraw_commission", rest.MiddleHandler(cliCtx, withdrawValidatorCommissionsHandler, types.DefaultCodespace)).Methods("POST")
 	r.HandleFunc("/distribution/delegator/withdraw_rewards", rest.MiddleHandler(cliCtx, withdrawDelegationRewardsHandler, types.DefaultCodespace)).Methods("POST")
@@ -234,9 +233,7 @@ func setDelegatorWithdrawalAddrHandlerFn(cliCtx context.Context) http.HandlerFun
 }
 <<<<<<< HEAD
 */
-=======
 
->>>>>>> mint
 
 func paserArgs(writer http.ResponseWriter, req *http.Request) (string, uint64, uint64, string, bool)  {
 	accountAddress, ok := checkFromAddressVar(writer, req)

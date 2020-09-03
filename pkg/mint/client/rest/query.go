@@ -22,11 +22,8 @@ func RegisterQueryRoutes(cliCtx context.Context, r *mux.Router) {
 func queryParamsHandleFn(cliCtx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		route := fmt.Sprintf("/custom/%s/%s", types.QuerierRoute, types.QueryParameters)
-<<<<<<< HEAD
 		res, _, _, err := cliCtx.Query(route, nil, false)
-=======
-		res, _, err := cliCtx.Query(route, nil)
->>>>>>> mint
+
 		if err != nil {
 			rest.WriteErrorRes(w, err)
 			return
@@ -42,11 +39,8 @@ func queryParamsHandleFn(cliCtx context.Context) http.HandlerFunc {
 func queryInflationHandleFn(cliCtx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		route := fmt.Sprintf("/custom/%s/%s", types.QuerierRoute, types.QueryInflation)
-<<<<<<< HEAD
 		res, _, _, err := cliCtx.Query(route, nil, false)
-=======
-		res, _, err := cliCtx.Query(route, nil)
->>>>>>> mint
+
 		if err != nil {
 			rest.WriteErrorRes(w, err)
 			return
@@ -63,11 +57,8 @@ func queryInflationHandleFn(cliCtx context.Context) http.HandlerFunc {
 func queryAnnualProvisionsHandlerFn(cliCtx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		route := fmt.Sprintf("/custom/%s/%s", types.QuerierRoute, types.QueryAnnualProvisions)
-<<<<<<< HEAD
 		res, _, _, err := cliCtx.Query(route, nil, false)
-=======
-		res, _, err := cliCtx.Query(route, nil)
->>>>>>> mint
+
 		if err != nil {
 			rest.WriteErrorRes(w, err)
 			return

@@ -86,11 +86,9 @@ func QueryValidatorOutstandingRewardsHandleFn(cliCtx context.Context) http.Handl
 			return
 		}
 		b := cliCtx.Cdc.MustMarshalJSON(types.NewQueryValidatorOutstandingRewardsParams(sdk.HexToAddress(validatorAddress)))
-<<<<<<< HEAD
+
 		res, _, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryValidatorOutstandingRewards, b, false)
-=======
-		res, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryValidatorOutstandingRewards, b)
->>>>>>> mint
+
 		if err != nil {
 			rest.WriteErrorRes(writer, err)
 			return
@@ -103,12 +101,8 @@ func QueryValidatorOutstandingRewardsHandleFn(cliCtx context.Context) http.Handl
 
 func QueryCommunityPoolHandleFn(cliCtx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
-<<<<<<< HEAD
 		res, _, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryCommunityPool, nil, false)
-=======
-		res, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryCommunityPool, nil)
->>>>>>> mint
+
 		if err != nil {
 			rest.WriteErrorRes(w, err)
 		}
@@ -125,11 +119,8 @@ func QueryWithDrawAddress(cliCtx context.Context) http.HandlerFunc {
 			return
 		}
 		b := cliCtx.Cdc.MustMarshalJSON(types.NewQueryDelegatorWithdrawAddrParams(sdk.HexToAddress(delegatorAddr)))
-<<<<<<< HEAD
 		res, _, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryWithdrawAddress, b, false)
-=======
-		res, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryWithdrawAddress, b)
->>>>>>> mint
+
 		if err != nil {
 			rest.WriteErrorRes(w, err)
 			return
