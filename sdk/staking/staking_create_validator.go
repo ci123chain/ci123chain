@@ -9,7 +9,7 @@ import (
 	cryptoAmino "github.com/tendermint/tendermint/crypto/encoding/amino"
 )
 
-func SignCreateValidatorMSg(from string, amount, gas, nonce uint64, priv string, minSelfDelegation int64,
+func SignCreateValidatorMSg(from string, amount int64, gas, nonce uint64, priv string, minSelfDelegation int64,
 	validatorAddress, delegatorAddress string, rate, maxRate, maxChangeRate int64,
 	moniker, identity, website, securityContact, details string, publicKey string) ([]byte, error) {
 
@@ -31,10 +31,22 @@ func SignCreateValidatorMSg(from string, amount, gas, nonce uint64, priv string,
 	selfDelegation, r, mr, mxr := CreateParseArgs(minSelfDelegation, rate, maxRate, maxChangeRate)
 	tx := staking.NewCreateValidatorMsg(fromAddr, gas, nonce, amt,selfDelegation,validatorAddr, delegatorAddr,r,mr,mxr,
 	moniker, identity, website, securityContact, details, public)
+<<<<<<< HEAD
 	var signature []byte
 	privPub, err := hex.DecodeString(priv)
 	eth := cryptosuit.NewETHSignIdentity()
 	signature, err = eth.Sign(tx.GetSignBytes(), privPub)
+=======
+
+	/*sid := cryptosuit.NewFabSignIdentity()
+	pub, err  := sid.GetPubKey(privateKey)
+
+	tx.SetPubKey(pub)
+	signbyte := tx.GetSignBytes()
+	signature, err := sid.Sign(signbyte, privateKey)*/
+	eth := cryptosuit.NewETHSignIdentity()
+	signature, err := eth.Sign(tx.GetSignBytes(), privateKey)
+>>>>>>> mint
 	if err != nil {
 		return nil, err
 	}

@@ -25,6 +25,16 @@ func NewPermissionForAddress(name string, permissions []string) PermissionsForAd
 	}
 }
 
+// HasPermission returns whether the PermissionsForAddress contains permission.
+func (pa PermissionsForAddress) HasPermission(permission string) bool {
+	for _, perm := range pa.permissions {
+		if perm == permission {
+			return true
+		}
+	}
+	return false
+}
+
 
 // GetAddress returns the address of the PermissionsForAddress object
 func (pa PermissionsForAddress) GetAddress() sdk.AccAddress {

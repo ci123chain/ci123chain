@@ -202,9 +202,9 @@ func ErrUndelegateFailed(codespace sdk.CodespaceType, err error) sdk.Error {
 }
 
 func ErrValidateUnBondAmountFailed(codespace sdk.CodespaceType, err error) sdk.Error {
-return sdk.NewError(codespace, CodeValidateUnbondAmountFailed, "Validate unbond amount failed: %s", err.Error())
-}
 
+	return sdk.NewError(codespace, CodeValidateUnbondAmountFailed, "Validate unbond amount failed: %s", err.Error())
+}
 
 func ErrCheckParams(codespace sdk.CodespaceType, str string) sdk.Error {
 	return sdk.NewError(codespace, CodeCheckParamsError, "param invalid: %s", str)

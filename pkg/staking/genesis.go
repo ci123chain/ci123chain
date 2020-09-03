@@ -35,8 +35,6 @@ func InitGenesis(
 	keeper.SetLastTotalPower(ctx, data.LastTotalPower)
 
 	for _, validator := range data.Validators {
-		//opAddr := sdk.ToAccAddress(validator.GetConsPubKey().Address())
-		//validator.OperatorAddress = opAddr
 		err := keeper.SetValidator(ctx, validator)
 		if err != nil {
 			panic(err)
@@ -94,7 +92,6 @@ func InitGenesis(
 		}
 	}
 
-	//bondedCoins := sdk.NewCoins(sdk.NewCoin(bondedTokens))
 	//notBondedCoins := sdk.NewCoins(sdk.NewCoin(notBondedTokens))
 
 	// check if the unbonded and bonded pools accounts exists

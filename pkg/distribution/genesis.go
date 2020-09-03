@@ -38,5 +38,23 @@ func InitGenesis(ctx sdk.Context, ak account.AccountKeeper, sk supply.Keeper, k 
 	for _, evt := range data.ValidatorSlashEvents {
 		k.SetValidatorSlashEvent(ctx, evt.ValidatorAddress, evt.Height, evt.Period, evt.Event)
 	}
+/*
+	moduleHoldings = moduleHoldings.Add(data.FeePool.CommunityPool)
+	moduleHoldingsInt, _ := moduleHoldings.TruncateDecimal()
+
+	// check if the module account exists
+	moduleAcc := k.GetDistributionAccount(ctx)
+	if moduleAcc == nil {
+		panic(fmt.Sprintf("%s module account has not been set", types.ModuleName))
+	}
+
+	if ak.GetAllBalances(ctx, moduleAcc.GetAddress()).IsZero() {
+		if err := ak.SetBalances(ctx, moduleAcc.GetAddress(), sdk.NewCoins(moduleHoldingsInt)); err != nil {
+			panic(err)
+		}
+
+		sk.SetModuleAccount(ctx, moduleAcc)
+	}
+	*/
 
 }

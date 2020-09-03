@@ -7,13 +7,13 @@ import (
 )
 
 
-func CommonParseArgs(from string, amount uint64, validatorAddr, delegatorAddr string) (sdk.AccAddress, sdk.Coin, sdk.AccAddress, sdk.AccAddress, error) {
+func CommonParseArgs(from string, amount int64, validatorAddr, delegatorAddr string) (sdk.AccAddress, sdk.Coin, sdk.AccAddress, sdk.AccAddress, error) {
 
 	fromAddr, err := helper.StrToAddress(from)
 	if err != nil {
 		return sdk.AccAddress{},sdk.Coin{}, sdk.AccAddress{}, sdk.AccAddress{}, errors.New("unexpected from address")
 	}
-	amt := sdk.NewUInt64Coin(amount)
+	amt := sdk.NewCoin(sdk.NewInt(amount))
 
 	validatorAddress, err := helper.StrToAddress(validatorAddr)
 	if err != nil {
@@ -28,13 +28,13 @@ func CommonParseArgs(from string, amount uint64, validatorAddr, delegatorAddr st
 
 }
 
-func RedelegateParseArgs(from string, amount uint64, validatorSrcAddr, validatorDstAddr, delegatorAddr string) (sdk.AccAddress, sdk.Coin, sdk.AccAddress, sdk.AccAddress, sdk.AccAddress, error) {
+func RedelegateParseArgs(from string, amount int64, validatorSrcAddr, validatorDstAddr, delegatorAddr string) (sdk.AccAddress, sdk.Coin, sdk.AccAddress, sdk.AccAddress, sdk.AccAddress, error) {
 
 	fromAddr, err := helper.StrToAddress(from)
 	if err != nil {
 		return sdk.AccAddress{},sdk.Coin{}, sdk.AccAddress{}, sdk.AccAddress{},sdk.AccAddress{}, errors.New("unexpected from address")
 	}
-	amt := sdk.NewUInt64Coin(amount)
+	amt := sdk.NewCoin(sdk.NewInt(amount))
 
 	validatorSrcAddress, err := helper.StrToAddress(validatorSrcAddr)
 	if err != nil {

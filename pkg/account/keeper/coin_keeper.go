@@ -103,7 +103,6 @@ func (k AccountKeeper) getBalance(ctx sdk.Context, addr sdk.AccAddress) sdk.Coin
 }
 
 func (k AccountKeeper) SetBalances(ctx sdk.Context, addr sdk.AccAddress, balances sdk.Coins) error {
-	//
 
 	k.ClearBalances(ctx, addr)
 
@@ -159,7 +158,6 @@ func (k AccountKeeper) IterateAccountBalances(ctx sdk.Context, addr sdk.AccAddre
 }
 
 func (am AccountKeeper) GetAllBalances(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins {
-	//
 
 	balances := sdk.NewCoins()
 	am.IterateAccountBalances(ctx, addr, func(balance sdk.Coin) bool {

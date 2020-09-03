@@ -66,8 +66,8 @@ var (
 	IBCStoreKey 	 = sdk.NewKVStoreKey(ibc.StoreKey)
 	OrderStoreKey	 = sdk.NewKVStoreKey(order.StoreKey)
 
-	//fcStoreKey       = sdk.NewKVStoreKey(fc.FcStoreKey)
-	disrtStoreKey         = sdk.NewKVStoreKey(k.DisrtKey)
+
+	disrtStoreKey    = sdk.NewKVStoreKey(k.DisrtKey)
 	stakingStoreKey  = sdk.NewKVStoreKey(staking.StoreKey)
 	wasmStoreKey     = sdk.NewKVStoreKey(wasm.StoreKey)
 	mintStoreKey     = sdk.NewKVStoreKey(mint.StoreKey)
@@ -150,8 +150,10 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 	mintSubspace := paramsKeeper.Subspace(mint.DefaultCodeSpce)
 	mintKeeper := mint.NewKeeper(cdc, mintStoreKey, mintSubspace, stakingKeeper, supplyKeeper, auth.FeeCollectorName)
 
+
 	odb := cdb.(*couchdb.GoCouchDB)
 	orderKeeper := order.NewKeeper(odb, OrderStoreKey, accKeeper)
+
 
 	homeDir := viper.GetString(cli.HomeFlag)
 	var wasmconfig wasm_types.WasmConfig
@@ -164,7 +166,9 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 		auth.AppModule{AuthKeeper: c.authKeeper},
 		account.AppModule{AccountKeeper: accKeeper},
 		supply.AppModule{Keeper:supplyKeeper},
-		distr.AppModule{DistributionKeeper: distrKeeper},
+
+		distr.AppModule{DistributionKeeper: distrKeeper, AccountKeeper:accKeeper, SupplyKeeper:supplyKeeper},
+
 		order.AppModule{OrderKeeper: &orderKeeper},
 		staking.AppModule{StakingKeeper:stakingKeeper, AccountKeeper:accKeeper, SupplyKeeper:supplyKeeper},
 		wasm.AppModule{WasmKeeper:wasmKeeper},
@@ -189,9 +193,9 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 	c.QueryRouter().AddRoute(wasm.RouteKey, wasm.NewQuerier(wasmKeeper))
 	c.QueryRouter().AddRoute(mint.RouteKey, mint.NewQuerier(mintKeeper))
 
-	//c.SetAnteHandler(ante.NewAnteHandler(c.authKeeper, accKeeper, fcKeeper))
-	c.SetDeferHandler(_defer.NewDeferHandler(accKeeper))
+
 	c.SetAnteHandler(ante.NewAnteHandler(c.authKeeper, accKeeper, supplyKeeper))
+	c.SetDeferHandler(_defer.NewDeferHandler(accKeeper))
 	c.SetBeginBlocker(c.BeginBlocker)
 	c.SetCommitter(c.Committer)
 	c.SetInitChainer(c.InitChainer)
@@ -214,8 +218,8 @@ func (c *Chain) mountStores() error {
 		c.contractStore,
 		ParamStoreKey,
 		AuthStoreKey,
-		MortgageStoreKey,
 		SupplyStoreKey,
+		MortgageStoreKey,
 		IBCStoreKey,
 		disrtStoreKey,
 		OrderStoreKey,
@@ -226,7 +230,6 @@ func (c *Chain) mountStores() error {
 	c.MountStoresIAVL(keys...)
 
 	c.MountStoresTransient(c.txIndexStore, ParamTransStoreKey)
-
 
 	for _, key := range keys {
 		if err := c.LoadLatestVersion(key); err != nil {

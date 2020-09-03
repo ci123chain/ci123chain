@@ -6,7 +6,6 @@ import (
 )
 
 func (k DistrKeeper) AllocateTokensToValidator(ctx sdk.Context, val staking.Validator, tokens sdk.DecCoin) {
-	//
 	commission := tokens.MulDec(val.GetCommission())
 	shared := tokens.Sub(commission)
 

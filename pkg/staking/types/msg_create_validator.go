@@ -1,6 +1,7 @@
 package types
 
 import (
+	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/transaction"
 	"github.com/ci123chain/ci123chain/pkg/util"
@@ -40,36 +41,41 @@ func NewCreateValidatorTx(from types.AccAddress, gas ,nonce uint64, value types.
 
 func (msg *CreateValidatorTx) ValidateBasic() types.Error {
 
+	err := msg.VerifySignature(msg.GetSignBytes(), false)
+	if err != nil {
+		return ErrCheckParams(DefaultCodespace, err.Error())
+	}
+
 	// note that unmarshaling from bech32 ensures either empty or valid
 	if msg.DelegatorAddress.Empty() {
-		return types.ErrEmptyDelegatorAddr("empty delegator address")
+		return ErrInvalidAddress(DefaultCodespace, fmt.Sprintf("empty delegator address"))
 	}
 	if msg.ValidatorAddress.Empty() {
-		return types.ErrEmptyValidatorAddr("empty validator address")
+		return ErrInvalidAddress(DefaultCodespace, fmt.Sprintf("empty validator address"))
 	}
 	if !msg.ValidatorAddress.Equals(msg.DelegatorAddress) {
-		return types.ErrBadValidatorAddr("bad validator address")
+		return ErrInvalidAddress(DefaultCodespace, fmt.Sprintf("expected %s, got %s", msg.DelegatorAddress, msg.ValidatorAddress))
 	}
 	if msg.PublicKey == nil {
-		return types.ErrEmptyValidatorPubKey("empty validator pubkey")
+		return ErrEmptyPublicKey(DefaultCodespace, "empty publicKey")
 	}
 	if !msg.Value.Amount.IsPositive() {
-		return types.ErrBadDelegationAmount("bad delegation amount")
+		return ErrCheckParams(DefaultCodespace, "invalid amount")
 	}
 	if msg.Description == (Description{}) {
-		return types.ErrEmptyDescription("empty description")
+		return ErrCheckParams(DefaultCodespace, "description can not be empty")
 	}
 	if msg.Commission == (CommissionRates{}) {
-		return types.ErremptyCommission("empty commission")
+		return ErrCheckParams(DefaultCodespace, "commission can not be empty")
 	}
 	if err := msg.Commission.Validate(); err != nil {
-		return types.ErrInvalidCommission("invalid commission")
+		return ErrCheckParams(DefaultCodespace, err.Error())
 	}
 	if !msg.MinSelfDelegation.IsPositive() {
-		return types.ErrMinSelfDelegationInvalid("invalid minself delegation")
+		return ErrCheckParams(DefaultCodespace, "invalid minSelfDelegation")
 	}
 	if msg.Value.Amount.LT(msg.MinSelfDelegation) {
-		return types.ErrSelfDelegationBelowMinimum("self delegation below minnium")
+		return ErrCheckParams(DefaultCodespace, "self delegation below minnium")
 	}
 
 	return nil

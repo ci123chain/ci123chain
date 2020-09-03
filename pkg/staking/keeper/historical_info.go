@@ -38,8 +38,6 @@ func (k StakingKeeper) DeleteHistoricalInfo(ctx sdk.Context, height int64) {
 }
 
 func (k StakingKeeper) TrackHistoricalInfo(ctx sdk.Context) {
-	//
-
 
 	entryNum := k.HistoricalEntries(ctx)
 

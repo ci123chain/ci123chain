@@ -79,8 +79,6 @@ func (k Keeper) SetModuleAccount(ctx sdk.Context, macc exported.ModuleAccountI) 
 	k.ak.SetAccount(ctx, macc)
 }
 
-
-
 // SendCoinsFromAccountToModule transfers coins from an AccAddress to a ModuleAccount
 func (k Keeper) SendCoinsFromAccountToModule(ctx sdk.Context, senderAddr sdk.AccAddress,
 	recipientModule string, amt sdk.Coin) sdk.Error {
@@ -158,8 +156,6 @@ func (k Keeper) UndelegateCoinsFromModuleToAccount(
 //	return nil
 //}
 
-///-------------
-
 // GetSupply retrieves the Supply from store
 func (k Keeper) GetSupply(ctx sdk.Context) (supply exported.SupplyI) {
 	store := ctx.KVStore(k.storeKey)
@@ -177,6 +173,20 @@ func (k Keeper) SetSupply(ctx sdk.Context, supply exported.SupplyI) {
 	b := k.cdc.MustMarshalBinaryLengthPrefixed(supply)
 	store.Set(types2.SupplyKey, b)
 }
+
+
+// ValidatePermissions validates that the module account has been granted
+// permissions within its set of allowed permissions.
+func (k Keeper) ValidatePermissions(macc exported.ModuleAccountI) error {
+	permAddr := k.permAddrs[macc.GetName()]
+	for _, perm := range macc.GetPermissions() {
+		if !permAddr.HasPermission(perm) {
+			return fmt.Errorf("invalid module permission %s", perm)
+		}
+	}
+	return nil
+}
+
 
 // MintCoins creates new coins from thin air and adds it to the module account.
 // It will panic if the module account does not exist or is unauthorized.

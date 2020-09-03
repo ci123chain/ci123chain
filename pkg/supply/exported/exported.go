@@ -9,10 +9,9 @@ type ModuleAccountI interface {
 	exported.Account
 
 	GetName() string
-	GetPermission() []string
+	GetPermissions() []string
 	HasPermission(string) bool
 }
-
 // SupplyI defines an inflationary supply interface for modules that handle
 // token supply.
 type SupplyI interface {

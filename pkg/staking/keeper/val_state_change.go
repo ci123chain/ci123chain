@@ -3,9 +3,9 @@ package keeper
 import (
 	"bytes"
 	"fmt"
-	gogotypes "github.com/gogo/protobuf/types"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/staking/types"
+	gogotypes "github.com/gogo/protobuf/types"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
 	"sort"
 )
@@ -23,6 +23,8 @@ func (k StakingKeeper) jailValidator(ctx sdk.Context, validator types.Validator)
 func (k StakingKeeper) BlockValidatorUpdates(ctx sdk.Context) []abcitypes.ValidatorUpdate {
 
 	validatorUpdates := k.ApplyAndReturnValidatorSetUpdates(ctx)
+
+	//fmt.Printf("validatorUpdates is %v\n", validatorUpdates)
 
 	k.UnbondAllMatureValidatorQueue(ctx)
 
@@ -69,6 +71,19 @@ func (k StakingKeeper) BlockValidatorUpdates(ctx sdk.Context) []abcitypes.Valida
 	return validatorUpdates
 }
 
+// Apply and return accumulated updates to the bonded validator set. Also,
+// * Updates the active valset as keyed by LastValidatorPowerKey.
+// * Updates the total power as keyed by LastTotalPowerKey.
+// * Updates validator status' according to updated powers.
+// * Updates the fee pool bonded vs not-bonded tokens.
+// * Updates relevant indices.
+// It gets called once after genesis, another time maybe after genesis transactions,
+// then once at every EndBlock.
+//
+// CONTRACT: Only validators with non-zero power or zero-power that were bonded
+// at the previous block height or were removed from the validator set entirely
+// are returned to Tendermint.
+
 func (k StakingKeeper) ApplyAndReturnValidatorSetUpdates(ctx sdk.Context) (updates []abcitypes.ValidatorUpdate) {
 	maxValidators := k.GetParams(ctx).MaxValidators
 	totalPower := sdk.ZeroInt()
@@ -93,6 +108,7 @@ func (k StakingKeeper) ApplyAndReturnValidatorSetUpdates(ctx sdk.Context) (updat
 		if validator.Jailed {
 			panic("should never retrieve a jailed validator from the power store")
 		}
+		//fmt.Printf("validator.power = %d\n", validator.PotentialConsensusPower())
 
 		// if we get to a zero-power validator (which we don't bond),
 		// there are no more possible bonded validators

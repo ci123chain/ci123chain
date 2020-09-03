@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	"github.com/ci123chain/ci123chain/pkg/abci/types"
+
 	types2 "github.com/ci123chain/ci123chain/pkg/supply/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 	tmtypes "github.com/tendermint/tendermint/types"
@@ -44,6 +45,7 @@ func (am AppModuleBasic) RegisterCodec(codec *codec.Codec) {
 func (am AppModuleBasic) DefaultGenesis(_ []tmtypes.GenesisValidator) json.RawMessage {
 	var res = types2.DefaultGenesisState()
 	return ModuleCdc.MustMarshalJSON(res)
+
 }
 
 func (am AppModuleBasic) Name() string {

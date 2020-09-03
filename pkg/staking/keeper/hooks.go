@@ -1,10 +1,17 @@
 package keeper
 
-import sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+import (
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/staking/types"
+)
+
+// Implements StakingHooks interface
+var _ types.StakingHooks = StakingKeeper{}
 
 func (k StakingKeeper) AfterValidatorCreated(ctx sdk.Context, valAddr sdk.AccAddress) {
 	if k.hooks != nil {
 		k.hooks.AfterValidatorCreated(ctx, valAddr)
+
 	}
 }
 

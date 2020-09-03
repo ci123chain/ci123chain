@@ -3,11 +3,11 @@ package types
 import (
 	"encoding/json"
 	"errors"
+
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/transaction"
 	"github.com/ci123chain/ci123chain/pkg/util"
 )
-
 type InstantiateContractTx struct {
 	transaction.CommonTx
 	Code    	[]byte              `json:"code"`

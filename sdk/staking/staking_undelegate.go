@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-func SignUndelegateMsg(from string, amount, gas, nonce uint64, priv string,
+func SignUndelegateMsg(from string, amount int64, gas, nonce uint64, priv string,
 	validatorAddress, delegatorAddress string) ([]byte, error) {
 
 	fromAddr, amt, validatorAddr, delegatorAddr, err := CommonParseArgs(from, amount, validatorAddress, delegatorAddress)
@@ -26,6 +26,22 @@ func SignUndelegateMsg(from string, amount, gas, nonce uint64, priv string,
 	if err != nil {
 		return nil, err
 	}
+<<<<<<< HEAD
+=======
+	tx := staking.NewUndelegateMsg(fromAddr, gas, nonce, delegatorAddr, validatorAddr,amt)
+
+	/*sid := cryptosuit.NewFabSignIdentity()
+	pub, err  := sid.GetPubKey(privateKey)
+
+	tx.SetPubKey(pub)
+	signbyte := tx.GetSignBytes()
+	signature, err := sid.Sign(signbyte, privateKey)*/
+	eth := cryptosuit.NewETHSignIdentity()
+	signature, err := eth.Sign(tx.GetSignBytes(), privateKey)
+	if err != nil {
+		return nil, err
+	}
+>>>>>>> mint
 	tx.SetSignature(signature)
 
 	return tx.Bytes(), nil

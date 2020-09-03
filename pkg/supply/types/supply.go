@@ -4,7 +4,9 @@ import (
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/supply/exported"
+
 	"gopkg.in/yaml.v2"
+
 )
 
 
@@ -35,7 +37,7 @@ func NewSupply(total sdk.Coin) exported.SupplyI {
 
 // DefaultSupply creates an empty Supply
 func DefaultSupply() exported.SupplyI {
-	return NewSupply(sdk.NewCoin(sdk.NewInt(100000000)))
+	return NewSupply(sdk.NewCoin(sdk.NewInt(100000000000)))
 }
 
 // Inflate adds coins to the total supply

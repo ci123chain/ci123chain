@@ -34,6 +34,7 @@ func AddGenesisValidatorCmd(ctx *app.Context, cdc *codec.Codec) *cobra.Command {
 			if err != nil {
 				return err
 			}
+
 			_, err = parsePubKey(args[2], cdc)
 			if err != nil {
 				return err
@@ -59,6 +60,7 @@ func AddGenesisValidatorCmd(ctx *app.Context, cdc *codec.Codec) *cobra.Command {
 			genesisValidator = staking.Validator{
 				OperatorAddress:   addr,
 				ConsensusKey:      args[2],
+
 				Jailed:            false,
 				Status:            1,
 				Tokens:            types.NewInt(coin),

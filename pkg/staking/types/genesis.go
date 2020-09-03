@@ -6,6 +6,7 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
+//params:  相关参数设置；
 type GenesisState struct {
 	Params               Params                 `json:"params"`
 	LastTotalPower       sdk.Int                `json:"last_total_power"`

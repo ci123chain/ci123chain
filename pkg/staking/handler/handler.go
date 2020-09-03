@@ -34,7 +34,6 @@ func NewHandler(k keeper.StakingKeeper) sdk.Handler {
 }
 
 func handleCreateValidatorTx(ctx sdk.Context, k keeper.StakingKeeper, tx staking.CreateValidatorTx) sdk.Result {
-	//
 	if _, found := k.GetValidator(ctx, tx.ValidatorAddress); found {
 		return types.ErrValidatorExisted(types.DefaultCodespace, nil).Result()
 	}

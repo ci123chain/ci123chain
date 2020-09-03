@@ -2,13 +2,13 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	"github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/account"
 	acc_type "github.com/ci123chain/ci123chain/pkg/account/types"
 	"github.com/ci123chain/ci123chain/pkg/app"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/libs/cli"
 	"strconv"
 )
@@ -45,7 +45,7 @@ func AddGenesisAccountCmd(ctx *app.Context, cdc *codec.Codec) *cobra.Command {
 				cdc.MustUnmarshalJSON(appState[account.ModuleName], &genesisAccounts)
 			}
 			if genesisAccounts.Contains(addr) {
-				fmt.Errorf("cannot add account at existing address %v", addr)
+				_ = fmt.Errorf("cannot add account at existing address %v", addr)
 			}
 
 			genesisAccounts = append(genesisAccounts, genAcc)

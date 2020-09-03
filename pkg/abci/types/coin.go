@@ -16,16 +16,25 @@ const (
 	DefaultCoinDenom = "stake"
 )
 
+// NewCoin returns a new coin with a denomination and amount. It will panic if
+// the amount is negative.
 func NewCoin(amount Int) Coin {
-
-	if amount.LT(ZeroInt()) {
-		panic(fmt.Errorf("negative coin amount: %v", amount))
+	if err := validate(DefaultCoinDenom, amount); err != nil {
+		panic(err)
 	}
 
 	return Coin{
-		Denom: "stake",
+		Denom:  DefaultCoinDenom,
 		Amount: amount,
 	}
+}
+
+func NewEmptyCoin() Coin {
+	res := Coin{
+		Denom:  DefaultCoinDenom,
+		Amount: NewInt(0),
+	}
+	return res
 }
 
 func NewUInt64Coin(amount uint64) Coin {
@@ -53,6 +62,13 @@ func (c Coin) IsLT(other Coin) bool {
 func (c Coin) IsEqual(other Coin) bool {
 
 	return c.Amount.Equal(other.Amount)
+}
+
+func (c Coin) AmountOf(denom string) Int {
+	if c.Denom != denom {
+		panic(fmt.Errorf("denom does not match"))
+	}
+	return c.Amount
 }
 
 func (c Coin) Add(coinB Coin) Coin {
@@ -96,6 +112,7 @@ func (c Coin) IsPositive() bool {
 func (c Coin) IsValid() bool {
 	return !c.Amount.LT(NewInt(0))
 }
+
 
 type Coins []Coin
 
@@ -204,12 +221,50 @@ func mustValidateDenom(denom string) {
 	}
 }
 
-func NewEmptyCoin() Coin {
-	res := Coin{
-		Denom:  DefaultCoinDenom,
-		Amount: NewInt(0),
+
+// Returns the amount of a denom from coins
+func (coins Coins) AmountOf(denom string) Int {
+	mustValidateDenom(denom)
+
+	switch len(coins) {
+	case 0:
+		return ZeroInt()
+
+	case 1:
+		coin := coins[0]
+		if coin.Denom == denom {
+			return coin.Amount
+		}
+		return ZeroInt()
+
+	default:
+		midIdx := len(coins) / 2 // 2:1, 3:1, 4:2
+		coin := coins[midIdx]
+		switch {
+		case denom < coin.Denom:
+			return coins[:midIdx].AmountOf(denom)
+		case denom == coin.Denom:
+			return coin.Amount
+		default:
+			return coins[midIdx+1:].AmountOf(denom)
+		}
 	}
-	return res
+}
+
+func (coins Coins) Sub(coinsB Coins) Coins {
+	diff, hasNeg := coins.SafeSub(coinsB)
+	if hasNeg {
+		panic("negative coin amount")
+	}
+
+	return diff
+}
+
+// SafeSub performs the same arithmetic as Sub but returns a boolean if any
+// negative coin amount was returned.
+func (coins Coins) SafeSub(coinsB Coins) (Coins, bool) {
+	diff := coins.safeAdd(coinsB.negative())
+	return diff, diff.IsAnyNegative()
 }
 
 // safeAdd will perform addition of two coins sets. If both coin sets are
@@ -265,6 +320,29 @@ func (coins Coins) safeAdd(coinsB Coins) Coins {
 	}
 }
 
+func (coins Coins) IsAnyNegative() bool {
+	for _, coin := range coins {
+		if coin.IsNegative() {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (coins Coins) negative() Coins {
+	res := make([]Coin, 0, len(coins))
+
+	for _, coin := range coins {
+		res = append(res, Coin{
+			Denom:  coin.Denom,
+			Amount: coin.Amount.Neg(),
+		})
+	}
+
+	return res
+}
+
 // IsZero returns whether all coins are zero
 func (coins Coins) IsZero() bool {
 	for _, coin := range coins {
@@ -273,13 +351,6 @@ func (coins Coins) IsZero() bool {
 		}
 	}
 	return true
-}
-
-func (c Coin) AmountOf(denom string) Int {
-	if c.Denom != denom {
-		panic(fmt.Errorf("denom does not match"))
-	}
-	return c.Amount
 }
 
 func (coins Coins) Add(coinsB ...Coin) Coins {

@@ -10,7 +10,7 @@ import (
 	"net/http"
 )
 
-func RegisterTxRoutes(cliCtx context.Context, r *mux.Router) {
+func RegisterQueryRoutes(cliCtx context.Context, r *mux.Router) {
 	// Get all validators
 	r.HandleFunc("/staking/validator/all", validatorsHandlerFn(cliCtx), ).Methods("POST")
 	// Get a single validator info

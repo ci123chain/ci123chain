@@ -69,6 +69,7 @@ func ErrGenValidatorKey(codespace sdk.CodespaceType, err error) sdk.Error {
 	return sdk.NewError(codespace, CodeNodeError,"Gen Validator Key Error: %s", err.Error())
 }
 
+
 func ErrParseParam(codespace sdk.CodespaceType, err error) sdk.Error {
 	return sdk.NewError(codespace, CodeParseParamsError,"Parse params Error: %s", err.Error())
 }

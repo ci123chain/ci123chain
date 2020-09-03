@@ -23,3 +23,15 @@ var (
 type (
 	GenesisState 	= types.GenesisState
 )
+
+/*type lastCommitValidatorsAddr struct {
+	Address []string `json:"address"`
+}
+
+func getKey(addr string, height int64) sdk.AccAddr {
+
+	tkey := strconv.FormatInt(height, 10)
+	key := sdk.AccAddr([]byte(addr + tkey))
+	return key
+}*/
+

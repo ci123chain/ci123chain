@@ -245,6 +245,17 @@ func (v Validator) TokensFromSharesRoundUp(shares sdk.Dec) sdk.Dec {
 	return (shares.MulInt(v.Tokens)).QuoRoundUp(v.DelegatorShares)
 }
 
+/*// calculate the token worth of provided shares, truncated
+func (v Validator) TokensFromSharesTruncated(shares sdk.Dec) sdk.Dec {
+	return (shares.MulInt(v.Tokens)).QuoTruncate(v.DelegatorShares)
+}
+
+// TokensFromSharesRoundUp returns the token worth of provided shares, rounded
+// up.
+func (v Validator) TokensFromSharesRoundUp(shares sdk.Dec) sdk.Dec {
+	return (shares.MulInt(v.Tokens)).QuoRoundUp(v.DelegatorShares)
+}*/
+
 
 // Validators is a collection of Validator
 type Validators []Validator

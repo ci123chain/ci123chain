@@ -22,7 +22,7 @@ type MinterKeeper struct {
 func NewMinterKeeper(
 	cdc *codec.Codec, key sdk.StoreKey, paramSpace params.Subspace,
 	sk sk.StakingKeeper, supplyKeeper supply.Keeper, feeCollectorName string,
-) MinterKeeper {
+	) MinterKeeper {
 
 	// ensure mint module account is set
 	if addr := supplyKeeper.GetModuleAddress(types.ModuleName); addr.Empty() {

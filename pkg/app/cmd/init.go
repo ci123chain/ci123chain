@@ -58,6 +58,13 @@ type InitConfig struct{
 	Overwrite 	bool
 	GenesisTime time.Time
 }
+
+type ValidatorAccount struct {
+	Address     string    `json:"address"`
+	PublicKey   string     `json:"public_key"`
+	PrivateKey  string    `json:"private_key"`
+}
+
 //
 //func GenTxCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Command {
 //	cmd := &cobra.Command{
@@ -183,15 +190,15 @@ func gentxWithConfig(cdc *amino.Codec, appInit app.AppInit, config *cfg.Config, 
 	}
 	nodeID := string(nodeKey.ID())
 
-	appGenTx, cliPrint, validator, err := appInit.AppGenTx(cdc, pv.GetPubKey(), genTxConfig)
+	appGenTx, cliPrint, val, err := appInit.AppGenTx(cdc, pv.GetPubKey(), genTxConfig)
 	if err != nil {
 		return
 	}
 	tx := app.GenesisTx{
-		NodeID: nodeID,
-		IP: 	genTxConfig.IP,
-		Validator: validator,
-		AppGenTx: 	appGenTx,
+		NodeID:    nodeID,
+		IP:        genTxConfig.IP,
+		Validator: val,
+		AppGenTx:  appGenTx,
 	}
 
 	bz, err := app.MarshalJSONIndent(cdc, tx)
@@ -199,10 +206,10 @@ func gentxWithConfig(cdc *amino.Codec, appInit app.AppInit, config *cfg.Config, 
 		return
 	}
 
-	genTxFile = json.RawMessage(bz)
+	/*genTxFile = json.RawMessage(bz)
 	if err != nil {
 		return
-	}
+	}*/
 
 	genTxFile = json.RawMessage(bz)
 	name := fmt.Sprintf("gentx-%v.json", nodeID)
@@ -257,7 +264,7 @@ func GetChainID() (string, error){
 
 /*
 func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initConfig InitConfig)(
-	chainID string, nodeID string, appMessage json.RawMessage, err error) {
+	chainID string, nodeID string, appMessage json.RawMessage, pubKey string, err error) {
 	var validatorKey secp256k1.PrivKeySecp256k1
 	var privStr string
 	nodeKey, err := node.LoadNodeKey(c.NodeKeyFile())
@@ -389,6 +396,7 @@ func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initCo
 
 	val := appInit.GetValidator(nodeKey.PubKey(), viper.GetString(FlagName))
 	validators := []tmtypes.GenesisValidator{val}
+
 
 	pubKey = hex.EncodeToString(cdc.MustMarshalJSON(nodeKey.PubKey()))
 

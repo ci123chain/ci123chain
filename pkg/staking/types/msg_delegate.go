@@ -1,6 +1,7 @@
 package types
 
 import (
+	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/transaction"
 	"github.com/ci123chain/ci123chain/pkg/util"
@@ -30,14 +31,21 @@ func NewDelegateTx(from types.AccAddress, gas ,nonce uint64, delegatorAddr types
 
 func (msg *DelegateTx) ValidateBasic() types.Error {
 	//
+	err := msg.VerifySignature(msg.GetSignBytes(), false)
+	if err != nil {
+		return ErrCheckParams(DefaultCodespace, err.Error())
+	}
 	if msg.DelegatorAddress.Empty() {
-		return types.ErrEmptyDelegatorAddr("empty delegator address")
+		return ErrInvalidAddress(DefaultCodespace, fmt.Sprintf("empty delegator address"))
 	}
 	if msg.ValidatorAddress.Empty() {
-		return types.ErrEmptyValidatorAddr("empty validator address")
+		return ErrInvalidAddress(DefaultCodespace, fmt.Sprintf("empty validator address"))
 	}
 	if !msg.Amount.Amount.IsPositive() {
-		return types.ErrBadDelegationAmount("bad delegation amount")
+		return ErrCheckParams(DefaultCodespace, "amount should be positive")
+	}
+	if !msg.From.Equal(msg.DelegatorAddress) {
+		return ErrInvalidAddress(DefaultCodespace, fmt.Sprintf("expected %s, got %s", msg.From.String(), msg.DelegatorAddress.String()))
 	}
 	return nil
 }
@@ -60,7 +68,7 @@ func (msg *DelegateTx) Bytes() []byte {
 	return bytes
 }
 func (msg *DelegateTx) SetPubKey(pub []byte) {
-	msg.PubKey = pub
+	msg.CommonTx.PubKey = pub
 }
 func (msg *DelegateTx) Route() string {return RouteKey}
 func (msg *DelegateTx) GetGas() uint64 { return msg.Gas}
