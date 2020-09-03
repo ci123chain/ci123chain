@@ -53,7 +53,7 @@ func CreateValidatorRequest(cliCtx context.Context, writer http.ResponseWriter, 
 	txByte, err := sSdk.SignCreateValidatorMSg(from, amount, gas, nonce, key, msd, from,
 		delegatorAddr, r, mr, mcr, moniker, identity, website, securityContact, details, publicKey)
 	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"data error"))
+		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
 		return
 	}
 
@@ -86,7 +86,7 @@ func DelegateTX(cliCtx context.Context, writer http.ResponseWriter, request *htt
 
 	txByte, err := sSdk.SignDelegateMsg(from, amount, gas, nonce, key, validatorAddr, delegatorAddr)
 	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"data error"))
+		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
 		return
 	}
 
@@ -116,7 +116,7 @@ func RedelegateTX(cliCtx context.Context, writer http.ResponseWriter, request *h
 
 	txByte, err := sSdk.SignRedelegateMsg(from, amount, gas, nonce, key, validatorSrcAddr, validatorDstAddr, delegatorAddr)
 	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"data error"))
+		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
 		return
 	}
 
@@ -143,7 +143,7 @@ func UndelegateTX(cliCtx context.Context, writer http.ResponseWriter, request *h
 
 	txByte, err := sSdk.SignUndelegateMsg(from, amount, gas, nonce, key, validatorAddr, delegatorAddr)
 	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"data error"))
+		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
 		return
 	}
 
@@ -175,7 +175,7 @@ func EditValidatorTX(cliCtx context.Context, writer http.ResponseWriter, request
 
 	txByte, err := sSdk.SignEditValidator(from,gas, nonce, priv, moniker, identity, website, secu, details, minSelf, newRate)
 	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"data error"))
+		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
 		return
 	}
 	res, err := cliCtx.BroadcastSignedData(txByte)
