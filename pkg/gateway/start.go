@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/gateway/backend"
 	"github.com/ci123chain/ci123chain/pkg/gateway/couchdbsource"
+	"github.com/ci123chain/ci123chain/pkg/gateway/dynamic"
 	"github.com/ci123chain/ci123chain/pkg/gateway/logger"
 	"github.com/ci123chain/ci123chain/pkg/gateway/types"
 	"github.com/spf13/pflag"
@@ -51,6 +52,7 @@ func Start() {
 	}
 	// 初始化logger
 	logger.Init(logDir, "gateway", "", logLevel)
+	dynamic.Init()
 
 	svr := couchdbsource.NewCouchSource(statedb, urlreg)
 

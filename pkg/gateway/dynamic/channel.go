@@ -1,6 +1,7 @@
 package dynamic
 
 import (
+	"github.com/ci123chain/ci123chain/pkg/gateway/logger"
 	"github.com/pretty66/gosdk"
 	"github.com/pretty66/gosdk/cienv"
 	"net/http"
@@ -15,16 +16,16 @@ const API = "Channel/assignChannel"
 const ALIAS = "deployment"
 
 var client gosdk.Client
-func init() {
+func Init() {
 	var err error
 	h := http.Header{}
 	client, err = gosdk.GetClientInstance(h)
 	if err != nil {
-		panic(err)
+		logger.Error("init dynamic error: %v", err)
 	}
 	err = client.SetAppInfo(cienv.GetEnv("IDG_APPID"), cienv.GetEnv("IDG_APPKEY"), cienv.GetEnv("IDG_CHANNEL"), cienv.GetEnv("IDG_VERSION"))
 	if err != nil {
-		panic(err)
+		logger.Error("init dynamic error: %v", err)
 	}
 }
 
