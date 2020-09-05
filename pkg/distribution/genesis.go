@@ -1,6 +1,7 @@
 package distribution
 
 import (
+	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/account"
 	"github.com/ci123chain/ci123chain/pkg/distribution/keeper"
@@ -19,24 +20,38 @@ func InitGenesis(ctx sdk.Context, ak account.AccountKeeper, sk supply.Keeper, k 
 		k.SetDelegatorWithdrawAddr(ctx, dwi.DelegatorAddress, dwi.WithdrawAddress)
 	}
 	k.SetPreviousProposerAddr(ctx, data.PreviousProposer)
-	for _, rew := range data.OutstandingRewards {
-		k.SetValidatorOutstandingRewards(ctx, rew.ValidatorAddress, types.ValidatorOutstandingRewards{Rewards: rew.OutstandingRewards})
-		moduleHoldings = moduleHoldings.Add(rew.OutstandingRewards)
+	if data.OutstandingRewards != nil {
+		for _, rew := range data.OutstandingRewards {
+			k.SetValidatorOutstandingRewards(ctx, rew.ValidatorAddress, types.ValidatorOutstandingRewards{Rewards: rew.OutstandingRewards})
+			moduleHoldings = moduleHoldings.Add(rew.OutstandingRewards)
+		}
 	}
-	for _, acc := range data.ValidatorAccumulatedCommissions {
-		k.SetValidatorAccumulatedCommission(ctx, acc.ValidatorAddress, acc.Accumulated)
+	if data.ValidatorAccumulatedCommissions != nil {
+		for _, acc := range data.ValidatorAccumulatedCommissions {
+			k.SetValidatorAccumulatedCommission(ctx, acc.ValidatorAddress, acc.Accumulated)
+		}
 	}
-	for _, his := range data.ValidatorHistoricalRewards {
-		k.SetValidatorHistoricalRewards(ctx, his.ValidatorAddress, his.Period, his.Rewards)
+
+	if data.ValidatorHistoricalRewards != nil {
+		for _, his := range data.ValidatorHistoricalRewards {
+			k.SetValidatorHistoricalRewards(ctx, his.ValidatorAddress, his.Period, his.Rewards)
+		}
 	}
-	for _, cur := range data.ValidatorCurrentRewards {
-		k.SetValidatorCurrentRewards(ctx, cur.ValidatorAddress, cur.Rewards)
+	if data.ValidatorCurrentRewards != nil {
+		for _, cur := range data.ValidatorCurrentRewards {
+			fmt.Println("distr-genesis")
+			k.SetValidatorCurrentRewards(ctx, cur.ValidatorAddress, cur.Rewards)
+		}
 	}
-	for _, del := range data.DelegatorStartingInfos {
-		k.SetDelegatorStartingInfo(ctx, del.ValidatorAddress, del.DelegatorAddress, del.StartingInfo)
+	if data.DelegatorStartingInfos != nil {
+		for _, del := range data.DelegatorStartingInfos {
+			k.SetDelegatorStartingInfo(ctx, del.ValidatorAddress, del.DelegatorAddress, del.StartingInfo)
+		}
 	}
-	for _, evt := range data.ValidatorSlashEvents {
-		k.SetValidatorSlashEvent(ctx, evt.ValidatorAddress, evt.Height, evt.Period, evt.Event)
+	if data.ValidatorSlashEvents != nil {
+		for _, evt := range data.ValidatorSlashEvents {
+			k.SetValidatorSlashEvent(ctx, evt.ValidatorAddress, evt.Height, evt.Period, evt.Event)
+		}
 	}
 /*
 	moduleHoldings = moduleHoldings.Add(data.FeePool.CommunityPool)

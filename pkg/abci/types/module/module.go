@@ -81,7 +81,8 @@ func NewManager(modules ...AppModule) *AppManager {
 
 func (am AppManager) InitGenesis(ctx types.Context, data map[string]json.RawMessage) abci.ResponseInitChain {
 	var validatorUpdates []abci.ValidatorUpdate
-	for _, m := range am.Modules {
+	for _, name := range am.Orders {
+		m := am.Modules[name]
 		moduleValUpdates := m.InitGenesis(ctx, data[m.Name()])
 		// use these validator updates if provided, the module manager assumes
 		// only one module will update the validator set
@@ -110,13 +111,6 @@ func (am AppManager) BeginBlocker(ctx types.Context, req abci.RequestBeginBlock)
 		m := am.Modules[name]
 		m.BeginBlocker(ctx, req)
 	}
-
-	/*for _, m := range am.Modules {
-		if m == am.Modules[order.ModuleName] {
-			continue
-		}
-		m.BeginBlocker(ctx, req)
-	}*/
 	return abci.ResponseBeginBlock{}
 }
 
@@ -131,7 +125,8 @@ func (am AppManager) Committer(ctx types.Context) abci.ResponseCommit {
 func (am AppManager) EndBlocker(ctx types.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
 
 	validatorUpdates := []abci.ValidatorUpdate{}
-	for _, m := range am.Modules {
+	for _, name := range am.Orders {
+		m := am.Modules[name]
 		if m == am.Modules[order.ModuleName] {
 			continue
 		}
