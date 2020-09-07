@@ -87,6 +87,10 @@ func ErrSignTx(codespace sdk.CodespaceType, err error) sdk.Error {
 	return sdk.NewError(codespace, CodeErrSignTx, err.Error())
 }
 
+func ErrParams(codespace sdk.CodespaceType, err error) sdk.Error {
+	return sdk.NewError(codespace, CodeErrSignTx, err.Error())
+}
+
 func ErrSetWithdrawAddrDisabled(codespace sdk.CodespaceType) sdk.Error {
 	return sdk.NewError(codespace, CodeErrSetWithdrawAddrDisabled, "set withdraw address disabled")
 }

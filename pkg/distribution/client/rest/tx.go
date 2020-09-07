@@ -1,6 +1,8 @@
 package rest
 
 import (
+	"errors"
+	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
 	"github.com/ci123chain/ci123chain/pkg/client"
@@ -46,7 +48,7 @@ func fundCommunityPoolHandler(cliCtx context.Context, writer http.ResponseWriter
 		return
 	}
 
-	res, err := cliCtx.BroadcastSignedData(txByte)
+	res, err := cliCtx.BroadcastSignedTx(txByte)
 	if err != nil {
 		rest.WriteErrorRes(writer, client.ErrBroadcast(types.DefaultCodespace, err))
 		return
@@ -62,7 +64,7 @@ func withdrawValidatorCommissionsHandler(cliCtx context.Context, writer http.Res
 	validatorAddress := from
 
 	txByte, err := sSDK.SignWithdrawValidatorCommissionTx(from, validatorAddress, gas, nonce, priv)
-	res, err := cliCtx.BroadcastSignedData(txByte)
+	res, err := cliCtx.BroadcastSignedTx(txByte)
 	if err != nil {
 		rest.WriteErrorRes(writer, client.ErrBroadcast(types.DefaultCodespace, err))
 		return
@@ -85,7 +87,7 @@ func withdrawDelegationRewardsHandler(cliCtx context.Context, writer http.Respon
 		rest.WriteErrorRes(writer, types.ErrSignTx(types.DefaultCodespace,err))
 		return
 	}
-	res, err := cliCtx.BroadcastSignedData(txByte)
+	res, err := cliCtx.BroadcastSignedTx(txByte)
 	if err != nil {
 		rest.WriteErrorRes(writer, client.ErrBroadcast(types.DefaultCodespace, err))
 		return
@@ -107,7 +109,7 @@ func setDelegatorWithdrawalAddrHandler(cliCtx context.Context, writer http.Respo
 		rest.WriteErrorRes(writer, types.ErrSignTx(types.DefaultCodespace,err))
 		return
 	}
-	res, err := cliCtx.BroadcastSignedData(txByte)
+	res, err := cliCtx.BroadcastSignedTx(txByte)
 	if err != nil {
 		rest.WriteErrorRes(writer, client.ErrBroadcast(types.DefaultCodespace, err))
 		return
@@ -119,18 +121,22 @@ func setDelegatorWithdrawalAddrHandler(cliCtx context.Context, writer http.Respo
 func paserArgs(writer http.ResponseWriter, req *http.Request) (string, uint64, uint64, string, bool)  {
 	accountAddress, ok := checkFromAddressVar(writer, req)
 	if !ok {
+		rest.WriteErrorRes(writer, types.ErrSignTx(types.DefaultCodespace,errors.New(fmt.Sprintf("invalid account address %v", accountAddress))))
 		return "", 0, 0, "", false
 	}
 	gas, ok := checkGasVar(writer, req)
 	if !ok {
+		rest.WriteErrorRes(writer, types.ErrSignTx(types.DefaultCodespace,errors.New(fmt.Sprintf("invalid gas:%d", gas))))
 		return "", 0, 0, "", false
 	}
 	nonce, ok := checkNonce(writer,  req, sdk.HexToAddress(accountAddress))
 	if !ok {
+		rest.WriteErrorRes(writer, types.ErrSignTx(types.DefaultCodespace,errors.New(fmt.Sprintf("invalid nonce %d", nonce))))
 		return "", 0, 0, "", false
 	}
 	privateKey, ok := checkPrivateKey(writer, req)
 	if !ok {
+		rest.WriteErrorRes(writer, types.ErrParams(types.DefaultCodespace,errors.New(fmt.Sprintf("invalid privateKey %v", privateKey))))
 		return "", 0, 0, "", false
 	}
 	return accountAddress, gas, nonce, privateKey, true

@@ -35,12 +35,12 @@ func NewHandler(k keeper.StakingKeeper) sdk.Handler {
 
 func handleCreateValidatorTx(ctx sdk.Context, k keeper.StakingKeeper, tx staking.CreateValidatorTx) sdk.Result {
 	if _, found := k.GetValidator(ctx, tx.ValidatorAddress); found {
-		return types.ErrValidatorExisted(types.DefaultCodespace, nil).Result()
+		return types.ErrValidatorExisted(types.DefaultCodespace, errors.New(fmt.Sprintf("validator %s has existed", tx.ValidatorAddress.String()))).Result()
 	}
 	pk := tx.PublicKey
 
 	if _, found := k.GetValidatorByConsAddr(ctx, sdk.GetConsAddress(pk)); found {
-		return types.ErrValidatorExisted(types.DefaultCodespace, nil).Result()
+		return types.ErrValidatorExisted(types.DefaultCodespace, errors.New(fmt.Sprintf("the pubKey has been bonded"))).Result()
 	}
 
 	if _, err := tx.Description.EnsureLength(); err != nil {
