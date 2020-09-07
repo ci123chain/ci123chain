@@ -79,6 +79,10 @@ func ErrGas(codespace sdk.CodespaceType, gas string) sdk.Error{
 	return sdk.NewError(codespace, CodeInvalidGas, fmt.Sprintf("invalid gas %s", gas))
 }
 
+func ErrParams(codespace sdk.CodespaceType, err string) sdk.Error {
+	return sdk.NewError(codespace, CodeInvalidGas, fmt.Sprintf("invalid param %s", err))
+}
+
 func ErrEmptyPrivateKey(codespace sdk.CodespaceType) sdk.Error {
 	return sdk.NewError(codespace, CodeInvalidPrivateKey, "private key can not be empty")
 }
