@@ -46,7 +46,7 @@ func fundCommunityPoolHandler(cliCtx context.Context, writer http.ResponseWriter
 		return
 	}
 
-	res, err := cliCtx.BroadcastSignedData(txByte)
+	res, err := cliCtx.BroadcastSignedTx(txByte)
 	if err != nil {
 		rest.WriteErrorRes(writer, client.ErrBroadcast(types.DefaultCodespace, err))
 		return
@@ -62,7 +62,7 @@ func withdrawValidatorCommissionsHandler(cliCtx context.Context, writer http.Res
 	validatorAddress := from
 
 	txByte, err := sSDK.SignWithdrawValidatorCommissionTx(from, validatorAddress, gas, nonce, priv)
-	res, err := cliCtx.BroadcastSignedData(txByte)
+	res, err := cliCtx.BroadcastSignedTx(txByte)
 	if err != nil {
 		rest.WriteErrorRes(writer, client.ErrBroadcast(types.DefaultCodespace, err))
 		return
@@ -85,7 +85,7 @@ func withdrawDelegationRewardsHandler(cliCtx context.Context, writer http.Respon
 		rest.WriteErrorRes(writer, types.ErrSignTx(types.DefaultCodespace,err))
 		return
 	}
-	res, err := cliCtx.BroadcastSignedData(txByte)
+	res, err := cliCtx.BroadcastSignedTx(txByte)
 	if err != nil {
 		rest.WriteErrorRes(writer, client.ErrBroadcast(types.DefaultCodespace, err))
 		return
@@ -107,7 +107,7 @@ func setDelegatorWithdrawalAddrHandler(cliCtx context.Context, writer http.Respo
 		rest.WriteErrorRes(writer, types.ErrSignTx(types.DefaultCodespace,err))
 		return
 	}
-	res, err := cliCtx.BroadcastSignedData(txByte)
+	res, err := cliCtx.BroadcastSignedTx(txByte)
 	if err != nil {
 		rest.WriteErrorRes(writer, client.ErrBroadcast(types.DefaultCodespace, err))
 		return

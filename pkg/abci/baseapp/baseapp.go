@@ -605,7 +605,7 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 				result.GasUsed = gasWanted
 			default:
 				res := app.deferHandler(ctx, tx, false, 0)
-				log := fmt.Sprintf("recovered: %v\nstack:\n%v", r, string(debug.Stack()))
+				log := fmt.Sprintf("recovered: %v\nstack:%v\n", r, string(debug.Stack()))
 				result = sdk.ErrInternal(log).Result()
 				result.GasUsed = res.GasUsed
 			}
