@@ -33,8 +33,9 @@ func fundCommunityPoolHandler(cliCtx context.Context, writer http.ResponseWriter
 	if !ok {
 		return
 	}
-	nonce, ok := checkNonce(writer,  req, sdk.HexToAddress(accountAddress))
-	if !ok {
+	nonce, err := checkNonce(writer,  req, sdk.HexToAddress(accountAddress))
+	if err != nil {
+		rest.WriteErrorRes(writer, types.ErrSignTx(types.DefaultCodespace, err))
 		return
 	}
 	privateKey, ok := checkPrivateKey(writer, req)
@@ -100,8 +101,9 @@ func setDelegatorWithdrawalAddrHandler(cliCtx context.Context, writer http.Respo
 	if !ok {
 		return
 	}
-	withdraw, ok := checkWithdrawAddressVar(writer, req)
-	if !ok {
+	withdraw, checkErr := checkWithdrawAddressVar(writer, req)
+	if checkErr != nil {
+		rest.WriteErrorRes(writer,types.ErrBadAddress(types.DefaultCodespace, checkErr))
 		return
 	}
 	txByte, err := sSDK.SignSetWithdrawAddressTx(from, withdraw, gas, nonce, priv)
@@ -129,9 +131,9 @@ func paserArgs(writer http.ResponseWriter, req *http.Request) (string, uint64, u
 		rest.WriteErrorRes(writer, types.ErrSignTx(types.DefaultCodespace,errors.New(fmt.Sprintf("invalid gas:%d", gas))))
 		return "", 0, 0, "", false
 	}
-	nonce, ok := checkNonce(writer,  req, sdk.HexToAddress(accountAddress))
-	if !ok {
-		rest.WriteErrorRes(writer, types.ErrSignTx(types.DefaultCodespace,errors.New(fmt.Sprintf("invalid nonce %d", nonce))))
+	nonce, err := checkNonce(writer,  req, sdk.HexToAddress(accountAddress))
+	if err != nil {
+		rest.WriteErrorRes(writer, types.ErrSignTx(types.DefaultCodespace, err))
 		return "", 0, 0, "", false
 	}
 	privateKey, ok := checkPrivateKey(writer, req)
