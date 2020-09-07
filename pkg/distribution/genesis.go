@@ -1,7 +1,6 @@
 package distribution
 
 import (
-	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/account"
 	"github.com/ci123chain/ci123chain/pkg/distribution/keeper"
@@ -39,7 +38,6 @@ func InitGenesis(ctx sdk.Context, ak account.AccountKeeper, sk supply.Keeper, k 
 	}
 	if data.ValidatorCurrentRewards != nil {
 		for _, cur := range data.ValidatorCurrentRewards {
-			fmt.Println("distr-genesis")
 			k.SetValidatorCurrentRewards(ctx, cur.ValidatorAddress, cur.Rewards)
 		}
 	}
