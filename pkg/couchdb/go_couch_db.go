@@ -38,6 +38,8 @@ func NewGoCouchDB(name, address string, auth Auth) (*GoCouchDB, error) {
 		case *Error:
 			if t.ErrorCode == "file_exists" {
 				// do nothing
+			} else {
+				return nil, err
 			}
 		default:
 			return nil, err
