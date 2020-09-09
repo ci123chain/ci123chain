@@ -54,7 +54,7 @@ func TestContextGetOpShouldNeverPanic(t *testing.T) {
 
 func defaultContext(key types.StoreKey) types.Context {
 	db := dbm.NewMemDB()
-	cms := store.NewCommitMultiStore(db)
+	cms := store.NewCommitMultiStore(db, db)
 	cms.MountStoreWithDB(key, types.StoreTypeIAVL, db)
 	cms.LoadLatestVersion()
 	ctx := types.NewContext(cms, abci.Header{}, false, log.NewNopLogger())

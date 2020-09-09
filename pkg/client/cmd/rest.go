@@ -79,7 +79,9 @@ func NewRestServer() *RestServer {
 		return nil
 	}
 
+
 	r.NotFoundHandler = Handle404()
+	r.HandleFunc("/healthcheck", HealthCheckHandler(cliCtx)).Methods("POST")
 
 	rpc.RegisterRoutes(cliCtx, r)
 	accountRpc.RegisterRoutes(cliCtx, r)
@@ -123,6 +125,7 @@ func Handle404() http.Handler {
 			http.Error(w, "404 path not found", http.StatusNotFound)
 			return
 		}
+
 		arr := strings.SplitAfter(nodeUri, CorePrefix)
 		arr = arr[1:]
 		newPath := strings.Join(arr, "")
@@ -209,3 +212,74 @@ func (rs *RestServer) Start(listenAddr string, maxOpen int, readTimeout, writeTi
 	return rpcserver.StartHTTPServer(rs.listener, rs.Mux, logger,cfg)
 }
 
+func HealthCheckHandler(ctx context.Context) http.HandlerFunc  {
+	return func(w http.ResponseWriter, req *http.Request) {
+		cli := &http.Client{}
+
+		dest := viper.GetString(helper.FlagNode)
+		dest = strings.ReplaceAll(dest, "tcp", "http")
+
+		req.ParseForm()
+		var data = map[string]string{}
+
+		for k, v := range req.Form {
+			key := k
+			value := v[0]
+			data[key] = value
+		}
+
+		newData := url.Values{}
+		for k, v := range data {
+			newData.Set(k, v)
+		}
+		path := "/status"
+		proxyurl, _ := url.Parse(dest)
+
+		remote_addr := "http://" + proxyurl.Host + path
+
+		r, Err := http.NewRequest(req.Method, remote_addr, strings.NewReader(newData.Encode()))
+		if Err != nil {
+			panic(Err)
+		}
+		r.Body = ioutil.NopCloser(strings.NewReader(newData.Encode()))
+
+		r.URL.Host = proxyurl.Host
+		r.URL.Path = path
+
+		r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+		rep, err := cli.Do(r)
+		if err != nil  || rep.StatusCode != http.StatusOK {
+			w.Header().Set("Content-Type","application/json")
+			w.WriteHeader(500)
+			var data interface{}
+			if err != nil {
+				data = err
+			} else {
+				data = rep.Status
+			}
+			resultResponse := client.HealthcheckResponse{
+				State:   500,
+				Data:    data,
+			}
+
+			resultByte, _ := json.Marshal(resultResponse)
+			w.Write(resultByte)
+			return
+		}
+
+		resBody, err := ioutil.ReadAll(rep.Body)
+
+		var tmResponse client.TMResponse
+		err = json.Unmarshal(resBody, &tmResponse)
+		resultResponse := client.HealthcheckResponse{
+			State:   200,
+			Data:    tmResponse,
+		}
+
+		resultByte, _ := json.Marshal(resultResponse)
+
+		w.Header().Set("Content-Type","application/json")
+		w.Write(resultByte)
+	}
+}
