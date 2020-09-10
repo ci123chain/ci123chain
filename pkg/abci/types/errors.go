@@ -43,6 +43,7 @@ const (
 	CodeInsufficientFee   CodeType = 14
 	CodeTooManySignatures CodeType = 15
 	CodeNoPermission      CodeType = 16
+	CodeInvalidSign       CodeType = 17
 
 	CodeNoDelegation      CodeType = 20
 	CodeNoValidator       CodeType = 21
@@ -130,6 +131,9 @@ func ErrUnknownAddress(msg string) Error {
 }
 func ErrInvalidPubKey(msg string) Error {
 	return newErrorWithRootCodespace(CodeInvalidPubKey, msg)
+}
+func ErrInvalidSign(msg string) Error {
+	return newErrorWithRootCodespace(CodeInvalidSign, msg)
 }
 func ErrInsufficientCoins(msg string) Error {
 	return newErrorWithRootCodespace(CodeInsufficientCoins, msg)

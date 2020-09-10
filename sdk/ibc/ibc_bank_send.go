@@ -1,17 +1,16 @@
 package ibc
 
 import (
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/client/helper"
 	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
 	"github.com/ci123chain/ci123chain/pkg/ibc"
-	"github.com/ci123chain/ci123chain/pkg/transaction"
 )
 
 // 生成 MortgageDone 完成交易
 
-func SignIBCBankSendMsg(from string, raw []byte, gas, nonce uint64, priv []byte) ([]byte, error) {
-
-	tx, err := buildIBCBankSendMsg(from, raw, gas, nonce)
+func SignIBCBankSendMsg(from string, raw, priv []byte) ([]byte, error) {
+	tx, err := buildIBCBankSendMsg(from, raw)
 	if err != nil {
 		return nil, err
 	}
@@ -25,15 +24,12 @@ func SignIBCBankSendMsg(from string, raw []byte, gas, nonce uint64, priv []byte)
 	return tx.Bytes(), nil
 }
 
-
-
-func buildIBCBankSendMsg (from string, raw []byte, gas, nonce uint64) (transaction.Transaction, error) {
-
+func buildIBCBankSendMsg (from string, raw []byte) (sdk.Msg, error) {
 	fromAddr, err := helper.StrToAddress(from)
 	if err != nil {
 		return nil, err
 	}
-	ibcMsg := ibc.NewIBCMsgBankSendMsg(fromAddr, raw, gas, nonce)
+	ibcMsg := ibc.NewIBCMsgBankSendMsg(fromAddr, raw)
 	return ibcMsg, nil
 }
 

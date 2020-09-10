@@ -5,12 +5,12 @@ import (
 	"errors"
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	"github.com/ci123chain/ci123chain/pkg/client"
+	"github.com/ci123chain/ci123chain/pkg/app"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/client/helper"
 	"github.com/ci123chain/ci123chain/pkg/client/types"
 	"github.com/ci123chain/ci123chain/pkg/transaction"
-	"github.com/ci123chain/ci123chain/pkg/transfer"
+	transfer2 "github.com/ci123chain/ci123chain/pkg/transfer"
 	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
@@ -37,15 +37,14 @@ const isFabric = false
 
 var signCmd = &cobra.Command{
 	Use: "sign",
-	Short: "Build, Sign transfer",
+	Short: "Build, Sign transfer msg",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		viper.BindPFlags(cmd.Flags())
-
-		ctx, err := client.NewClientContextFromViper(cdc)
+		err := viper.BindPFlags(cmd.Flags())
 		if err != nil {
-			return types.ErrNewClientCtx(types.DefaultCodespace, err)
+			panic(err)
 		}
-		from := ctx.GetFromAddresses()
+
+		from := sdk.HexToAddress(viper.GetString(flagFrom))
 		tos, err := helper.ParseAddrs(viper.GetString(flagTo))
 		if err != nil {
 			return types.ErrParseAddr(types.DefaultCodespace, err)
@@ -53,28 +52,24 @@ var signCmd = &cobra.Command{
 		if len(tos) == 0 {
 			return types.ErrNoAddr(types.DefaultCodespace, err)
 		}
-		//直接getNonce
-		// todo err
-		nonce, _, err := ctx.GetNonceByAddress(from, false)
-		if err != nil {
-			return err
-		}
-		ucoin := uint64(viper.GetInt(flagAmount))
 
-		tx := transfer.NewTransferTx(from, tos[0], uint64(viper.GetInt(flagGas)), nonce , sdk.NewUInt64Coin(ucoin), isFabric)
-		password := viper.GetString(flagPassword)
-		if len(password) < 1 {
-			var err error
-			password, err = helper.GetPassphrase(from)
-			if err != nil {
-				return types.ErrGetPassPhrase(types.DefaultCodespace, err)
-			}
+		gas := uint64((viper.GetInt(flagGas)))
+		amount := uint64(viper.GetInt(flagAmount))
+		privKey := viper.GetString(flagKey)
+		isFabric := viper.GetBool(flagIsFabric)
+
+		coin := sdk.NewUInt64Coin(amount)
+		msg := transfer2.NewMsgTransfer(from, tos[0], coin, isFabric)
+		nonce, err := transfer2.GetNonceByAddress(from)
+		if err != nil {
+			return types.ErrParseParam(types.DefaultCodespace, err)
 		}
 
-		txByte, err := getSignedDataWithTx(ctx, tx, password, from)
+		txByte, err := app.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
 		if err != nil {
-			return types.ErrGetSignData(types.DefaultCodespace, err)
+			return types.ErrParseParam(types.DefaultCodespace, err)
 		}
+
 		fmt.Println(hex.EncodeToString(txByte))
 		return nil
 	},

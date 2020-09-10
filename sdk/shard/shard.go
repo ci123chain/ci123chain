@@ -14,18 +14,18 @@ import (
 )
 
 //off line
-func SignAddShardMsg(from sdk.AccAddress, gas, nonce uint64,t, name string, height int64, priv string) ([]byte, error){
-	tx := order.NewAddShardTx(from, gas, nonce, t, name, height)
+func SignUpgradeMsg(t, name string, height int64, priv string) (sdk.Msg, error){
+	msg := order.NewMsgUpgrade(t, name, height)
 
 	var signature []byte
 	privPub, err := hex.DecodeString(priv)
 	eth := cryptosuit.NewETHSignIdentity()
-	signature, err = eth.Sign(tx.GetSignBytes(), privPub)
+	signature, err = eth.Sign(msg.GetSignBytes(), privPub)
 	if err != nil {
 		return nil, err
 	}
-	tx.SetSignature(signature)
-	return tx.Bytes(), nil
+	msg.SetSignature(signature)
+	return msg, nil
 }
 
 //on line

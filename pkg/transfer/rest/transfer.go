@@ -1,13 +1,15 @@
 package rest
 
 import (
+	"encoding/hex"
+	"github.com/ci123chain/ci123chain/pkg/app"
 	"github.com/ci123chain/ci123chain/pkg/client/helper"
+	transfer2 "github.com/ci123chain/ci123chain/pkg/transfer"
 	"github.com/ci123chain/ci123chain/pkg/util"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	//"encoding/hex"
 	"github.com/pkg/errors"
 	"strconv"
-
-	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	///sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
 	"github.com/ci123chain/ci123chain/pkg/client"
@@ -18,16 +20,24 @@ import (
 )
 
 func SendRequestHandlerFn(cliCtx context.Context, writer http.ResponseWriter, request *http.Request) {
-	priv := request.FormValue("privateKey")
-	err := util.CheckStringLength(1, 100, priv)
+	broadcast, err := strconv.ParseBool(request.FormValue("broadcast"))
 	if err != nil {
-		rest.WriteErrorRes(writer, transaction.ErrBadPrivkey(types.DefaultCodespace, errors.New("param privateKey not found")) )
+		broadcast = true
+	}
+	privKey, from, nonce, gas, err := rest.GetNecessaryParams(cliCtx, request, cdc, broadcast)
+	if err != nil {
+		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
 		return
 	}
-
-	txByte, err := buildTransferTx(request, false, priv)
+	fabric := request.FormValue("fabric")
+	isFabric, err := util.CheckFabric(fabric)
 	if err != nil {
-		rest.WriteErrorRes(writer, transaction.ErrSignature(types.DefaultCodespace, err))
+		isFabric = false
+	}
+	to := sdk.HexToAddress(request.FormValue("to"))
+	amount, err := strconv.ParseUint(request.FormValue("amount"), 10, 64)
+	if err != nil {
+		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
 		return
 	}
 	isBalanceEnough := CheckAccountAndBalanceFromParams(cliCtx, request, writer)
@@ -35,12 +45,23 @@ func SendRequestHandlerFn(cliCtx context.Context, writer http.ResponseWriter, re
 		rest.WriteErrorRes(writer, transaction.ErrAmount(types.DefaultCodespace, errors.New("The balance is not enough to pay the amount")) )
 		return
 	}
+	coin := sdk.NewUInt64Coin(amount)
+	msg := transfer2.NewMsgTransfer(from, to, coin, isFabric)
+	if !broadcast {
+		rest.PostProcessResponseBare(writer, cliCtx, hex.EncodeToString(msg.Bytes()))
+		return
+	}
+
+	txByte, err := app.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
+	if err != nil {
+		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
+		return
+	}
 
 	res, err := cliCtx.BroadcastSignedTx(txByte)
 	if err != nil {
 		rest.WriteErrorRes(writer, client.ErrBroadcast(types.DefaultCodespace, err))
 		return
-
 	}
 	rest.PostProcessResponseBare(writer, cliCtx, res)
 }

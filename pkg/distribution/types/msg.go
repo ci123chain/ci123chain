@@ -3,36 +3,33 @@ package types
 import (
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	"github.com/ci123chain/ci123chain/pkg/transaction"
 	"github.com/ci123chain/ci123chain/pkg/util"
 )
 
 
-type FundCommunityPoolTx struct {
-	transaction.CommonTx
+type MsgFundCommunityPool struct {
+	FromAddress		  	sdk.AccAddress	 `json:"from_address"`
+	Signature 		  	[]byte   		 `json:"signature"`
+	PubKey			  	[]byte			 `json:"pub_key"`
+
 	Amount       sdk.Coin          `json:"amount"`
 	Depositor    sdk.AccAddress    `json:"depositor"`
 }
 
-
-func NewMsgFundCommunityPool(from sdk.AccAddress,amount sdk.Coin, gas, nonce uint64, depositor sdk.AccAddress) FundCommunityPoolTx {
-	return FundCommunityPoolTx{
-		CommonTx:transaction.CommonTx{
-			From:      from,
-			Nonce:     nonce,
-			Gas:       gas,
-		},
+func NewMsgFundCommunityPool(from sdk.AccAddress,amount sdk.Coin, gas, nonce uint64, depositor sdk.AccAddress) MsgFundCommunityPool {
+	return MsgFundCommunityPool{
+		FromAddress: from,
 		Amount:    amount,
 		Depositor: depositor,
 	}
 }
 
 // Route returns the MsgFundCommunityPool message route.
-func (msg *FundCommunityPoolTx) Route() string { return RouteKey }
+func (msg *MsgFundCommunityPool) Route() string { return RouteKey }
 
-// GetSigners returns the signer addresses that are expected to sign the result
-// of GetSignBytes.
-func (msg *FundCommunityPoolTx) Bytes() []byte{
+func (msg *MsgFundCommunityPool) MsgType() string { return "fund_community_pool" }
+
+func (msg *MsgFundCommunityPool) Bytes() []byte{
 	bytes, err := DistributionCdc.MarshalBinaryLengthPrefixed(msg)
 	if err != nil {
 		panic(err)
@@ -41,91 +38,81 @@ func (msg *FundCommunityPoolTx) Bytes() []byte{
 	return bytes
 }
 
-func (msg *FundCommunityPoolTx) SetSignature(sig []byte) {
+func (msg *MsgFundCommunityPool) SetSignature(sig []byte) {
 	msg.Signature = sig
 }
 
-func (msg *FundCommunityPoolTx) SetPubKey(pub []byte) {
+func (msg *MsgFundCommunityPool) SetPubKey(pub []byte) {
 	msg.PubKey = pub
 }
 
 // GetSignBytes returns the raw bytes for a MsgFundCommunityPool message that
 // the expected signer needs to sign.
-func (msg *FundCommunityPoolTx) GetSignBytes() []byte {
+func (msg *MsgFundCommunityPool) GetSignBytes() []byte {
 	tmsg := *msg
 	tmsg.Signature = nil
 	return util.TxHash(tmsg.Bytes())
 }
 
 // ValidateBasic performs basic MsgFundCommunityPool message validation.
-func (msg *FundCommunityPoolTx) ValidateBasic() sdk.Error {
-
-	err := msg.VerifySignature(msg.GetSignBytes(), false)
-	if err != nil {
-		return ErrInvalidSignature(DefaultCodespace, "invalid signature")
-	}
+func (msg *MsgFundCommunityPool) ValidateBasic() sdk.Error {
 	if !msg.Amount.IsValid() {
 		return ErrInvalidCoin(DefaultCodespace, msg.Amount.String())
 	}
 	if msg.Depositor.Empty() {
 		return ErrInvalidAddress(DefaultCodespace, msg.Depositor.String())
 	}
-	if !msg.From.Equal(msg.Depositor) {
-		return ErrInvalidAddress(DefaultCodespace, fmt.Sprintf("expected %s, got %s", msg.From.String(), msg.Depositor.String()))
+	if !msg.FromAddress.Equal(msg.Depositor) {
+		return ErrInvalidAddress(DefaultCodespace, fmt.Sprintf("expected %s, got %s", msg.FromAddress.String(), msg.Depositor.String()))
 	}
 
 	return nil
 }
 
-func (msg *FundCommunityPoolTx) GetNonce() uint64 { return msg.Nonce}
-func (msg *FundCommunityPoolTx) GetGas() uint64 { return msg.Gas}
-func (msg *FundCommunityPoolTx) GetFromAddress() sdk.AccAddress { return msg.From}
+func (msg *MsgFundCommunityPool) GetFromAddress() sdk.AccAddress { return msg.FromAddress}
 
+func (msg *MsgFundCommunityPool) GetSignature() []byte { return msg.Signature}
 
+type MsgSetWithdrawAddress struct {
+	FromAddress		  	sdk.AccAddress	 `json:"from_address"`
+	Signature 		  	[]byte   		 `json:"signature"`
+	PubKey			  	[]byte			 `json:"pub_key"`
 
-type SetWithdrawAddressTx struct {
-	transaction.CommonTx
-	DelegatorAddress     sdk.AccAddress   `json:"delegator_address"`
-	WithdrawAddress      sdk.AccAddress    `json:"withdraw_address"`
+	DelegatorAddress     sdk.AccAddress  `json:"delegator_address"`
+	WithdrawAddress      sdk.AccAddress  `json:"withdraw_address"`
 }
 
-func NewSetWithdrawAddressTx(from, withdraw, del sdk.AccAddress, gas, nonce uint64) SetWithdrawAddressTx{
-	return SetWithdrawAddressTx{
-		CommonTx: transaction.CommonTx{
-			From:      from,
-			Nonce:     nonce,
-			Gas:       gas,
-		},
-		DelegatorAddress:del,
-		WithdrawAddress:withdraw,
+func NewMsgSetWithdrawAddress(from, withdraw, del sdk.AccAddress) *MsgSetWithdrawAddress{
+	return &MsgSetWithdrawAddress{
+		FromAddress:      from,
+		DelegatorAddress: del,
+		WithdrawAddress:  withdraw,
 	}
 }
 
-func (tx *SetWithdrawAddressTx) Route() string { return RouteKey}
+func (msg *MsgSetWithdrawAddress) Route() string { return RouteKey}
 
-func (tx *SetWithdrawAddressTx) ValidateBasic() sdk.Error {
-	err := tx.VerifySignature(tx.GetSignBytes(), false)
-	if err != nil {
-		return ErrInvalidSignature(DefaultCodespace, "invalid signature")
+func (msg *MsgSetWithdrawAddress) MsgType() string { return "set_withdraw_address"}
+
+func (msg *MsgSetWithdrawAddress) ValidateBasic() sdk.Error {
+	if msg.DelegatorAddress.Empty() {
+		return ErrInvalidAddress(DefaultCodespace, msg.DelegatorAddress.String())
 	}
-	if tx.DelegatorAddress.Empty() {
-		return ErrInvalidAddress(DefaultCodespace, tx.DelegatorAddress.String())
+	if msg.WithdrawAddress.Empty() {
+		return ErrInvalidAddress(DefaultCodespace, msg.WithdrawAddress.String())
 	}
-	if tx.WithdrawAddress.Empty() {
-		return ErrInvalidAddress(DefaultCodespace, tx.WithdrawAddress.String())
-	}
-	if tx.From.Empty() {
-		return ErrInvalidAddress(DefaultCodespace, tx.From.String())
+	if msg.FromAddress.Empty() {
+		return ErrInvalidAddress(DefaultCodespace, msg.FromAddress.String())
 	}
 	//keep delegator address and from address the same.
-	if !tx.From.Equal(tx.DelegatorAddress) {
-		return ErrInvalidAddress(DefaultCodespace, fmt.Sprintf("expected %s, got %s", tx.From.String(), tx.DelegatorAddress.String()))
+	if !msg.FromAddress.Equal(msg.DelegatorAddress) {
+		return ErrInvalidAddress(DefaultCodespace, fmt.Sprintf("expected %s, got %s", msg.FromAddress.String(), msg.DelegatorAddress.String()))
 	}
 	return nil
 }
 
-func (tx *SetWithdrawAddressTx) Bytes() []byte {
-	bytes, err := DistributionCdc.MarshalBinaryLengthPrefixed(tx)
+func (msg *MsgSetWithdrawAddress) Bytes() []byte {
+	bytes, err := DistributionCdc.MarshalBinaryLengthPrefixed(msg)
 	if err != nil {
 		panic(err)
 	}
@@ -133,74 +120,64 @@ func (tx *SetWithdrawAddressTx) Bytes() []byte {
 	return bytes
 }
 
-func (tx *SetWithdrawAddressTx) SetSignature(sig []byte) {
-	tx.Signature = sig
+func (msg *MsgSetWithdrawAddress) SetSignature(sig []byte) {
+	msg.Signature = sig
 }
 
-func (tx *SetWithdrawAddressTx) SetPubKey(pubKey []byte) {
-	tx.PubKey = pubKey
+func (msg *MsgSetWithdrawAddress) SetPubKey(pubKey []byte) {
+	msg.PubKey = pubKey
 }
 
-func (tx *SetWithdrawAddressTx) GetSignBytes() []byte {
-	tmsg := *tx
+func (msg *MsgSetWithdrawAddress) GetSignBytes() []byte {
+	tmsg := *msg
 	tmsg.Signature = nil
 	return util.TxHash(tmsg.Bytes())
 }
 
-func (tx *SetWithdrawAddressTx) GetNonce() uint64 {
-	return tx.Nonce
-}
+func (msg *MsgSetWithdrawAddress) GetFromAddress() sdk.AccAddress { return msg.FromAddress}
 
-func (tx *SetWithdrawAddressTx) GetGas() uint64 {
-	return tx.Gas
-}
-
-func (tx *SetWithdrawAddressTx) GetFromAddress() sdk.AccAddress { return tx.From}
+func (msg *MsgSetWithdrawAddress) GetSignature() []byte { return msg.Signature}
 
 
-type WithdrawDelegatorRewardTx struct {
-	transaction.CommonTx
+type MsgWithdrawDelegatorReward struct {
+	FromAddress		  	sdk.AccAddress	 `json:"from_address"`
+	Signature 		  	[]byte   		 `json:"signature"`
+	PubKey			  	[]byte			 `json:"pub_key"`
+
 	DelegatorAddress     sdk.AccAddress    `json:"delegator_address"`
 	ValidatorAddress     sdk.AccAddress    `json:"validator_address"`
 }
 
-func NewWithdrawDelegatorRewardTx(from, val, del sdk.AccAddress, gas, nonce uint64) WithdrawDelegatorRewardTx {
-	return WithdrawDelegatorRewardTx{
-		CommonTx:transaction.CommonTx{
-			From:      from,
-			Nonce:     nonce,
-			Gas:       gas,
-		},
+func NewMsgWithdrawDelegatorReward(from, val, del sdk.AccAddress) *MsgWithdrawDelegatorReward {
+	return &MsgWithdrawDelegatorReward{
+		FromAddress: from,
 		DelegatorAddress:del,
 		ValidatorAddress:val,
 	}
 }
 
-func (tx *WithdrawDelegatorRewardTx) Route() string { return RouteKey}
+func (msg *MsgWithdrawDelegatorReward) Route() string { return RouteKey}
+func (msg *MsgWithdrawDelegatorReward) MsgType() string { return "withdraw_delegator_reward"}
 
-func (tx *WithdrawDelegatorRewardTx) ValidateBasic() sdk.Error {
-	err := tx.VerifySignature(tx.GetSignBytes(), false)
-	if err != nil {
-		return ErrInvalidSignature(DefaultCodespace, "invalid signature")
+func (msg *MsgWithdrawDelegatorReward) ValidateBasic() sdk.Error {
+	if msg.ValidatorAddress.Empty() {
+		return ErrInvalidAddress(DefaultCodespace, msg.ValidatorAddress.String())
 	}
-	if tx.ValidatorAddress.Empty() {
-		return ErrInvalidAddress(DefaultCodespace, tx.ValidatorAddress.String())
+	if msg.DelegatorAddress.Empty() {
+		return ErrInvalidAddress(DefaultCodespace, msg.DelegatorAddress.String())
 	}
-	if tx.DelegatorAddress.Empty() {
-		return ErrInvalidAddress(DefaultCodespace, tx.DelegatorAddress.String())
+	if msg.FromAddress.Empty() {
+		return ErrInvalidAddress(DefaultCodespace, msg.FromAddress.String())
 	}
-	if tx.From.Empty() {
-		return ErrInvalidAddress(DefaultCodespace, tx.From.String())
-	}
-	if !tx.From.Equal(tx.DelegatorAddress) {
-		return ErrInvalidAddress(DefaultCodespace, fmt.Sprintf("expected %s, got %s", tx.From.String(), tx.DelegatorAddress.String()))
+	if !msg.FromAddress.Equal(msg.DelegatorAddress) {
+		return ErrInvalidAddress(DefaultCodespace, fmt.Sprintf("expected %s, got %s", msg.FromAddress.String(), msg.DelegatorAddress.String()))
 	}
 
 	return nil
 }
 
-func (tx *WithdrawDelegatorRewardTx) Bytes() []byte {
-	bytes, err := DistributionCdc.MarshalBinaryLengthPrefixed(tx)
+func (msg *MsgWithdrawDelegatorReward) Bytes() []byte {
+	bytes, err := DistributionCdc.MarshalBinaryLengthPrefixed(msg)
 	if err != nil {
 		panic(err)
 	}
@@ -208,69 +185,61 @@ func (tx *WithdrawDelegatorRewardTx) Bytes() []byte {
 	return bytes
 }
 
-func (tx *WithdrawDelegatorRewardTx) SetSignature(sig []byte) {
-	tx.Signature = sig
+func (msg *MsgWithdrawDelegatorReward) SetSignature(sig []byte) {
+	msg.Signature = sig
 }
 
-func (tx *WithdrawDelegatorRewardTx) SetPubKey(pubKey []byte) {
-	tx.PubKey = pubKey
+func (msg *MsgWithdrawDelegatorReward) SetPubKey(pubKey []byte) {
+	msg.PubKey = pubKey
 }
 
-func (tx *WithdrawDelegatorRewardTx) GetSignBytes() []byte {
-	tmsg := *tx
+func (msg *MsgWithdrawDelegatorReward) GetSignBytes() []byte {
+	tmsg := *msg
 	tmsg.Signature = nil
 	return util.TxHash(tmsg.Bytes())
 }
 
-func (tx *WithdrawDelegatorRewardTx) GetNonce() uint64 {
-	return tx.Nonce
+func (msg *MsgWithdrawDelegatorReward) GetSignature() []byte {
+	return msg.Signature
 }
 
-func (tx *WithdrawDelegatorRewardTx) GetGas() uint64 {
-	return tx.Gas
+func (msg *MsgWithdrawDelegatorReward) GetFromAddress() sdk.AccAddress { return msg.FromAddress}
+
+
+type MsgWithdrawValidatorCommission struct {
+	FromAddress		  	sdk.AccAddress	 `json:"from_address"`
+	Signature 		  	[]byte   		 `json:"signature"`
+	PubKey			  	[]byte			 `json:"pub_key"`
+
+	ValidatorAddress    sdk.AccAddress   `json:"validator_address"`
 }
 
-func (tx *WithdrawDelegatorRewardTx) GetFromAddress() sdk.AccAddress { return tx.From}
-
-
-type WithdrawValidatorCommissionTx struct {
-	transaction.CommonTx
-	ValidatorAddress    sdk.AccAddress    `json:"validator_address"`
-}
-
-func NewWithdrawValidatorCommissionTx(from, val sdk.AccAddress, gas, nonce uint64) WithdrawValidatorCommissionTx {
-	return WithdrawValidatorCommissionTx{
-		CommonTx:transaction.CommonTx{
-			From:      from,
-			Nonce:     nonce,
-			Gas:       gas,
-		},
-		ValidatorAddress:val,
+func NewMsgWithdrawValidatorCommission(from, val sdk.AccAddress) *MsgWithdrawValidatorCommission {
+	return &MsgWithdrawValidatorCommission{
+		FromAddress:      from,
+		ValidatorAddress: val,
 	}
 }
 
-func (tx *WithdrawValidatorCommissionTx) Route() string { return RouteKey}
+func (msg *MsgWithdrawValidatorCommission) Route() string { return RouteKey}
+func (msg *MsgWithdrawValidatorCommission) MsgType() string { return "withdraw_validator_commission"}
 
-func (tx *WithdrawValidatorCommissionTx) ValidateBasic() sdk.Error {
-	err := tx.VerifySignature(tx.GetSignBytes(), false)
-	if err != nil {
-		return ErrInvalidSignature(DefaultCodespace, "invalid signature")
+func (msg *MsgWithdrawValidatorCommission) ValidateBasic() sdk.Error {
+	if msg.ValidatorAddress.Empty() {
+		return ErrInvalidAddress(DefaultCodespace, msg.ValidatorAddress.String())
 	}
-	if tx.ValidatorAddress.Empty() {
-		return ErrInvalidAddress(DefaultCodespace, tx.ValidatorAddress.String())
+	if msg.FromAddress.Empty() {
+		return ErrInvalidAddress(DefaultCodespace, msg.FromAddress.String())
 	}
-	if tx.From.Empty() {
-		return ErrInvalidAddress(DefaultCodespace, tx.From.String())
-	}
-	if !tx.From.Equal(tx.ValidatorAddress) {
-		return ErrInvalidAddress(DefaultCodespace, fmt.Sprintf("expected %s, got %s", tx.From.String(), tx.ValidatorAddress.String()))
+	if !msg.FromAddress.Equal(msg.ValidatorAddress) {
+		return ErrInvalidAddress(DefaultCodespace, fmt.Sprintf("expected %s, got %s", msg.FromAddress.String(), msg.ValidatorAddress.String()))
 	}
 
 	return nil
 }
 
-func (tx *WithdrawValidatorCommissionTx) Bytes() []byte {
-	bytes, err := DistributionCdc.MarshalBinaryLengthPrefixed(tx)
+func (msg *MsgWithdrawValidatorCommission) Bytes() []byte {
+	bytes, err := DistributionCdc.MarshalBinaryLengthPrefixed(msg)
 	if err != nil {
 		panic(err)
 	}
@@ -278,26 +247,22 @@ func (tx *WithdrawValidatorCommissionTx) Bytes() []byte {
 	return bytes
 }
 
-func (tx *WithdrawValidatorCommissionTx) SetSignature(sig []byte) {
-	tx.Signature = sig
+func (msg *MsgWithdrawValidatorCommission) SetSignature(sig []byte) {
+	msg.Signature = sig
 }
 
-func (tx *WithdrawValidatorCommissionTx) SetPubKey(pubKey []byte) {
-	tx.PubKey = pubKey
+func (msg *MsgWithdrawValidatorCommission) SetPubKey(pubKey []byte) {
+	msg.PubKey = pubKey
 }
 
-func (tx *WithdrawValidatorCommissionTx) GetSignBytes() []byte {
-	tmsg := *tx
+func (msg *MsgWithdrawValidatorCommission) GetSignBytes() []byte {
+	tmsg := *msg
 	tmsg.Signature = nil
 	return util.TxHash(tmsg.Bytes())
 }
 
-func (tx *WithdrawValidatorCommissionTx) GetNonce() uint64 {
-	return tx.Nonce
+func (msg *MsgWithdrawValidatorCommission) GetSignature() []byte {
+	return msg.Signature
 }
 
-func (tx *WithdrawValidatorCommissionTx) GetGas() uint64 {
-	return tx.Gas
-}
-
-func (tx *WithdrawValidatorCommissionTx) GetFromAddress() sdk.AccAddress { return tx.From}
+func (msg *MsgWithdrawValidatorCommission) GetFromAddress() sdk.AccAddress { return msg.FromAddress}

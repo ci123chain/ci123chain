@@ -19,6 +19,17 @@ func CheckBool(async string) (bool, error) {
 	return isAysnc, nil
 }
 
+func CheckFabric(isFabric string) (bool, error) {
+	if isFabric == "" {
+		return false, nil
+	}
+	isAysnc, err := strconv.ParseBool(isFabric)
+	if err != nil {
+		return false, err
+	}
+	return isAysnc, nil
+}
+
 
 func CheckInt64(num string) (int64, error) {
 	if num == "" {

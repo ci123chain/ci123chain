@@ -2,19 +2,23 @@ package cmd
 
 import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/app"
 	"github.com/ci123chain/ci123chain/pkg/client"
 	"github.com/ci123chain/ci123chain/pkg/client/helper"
 	"github.com/ci123chain/ci123chain/pkg/client/types"
-	"github.com/ci123chain/ci123chain/pkg/transfer"
+	transfer2 "github.com/ci123chain/ci123chain/pkg/transfer"
 	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 const (
+	flagFrom    = "from"
 	flagTo 		= "to"
 	flagAmount  = "amount"
 	flagGas 	= "gas"
+	flagKey		= "privKey"
+	flagIsFabric= "isFabric"
 )
 
 func init()  {
@@ -42,7 +46,7 @@ var transferCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		from := ctx.GetFromAddresses()
+		from := sdk.HexToAddress(viper.GetString(flagFrom))
 		tos, err := helper.ParseAddrs(viper.GetString(flagTo))
 		if err != nil {
 			return types.ErrParseAddr(types.DefaultCodespace, err)
@@ -50,30 +54,25 @@ var transferCmd = &cobra.Command{
 		if len(tos) == 0 {
 			return types.ErrNoAddr(types.DefaultCodespace, err)
 		}
-		//直接getNonce
-		//todo err
-		nonce, _, err := ctx.GetNonceByAddress(from, false)
+
+		gas := uint64((viper.GetInt(flagGas)))
+		amount := uint64(viper.GetInt(flagAmount))
+		privKey := viper.GetString(flagKey)
+		isFabric := viper.GetBool(flagIsFabric)
+
+		coin := sdk.NewUInt64Coin(amount)
+		msg := transfer2.NewMsgTransfer(from, tos[0], coin, isFabric)
+		nonce, err := transfer2.GetNonceByAddress(from)
 		if err != nil {
-			return err
+			return types.ErrParseParam(types.DefaultCodespace, err)
 		}
 
-		ucoin := uint64(viper.GetInt(flagAmount))
-		tx := transfer.NewTransferTx(from, tos[0], uint64(viper.GetInt(flagGas)), nonce, sdk.NewUInt64Coin(ucoin), false)
-
-		password := viper.GetString(flagPassword)
-		if len(password) < 1 {
-			var err error
-			password, err = helper.GetPassphrase(from)
-			if err != nil {
-				return types.ErrGetPassPhrase(types.DefaultCodespace, err)
-			}
-		}
-
-		signedData, err := getSignedDataWithTx(ctx, tx, password, from)
+		txByte, err := app.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
 		if err != nil {
-			return types.ErrGetSignData(types.DefaultCodespace, err)
+			return types.ErrParseParam(types.DefaultCodespace, err)
 		}
-		res, err := ctx.BroadcastSignedData(signedData)
+
+		res, err := ctx.BroadcastSignedData(txByte)
 		if err != nil {
 			return types.ErrBroadcast(types.DefaultCodespace, err)
 		}

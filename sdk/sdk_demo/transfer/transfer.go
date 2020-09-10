@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/hex"
+	"github.com/ci123chain/ci123chain/pkg/abci/types"
 	sdk "github.com/ci123chain/ci123chain/sdk/transfer"
 )
 
@@ -9,11 +10,11 @@ import (
 func SignTransferTxDemo() (string, error) {
 	isFabric = false
 	//isFabric = true
-	txByte, err := sdk.SignTransferMsg(from, to, offlineAmount, offlineGas, offlineNonce, priv, isFabric)
+	msg, err := sdk.SignMsgTransfer(types.HexToAddress(from), types.HexToAddress(to), offlineAmount, priv, isFabric)
 	if err != nil {
 		return "", err
 	}
-	return hex.EncodeToString(txByte), nil
+	return hex.EncodeToString(msg.Bytes()), nil
 }
 
 

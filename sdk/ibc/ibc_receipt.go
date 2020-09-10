@@ -1,17 +1,17 @@
 package ibc
 
 import (
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/client/helper"
 	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
 	"github.com/ci123chain/ci123chain/pkg/ibc"
-	"github.com/ci123chain/ci123chain/pkg/transaction"
 )
 
 // 生成 MortgageDone 完成交易
 
-func SignIBCReceiptMsg(from string, raw []byte, gas, nonce uint64, priv []byte) ([]byte, error) {
+func SignIBCReceiptMsg(from string, raw, priv []byte) ([]byte, error) {
 
-	tx, err := buildIBCReceiptMsg(from, raw, gas, nonce)
+	tx, err := buildIBCReceiptMsg(from, raw)
 	if err != nil {
 		return nil, err
 	}
@@ -27,13 +27,13 @@ func SignIBCReceiptMsg(from string, raw []byte, gas, nonce uint64, priv []byte) 
 
 
 
-func buildIBCReceiptMsg (from string, raw []byte, gas, nonce uint64) (transaction.Transaction, error) {
+func buildIBCReceiptMsg (from string, raw []byte) (sdk.Msg, error) {
 
 	fromAddr, err := helper.StrToAddress(from)
 	if err != nil {
 		return nil, err
 	}
-	ibcMsg := ibc.NewIBCReceiveReceiptMsg(fromAddr, raw, gas, nonce)
+	ibcMsg := ibc.NewIBCReceiveReceiptMsg(fromAddr, raw)
 	return ibcMsg, nil
 }
 

@@ -17,7 +17,6 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/abci/version"
-	"github.com/ci123chain/ci123chain/pkg/transaction"
 )
 
 // Key to store the header in the DB itself.
@@ -500,48 +499,53 @@ func (app *BaseApp) getContextForTx(mode runTxMode, txBytes []byte) (ctx sdk.Con
 	return
 }
 
-func (app *BaseApp) runMsgs(ctx sdk.Context, tx sdk.Tx, mode runTxMode) sdk.Result {
+func (app *BaseApp) runMsgs(ctx sdk.Context, msgs []sdk.Msg, mode runTxMode) sdk.Result {
+	idxLogs := make([]sdk.ABCIMessageLog, 0, len(msgs))
 	var code      sdk.CodeType
 	var codespace sdk.CodespaceType
+	var data []byte
+	var events sdk.Events
 
-	txRoute := tx.Route()
+	for msgIdx, msg := range msgs{
+		msgRoute := msg.Route()
+		handler := app.router.Route(msgRoute)
+		if handler == nil {
+			return sdk.ErrUnknownRequest("Unrecognized Msg type: " + msgRoute).Result()
+		}
 
-	handler := app.router.Route(txRoute)
+		var msgResult sdk.Result
 
-	if handler == nil {
-		return sdk.ErrUnknownRequest("Unrecognized Msg type: " + txRoute).Result()
+		// check 不实际执行
+		if mode != runTxModeCheck {
+			msgResult = handler(ctx, msg)
+		}
+
+		// append date and log and events
+		data = append(data, msgResult.Data...)
+		idxLog := sdk.ABCIMessageLog{MsgIndex: uint16(msgIdx), Log: msgResult.Log}
+		events = append(events, msgResult.Events...)
+
+		if !msgResult.IsOK() {
+			idxLog.Success = false
+			idxLogs = append(idxLogs, idxLog)
+
+			code = msgResult.Code
+			codespace = msgResult.Codespace
+			break
+		}
+
+		idxLog.Success = true
+		idxLogs = append(idxLogs, idxLog)
 	}
-	var msgResult sdk.Result
 
-	fmt.Println("-------- enter handler ----------")
-	fmt.Println(ctx.GasMeter().GasConsumed())
-
-	// check 不实际执行
-	if mode != runTxModeCheck {
-		msgResult = handler(ctx, tx)
-	}
-
-	fmt.Println("-------- out handler ----------")
- 	fmt.Println(ctx.GasMeter().GasConsumed())
-
-	if !msgResult.IsOK() {
-		code = msgResult.Code
-		codespace = msgResult.Codespace
-	}
-
-	gasUsed := ctx.GasMeter().GasConsumed()
-	if msgResult.GasUsed != 0 {
-		gasUsed = msgResult.GasUsed
-	}
-
-
+	logJSON := codec.Cdc.MustMarshalJSON(idxLogs)
 	return sdk.Result{
 		Code: 		code,
 		Codespace: 	codespace,
-		GasUsed:   	gasUsed,
-		Log: 		strings.TrimSpace(msgResult.Log),
-		Data: 		msgResult.Data,
-		Events: 	msgResult.Events,
+		GasUsed:   	ctx.GasMeter().GasConsumed(),
+		Log: 		strings.TrimSpace(string(logJSON)),
+		Data: 		data,
+		Events: 	events,
 	}
 }
 
@@ -588,34 +592,37 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 	//var gasUsed uint64
 	ctx := app.getContextForTx(mode, txBytes)
 	ms := ctx.MultiStore()
-
-	stdTx, ok := tx.(transaction.Transaction)
-	gasWanted = stdTx.GetGas()
-	if !ok {
-		return transaction.ErrInvalidTx(sdk.CodespaceRoot, "tx must be StdTx").Result()
-	}
+	gasWanted = tx.GetGas()
+	ctx.WithGasLimit(gasWanted)
+	ctx.WithNonce(tx.GetNonce())
 	defer func() {
 
 		if r := recover(); r != nil {
 			switch rType := r.(type) {
 			case sdk.ErrorOutOfGas:
-				app.deferHandler(ctx, tx, true, 0)
+				app.deferHandler(ctx, tx, true)
 				log := fmt.Sprintf("out of gas in location: %v", rType.Descriptor)
 				result = sdk.ErrOutOfGas(log).Result()
 				result.GasUsed = gasWanted
 			default:
-				res := app.deferHandler(ctx, tx, false, 0)
+				res := app.deferHandler(ctx, tx, false)
 				log := fmt.Sprintf("recovered: %v\nstack:%v\n", r, string(debug.Stack()))
 				result = sdk.ErrInternal(log).Result()
 				result.GasUsed = res.GasUsed
 			}
 		} else {
-			app.deferHandler(ctx, tx, false, result.GasUsed)
+			res := app.deferHandler(ctx, tx, false)
+			result.GasUsed = res.GasUsed
 		}
 		result.GasWanted = gasWanted
 		//result.GasUsed = gasUsed
 	}()
-
+	msgs := tx.GetMsgs()
+	signer := tx.GetFromAddress()
+	err := validateBasicTxMsgs(msgs, signer)
+	if err != nil {
+		return err.Result()
+	}
 	if err := tx.ValidateBasic(); err != nil {
 		return err.Result()
 	}
@@ -659,7 +666,7 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 
 	runMsgCtx, msCache := app.cacheTxContext(ctx, txBytes)
 
-	result = app.runMsgs(runMsgCtx, tx, mode)
+	result = app.runMsgs(runMsgCtx, msgs, mode)
 
 	if mode == runTxModeSimulate  { // XXX
 		return
@@ -720,4 +727,23 @@ func (app *BaseApp) Commit() (res abci.ResponseCommit) {
 	return abci.ResponseCommit{
 		Data: commitID.Hash,
 	}
+}
+
+func validateBasicTxMsgs(msgs []sdk.Msg, signer sdk.AccAddress) sdk.Error {
+	if msgs == nil || len(msgs) == 0 {
+		return sdk.ErrUnknownRequest("Tx.GetMsgs() must return at least one message in list")
+	}
+
+	for _, msg := range msgs {
+		// Validate the Msg.
+		if signer != msg.GetFromAddress(){
+			return sdk.ErrInvalidSign("Signer is different from msg.from")
+		}
+		err := msg.ValidateBasic()
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

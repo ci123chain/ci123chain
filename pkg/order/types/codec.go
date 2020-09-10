@@ -6,7 +6,7 @@ import (
 )
 
 func RegisterCodec(cdc *codec.Codec) {
-	cdc.RegisterConcrete(&UpgradeTx{}, "ci123chain/UpgradeTx", nil)
+	cdc.RegisterConcrete(&MsgUpgrade{}, "ci123chain/MsgUpgrade", nil)
 	cdc.RegisterConcrete(&keeper.OrderBook{}, "ci123chain/OrderBook", nil)
 }
 

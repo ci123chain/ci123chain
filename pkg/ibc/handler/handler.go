@@ -9,24 +9,22 @@ import (
 )
 
 func NewHandler(k keeper.IBCKeeper) sdk.Handler {
-	return func(ctx sdk.Context, tx sdk.Tx) sdk.Result {
-		switch tx := tx.(type) {
+	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
+		switch msg := msg.(type) {
 		case *types.IBCTransfer:
-			return handleMsgIBCTransfer(ctx, k, *tx)
-		case *types.ApplyIBCTx:
-			return handleMsgApplyIBCTx(ctx, k, *tx)
+			return handleMsgIBCTransfer(ctx, k, *msg)
+		case *types.MsgApplyIBC:
+			return handleMsgApplyIBCTx(ctx, k, *msg)
 		case *types.IBCMsgBankSend:
-			return handleMsgIBCBankSendTx(ctx, k, *tx)
+			return handleMsgIBCBankSendTx(ctx, k, *msg)
 		case *types.IBCReceiveReceiptMsg:
-			return handleMsgReceiveReceipt(ctx, k, *tx)
+			return handleMsgReceiveReceipt(ctx, k, *msg)
 		default:
-			errMsg := fmt.Sprintf("unrecognized supply message type: %T", tx)
+			errMsg := fmt.Sprintf("unrecognized supply message type: %T", msg)
 			return sdk.ErrUnknownRequest(errMsg).Result()
 		}
 	}
 }
-
-
 
 // 新增跨链消息
 func handleMsgIBCTransfer(ctx sdk.Context, k keeper.IBCKeeper, tx types.IBCTransfer) sdk.Result {
@@ -47,7 +45,7 @@ func handleMsgIBCTransfer(ctx sdk.Context, k keeper.IBCKeeper, tx types.IBCTrans
 }
 
 // 第一步: 申请处理跨链交易
-func handleMsgApplyIBCTx(ctx sdk.Context, k keeper.IBCKeeper, tx types.ApplyIBCTx) sdk.Result {
+func handleMsgApplyIBCTx(ctx sdk.Context, k keeper.IBCKeeper, tx types.MsgApplyIBC) sdk.Result {
 	signedIBCMsg, err := k.ApplyIBCMsg(ctx, tx)
 	if err != nil {
 		return types.ErrApplyIBCMsg(types.DefaultCodespace, err).Result()
@@ -116,7 +114,6 @@ func handleMsgIBCBankSendTx(ctx sdk.Context, k keeper.IBCKeeper, tx types.IBCMsg
 	return sdk.Result{Data: receiptBz}
 }
 
-
 // 接收到回执消息
 func handleMsgReceiveReceipt(ctx sdk.Context, k keeper.IBCKeeper, tx types.IBCReceiveReceiptMsg) sdk.Result  {
 
@@ -145,7 +142,7 @@ func handleMsgReceiveReceipt(ctx sdk.Context, k keeper.IBCKeeper, tx types.IBCRe
 func makeIBCMsg(uuidBz []byte, tx types.IBCTransfer) (types.IBCInfo, error) {
 	ibcMsg := types.IBCInfo{
 		UniqueID: 		uuidBz,
-		FromAddress: 	tx.From,
+		FromAddress: 	tx.FromAddress,
 		ToAddress: 		tx.ToAddress,
 		Amount: 		tx.Coin,
 		State: 			types.StateReady,

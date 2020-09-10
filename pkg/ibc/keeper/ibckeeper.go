@@ -71,7 +71,7 @@ func (k IBCKeeper) GetFirstReadyIBCMsg(ctx sdk.Context) *types.IBCInfo {
 }
 
 // 申请处理某笔交易
-func (k IBCKeeper) ApplyIBCMsg(ctx sdk.Context, tx types.ApplyIBCTx) (*types.ApplyReceipt, error) {
+func (k IBCKeeper) ApplyIBCMsg(ctx sdk.Context, tx types.MsgApplyIBC) (*types.ApplyReceipt, error) {
 
 	ibcMsg := k.GetIBCByUniqueID(ctx, tx.UniqueID)
 	if ibcMsg == nil {

@@ -2,7 +2,6 @@ package types
 
 import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	"github.com/ci123chain/ci123chain/pkg/transaction"
 	"github.com/ci123chain/ci123chain/pkg/transfer"
 	"github.com/ci123chain/ci123chain/pkg/util"
 )
@@ -13,22 +12,34 @@ const (
 	StateCancel = "StateCancel"
 )
 
-var _ transaction.Transaction = (*MsgMortgage)(nil)
+//var _ transaction.Transaction = (*MsgMortgage)(nil)
 
 type MsgMortgage struct {
-	transaction.CommonTx
-	//FromAddress  sdk.AccAddress `json:"from_address"`
+	FromAddress sdk.AccAddress	`json:"from_address"`
+	Signature 	[]byte   		`json:"signature"`
+	PubKey		[]byte			`json:"pub_key"`
+
 	ToAddress 	 sdk.AccAddress `json:"to_address"`
 	UniqueID 	 []byte 		`json:"unique_id"`
-	Coin 	 sdk.Coin			`json:"coin"`
+	Coin 	 	 sdk.Coin		`json:"coin"`
+}
+
+func NewMsgMortgage(from, to sdk.AccAddress, coin sdk.Coin, uniqueID []byte) *MsgMortgage {
+	msg := &MsgMortgage{
+		FromAddress: from,
+		ToAddress: 	 to,
+		UniqueID: 	 uniqueID,
+		Coin: 		 coin,
+	}
+	return msg
 }
 
 func (msg *MsgMortgage) ValidateBasic() sdk.Error {
-	if err := msg.CommonTx.ValidateBasic(); err != nil {
-		return err
+	if msg.FromAddress.Empty() {
+		return transfer.ErrCheckParams(DefaultCodespace, "missing from address")
 	}
 	if msg.ToAddress.Empty() {
-		return transfer.ErrCheckParams(DefaultCodespace, "missing sender address")
+		return transfer.ErrCheckParams(DefaultCodespace, "missing to address")
 	}
 	if len(msg.UniqueID) < 1 {
 		return transfer.ErrCheckParams(DefaultCodespace, "param mortgageRecord missing")
@@ -40,31 +51,17 @@ func (msg *MsgMortgage) ValidateBasic() sdk.Error {
 	//return msg.CommonTx.VerifySignature(msg.GetSignBytes(), true)
 }
 
-func NewMsgMortgage(from, to sdk.AccAddress, gas, nonce uint64, coin sdk.Coin, uniqueID []byte) *MsgMortgage {
-	msg := &MsgMortgage{
-		CommonTx: transaction.CommonTx{
-			From: from,
-			Nonce: nonce,
-			Gas:  gas,
-		},
-		ToAddress: 	to,
-		UniqueID: 	uniqueID,
-		Coin: 		coin,
-	}
-	return msg
-}
-func (msg *MsgMortgage)GetSignBytes() []byte {
+func (msg *MsgMortgage) GetSignBytes() []byte {
 	ntx := *msg
 	ntx.SetSignature(nil)
 	return util.TxHash(ntx.Bytes())
 }
 
-
-func (msg *MsgMortgage)SetSignature(sig []byte) {
-	msg.CommonTx.SetSignature(sig)
+func (msg *MsgMortgage) SetSignature(sig []byte) {
+	msg.SetSignature(sig)
 }
 
-func (msg *MsgMortgage)Bytes() []byte {
+func (msg *MsgMortgage) Bytes() []byte {
 	bytes, err := MortgageCdc.MarshalBinaryLengthPrefixed(msg)
 	if err != nil {
 		panic(err)
@@ -73,24 +70,24 @@ func (msg *MsgMortgage)Bytes() []byte {
 	return bytes
 }
 
-func (msg *MsgMortgage)SetPubKey(pub []byte) {
-	msg.CommonTx.PubKey = pub
+func (msg *MsgMortgage) SetPubKey(pub []byte) {
+	msg.PubKey = pub
 }
 
 func (msg *MsgMortgage) Route() string {
 	return RouterKey
 }
 
-func (msg *MsgMortgage) GetGas() uint64 {
-	return msg.CommonTx.Gas
-}
-
-func (msg *MsgMortgage) GetNonce() uint64 {
-	return msg.CommonTx.Nonce
+func (msg *MsgMortgage) MsgType() string {
+	return "mortgage"
 }
 
 func (msg *MsgMortgage) GetFromAddress() sdk.AccAddress {
-	return msg.CommonTx.From
+	return msg.FromAddress
+}
+
+func (msg *MsgMortgage) GetSignature() []byte {
+	return msg.Signature
 }
 
 type Mortgage struct {

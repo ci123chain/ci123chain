@@ -24,7 +24,7 @@ if [ ! -f $CI_HOME/config/genesis.json ]; then
     ./cid-linux add-genesis-account 0xB6727FCbC60A03A6689AEE6E5fBC83a7FDc9beBf 10000000000 --home=$CI_HOME
 
     ./cid-linux add-genesis-validator 0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c 8000000 $CI_PUBKEY 1 4 50 --home=$CI_HOME
-    
+
     if [ $GENESIS_SHARED ]; then
         ./cid-linux add-genesis-shard "$GENESIS_SHARED"
         #./cid-linux add-genesis-shard "ci0:0;ci1:0;ci2:0"

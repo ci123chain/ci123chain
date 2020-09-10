@@ -3,41 +3,32 @@ package types
 import (
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	"github.com/ci123chain/ci123chain/pkg/transaction"
 	"github.com/ci123chain/ci123chain/pkg/util"
 )
 
-type EditValidatorTx struct {
-	transaction.CommonTx
-	Description       Description      `json:"description"`
-	ValidatorAddress  sdk.AccAddress   `json:"validator_address"`
+type MsgEditValidator struct {
+	FromAddress		  sdk.AccAddress	`json:"from_address"`
+	Signature 		  []byte   			`json:"signature"`
+	PubKey			  []byte			`json:"pub_key"`
+
+	Description       Description      	`json:"description"`
+	ValidatorAddress  sdk.AccAddress   	`json:"validator_address"`
 	CommissionRate    *sdk.Dec          `json:"commission_rate"`
 	MinSelfDelegation *sdk.Int          `json:"min_self_delegation"`
 }
 
-
-func NewEditValidatorTx(from sdk.AccAddress, gas ,nonce uint64, desc Description, commissionRate *sdk.Dec,
-	minSelfDelegation *sdk.Int) EditValidatorTx {
-	return EditValidatorTx{
-		CommonTx:          transaction.CommonTx{
-			From:      from,
-			Nonce:     nonce,
-			Gas:       gas,
-		},
-		Description:       desc,
-		ValidatorAddress:  from,
-		CommissionRate:    commissionRate,
-		MinSelfDelegation: minSelfDelegation,
+func NewMsgEditValidator(from sdk.AccAddress, desc Description, commissionRate *sdk.Dec,
+	minSelfDelegation *sdk.Int) *MsgEditValidator {
+	return &MsgEditValidator{
+		FromAddress: 		from,
+		Description:    	desc,
+		ValidatorAddress:  	from,
+		CommissionRate:    	commissionRate,
+		MinSelfDelegation:	minSelfDelegation,
 	}
 }
 
-
-func (tx *EditValidatorTx) ValidateBasic() sdk.Error {
-
-	err := tx.VerifySignature(tx.GetSignBytes(), false)
-	if err != nil {
-		return ErrCheckParams(DefaultCodespace, err.Error())
-	}
+func (tx *MsgEditValidator) ValidateBasic() sdk.Error {
 	if tx.ValidatorAddress.Empty() {
 		return ErrInvalidAddress(DefaultCodespace, fmt.Sprintf("empty validator address"))
 	}
@@ -49,26 +40,23 @@ func (tx *EditValidatorTx) ValidateBasic() sdk.Error {
 			return ErrCheckParams(DefaultCodespace, "commission rate must be between 0 and 1 (inclusive)")
 		}
 	}
-	if !tx.ValidatorAddress.Equals(tx.From) {
-		return ErrInvalidAddress(DefaultCodespace, fmt.Sprintf("expected %s, got %s", tx.From, tx.ValidatorAddress))
+	if !tx.ValidatorAddress.Equals(tx.FromAddress) {
+		return ErrInvalidAddress(DefaultCodespace, fmt.Sprintf("expected %s, got %s", tx.FromAddress, tx.ValidatorAddress))
 	}
 	return nil
 }
 
-
-func (tx *EditValidatorTx) GetSignBytes() []byte {
+func (tx *MsgEditValidator) GetSignBytes() []byte {
 	tmsg := *tx
 	tmsg.Signature = nil
 	return util.TxHash(tmsg.Bytes())
 }
 
-
-func (tx *EditValidatorTx) SetSignature(sig []byte) {
+func (tx *MsgEditValidator) SetSignature(sig []byte) {
 	tx.Signature = sig
 }
 
-
-func (tx *EditValidatorTx) Bytes() []byte {
+func (tx *MsgEditValidator) Bytes() []byte {
 	bytes, err := StakingCodec.MarshalBinaryLengthPrefixed(tx)
 	if err != nil {
 		panic(err)
@@ -77,15 +65,16 @@ func (tx *EditValidatorTx) Bytes() []byte {
 	return bytes
 }
 
-
-func (tx *EditValidatorTx) SetPubKey(pub []byte) {
+func (tx *MsgEditValidator) SetPubKey(pub []byte) {
 	tx.PubKey = pub
 }
 
-func (tx *EditValidatorTx) Route() string { return RouteKey }
+func (tx *MsgEditValidator) Route() string { return RouteKey }
 
-func (tx *EditValidatorTx) GetGas() uint64 { return tx.Gas }
+func (tx *MsgEditValidator) MsgType() string { return "edit-validator" }
 
-func (tx *EditValidatorTx) GetNonce() uint64 { return tx.Nonce }
+func (tx *MsgEditValidator) GetFromAddress() sdk.AccAddress { return tx.FromAddress }
 
-func (tx *EditValidatorTx) GetFromAddress() sdk.AccAddress { return tx.From }
+func (tx *MsgEditValidator) GetSignature() []byte {
+	return tx.Signature
+}

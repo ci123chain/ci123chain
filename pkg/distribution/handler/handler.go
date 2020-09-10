@@ -10,31 +10,31 @@ import (
 
 
 func NewHandler(k keeper.DistrKeeper) sdk.Handler {
-	return func(ctx sdk.Context, tx sdk.Tx) sdk.Result {
+	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 
-		switch tx := tx.(type) {
-		case *types.SetWithdrawAddressTx:
-			return handleMsgModifyWithdrawAddress(ctx, *tx, k)
-		case *types.WithdrawDelegatorRewardTx:
-			return handleMsgWithdrawDelegatorReward(ctx, *tx, k)
-		case *types.WithdrawValidatorCommissionTx:
-			return handleMsgWithdrawValidatorCommission(ctx, *tx, k)
-		case *types.FundCommunityPoolTx:
-			return handleMsgFundCommunityPool(ctx, *tx, k)
+		switch msg := msg.(type) {
+		case *types.MsgSetWithdrawAddress:
+			return handleMsgModifyWithdrawAddress(ctx, *msg, k)
+		case *types.MsgWithdrawDelegatorReward:
+			return handleMsgWithdrawDelegatorReward(ctx, *msg, k)
+		case *types.MsgWithdrawValidatorCommission:
+			return handleMsgWithdrawValidatorCommission(ctx, *msg, k)
+		case *types.MsgFundCommunityPool:
+			return handleMsgFundCommunityPool(ctx, *msg, k)
 		default:
-			errMsg := fmt.Sprintf("unrecognized supply message type: %T", tx)
+			errMsg := fmt.Sprintf("unrecognized supply message type: %T", msg)
 			return sdk.ErrUnknownRequest(errMsg).Result()
 		}
 	}
 }
 
 
-func handleMsgModifyWithdrawAddress(ctx sdk.Context, msg types.SetWithdrawAddressTx, k keeper.DistrKeeper) sdk.Result {
+func handleMsgModifyWithdrawAddress(ctx sdk.Context, msg types.MsgSetWithdrawAddress, k keeper.DistrKeeper) sdk.Result {
 
 	//verify identity
-	if !msg.From.Equal(msg.DelegatorAddress) {
-		return types.ErrWithdrawAddressInfoMismatch(types.DefaultCodespace, msg.From, msg.DelegatorAddress).Result()
+	if !msg.FromAddress.Equal(msg.DelegatorAddress) {
+		return types.ErrWithdrawAddressInfoMismatch(types.DefaultCodespace, msg.FromAddress, msg.DelegatorAddress).Result()
 	}
 	//check validator that is bonded to delegator account.
 	validators, Err := k.StakingKeeper.GetDelegatorValidators(ctx, msg.DelegatorAddress, 3)
@@ -58,11 +58,11 @@ func handleMsgModifyWithdrawAddress(ctx sdk.Context, msg types.SetWithdrawAddres
 	return sdk.Result{Events: ctx.EventManager().Events()}
 }
 
-func handleMsgWithdrawDelegatorReward(ctx sdk.Context, msg types.WithdrawDelegatorRewardTx, k keeper.DistrKeeper) sdk.Result {
+func handleMsgWithdrawDelegatorReward(ctx sdk.Context, msg types.MsgWithdrawDelegatorReward, k keeper.DistrKeeper) sdk.Result {
 
 	//verify identity
-	if !msg.From.Equal(msg.DelegatorAddress) {
-		return types.ErrWithdrawAddressInfoMismatch(types.DefaultCodespace, msg.From, msg.DelegatorAddress).Result()
+	if !msg.FromAddress.Equal(msg.DelegatorAddress) {
+		return types.ErrWithdrawAddressInfoMismatch(types.DefaultCodespace, msg.FromAddress, msg.DelegatorAddress).Result()
 	}
 
 	_, err := k.WithdrawDelegationRewards(ctx, msg.DelegatorAddress, msg.ValidatorAddress)
@@ -81,10 +81,10 @@ func handleMsgWithdrawDelegatorReward(ctx sdk.Context, msg types.WithdrawDelegat
 	return sdk.Result{Events: ctx.EventManager().Events()}
 }
 
-func handleMsgWithdrawValidatorCommission(ctx sdk.Context, msg types.WithdrawValidatorCommissionTx, k keeper.DistrKeeper) sdk.Result {
+func handleMsgWithdrawValidatorCommission(ctx sdk.Context, msg types.MsgWithdrawValidatorCommission, k keeper.DistrKeeper) sdk.Result {
 	//verify identity
-	if !msg.From.Equal(msg.ValidatorAddress) {
-		return types.ErrWithdrawAddressInfoMismatch(types.DefaultCodespace, msg.From, msg.ValidatorAddress).Result()
+	if !msg.FromAddress.Equal(msg.ValidatorAddress) {
+		return types.ErrWithdrawAddressInfoMismatch(types.DefaultCodespace, msg.FromAddress, msg.ValidatorAddress).Result()
 	}
 
 	_, ok := k.StakingKeeper.GetValidator(ctx, msg.ValidatorAddress)
@@ -109,7 +109,7 @@ func handleMsgWithdrawValidatorCommission(ctx sdk.Context, msg types.WithdrawVal
 }
 
 //send funds from personal account to communityPool.
-func handleMsgFundCommunityPool(ctx sdk.Context, msg types.FundCommunityPoolTx, k keeper.DistrKeeper) sdk.Result {
+func handleMsgFundCommunityPool(ctx sdk.Context, msg types.MsgFundCommunityPool, k keeper.DistrKeeper) sdk.Result {
 	if err := k.FundCommunityPool(ctx, msg.Amount, msg.Depositor); err != nil {
 		return types.ErrHandleTxFailed(types.DefaultCodespace, err).Result()
 	}
