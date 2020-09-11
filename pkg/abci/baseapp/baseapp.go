@@ -593,8 +593,8 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 	ctx := app.getContextForTx(mode, txBytes)
 	ms := ctx.MultiStore()
 	gasWanted = tx.GetGas()
-	ctx.WithGasLimit(gasWanted)
-	ctx.WithNonce(tx.GetNonce())
+	ctx = ctx.WithGasLimit(gasWanted)
+	ctx = ctx.WithNonce(tx.GetNonce())
 	defer func() {
 
 		if r := recover(); r != nil {
@@ -665,7 +665,6 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 	// multi-store in case message processing fails.
 
 	runMsgCtx, msCache := app.cacheTxContext(ctx, txBytes)
-
 	result = app.runMsgs(runMsgCtx, msgs, mode)
 
 	if mode == runTxModeSimulate  { // XXX
