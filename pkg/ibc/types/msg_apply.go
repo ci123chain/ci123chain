@@ -3,32 +3,29 @@ package types
 import (
 	"encoding/hex"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	"github.com/ci123chain/ci123chain/pkg/transaction"
 	"github.com/ci123chain/ci123chain/pkg/transfer"
 	"github.com/ci123chain/ci123chain/pkg/util"
 )
 
-type ApplyIBCTx struct {
-	// 跨链交易ID
-	transaction.CommonTx
-	UniqueID []byte		`json:"unique_id"`
-	ObserverID []byte	`json:"observer_id"`
+type MsgApplyIBC struct {
+	FromAddress sdk.AccAddress	`json:"from_address"`
+	Signature 	[]byte   		`json:"signature"`
+	PubKey		[]byte			`json:"pub_key"`
+
+	UniqueID 	[]byte			`json:"unique_id"`
+	ObserverID 	[]byte			`json:"observer_id"`
 }
 
-func NewApplyIBCTx(from sdk.AccAddress, gas ,nonce uint64, uniqueID, observerID []byte) *ApplyIBCTx {
-	return &ApplyIBCTx{
-		CommonTx: transaction.CommonTx{
-			From: from,
-			Gas: 	gas,
-			Nonce: nonce,
-		},
+func NewMsgApplyIBC(from sdk.AccAddress, uniqueID, observerID []byte) *MsgApplyIBC {
+	return &MsgApplyIBC{
+		FromAddress: from,
 		UniqueID: uniqueID,
 		ObserverID: observerID,
 	}
 }
 
-func (msg *ApplyIBCTx) ValidateBasic() sdk.Error {
-	if err := msg.CommonTx.ValidateBasic(); err != nil {
+func (msg *MsgApplyIBC) ValidateBasic() sdk.Error {
+	if err := msg.ValidateBasic(); err != nil {
 		return err
 	}
 	if len(msg.UniqueID) < 1 {
@@ -37,23 +34,28 @@ func (msg *ApplyIBCTx) ValidateBasic() sdk.Error {
 	if len(msg.ObserverID) < 1 {
 		return transfer.ErrCheckParams(DefaultCodespace, "ObserverID is invalid " + hex.EncodeToString(msg.ObserverID))
 	}
+	if msg.FromAddress.Empty() {
+		return transfer.ErrCheckParams(DefaultCodespace, "fromAddress is empty")
+	}
 	return nil
 	//return msg.CommonTx.VerifySignature(msg.GetSignBytes(), true)
 }
 
-
-func (msg *ApplyIBCTx)GetSignBytes() []byte {
+func (msg *MsgApplyIBC) GetSignBytes() []byte {
 	ntx := *msg
 	ntx.SetSignature(nil)
 	return util.TxHash(ntx.Bytes())
 }
 
-
-func (msg *ApplyIBCTx)SetSignature(sig []byte) {
-	msg.CommonTx.SetSignature(sig)
+func (msg *MsgApplyIBC) SetSignature(sig []byte) {
+	msg.SetSignature(sig)
 }
 
-func (msg *ApplyIBCTx)Bytes() []byte {
+func (msg *MsgApplyIBC) GetSignature()[]byte {
+	return msg.Signature
+}
+
+func (msg *MsgApplyIBC) Bytes() []byte {
 	bytes, err := IbcCdc.MarshalBinaryLengthPrefixed(msg)
 	if err != nil {
 		panic(err)
@@ -62,22 +64,18 @@ func (msg *ApplyIBCTx)Bytes() []byte {
 	return bytes
 }
 
-func (msg *ApplyIBCTx) SetPubKey(pub []byte) {
-	msg.CommonTx.PubKey = pub
+func (msg *MsgApplyIBC) SetPubKey(pub []byte) {
+	msg.PubKey = pub
 }
 
-func (msg *ApplyIBCTx) Route() string {
+func (msg *MsgApplyIBC) Route() string {
 	return RouterKey
 }
 
-func (msg *ApplyIBCTx) GetGas() uint64 {
-	return msg.CommonTx.Gas
+func (msg *MsgApplyIBC) MsgType() string {
+	return "apply_IBC"
 }
 
-func (msg *ApplyIBCTx) GetNonce() uint64 {
-	return msg.CommonTx.Nonce
-}
-
-func (msg *ApplyIBCTx) GetFromAddress() sdk.AccAddress {
-	return msg.CommonTx.From
+func (msg *MsgApplyIBC) GetFromAddress() sdk.AccAddress {
+	return msg.FromAddress
 }

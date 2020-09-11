@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/ci123chain/ci123chain/pkg/abci/types"
 	sdk "github.com/ci123chain/ci123chain/sdk/broadcast"
 	sSDK "github.com/ci123chain/ci123chain/sdk/staking"
 )
@@ -19,7 +20,7 @@ var (
 	// requestURL = "http://ciChain:3030/tx/broadcast_async"
 
 	from = "0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c"
-	amount int64 = 20
+	amount uint64 = 20
 	gas uint64 = 20000
 	nonce uint64 = 0
 	pri = "2b452434ac4f7cf9c5d61d62f23834f34e851fb6efdb8d4a8c6e214a8bc93d70"
@@ -63,9 +64,14 @@ func main() {
 	create = true
 	online = false
 
+	froms := types.HexToAddress(from)
+	validatorAddresss := types.HexToAddress(validatorAddress)
+	delegatorAddresss := types.HexToAddress(delegatorAddress)
+	validatorSrcAddresss := types.HexToAddress(validatorSrcAddress)
+	validatorDstAddresss := types.HexToAddress(validatorDstAddress)
 	if create {
 		fmt.Println("---------------添加验证者离线签名交易----------------------")
-		tx, err := SignCreateValidatorTx(from, amount, gas, nonce, pri, minSelfDelegation, validatorAddress, delegatorAddress, rate, maxRate,
+		tx, err := SignCreateValidatorTx(froms, amount, pri, minSelfDelegation, validatorAddresss, delegatorAddresss, rate, maxRate,
 			maxChangeRate, moniker, identity, website, securityContact, details, publicKey)
 		if err != nil {
 			fmt.Println("签名失败，参数错误")
@@ -98,7 +104,7 @@ func main() {
 			fmt.Println("---------------抵押在线签名交易完成----------------------")
 		}else {
 			fmt.Println("---------------抵押离线签名交易----------------------")
-			delegateTx, err := SignDelegateTx(from, amount, gas, nonce, pri, validatorAddress, delegatorAddress)
+			delegateTx, err := SignDelegateTx(froms, amount, pri, validatorAddresss, delegatorAddresss)
 			if err != nil {
 				fmt.Println("签名失败，参数错误")
 				fmt.Println(err)
@@ -131,7 +137,7 @@ func main() {
 			fmt.Println("---------------重新抵押在线签名交易完成----------------------")
 		}else {
 			fmt.Println("---------------重新抵押离线签名交易----------------------")
-			redelegateTx, err := SignRelegateTx(from, amount, gas, nonce, pri, validatorSrcAddress, validatorDstAddress, delegatorAddress)
+			redelegateTx, err := SignRelegateTx(froms, amount, pri, validatorSrcAddresss, validatorDstAddresss, delegatorAddresss)
 			if err != nil {
 				fmt.Println("签名失败，参数错误")
 				fmt.Println(err)
@@ -164,7 +170,7 @@ func main() {
 			fmt.Println("---------------解除抵押在线签名交易完成----------------------")
 		}else {
 			fmt.Println("---------------解除抵押离线签名交易----------------------")
-			undelegateTx, err := SignUndelegate(from, amount, gas, nonce, pri, validatorAddress, delegatorAddress)
+			undelegateTx, err := SignUndelegate(froms, amount, pri, validatorAddresss, delegatorAddresss)
 			if err != nil {
 				fmt.Println("签名失败，参数错误")
 				fmt.Println(err)

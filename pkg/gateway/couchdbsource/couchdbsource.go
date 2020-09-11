@@ -11,7 +11,7 @@ import (
 )
 
 
-const SharedKey  = "order//OrderBook"
+const SharedKey  = "s/k:order/OrderBook"
 const HostPattern  = "[*]+"
 const DefaultDBName = "ci123"
 func NewCouchSource(host, urlreg string) *CouchDBSourceImp {

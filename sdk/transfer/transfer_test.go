@@ -3,6 +3,7 @@ package transfer
 import (
 	"encoding/hex"
 	"fmt"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
@@ -26,12 +27,12 @@ var (
 	onlineReqUrl = "http://ciChain:3030/tx/transfers"
 )
 
-func TestSignTransferMsg(t *testing.T) {
+func TestSignMsgTransfer(t *testing.T) {
 
-	signdata, err := SignTransferMsg(from, to,offlineAmount, offlineGas, offlineNonce, priv, false)
+	signdata, err := SignMsgTransfer(sdk.HexToAddress(from), sdk.HexToAddress(to), offlineAmount, priv, false)
 
 	assert.NoError(t, err)
-	httpTransfer(hex.EncodeToString(signdata))
+	httpTransfer(hex.EncodeToString(signdata.Bytes()))
 }
 func httpTransfer(param string) {
 	cli := &http.Client{}

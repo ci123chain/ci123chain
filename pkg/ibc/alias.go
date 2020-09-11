@@ -16,7 +16,7 @@ var (
 	NewKeeper = keeper.NewIBCKeeper
 
 	NewIBCTransfer = types.NewIBCTransferMsg
-	NewApplyIBCTx = types.NewApplyIBCTx
+	NewApplyIBCTx = types.NewMsgApplyIBC
 	NewIBCMsgBankSendMsg = types.NewIBCMsgBankSendMsg
 	NewIBCReceiveReceiptMsg = types.NewIBCReceiveReceiptMsg
 

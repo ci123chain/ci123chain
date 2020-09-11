@@ -38,7 +38,7 @@ func main() {
 		shardsdk.HttpAddShardTx(from, gas, nonce, t, name, height, priv, proxy, onlienReqUrl)
 	}else {
 		fmt.Println("---------------添加分片离线签名交易----------------------")
-		tx, err := signAddShardTxDemo()
+		tx, err := signUpgradeMsgDemo()
 		if err != nil {
 			fmt.Println("签名失败，参数错误")
 			fmt.Println(err)

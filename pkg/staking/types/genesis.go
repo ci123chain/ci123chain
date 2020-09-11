@@ -43,7 +43,7 @@ func DefaultValidators(validators []tmtypes.GenesisValidator) []Validator {
 	}else {
 		for i := range validators {
 			genesisValidator.OperatorAddress = sdk.ToAccAddress(validators[i].PubKey.Address())
-			genesisValidator.Address = validators[i].PubKey.Address()
+			//genesisValidator.Address = validators[i].PubKey.Address()
 			pubByte, _ := cdc.MarshalJSON(validators[i].PubKey)
 			pubstr := hex.EncodeToString(pubByte)
 			genesisValidator.ConsensusKey = pubstr

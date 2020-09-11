@@ -2,48 +2,47 @@ package main
 
 import (
 	"encoding/hex"
+	"github.com/ci123chain/ci123chain/pkg/abci/types"
 	sdk "github.com/ci123chain/ci123chain/sdk/staking"
 )
 
-func SignCreateValidatorTx(from string, amount int64, gas, nonce uint64, priv string, minSelfDelegation int64,
-	validatorAddress, delegatorAddress string, rate, maxRate, maxChangeRate int64,
+func SignCreateValidatorTx(from types.AccAddress, amount uint64, priv string, minSelfDelegation int64,
+	validatorAddress, delegatorAddress types.AccAddress, rate, maxRate, maxChangeRate int64,
 	moniker, identity, website, securityContact, details string, publicKey string) (string, error) {
 	//
 
-	txBytes, err := sdk.SignCreateValidatorMSg(from, amount, gas, nonce, priv, minSelfDelegation, validatorAddress,
+	tx, err := sdk.SignCreateValidatorMSg(from, amount, priv, minSelfDelegation, validatorAddress,
 		delegatorAddress, rate, maxRate, maxChangeRate, moniker, identity, website, securityContact, details, publicKey)
 
 	if err != nil {
 		return "", err
 	}
-	return hex.EncodeToString(txBytes), nil
+	return hex.EncodeToString(tx.Bytes()), nil
 }
 
-func SignDelegateTx(from string, amount int64, gas, nonce uint64, priv string, validatorAddress, delegatorAddress string) (string, error) {
+func SignDelegateTx(from types.AccAddress, amount uint64, priv string, validatorAddress, delegatorAddress types.AccAddress) (string, error) {
 
-	txBytes, err := sdk.SignDelegateMsg(from, amount, gas, nonce, priv, validatorAddress, delegatorAddress)
+	tx, err := sdk.SignDelegateMsg(from, amount, priv, validatorAddress, delegatorAddress)
 	if err != nil {
 		return "", err
 	}
-	return hex.EncodeToString(txBytes), nil
+	return hex.EncodeToString(tx.Bytes()), nil
 }
 
-func SignRelegateTx(from string, amount int64, gas, nonce uint64, priv string, validatorSrcAddress, validatorDstAddress, delegatorAddress string) (string, error) {
+func SignRelegateTx(from types.AccAddress, amount uint64, priv string, validatorSrcAddress, validatorDstAddress, delegatorAddress types.AccAddress) (string, error) {
 
 	//
-	txBytes, err := sdk.SignRedelegateMsg(from, amount, gas, nonce, priv, validatorSrcAddress, validatorDstAddress, delegatorAddress)
+	tx, err := sdk.SignRedelegateMsg(from, amount, priv, validatorSrcAddress, validatorDstAddress, delegatorAddress)
 	if err != nil {
 		return "", err
 	}
-	return hex.EncodeToString(txBytes), nil
+	return hex.EncodeToString(tx.Bytes()), nil
 }
 
-func SignUndelegate(from string, amount int64, gas, nonce uint64, priv string, validatorAddress, delegatorAddress string) (string, error) {
-
-
-	txBytes, err := sdk.SignUndelegateMsg(from, amount, gas, nonce, priv, validatorAddress, delegatorAddress)
+func SignUndelegate(from types.AccAddress, amount uint64, priv string, validatorAddress, delegatorAddress types.AccAddress) (string, error) {
+	tx, err := sdk.SignUndelegateMsg(from, amount, priv, validatorAddress, delegatorAddress)
 	if err != nil {
 		return "", err
 	}
-	return hex.EncodeToString(txBytes), nil
+	return hex.EncodeToString(tx.Bytes()), nil
 }

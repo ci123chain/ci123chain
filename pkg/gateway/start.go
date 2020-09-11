@@ -5,6 +5,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/ci123chain/ci123chain/pkg/client"
 	"github.com/ci123chain/ci123chain/pkg/gateway/backend"
 	"github.com/ci123chain/ci123chain/pkg/gateway/couchdbsource"
 	"github.com/ci123chain/ci123chain/pkg/gateway/dynamic"
@@ -65,7 +66,7 @@ func Start() {
 	// create http server
 
 	timeoutHandler := http.TimeoutHandler(http.HandlerFunc(AllHandle), time.Second*60, "server timeout")
-
+	http.HandleFunc("/healthcheck", healthCheckHandlerFn)
 	http.Handle("/", timeoutHandler)
 
 	// start health checking
@@ -96,4 +97,27 @@ func AllHandle(w http.ResponseWriter, r *http.Request) {
 	 case resp := <- *job.ResponseChan:
 		_, _ = w.Write(resp)
 	}
+}
+
+func healthCheckHandlerFn(w http.ResponseWriter, req *http.Request) {
+	deadList := serverPool.getDeadList()
+	if len(deadList) != 0{
+		w.Header().Set("Content-Type","application/json")
+		w.WriteHeader(500)
+		resultResponse := client.HealthcheckResponse{
+			State:   500,
+			Data:    deadList,
+		}
+
+		resultByte, _ := json.Marshal(resultResponse)
+		w.Write(resultByte)
+		return
+	}
+	resultResponse := client.HealthcheckResponse{
+		State:   200,
+		Data:    "all backends health or no backends now",
+	}
+	resultByte, _ := json.Marshal(resultResponse)
+	w.Header().Set("Content-Type","application/json")
+	w.Write(resultByte)
 }

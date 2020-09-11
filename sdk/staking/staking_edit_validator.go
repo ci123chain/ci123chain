@@ -9,14 +9,13 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/staking/types"
 )
 
-func SignEditValidator(from string, gas, nonce uint64, priv,
-	moniker, identity, website, secu, details string, minSelfDelegation, newRate int64) ([]byte, error) {
+func SignEditValidator(from sdk.AccAddress, priv, moniker, identity, website, secu, details string,
+	minSelfDelegation, newRate int64) (sdk.Msg, error) {
 
 	privateKey, err := hex.DecodeString(priv)
 	if err != nil {
 		return nil, err
 	}
-	fromAddr := sdk.HexToAddress(from)
 	var nrArg *sdk.Dec
 	var minArg *sdk.Int
 	if newRate < 0 {
@@ -47,14 +46,14 @@ func SignEditValidator(from string, gas, nonce uint64, priv,
 		Details:         details,
 	}
 
-	tx := staking.NewEditValidatorMsg(fromAddr, gas, nonce, desc, nrArg, minArg)
+	msg := staking.NewEditValidatorMsg(from, desc, nrArg, minArg)
 
 	eth := cryptosuit.NewETHSignIdentity()
-	signature, err := eth.Sign(tx.GetSignBytes(), privateKey)
+	signature, err := eth.Sign(msg.GetSignBytes(), privateKey)
 	if err != nil {
 		return nil, err
 	}
-	tx.SetSignature(signature)
+	msg.SetSignature(signature)
 
-	return tx.Bytes(), nil
+	return msg, nil
 }

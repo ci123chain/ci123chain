@@ -6,14 +6,13 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/client/helper"
 	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
 	"github.com/ci123chain/ci123chain/pkg/ibc"
-	"github.com/ci123chain/ci123chain/pkg/transaction"
 )
 var cdc = app.MakeCodec()
 
 // 生成 MortgageDone 完成交易
 
-func SignIBCTransferMsg(from string, to string, amount, gas, nonce uint64, priv []byte) ([]byte, error) {
-	tx, err := buildIBCTransferMsg(from, to, amount, gas, nonce)
+func SignIBCTransferMsg(from string, to string, amount uint64, priv []byte) ([]byte, error) {
+	tx, err := buildIBCTransferMsg(from, to, amount)
 	if err != nil {
 		return nil, err
 	}
@@ -27,9 +26,7 @@ func SignIBCTransferMsg(from string, to string, amount, gas, nonce uint64, priv 
 	return tx.Bytes(), nil
 }
 
-
-
-func buildIBCTransferMsg (from, to string, amount, gas, nonce uint64) (transaction.Transaction, error) {
+func buildIBCTransferMsg (from, to string, amount uint64) (sdk.Msg, error) {
 	fromAddr, err := helper.StrToAddress(from)
 	if err != nil {
 		return nil, err
@@ -38,7 +35,7 @@ func buildIBCTransferMsg (from, to string, amount, gas, nonce uint64) (transacti
 	if err != nil {
 		return nil, err
 	}
-	ibcMsg := ibc.NewIBCTransfer(fromAddr, toAddr, sdk.NewUInt64Coin(amount),  gas, nonce)
+	ibcMsg := ibc.NewIBCTransfer(fromAddr, toAddr, sdk.NewUInt64Coin(amount))
 	return ibcMsg, nil
 }
 

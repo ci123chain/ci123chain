@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/gateway/logger"
 	"github.com/ci123chain/ci123chain/pkg/gateway/types"
 	"log"
@@ -52,7 +53,7 @@ func (s *ServerPool)ConfigServerPool(tokens []string)  {
 		if err != nil {
 			log.Fatal(err)
 		}
-
+		
 		if !isBackendAlive(serverUrl) {
 			continue
 		}
@@ -134,5 +135,25 @@ func (s *ServerPool) HealthCheck() {
 		}
 		logger.Info("%s [%s]\n", b.URL(), status)
 	}
+}
+
+func (s *ServerPool) getDeadList() []string{
+	if len(s.backends) == 0 {
+		return nil
+	}
+
+	var deadList []string
+	for _, b := range s.backends {
+		status := "up"
+		alive := isBackendAlive(b.URL())
+		b.SetAlive(alive)
+		if !alive {
+			status = "down"
+			deadList = append(deadList, fmt.Sprintf("%s [%s]", b.URL(), status))
+			logger.Warn("%s [%s]\n", b.URL(), status)
+		}
+		logger.Info("%s [%s]\n", b.URL(), status)
+	}
+	return deadList
 }
 

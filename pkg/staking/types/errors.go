@@ -162,8 +162,8 @@ func setUsed(err *Error) {
 	usedCodes[errorID(err.codespace, err.code)] = err
 }
 
-func ErrValidatorExisted(codespace sdk.CodespaceType, err error) sdk.Error {
-	return sdk.NewError(codespace, CodeValidatorExisted, "Validator existed: %s", err.Error())
+func ErrValidatorExisted(codespace sdk.CodespaceType, _ error) sdk.Error {
+	return sdk.NewError(codespace, CodeValidatorExisted, "Validator existed already", "")
 }
 
 func ErrDescriptionOutOfLength(codespace sdk.CodespaceType, err error) sdk.Error {

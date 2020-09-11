@@ -92,8 +92,6 @@ func InitGenesis(
 		}
 	}
 
-	//notBondedCoins := sdk.NewCoins(sdk.NewCoin(notBondedTokens))
-
 	// check if the unbonded and bonded pools accounts exists
 	bondedPool := keeper.GetBondedPool(ctx)
 	if bondedPool == nil {

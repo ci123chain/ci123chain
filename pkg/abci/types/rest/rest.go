@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/client"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
@@ -227,4 +228,42 @@ func MiddleHandler(ctx context.Context, f func(clictx context.Context, w http.Re
 
 		f(ctx, w, r)
 	}
+}
+
+func GetNecessaryParams(cliCtx context.Context, request *http.Request, cdc *codec.Codec, broadcast bool) (key string, from sdk.AccAddress, nonce, gas uint64, err error) {
+	key = request.FormValue("privateKey")
+	from = cliCtx.GetFromAddresses()
+	if !broadcast {
+		nonce = 0
+		gas = 0
+		return
+	}
+	Gas, err2 := strconv.ParseUint(request.FormValue("gas"), 10, 64)
+	if err2 != nil || Gas < 0 {
+		err = errors.New("gas error")
+		return
+	}
+	gas = Gas
+	userNonce := request.FormValue("nonce")
+	if userNonce != "" {
+		Nonce, err2 := strconv.ParseInt(userNonce, 10, 64)
+		if err2 != nil || Nonce < 0 {
+			err = errors.New("nonce err")
+			return
+		}
+		nonce = uint64(Nonce)
+		return
+	}else {
+		ctx, err2 := client.NewClientContextFromViper(cdc)
+		if err2 != nil {
+			err = errors.New("new client context error")
+			return
+		}
+		nonce, _, err2 = ctx.GetNonceByAddress(from, false)
+		if err2 != nil {
+			err = errors.New("get nonce error")
+			return
+		}
+	}
+	return
 }

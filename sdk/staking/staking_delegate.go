@@ -3,6 +3,7 @@ package staking
 import (
 	"encoding/hex"
 	"fmt"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
 	"github.com/ci123chain/ci123chain/pkg/staking"
 	"io/ioutil"
@@ -11,26 +12,19 @@ import (
 	"strings"
 )
 
-func SignDelegateMsg(from string, amount int64, gas, nonce uint64, priv string,
-	validatorAddress, delegatorAddress string) ([]byte, error) {
-	fromAddr, amt, validatorAddr, delegatorAddr, err := CommonParseArgs(from, amount, validatorAddress, delegatorAddress)
-	if err != nil {
-		return nil, err
-	}
-	tx := staking.NewDelegateMsg(fromAddr, gas, nonce, delegatorAddr, validatorAddr,amt)
-
+func SignDelegateMsg(from sdk.AccAddress, amount uint64, priv string, validatorAddress, delegatorAddress sdk.AccAddress) (sdk.Msg, error) {
+	amt := sdk.NewUInt64Coin(amount)
+	msg := staking.NewDelegateMsg(from, delegatorAddress, validatorAddress, amt)
 
 	var signature []byte
 	privPub, err := hex.DecodeString(priv)
 	eth := cryptosuit.NewETHSignIdentity()
-	signature, err = eth.Sign(tx.GetSignBytes(), privPub)
-
+	signature, err = eth.Sign(msg.GetSignBytes(), privPub)
 	if err != nil {
 		return nil, err
 	}
-	tx.SetSignature(signature)
-
-	return tx.Bytes(), nil
+	msg.SetSignature(signature)
+	return msg, nil
 }
 
 func HttpDelegateTx(from, gas, nonce, amount,priv, validatorAddr, delegatorAddr, proxy, reqUrl string) {

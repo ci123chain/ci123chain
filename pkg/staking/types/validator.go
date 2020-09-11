@@ -8,7 +8,6 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto"
 	cryptoAmino "github.com/tendermint/tendermint/crypto/encoding/amino"
-	cmn "github.com/tendermint/tendermint/libs/common"
 	tmtypes "github.com/tendermint/tendermint/types"
 	"sort"
 	"time"
@@ -16,8 +15,7 @@ import (
 
 type Validator struct {
 	OperatorAddress    sdk.AccAddress	`json:"operator_address"`
-	Address            cmn.HexBytes     `json:"address"`
-	ConsensusKey       string           `json:"pub_key"`//crypto.PubKey    `json:"pub_key"`
+	ConsensusKey       string           `json:"pub_key"`
 	Jailed             bool             `json:"jailed"`
 	Status             sdk.BondStatus   `json:"status"`
 	Tokens             sdk.Int          `json:"tokens"`
@@ -45,7 +43,6 @@ func NewValidator(operator sdk.AccAddress, pubKey crypto.PubKey, description Des
 	return Validator{
 		OperatorAddress: operator,
 		ConsensusKey: pubStr,
-		Address: pubKey.Address(),
 		Jailed:          false,
 		Status:          sdk.Unbonded,
 		Tokens:          sdk.ZeroInt(),

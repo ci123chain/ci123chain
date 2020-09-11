@@ -6,48 +6,48 @@ import (
 )
 
 
-func SignIBC(from, to string, amount, gas, nonce uint64, priv string) ([]byte, error) {
+func SignIBC(from, to string, amount uint64, priv string) ([]byte, error) {
 	privateKey, err := hex.DecodeString(priv)
 	if err != nil {
 		return nil, err
 	}
-	txByte, err := sdk.SignIBCTransferMsg(from, to, amount, gas, nonce, privateKey)
+	txByte, err := sdk.SignIBCTransferMsg(from, to, amount, privateKey)
 	if err != nil {
 		return nil, err
 	}
 	return txByte, nil
 }
 
-func SignIBCApplyTx(from string, uniqueID, observerID []byte, gas, nonce uint64, priv string) ([]byte, error) {
+func SignIBCApplyTx(from string, uniqueID, observerID []byte, priv string) ([]byte, error) {
 	privateKey, err := hex.DecodeString(priv)
 	if err != nil {
 		return nil, err
 	}
-	txByte, err := sdk.SignApplyIBCMsg(from, uniqueID, observerID, gas, nonce, privateKey)
+	txByte, err := sdk.SignApplyIBCMsg(from, uniqueID, observerID, privateKey)
 	if err != nil {
 		return nil, err
 	}
 	return txByte, nil
 }
 
-func SignIBCBankSendTx(from string, raw []byte, gas, nonce uint64, priv string) ([]byte, error) {
+func SignIBCBankSendTx(from string, raw []byte, priv string) ([]byte, error) {
 	privateKey, err := hex.DecodeString(priv)
 	if err != nil {
 		return nil, err
 	}
-	txByte, err := sdk.SignIBCBankSendMsg(from, raw, gas, nonce, privateKey)
+	txByte, err := sdk.SignIBCBankSendMsg(from, raw, privateKey)
 	if err != nil {
 		return nil, err
 	}
 	return txByte, nil
 }
 
-func SignIBCReceiptTx(from string, raw []byte, gas, nonce uint64, priv string) ([]byte, error) {
+func SignIBCReceiptTx(from string, raw []byte, priv string) ([]byte, error) {
 	privateKey, err := hex.DecodeString(priv)
 	if err != nil {
 		return nil, err
 	}
-	txByte, err := sdk.SignIBCReceiptMsg(from, raw, gas, nonce, privateKey)
+	txByte, err := sdk.SignIBCReceiptMsg(from, raw, privateKey)
 	if err != nil {
 		return nil, err
 	}

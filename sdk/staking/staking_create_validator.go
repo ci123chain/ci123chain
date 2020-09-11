@@ -2,6 +2,7 @@ package staking
 
 import (
 	"encoding/hex"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
 	"github.com/ci123chain/ci123chain/pkg/staking"
 	"github.com/tendermint/go-amino"
@@ -9,9 +10,9 @@ import (
 	cryptoAmino "github.com/tendermint/tendermint/crypto/encoding/amino"
 )
 
-func SignCreateValidatorMSg(from string, amount int64, gas, nonce uint64, priv string, minSelfDelegation int64,
-	validatorAddress, delegatorAddress string, rate, maxRate, maxChangeRate int64,
-	moniker, identity, website, securityContact, details string, publicKey string) ([]byte, error) {
+func SignCreateValidatorMSg(from sdk.AccAddress, amount uint64, priv string, minSelfDelegation int64,
+	validatorAddress, delegatorAddress sdk.AccAddress, rate, maxRate, maxChangeRate int64,
+	moniker, identity, website, securityContact, details string, publicKey string) (sdk.Msg, error) {
 
 	by, err := hex.DecodeString(publicKey)
 	if err != nil {
@@ -23,26 +24,22 @@ func SignCreateValidatorMSg(from string, amount int64, gas, nonce uint64, priv s
 		return nil, err
 	}
 
-	fromAddr, amt, validatorAddr, delegatorAddr, err := CommonParseArgs(from, amount, validatorAddress, delegatorAddress)
-	if err != nil {
-		return nil, err
-	}
-
+	amt := sdk.NewUInt64Coin(amount)
 	selfDelegation, r, mr, mxr := CreateParseArgs(minSelfDelegation, rate, maxRate, maxChangeRate)
-	tx := staking.NewCreateValidatorMsg(fromAddr, gas, nonce, amt,selfDelegation,validatorAddr, delegatorAddr,r,mr,mxr,
+	msg := staking.NewCreateValidatorMsg(from, amt, selfDelegation, validatorAddress, delegatorAddress, r, mr, mxr,
 	moniker, identity, website, securityContact, details, public)
 
 	var signature []byte
 	privPub, err := hex.DecodeString(priv)
 	eth := cryptosuit.NewETHSignIdentity()
-	signature, err = eth.Sign(tx.GetSignBytes(), privPub)
+	signature, err = eth.Sign(msg.GetSignBytes(), privPub)
 
 	if err != nil {
 		return nil, err
 	}
-	tx.SetSignature(signature)
+	msg.SetSignature(signature)
 
-	return tx.Bytes(), nil
+	return msg, nil
 }
 
 var cdc = amino.NewCodec()

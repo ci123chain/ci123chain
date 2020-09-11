@@ -5,13 +5,14 @@ import (
 	"errors"
 
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	"github.com/ci123chain/ci123chain/pkg/transaction"
 	"github.com/ci123chain/ci123chain/pkg/util"
 )
-type InstantiateContractTx struct {
-	transaction.CommonTx
+type MsgInstantiateContract struct {
+	FromAddress sdk.AccAddress		`json:"from_address"`
+	Signature 	[]byte   			`json:"signature"`
+	PubKey		[]byte				`json:"pub_key"`
+
 	Code    	[]byte              `json:"code"`
-	Sender      sdk.AccAddress      `json:"sender"`
 	Name		string				`json:"name,omitempty"`
 	Version     string				`json:"version,omitempty"`
 	Author      string				`json:"author,omitempty"`
@@ -20,55 +21,45 @@ type InstantiateContractTx struct {
 	Args      	json.RawMessage     `json:"args,omitempty"`
 }
 
-func NewInstantiateContractTx(code []byte, from sdk.AccAddress, gas, nonce uint64, sender sdk.AccAddress, name, version, author, email, describe string,
-	initMsg json.RawMessage) InstantiateContractTx{
+func NewMsgInstantiateContract(code []byte, from sdk.AccAddress, name, version, author, email, describe string,
+	initMsg json.RawMessage) *MsgInstantiateContract {
 
-		return InstantiateContractTx{
-			CommonTx: transaction.CommonTx{
-				From:  	from,
-				Gas:   	gas,
-				Nonce: 	nonce,
-			},
-			Code:       code,
-			Sender:    	sender,
-			Name:     	name,
-			Version: 	version,
-			Author: 	author,
-			Email:      email,
-			Describe:   describe,
-			Args:   	initMsg,
+		return &MsgInstantiateContract {
+			FromAddress: from,
+			Code:        code,
+			Name:     	 name,
+			Version: 	 version,
+			Author: 	 author,
+			Email:       email,
+			Describe:    describe,
+			Args:   	 initMsg,
 		}
 }
 
-
 //TODO
-func (msg *InstantiateContractTx) ValidateBasic() sdk.Error {
-	if err := msg.CommonTx.ValidateBasic(); err != nil {
-		return err
-	}
-
+func (msg *MsgInstantiateContract) ValidateBasic() sdk.Error {
 	if msg.Code == nil {
 		return ErrInvalidMsg(DefaultCodespace, errors.New("code is invalid"))
 	}
 
-	if msg.Sender.Empty() {
+	if msg.FromAddress.Empty() {
 		return ErrInvalidMsg(DefaultCodespace, errors.New("sender is invalid"))
 	}
 
 	return nil
 }
 
-func (msg *InstantiateContractTx) GetSignBytes() []byte {
+func (msg *MsgInstantiateContract) GetSignBytes() []byte {
 	ntx := *msg
 	ntx.SetSignature(nil)
 	return util.TxHash(ntx.Bytes())
 }
 
-func (msg *InstantiateContractTx) SetSignature(sig []byte) {
+func (msg *MsgInstantiateContract) SetSignature(sig []byte) {
 	msg.Signature = sig
 }
 
-func (msg *InstantiateContractTx) Bytes() []byte {
+func (msg *MsgInstantiateContract) Bytes() []byte {
 	bytes, err := WasmCodec.MarshalBinaryLengthPrefixed(msg)
 	if err != nil {
 		panic(err)
@@ -77,61 +68,51 @@ func (msg *InstantiateContractTx) Bytes() []byte {
 	return bytes
 }
 
-func (msg *InstantiateContractTx) SetPubKey(pub []byte) {
+func (msg *MsgInstantiateContract) SetPubKey(pub []byte) {
 	msg.PubKey = pub
 }
 
-func (msg *InstantiateContractTx) Route() string {
+func (msg *MsgInstantiateContract) Route() string {
 	return RouteKey
 }
 
-func (msg *InstantiateContractTx) GetGas() uint64 {
-	return msg.Gas
+func (msg *MsgInstantiateContract) MsgType() string {
+	return "instantiate"
 }
 
-func (msg *InstantiateContractTx) GetNonce() uint64 {
-	return msg.Nonce
+func (msg *MsgInstantiateContract) GetFromAddress() sdk.AccAddress {
+	return msg.FromAddress
 }
 
-func (msg *InstantiateContractTx) GetFromAddress() sdk.AccAddress {
-	return msg.From
+func (msg *MsgInstantiateContract) GetSignature() []byte {
+	return msg.Signature
 }
 
+type MsgExecuteContract struct {
+	FromAddress sdk.AccAddress		`json:"from_address"`
+	Signature 	[]byte   			`json:"signature"`
+	PubKey		[]byte				`json:"pub_key"`
 
-type ExecuteContractTx struct {
-	transaction.CommonTx
-	Sender           sdk.AccAddress      `json:"sender"`
 	Contract         sdk.AccAddress      `json:"contract"`
 	Args              json.RawMessage    `json:"args"`
 }
 
-func NewExecuteContractTx(from sdk.AccAddress, gas, nonce uint64, sender sdk.AccAddress,
-	contractAddress sdk.AccAddress, msg json.RawMessage) ExecuteContractTx {
+func NewMsgExecuteContract(from sdk.AccAddress, contractAddress sdk.AccAddress, msg json.RawMessage) *MsgExecuteContract {
 
-	return ExecuteContractTx{
-		CommonTx:  transaction.CommonTx{
-			From:      from,
-			Nonce:     nonce,
-			Gas:       gas,
-		},
-		Sender:    sender,
-		Contract:  contractAddress,
-		Args:       msg,
+	return &MsgExecuteContract{
+		FromAddress: from,
+		Contract:    contractAddress,
+		Args:        msg,
 	}
 }
 
 //TODO
-func (msg *ExecuteContractTx) ValidateBasic() sdk.Error {
-
-	if err := msg.CommonTx.ValidateBasic(); err != nil {
-		return err
-	}
-
+func (msg *MsgExecuteContract) ValidateBasic() sdk.Error {
 	if msg.Contract.Empty() {
 		return ErrInvalidMsg(DefaultCodespace, errors.New("contractAddress is invalid"))
 	}
 
-	if msg.Sender.Empty() {
+	if msg.FromAddress.Empty() {
 		return ErrInvalidMsg(DefaultCodespace, errors.New("sender is invalid"))
 	}
 
@@ -141,17 +122,17 @@ func (msg *ExecuteContractTx) ValidateBasic() sdk.Error {
 	return nil
 }
 
-func (msg *ExecuteContractTx) GetSignBytes() []byte {
+func (msg *MsgExecuteContract) GetSignBytes() []byte {
 	ntx := *msg
 	ntx.SetSignature(nil)
 	return util.TxHash(ntx.Bytes())
 }
 
-func (msg *ExecuteContractTx) SetSignature(sig []byte) {
+func (msg *MsgExecuteContract) SetSignature(sig []byte) {
 	msg.Signature = sig
 }
 
-func (msg *ExecuteContractTx) Bytes() []byte {
+func (msg *MsgExecuteContract) Bytes() []byte {
 	bytes, err := WasmCodec.MarshalBinaryLengthPrefixed(msg)
 	if err != nil {
 		panic(err)
@@ -160,30 +141,32 @@ func (msg *ExecuteContractTx) Bytes() []byte {
 	return bytes
 }
 
-func (msg *ExecuteContractTx) SetPubKey(pub []byte) {
+func (msg *MsgExecuteContract) SetPubKey(pub []byte) {
 	msg.PubKey = pub
 }
 
-func (msg *ExecuteContractTx) Route() string {
+func (msg *MsgExecuteContract) Route() string {
 	return RouteKey
 }
 
-func (msg *ExecuteContractTx) GetGas() uint64 {
-	return msg.Gas
+func (msg *MsgExecuteContract) MsgType() string {
+	return "execute"
 }
 
-func (msg *ExecuteContractTx) GetNonce() uint64 {
-	return msg.Nonce
+func (msg *MsgExecuteContract) GetFromAddress() sdk.AccAddress {
+	return msg.FromAddress
 }
 
-func (msg *ExecuteContractTx) GetFromAddress() sdk.AccAddress {
-	return msg.From
+func (msg *MsgExecuteContract) GetSignature() []byte {
+	return msg.Signature
 }
 
-type MigrateContractTx struct {
-	transaction.CommonTx
+type MsgMigrateContract struct {
+	FromAddress sdk.AccAddress		`json:"from_address"`
+	Signature 	[]byte   			`json:"signature"`
+	PubKey		[]byte				`json:"pub_key"`
+
 	Code    	[]byte              `json:"code"`
-	Sender      sdk.AccAddress      `json:"sender"`
 	Contract	sdk.AccAddress		`json:"contract"`
 	Name		string				`json:"name,omitempty"`
 	Version     string				`json:"version,omitempty"`
@@ -193,37 +176,28 @@ type MigrateContractTx struct {
 	Args      	json.RawMessage     `json:"args,omitempty"`
 }
 
-func NewMigrateContractTx(code []byte, from sdk.AccAddress, gas, nonce uint64, sender sdk.AccAddress, name, version, author, email, describe string,
-	contract sdk.AccAddress, initMsg json.RawMessage) MigrateContractTx{
+func NewMsgMigrateContract(code []byte, from sdk.AccAddress, name, version, author, email, describe string,
+	contract sdk.AccAddress, initMsg json.RawMessage) *MsgMigrateContract{
 
-	return MigrateContractTx{
-		CommonTx: transaction.CommonTx{
-			From:  	from,
-			Gas:   	gas,
-			Nonce: 	nonce,
-		},
-		Code:       code,
-		Sender:    	sender,
-		Contract: 	contract,
-		Name:     	name,
-		Version: 	version,
-		Author: 	author,
-		Email:      email,
-		Describe:   describe,
-		Args:   	initMsg,
+	return &MsgMigrateContract{
+		FromAddress: from,
+		Code:        code,
+		Contract:    contract,
+		Name:        name,
+		Version:     version,
+		Author:      author,
+		Email:       email,
+		Describe:    describe,
+		Args:        initMsg,
 	}
 }
 
-func (msg *MigrateContractTx) ValidateBasic() sdk.Error {
-	if err := msg.CommonTx.ValidateBasic(); err != nil {
-		return err
-	}
-
+func (msg *MsgMigrateContract) ValidateBasic() sdk.Error {
 	if msg.Code == nil {
 		return ErrInvalidMsg(DefaultCodespace, errors.New("code is invalid"))
 	}
 
-	if msg.Sender.Empty() {
+	if msg.FromAddress.Empty() {
 		return ErrInvalidMsg(DefaultCodespace, errors.New("sender is invalid"))
 	}
 
@@ -233,17 +207,17 @@ func (msg *MigrateContractTx) ValidateBasic() sdk.Error {
 	return nil
 }
 
-func (msg *MigrateContractTx) GetSignBytes() []byte {
+func (msg *MsgMigrateContract) GetSignBytes() []byte {
 	ntx := *msg
 	ntx.SetSignature(nil)
 	return util.TxHash(ntx.Bytes())
 }
 
-func (msg *MigrateContractTx) SetSignature(sig []byte) {
+func (msg *MsgMigrateContract) SetSignature(sig []byte) {
 	msg.Signature = sig
 }
 
-func (msg *MigrateContractTx) Bytes() []byte {
+func (msg *MsgMigrateContract) Bytes() []byte {
 	bytes, err := WasmCodec.MarshalBinaryLengthPrefixed(msg)
 	if err != nil {
 		panic(err)
@@ -252,22 +226,22 @@ func (msg *MigrateContractTx) Bytes() []byte {
 	return bytes
 }
 
-func (msg *MigrateContractTx) SetPubKey(pub []byte) {
+func (msg *MsgMigrateContract) SetPubKey(pub []byte) {
 	msg.PubKey = pub
 }
 
-func (msg *MigrateContractTx) Route() string {
+func (msg *MsgMigrateContract) Route() string {
 	return RouteKey
 }
 
-func (msg *MigrateContractTx) GetGas() uint64 {
-	return msg.Gas
+func (msg *MsgMigrateContract) MsgType() string {
+	return "migrate"
 }
 
-func (msg *MigrateContractTx) GetNonce() uint64 {
-	return msg.Nonce
+func (msg *MsgMigrateContract) GetFromAddress() sdk.AccAddress {
+	return msg.FromAddress
 }
 
-func (msg *MigrateContractTx) GetFromAddress() sdk.AccAddress {
-	return msg.From
+func (msg *MsgMigrateContract) GetSignature() []byte {
+	return msg.Signature
 }

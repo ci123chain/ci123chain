@@ -1,14 +1,18 @@
 package rest
 
 import (
+	"encoding/hex"
+	"errors"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
+	"github.com/ci123chain/ci123chain/pkg/app"
 	"github.com/ci123chain/ci123chain/pkg/client"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/distribution/types"
 	sSDK "github.com/ci123chain/ci123chain/sdk/distribution"
 	"github.com/gorilla/mux"
 	"net/http"
+	"strconv"
 )
 
 func registerTxRoutes(cliCtx context.Context, r *mux.Router) {
@@ -31,8 +35,9 @@ func fundCommunityPoolHandler(cliCtx context.Context, writer http.ResponseWriter
 	if !ok {
 		return
 	}
-	nonce, ok := checkNonce(writer,  req, sdk.HexToAddress(accountAddress))
-	if !ok {
+	nonce, err := checkNonce(writer,  req, sdk.HexToAddress(accountAddress))
+	if err != nil {
+		rest.WriteErrorRes(writer, types.ErrSignTx(types.DefaultCodespace, err))
 		return
 	}
 	privateKey, ok := checkPrivateKey(writer, req)
@@ -46,7 +51,7 @@ func fundCommunityPoolHandler(cliCtx context.Context, writer http.ResponseWriter
 		return
 	}
 
-	res, err := cliCtx.BroadcastSignedData(txByte)
+	res, err := cliCtx.BroadcastSignedTx(txByte)
 	if err != nil {
 		rest.WriteErrorRes(writer, client.ErrBroadcast(types.DefaultCodespace, err))
 		return
@@ -55,14 +60,32 @@ func fundCommunityPoolHandler(cliCtx context.Context, writer http.ResponseWriter
 }
 
 func withdrawValidatorCommissionsHandler(cliCtx context.Context, writer http.ResponseWriter, req *http.Request) {
-	from, gas, nonce, priv, ok := paserArgs(writer, req)
-	if !ok {
+	broadcast, err := strconv.ParseBool(req.FormValue("broadcast"))
+	if err != nil {
+		broadcast = true
+	}
+	gas, err := strconv.ParseUint(req.FormValue("gas"), 10, 64)
+	if err != nil || gas < 0 {
+		rest.WriteErrorRes(writer, types.ErrParams(types.DefaultCodespace,errors.New("gas error")))
 		return
 	}
-	validatorAddress := from
-
-	txByte, err := sSDK.SignWithdrawValidatorCommissionTx(from, validatorAddress, gas, nonce, priv)
-	res, err := cliCtx.BroadcastSignedData(txByte)
+	privKey, from, nonce, gas, err := rest.GetNecessaryParams(cliCtx, req, cdc, broadcast)
+	if err != nil {
+		rest.WriteErrorRes(writer, types.ErrParams(types.DefaultCodespace, errors.New("get params error")))
+		return
+	}
+	validator := from
+	msg := types.NewMsgWithdrawValidatorCommission(from, validator)
+	if !broadcast {
+		rest.PostProcessResponseBare(writer, cliCtx, hex.EncodeToString(msg.Bytes()))
+		return
+	}
+	txByte, err := app.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
+	if err != nil {
+		rest.WriteErrorRes(writer, types.ErrParams(types.DefaultCodespace, err))
+		return
+	}
+	res, err := cliCtx.BroadcastSignedTx(txByte)
 	if err != nil {
 		rest.WriteErrorRes(writer, client.ErrBroadcast(types.DefaultCodespace, err))
 		return
@@ -71,21 +94,31 @@ func withdrawValidatorCommissionsHandler(cliCtx context.Context, writer http.Res
 }
 
 func withdrawDelegationRewardsHandler(cliCtx context.Context, writer http.ResponseWriter, req *http.Request) {
-	from, gas, nonce, priv, ok := paserArgs(writer, req)
-	if !ok {
-		return
-	}
-	validator, ok := checkValidatorAddressVar(writer, req)
-	if !ok {
-		return
-	}
-	delegator := from
-	txByte, err := sSDK.SignWithdrawDelegatorRewardTx(from, validator, delegator, gas, nonce, priv)
+	broadcast, err := strconv.ParseBool(req.FormValue("broadcast"))
 	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrSignTx(types.DefaultCodespace,err))
+		broadcast = true
+	}
+
+	privKey, from, nonce, gas, err := rest.GetNecessaryParams(cliCtx, req, cdc, broadcast)
+	if err != nil {
+		rest.WriteErrorRes(writer, types.ErrParams(types.DefaultCodespace, errors.New("get params error")))
 		return
 	}
-	res, err := cliCtx.BroadcastSignedData(txByte)
+
+	validator := sdk.HexToAddress(req.FormValue("validatorAddr"))
+	delegator := from
+	msg := types.NewMsgWithdrawDelegatorReward(from, validator, delegator)
+	if !broadcast {
+		rest.PostProcessResponseBare(writer, cliCtx, hex.EncodeToString(msg.Bytes()))
+		return
+	}
+
+	txByte, err := app.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
+	if err != nil {
+		rest.WriteErrorRes(writer, types.ErrParams(types.DefaultCodespace, err))
+		return
+	}
+	res, err := cliCtx.BroadcastSignedTx(txByte)
 	if err != nil {
 		rest.WriteErrorRes(writer, client.ErrBroadcast(types.DefaultCodespace, err))
 		return
@@ -94,44 +127,32 @@ func withdrawDelegationRewardsHandler(cliCtx context.Context, writer http.Respon
 }
 
 func setDelegatorWithdrawalAddrHandler(cliCtx context.Context, writer http.ResponseWriter, req *http.Request) {
-	from, gas, nonce, priv, ok := paserArgs(writer, req)
-	if !ok {
-		return
-	}
-	withdraw, ok := checkWithdrawAddressVar(writer, req)
-	if !ok {
-		return
-	}
-	txByte, err := sSDK.SignSetWithdrawAddressTx(from, withdraw, gas, nonce, priv)
+	broadcast, err := strconv.ParseBool(req.FormValue("broadcast"))
 	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrSignTx(types.DefaultCodespace,err))
+		broadcast = true
+	}
+	privKey, from, nonce, gas, err := rest.GetNecessaryParams(cliCtx, req, cdc, broadcast)
+	if err != nil {
+		rest.WriteErrorRes(writer, types.ErrParams(types.DefaultCodespace, errors.New("get params error")))
 		return
 	}
-	res, err := cliCtx.BroadcastSignedData(txByte)
+
+	delegator := from
+	withdraw := sdk.HexToAddress(req.FormValue("withdrawAddress"))
+	msg := types.NewMsgSetWithdrawAddress(from, withdraw, delegator)
+	if !broadcast {
+		rest.PostProcessResponseBare(writer, cliCtx, hex.EncodeToString(msg.Bytes()))
+		return
+	}
+	txByte, err := app.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
+	if err != nil {
+		rest.WriteErrorRes(writer, types.ErrParams(types.DefaultCodespace, err))
+		return
+	}
+	res, err := cliCtx.BroadcastSignedTx(txByte)
 	if err != nil {
 		rest.WriteErrorRes(writer, client.ErrBroadcast(types.DefaultCodespace, err))
 		return
 	}
 	rest.PostProcessResponseBare(writer, cliCtx, res)
-}
-
-
-func paserArgs(writer http.ResponseWriter, req *http.Request) (string, uint64, uint64, string, bool)  {
-	accountAddress, ok := checkFromAddressVar(writer, req)
-	if !ok {
-		return "", 0, 0, "", false
-	}
-	gas, ok := checkGasVar(writer, req)
-	if !ok {
-		return "", 0, 0, "", false
-	}
-	nonce, ok := checkNonce(writer,  req, sdk.HexToAddress(accountAddress))
-	if !ok {
-		return "", 0, 0, "", false
-	}
-	privateKey, ok := checkPrivateKey(writer, req)
-	if !ok {
-		return "", 0, 0, "", false
-	}
-	return accountAddress, gas, nonce, privateKey, true
 }

@@ -5,7 +5,6 @@ import (
 )
 var DistributionCdc *codec.Codec
 
-
 func init()  {
 	DistributionCdc = codec.New()
 	RegisterCodec(DistributionCdc)
@@ -14,9 +13,8 @@ func init()  {
 }
 
 func RegisterCodec(cdc *codec.Codec)  {
-
-	cdc.RegisterConcrete(&SetWithdrawAddressTx{}, "ci123chain/SetWithdrawAddressTx", nil)
-	cdc.RegisterConcrete(&WithdrawDelegatorRewardTx{}, "ci123chain/WithdrawDelegatorRewardTx", nil)
-	cdc.RegisterConcrete(&WithdrawValidatorCommissionTx{}, "ci123chain/WithdrawValidatorCommissionTx", nil)
-	cdc.RegisterConcrete(&FundCommunityPoolTx{}, "ci123chain/FundCommunityPoolTx", nil)
+	cdc.RegisterConcrete(&MsgSetWithdrawAddress{}, "ci123chain/SetWithdrawAddressTx", nil)
+	cdc.RegisterConcrete(&MsgWithdrawDelegatorReward{}, "ci123chain/WithdrawDelegatorRewardTx", nil)
+	cdc.RegisterConcrete(&MsgWithdrawValidatorCommission{}, "ci123chain/WithdrawValidatorCommissionTx", nil)
+	cdc.RegisterConcrete(&MsgFundCommunityPool{}, "ci123chain/FundCommunityPoolTx", nil)
 }

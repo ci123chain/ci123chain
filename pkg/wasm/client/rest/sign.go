@@ -2,145 +2,15 @@ package rest
 
 import (
 	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/app"
-	"github.com/ci123chain/ci123chain/pkg/client"
-	"github.com/ci123chain/ci123chain/pkg/client/helper"
 	"github.com/ci123chain/ci123chain/pkg/util"
-	wasm "github.com/ci123chain/ci123chain/pkg/wasm/types"
-	sdk "github.com/ci123chain/ci123chain/sdk/wasm"
 	"io/ioutil"
 	"net/http"
 )
 
 var cdc = app.MakeCodec()
-
-func buildInstantiateContractMsg(r *http.Request) ([]byte, error) {
-	wasmCode, err := getWasmCode(r)
-	if err != nil || wasmCode == nil {
-		return nil, errors.New("get wasmCode error")
-	}
-	name, version, author, email, describe, err := adjustInstantiateParams(r)
-	if err != nil {
-		return nil, err
-	}
-	from, gas, nonce, priv, args, err := getArgs(r)
-	if err != nil {
-		return nil, err
-	}
-
-	txByte, err := sdk.SignInstantiateContractMsg(wasmCode, from, gas, nonce, priv, from, name, version, author, email, describe, args)
-	if err != nil {
-		return nil, err
-	}
-	return txByte, nil
-}
-
-func buildExecuteContractMsg(r *http.Request) ([]byte, error) {
-
-	contractAddr := r.FormValue("contractAddress")
-	err := util.CheckStringLength(42, 100, contractAddr)
-	if err != nil {
-		return nil, errors.New("error contractAddress")
-	}
-	contractAddress := types.HexToAddress(contractAddr)
-
-	from, gas, nonce, priv, args, err := getArgs(r)
-	if err != nil {
-		return nil, err
-	}
-
-	txByte, err := sdk.SignExecuteContractMsg(from, gas, nonce, priv, from, contractAddress, args)
-	if err != nil {
-		return nil, err
-	}
-	return txByte, nil
-}
-
-func buildMigrateContractMsg(r *http.Request) ([]byte, error) {
-	wasmCode, err := getWasmCode(r)
-	if err != nil || wasmCode == nil {
-		return nil, errors.New("get wasmCode error")
-	}
-	name, version, author, email, describe, err := adjustInstantiateParams(r)
-	if err != nil {
-		return nil, err
-	}
-	from, gas, nonce, priv, args, err := getArgs(r)
-	if err != nil {
-		return nil, err
-	}
-
-	contract := r.FormValue("contractAddress")
-	contractAddr := types.HexToAddress(contract)
-
-	txByte, err := sdk.SignMigrateContractMsg(wasmCode, from, gas, nonce, priv, from, name, version, author, email, describe, contractAddr, args)
-	if err != nil {
-		return nil, err
-	}
-	return txByte, nil
-}
-
-func getArgs(r *http.Request) (types.AccAddress, uint64, uint64, string, json.RawMessage, error) {
-	var args []byte
-
-	from := r.FormValue("from")
-	inputGas := r.FormValue("gas")
-	inputNonce := r.FormValue("nonce")
-	err := util.CheckStringLength(42, 100, from)
-	if err != nil {
-		return types.AccAddress{}, 0, 0,  "", nil, errors.New("error from")
-	}
-	froms, err := helper.ParseAddrs(from)
-	if err != nil {
-		return types.AccAddress{}, 0, 0,  "", nil, err
-	}
-	gas, err := util.CheckUint64(inputGas)
-	if err != nil {
-		return types.AccAddress{}, 0, 0,  "", nil, err
-	}
-	priv := r.FormValue("privateKey")
-	err = util.CheckStringLength(1, 100, priv)
-	if err != nil {
-		return types.AccAddress{}, 0, 0, "", nil, errors.New("error privateKey")
-	}
-	msg := r.FormValue("args")
-	if msg == "" {
-		args = nil
-	}else {
-		var argsStr wasm.CallContractParam
-		ok, err := util.CheckJsonArgs(msg, argsStr)
-		if err != nil || !ok {
-			return types.AccAddress{}, 0, 0, "", nil, errors.New("unexpected args")
-		}
-		var argsByte = []byte(msg)
-		args = argsByte
-	}
-	JsonArgs := json.RawMessage(args)
-	var nonce uint64
-	if inputNonce != "" {
-		UserNonce, err := util.CheckUint64(inputNonce)
-		if err != nil || UserNonce < 0 {
-			return types.AccAddress{}, 0, 0, "", nil, err
-		}
-		nonce = UserNonce
-	}else {
-		ctx, err := client.NewClientContextFromViper(cdc)
-		if err != nil {
-			return types.AccAddress{}, 0, 0, "", nil, err
-		}
-		nonce, _, err = ctx.GetNonceByAddress(froms[0], false)
-		if err != nil {
-			return types.AccAddress{}, 0, 0, "", nil, err
-		}
-	}
-
-	return froms[0], gas, nonce, priv, JsonArgs, nil
-
-}
 
 func getWasmCode(r *http.Request) (wasmcode []byte, err error){
 	codeStr := r.FormValue("wasmCodeStr")

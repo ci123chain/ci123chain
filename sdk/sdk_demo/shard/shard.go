@@ -5,12 +5,11 @@ import (
 	sdk "github.com/ci123chain/ci123chain/sdk/shard"
 )
 
-func signAddShardTxDemo() (string, error) {
-
-	txByte, err := sdk.SignAddShardMsg(from, offlineGas, offlineNonce, t, name, offlineHeight, priv)
+func signUpgradeMsgDemo() (string, error) {
+	msg, err := sdk.SignUpgradeMsg(t, name, offlineHeight, priv)
 	if err != nil {
 		return "", err
 	}
-	return hex.EncodeToString(txByte), nil
+	return hex.EncodeToString(msg.Bytes()), nil
 }
 

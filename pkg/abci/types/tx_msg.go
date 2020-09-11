@@ -1,17 +1,29 @@
 package types
 
-//__________________________________________________________
-
-// Transactions objects must fulfill the Tx
-type Tx interface {
-	// ValidateBasic does a simple and lightweight validation check that doesn't
-	// require access to any other information.
-	ValidateBasic() Error
-
+type Msg interface {
 	Route() string
+	MsgType() string
+	ValidateBasic() Error
+	GetSignBytes() []byte
+	GetSignature() []byte
+	SetSignature([]byte)
+	SetPubKey([]byte)
+	GetFromAddress() AccAddress
+	Bytes() []byte
 }
 
-//__________________________________________________________
+type Tx interface {
+	GetMsgs() []Msg
+	ValidateBasic() Error
+	GetSignBytes() []byte
+	GetSignature() []byte
+	SetSignature([]byte)
+	Bytes() []byte
+	SetPubKey([]byte)
+	GetGas() uint64
+	GetNonce() uint64
+	GetFromAddress() AccAddress
+}
 
 // TxDecoder unmarshals transfer bytes
 type TxDecoder func(txBytes []byte) (Tx, Error)
