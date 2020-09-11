@@ -23,7 +23,7 @@ import (
 var cdc = app.MakeCodec()
 // RegisterRoutes - Central function to define routes that get registered by the main application
 func RegisterRoutes(cliCtx context.Context, r *mux.Router) {
-	r.HandleFunc("/account/new", rest.MiddleHandler(cliCtx, NewAccountRequest, types.DefaultCodespace)).Methods("POST")
+	r.HandleFunc("/account/new", NewAccountRequestHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/bank/balance", QueryBalancesRequestHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/account/nonce", QueryNonceRequestHandleFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/node/new_validator", rest.MiddleHandler(cliCtx, CreateNewValidatorKey, types.DefaultCodespace)).Methods("GET")
@@ -52,22 +52,24 @@ type Key struct {
 	ValidatorKey string `json:"validator_key"`
 }
 
-func NewAccountRequest(cliCtx context.Context, w http.ResponseWriter, request *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
+func NewAccountRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
+	return func(w http.ResponseWriter, request *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
 
-	key, err := crypto.GenerateKey()
-	if err != nil {
-		fmt.Println("Error: ", err.Error());
+		key, err := crypto.GenerateKey()
+		if err != nil {
+			fmt.Println("Error: ", err.Error());
+		}
+
+		address := crypto.PubkeyToAddress(key.PublicKey).Hex()
+		privKey := hex.EncodeToString(key.D.Bytes())
+
+		resp := Account{
+			Address:	address,
+			PrivKey:	privKey,
+		}
+		rest.PostProcessResponseBare(w, cliCtx, resp)
 	}
-
-	address := crypto.PubkeyToAddress(key.PublicKey).Hex()
-	privKey := hex.EncodeToString(key.D.Bytes())
-
-	resp := Account{
-		Address:	address,
-		PrivKey:	privKey,
-	}
-	rest.PostProcessResponseBare(w, cliCtx, resp)
 }
 
 func QueryBalancesRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
