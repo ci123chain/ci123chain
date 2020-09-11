@@ -98,6 +98,7 @@ func NewResponseResultTx(res *ctypes.ResultTx, tx Tx, timestamp string) TxRespon
 		Height:    res.Height,
 		Code:      res.TxResult.Code,
 		Data:      strings.ToUpper(hex.EncodeToString(res.TxResult.Data)),
+		FormatData: string(res.TxResult.Data),
 		//RawLog:    res.TxResult.Log,
 		Log:      res.TxResult.Log,
 		Info:      res.TxResult.Info,
