@@ -259,7 +259,7 @@ func (c Context) WithGasLimit(gas uint64) Context {
 }
 
 func (c Context) WithNonce(nonce uint64) Context {
-	return c.withValue(contextKeyGasLimit, nonce)
+	return c.withValue(contextKeyNonce, nonce)
 }
 
 // Cache the multistore and return a new cached context. The cached context is

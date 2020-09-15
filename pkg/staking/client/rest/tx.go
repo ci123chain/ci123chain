@@ -41,16 +41,16 @@ func CreateValidatorRequest(cliCtx context.Context, writer http.ResponseWriter, 
 		return
 	}
 	delegatorAddr := from
-	validatorAddr := sdk.HexToAddress(request.FormValue("validatorAddr"))
 	amount, err := strconv.ParseUint(request.FormValue("amount"), 10, 64)
 	if err != nil {
 		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
 		return
 	}
 	//verify account exists
-	err = checkAccountExist(cliCtx, from, validatorAddr)
+	err = checkAccountExist(cliCtx, from)
 	if err != nil {
 		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
+		return
 	}
 
 	msd, r, mr, mcr, moniker, identity, website, securityContact, details,
@@ -115,6 +115,7 @@ func DelegateTX(cliCtx context.Context, writer http.ResponseWriter, request *htt
 	err = checkAccountExist(cliCtx, from, validatorAddr)
 	if err != nil {
 		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
+		return
 	}
 
 	coin := sdk.NewUInt64Coin(amount)
@@ -159,14 +160,11 @@ func RedelegateTX(cliCtx context.Context, writer http.ResponseWriter, request *h
 	err = checkAccountExist(cliCtx, from, validatorSrcAddr, validatorDstAddr)
 	if err != nil {
 		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
+		return
 	}
 
 	coin := sdk.NewUInt64Coin(amount)
 	msg := staking.NewRedelegateMsg(from, delegatorAddr, validatorSrcAddr, validatorDstAddr, coin)
-	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
-		return
-	}
 
 	if !broadcast {
 		rest.PostProcessResponseBare(writer, cliCtx, hex.EncodeToString(msg.Bytes()))
@@ -207,6 +205,7 @@ func UndelegateTX(cliCtx context.Context, writer http.ResponseWriter, request *h
 	err = checkAccountExist(cliCtx, from, validatorAddr)
 	if err != nil {
 		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
+		return
 	}
 
 	coin := sdk.NewUInt64Coin(amount)

@@ -78,7 +78,7 @@ func parseTx(cdc *codec.Codec, txBytes []byte) (sdk.Tx, error) {
 	//tx := new(transfer.TransferTx)
 	var tx sdk.Tx
 	//rlp.DecodeBytes(txBytes, &tx)
-	err := cdc.UnmarshalBinaryLengthPrefixed(txBytes, &tx)
+	err := cdc.UnmarshalBinaryBare(txBytes, &tx)
 	if err != nil {
 		return nil, err
 	}
