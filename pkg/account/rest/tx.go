@@ -202,7 +202,7 @@ func MultiMsgsRequest(cliCtx context.Context, w http.ResponseWriter, r *http.Req
 		rest.WriteErrorRes(w, client.ErrParseParam(types.DefaultCodespace, err))
 		return
 	}
-	res, err := cliCtx.BroadcastSignedData(txByte)
+	res, err := cliCtx.BroadcastSignedTx(txByte)
 	if err != nil {
 		rest.WriteErrorRes(w, client.ErrBroadcast(types.DefaultCodespace, err))
 		return
