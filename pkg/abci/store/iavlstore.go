@@ -74,7 +74,7 @@ func newIAVLStore(db dbm.DB, tree *iavl.MutableTree, numRecent int64, storeEvery
 // Implements Committer.
 func (st *iavlStore) Commit() CommitID {
 	// Save a new version.
-	st.parent.Commit()
+	//st.parent.Commit()
 	hash, version, err := st.tree.SaveVersion()
 	if err != nil {
 		// TODO: Do we want to extend Commit to allow returning errors?

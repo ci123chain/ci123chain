@@ -7,6 +7,7 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/tmhash"
 	cmn "github.com/tendermint/tendermint/libs/common"
+	db "github.com/tendermint/tm-db"
 	"io"
 	"sort"
 	"sync"
@@ -250,6 +251,37 @@ func (ks *baseKVStore) Commit() CommitID {
 		return CommitID{
 			Version: cInfo.Version + 1,
 			Hash:    hash,
+		}
+	}
+}
+
+func (ks *baseKVStore) BatchSet(batch db.Batch) {
+	ks.mtx.Lock()
+	defer ks.mtx.Unlock()
+
+	// We need a copy of all of the keys.
+	// Not the best, but probably not a bottleneck depending.
+	keys := make([]string, 0, len(ks.cache))
+	for key, dbValue := range ks.cache {
+		if dbValue.dirty {
+			keys = append(keys, key)
+		}
+	}
+
+	sort.Strings(keys)
+
+	var valueBytes []cValue
+	// TODO: Consider allowing usage of Batch, which would allow the write to
+	// at least happen atomically.
+	for _, key := range keys {
+		cacheValue := ks.cache[key]
+		if cacheValue.deleted {
+			ks.parent.Delete([]byte(key))
+		} else if cacheValue.value == nil {
+			// Skip, it already doesn't exist in parent.
+		} else {
+			batch.Set([]byte(key), cacheValue.value)
+			valueBytes = append(valueBytes, cacheValue)
 		}
 	}
 }

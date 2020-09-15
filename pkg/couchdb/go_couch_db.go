@@ -309,9 +309,26 @@ func (mBatch *goCouchDBBatch) Write() {
 	if mBatch.batch.docs == nil {
 		return
 	}
-	_, err := mBatch.batch.Commit()
+	resp, err := mBatch.batch.Commit()
 	if err != nil {
 		panic(err)
+	}
+	mBatch.ensureBatchResult(resp)
+}
+
+// Implements Batch.
+func (mBatch *goCouchDBBatch) ensureBatchResult(res []BulkDocumentResult) {
+	nBatch := mBatch.cdb.NewBatch()
+	for k, v := range res {
+		if v.Ok != true {
+			err := nBatch.(*goCouchDBBatch).batch.Save(mBatch.batch.docs[k], v.ID, v.Revision)
+			if err != nil {
+				panic(err)
+			}
+		}
+	}
+	if len(nBatch.(*goCouchDBBatch).batch.docs) != 0 {
+		nBatch.Write()
 	}
 }
 
