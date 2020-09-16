@@ -5,7 +5,6 @@ import (
 )
 
 const (
-	//invoker = "0x9BA7dc2269895DF1004Ec75D8326644295508069"
 	communityContractAddress = "0xfffffffffffffffffffffffffffffffffffffff1"
 	isOfficial = "true"
 	aclContractAddress = "0xfffffffffffffffffffffffffffffffffffffff2"
@@ -14,7 +13,7 @@ const (
 	minAcceptQuorumPct = "5000000000"
 	openTime = "1290600000"
 	InitMethod = "init"
-	//InvokeMethod = "invoke"
+	InvokeMethod = "invoke"
 	SetContractMethod = "initial_contract"
 	invoker = communityContractAddress
 )
@@ -65,8 +64,8 @@ func DefaultGenesisState(_ []tmtypes.GenesisValidator) GenesisState{
 		{
 			Index: 3,
 			Code: community_code,
-			Method: SetContractMethod,
-			Params: []string{aclContractAddress, votingContractAddress},
+			Method: InvokeMethod,
+			Params: []string{SetContractMethod, aclContractAddress, votingContractAddress},
 			Address: communityContractAddress,
 		},
 

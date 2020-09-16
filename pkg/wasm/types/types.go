@@ -7,6 +7,10 @@ import (
 	"strings"
 )
 
+var (
+	EmptyAddress = sdk.HexToAddress("0x0000000000000000000000000000000000000000")
+)
+
 type CodeInfo struct {
 	CodeHash    string         `json:"code_hash"`
 	Creator     sdk.AccAddress  `json:"creator"`

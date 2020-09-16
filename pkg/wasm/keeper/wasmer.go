@@ -51,11 +51,6 @@ const (
 	InputDataTypeContractResult = 1
 )
 
-type Param struct {
-	Method string 	`json:"method"`
-	Args   []string	`json:"args"`
-}
-
 //export read_db
 func read_db(context unsafe.Pointer, keyPtr, keySize, valuePtr, valueSize, offset int32) int32 {
 	return readDB(context, keyPtr, keySize, valuePtr, valueSize, offset)

@@ -52,145 +52,8 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, homeDir string, wasmConf
 	return wk
 }
 
-func (k Keeper)GenesisContractInit(ctx sdk.Context, wasmCode []byte, invoker sdk.AccAddress, args json.RawMessage, name, version, author, email, describe string, address sdk.AccAddress) error {
-	codeHash, isExist, err := k.create(ctx, invoker, wasmCode)
-	if err != nil {
-		return err
-	}
-	SetGasUsed()
-	SetCtx(&ctx)
-	var codeInfo types.CodeInfo
-	var wasmer Wasmer
-	var code []byte
-	var params types.CallContractParam
-	if args != nil {
-		err := json.Unmarshal(args, &params)
-		if err != nil {
-			return sdk.ErrInternal("invalid instantiate message")
-		}
-	}
-	contractAddress := address
-	existingAcct := k.AccountKeeper.GetAccount(ctx, contractAddress)
-	if existingAcct != nil {
-		return sdk.ErrInternal("Contract account exists")
-	}
-	SetPreCaller(invoker)
-	SetInvoker(invoker)
-	SetCreator(invoker)
-	SetSelfAddr(contractAddress)
-	var contractAccount exported.Account
-	contractAccount = k.AccountKeeper.NewAccountWithAddress(ctx, contractAddress)
-	k.AccountKeeper.SetAccount(ctx, contractAccount)
-
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.GetCodeKey(codeHash))
-	if bz == nil {
-		return sdk.ErrInternal("codeHash not found")
-	}
-	wasmerBz := store.Get(types.GetWasmerKey())
-	if wasmerBz != nil {
-		k.cdc.MustUnmarshalJSON(wasmerBz, &wasmer)
-		if wasmer.LastFileID == 0 {
-			return sdk.ErrInternal("empty wasmer")
-		}
-		k.wasmer = wasmer
-	}
-	k.cdc.MustUnmarshalBinaryBare(bz, &codeInfo)
-
-	wc, err := k.wasmer.GetWasmCode(codeHash)
-	if err != nil {
-		wc = store.Get(codeHash)
-
-		fileName := k.wasmer.FilePathMap[strings.ToLower(codeInfo.CodeHash)]
-		err = ioutil.WriteFile(k.wasmer.HomeDir + "/" + fileName, wc, types.ModePerm)
-		if err != nil {
-			return err
-		}
-	}
-	code = wc
-
-	prefixStoreKey := types.GetContractStorePrefixKey(contractAddress)
-	prefixStore := NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
-	SetStore(prefixStore)
-	if len(args) != 0 {
-		input, err := handleArgs(args)
-		if err != nil {
-			return err
-		}
-		_, err = k.wasmer.Call(code, input, INIT)
-		if err != nil {
-			return err
-		}
-	}
-	//save the contract info.
-	createdAt := types.NewCreatedAt(ctx)
-	contractInfo := types.NewContractInfo(codeHash, invoker, args, name, version, author, email, describe, createdAt)
-	store.Set(types.GetContractAddressKey(contractAddress), k.cdc.MustMarshalBinaryBare(contractInfo))
-
-	//store code in local.
-	if !isExist {
-		hash := fmt.Sprintf("%x", codeHash)
-		err = ioutil.WriteFile(k.wasmer.HomeDir + "/" + k.wasmer.FilePathMap[hash], wasmCode, types.ModePerm)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (k Keeper)GenesisInvoke(ctx sdk.Context, contractAddress sdk.AccAddress, invoker sdk.AccAddress, args json.RawMessage) error {
-	SetGasUsed()
-	SetSelfAddr(contractAddress)
-	SetInvoker(invoker)
-	SetPreCaller(invoker)
-	SetCtx(&ctx)
-
-	contract := k.GetContractInfo(ctx, contractAddress)
-	SetCreator(contract.CodeInfo.Creator)
-	var params types.CallContractParam
-	if args != nil {
-		err := json.Unmarshal(args, &params)
-		if err != nil {
-			return sdk.ErrInternal("invalid handle message")
-		}
-	}
-	codeInfo, err := k.contractInstance(ctx, contractAddress)
-	if err != nil {
-		return err
-	}
-	var code []byte
-	codeHash, _ := hex.DecodeString(codeInfo.CodeHash)
-	wc, err := k.wasmer.GetWasmCode(codeHash)
-	ccstore := ctx.KVStore(k.storeKey)
-	if err != nil {
-		wc = ccstore.Get(codeHash)
-
-		fileName := k.wasmer.FilePathMap[strings.ToLower(codeInfo.CodeHash)]
-		err = ioutil.WriteFile(k.wasmer.HomeDir + "/" + fileName, wc, types.ModePerm)
-		if err != nil {
-			return err
-		}
-	}
-	code = wc
-	//get store
-	prefixStoreKey := types.GetContractStorePrefixKey(contractAddress)
-	prefixStore := NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
-	SetStore(prefixStore)
-	input, err := handleArgs(args)
-	if err != nil {
-		return err
-	}
-	_, err = k.wasmer.Call(code, input, INVOKE)
-	if err != nil {
-		return err
-	}
-	ctx.GasMeter().ConsumeGas(sdk.Gas(GasUsed),"wasm cost")
-	return nil
-}
-
 //
-func (k Keeper) Instantiate(ctx sdk.Context, wasmCode []byte, invoker sdk.AccAddress, nonce uint64, args json.RawMessage, name, version, author, email, describe string) (sdk.AccAddress, error) {
+func (k Keeper) Instantiate(ctx sdk.Context, wasmCode []byte, invoker sdk.AccAddress, nonce uint64, args json.RawMessage, name, version, author, email, describe string, isGenesis bool, genesisContractAddress sdk.AccAddress) (sdk.AccAddress, error) {
 	codeHash, isExist, err := k.create(ctx, invoker, wasmCode)
 	if err != nil {
 		return sdk.AccAddress{}, err
@@ -208,7 +71,12 @@ func (k Keeper) Instantiate(ctx sdk.Context, wasmCode []byte, invoker sdk.AccAdd
 			return sdk.AccAddress{}, sdk.ErrInternal("invalid instantiate message")
 		}
 	}
-	contractAddress := k.generateContractAddress(invoker, nonce)
+	var contractAddress sdk.AccAddress
+	if isGenesis {
+		contractAddress = genesisContractAddress
+	}else {
+		contractAddress = k.generateContractAddress(invoker, nonce)
+	}
 	existingAcct := k.AccountKeeper.GetAccount(ctx, contractAddress)
 	if existingAcct != nil {
 		return sdk.AccAddress{}, sdk.ErrInternal("Contract account exists")
@@ -269,9 +137,11 @@ func (k Keeper) Instantiate(ctx sdk.Context, wasmCode []byte, invoker sdk.AccAdd
 	store.Set(types.GetContractAddressKey(contractAddress), k.cdc.MustMarshalBinaryBare(contractInfo))
 
 	//save contractAddress into account
-	Account := k.AccountKeeper.GetAccount(ctx, invoker)
-	Account.AddContract(contractAddress)
-	k.AccountKeeper.SetAccount(ctx, Account)
+	if !isGenesis {
+		Account := k.AccountKeeper.GetAccount(ctx, invoker)
+		Account.AddContract(contractAddress)
+		k.AccountKeeper.SetAccount(ctx, Account)
+	}
 	ctx.GasMeter().ConsumeGas(sdk.Gas(GasUsed),"wasm cost")
 
 	//store code in local.
@@ -282,7 +152,6 @@ func (k Keeper) Instantiate(ctx sdk.Context, wasmCode []byte, invoker sdk.AccAdd
 			return sdk.AccAddress{}, err
 		}
 	}
-
 	return contractAddress, nil
 }
 
@@ -340,7 +209,7 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, invoker
 }
 
 func (k Keeper) Migrate(ctx sdk.Context, wasmCode []byte, invoker sdk.AccAddress, oldContract sdk.AccAddress, nonce uint64, args json.RawMessage, name, version, author, email, describe string) (sdk.AccAddress, error) {
-	newContract, err := k.Instantiate(ctx, wasmCode, invoker, nonce, args, name, version, author, email, describe)
+	newContract, err := k.Instantiate(ctx, wasmCode, invoker, nonce, args, name, version, author, email, describe, false, types.EmptyAddress)
 	if err != nil {
 		return sdk.AccAddress{}, err
 	}
@@ -573,14 +442,14 @@ func (k Keeper) generateContractAddress(creatorAddr sdk.AccAddress, nonce uint64
 }
 
 func handleArgs(args json.RawMessage) ([]byte, error){
-	var param Param
+	var param types.CallContractParam
 	inputByte, _ := args.MarshalJSON()
 	err := json.Unmarshal(inputByte, &param)
 	if err != nil {
 		return nil, err
 	}
 
-	inputArgs := []interface{}{param.Method}
+	var inputArgs []interface{}
 	for i := 0; i < len(param.Args); i++ {
 		inputArgs = append(inputArgs, param.Args[i])
 	}

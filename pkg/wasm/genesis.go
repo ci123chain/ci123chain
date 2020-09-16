@@ -3,6 +3,8 @@ package wasm
 import (
 	"encoding/hex"
 	"encoding/json"
+	"errors"
+	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/wasm/keeper"
 	"github.com/ci123chain/ci123chain/pkg/wasm/types"
@@ -32,15 +34,17 @@ func InitGenesis(ctx sdk.Context, wasmer keeper.Keeper, data GenesisState) {
 				}
 				keeper.SetGasWanted(gasWanted)
 				if v.Method == types.InitMethod {
-					err = wasmer.GenesisContractInit(ctx, code, invoker,args, data.Name, data.Version, data.Author, data.Email, data.Describe, address)
+					_, err = wasmer.Instantiate(ctx, code, invoker, 0, args, data.Name, data.Version, data.Author, data.Email, data.Describe, true, address)
+					if err != nil {
+						panic(err)
+					}
+				}else if v.Method == types.InvokeMethod {
+					_, err = wasmer.Execute(ctx, address, invoker, args)
 					if err != nil {
 						panic(err)
 					}
 				}else {
-					err = wasmer.GenesisInvoke(ctx, address, invoker, args)
-					if err != nil {
-						panic(err)
-					}
+					panic(errors.New(fmt.Sprintf("implement method %s", v.Method)))
 				}
 			}
 		}

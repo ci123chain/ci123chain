@@ -14,15 +14,6 @@ type CallContractParam struct {
 	Args   []string `json:"args"`
 }
 
-func NewCallContractParams(method string, args []string) CallContractParam {
-	param := CallContractParam{
-		Method: method,
-		Args:   args,
-	}
-	return param
-}
-
-
 
 // IsWasm checks if the file contents are of wasm binary
 func IsWasm(input []byte) bool {
