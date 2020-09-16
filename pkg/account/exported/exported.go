@@ -28,7 +28,4 @@ type Account interface {
 	SpendableCoins(blockTime time.Time) types.Coin
 	// Ensure that account implements stringer
 	String() string
-
-	AddContract(contractAddress types.AccAddress)
-	GetContractList() []string
 }
