@@ -263,7 +263,10 @@ func callContract(context unsafe.Pointer, addrPtr, inputPtr, inputSize int32) in
 	SetCreator(newcreator)
 	SetPreCaller(selfAddr)
 	SetSelfAddr(contractAddress)
-
+	fmt.Println("precaller:")
+	fmt.Println(precaller.String())
+	fmt.Println("selfAddr:")
+	fmt.Println(selfAddr.String())
 	res, err := keeper.wasmer.Call(code, input, INVOKE)
 
 	SetStore(tempStore)
@@ -357,4 +360,61 @@ func debugPrint(context unsafe.Pointer, msgPtr, msgSize int32) {
 
 	data := memory[msgPtr : msgPtr+msgSize]
 	println(string(data))
+}
+
+func getValidatorPower(context unsafe.Pointer, dataPtr, dataSize, valuePtr int32) {
+	var instanceContext = wasm.IntoInstanceContext(context)
+	var memory = instanceContext.Memory().Data()
+
+	source := NewSink(memory[dataPtr : dataPtr+dataSize])
+
+	var validators []Address
+	{
+		length, err := source.ReadU32()
+		if err != nil {
+			panic(err)
+		}
+		validators = make([]Address, 0, length)
+		var i uint32 = 0
+		for ; i < length; i++ {
+			bytes, _, err := source.ReadBytes()
+			if err != nil {
+				panic(err)
+			}
+			validators = append(validators, NewAddress(bytes))
+		}
+	}
+	value := make([]uint64, len(validators))
+	for _, v := range validators {
+		i := 0
+		val, ok := stakingKeeper.GetValidator(*ctx, sdk.HexToAddress(v.ToString()))
+		if !ok {
+			value[i] = 0
+		}else {
+			value[i] = uint64(val.DelegatorShares.TruncateInt64())
+		}
+		i++
+	}
+
+	//根据链上信息返回验证者的 delegate shares
+	/*value := make([]uint64, len(validators))
+	for i := range value {
+		value[i] = uint64(i)
+	}*/
+
+	sink := NewSink([]byte{})
+	for i := range value {
+		sink.WriteU64(value[i])
+	}
+
+	res := sink.Bytes()
+	copy(memory[valuePtr:int(valuePtr)+len(res)], res)
+}
+
+func totalPower(_ unsafe.Pointer) int64 {
+
+	bondedPool := stakingKeeper.GetBondedPool(*ctx)
+	return bondedPool.GetCoin().Amount.Int64()
+	//根据链上信息返回总权益
+	//return 123456789
 }
