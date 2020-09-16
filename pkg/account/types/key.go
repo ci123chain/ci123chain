@@ -3,7 +3,8 @@ package types
 import "github.com/ci123chain/ci123chain/pkg/abci/types"
 
 const ModuleName  = "accounts"
-
+const RouteKey  = "accounts"
+const QueryAccount  = "queryAccount"
 var (
 	// AddressStoreKeyPrefix prefix for account-by-address store
 	AddressStoreKeyPrefix = []byte{0x01}

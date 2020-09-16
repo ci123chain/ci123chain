@@ -5,7 +5,8 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/account/exported"
-	acc_types "github.com/ci123chain/ci123chain/pkg/account/types"
+	"github.com/ci123chain/ci123chain/pkg/account/keeper"
+	"github.com/ci123chain/ci123chain/pkg/account/types"
 	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
 	"github.com/ci123chain/ci123chain/pkg/transaction"
 	"github.com/pkg/errors"
@@ -66,8 +67,12 @@ func (ctx *Context) GetBlocked() (bool) {
 }
 
 func (ctx *Context) GetBalanceByAddress(addr sdk.AccAddress, isProve bool) (uint64, *merkle.Proof, error) {
-	addrByte := acc_types.AddressStoreKey(addr)
-	res, _, proof, err := ctx.Query("/store/main/key", addrByte, isProve)
+	qparams := keeper.NewQueryAccountParams(addr)
+	bz, err := ctx.Cdc.MarshalJSON(qparams)
+	if err != nil {
+		return 0, nil , err
+	}
+	res, _, proof, err := ctx.Query("/custom/" + types.ModuleName + "/" + types.QueryAccount, bz, false)
 	if err != nil {
 		return 0, nil, err
 	}
@@ -84,13 +89,17 @@ func (ctx *Context) GetBalanceByAddress(addr sdk.AccAddress, isProve bool) (uint
 }
 
 func (ctx *Context) GetNonceByAddress(addr sdk.AccAddress, isProve bool) (uint64, *merkle.Proof, error) {
-	addrByte := acc_types.AddressStoreKey(addr)
-	res, _, proof, err := ctx.Query("/store/main/key", addrByte, isProve)
-	if res == nil{
-		return 0, nil, errors.New("The account does not exist")
+	qparams := keeper.NewQueryAccountParams(addr)
+	bz, err := ctx.Cdc.MarshalJSON(qparams)
+	if err != nil {
+		return 0, nil , err
 	}
+	res, _, proof, err := ctx.Query("/custom/" + types.ModuleName + "/" + types.QueryAccount, bz, false)
 	if err != nil {
 		return 0, nil, err
+	}
+	if res == nil{
+		return 0, nil, errors.New("The account does not exist")
 	}
 	var acc exported.Account
 	err2 := ctx.Cdc.UnmarshalBinaryLengthPrefixed(res, &acc)
