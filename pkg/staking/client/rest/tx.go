@@ -47,6 +47,7 @@ func CreateValidatorRequest(cliCtx context.Context, writer http.ResponseWriter, 
 	err = checkAccountExist(cliCtx, from)
 	if err != nil {
 		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
+		return
 	}
 
 

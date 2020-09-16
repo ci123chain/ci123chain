@@ -20,6 +20,8 @@ package keeper
 // extern int call_contract(void*, int, int, int);
 // extern void destroy_contract(void*);
 // extern void panic_contract(void*, int, int);
+// extern void get_validator_power(void*, int, int, int);
+// extern long long total_power(void*);
 //
 // extern void addgas(void*, int);
 // extern void debug_print(void*, int, int);
@@ -30,6 +32,7 @@ import (
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/account"
+	keeper2 "github.com/ci123chain/ci123chain/pkg/staking/keeper"
 	"github.com/ci123chain/ci123chain/pkg/wasm/types"
 	"github.com/wasmerio/go-ext-wasm/wasmer"
 	"io/ioutil"
@@ -136,6 +139,15 @@ func panic_contract(context unsafe.Pointer, dataPtr, dataSize int32) {
 func debug_print(context unsafe.Pointer, dataPtr, dataSize int32) {
 	debugPrint(context, dataPtr, dataSize)
 }
+//export get_validator_power
+func get_validator_power(context unsafe.Pointer, dataPtr, dataSize, valuePtr int32) {
+	getValidatorPower(context, dataPtr, dataSize, valuePtr)
+}
+
+//export total_power
+func total_power(context unsafe.Pointer) int64 {
+	return totalPower(context)
+}
 
 
 type VMRes struct {
@@ -190,6 +202,11 @@ func SetWasmKeeper(wk *Keeper) {
 var accountKeeper account.AccountKeeper
 func SetAccountKeeper(ac account.AccountKeeper) {
 	accountKeeper = ac
+}
+
+var stakingKeeper keeper2.StakingKeeper
+func SetStakingKeeper(sk keeper2.StakingKeeper) {
+	stakingKeeper = sk
 }
 
 var ctx *sdk.Context
@@ -325,6 +342,8 @@ func getInstance(code []byte) (*wasmer.Instance, error) {
 
 	_, _ = imports.Append("addgas", addgas, C.addgas)
 	_, _ = imports.Append("debug_print", debug_print, C.debug_print)
+	_, _ = imports.Append("get_validator_power", get_validator_power, C.get_validator_power)
+	_, _ = imports.Append("total_power", total_power, C.total_power)
 	module, err := wasmer.Compile(code)
 	if err != nil {
 		panic(err)

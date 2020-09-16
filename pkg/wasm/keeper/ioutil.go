@@ -11,7 +11,7 @@ var gzipIdent = []byte("\x1F\x8B\x08")
 
 const maxSize = 400 * 1024
 
-func uncompress(src []byte) ([]byte, error) {
+func UnCompress(src []byte) ([]byte, error) {
 	if len(src) < 3 {
 		return src, nil
 	}

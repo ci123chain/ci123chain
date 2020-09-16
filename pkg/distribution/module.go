@@ -33,7 +33,7 @@ func (am AppModule) InitGenesis(ctx types.Context, data json.RawMessage) []abci.
 	var genesisState GenesisState
 	ModuleCdc.MustUnmarshalJSON(data, &genesisState)
 	InitGenesis(ctx, am.AccountKeeper, am.SupplyKeeper, am.DistributionKeeper, genesisState)
-	return []abci.ValidatorUpdate{}
+	return nil
 }
 
 

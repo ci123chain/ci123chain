@@ -13,6 +13,7 @@ const (
 )
 
 var (
+	Modulecdc = types.WasmCodec
 	NewKeeper = keeper.NewKeeper
 	NewHandler = keeper.NewHandler
 	NewQuerier = keeper.NewQuerier
@@ -20,4 +21,8 @@ var (
 	NewInstantiateTx = types.NewInstantiateContractTx
 	NewExecuteTx = types.NewExecuteContractTx
 	NewMigrateTx = types.NewMigrateContractTx
+)
+
+type (
+	GenesisState = types.GenesisState
 )
