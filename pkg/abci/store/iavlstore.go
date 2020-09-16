@@ -66,7 +66,7 @@ func newIAVLStore(db dbm.DB, tree *iavl.MutableTree, numRecent int64, storeEvery
 		tree:       tree,
 		numRecent:  numRecent,
 		storeEvery: storeEvery,
-		parent: 	NewBaseKVStore(dbStoreAdapter{db}, storeEvery, numRecent, key),
+		parent: 	NewBaseKVStore(dbStoreAdapter{db}, storeEvery, numRecent, key).Prefix([]byte(key.Name())).(CommitStore),
 	}
 	return st
 }
@@ -231,7 +231,6 @@ func (st *iavlStore) Query(req abci.RequestQuery) (res abci.ResponseQuery) {
 	switch req.Path {
 	case "/key": // get by key
 		key := req.Data // data holds the key bytes
-
 		res.Key = key
 		if !st.VersionExists(res.Height) {
 			res.Log = cmn.ErrorWrap(iavl.ErrVersionDoesNotExist, "").Error()

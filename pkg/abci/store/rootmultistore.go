@@ -24,7 +24,7 @@ const (
 // the CommitMultiStore interface.
 type rootMultiStore struct {
 	ldb 	     dbm.DB
-	cdb           dbm.DB
+	cdb          dbm.DB
 	lastCommitID CommitID
 	pruning      sdk.PruningStrategy
 	storesParams map[StoreKey]storeParams
@@ -344,10 +344,10 @@ func (rs *rootMultiStore) loadCommitStoreFromParams(key sdk.StoreKey, id CommitI
 	var cdb dbm.DB
 	if params.db != nil {
 		ldb = dbm.NewPrefixDB(params.db, []byte("s/_/"))
-		cdb = dbm.NewPrefixDB(params.db, []byte("s/_/"))
+		cdb = rs.cdb
 	} else {
 		ldb = dbm.NewPrefixDB(rs.ldb, []byte("s/k:"+params.key.Name()+"/"))
-		cdb = dbm.NewPrefixDB(rs.cdb, []byte("s/k:"+params.key.Name()+"/"))
+		cdb = rs.cdb
 	}
 
 	switch params.typ {
@@ -486,7 +486,7 @@ func(rs *rootMultiStore) commitStores(version int64, storeMap map[StoreKey]Commi
 	for key, store := range storeMap {
 		// Commit
 		if reflect.TypeOf(store).Elem() == reflect.TypeOf(iavlStore{}){
-			store.(*iavlStore).Parent().(*baseKVStore).BatchSet(batch)
+			store.(*iavlStore).Parent().(prefixStore).BatchSet(batch)
 		}
 		commitID := store.Commit()
 
