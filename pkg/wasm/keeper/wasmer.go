@@ -52,6 +52,7 @@ const (
 )
 
 type Param struct {
+	Method string 	`json:"method"`
 	Args   []string	`json:"args"`
 }
 
