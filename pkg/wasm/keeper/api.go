@@ -196,7 +196,7 @@ func returnContract(context unsafe.Pointer, ptr, size int32) {
 	result := memory[ptr : ptr+size]
 
 	sink := NewSink(result)
-	_, err := sink.ReadBool()
+	success, err := sink.ReadBool()
 	if err != nil {
 		panic(err)
 	}
@@ -204,8 +204,17 @@ func returnContract(context unsafe.Pointer, ptr, size int32) {
 	if err != nil {
 		panic(err)
 	}
-
-	panic(VMRes{res: msg})
+	if success {
+		panic(VMRes{
+			res: msg,
+			err: nil,
+		})
+	} else {
+		panic(VMRes{
+			res: nil,
+			err: msg,
+		})
+	}
 }
 
 func callContract(context unsafe.Pointer, addrPtr, inputPtr, inputSize int32) int32 {

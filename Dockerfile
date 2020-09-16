@@ -4,9 +4,9 @@ WORKDIR /opt/ci123chain
 
 COPY . /opt/ci123chain/
 
-RUN GOPROXY=https://goproxy.io go build -o /opt/cid-linux ./cmd/cid
-RUN GOPROXY=https://goproxy.io go build -o /opt/cli-linux ./cmd/cicli
-RUN GOPROXY=https://goproxy.io go build -o /opt/cproxy-linux ./cmd/gateway
+RUN GOPROXY=https://goproxy.cn go build -o /opt/cid-linux ./cmd/cid
+RUN GOPROXY=https://goproxy.cn go build -o /opt/cli-linux ./cmd/cicli
+RUN GOPROXY=https://goproxy.cn go build -o /opt/cproxy-linux ./cmd/gateway
 
 COPY ./docker/node/2start.sh /opt
 

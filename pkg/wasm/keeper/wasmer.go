@@ -146,7 +146,8 @@ func total_power(context unsafe.Pointer) int64 {
 
 
 type VMRes struct {
-	res []byte
+	err []byte // error  response tip
+	res []byte // success
 }
 
 var GasUsed int64
@@ -295,8 +296,13 @@ func (w *Wasmer) Call(code []byte, input []byte, method string) (res []byte, err
 			case sdk.ErrorOutOfGas:
 				panic(x)
 			case VMRes:
-				res = x.res
-				err = nil
+				if x.err == nil {
+					res = x.res
+					err = nil
+				} else {
+					res = nil
+					err = errors.New(string(x.err))
+				}
 			default:
 				err = errors.New("")
 				res = nil
@@ -304,11 +310,11 @@ func (w *Wasmer) Call(code []byte, input []byte, method string) (res []byte, err
 		}
 	}()
 
-	_, err = call()
-	if err != nil {
-		panic(err)
+	_, err2 := call()
+	if err2 != nil {
+		panic(err2)
 	}
-	return res, nil
+	return res, err
 }
 
 func getInstance(code []byte) (*wasmer.Instance, error) {
