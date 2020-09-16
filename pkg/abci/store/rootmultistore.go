@@ -3,6 +3,7 @@ package store
 import (
 	"fmt"
 	"io"
+	"reflect"
 	"strings"
 
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -23,7 +24,7 @@ const (
 // the CommitMultiStore interface.
 type rootMultiStore struct {
 	ldb 	     dbm.DB
-	cdb           dbm.DB
+	cdb          dbm.DB
 	lastCommitID CommitID
 	pruning      sdk.PruningStrategy
 	storesParams map[StoreKey]storeParams
@@ -196,7 +197,7 @@ func (rs *rootMultiStore) Commit() CommitID {
 
 	// Commit stores.
 	version := rs.lastCommitID.Version + 1
-	commitInfo := commitStores(version, rs.stores)
+	commitInfo := rs.commitStores(version, rs.stores)
 
 	// Need to update atomically.
 	batch := rs.ldb.NewBatch()
@@ -343,10 +344,10 @@ func (rs *rootMultiStore) loadCommitStoreFromParams(key sdk.StoreKey, id CommitI
 	var cdb dbm.DB
 	if params.db != nil {
 		ldb = dbm.NewPrefixDB(params.db, []byte("s/_/"))
-		cdb = dbm.NewPrefixDB(params.db, []byte("s/_/"))
+		cdb = rs.cdb
 	} else {
 		ldb = dbm.NewPrefixDB(rs.ldb, []byte("s/k:"+params.key.Name()+"/"))
-		cdb = dbm.NewPrefixDB(rs.cdb, []byte("s/k:"+params.key.Name()+"/"))
+		cdb = rs.cdb
 	}
 
 	switch params.typ {
@@ -479,11 +480,14 @@ func setLatestVersion(batch dbm.Batch, version int64) {
 }
 
 // Commits each store and returns a new commitInfo.
-func commitStores(version int64, storeMap map[StoreKey]CommitStore) commitInfo {
+func(rs *rootMultiStore) commitStores(version int64, storeMap map[StoreKey]CommitStore) commitInfo {
 	storeInfos := make([]storeInfo, 0, len(storeMap))
-
+	batch := rs.cdb.NewBatch()
 	for key, store := range storeMap {
 		// Commit
+		if reflect.TypeOf(store).Elem() == reflect.TypeOf(iavlStore{}){
+			store.(*iavlStore).Parent().(prefixStore).BatchSet(batch)
+		}
 		commitID := store.Commit()
 
 		if store.GetStoreType() == sdk.StoreTypeTransient {
@@ -497,7 +501,7 @@ func commitStores(version int64, storeMap map[StoreKey]CommitStore) commitInfo {
 		// si.Core.StoreType = store.GetStoreType()
 		storeInfos = append(storeInfos, si)
 	}
-
+	batch.Write()
 	ci := commitInfo{
 		Version:    version,
 		StoreInfos: storeInfos,
