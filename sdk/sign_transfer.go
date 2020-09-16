@@ -2,10 +2,8 @@ package sdk
 
 import (
 	"github.com/ci123chain/ci123chain/pkg/abci/types"
-	"github.com/ci123chain/ci123chain/pkg/client"
 	"github.com/ci123chain/ci123chain/pkg/client/helper"
 	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
-	"github.com/ci123chain/ci123chain/pkg/transaction"
 	"github.com/ci123chain/ci123chain/pkg/transfer"
 )
 
@@ -33,7 +31,7 @@ func Verifier(digest, signature, pubKey []byte, addr []byte) (bool, error) {
 	return sid.Verifier(digest, signature, pubKey, addr)
 }
 
-func buildTransferTx(from, to string, gas, amount uint64, isFabric bool) (transaction.Transaction, error) {
+func buildTransferTx(from, to string, gas, amount uint64, isFabric bool) (types.Msg, error) {
 	fromAddr, err := helper.StrToAddress(from)
 	if err != nil {
 		return nil, err
@@ -42,11 +40,6 @@ func buildTransferTx(from, to string, gas, amount uint64, isFabric bool) (transa
 	if err != nil {
 		return nil, err
 	}
-	ctx, err := client.NewClientContextFromViper(cdc)
-	if err != nil {
-		return nil,err
-	}
-	nonce, _, err := ctx.GetNonceByAddress(fromAddr, false)
-	tx := transfer.NewTransferTx(fromAddr, toAddr, gas, nonce, types.NewUInt64Coin(amount), isFabric)
+	tx := transfer.NewMsgTransfer(fromAddr, toAddr, types.NewUInt64Coin(amount), isFabric)
 	return tx, nil
 }

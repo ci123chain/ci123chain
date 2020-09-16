@@ -8,18 +8,18 @@ import (
 )
 
 func NewHandler(keeper *keeper.OrderKeeper) types.Handler {
-	return func(ctx types.Context, tx types.Tx) types.Result {
-		switch tx := tx.(type) {
-		case *order.UpgradeTx:
-			return handlerUpgradeTx(ctx, keeper, tx)
+	return func(ctx types.Context, msg types.Msg) types.Result {
+		switch msg := msg.(type) {
+		case *order.MsgUpgrade:
+			return handlerMsgUpgrade(ctx, keeper, msg)
 		default:
-			errMsg := "Unrecognized Tx type: " + reflect.TypeOf(tx).Name()
+			errMsg := "Unrecognized msg type: " + reflect.TypeOf(msg).Name()
 			return types.ErrUnknownRequest(errMsg).Result()
 		}
 	}
 }
 
-func handlerUpgradeTx(ctx types.Context,k *keeper.OrderKeeper, tx *order.UpgradeTx) types.Result {
+func handlerMsgUpgrade(ctx types.Context,k *keeper.OrderKeeper, msg *order.MsgUpgrade) types.Result {
 	///扩展容量交易的处理
 
 	orderbook, err := k.GetOrderBook(ctx)
@@ -29,9 +29,9 @@ func handlerUpgradeTx(ctx types.Context,k *keeper.OrderKeeper, tx *order.Upgrade
 
 	//现在是新添加一个分片
 	var action keeper.Actions
-	action.Name = tx.Name
-	action.Height = tx.Height
-	action.Type = tx.Type
+	action.Name = msg.Name
+	action.Height = msg.Height
+	action.Type = msg.Type
 
 	k.UpdateOrderBook(ctx, orderbook, &action)
 	return types.Result{}

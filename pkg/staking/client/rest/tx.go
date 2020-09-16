@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
@@ -9,11 +10,12 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/app"
 	"github.com/ci123chain/ci123chain/pkg/client"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
+	"github.com/ci123chain/ci123chain/pkg/staking"
 	"github.com/ci123chain/ci123chain/pkg/staking/types"
-	tRest "github.com/ci123chain/ci123chain/pkg/transfer/rest"
 	"github.com/ci123chain/ci123chain/pkg/util"
 	sSdk "github.com/ci123chain/ci123chain/sdk/staking"
 	"github.com/gorilla/mux"
+	"github.com/tendermint/tendermint/crypto"
 	"net/http"
 	"strconv"
 )
@@ -24,23 +26,24 @@ func RegisterRestTxRoutes(cliCtx context.Context, r *mux.Router)  {
 	r.HandleFunc("/staking/redelegate", rest.MiddleHandler(cliCtx, RedelegateTX, types.DefaultCodespace)).Methods("POST")
 	r.HandleFunc("/staking/undelegate", rest.MiddleHandler(cliCtx, UndelegateTX, types.DefaultCodespace)).Methods("POST")
 	r.HandleFunc("/staking/edit", rest.MiddleHandler(cliCtx, EditValidatorTX, types.DefaultCodespace)).Methods("POST")
-
 }
 
 var cdc = app.MakeCodec()
 
-
 func CreateValidatorRequest(cliCtx context.Context, writer http.ResponseWriter, request *http.Request) {
-
-	msd, r, mr, mcr, moniker, identity, website, securityContact, details,
-	publicKey,err := parseOtherArgs(request)
+	broadcast, err := strconv.ParseBool(request.FormValue("broadcast"))
+	if err != nil {
+		broadcast = true
+	}
+	privKey, from, nonce, gas, err := rest.GetNecessaryParams(cliCtx, request, cdc, broadcast)
 	if err != nil {
 		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
 		return
 	}
-
-	from, delegatorAddr, key, amount, gas, nonce, ok := parseBaseArgs(writer, request)
-	if !ok {
+	delegatorAddr := from
+	amount, err := strconv.ParseUint(request.FormValue("amount"), 10, 64)
+	if err != nil {
+		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
 		return
 	}
 	//verify account exists
@@ -50,14 +53,39 @@ func CreateValidatorRequest(cliCtx context.Context, writer http.ResponseWriter, 
 		return
 	}
 
+	msd, r, mr, mcr, moniker, identity, website, securityContact, details,
+	publicKey,err := parseOtherArgs(request)
+	if err != nil {
+		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
+		return
+	}
+	by, err := hex.DecodeString(publicKey)
+	if err != nil {
+		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
+		return
+	}
+	var public crypto.PubKey
+	err = cdc.UnmarshalJSON(by, &public)
+	if err != nil {
+		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
+		return
+	}
 
-	txByte, err := sSdk.SignCreateValidatorMSg(from, amount, gas, nonce, key, msd, from,
-		delegatorAddr, r, mr, mcr, moniker, identity, website, securityContact, details, publicKey)
+	coin := sdk.NewUInt64Coin(amount)
+	MSD, R, MR, MXR := sSdk.CreateParseArgs(msd, r, mr, mcr)
+	msg := staking.NewCreateValidatorMsg(from, coin, MSD, from,
+		delegatorAddr, R, MR, MXR, moniker, identity, website, securityContact, details, public)
+
+	if !broadcast {
+		rest.PostProcessResponseBare(writer, cliCtx, hex.EncodeToString(msg.Bytes()))
+		return
+	}
+
+	txByte, err := app.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
 	if err != nil {
 		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
 		return
 	}
-
 	res, err := cliCtx.BroadcastSignedTx(txByte)
 	if err != nil {
 		rest.WriteErrorRes(writer, client.ErrBroadcast(types.DefaultCodespace, err))
@@ -67,30 +95,41 @@ func CreateValidatorRequest(cliCtx context.Context, writer http.ResponseWriter, 
 }
 
 func DelegateTX(cliCtx context.Context, writer http.ResponseWriter, request *http.Request) {
-
-	isOk := tRest.CheckAccountAndBalanceFromParams(cliCtx, request, writer)
-	if !isOk {
+	broadcast, err := strconv.ParseBool(request.FormValue("broadcast"))
+	if err != nil {
+		broadcast = true
+	}
+	privKey, from, nonce, gas, err := rest.GetNecessaryParams(cliCtx, request, cdc, broadcast)
+	if err != nil {
+		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
 		return
 	}
-
-	from, delegatorAddr, key, amount, gas, nonce, ok := parseBaseArgs(writer, request)
-	if !ok {
+	delegatorAddr := from
+	validatorAddr := sdk.HexToAddress(request.FormValue("validatorAddr"))
+	amount, err := strconv.ParseUint(request.FormValue("amount"), 10, 64)
+	if err != nil {
+		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
 		return
 	}
-	validatorAddr := request.FormValue("validatorAddr")
 	//verify account exists
-	err := checkAccountExist(cliCtx, from, validatorAddr)
+	err = checkAccountExist(cliCtx, from, validatorAddr)
 	if err != nil {
 		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
 		return
 	}
 
-	txByte, err := sSdk.SignDelegateMsg(from, amount, gas, nonce, key, validatorAddr, delegatorAddr)
+	coin := sdk.NewUInt64Coin(amount)
+	msg := staking.NewDelegateMsg(from, delegatorAddr, validatorAddr, coin)
+	if !broadcast {
+		rest.PostProcessResponseBare(writer, cliCtx, hex.EncodeToString(msg.Bytes()))
+		return
+	}
+
+	txByte, err := app.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
 	if err != nil {
 		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
 		return
 	}
-
 	res, err := cliCtx.BroadcastSignedTx(txByte)
 	if err != nil {
 		rest.WriteErrorRes(writer, client.ErrBroadcast(types.DefaultCodespace, err))
@@ -100,27 +139,43 @@ func DelegateTX(cliCtx context.Context, writer http.ResponseWriter, request *htt
 }
 
 func RedelegateTX(cliCtx context.Context, writer http.ResponseWriter, request *http.Request) {
-
-	validatorSrcAddr := request.FormValue("validatorSrcAddr")
-	validatorDstAddr := request.FormValue("validatorDstAddr")
-
-	from, delegatorAddr, key, amount, gas, nonce, ok := parseBaseArgs(writer, request)
-	if !ok {
+	broadcast, err := strconv.ParseBool(request.FormValue("broadcast"))
+	if err != nil {
+		broadcast = true
+	}
+	privKey, from, nonce, gas, err := rest.GetNecessaryParams(cliCtx, request, cdc, broadcast)
+	if err != nil {
+		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
+		return
+	}
+	delegatorAddr := from
+	validatorSrcAddr := sdk.HexToAddress(request.FormValue("validatorSrcAddr"))
+	validatorDstAddr := sdk.HexToAddress(request.FormValue("validatorDstAddr"))
+	amount, err := strconv.ParseUint(request.FormValue("amount"), 10, 64)
+	if err != nil {
+		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
 		return
 	}
 	//verify account exists
-	err := checkAccountExist(cliCtx, from, validatorSrcAddr, validatorDstAddr)
+	err = checkAccountExist(cliCtx, from, validatorSrcAddr, validatorDstAddr)
 	if err != nil {
 		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
+		return
 	}
 
+	coin := sdk.NewUInt64Coin(amount)
+	msg := staking.NewRedelegateMsg(from, delegatorAddr, validatorSrcAddr, validatorDstAddr, coin)
 
-	txByte, err := sSdk.SignRedelegateMsg(from, amount, gas, nonce, key, validatorSrcAddr, validatorDstAddr, delegatorAddr)
+	if !broadcast {
+		rest.PostProcessResponseBare(writer, cliCtx, hex.EncodeToString(msg.Bytes()))
+		return
+	}
+
+	txByte, err := app.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
 	if err != nil {
 		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
 		return
 	}
-
 	res, err := cliCtx.BroadcastSignedTx(txByte)
 	if err != nil {
 		rest.WriteErrorRes(writer, client.ErrBroadcast(types.DefaultCodespace, err))
@@ -130,24 +185,41 @@ func RedelegateTX(cliCtx context.Context, writer http.ResponseWriter, request *h
 }
 
 func UndelegateTX(cliCtx context.Context, writer http.ResponseWriter, request *http.Request) {
-
-	from, delegatorAddr, key, amount, gas, nonce, ok := parseBaseArgs(writer, request)
-	if !ok {
-		return
+	broadcast, err := strconv.ParseBool(request.FormValue("broadcast"))
+	if err != nil {
+		broadcast = true
 	}
-	validatorAddr := request.FormValue("validatorAddr")
-	//verify account exists
-	err := checkAccountExist(cliCtx, from, validatorAddr)
+	privKey, from, nonce, gas, err := rest.GetNecessaryParams(cliCtx, request, cdc, broadcast)
 	if err != nil {
 		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
+		return
+	}
+	delegatorAddr := from
+	validatorAddr := sdk.HexToAddress(request.FormValue("validatorAddr"))
+	amount, err := strconv.ParseUint(request.FormValue("amount"), 10, 64)
+	if err != nil {
+		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
+		return
+	}
+	//verify account exists
+	err = checkAccountExist(cliCtx, from, validatorAddr)
+	if err != nil {
+		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
+		return
 	}
 
-	txByte, err := sSdk.SignUndelegateMsg(from, amount, gas, nonce, key, validatorAddr, delegatorAddr)
+	coin := sdk.NewUInt64Coin(amount)
+	msg := staking.NewUndelegateMsg(from, delegatorAddr, validatorAddr, coin)
+	if !broadcast {
+		rest.PostProcessResponseBare(writer, cliCtx, hex.EncodeToString(msg.Bytes()))
+		return
+	}
+
+	txByte, err := app.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
 	if err != nil {
 		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
 		return
 	}
-
 	res, err := cliCtx.BroadcastSignedTx(txByte)
 	if err != nil {
 		rest.WriteErrorRes(writer, client.ErrBroadcast(types.DefaultCodespace, err))
@@ -156,14 +228,18 @@ func UndelegateTX(cliCtx context.Context, writer http.ResponseWriter, request *h
 	rest.PostProcessResponseBare(writer, cliCtx, res)
 }
 
-
 func EditValidatorTX(cliCtx context.Context, writer http.ResponseWriter, request *http.Request) {
-	from, gas, nonce, priv, ok := parseBasicArgs(writer, request)
-	if !ok {
+	broadcast, err := strconv.ParseBool(request.FormValue("broadcast"))
+	if err != nil {
+		broadcast = true
+	}
+	privKey, from, nonce, gas, err := rest.GetNecessaryParams(cliCtx, request, cdc, broadcast)
+	if err != nil {
+		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
 		return
 	}
 	//verify account exists
-	err := checkAccountExist(cliCtx, from)
+	err = checkAccountExist(cliCtx, from)
 	if err != nil {
 		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
 		return
@@ -173,13 +249,49 @@ func EditValidatorTX(cliCtx context.Context, writer http.ResponseWriter, request
 	if !ok {
 		return
 	}
+	var nrArg *sdk.Dec
+	var minArg *sdk.Int
+	if newRate < 0 {
+		if newRate == -1 {
+			nrArg = nil
+		}else {
+			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, "newrate error"))
+			return
+		}
+	}else {
+		nr := sdk.NewDecWithPrec(newRate, 2)
+		nrArg = &nr
+	}
+	if minSelf < 0 {
+		if minSelf == -1 {
+			minArg = nil
+		}else {
+			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, "minself error"))
+			return
+		}
+	}else {
+		min := sdk.NewInt(minSelf)
+		minArg = &min
+	}
+	desc := types.Description{
+		Moniker:         moniker,
+		Identity:        identity,
+		Website:         website,
+		SecurityContact: secu,
+		Details:         details,
+	}
+	msg := staking.NewEditValidatorMsg(from, desc, nrArg, minArg)
+	if !broadcast {
+		rest.PostProcessResponseBare(writer, cliCtx, hex.EncodeToString(msg.Bytes()))
+		return
+	}
 
-	txByte, err := sSdk.SignEditValidator(from,gas, nonce, priv, moniker, identity, website, secu, details, minSelf, newRate)
+	txByte, err := app.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
 	if err != nil {
 		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
 		return
 	}
-	res, err := cliCtx.BroadcastSignedData(txByte)
+	res, err := cliCtx.BroadcastSignedTx(txByte)
 	if err != nil {
 		rest.WriteErrorRes(writer, client.ErrBroadcast(types.DefaultCodespace, err))
 		return
@@ -287,9 +399,9 @@ func checkNonce(r *http.Request, from sdk.AccAddress, cdc *codec.Codec) (uint64,
 }
 
 
-func checkAccountExist(ctx context.Context, address... string) error {
+func checkAccountExist(ctx context.Context, address... sdk.AccAddress) error {
 	for i := 0; i < len(address); i++ {
-		_,_,  err := ctx.GetNonceByAddress(sdk.HexToAddress(address[i]), false)
+		_,_,  err := ctx.GetNonceByAddress(address[i], false)
 		if err != nil {
 			return errors.New(fmt.Sprintf("account of %s does not exist", address[i]))
 		}

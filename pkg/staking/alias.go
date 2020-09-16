@@ -22,11 +22,11 @@ var (
 	KeyBondDenom = types.KeyBondDenom
 	DefaultGenesisState                = types.DefaultGenesisState
 
-	NewCreateValidatorMsg = types.NewCreateValidatorTx
-	NewEditValidatorMsg = types.NewEditValidatorTx
-	NewDelegateMsg = types.NewDelegateTx
-	NewRedelegateMsg = types.NewRedelegateTx
-	NewUndelegateMsg = types.NewUndelegateTx
+	NewCreateValidatorMsg = types.NewMsgCreateValidator
+	NewEditValidatorMsg = types.NewMsgEditValidator
+	NewDelegateMsg = types.NewMsgDelegate
+	NewRedelegateMsg = types.NewMsgRedelegate
+	NewUndelegateMsg = types.NewMsgUndelegate
 
 	NewMultiStakingHooks  = types.NewMultiStakingHooks
 )

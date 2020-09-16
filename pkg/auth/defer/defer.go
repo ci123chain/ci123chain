@@ -10,7 +10,7 @@ import (
 const Price uint64 = 1
 //const unit = 1000
 func NewDeferHandler( ak account.AccountKeeper) sdk.DeferHandler {
-	return func(ctx sdk.Context, tx sdk.Tx, out bool, used uint64) (res sdk.Result) {
+	return func(ctx sdk.Context, tx sdk.Tx, out bool) (res sdk.Result) {
 		if out {
 			return
 		}
@@ -29,11 +29,9 @@ func NewDeferHandler( ak account.AccountKeeper) sdk.DeferHandler {
 		}()
 
 		acc := ak.GetAccount(ctx, address)
-		if used != 0 {
-			gasused = used
-		} else {
-			gasused = ctx.GasMeter().GasConsumed()
-		}
+
+		gasused = ctx.GasMeter().GasConsumed()
+
 		restgas := gaswanted - gasused
 		if restgas == 0 {
 			return 

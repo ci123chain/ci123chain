@@ -6,8 +6,8 @@ import (
 	"github.com/tendermint/go-amino"
 )
 
-func RegisterCodec(cdc *amino.Codec)  {
-	cdc.RegisterConcrete(&TransferTx{}, "transfer/transfer", nil)
+func RegisterCodec(cdc *amino.Codec) {
+	cdc.RegisterConcrete(&MsgTransfer{}, "transfer/transfer", nil)
 }
 
 var transferCdc *codec.Codec

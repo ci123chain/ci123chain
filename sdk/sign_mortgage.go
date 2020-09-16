@@ -35,12 +35,7 @@ func buildMortgageTx (from, to string, amount, gas uint64, uniqueID string) (*ty
 	if err != nil {
 		return nil, err
 	}
-	ctx, err := client.NewClientContextFromViper(cdc)
-	if err != nil {
-		return nil,err
-	}
-	nonce, _, err := ctx.GetNonceByAddress(fromAddr, false)
-	mort := mortgage.NewMortgageMsg(fromAddr, toAddr, gas, nonce, types.NewUInt64Coin(amount), []byte(uniqueID))
+	mort := mortgage.NewMortgageMsg(fromAddr, toAddr, types.NewUInt64Coin(amount), []byte(uniqueID))
 	return mort, nil
 }
 
@@ -102,15 +97,6 @@ func buildMortgageCancelTx (from string, gas uint64, uniqueID string) (*types2.M
 	if err != nil {
 		return nil, err
 	}
-	if err != nil {
-		return nil, err
-	}
-	ctx, err := client.NewClientContextFromViper(cdc)
-	if err != nil {
-		return nil,err
-	}
-
-	nonce, _, err := ctx.GetNonceByAddress(fromAddr, false)
-	mort := mortgage.NewMsgMortgageCancel(fromAddr, gas, nonce, []byte(uniqueID))
+	mort := mortgage.NewMsgMortgageCancel(fromAddr, []byte(uniqueID))
 	return mort, nil
 }

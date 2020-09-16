@@ -15,7 +15,6 @@ import (
 	_defer "github.com/ci123chain/ci123chain/pkg/auth/defer"
 	"github.com/ci123chain/ci123chain/pkg/config"
 	"github.com/ci123chain/ci123chain/pkg/couchdb"
-	"github.com/ci123chain/ci123chain/pkg/db"
 	distr "github.com/ci123chain/ci123chain/pkg/distribution"
 	k "github.com/ci123chain/ci123chain/pkg/distribution/keeper"
 	"github.com/ci123chain/ci123chain/pkg/ibc"
@@ -27,7 +26,6 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/staking"
 	stakingTypes "github.com/ci123chain/ci123chain/pkg/staking/types"
 	"github.com/ci123chain/ci123chain/pkg/supply"
-	"github.com/ci123chain/ci123chain/pkg/transaction"
 	"github.com/ci123chain/ci123chain/pkg/transfer"
 	"github.com/ci123chain/ci123chain/pkg/transfer/handler"
 	"github.com/ci123chain/ci123chain/pkg/wasm"
@@ -114,7 +112,7 @@ type Chain struct {
 
 func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer) *Chain {
 	cdc := MakeCodec()
-	app := baseapp.NewBaseApp("ci123", logger, ldb, cdb, transaction.DefaultTxDecoder(cdc))
+	app := baseapp.NewBaseApp("ci123", logger, ldb, cdb, DefaultTxDecoder(cdc))
 
 	c := &Chain{
 		BaseApp: 			app,
@@ -123,9 +121,6 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 		contractStore: 		ContractStoreKey,
 		txIndexStore: 		TxIndexStoreKey,
 	}
-
-	txm := transaction.NewTxIndexMapper(c.txIndexStore)
-	sm := db.NewStateManager(c.contractStore)
 
 	// todo mainkey?
 	accKeeper := keeper.NewAccountKeeper(cdc, c.capKeyMainStore, acc_types.ProtoBaseAccount)
@@ -175,7 +170,7 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 		mint.AppModule{Keeper:mintKeeper},
 		)
 	// invoke router
-	c.Router().AddRoute(transfer.RouteKey, handler.NewHandler(txm, accKeeper, sm))
+	c.Router().AddRoute(transfer.RouteKey, handler.NewHandler(accKeeper))
 	c.Router().AddRoute(ibc.RouterKey, ibc.NewHandler(ibcKeeper))
 	c.Router().AddRoute(order.RouteKey, orhandler.NewHandler(&orderKeeper))
 	c.Router().AddRoute(staking.RouteKey, staking.NewHandler(stakingKeeper))

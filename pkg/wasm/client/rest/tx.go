@@ -1,19 +1,64 @@
 package rest
 
 import (
+	"encoding/hex"
+	"encoding/json"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
+	"github.com/ci123chain/ci123chain/pkg/app"
 	"github.com/ci123chain/ci123chain/pkg/client"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
+	"github.com/ci123chain/ci123chain/pkg/util"
+	wasm2 "github.com/ci123chain/ci123chain/pkg/wasm"
 	"github.com/ci123chain/ci123chain/pkg/wasm/types"
 	"net/http"
+	"strconv"
 )
 
 const CAN_MIGRATE string = `{"method":"canMigrate","args": [""]}`
 
-
 func instantiateContractHandler(cliCtx context.Context,w http.ResponseWriter, r *http.Request) {
-	txByte, err := buildInstantiateContractMsg(r)
+	broadcast, err := strconv.ParseBool(r.FormValue("broadcast"))
+	if err != nil {
+		broadcast = true
+	}
+	privKey, from, nonce, gas, err := rest.GetNecessaryParams(cliCtx, r, cdc, broadcast)
+	if err != nil {
+		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
+		return
+	}
+	wasmCode, err := getWasmCode(r)
+	if err != nil || wasmCode == nil {
+		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "get wasmcode failed"))
+		return
+	}
+	name, version, author, email, describe, err := adjustInstantiateParams(r)
+	if err != nil {
+		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "get params failed"))
+		return
+	}
+	var args []byte
+	args_str := r.FormValue("args")
+	if args_str == "" {
+		args = nil
+	}else {
+		var argsStr types.CallContractParam
+		ok, err := util.CheckJsonArgs(args_str, argsStr)
+		if err != nil || !ok {
+			rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "get initArgs failed"))
+			return
+		}
+		var argsByte = []byte(args_str)
+		args = argsByte
+	}
+	JsonArgs := json.RawMessage(args)
+	msg := wasm2.NewInstantiateTx(wasmCode, from, name, version, author, email, describe, JsonArgs)
+	if !broadcast {
+		rest.PostProcessResponseBare(w, cliCtx, hex.EncodeToString(msg.Bytes()))
+		return
+	}
+
+	txByte, err := app.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
 	if err != nil {
 		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
 		return
@@ -27,6 +72,16 @@ func instantiateContractHandler(cliCtx context.Context,w http.ResponseWriter, r 
 }
 
 func executeContractHandler(cliCtx context.Context,w http.ResponseWriter, r *http.Request) {
+	broadcast, err := strconv.ParseBool(r.FormValue("broadcast"))
+	if err != nil {
+		broadcast = true
+	}
+	privKey, from, nonce, gas, err := rest.GetNecessaryParams(cliCtx, r, cdc, broadcast)
+	if err != nil {
+		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
+		return
+	}
+
 	contractAddr := r.FormValue("contractAddress")
 	contractAddress := sdk.HexToAddress(contractAddr)
 	params := types.NewQueryContractInfoParams(contractAddress)
@@ -36,26 +91,56 @@ func executeContractHandler(cliCtx context.Context,w http.ResponseWriter, r *htt
 		return
 	}
 
-	res, _, _, _:= cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryContractInfo, bz, false)
-	if res == nil {
+	resQuery, _, _, _:= cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryContractInfo, bz, false)
+	if resQuery == nil {
 		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "contract does not exist or get contract error"))
 		return
 	}
+	var args []byte
+	args_str := r.FormValue("args")
+	if args_str == "" {
+		args = nil
+	}else {
+		var argsStr types.CallContractParam
+		ok, err := util.CheckJsonArgs(args_str, argsStr)
+		if err != nil || !ok {
+			rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "get initArgs failed"))
+			return
+		}
+		var argsByte = []byte(args_str)
+		args = argsByte
+	}
+	JsonArgs := json.RawMessage(args)
+	msg := types.NewMsgExecuteContract(from, contractAddress, JsonArgs)
+	if !broadcast {
+		rest.PostProcessResponseBare(w, cliCtx, hex.EncodeToString(msg.Bytes()))
+		return
+	}
 
-	txByte, err := buildExecuteContractMsg(r)
+	txByte, err := app.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
 	if err != nil {
 		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
 		return
 	}
-	resTx, err := cliCtx.BroadcastSignedTx(txByte)
+	res, err := cliCtx.BroadcastSignedTx(txByte)
 	if err != nil {
 		rest.WriteErrorRes(w, client.ErrBroadcast(types.DefaultCodespace, err))
 		return
 	}
-	rest.PostProcessResponseBare(w, cliCtx, resTx)
+	rest.PostProcessResponseBare(w, cliCtx, res)
 }
 
 func migrateContractHandler(cliCtx context.Context,w http.ResponseWriter, r *http.Request) {
+	broadcast, err := strconv.ParseBool(r.FormValue("broadcast"))
+	if err != nil {
+		broadcast = true
+	}
+	privKey, from, nonce, gas, err := rest.GetNecessaryParams(cliCtx, r, cdc, broadcast)
+	if err != nil {
+		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
+		return
+	}
+
 	sender := cliCtx.FromAddr
 	contractAddr := r.FormValue("contractAddress")
 	contractAddress := sdk.HexToAddress(contractAddr)
@@ -67,22 +152,56 @@ func migrateContractHandler(cliCtx context.Context,w http.ResponseWriter, r *htt
 		return
 	}
 
-	res, _, _, _ := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryContractState, bz, false)
+	resQuery, _, _, _ := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryContractState, bz, false)
 	var contractState types.ContractState
-	cliCtx.Cdc.MustUnmarshalJSON(res, &contractState)
+	cliCtx.Cdc.MustUnmarshalJSON(resQuery, &contractState)
 	if contractState.Result != "true" {
 		rest.WriteErrorRes(w, sdk.ErrInternal("No permissions to migrate contracts"))
 		return
 	}
-	txByte, err := buildMigrateContractMsg(r)
+
+	wasmCode, err := getWasmCode(r)
+	if err != nil || wasmCode == nil {
+		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "get wasmcode failed"))
+		return
+	}
+	name, version, author, email, describe, err := adjustInstantiateParams(r)
+	if err != nil {
+		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "get params failed"))
+		return
+	}
+
+	var args []byte
+	args_str := r.FormValue("args")
+	if args_str == "" {
+		args = nil
+	}else {
+		var argsStr types.CallContractParam
+		ok, err := util.CheckJsonArgs(args_str, argsStr)
+		if err != nil || !ok {
+			rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "get initArgs failed"))
+			return
+		}
+		var argsByte = []byte(args_str)
+		args = argsByte
+	}
+	JsonArgs := json.RawMessage(args)
+
+	msg := types.NewMsgMigrateContract(wasmCode, from, name, version, author, email, describe, contractAddress, JsonArgs)
+	if !broadcast {
+		rest.PostProcessResponseBare(w, cliCtx, hex.EncodeToString(msg.Bytes()))
+		return
+	}
+
+	txByte, err := app.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
 	if err != nil {
 		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
 		return
 	}
-	resTx, err := cliCtx.BroadcastSignedTx(txByte)
+	res, err := cliCtx.BroadcastSignedTx(txByte)
 	if err != nil {
 		rest.WriteErrorRes(w, client.ErrBroadcast(types.DefaultCodespace, err))
 		return
 	}
-	rest.PostProcessResponseBare(w, cliCtx, resTx)
+	rest.PostProcessResponseBare(w, cliCtx, res)
 }

@@ -18,11 +18,12 @@ var (
 	NewHandler = keeper.NewHandler
 	NewQuerier = keeper.NewQuerier
 
-	NewInstantiateTx = types.NewInstantiateContractTx
-	NewExecuteTx = types.NewExecuteContractTx
-	NewMigrateTx = types.NewMigrateContractTx
+	NewInstantiateTx = types.NewMsgInstantiateContract
+	NewExecuteTx = types.NewMsgExecuteContract
+	NewMigrateTx = types.NewMsgMigrateContract
 )
 
 type (
 	GenesisState = types.GenesisState
+
 )

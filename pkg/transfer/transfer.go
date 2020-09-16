@@ -3,109 +3,61 @@ package transfer
 import (
 	"errors"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	"github.com/ci123chain/ci123chain/pkg/client/helper"
-	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
-	"github.com/ci123chain/ci123chain/pkg/transaction"
 	"github.com/ci123chain/ci123chain/pkg/transfer/types"
 	"github.com/ci123chain/ci123chain/pkg/util"
 )
 
 const RouteKey = "Transfer"
 
-func NewTransferTx(from, to sdk.AccAddress, gas, nonce uint64, amount sdk.Coin, isFabric bool ) transaction.Transaction {
-	tx := &TransferTx{
-		CommonTx: transaction.CommonTx{
-			From: from,
-			Gas:  gas,
-			Nonce:nonce,
-		},
-		To: 		to,
-		Amount: 	amount,
-		FabricMode: isFabric,
+type MsgTransfer struct {
+	FromAddress sdk.AccAddress  `json:"from"`
+	To     		sdk.AccAddress  `json:"to"`
+	Amount 		sdk.Coin        `json:"amount"`
+	FabricMode 	bool         	`json:"fabric_mode"`
+	Signature 	[]byte   		`json:"signature"`
+	PubKey 	    []byte			`json:"pub_key"`
+}
+
+func NewMsgTransfer(from, to sdk.AccAddress, amount sdk.Coin, isFabric bool ) *MsgTransfer {
+	msg := &MsgTransfer{
+		FromAddress: 	from,
+		To: 			to,
+		Amount: 		amount,
+		FabricMode: 	isFabric,
 	}
-	return tx
+	return msg
 }
 
-func SignTransferTx(from string, to string, amount, gas, nonce uint64, priv []byte) ([]byte, error) {
-	fromAddr, err := helper.StrToAddress(from)
-	if err != nil {
-		return nil, err
-	}
-	toAddr, err := helper.StrToAddress(to)
-	if err != nil {
-		return nil, err
-	}
-	tx := NewTransferTx(fromAddr, toAddr, gas, nonce, sdk.NewUInt64Coin(amount), true)
-	sid := cryptosuit.NewFabSignIdentity()
-	pub, err  := sid.GetPubKey(priv)
-
-	tx.SetPubKey(pub)
-	signbyte := tx.GetSignBytes()
-	signature, err := sid.Sign(signbyte, priv)
-	tx.SetSignature(signature)
-	return tx.Bytes(), nil
+func (msg *MsgTransfer) SetSignature(sig []byte) {
+	msg.Signature = sig
 }
 
-
-type TransferTx struct {
-	transaction.CommonTx
-	To     sdk.AccAddress   	`json:"to"`
-	Amount sdk.Coin         	`json:"amount"`
-	FabricMode bool         	`json:"fabric_mode"`
+func (msg *MsgTransfer) GetSignature() []byte{
+	return msg.Signature
 }
 
-//func DecodeTransferTx(b []byte) (*TransferTx, error) {
-//	var transfer TransferTx
-//	err := transferCdc.UnmarshalBinaryLengthPrefixed(b, &transfer)
-//	if err != nil {
-//		return nil, err
-//	}
-//	return &transfer, nil
-//
-//	//tx := new(TransferTx)
-//	//return tx, rlp.DecodeBytes(b, tx)
-//}
-
-func (tx *TransferTx) SetPubKey(pub []byte) {
-	tx.CommonTx.PubKey = pub
-}
-
-func (tx *TransferTx) SetSignature(sig []byte) {
-	tx.CommonTx.SetSignature(sig)
-}
-
-func (tx *TransferTx) GetSignature() []byte{
-	return tx.CommonTx.GetSignature()
-}
-
-
-func (tx *TransferTx) ValidateBasic() sdk.Error {
-	if err := tx.CommonTx.ValidateBasic(); err != nil {
-		return err
-	}
-	if tx.Amount.IsEqual(sdk.NewCoin(sdk.NewInt(0)))  {
+func (msg *MsgTransfer) ValidateBasic() sdk.Error {
+	if msg.Amount.IsEqual(sdk.NewCoin(sdk.NewInt(0)))  {
 		return types.ErrBadAmount(types.DefaultCodespace, errors.New("amount = 0"))
 	}
-	if transaction.EmptyAddr(tx.To) {
+	if msg.To.Empty() {
 		return types.ErrBadReceiver(types.DefaultCodespace, errors.New("empty to address"))
 	}
 	return nil
-	//return tx.VerifySignature(tx.GetSignBytes(), tx.FabricMode)
 }
 
-func (tx *TransferTx) Route() string {
-	return RouteKey
-}
+func (msg *MsgTransfer) Route() string { return RouteKey }
 
-func (tx *TransferTx) GetSignBytes() []byte {
-	ntx := *tx
+func (msg *MsgTransfer) MsgType() string { return "transfer"}
+
+func (msg *MsgTransfer) GetSignBytes() []byte {
+	ntx := *msg
 	ntx.SetSignature(nil)
 	return util.TxHash(ntx.Bytes())
 }
 
-func (tx *TransferTx) Bytes() []byte {
-
-	bytes, err := transferCdc.MarshalBinaryLengthPrefixed(tx)
+func (msg *MsgTransfer) Bytes() []byte {
+	bytes, err := transferCdc.MarshalBinaryLengthPrefixed(msg)
 	if err != nil {
 		panic(err)
 	}
@@ -113,14 +65,10 @@ func (tx *TransferTx) Bytes() []byte {
 	return bytes
 }
 
-func (tx *TransferTx) GetGas() uint64 {
-	return tx.Gas
+func (msg *MsgTransfer) GetFromAddress() sdk.AccAddress {
+	return msg.FromAddress
 }
 
-func (tx *TransferTx) GetNonce() uint64 {
-	return tx.Nonce
-}
-
-func (tx *TransferTx) GetFromAddress() sdk.AccAddress {
-	return tx.From
+func (msg *MsgTransfer) SetPubKey(pub []byte) {
+	msg.PubKey = pub
 }

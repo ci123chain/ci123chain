@@ -33,6 +33,7 @@ func MakeCodec() *codec.Codec {
 	cdc := amino.NewCodec()
 	//cdc.RegisterInterface((*crypto.PubKey)(nil), nil)
 	//cdc.RegisterInterface((*crypto.PrivKey)(nil), nil)
+	cdc.RegisterConcrete(&CommonTx{}, "transfer/commontx", nil)
 	sdk.RegisterCodec(cdc)
 	transaction.RegisterCodec(cdc)
 	transfer.RegisterCodec(cdc)

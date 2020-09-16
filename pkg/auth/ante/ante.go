@@ -18,30 +18,21 @@ const Price uint64 = 1
 func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, sk supply.Keeper) sdk.AnteHandler {
 	return func(ctx sdk.Context, tx sdk.Tx, simulate bool) (newCtx sdk.Context, res sdk.Result, abort bool) {
 
-		stdTx, ok := tx.(transaction.Transaction)
-		if !ok {
-			// Set a gas meter with limit 0 as to prevent an infinite gas meter attack
-			// during runTx.
-			newCtx = SetGasMeter(simulate, ctx, 0)
-			return newCtx, transaction.ErrInvalidTx(types.DefaultCodespace, "tx must be StdTx").Result(), true
-		}
-
 		// check sign
 		eth := cryptosuit.NewETHSignIdentity()
-		valid, err := eth.Verifier(stdTx.GetSignBytes(), stdTx.GetSignature(), nil, stdTx.GetFromAddress().Bytes())
+		valid, err := eth.Verifier(tx.GetSignBytes(), tx.GetSignature(), nil, tx.GetFromAddress().Bytes())
 		if !valid || err != nil {
 			return newCtx, transaction.ErrInvalidTx(types.DefaultCodespace, "tx signature invalid").Result(), true
 		}
 
-
-		address := stdTx.GetFromAddress()
+		address := tx.GetFromAddress()
 		acc := ak.GetAccount(ctx, address)
 		if acc == nil {
 			newCtx := ctx.WithGasMeter(sdk.NewGasMeter(0))
 			return newCtx, transaction.ErrInvalidTx(types.DefaultCodespace, "Invalid account").Result(), true
 		}
 		accountSequence := acc.GetSequence()
-		txNonce := stdTx.GetNonce()
+		txNonce := tx.GetNonce()
 		if txNonce != accountSequence {
 			newCtx := ctx.WithGasMeter(sdk.NewGasMeter(0))
 			return newCtx, transaction.ErrInvalidTx(types.DefaultCodespace, "Unexpected nonce ").Result(), true
@@ -57,7 +48,7 @@ func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, sk su
 				return newCtx, res, true
 			}
 		}
-		gas := stdTx.GetGas()//用户期望的gas值 g.limit
+		gas := tx.GetGas()//用户期望的gas值 g.limit
 		//检查是否足够支付gas limit, 并预先扣除
 		if acc.GetCoin().Amount.Uint64() < gas {
 			return newCtx, sdk.ErrInsufficientCoins("Can't pay enough gasLimit").Result(),true
@@ -98,9 +89,6 @@ func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, sk su
 		newCtx.GasMeter().ConsumeGas(params.TxSizeCostPerByte*sdk.Gas(len(newCtx.TxBytes())), "txSize")
 		fee := newCtx.GasMeter().GasConsumed() * gasPrice
 		getFee := sdk.NewUInt64Coin(fee)
-
-		fmt.Println("-------- consume gas by txSize ----------")
-		fmt.Println(newCtx.GasMeter().GasConsumed())
 
 		//存储奖励金到feeCollector Module账户
 		feeCollectorModuleAccount := sk.GetModuleAccount(ctx, auth.FeeCollectorName)

@@ -27,18 +27,18 @@ var (
 	proxy = "lb"
 )
 
-func TestSignAddShardMsg(t *testing.T) {
+func TestSignUpgradeMsg(t *testing.T) {
 
-	signdata, err := SignAddShardMsg(from, offlineGas, offlineNonce, ty, name, offlineHeight, priv)
+	signdata, err := SignUpgradeMsg(ty, name, offlineHeight, priv)
 	if err != nil {
 		panic(err)
 	}
 
 	assert.NoError(t, err)
-	httpSignAddShardMsg(hex.EncodeToString(signdata))
+	httpSignUpgradeMsg(hex.EncodeToString(signdata))
 }
 
-func httpSignAddShardMsg(param string) {
+func httpSignUpgradeMsg(param string) {
 
 	cli := &http.Client{}
 	data := url.Values{}

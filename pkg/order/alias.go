@@ -11,7 +11,7 @@ var (
 	NewKeeper  				= keeper.NewOrderKeeper
 	RegisterTxRoutes 		= rest.RegisterTxRoutes
 	ErrQueryTx				= types.ErrQueryTx
-	NewAddShardTx           = types.NewUpgradeTx
+	NewMsgUpgrade           = types.NewMsgUpgrade
 	StoreKey				= types.StoreKey
 )
 

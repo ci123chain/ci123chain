@@ -199,11 +199,12 @@ func getHeight(tree *iavl.MutableTree, req abci.RequestQuery) int64 {
 	height := req.Height
 	if height == 0 {
 		latest := tree.Version()
-		if tree.VersionExists(latest - 1) {
-			height = latest - 1
-		} else {
-			height = latest
-		}
+		//if tree.VersionExists(latest - 1) {
+		//	height = latest - 1
+		//} else {
+		//	height = latest
+		//}
+		height = latest
 	}
 	return height
 }

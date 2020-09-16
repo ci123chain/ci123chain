@@ -4,7 +4,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	"github.com/ci123chain/ci123chain/pkg/client/helper"
 	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
 	"github.com/ci123chain/ci123chain/pkg/transfer"
 	"io/ioutil"
@@ -14,22 +13,14 @@ import (
 )
 
 //off line
-func SignTransferMsg(from, to string, amount, gas, nonce uint64, priv string, isfabric bool) ([]byte, error) {
+func SignMsgTransfer(from, to sdk.AccAddress, amount uint64, priv string, isfabric bool) (sdk.Msg, error) {
 
 	var signature []byte
-	fromAddr, err := helper.StrToAddress(from)
-	if err != nil {
-		return nil, err
-	}
-	toAddr, err := helper.StrToAddress(to)
-	if err != nil {
-		return nil, err
-	}
 	privPub, err := hex.DecodeString(priv)
 	if err != nil {
 		return nil, err
 	}
-	tx := transfer.NewTransferTx(fromAddr, toAddr, gas, nonce, sdk.NewUInt64Coin(amount), isfabric)
+	msg := transfer.NewMsgTransfer(from, to, sdk.NewUInt64Coin(amount), isfabric)
 
 	if isfabric {
 		fab := cryptosuit.NewFabSignIdentity()
@@ -37,20 +28,20 @@ func SignTransferMsg(from, to string, amount, gas, nonce uint64, priv string, is
 		if err != nil {
 			return nil, err
 		}
-		tx.SetPubKey(pubkey)
-		signature, err = fab.Sign(tx.GetSignBytes(), privPub)
+		msg.SetPubKey(pubkey)
+		signature, err = fab.Sign(msg.GetSignBytes(), privPub)
 		if err != nil {
 			return nil, err
 		}
 	} else {
 		eth := cryptosuit.NewETHSignIdentity()
-		signature, err = eth.Sign(tx.GetSignBytes(), privPub)
+		signature, err = eth.Sign(msg.GetSignBytes(), privPub)
 		if err != nil {
 			return nil, err
 		}
 	}
-	tx.SetSignature(signature)
-	return tx.Bytes(), nil
+	msg.SetSignature(signature)
+	return msg, nil
 }
 
 //on line

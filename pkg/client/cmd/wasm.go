@@ -65,7 +65,7 @@ func initContract() error {
 	if err != nil {
 		return  err
 	}
-	from, gas, nonce, key, args, err := GetArgs(ctx)
+	from, _, _, key, args, err := GetArgs(ctx)
 	if err != nil {
 		return err
 	}
@@ -84,8 +84,8 @@ func initContract() error {
 	email := viper.GetString(helper.FlagEmail)
 	describe := viper.GetString(helper.FlagDescribe)
 
-	txByte, err := sdk.SignInstantiateContractMsg(code, from, gas, nonce, key, from, name, version, author, email, describe, args)
-	txid, err := ctx.BroadcastSignedData(txByte)
+	tx, err := sdk.SignInstantiateContractMsg(code, from, key, name, version, author, email, describe, args)
+	txid, err := ctx.BroadcastSignedData(tx.Bytes())
 	if err != nil {
 		return err
 	}
@@ -98,15 +98,15 @@ func executeContract() error {
 	if err != nil {
 		return  err
 	}
-	from, gas, nonce, key, args, err := GetArgs(ctx)
+	from, _, _, key, args, err := GetArgs(ctx)
 	if err != nil {
 		return err
 	}
 	contractAddr := viper.GetString(helper.FlagContractAddress)
 	addrs := types.HexToAddress(contractAddr)
 	contractAddress := addrs
-	txByte, err := sdk.SignExecuteContractMsg(from, gas, nonce, key, from, contractAddress, args)
-	txid, err := ctx.BroadcastSignedData(txByte)
+	tx, err := sdk.SignExecuteContractMsg(from, key, contractAddress, args)
+	txid, err := ctx.BroadcastSignedData(tx.Bytes())
 	if err != nil {
 		return err
 	}
@@ -119,7 +119,7 @@ func migrateContract() error {
 	if err != nil {
 		return  err
 	}
-	from, gas, nonce, key, args, err := GetArgs(ctx)
+	from, _, _, key, args, err := GetArgs(ctx)
 	if err != nil {
 		return err
 	}
@@ -139,8 +139,8 @@ func migrateContract() error {
 	describe := viper.GetString(helper.FlagDescribe)
 	contract := viper.GetString(helper.FlagContractAddress)
 	contractAddr := types.HexToAddress(contract)
-	txByte, err := sdk.SignMigrateContractMsg(code, from, gas, nonce, key, from, name, version, author, email, describe, contractAddr, args)
-	txid, err := ctx.BroadcastSignedData(txByte)
+	tx, err := sdk.SignMigrateContractMsg(code, from, key, name, version, author, email, describe, contractAddr, args)
+	txid, err := ctx.BroadcastSignedData(tx.Bytes())
 	if err != nil {
 		return err
 	}
@@ -172,7 +172,7 @@ func GetArgs(ctx context.Context) (types.AccAddress, uint64, uint64, string, jso
 	}else {
 		var params wasm.CallContractParam
 		argsByte := []byte(Msg)
-		err := json.Unmarshal(argsByte, params)
+		err := json.Unmarshal(argsByte, &params)
 		if err != nil {
 			return types.AccAddress{}, 0, 0, "", nil, errors.New("unexpected args")
 		}

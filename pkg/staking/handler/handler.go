@@ -12,38 +12,38 @@ import (
 )
 
 func NewHandler(k keeper.StakingKeeper) sdk.Handler {
-	return func(ctx sdk.Context, tx sdk.Tx) sdk.Result {
+	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		//ctx = ctx.WithEventManager(sdk.NewEventManager())
 
-		switch tx := tx.(type) {
-		case *staking.CreateValidatorTx:
-			return handleCreateValidatorTx(ctx, k, *tx)
-		case *staking.EditValidatorTx:
-			return handleEditValidatorTx(ctx, k, *tx)
-		case *staking.DelegateTx:
-			return handleDelegateTx(ctx, k, *tx)
-		case *staking.RedelegateTx:
-			return handleRedelegateTx(ctx, k, *tx)
-		case *staking.UndelegateTx:
-			return handleUndelegateTx(ctx, k, *tx)
+		switch msg := msg.(type) {
+		case *staking.MsgCreateValidator:
+			return handleMsgCreateValidator(ctx, k, *msg)
+		case *staking.MsgEditValidator:
+			return handleMsgEditValidator(ctx, k, *msg)
+		case *staking.MsgDelegate:
+			return handleMsgDelegate(ctx, k, *msg)
+		case *staking.MsgRedelegate:
+			return handleMsgRedelegate(ctx, k, *msg)
+		case *staking.MsgUndelegate:
+			return handleMsgUndelegate(ctx, k, *msg)
 		default:
-			errMsg := fmt.Sprintf("unrecognized supply message type: %T", tx)
+			errMsg := fmt.Sprintf("unrecognized supply message type: %T", msg)
 			return sdk.ErrUnknownRequest(errMsg).Result()
 		}
 	}
 }
 
-func handleCreateValidatorTx(ctx sdk.Context, k keeper.StakingKeeper, tx staking.CreateValidatorTx) sdk.Result {
-	if _, found := k.GetValidator(ctx, tx.ValidatorAddress); found {
-		return types.ErrValidatorExisted(types.DefaultCodespace, errors.New(fmt.Sprintf("validator %s has existed", tx.ValidatorAddress.String()))).Result()
+func handleMsgCreateValidator(ctx sdk.Context, k keeper.StakingKeeper, msg staking.MsgCreateValidator) sdk.Result {
+	if _, found := k.GetValidator(ctx, msg.ValidatorAddress); found {
+		return types.ErrValidatorExisted(types.DefaultCodespace, errors.New(fmt.Sprintf("validator %s has existed", msg.ValidatorAddress.String()))).Result()
 	}
-	pk := tx.PublicKey
+	pk := msg.PublicKey
 
 	if _, found := k.GetValidatorByConsAddr(ctx, sdk.GetConsAddress(pk)); found {
 		return types.ErrValidatorExisted(types.DefaultCodespace, errors.New(fmt.Sprintf("the pubKey has been bonded"))).Result()
 	}
 
-	if _, err := tx.Description.EnsureLength(); err != nil {
+	if _, err := msg.Description.EnsureLength(); err != nil {
 		return types.ErrDescriptionOutOfLength(types.DefaultCodespace, err).Result()
 	}
 
@@ -57,18 +57,18 @@ func handleCreateValidatorTx(ctx sdk.Context, k keeper.StakingKeeper, tx staking
 		}*/
 	//}
 
-	validator, err := staking.NewValidator(tx.ValidatorAddress, tx.PublicKey, tx.Description)
+	validator, err := staking.NewValidator(msg.ValidatorAddress, msg.PublicKey, msg.Description)
 	if err != nil {
 		return types.ErrSetValidatorFailed(types.DefaultCodespace, err).Result()
 	}
-	commission := staking.NewCommissionWithTime(tx.Commission.Rate,
-		tx.Commission.MaxRate, tx.Commission.MaxChangeRate, ctx.BlockHeader().Time)
+	commission := staking.NewCommissionWithTime(msg.Commission.Rate,
+		msg.Commission.MaxRate, msg.Commission.MaxChangeRate, ctx.BlockHeader().Time)
 
 	validator, err = validator.SetInitialCommission(commission)
 	if err != nil {
 		return types.ErrSetCommissionFailed(types.DefaultCodespace, err).Result()
 	}
-	validator.MinSelfDelegation = tx.MinSelfDelegation
+	validator.MinSelfDelegation = msg.MinSelfDelegation
 
 	err = k.SetValidator(ctx, validator)
 	if err != nil {
@@ -79,7 +79,7 @@ func handleCreateValidatorTx(ctx sdk.Context, k keeper.StakingKeeper, tx staking
 
 	k.AfterValidatorCreated(ctx, validator.OperatorAddress)
 
-	_, err = k.Delegate(ctx, tx.DelegatorAddress, tx.Value.Amount, sdk.Unbonded, validator, true)
+	_, err = k.Delegate(ctx, msg.DelegatorAddress, msg.Value.Amount, sdk.Unbonded, validator, true)
 	if err != nil {
 		return types.ErrDelegateFailed(types.DefaultCodespace, err).Result()
 	}
@@ -87,26 +87,26 @@ func handleCreateValidatorTx(ctx sdk.Context, k keeper.StakingKeeper, tx staking
 	em := sdk.NewEventManager()
 	em.EmitEvents(sdk.Events{
 		sdk.NewEvent(types.EventTypeCreateValidator,
-			sdk.NewAttribute(types.AttributeKeyValidator, tx.ValidatorAddress.String()),
-			sdk.NewAttribute(sdk.AttributeKeyAmount, tx.Value.Amount.String()),
+			sdk.NewAttribute(types.AttributeKeyValidator, msg.ValidatorAddress.String()),
+			sdk.NewAttribute(sdk.AttributeKeyAmount, msg.Value.Amount.String()),
 		),
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(sdk.AttributeKeySender, tx.DelegatorAddress.String()),
+			sdk.NewAttribute(sdk.AttributeKeySender, msg.DelegatorAddress.String()),
 			),
 	})
 
 	return sdk.Result{Events: em.Events()}
 }
 
-func handleEditValidatorTx(ctx sdk.Context, k keeper.StakingKeeper, tx staking.EditValidatorTx) sdk.Result {
+func handleMsgEditValidator(ctx sdk.Context, k keeper.StakingKeeper, msg staking.MsgEditValidator) sdk.Result {
 
-	validator, found := k.GetValidator(ctx, tx.ValidatorAddress)
+	validator, found := k.GetValidator(ctx, msg.ValidatorAddress)
 	if !found {
 		return types.ErrNoExpectedValidator(types.DefaultCodespace, errors.New(fmt.Sprintf("%s not found", validator.OperatorAddress.String()))).Result()
 	}
-	description, err := validator.Description.UpdateDescription(tx.Description)
+	description, err := validator.Description.UpdateDescription(msg.Description)
 	if err != nil {
 		return types.ErrCheckParams(types.DefaultCodespace, err.Error()).Result()
 	}
@@ -114,24 +114,24 @@ func handleEditValidatorTx(ctx sdk.Context, k keeper.StakingKeeper, tx staking.E
 	validator.Description = description
 
 	//if commissionRate == nil, no change.
-	if tx.CommissionRate != nil {
-		commission, err := k.UpdateValidatorCommission(ctx, validator, *tx.CommissionRate)
+	if msg.CommissionRate != nil {
+		commission, err := k.UpdateValidatorCommission(ctx, validator, *msg.CommissionRate)
 		if err != nil {
 			return types.ErrCheckParams(types.DefaultCodespace, err.Error()).Result()
 		}
 
-		k.BeforeValidatorModified(ctx, tx.ValidatorAddress)
+		k.BeforeValidatorModified(ctx, msg.ValidatorAddress)
 		validator.Commission = commission
 	}
 	//if minSelfDelegation == nil, no change.
-	if tx.MinSelfDelegation != nil {
-		if !tx.MinSelfDelegation.GT(validator.MinSelfDelegation) {
+	if msg.MinSelfDelegation != nil {
+		if !msg.MinSelfDelegation.GT(validator.MinSelfDelegation) {
 			return types.ErrCheckParams(types.DefaultCodespace, fmt.Sprintf("new minSelfDelegation should be greater than before: %s", validator.MinSelfDelegation.String())).Result()
 		}
-		if tx.MinSelfDelegation.GT(validator.Tokens) {
+		if msg.MinSelfDelegation.GT(validator.Tokens) {
 			return types.ErrCheckParams(types.DefaultCodespace, fmt.Sprintf("new minSelfDelegation can not be greater than tokens that you hold on")).Result()
 		}
-		validator.MinSelfDelegation = *tx.MinSelfDelegation
+		validator.MinSelfDelegation = *msg.MinSelfDelegation
 	}
 	err = k.SetValidator(ctx, validator)
 	if err != nil {
@@ -147,53 +147,53 @@ func handleEditValidatorTx(ctx sdk.Context, k keeper.StakingKeeper, tx staking.E
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(sdk.AttributeKeySender, tx.ValidatorAddress.String()),
+			sdk.NewAttribute(sdk.AttributeKeySender, msg.ValidatorAddress.String()),
 		),
 	})
 
 	return sdk.Result{Events: em.Events()}
 }
 
-func handleDelegateTx(ctx sdk.Context, k keeper.StakingKeeper, tx staking.DelegateTx) sdk.Result {
+func handleMsgDelegate(ctx sdk.Context, k keeper.StakingKeeper, msg staking.MsgDelegate) sdk.Result {
 	//
-	validator, found := k.GetValidator(ctx, tx.ValidatorAddress)
+	validator, found := k.GetValidator(ctx, msg.ValidatorAddress)
 	if !found {
 		return types.ErrNoExpectedValidator(types.DefaultCodespace, nil).Result()
 	}
 	denom := k.BondDenom(ctx)
-	if tx.Amount.Denom != denom {
+	if msg.Amount.Denom != denom {
 		return types.ErrBondedDenomDiff(types.DefaultCodespace, nil).Result()
 	}
-	_, err := k.Delegate(ctx, tx.DelegatorAddress, tx.Amount.Amount, sdk.Unbonded, validator, true)
+	_, err := k.Delegate(ctx, msg.DelegatorAddress, msg.Amount.Amount, sdk.Unbonded, validator, true)
 	if err != nil {
 		return types.ErrDelegateFailed(types.ModuleName, err).Result()
 	}
 	em := sdk.NewEventManager()
 	em.EmitEvents(sdk.Events{
 		sdk.NewEvent(types.EventTypeDelegate,
-			sdk.NewAttribute(types.AttributeKeyValidator, tx.ValidatorAddress.String()),
-			sdk.NewAttribute(sdk.AttributeKeyAmount, tx.Amount.Amount.String()),
+			sdk.NewAttribute(types.AttributeKeyValidator, msg.ValidatorAddress.String()),
+			sdk.NewAttribute(sdk.AttributeKeyAmount, msg.Amount.Amount.String()),
 			),
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(sdk.AttributeKeySender, tx.DelegatorAddress.String()),
+			sdk.NewAttribute(sdk.AttributeKeySender, msg.DelegatorAddress.String()),
 			),
 	})
 
 	return sdk.Result{Events: em.Events()}
 }
 
-func handleRedelegateTx(ctx sdk.Context, k keeper.StakingKeeper, tx staking.RedelegateTx) sdk.Result {
-	shares, err := k.ValidateUnbondAmount(ctx, tx.DelegatorAddress, tx.ValidatorSrcAddress, tx.Amount.Amount)
+func handleMsgRedelegate(ctx sdk.Context, k keeper.StakingKeeper, msg staking.MsgRedelegate) sdk.Result {
+	shares, err := k.ValidateUnbondAmount(ctx, msg.DelegatorAddress, msg.ValidatorSrcAddress, msg.Amount.Amount)
 	if err != nil {
 		return types.ErrValidateUnBondAmountFailed(types.DefaultCodespace, err).Result()
 	}
-	if tx.Amount.Denom != k.BondDenom(ctx) {
+	if msg.Amount.Denom != k.BondDenom(ctx) {
 		return types.ErrBondedDenomDiff(types.ModuleName, nil).Result()
 	}
 
-	completionTime, err := k.Redelegate(ctx, tx.DelegatorAddress, tx.ValidatorSrcAddress, tx.ValidatorDstAddress, shares)
+	completionTime, err := k.Redelegate(ctx, msg.DelegatorAddress, msg.ValidatorSrcAddress, msg.ValidatorDstAddress, shares)
 	if err != nil {
 		return types.ErrRedelegationFailed(types.ModuleName, err).Result()
 	}
@@ -209,31 +209,31 @@ func handleRedelegateTx(ctx sdk.Context, k keeper.StakingKeeper, tx staking.Rede
 	em.EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventTypeRedelegate,
-			sdk.NewAttribute(types.AttributeKeySrcValidator, tx.ValidatorSrcAddress.String()),
-			sdk.NewAttribute(types.AttributeKeyDstValidator, tx.ValidatorDstAddress.String()),
-			sdk.NewAttribute(sdk.AttributeKeyAmount, tx.Amount.Amount.String()),
+			sdk.NewAttribute(types.AttributeKeySrcValidator, msg.ValidatorSrcAddress.String()),
+			sdk.NewAttribute(types.AttributeKeyDstValidator, msg.ValidatorDstAddress.String()),
+			sdk.NewAttribute(sdk.AttributeKeyAmount, msg.Amount.Amount.String()),
 			sdk.NewAttribute(types.AttributeKeyCompletionTime, completionTime.Format(time.RFC3339)),
 			),
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(sdk.AttributeKeySender, tx.DelegatorAddress.String()),
+			sdk.NewAttribute(sdk.AttributeKeySender, msg.DelegatorAddress.String()),
 			),
 	})
 
 	return sdk.Result{Data: completionTimeBz, Events: em.Events()}
 }
 
-func handleUndelegateTx(ctx sdk.Context, k keeper.StakingKeeper, tx staking.UndelegateTx) sdk.Result {
+func handleMsgUndelegate(ctx sdk.Context, k keeper.StakingKeeper, msg staking.MsgUndelegate) sdk.Result {
 	//
-	shares, err := k.ValidateUnbondAmount(ctx, tx.DelegatorAddress, tx.ValidatorAddress, tx.Amount.Amount)
+	shares, err := k.ValidateUnbondAmount(ctx, msg.DelegatorAddress, msg.ValidatorAddress, msg.Amount.Amount)
 	if err != nil {
 		return types.ErrValidateUnBondAmountFailed(types.DefaultCodespace, err).Result()
 	}
-	if tx.Amount.Denom != k.BondDenom(ctx) {
+	if msg.Amount.Denom != k.BondDenom(ctx) {
 		return types.ErrBondedDenomDiff(types.ModuleName, nil).Result()
 	}
-	completionTime, err := k.Undelegate(ctx, tx.DelegatorAddress, tx.ValidatorAddress, shares)
+	completionTime, err := k.Undelegate(ctx, msg.DelegatorAddress, msg.ValidatorAddress, shares)
 	if err != nil {
 		//
 		return types.ErrUndelegateFailed(types.DefaultCodespace, err).Result()
@@ -247,14 +247,14 @@ func handleUndelegateTx(ctx sdk.Context, k keeper.StakingKeeper, tx staking.Unde
 	em.EmitEvents(
 		sdk.Events{
 			sdk.NewEvent(types.EventTypeUnbond,
-				sdk.NewAttribute(types.AttributeKeyValidator, tx.ValidatorAddress.String()),
-				sdk.NewAttribute(sdk.AttributeKeyAmount, tx.Amount.Amount.String()),
+				sdk.NewAttribute(types.AttributeKeyValidator, msg.ValidatorAddress.String()),
+				sdk.NewAttribute(sdk.AttributeKeyAmount, msg.Amount.Amount.String()),
 				sdk.NewAttribute(types.AttributeKeyCompletionTime, completionTime.Format(time.RFC3339)),
 		),
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(sdk.AttributeKeySender, tx.DelegatorAddress.String()),
+			sdk.NewAttribute(sdk.AttributeKeySender, msg.DelegatorAddress.String()),
 			),
 		})
 

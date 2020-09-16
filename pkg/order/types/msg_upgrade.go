@@ -3,36 +3,42 @@ package types
 import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/order/keeper"
-	"github.com/ci123chain/ci123chain/pkg/transaction"
 	"github.com/ci123chain/ci123chain/pkg/util"
 )
 
-type UpgradeTx struct {
-	transaction.CommonTx
-	Type      string   `json:"type"`
-	Height    int64    `json:"height"`
-	Name      string   `json:"name"`
+type MsgUpgrade struct {
+	FromAddress sdk.AccAddress	`json:"from_address"`
+	Signature 	[]byte   		`json:"signature"`
+	PubKey		[]byte			`json:"pub_key"`
+
+	Type      	string   		`json:"type"`
+	Height    	int64    		`json:"height"`
+	Name      	string   		`json:"name"`
 }
 
-func NewUpgradeTx(from sdk.AccAddress, gas ,nonce uint64, t, name string, height int64) UpgradeTx{
-
-	return UpgradeTx{
-		CommonTx: transaction.CommonTx{
-			From: from,
-			Gas: 	gas,
-			Nonce: nonce,
-		},
+func NewMsgUpgrade(t, name string, height int64) *MsgUpgrade{
+	return &MsgUpgrade{
 		Type:t,
 		Height:height,
 		Name:name,
 	}
 }
 
-func (msg *UpgradeTx) ValidateBasic() sdk.Error{
-	if err := msg.CommonTx.ValidateBasic(); err != nil {
-		return err
-	}
+func (msg *MsgUpgrade) Route() string { return RouteKey }
 
+func (msg *MsgUpgrade) MsgType() string { return "upgrade"}
+
+func (msg *MsgUpgrade) GetSignBytes() []byte{
+	ntx := *msg
+	ntx.SetSignature(nil)
+	return util.TxHash(ntx.Bytes())
+}
+
+func (msg *MsgUpgrade) SetSignature(sig []byte) {
+	msg.Signature = sig
+}
+
+func (msg *MsgUpgrade) ValidateBasic() sdk.Error{
 	if len(msg.Type) == 0 {
 		return ErrCheckParams(DefaultCodespace, "type is invalid")
 	}
@@ -45,25 +51,7 @@ func (msg *UpgradeTx) ValidateBasic() sdk.Error{
 	return nil
 }
 
-func (msg *UpgradeTx) SetPubKey(pub []byte) {
-	msg.CommonTx.PubKey = pub
-}
-
-func (msg *UpgradeTx) SetSignature(sig []byte) {
-	msg.CommonTx.Signature = sig
-}
-
-func (msg *UpgradeTx) Route() string {
-	return RouteKey
-}
-
-func (msg *UpgradeTx) GetSignBytes() []byte{
-	ntx := *msg
-	ntx.SetSignature(nil)
-	return util.TxHash(ntx.Bytes())
-}
-
-func (msg *UpgradeTx)Bytes() []byte {
+func (msg *MsgUpgrade) Bytes() []byte {
 	bytes, err := keeper.ModuleCdc.MarshalBinaryLengthPrefixed(msg)
 	if err != nil {
 		panic(err)
@@ -72,14 +60,14 @@ func (msg *UpgradeTx)Bytes() []byte {
 	return bytes
 }
 
-func (msg *UpgradeTx) GetNonce() uint64 {
-	return msg.CommonTx.Nonce
+func (msg *MsgUpgrade) GetFromAddress() sdk.AccAddress {
+	return msg.FromAddress
 }
 
-func (msg *UpgradeTx) GetGas() uint64 {
-	return msg.CommonTx.Gas
+func (msg *MsgUpgrade) SetPubKey(pubKey []byte) {
+	msg.PubKey = pubKey
 }
 
-func (msg *UpgradeTx) GetFromAddress() sdk.AccAddress{
-	return msg.CommonTx.From
+func (msg *MsgUpgrade) GetSignature() []byte {
+	return msg.Signature
 }

@@ -29,3 +29,8 @@ type Response struct {
 	Data 	interface{}	`json:"data"`
 	Message	string	`json:"message"`
 }
+
+type HealthcheckResponse struct {
+	State	int 		`json:"state"`
+	Data 	interface{}	`json:"data"`
+}

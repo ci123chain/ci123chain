@@ -25,7 +25,7 @@ func main() {
 	fmt.Println("---------------跨链转账离线签名交易----------------------")
 	fmt.Println("---发送跨链消息---")
 
-	txByte, err := SignIBC(from, to, amount, gas,nonce, priv)
+	txByte, err := SignIBC(from, to, amount, priv)
 	if err != nil {
 		fmt.Println("---签名失败，参数错误---")
 		fmt.Println(err)
@@ -43,7 +43,7 @@ func main() {
 	fmt.Println("---申请处理该跨链消息---")
 	uid := []byte(registRet.Data)
 	observerID := []byte("1234567812345679")
-	signdata, err := SignIBCApplyTx(from, uid, observerID, gas, nonce, priv)
+	signdata, err := SignIBCApplyTx(from, uid, observerID, priv)
 	if err != nil {
 		fmt.Println("---签名失败，参数错误---")
 		fmt.Println(err)
@@ -61,7 +61,7 @@ func main() {
 
 	fmt.Println("---向对方转账---")
 	pkg := applyRet.Data
-	signdata, err = SignIBCBankSendTx(from, []byte(pkg), gas, nonce, priv)
+	signdata, err = SignIBCBankSendTx(from, []byte(pkg), priv)
 	if err != nil {
 		fmt.Println("---签名失败，参数错误---")
 		fmt.Println(err)
@@ -79,7 +79,7 @@ func main() {
 
 	fmt.Println("---发送回执---")
 	receivepkg := receiptRet.Data
-	signdata, err = SignIBCReceiptTx(from, []byte(receivepkg), gas, nonce, priv)
+	signdata, err = SignIBCReceiptTx(from, []byte(receivepkg), priv)
 	if err != nil {
 		fmt.Println("---签名失败，参数错误---")
 		fmt.Println(err)

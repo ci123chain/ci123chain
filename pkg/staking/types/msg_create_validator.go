@@ -3,32 +3,28 @@ package types
 import (
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/types"
-	"github.com/ci123chain/ci123chain/pkg/transaction"
 	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/tendermint/tendermint/crypto"
 )
 
+type MsgCreateValidator struct {
+	FromAddress		  types.AccAddress	 `json:"from_address"`
+	Signature 		  []byte   			 `json:"signature"`
+	PubKey			  []byte			 `json:"pub_key"`
 
-type CreateValidatorTx struct {
-	//
-	transaction.CommonTx
 	PublicKey         crypto.PubKey      `json:"public_key"`
 	Value             types.Coin         `json:"value"`
 	ValidatorAddress  types.AccAddress   `json:"validator_address"`
 	DelegatorAddress  types.AccAddress   `json:"delegator_address"`
-	MinSelfDelegation  types.Int         `json:"min_self_delegation"`
+	MinSelfDelegation types.Int          `json:"min_self_delegation"`
 	Commission        CommissionRates    `json:"commission"`
 	Description       Description        `json:"description"`
 }
 
-func NewCreateValidatorTx(from types.AccAddress, gas ,nonce uint64, value types.Coin, minSelfDelegation types.Int, validatorAddr types.AccAddress, delegatorAddr types.AccAddress,
-	rate, maxRate, maxChangeRate types.Dec, moniker, identity, website, securityContact, details string, publicKey crypto.PubKey ) CreateValidatorTx {
-	return CreateValidatorTx{
-		CommonTx: transaction.CommonTx{
-			From: from,
-			Gas: 	gas,
-			Nonce: nonce,
-		},
+func NewMsgCreateValidator(from types.AccAddress, value types.Coin, minSelfDelegation types.Int, validatorAddr types.AccAddress, delegatorAddr types.AccAddress,
+	rate, maxRate, maxChangeRate types.Dec, moniker, identity, website, securityContact, details string, publicKey crypto.PubKey ) *MsgCreateValidator {
+	return &MsgCreateValidator{
+		FromAddress: from,
 		PublicKey:publicKey,
 		Value:value,
 		ValidatorAddress:validatorAddr,
@@ -39,13 +35,11 @@ func NewCreateValidatorTx(from types.AccAddress, gas ,nonce uint64, value types.
 	}
 }
 
-func (msg *CreateValidatorTx) ValidateBasic() types.Error {
+func (msg *MsgCreateValidator) Route() string {return RouteKey}
 
-	err := msg.VerifySignature(msg.GetSignBytes(), false)
-	if err != nil {
-		return ErrCheckParams(DefaultCodespace, err.Error())
-	}
+func (msg *MsgCreateValidator) MsgType() string {return "create-validator"}
 
+func (msg *MsgCreateValidator) ValidateBasic() types.Error {
 	// note that unmarshaling from bech32 ensures either empty or valid
 	if msg.DelegatorAddress.Empty() {
 		return ErrInvalidAddress(DefaultCodespace, fmt.Sprintf("empty delegator address"))
@@ -81,28 +75,29 @@ func (msg *CreateValidatorTx) ValidateBasic() types.Error {
 	return nil
 }
 
-func (msg *CreateValidatorTx) GetSignBytes() []byte {
-	tmsg := *msg
-	tmsg.Signature = nil
-	signBytes := tmsg.Bytes()
-	return util.TxHash(signBytes)
+func (msg *MsgCreateValidator) GetSignBytes() []byte {
+	ntx := *msg
+	ntx.SetSignature(nil)
+	return util.TxHash(ntx.Bytes())
 }
-func (msg *CreateValidatorTx) SetSignature(sig []byte) {
+func (msg *MsgCreateValidator) SetSignature(sig []byte) {
 	msg.Signature = sig
 }
-func (msg *CreateValidatorTx) Bytes() []byte {
+
+func (msg *MsgCreateValidator) SetPubKey(pub []byte) {
+	msg.PubKey = pub
+}
+
+func (msg *MsgCreateValidator) GetFromAddress() types.AccAddress { return msg.FromAddress}
+
+func (msg *MsgCreateValidator) Bytes() []byte {
 	bytes, err := StakingCodec.MarshalBinaryLengthPrefixed(msg)
 	if err != nil {
 		panic(err)
 	}
-
 	return bytes
 }
-func (msg *CreateValidatorTx) SetPubKey(pub []byte) {
-	msg.PubKey = pub
-}
-func (msg *CreateValidatorTx) Route() string {return RouteKey}
-func (msg *CreateValidatorTx) GetGas() uint64 { return msg.Gas}
 
-func (msg *CreateValidatorTx) GetNonce() uint64 { return msg.Nonce}
-func (msg *CreateValidatorTx) GetFromAddress() types.AccAddress { return msg.From}
+func (msg *MsgCreateValidator) GetSignature() []byte {
+	return msg.Signature
+}
