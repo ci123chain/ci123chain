@@ -580,7 +580,7 @@ func handleArgs(args json.RawMessage) ([]byte, error){
 		return nil, err
 	}
 
-	inputArgs := []interface{}{param.Method}
+	inputArgs := []interface{}{}
 	for i := 0; i < len(param.Args); i++ {
 		inputArgs = append(inputArgs, param.Args[i])
 	}
