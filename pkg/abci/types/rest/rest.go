@@ -231,7 +231,7 @@ func MiddleHandler(ctx context.Context, f func(clictx context.Context, w http.Re
 }
 
 func GetNecessaryParams(cliCtx context.Context, request *http.Request, cdc *codec.Codec, broadcast bool) (key string, from sdk.AccAddress, nonce, gas uint64, err error) {
-	key = request.FormValue("privateKey")
+	key = request.FormValue("private_key")
 	from = cliCtx.GetFromAddresses()
 	if !broadcast {
 		nonce = 0

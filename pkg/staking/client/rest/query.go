@@ -149,7 +149,7 @@ func validatorHandlerFn(cliCtx context.Context) http.HandlerFunc {
 
 		//vars := mux.Vars(request)
 		//validatorAddress := vars["validatorAddr"]
-		validatorAddress := request.FormValue("validatorAddr")
+		validatorAddress := request.FormValue("validator_addr")
 		validatorAddr := sdk.HexToAddress(validatorAddress)
 		params := types.NewQueryValidatorParams(validatorAddr)
 		bz, Err := cliCtx.Cdc.MarshalJSON(params)

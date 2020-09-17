@@ -105,7 +105,7 @@ func DelegateTX(cliCtx context.Context, writer http.ResponseWriter, request *htt
 		return
 	}
 	delegatorAddr := from
-	validatorAddr := sdk.HexToAddress(request.FormValue("validatorAddr"))
+	validatorAddr := sdk.HexToAddress(request.FormValue("validator_addr"))
 	amount, err := strconv.ParseUint(request.FormValue("amount"), 10, 64)
 	if err != nil {
 		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
@@ -149,8 +149,8 @@ func RedelegateTX(cliCtx context.Context, writer http.ResponseWriter, request *h
 		return
 	}
 	delegatorAddr := from
-	validatorSrcAddr := sdk.HexToAddress(request.FormValue("validatorSrcAddr"))
-	validatorDstAddr := sdk.HexToAddress(request.FormValue("validatorDstAddr"))
+	validatorSrcAddr := sdk.HexToAddress(request.FormValue("validator_src_addr"))
+	validatorDstAddr := sdk.HexToAddress(request.FormValue("validator_dst_addr"))
 	amount, err := strconv.ParseUint(request.FormValue("amount"), 10, 64)
 	if err != nil {
 		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
@@ -195,7 +195,7 @@ func UndelegateTX(cliCtx context.Context, writer http.ResponseWriter, request *h
 		return
 	}
 	delegatorAddr := from
-	validatorAddr := sdk.HexToAddress(request.FormValue("validatorAddr"))
+	validatorAddr := sdk.HexToAddress(request.FormValue("validator_addr"))
 	amount, err := strconv.ParseUint(request.FormValue("amount"), 10, 64)
 	if err != nil {
 		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
@@ -303,7 +303,7 @@ func getMinSelfAndNewRate(w http.ResponseWriter, req *http.Request) (int64, int6
 	//
 	var minSelf, newRate int64
 	var err error
-	ms := req.FormValue("minSelfDelegation")
+	ms := req.FormValue("min_self_delegation")
 	if ms != "" {
 		minSelf, err = util.CheckInt64(ms)
 		if err != nil || minSelf <= 0 {
@@ -313,7 +313,7 @@ func getMinSelfAndNewRate(w http.ResponseWriter, req *http.Request) (int64, int6
 	}else {
 		minSelf = -1
 	}
-	nr := req.FormValue("newRate")
+	nr := req.FormValue("new_rate")
 	if nr != "" {
 		newRate, err = util.CheckInt64(nr)
 		if err != nil || newRate > 100 || newRate <= 0 {
@@ -339,7 +339,7 @@ func getDescription(req *http.Request) (string, string, string, string, string) 
 	if website == "" {
 		website = types.DoNotModifyDesc
 	}
-	secu := req.FormValue("securityContact")
+	secu := req.FormValue("security_contact")
 	if secu == "" {
 		secu = types.DoNotModifyDesc
 	}
