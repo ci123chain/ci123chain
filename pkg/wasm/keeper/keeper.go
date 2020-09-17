@@ -138,9 +138,23 @@ func (k Keeper) Instantiate(ctx sdk.Context, wasmCode []byte, invoker sdk.AccAdd
 
 	//save contractAddress into account
 	if !isGenesis {
-		Account := k.AccountKeeper.GetAccount(ctx, invoker)
-		Account.AddContract(contractAddress)
-		k.AccountKeeper.SetAccount(ctx, Account)
+		contractAddrStr := contractAddress.String()
+		accountAddr := k.AccountKeeper.GetAccount(ctx, invoker).GetAddress()
+
+		var contractList []string
+		contractListBytes := store.Get(types.GetAccountContractListKey(accountAddr))
+		if contractListBytes != nil {
+			err := json.Unmarshal(contractListBytes, &contractList)
+			if err != nil{
+				return sdk.AccAddress{}, err
+			}
+		}
+		contractList = append(contractList, contractAddrStr)
+		contractListBytes, err = json.Marshal(contractList)
+		if err != nil{
+			return sdk.AccAddress{}, err
+		}
+		store.Set(types.GetAccountContractListKey(accountAddr), contractListBytes)
 	}
 	ctx.GasMeter().ConsumeGas(sdk.Gas(GasUsed),"wasm cost")
 

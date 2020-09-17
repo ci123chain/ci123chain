@@ -13,17 +13,17 @@ import (
 var cdc = app.MakeCodec()
 
 func getWasmCode(r *http.Request) (wasmcode []byte, err error){
-	codeStr := r.FormValue("wasmCodeStr")
+	codeStr := r.FormValue("wasm_code_str")
 	if codeStr != "" {
 		Byte, err := hex.DecodeString(codeStr)
 		if err != nil {
-			return nil, errors.New("invalid wasmcode")
+			return nil, errors.New("invalid wasm_code")
 		}
 		wasmcode = Byte
 	}else {
-		file, _, err := r.FormFile("wasmCode")
+		file, _, err := r.FormFile("wasm_code")
 		if err != nil {
-			return nil, errors.New("wasmCodeStr; cannot get wasm file: " + err.Error())
+			return nil, errors.New("wasm_code cannot get wasm file: " + err.Error())
 		}
 		wasmcode, err = ioutil.ReadAll(file)
 		if err != nil {

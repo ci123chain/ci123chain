@@ -26,7 +26,7 @@ func RegisterRoutes(cliCtx context.Context, r *mux.Router) {
 	r.HandleFunc("/account/new", NewAccountRequestHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/bank/balance", QueryBalancesRequestHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/account/nonce", QueryNonceRequestHandleFn(cliCtx)).Methods("POST")
-	r.HandleFunc("/node/new_validator", rest.MiddleHandler(cliCtx, CreateNewValidatorKey, types.DefaultCodespace)).Methods("GET")
+	r.HandleFunc("/node/new_validator", rest.MiddleHandler(cliCtx, CreateNewValidatorKey, types.DefaultCodespace)).Methods("POST")
 	r.HandleFunc("/transaction/multi_msgs_tx", rest.MiddleHandler(cliCtx, MultiMsgsRequest, types.DefaultCodespace)).Methods("POST")
 }
 
@@ -93,9 +93,9 @@ func QueryBalancesRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			rest.WriteErrorRes(w, err)
 			return
 		}
-		addrBytes, err2 := helper.ParseAddrs(address)
-		if len(addrBytes) < 1 || err2 != nil {
-			rest.WriteErrorRes(w, client.ErrParseAddr(types.DefaultCodespace, err2))
+		addr, err2 := helper.StrToAddress(address)
+		if err2 != nil {
+			rest.WriteErrorRes(w, client.ErrParseParam(types.DefaultCodespace, err2))
 			return
 		}
 		//params := types.NewQueryBalanceParams(addr)
@@ -103,7 +103,7 @@ func QueryBalancesRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		if prove == "true" {
 			isProve = true
 		}
-		res, proof, err2 := cliCtx.GetBalanceByAddress(addrBytes[0], isProve)
+		res, proof, err2 := cliCtx.GetBalanceByAddress(addr, isProve)
 		if err2 != nil {
 			rest.WriteErrorRes(w, transfer.ErrQueryTx(types.DefaultCodespace, err2.Error()))
 			return

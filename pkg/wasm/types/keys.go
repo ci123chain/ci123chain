@@ -25,15 +25,20 @@ const (
 )
 
 var (
-	WasmerKey            =  []byte("wasmer")
+	WasmerKey            		=  []byte("wasmer")
 
-	CodeKeyPrefix        =  []byte{0x01}
-	ContractKeyPrefix    =  []byte{0x02}
-	ContractStorePrefix  =  []byte{0x03}
+	CodeKeyPrefix        		=  []byte{0x01}
+	ContractKeyPrefix    		=  []byte{0x02}
+	ContractStorePrefix  		=  []byte{0x03}
+	AccountContractListPrefix 	=  []byte{0x04}
 )
 
 func GetWasmerKey() []byte {
 	return WasmerKey
+}
+
+func GetAccountContractListKey(accountAddr sdk.AccAddress) []byte {
+	return append(AccountContractListPrefix, accountAddr.Bytes()...)
 }
 
 func GetCodeKey(codeHash []byte) []byte {

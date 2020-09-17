@@ -2,6 +2,7 @@ package store
 
 import (
 	"bytes"
+	db "github.com/tendermint/tm-db"
 	"io"
 
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
@@ -36,7 +37,8 @@ func (s prefixStore) key(key []byte) (res []byte) {
 	if key == nil {
 		panic("nil key on prefixStore")
 	}
-	res = cloneAppend(s.prefix, key)
+	prefix := []byte("s/k:" + string(s.prefix) + "/")
+	res = append(prefix, key...)
 	return
 }
 
@@ -89,6 +91,23 @@ func (s prefixStore) Latest(keys []string) KVStore {
 // Implements KVStore
 func (s prefixStore) Parent() KVStore {
 	return s.parent
+}
+
+func (s prefixStore) Commit() CommitID {
+	return s.parent.(CommitStore).Commit()
+}
+
+func (s prefixStore) LastCommitID() CommitID {
+	return s.parent.(CommitStore).LastCommitID()
+}
+
+func (s prefixStore) SetPruning(strategy PruningStrategy) {
+	s.parent.(CommitStore).SetPruning(strategy)
+}
+
+// Implements KVStore
+func (s prefixStore) BatchSet(batch db.Batch) {
+	s.parent.(*baseKVStore).BatchSet(batch)
 }
 
 // Implements KVStore

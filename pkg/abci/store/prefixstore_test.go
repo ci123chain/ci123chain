@@ -76,7 +76,7 @@ func testPrefixStore(t *testing.T, baseStore KVStore, prefix []byte) {
 func TestIAVLStorePrefix(t *testing.T) {
 	db := dbm.NewMemDB()
 	tree := iavl.NewMutableTree(db, cacheSize)
-	iavlStore := newIAVLStore(tree, numRecent, storeEvery)
+	iavlStore := newIAVLStore(db, tree, numRecent, storeEvery, nil)
 
 	testPrefixStore(t, iavlStore, []byte("test"))
 }

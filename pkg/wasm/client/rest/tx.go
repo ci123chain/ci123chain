@@ -82,7 +82,7 @@ func executeContractHandler(cliCtx context.Context,w http.ResponseWriter, r *htt
 		return
 	}
 
-	contractAddr := r.FormValue("contractAddress")
+	contractAddr := r.FormValue("contract_address")
 	contractAddress := sdk.HexToAddress(contractAddr)
 	params := types.NewQueryContractInfoParams(contractAddress)
 	bz, Er := cliCtx.Cdc.MarshalJSON(params)
@@ -142,7 +142,7 @@ func migrateContractHandler(cliCtx context.Context,w http.ResponseWriter, r *htt
 	}
 
 	sender := cliCtx.FromAddr
-	contractAddr := r.FormValue("contractAddress")
+	contractAddr := r.FormValue("contract_address")
 	contractAddress := sdk.HexToAddress(contractAddr)
 	queryParam := []byte(CAN_MIGRATE)
 	params := types.NewContractStateParam(contractAddress, sender, queryParam)

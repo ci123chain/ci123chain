@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"encoding/json"
 	"errors"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/wasm/types"
@@ -90,7 +91,15 @@ func queryAccountContractList(ctx sdk.Context, req abci.RequestQuery, k Keeper) 
 	if account == nil {
 		return nil, sdk.ErrInternal("account doesn't exists")
 	}
-	contractList := account.GetContractList()
+	var contractList []string
+	contractListBytes := store.Get(types.GetAccountContractListKey(account.GetAddress()))
+	if contractListBytes == nil {
+		return nil, nil
+	}
+	err = json.Unmarshal(contractListBytes, &contractList)
+	if err != nil{
+		return nil, sdk.ErrInternal(err.Error())
+	}
 	list := types.NewContractListResponse(contractList)
 	res := types.WasmCodec.MustMarshalBinaryBare(list)
 	return res, nil
