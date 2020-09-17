@@ -22,7 +22,7 @@ func queryCodeHandlerFn(cliCtx context.Context) http.HandlerFunc {
 
 		height := r.FormValue("height")
 		prove := r.FormValue("prove")
-		codeHash := r.FormValue("codeHash")
+		codeHash := r.FormValue("code_hash")
 		cliCtx, ok, Err := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r, "")
 		if !ok {
 			rest.WriteErrorRes(w, Err)
@@ -64,7 +64,7 @@ func listContractsByCodeHandlerFn(cliCtx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		height := r.FormValue("height")
 		prove := r.FormValue("prove")
-		accountAddr := r.FormValue("accountAddress")
+		accountAddr := r.FormValue("account_address")
 		accountAddress := sdk.HexToAddress(accountAddr)
 		params := types.NewContractListParams(accountAddress)
 		bz, Er := cliCtx.Cdc.MarshalJSON(params)
@@ -99,7 +99,7 @@ func queryContractHandlerFn(cliCtx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		height := r.FormValue("height")
 		prove := r.FormValue("prove")
-		contractAddr := r.FormValue("contractAddress")
+		contractAddr := r.FormValue("contract_address")
 		contractAddress := sdk.HexToAddress(contractAddr)
 
 		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r, "")
@@ -142,7 +142,7 @@ func queryContractHandlerFn(cliCtx context.Context) http.HandlerFunc {
 func queryContractStateAllHandlerFn(cliCtx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var queryParam []byte
-		contractAddr := r.FormValue("contractAddress")
+		contractAddr := r.FormValue("contract_address")
 		contractAddress := sdk.HexToAddress(contractAddr)
 		msg := r.FormValue("args")
 		height := r.FormValue("height")

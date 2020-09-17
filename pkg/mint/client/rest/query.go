@@ -13,9 +13,9 @@ import (
 
 
 func RegisterQueryRoutes(cliCtx context.Context, r *mux.Router) {
-	r.HandleFunc("/mint/parameters", queryParamsHandleFn(cliCtx)).Methods("GET")
-	r.HandleFunc("/mint/inflation", queryInflationHandleFn(cliCtx)).Methods("GET")
-	r.HandleFunc("/mint/annual-provisions", queryAnnualProvisionsHandlerFn(cliCtx)).Methods("GET")
+	r.HandleFunc("/mint/parameters", queryParamsHandleFn(cliCtx)).Methods("POST")
+	r.HandleFunc("/mint/inflation", queryInflationHandleFn(cliCtx)).Methods("POST")
+	r.HandleFunc("/mint/annual_provisions", queryAnnualProvisionsHandlerFn(cliCtx)).Methods("POST")
 }
 
 
