@@ -34,6 +34,9 @@ func queryAccount(ctx sdk.Context, req abci.RequestQuery, k AccountKeeper) ([]by
 		return nil, types.ErrGetAccount(types.DefaultCodespace, errors.New("unmarshal json failed"))
 	}
 	acc := k.GetAccount(ctx, accountParams.AccountAddress)
+	if acc == nil {
+		return nil, types.ErrGetAccount(types.DefaultCodespace, errors.New("account not found"))
+	}
 	by := types.ModuleCdc.MustMarshalBinaryLengthPrefixed(acc)
 	return by, nil
 }
