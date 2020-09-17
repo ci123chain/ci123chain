@@ -4,7 +4,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
 	"github.com/ci123chain/ci123chain/pkg/app"
@@ -22,10 +21,10 @@ import (
 
 func RegisterRestTxRoutes(cliCtx context.Context, r *mux.Router)  {
 	r.HandleFunc("/staking/validator/create", rest.MiddleHandler(cliCtx, CreateValidatorRequest, types.DefaultCodespace)).Methods("POST")
-	r.HandleFunc("/staking/delegate", rest.MiddleHandler(cliCtx, DelegateTX, types.DefaultCodespace)).Methods("POST")
-	r.HandleFunc("/staking/redelegate", rest.MiddleHandler(cliCtx, RedelegateTX, types.DefaultCodespace)).Methods("POST")
-	r.HandleFunc("/staking/undelegate", rest.MiddleHandler(cliCtx, UndelegateTX, types.DefaultCodespace)).Methods("POST")
-	r.HandleFunc("/staking/edit", rest.MiddleHandler(cliCtx, EditValidatorTX, types.DefaultCodespace)).Methods("POST")
+	r.HandleFunc("/staking/delegator/delegate", rest.MiddleHandler(cliCtx, DelegateTX, types.DefaultCodespace)).Methods("POST")
+	r.HandleFunc("/staking/delegator/redelegate", rest.MiddleHandler(cliCtx, RedelegateTX, types.DefaultCodespace)).Methods("POST")
+	r.HandleFunc("/staking/delegator/undelegate", rest.MiddleHandler(cliCtx, UndelegateTX, types.DefaultCodespace)).Methods("POST")
+	r.HandleFunc("/staking/validator/edit", rest.MiddleHandler(cliCtx, EditValidatorTX, types.DefaultCodespace)).Methods("POST")
 }
 
 var cdc = app.MakeCodec()
@@ -41,6 +40,7 @@ func CreateValidatorRequest(cliCtx context.Context, writer http.ResponseWriter, 
 		return
 	}
 	delegatorAddr := from
+	validatorAddr := from
 	amount, err := strconv.ParseUint(request.FormValue("amount"), 10, 64)
 	if err != nil {
 		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
@@ -73,7 +73,7 @@ func CreateValidatorRequest(cliCtx context.Context, writer http.ResponseWriter, 
 
 	coin := sdk.NewUInt64Coin(amount)
 	MSD, R, MR, MXR := sSdk.CreateParseArgs(msd, r, mr, mcr)
-	msg := staking.NewCreateValidatorMsg(from, coin, MSD, from,
+	msg := staking.NewCreateValidatorMsg(from, coin, MSD, validatorAddr,
 		delegatorAddr, R, MR, MXR, moniker, identity, website, securityContact, details, public)
 
 	if !broadcast {
@@ -105,7 +105,7 @@ func DelegateTX(cliCtx context.Context, writer http.ResponseWriter, request *htt
 		return
 	}
 	delegatorAddr := from
-	validatorAddr := sdk.HexToAddress(request.FormValue("validatorAddr"))
+	validatorAddr := sdk.HexToAddress(request.FormValue("validator_addr"))
 	amount, err := strconv.ParseUint(request.FormValue("amount"), 10, 64)
 	if err != nil {
 		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
@@ -149,8 +149,8 @@ func RedelegateTX(cliCtx context.Context, writer http.ResponseWriter, request *h
 		return
 	}
 	delegatorAddr := from
-	validatorSrcAddr := sdk.HexToAddress(request.FormValue("validatorSrcAddr"))
-	validatorDstAddr := sdk.HexToAddress(request.FormValue("validatorDstAddr"))
+	validatorSrcAddr := sdk.HexToAddress(request.FormValue("validator_src_addr"))
+	validatorDstAddr := sdk.HexToAddress(request.FormValue("validator_dst_addr"))
 	amount, err := strconv.ParseUint(request.FormValue("amount"), 10, 64)
 	if err != nil {
 		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
@@ -195,7 +195,7 @@ func UndelegateTX(cliCtx context.Context, writer http.ResponseWriter, request *h
 		return
 	}
 	delegatorAddr := from
-	validatorAddr := sdk.HexToAddress(request.FormValue("validatorAddr"))
+	validatorAddr := sdk.HexToAddress(request.FormValue("validator_addr"))
 	amount, err := strconv.ParseUint(request.FormValue("amount"), 10, 64)
 	if err != nil {
 		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
@@ -255,7 +255,7 @@ func EditValidatorTX(cliCtx context.Context, writer http.ResponseWriter, request
 		if newRate == -1 {
 			nrArg = nil
 		}else {
-			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, "newrate error"))
+			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, "new_rate error"))
 			return
 		}
 	}else {
@@ -266,7 +266,7 @@ func EditValidatorTX(cliCtx context.Context, writer http.ResponseWriter, request
 		if minSelf == -1 {
 			minArg = nil
 		}else {
-			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, "minself error"))
+			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, "min_self_delegation error"))
 			return
 		}
 	}else {
@@ -303,21 +303,21 @@ func getMinSelfAndNewRate(w http.ResponseWriter, req *http.Request) (int64, int6
 	//
 	var minSelf, newRate int64
 	var err error
-	ms := req.FormValue("minSelfDelegation")
+	ms := req.FormValue("min_self_delegation")
 	if ms != "" {
 		minSelf, err = util.CheckInt64(ms)
 		if err != nil || minSelf <= 0 {
-			rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "invalid minSelfDelegation"))
+			rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "invalid min_self_delegation"))
 			return 0, 0, false
 		}
 	}else {
 		minSelf = -1
 	}
-	nr := req.FormValue("newRate")
+	nr := req.FormValue("new_rate")
 	if nr != "" {
 		newRate, err = util.CheckInt64(nr)
 		if err != nil || newRate > 100 || newRate <= 0 {
-			rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "invalid newRate"))
+			rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "invalid new_rate"))
 			return 0, 0, false
 		}
 	}else {
@@ -339,7 +339,7 @@ func getDescription(req *http.Request) (string, string, string, string, string) 
 	if website == "" {
 		website = types.DoNotModifyDesc
 	}
-	secu := req.FormValue("securityContact")
+	secu := req.FormValue("security_contact")
 	if secu == "" {
 		secu = types.DoNotModifyDesc
 	}
@@ -350,7 +350,7 @@ func getDescription(req *http.Request) (string, string, string, string, string) 
 	return moniker, identity, website, secu, details
 }
 
-func parseBasicArgs(w http.ResponseWriter, req *http.Request) (string, uint64, uint64, string, bool) {
+/*func parseBasicArgs(w http.ResponseWriter, req *http.Request) (string, uint64, uint64, string, bool) {
 
 	from, ok := util.CheckFromAddressVar(req)
 	if !ok {
@@ -373,9 +373,9 @@ func parseBasicArgs(w http.ResponseWriter, req *http.Request) (string, uint64, u
 		return "", 0, 0, "", false
 	}
 	return from, gas, nonce, privateKey, true
-}
+}*/
 
-func checkNonce(r *http.Request, from sdk.AccAddress, cdc *codec.Codec) (uint64, bool) {
+/*func checkNonce(r *http.Request, from sdk.AccAddress, cdc *codec.Codec) (uint64, bool) {
 	nonce := r.FormValue("nonce")
 	var Nonce uint64
 	if nonce == "" {
@@ -396,7 +396,7 @@ func checkNonce(r *http.Request, from sdk.AccAddress, cdc *codec.Codec) (uint64,
 		}
 	}
 	return Nonce, true
-}
+}*/
 
 
 func checkAccountExist(ctx context.Context, address... sdk.AccAddress) error {
@@ -414,10 +414,10 @@ func checkAccountExist(ctx context.Context, address... sdk.AccAddress) error {
 func parseOtherArgs(request *http.Request) (int64, int64, int64, int64, string,
 	string, string, string, string, string, error) {
 
-	minSelfDelegation := request.FormValue("minSelfDelegation")
+	minSelfDelegation := request.FormValue("min_self_delegation")
 	msd, err := strconv.ParseInt(minSelfDelegation, 10, 64)
 	if err != nil || msd < 0 {
-		return 0, 0, 0, 0, "", "", "", "", "", "",errors.New("minSelfDelegation error")
+		return 0, 0, 0, 0, "", "", "", "", "", "",errors.New("min_self_delegation error")
 	}
 	rate := request.FormValue("rate")
 	var r, mr, mcr int64
@@ -429,49 +429,34 @@ func parseOtherArgs(request *http.Request) (int64, int64, int64, int64, string,
 			return 0, 0, 0, 0, "", "", "", "", "", "", errors.New("rate error")
 		}
 	}
-	maxRate := request.FormValue("maxRate")
+	maxRate := request.FormValue("max_rate")
 	if maxRate == "" {
 		mr = 1
 	}else {
 		mr, err = strconv.ParseInt(maxRate, 10, 64)
 		if err != nil || mr < 0 {
-			return 0, 0, 0, 0, "", "", "", "", "", "",  errors.New("max rate error")
+			return 0, 0, 0, 0, "", "", "", "", "", "",  errors.New("max_rate error")
 		}
 	}
 
-	maxChangeRate := request.FormValue("maxChangeRate")
+	maxChangeRate := request.FormValue("max_change_rate")
 	if maxChangeRate == "" {
 		mcr = 1
 	}else {
 		mcr, err = strconv.ParseInt(maxChangeRate, 10, 64)
 		if err != nil || mcr < 0 {
-			return 0, 0, 0, 0, "", "", "", "", "", "",errors.New("max change rate error")
+			return 0, 0, 0, 0, "", "", "", "", "", "",errors.New("max_change_rate error")
 		}
 	}
 	moniker := request.FormValue("moniker")
-	if moniker == "" {
-		moniker = "moniker"
-	}
 	identity := request.FormValue("identity")
-	if identity == "" {
-		identity = "identity"
-	}
 	website := request.FormValue("website")
-	if website == "" {
-		website = "website"
-	}
-	securityContact := request.FormValue("securityContact")
-	if securityContact == "" {
-		securityContact = "securityContact"
-	}
+	securityContact := request.FormValue("security_contact")
 	details := request.FormValue("details")
-	if details == "" {
-		details = "details"
-	}
 
-	publicKey := request.FormValue("publicKey")
+	publicKey := request.FormValue("public_key")
 	if publicKey == "" {
-		return 0, 0, 0, 0, "", "", "", "", "", "", errors.New("public key can't be empty")
+		return 0, 0, 0, 0, "", "", "", "", "", "", errors.New("public_key can't be empty")
 	}
 
 	return msd, r, mr, mcr, moniker, identity, website, securityContact, details, publicKey, nil
@@ -479,7 +464,7 @@ func parseOtherArgs(request *http.Request) (int64, int64, int64, int64, string,
 
 
 
-
+/*
 func parseBaseArgs(w http.ResponseWriter, req *http.Request) (string, string, string, int64, uint64, uint64, bool) {
 
 	//为了确保 createValidator交易是from账户发出的，validator的地址就直接是这个from;
@@ -497,4 +482,5 @@ func parseBaseArgs(w http.ResponseWriter, req *http.Request) (string, string, st
 	delegatorAddrStr := from
 	return from, delegatorAddrStr, privateKey, amount, gas, nonce, true
 }
+*/
 

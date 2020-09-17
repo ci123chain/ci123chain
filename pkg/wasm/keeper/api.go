@@ -9,6 +9,7 @@ import (
 	wasmtypes "github.com/ci123chain/ci123chain/pkg/wasm/types"
 	wasm "github.com/wasmerio/go-ext-wasm/wasmer"
 	"io/ioutil"
+	"math/big"
 	"strconv"
 	"unsafe"
 )
@@ -163,10 +164,18 @@ func selfAddress(context unsafe.Pointer, contractPtr int32) {
 	copy(memory[contractPtr:contractPtr+AddressSize], contractAddress[:])
 }
 
+func getBlockHeader(context unsafe.Pointer, valuePtr int32) {
+	var instanceContext = wasm.IntoInstanceContext(context)
+	var memory = instanceContext.Memory().Data()
 
-func getTime(_ unsafe.Pointer) int64 {
-	now := ctx.BlockHeader().Time //blockHeader.Time
-	return now.Unix()
+	var height = ctx.BlockHeader().Height
+	var now = ctx.BlockHeader().Time.Unix()
+
+	sink := NewSink([]byte{})
+	sink.WriteU64(uint64(height))                      // 高度
+	sink.WriteU64(uint64(now)) // 区块头时间
+
+	copy(memory[valuePtr:valuePtr+8*2], sink.Bytes())
 }
 
 func notifyContract(context unsafe.Pointer, ptr, size int32) {
@@ -384,14 +393,14 @@ func getValidatorPower(context unsafe.Pointer, dataPtr, dataSize, valuePtr int32
 			validators = append(validators, NewAddress(bytes))
 		}
 	}
-	value := make([]uint64, len(validators))
+	value := make([]*sdk.RustU128, len(validators))
 	for _, v := range validators {
 		i := 0
 		val, ok := stakingKeeper.GetValidator(*ctx, sdk.HexToAddress(v.ToString()))
 		if !ok {
-			value[i] = 0
+			value[i] = sdk.NewRustU128(big.NewInt(0))
 		}else {
-			value[i] = uint64(val.DelegatorShares.TruncateInt64())
+			value[i] = sdk.NewRustU128(big.NewInt(val.DelegatorShares.TruncateInt64() + 123456789))
 		}
 		i++
 	}
@@ -404,17 +413,20 @@ func getValidatorPower(context unsafe.Pointer, dataPtr, dataSize, valuePtr int32
 
 	sink := NewSink([]byte{})
 	for i := range value {
-		sink.WriteU64(value[i])
+		sink.WriteU128(value[i])
 	}
 
 	res := sink.Bytes()
 	copy(memory[valuePtr:int(valuePtr)+len(res)], res)
 }
 
-func totalPower(_ unsafe.Pointer) int64 {
+func totalPower(context unsafe.Pointer, valuePtr int32) {
 
+	var instanceContext = wasm.IntoInstanceContext(context)
+	var memory = instanceContext.Memory().Data()
 	bondedPool := stakingKeeper.GetBondedPool(*ctx)
-	return bondedPool.GetCoin().Amount.Int64()
+	u128 := sdk.NewRustU128(bondedPool.GetCoin().Amount.BigInt())
+	copy(memory[valuePtr:valuePtr+16], u128.Bytes())
 	//根据链上信息返回总权益
 	//return 123456789
 }

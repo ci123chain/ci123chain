@@ -105,7 +105,7 @@ func withdrawDelegationRewardsHandler(cliCtx context.Context, writer http.Respon
 		return
 	}
 
-	validator := sdk.HexToAddress(req.FormValue("validatorAddr"))
+	validator := sdk.HexToAddress(req.FormValue("validator_addr"))
 	delegator := from
 	msg := types.NewMsgWithdrawDelegatorReward(from, validator, delegator)
 	if !broadcast {
@@ -138,7 +138,7 @@ func setDelegatorWithdrawalAddrHandler(cliCtx context.Context, writer http.Respo
 	}
 
 	delegator := from
-	withdraw := sdk.HexToAddress(req.FormValue("withdrawAddress"))
+	withdraw := sdk.HexToAddress(req.FormValue("withdraw_addr"))
 	msg := types.NewMsgSetWithdrawAddress(from, withdraw, delegator)
 	if !broadcast {
 		rest.PostProcessResponseBare(writer, cliCtx, hex.EncodeToString(msg.Bytes()))

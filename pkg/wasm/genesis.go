@@ -1,30 +1,36 @@
 package wasm
 
 import (
-	"encoding/hex"
+	"bytes"
+	"compress/gzip"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/wasm/keeper"
 	"github.com/ci123chain/ci123chain/pkg/wasm/types"
+	"io/ioutil"
 )
 
 const (
 	gasWanted = uint64(80000000)
 )
 
-func InitGenesis(ctx sdk.Context, wasmer keeper.Keeper, data GenesisState) {
-
-	for i := 0; i < len(data.Contracts); i++ {
-		for _, v := range data.Contracts {
+func InitGenesis(ctx sdk.Context, wasmer keeper.Keeper) {
+	var contracts = types.DefaultGenesisState()
+	for i := 0; i < len(contracts.Contracts); i++ {
+		for _, v := range contracts.Contracts {
 			if v.Index == i {
-				code, err := hex.DecodeString(v.Code)
+				cdata, _ := base64.StdEncoding.DecodeString(v.Code)
+				rdata := bytes.NewReader(cdata)
+				r, _ := gzip.NewReader(rdata)
+				code, err := ioutil.ReadAll(r)
 				if err != nil {
 					panic(err)
 				}
 				address := sdk.HexToAddress(v.Address)
-				invoker := sdk.HexToAddress(data.Invoker)
+				invoker := sdk.HexToAddress(contracts.Invoker)
 				var params types.CallContractParam
 				params.Args = v.Params
 				params.Method = v.Method
@@ -34,7 +40,7 @@ func InitGenesis(ctx sdk.Context, wasmer keeper.Keeper, data GenesisState) {
 				}
 				keeper.SetGasWanted(gasWanted)
 				if v.Method == types.InitMethod {
-					_, err = wasmer.Instantiate(ctx, code, invoker, 0, args, data.Name, data.Version, data.Author, data.Email, data.Describe, true, address)
+					_, err = wasmer.Instantiate(ctx, code, invoker, 0, args, contracts.Name, contracts.Version, contracts.Author, contracts.Email, contracts.Describe, true, address)
 					if err != nil {
 						panic(err)
 					}

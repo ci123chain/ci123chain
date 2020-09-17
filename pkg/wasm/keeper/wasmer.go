@@ -11,7 +11,7 @@ package keeper
 // extern void get_creator(void*, int);
 // extern void get_invoker(void*, int);
 // extern void self_address(void*, int);
-// extern long long get_time(void*);
+// extern void get_block_header(void*, int);
 //
 // extern int get_input_length(void*, int);
 // extern void get_input(void*, int, int, int);
@@ -21,7 +21,7 @@ package keeper
 // extern void destroy_contract(void*);
 // extern void panic_contract(void*, int, int);
 // extern void get_validator_power(void*, int, int, int);
-// extern long long total_power(void*);
+// extern void total_power(void*, int);
 //
 // extern void addgas(void*, int);
 // extern void debug_print(void*, int, int);
@@ -91,9 +91,9 @@ func self_address(context unsafe.Pointer, contractPtr int32) {
 	selfAddress(context, contractPtr)
 }
 
-//export get_time
-func get_time(context unsafe.Pointer) int64 {
-	return getTime(context)
+//export get_block_header
+func get_block_header(context unsafe.Pointer, valuePtr int32) {
+	getBlockHeader(context, valuePtr)
 }
 
 //export get_input_length
@@ -140,8 +140,8 @@ func get_validator_power(context unsafe.Pointer, dataPtr, dataSize, valuePtr int
 }
 
 //export total_power
-func total_power(context unsafe.Pointer) int64 {
-	return totalPower(context)
+func total_power(context unsafe.Pointer, valuePtr int32) {
+	totalPower(context, valuePtr)
 }
 
 
@@ -331,7 +331,7 @@ func getInstance(code []byte) (*wasmer.Instance, error) {
 	_, _ = imports.Append("self_address", selfAddress, C.self_address)
 	_, _ = imports.Append("get_creator", get_creator, C.get_creator)
 	_, _ = imports.Append("get_invoker", get_invoker, C.get_invoker)
-	_, _ = imports.Append("get_time", get_time, C.get_time)
+	_, _ = imports.Append("get_block_header", get_block_header, C.get_block_header)
 
 	_, _ = imports.Append("get_input_length", get_input_length, C.get_input_length)
 	_, _ = imports.Append("get_input", get_input, C.get_input)
