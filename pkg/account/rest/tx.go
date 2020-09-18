@@ -26,7 +26,7 @@ func RegisterRoutes(cliCtx context.Context, r *mux.Router) {
 	r.HandleFunc("/account/new", NewAccountRequestHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/bank/balance", QueryBalancesRequestHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/account/nonce", QueryNonceRequestHandleFn(cliCtx)).Methods("POST")
-	r.HandleFunc("/node/new_validator", rest.MiddleHandler(cliCtx, CreateNewValidatorKey, types.DefaultCodespace)).Methods("GET")
+	r.HandleFunc("/node/new_validator", rest.MiddleHandler(cliCtx, CreateNewValidatorKey, types.DefaultCodespace)).Methods("POST")
 	r.HandleFunc("/transaction/multi_msgs_tx", rest.MiddleHandler(cliCtx, MultiMsgsRequest, types.DefaultCodespace)).Methods("POST")
 }
 

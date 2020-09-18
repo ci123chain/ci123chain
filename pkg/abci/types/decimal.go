@@ -10,6 +10,36 @@ import (
 	"testing"
 )
 
+type RustU128 [16]byte
+
+func NewRustU128(i *big.Int) *RustU128 {
+	ib := i.Bytes() // big-endian
+
+	size := len(ib)
+	if size > 16 {
+		panic("u128最大16字节") //链上处理
+	}
+
+	// little-endian
+	for i := 0; i < size/2; i++ {
+		ib[i], ib[size-1-i] = ib[size-1-i], ib[i]
+	}
+
+	// 补全
+	for i := 0; i+size < 16; i++ {
+		ib = append(ib, 0)
+	}
+
+	var u RustU128
+	copy(u[:], ib)
+	return &u
+}
+
+func (u128 *RustU128) Bytes() []byte {
+	return u128[:]
+}
+
+
 //var _ CustomProtobufType = (*Dec)(nil)
 
 // NOTE: never use new(Dec) or else we will panic unmarshalling into the

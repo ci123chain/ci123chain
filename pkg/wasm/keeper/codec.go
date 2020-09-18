@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"unicode/utf8"
 )
 
@@ -23,6 +24,10 @@ func (sink Sink) WriteU32(i uint32) {
 
 func (sink Sink) WriteU64(i uint64) {
 	sink.writeLittleEndian(i)
+}
+
+func (sink Sink) WriteU128(u *sdk.RustU128) {
+	sink.writeRawBytes(u[:])
 }
 
 func (sink Sink) WriteI32(i int32) {

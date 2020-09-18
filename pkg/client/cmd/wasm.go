@@ -44,7 +44,7 @@ var wasmCmd = &cobra.Command{
 	Use: "wasm [functionName]",
 	Short: "Wasm transaction subcommands",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		viper.BindPFlags(cmd.Flags())
+		_ = viper.BindPFlags(cmd.Flags())
 
 		funcName := args[0]
 		switch funcName {
@@ -85,6 +85,9 @@ func initContract() error {
 	describe := viper.GetString(helper.FlagDescribe)
 
 	tx, err := sdk.SignInstantiateContractMsg(code, from, key, name, version, author, email, describe, args)
+	if err != nil {
+		return err
+	}
 	txid, err := ctx.BroadcastSignedData(tx.Bytes())
 	if err != nil {
 		return err
@@ -106,6 +109,9 @@ func executeContract() error {
 	addrs := types.HexToAddress(contractAddr)
 	contractAddress := addrs
 	tx, err := sdk.SignExecuteContractMsg(from, key, contractAddress, args)
+	if err != nil {
+		return err
+	}
 	txid, err := ctx.BroadcastSignedData(tx.Bytes())
 	if err != nil {
 		return err
@@ -140,6 +146,9 @@ func migrateContract() error {
 	contract := viper.GetString(helper.FlagContractAddress)
 	contractAddr := types.HexToAddress(contract)
 	tx, err := sdk.SignMigrateContractMsg(code, from, key, name, version, author, email, describe, contractAddr, args)
+	if err != nil {
+		return err
+	}
 	txid, err := ctx.BroadcastSignedData(tx.Bytes())
 	if err != nil {
 		return err

@@ -1,17 +1,13 @@
 package types
 
-import (
-	tmtypes "github.com/tendermint/tendermint/types"
-)
-
 const (
 	communityContractAddress = "0xfffffffffffffffffffffffffffffffffffffff1"
 	isOfficial = "true"
 	aclContractAddress = "0xfffffffffffffffffffffffffffffffffffffff2"
 	votingContractAddress = "0xfffffffffffffffffffffffffffffffffffffff3"
-	supportRequiredPct = "6000000000"
-	minAcceptQuorumPct = "5000000000"
-	openTime = "1290600000"
+	supportRequiredPct = "600000000000000000"  //60*10^16 :60%
+	minAcceptQuorumPct = "500000000000000000"  //50*10^16 :50%
+	openTime = "1290600000"  //2 weeks
 	InitMethod = "init"
 	InvokeMethod = "invoke"
 	SetContractMethod = "initial_contract"
@@ -37,35 +33,35 @@ type GenesisState struct {
 	Describe string      `json:"describe"`
 }
 
-func DefaultGenesisState(_ []tmtypes.GenesisValidator) GenesisState{
+func DefaultGenesisState() GenesisState{
 
 	contracts := []Contract{
 		{
-			Index: 0,
-			Code: community_code,
-			Method: InitMethod,
-			Params: []string{isOfficial},
+			Index:   0,
+			Code:    communityCode,
+			Method:  InitMethod,
+			Params:  []string{isOfficial},
 			Address: communityContractAddress,
 		},
 		{
-			Index: 1,
-			Code: acl_code,
-			Method: InitMethod,
-			Params: []string{communityContractAddress},
+			Index:   1,
+			Code:    aclCode,
+			Method:  InitMethod,
+			Params:  []string{communityContractAddress},
 			Address: aclContractAddress,
 		},
 		{
-			Index: 2,
-			Code: voting_code,
-			Method: InitMethod,
-			Params: []string{aclContractAddress, communityContractAddress, supportRequiredPct, minAcceptQuorumPct, openTime, isOfficial},
+			Index:   2,
+			Code:    votingCode,
+			Method:  InitMethod,
+			Params:  []string{aclContractAddress, communityContractAddress, supportRequiredPct, minAcceptQuorumPct, openTime, isOfficial},
 			Address: votingContractAddress,
 		},
 		{
-			Index: 3,
-			Code: community_code,
-			Method: InvokeMethod,
-			Params: []string{SetContractMethod, aclContractAddress, votingContractAddress},
+			Index:   3,
+			Code:    communityCode,
+			Method:  InvokeMethod,
+			Params:  []string{SetContractMethod, aclContractAddress, votingContractAddress},
 			Address: communityContractAddress,
 		},
 
@@ -74,5 +70,10 @@ func DefaultGenesisState(_ []tmtypes.GenesisValidator) GenesisState{
 	return GenesisState{
 		Contracts:contracts,
 		Invoker:invoker,
+		Name: "OfficialContract",
+		Version: "v0.0.1",
+		Author: "Official",
+		Email: "ci123chain@corp-ci.com",
+		Describe: "OfficialContract",
 	}
 }

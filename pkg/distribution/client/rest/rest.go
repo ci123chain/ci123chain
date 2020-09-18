@@ -19,7 +19,7 @@ func RegisterRoutes(cliCtx context.Context, r *mux.Router) {
 }
 
 func checkDelegatorAddressVar(w http.ResponseWriter, r *http.Request) (string, bool) {
-	address := r.FormValue("delegatorAddr")
+	address := r.FormValue("delegator_addr")
 	checkErr := util.CheckStringLength(42, 100, address)
 	if checkErr != nil {
 		rest.WriteErrorRes(w,types.ErrBadAddress(types.DefaultCodespace, checkErr))
@@ -29,7 +29,7 @@ func checkDelegatorAddressVar(w http.ResponseWriter, r *http.Request) (string, b
 }
 
 func checkValidatorAddressVar(w http.ResponseWriter, r *http.Request) (string, bool) {
-	address := r.FormValue("validatorAddr")
+	address := r.FormValue("validator_addr")
 	checkErr := util.CheckStringLength(42, 100, address)
 	if checkErr != nil {
 		rest.WriteErrorRes(w,types.ErrBadAddress(types.DefaultCodespace, checkErr))
@@ -38,16 +38,16 @@ func checkValidatorAddressVar(w http.ResponseWriter, r *http.Request) (string, b
 	return address, true
 }
 
-
+/*
 func checkWithdrawAddressVar(w http.ResponseWriter, r *http.Request) (string, error) {
-	address := r.FormValue("withdrawAddress")
+	address := r.FormValue("withdraw_address")
 	checkErr := util.CheckStringLength(42, 100, address)
 	if checkErr != nil {
 		return "", checkErr
 	}
 	return address, nil
 }
-
+*/
 
 
 /*func checkAccountAddressVar(w http.ResponseWriter, r *http.Request) (sdk.AccAddress, bool) {
@@ -60,7 +60,7 @@ func checkWithdrawAddressVar(w http.ResponseWriter, r *http.Request) (string, er
 	return sdk.HexToAddress(address), true
 }*/
 
-func checkFromAddressVar(w http.ResponseWriter, r *http.Request) (string, bool) {
+func checkFromAddressVar(_ http.ResponseWriter, r *http.Request) (string, bool) {
 	address := r.FormValue("from")
 	checkErr := util.CheckStringLength(42, 100, address)
 	if checkErr != nil {
@@ -69,7 +69,7 @@ func checkFromAddressVar(w http.ResponseWriter, r *http.Request) (string, bool) 
 	return address, true
 }
 
-func checkAmountVar(w http.ResponseWriter, r *http.Request) (int64, bool) {
+func checkAmountVar(_ http.ResponseWriter, r *http.Request) (int64, bool) {
 	amount := r.FormValue("amount")
 	amt, checkErr := util.CheckInt64(amount)
 	if checkErr != nil {
@@ -78,7 +78,7 @@ func checkAmountVar(w http.ResponseWriter, r *http.Request) (int64, bool) {
 	return amt, true
 }
 
-func checkGasVar(w http.ResponseWriter, r *http.Request) (uint64, bool) {
+func checkGasVar(_ http.ResponseWriter, r *http.Request) (uint64, bool) {
 	gas := r.FormValue("gas")
 	Gas, checkErr := util.CheckUint64(gas)
 	if checkErr != nil {
@@ -87,7 +87,7 @@ func checkGasVar(w http.ResponseWriter, r *http.Request) (uint64, bool) {
 	return Gas, true
 }
 
-func checkNonce(w http.ResponseWriter, r *http.Request, from sdk.AccAddress) (uint64, error) {
+func checkNonce(_ http.ResponseWriter, r *http.Request, from sdk.AccAddress) (uint64, error) {
 
 	nonce := r.FormValue("nonce")
 	var Nonce uint64
@@ -113,8 +113,8 @@ func checkNonce(w http.ResponseWriter, r *http.Request, from sdk.AccAddress) (ui
 	return Nonce, nil
 }
 
-func checkPrivateKey(w http.ResponseWriter, r *http.Request) (string, bool) {
-	privKey := r.FormValue("privateKey")
+func checkPrivateKey(_ http.ResponseWriter, r *http.Request) (string, bool) {
+	privKey := r.FormValue("private_key")
 	if privKey == "" {
 		return "", false
 	}
