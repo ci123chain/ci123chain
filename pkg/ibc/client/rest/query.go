@@ -89,7 +89,7 @@ type QueryTxParams struct {
 
 func QueryTxByUniqueIDRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
-		UniqueidStr := request.FormValue("uniqueID")
+		UniqueidStr := request.FormValue("unique_id")
 		height := request.FormValue("height")
 		prove := request.FormValue("prove")
 		checkErr := util.CheckStringLength(1, 100, UniqueidStr)

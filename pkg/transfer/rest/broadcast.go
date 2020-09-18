@@ -13,7 +13,7 @@ import (
 func BroadcastTxRequest(cliCtx context.Context) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 
-		data := request.FormValue("txByte")
+		data := request.FormValue("tx_byte")
 		err := util.CheckStringLength(1, 1000, data)
 		if err != nil {
 			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"error txByte length"))
@@ -37,7 +37,7 @@ func BroadcastTxRequest(cliCtx context.Context) http.HandlerFunc {
 func BroadcastTxRequestAsync(cliCtx context.Context) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 
-		data := request.FormValue("txByte")
+		data := request.FormValue("tx_byte")
 		txByte, err := hex.DecodeString(data)
 		if err != nil {
 			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
