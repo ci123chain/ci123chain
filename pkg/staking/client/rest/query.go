@@ -36,7 +36,7 @@ func delegatorDelegationsHandlerFn(cliCtx context.Context) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		//vars := mux.Vars(request)
 		//delegatorAddress := vars["delegatorAddr"]
-		delegatorAddress := request.FormValue("delegator_addr")
+		delegatorAddress := request.FormValue("delegator_address")
 		height := request.FormValue("height")
 		prove := request.FormValue("prove")
 		delegatorAddr := sdk.HexToAddress(delegatorAddress)
@@ -147,9 +147,7 @@ func validatorHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			return
 		}
 
-		//vars := mux.Vars(request)
-		//validatorAddress := vars["validatorAddr"]
-		validatorAddress := request.FormValue("validator_addr")
+		validatorAddress := request.FormValue("validator_address")
 		validatorAddr := sdk.HexToAddress(validatorAddress)
 		params := types.NewQueryValidatorParams(validatorAddr)
 		bz, Err := cliCtx.Cdc.MarshalJSON(params)
@@ -185,7 +183,7 @@ func validatorDelegationsHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		height := request.FormValue("height")
 		prove := request.FormValue("prove")
 		//vars := mux.Vars(request)
-		validatorAddress := request.FormValue("validator_addr")
+		validatorAddress := request.FormValue("validator_address")
 		validatorAddr := sdk.HexToAddress(validatorAddress)
 		params := types.NewQueryValidatorParams(validatorAddr)
 		bz, Err := cliCtx.Cdc.MarshalJSON(params)
@@ -232,7 +230,7 @@ func delegatorValidatorsHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		//delegatorAddress := vars["delegatorAddr"]
 		height := request.FormValue("height")
 		prove := request.FormValue("prove")
-		delegatorAddress := request.FormValue("delegator_addr")
+		delegatorAddress := request.FormValue("delegator_address")
 		delegatorAddr := sdk.HexToAddress(delegatorAddress)
 		params := types.NewQueryDelegatorParams(delegatorAddr)
 		bz, Err := cliCtx.Cdc.MarshalJSON(params)
@@ -278,8 +276,8 @@ func delegatorValidatorHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		//vars := mux.Vars(request)
 		//validatorAddress := vars["validatorAddr"]
 		//delegatorAddress := vars["delegatorAddr"]
-		validatorAddress := request.FormValue("validator_addr")
-		delegatorAddress := request.FormValue("delegator_addr")
+		validatorAddress := request.FormValue("validator_address")
+		delegatorAddress := request.FormValue("delegator_address")
 		height := request.FormValue("height")
 		prove := request.FormValue("prove")
 		validatorAddr := sdk.HexToAddress(validatorAddress)
@@ -327,8 +325,8 @@ func delegationHandlerFn(cliCtx context.Context) http.HandlerFunc {
 
 		height := request.FormValue("height")
 		prove := request.FormValue("prove")
-		validatorAddress := request.FormValue("validator_addr")
-		delegatorAddress := request.FormValue("delegator_addr")
+		validatorAddress := request.FormValue("validator_address")
+		delegatorAddress := request.FormValue("delegator_address")
 		validatorAddr := sdk.HexToAddress(validatorAddress)
 		delegatorAddr := sdk.HexToAddress(delegatorAddress)
 		params := types.NewQueryBondsParams(delegatorAddr, validatorAddr)
@@ -379,9 +377,9 @@ func redelegationsHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		}
 		height := r.FormValue("height")
 		prove := r.FormValue("prove")
-		delegatorAddress := r.FormValue("delegator_addr")
-		validatorSrc := r.FormValue("validator_src_addr")
-		validatorDst := r.FormValue("validator_dst_addr")
+		delegatorAddress := r.FormValue("delegator_address")
+		validatorSrc := r.FormValue("validator_src_address")
+		validatorDst := r.FormValue("validator_dst_address")
 
 		delegatorAddr := sdk.HexToAddress(delegatorAddress)
 		validatorSrcAddr := sdk.HexToAddress(validatorSrc)

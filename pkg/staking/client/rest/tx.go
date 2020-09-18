@@ -105,7 +105,7 @@ func DelegateTX(cliCtx context.Context, writer http.ResponseWriter, request *htt
 		return
 	}
 	delegatorAddr := from
-	validatorAddr := sdk.HexToAddress(request.FormValue("validator_addr"))
+	validatorAddr := sdk.HexToAddress(request.FormValue("validator_address"))
 	amount, err := strconv.ParseUint(request.FormValue("amount"), 10, 64)
 	if err != nil {
 		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
@@ -149,8 +149,8 @@ func RedelegateTX(cliCtx context.Context, writer http.ResponseWriter, request *h
 		return
 	}
 	delegatorAddr := from
-	validatorSrcAddr := sdk.HexToAddress(request.FormValue("validator_src_addr"))
-	validatorDstAddr := sdk.HexToAddress(request.FormValue("validator_dst_addr"))
+	validatorSrcAddr := sdk.HexToAddress(request.FormValue("validator_src_address"))
+	validatorDstAddr := sdk.HexToAddress(request.FormValue("validator_dst_address"))
 	amount, err := strconv.ParseUint(request.FormValue("amount"), 10, 64)
 	if err != nil {
 		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
@@ -195,7 +195,7 @@ func UndelegateTX(cliCtx context.Context, writer http.ResponseWriter, request *h
 		return
 	}
 	delegatorAddr := from
-	validatorAddr := sdk.HexToAddress(request.FormValue("validator_addr"))
+	validatorAddr := sdk.HexToAddress(request.FormValue("validator_address"))
 	amount, err := strconv.ParseUint(request.FormValue("amount"), 10, 64)
 	if err != nil {
 		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
