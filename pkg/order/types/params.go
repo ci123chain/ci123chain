@@ -1,23 +1,54 @@
 package types
 
 import (
-	"github.com/ci123chain/ci123chain/pkg/order/keeper"
 	"github.com/ci123chain/ci123chain/pkg/params/subspace"
+	"time"
 )
+
+const SleepTime = 1 * time.Second
+const StateDone = "Done"
+const StateInit = "Init"
+const OrderBookKey = "OrderBook"
+const OpADD = "ADD"
+const NoOrderBookErr = "No OrderBook"
 
 var (
 	KeyOrderBook	= []byte("OrderBook")
 	StoreKey		= "order"
 )
 
+type OrderBook struct {
+	Lists 	[]Lists 	`json:"lists"`
+
+	Current	Current 	`json:"current"`
+
+	Actions	[]Actions 	`json:"actions"`
+}
+
+type Lists struct {
+	Name 	string 	`json:"name"`
+	Height	int64	`json:"height"`
+}
+
+type Current struct {
+	Index	int		`json:"index"`
+	State	string	`json:"state"`
+}
+
+type Actions struct {
+	Type	string	`json:"type"`
+	Height	int64	`json:"height"`
+	Name	string	`json:"name"`
+}
+
 type Params struct {
-	OrderBook	keeper.OrderBook	`json:"orderBook"`
+	OrderBook	OrderBook	`json:"orderBook"`
 }
 
 func DefaultParams() Params {
-	var lists []keeper.Lists
+	var lists []Lists
 
-	p1 := &keeper.Lists{
+	p1 := &Lists{
 		Name:   "",
 		Height: 0,
 	}
@@ -28,13 +59,13 @@ func DefaultParams() Params {
 	//lists = append(lists, *p1, *p2)
 	lists = append(lists, *p1)
 
-	current := keeper.Current{
+	current := Current{
 		Index: 0,
-		State: keeper.StateInit,
+		State: StateInit,
 	}
 
-	var actions []keeper.Actions
-	orderbook := keeper.OrderBook{
+	var actions []Actions
+	orderbook := OrderBook{
 		Lists: lists,
 		Current: current,
 		Actions: actions,

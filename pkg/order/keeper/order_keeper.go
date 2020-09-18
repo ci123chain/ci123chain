@@ -2,50 +2,19 @@ package keeper
 
 import (
 	"errors"
-	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/account"
 	"github.com/ci123chain/ci123chain/pkg/couchdb"
+	"github.com/ci123chain/ci123chain/pkg/order/types"
 	"github.com/ci123chain/ci123chain/pkg/params/subspace"
 	"time"
 )
 
-var ModuleCdc *codec.Codec
-const SleepTime = 1 * time.Second
-const StateDone = "Done"
-const StateInit = "Init"
-const OrderBookKey = "OrderBook"
-const OpADD = "ADD"
-const NoOrderBookErr = "No OrderBook"
 type OrderKeeper struct {
 	Cdb 		*couchdb.GoCouchDB
 	StoreKey	sdk.StoreKey
 	paramSubspace subspace.Subspace
 	AccountKeeper  account.AccountKeeper
-}
-
-type OrderBook struct {
-	Lists 	[]Lists 	`json:"lists"`
-
-	Current	Current 	`json:"current"`
-
-	Actions	[]Actions 	`json:"actions"`
-}
-
-type Lists struct {
-	Name 	string 	`json:"name"`
-	Height	int64	`json:"height"`
-}
-
-type Current struct {
-	Index	int		`json:"index"`
-	State	string	`json:"state"`
-}
-
-type Actions struct {
-	Type	string	`json:"type"`
-	Height	int64	`json:"height"`
-	Name	string	`json:"name"`
 }
 
 func NewOrderKeeper(cdb *couchdb.GoCouchDB, key sdk.StoreKey, ak account.AccountKeeper) OrderKeeper {
@@ -60,10 +29,10 @@ func (ok *OrderKeeper) WaitForReady(ctx sdk.Context) {
 	for {
 		orderbook, err := ok.GetOrderBook(ctx)
 		if err != nil {
-			if err.Error() != NoOrderBookErr {
+			if err.Error() != types.NoOrderBookErr {
 				panic(err)
 			} else {
-				time.Sleep(SleepTime)
+				time.Sleep(types.SleepTime)
 				continue
 			}
 		}
@@ -71,14 +40,14 @@ func (ok *OrderKeeper) WaitForReady(ctx sdk.Context) {
 			ok.UpdateOrderBook(ctx, orderbook, nil)
 			return
 		}
-		time.Sleep(SleepTime)
+		time.Sleep(types.SleepTime)
 		if err != nil {
 			panic(err)
 		}
 	}
 }
 
-func (ok *OrderKeeper) UpdateOrderBook(ctx sdk.Context, orderbook OrderBook, actions *Actions) {
+func (ok *OrderKeeper) UpdateOrderBook(ctx sdk.Context, orderbook types.OrderBook, actions *types.Actions) {
 	if actions != nil {
 		name := actions.Name
 		for _,v := range orderbook.Lists{
@@ -98,7 +67,7 @@ func (ok *OrderKeeper) UpdateOrderBook(ctx sdk.Context, orderbook OrderBook, act
 		if orderbook.Lists[i].Name == ctx.ChainID(){
 			orderbook.Lists[i].Height = ctx.BlockHeight()
 			orderbook.Current.Index = i
-			orderbook.Current.State = StateDone
+			orderbook.Current.State = types.StateDone
 			break
 		}
 	}
@@ -107,8 +76,8 @@ func (ok *OrderKeeper) UpdateOrderBook(ctx sdk.Context, orderbook OrderBook, act
 	var deleteIndex []int
 	if orderbook.Current.Index == 0 && orderbook.Actions != nil {
 		for k, v := range orderbook.Actions {
-			if v.Type == OpADD && ctx.BlockHeight() == v.Height {
-				list := Lists{
+			if v.Type == types.OpADD && ctx.BlockHeight() == v.Height {
+				list := types.Lists{
 					Name:   v.Name,
 					Height: 0,
 				}
@@ -130,38 +99,38 @@ func (ok *OrderKeeper) UpdateOrderBook(ctx sdk.Context, orderbook OrderBook, act
 	return
 }
 
-func (ok *OrderKeeper) GetOrderBook(ctx sdk.Context) (OrderBook, error) {
-	store := ctx.KVStore(ok.StoreKey).Latest([]string{OrderBookKey})
-	var orderbook OrderBook
+func (ok *OrderKeeper) GetOrderBook(ctx sdk.Context) (types.OrderBook, error) {
+	store := ctx.KVStore(ok.StoreKey).Latest([]string{types.OrderBookKey})
+	var orderbook types.OrderBook
 	isExist := ok.ExistOrderBook(ctx)
 	if !isExist {
-		return orderbook, errors.New(NoOrderBookErr)
+		return orderbook, errors.New(types.NoOrderBookErr)
 	}
-	bz := store.Get([]byte(OrderBookKey))
-	err := ModuleCdc.UnmarshalJSON(bz, &orderbook)
+	bz := store.Get([]byte(types.OrderBookKey))
+	err := types.ModuleCdc.UnmarshalJSON(bz, &orderbook)
 	return orderbook, err
 }
 
 func (ok *OrderKeeper) ExistOrderBook(ctx sdk.Context) bool  {
-	store := ctx.KVStore(ok.StoreKey).Latest([]string{OrderBookKey})
-	bz := store.Get([]byte(OrderBookKey))
+	store := ctx.KVStore(ok.StoreKey).Latest([]string{types.OrderBookKey})
+	bz := store.Get([]byte(types.OrderBookKey))
 	if len(bz) > 0 {
 		return true
 	}
 	return false
 }
 
-func (ok *OrderKeeper) SetOrderBook(ctx sdk.Context, orderbook OrderBook)  {
+func (ok *OrderKeeper) SetOrderBook(ctx sdk.Context, orderbook types.OrderBook)  {
 	store := ctx.KVStore(ok.StoreKey)
-	bz, err := ModuleCdc.MarshalJSON(orderbook)
+	bz, err := types.ModuleCdc.MarshalJSON(orderbook)
 	if err != nil {
 		panic(err)
 	}
-	store.Set([]byte(OrderBookKey), bz)
+	store.Set([]byte(types.OrderBookKey), bz)
 }
 
-func (ok *OrderKeeper) isReady(orderbook OrderBook, shardID string, height int64) bool {
-	if orderbook.Current.State == StateInit {
+func (ok *OrderKeeper) isReady(orderbook types.OrderBook, shardID string, height int64) bool {
+	if orderbook.Current.State == types.StateInit {
 		if orderbook.Lists[0].Name == shardID {
 			return true
 		} else {
@@ -175,7 +144,7 @@ func (ok *OrderKeeper) isReady(orderbook OrderBook, shardID string, height int64
 		nextIndex = orderbook.Current.Index + 1
 	}
 	if orderbook.Lists[nextIndex].Height + 1 == height &&
-		orderbook.Current.State == StateDone &&
+		orderbook.Current.State == types.StateDone &&
 		orderbook.Lists[nextIndex].Name == shardID {
 		return true
 	}else {

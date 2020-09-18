@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"encoding/json"
-	"github.com/ci123chain/ci123chain/pkg/order/keeper"
 	"time"
 
 	//"encoding/json"
@@ -161,9 +160,9 @@ func bootstrapGenWithConfig(c *cfg.Config, cdc *amino.Codec, appInit app.AppInit
 		appByte, _ = appState.MarshalJSON()
 		var gs genState
 		json.Unmarshal(appByte, &gs)
-		var ls []keeper.Lists
+		var ls []otypes.Lists
 		for j := 0; j < nodes; j++ {
-			var l keeper.Lists
+			var l otypes.Lists
 			l.Name = fmt.Sprintf("%s%d", chainPrefix, j)
 			l.Height = 0
 			ls = append(ls, l)
@@ -230,9 +229,9 @@ func bootstrapAddNode(c *cfg.Config, cdc *amino.Codec, appInit app.AppInit) erro
 	appByte, _ = appState.MarshalJSON()
 	var gs genState
 	json.Unmarshal(appByte, &gs)
-	var ls []keeper.Lists
+	var ls []otypes.Lists
 	for j := 0; j < nodeNum - 1; j++ {
-		var l keeper.Lists
+		var l otypes.Lists
 		l.Name = fmt.Sprintf("%s%d", chainPrefix, j)
 		l.Height = 0
 		ls = append(ls, l)

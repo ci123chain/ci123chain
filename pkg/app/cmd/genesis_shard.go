@@ -1,13 +1,12 @@
 package cmd
 
 import (
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	"github.com/ci123chain/ci123chain/pkg/app"
 	"github.com/ci123chain/ci123chain/pkg/order"
-	"github.com/ci123chain/ci123chain/pkg/order/keeper"
 	otype "github.com/ci123chain/ci123chain/pkg/order/types"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/libs/cli"
 	"strings"
 )
@@ -34,10 +33,10 @@ func AddGenesisShardCmd(ctx *app.Context, cdc *codec.Codec) *cobra.Command {
 				cdc.MustUnmarshalJSON(appState[order.ModuleName], &gs)
 			}
 			if gs.Params.OrderBook.Lists[0].Name == ""{
-				gs.Params.OrderBook.Lists = []keeper.Lists{}
+				gs.Params.OrderBook.Lists = []otype.Lists{}
 			}
 			for i := 0; i < len(shards); i++ {
-				var list keeper.Lists
+				var list otype.Lists
 				exist := false
 				list.Name = shards[i]
 				list.Height = 0

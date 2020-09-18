@@ -39,7 +39,7 @@ func (am AppModuleBasic) RegisterCodec(codec *codec.Codec) {
 }
 
 func (am AppModuleBasic) DefaultGenesis(_ []tmtypes.GenesisValidator) json.RawMessage {
-	return keeper.ModuleCdc.MustMarshalJSON(types.DefaultGenesisState())
+	return types.ModuleCdc.MustMarshalJSON(types.DefaultGenesisState())
 }
 
 func (am AppModuleBasic) Name() string {
@@ -57,7 +57,7 @@ func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.Va
 	}
 	//am.OrderKeeper.Cdb.ResetDB()
 	var genesisState types.GenesisState
-	keeper.ModuleCdc.MustUnmarshalJSON(data, &genesisState)
+	types.ModuleCdc.MustUnmarshalJSON(data, &genesisState)
 	shardID := ctx.ChainID()
 	if genesisState.Params.OrderBook.Lists != nil {
 		name := genesisState.Params.OrderBook.Lists[0].Name

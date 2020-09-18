@@ -28,7 +28,7 @@ func handlerMsgUpgrade(ctx types.Context,k *keeper.OrderKeeper, msg *order.MsgUp
 	}
 
 	//现在是新添加一个分片
-	var action keeper.Actions
+	var action order.Actions
 	action.Name = msg.Name
 	action.Height = msg.Height
 	action.Type = msg.Type

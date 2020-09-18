@@ -2,7 +2,6 @@ package types
 
 import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	"github.com/ci123chain/ci123chain/pkg/order/keeper"
 	"github.com/ci123chain/ci123chain/pkg/util"
 )
 
@@ -52,7 +51,7 @@ func (msg *MsgUpgrade) ValidateBasic() sdk.Error{
 }
 
 func (msg *MsgUpgrade) Bytes() []byte {
-	bytes, err := keeper.ModuleCdc.MarshalBinaryLengthPrefixed(msg)
+	bytes, err := ModuleCdc.MarshalBinaryLengthPrefixed(msg)
 	if err != nil {
 		panic(err)
 	}
