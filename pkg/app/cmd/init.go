@@ -370,7 +370,6 @@ func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initCo
 			panic(err)
 		}
 	}else {
-
 		panic(errors.New("validator key can not be empty"))
 	}
 

@@ -6,10 +6,10 @@ import (
 )
 
 func signUpgradeMsgDemo() (string, error) {
-	msg, err := sdk.SignUpgradeMsg(t, name, offlineHeight, priv)
+	msg, err := sdk.SignUpgradeMsg(t, name, offlineHeight, from, offlineGas, offlineNonce, priv)
 	if err != nil {
 		return "", err
 	}
-	return hex.EncodeToString(msg.Bytes()), nil
+	return hex.EncodeToString(msg), nil
 }
 

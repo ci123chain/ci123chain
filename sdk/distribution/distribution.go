@@ -3,10 +3,14 @@ package distribution
 import (
 	"encoding/hex"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/app"
 	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
 	"github.com/ci123chain/ci123chain/pkg/distribution/types"
 )
 
+var cdc = app.MakeCodec()
+
+//todo
 func SignFundCommunityPoolTx(from string, amount int64, gas, nonce uint64, priv string) ([]byte, error) {
 	//
 	privateKey, err := hex.DecodeString(priv)
@@ -16,13 +20,6 @@ func SignFundCommunityPoolTx(from string, amount int64, gas, nonce uint64, priv 
 	Amount := sdk.NewCoin(sdk.NewInt(amount))
 	accountAddr := sdk.HexToAddress(from)
 	tx := types.NewMsgFundCommunityPool(accountAddr, Amount, gas, nonce, accountAddr)
-
-	/*sid := cryptosuit.NewFabSignIdentity()
-	pub, err  := sid.GetPubKey(privateKey)
-
-	tx.SetPubKey(pub)
-	signbyte := tx.GetSignBytes()
-	signature, err := sid.Sign(signbyte, privateKey)*/
 	eth := cryptosuit.NewETHSignIdentity()
 	signature, err := eth.Sign(tx.GetSignBytes(), privateKey)
 	if err != nil {
@@ -33,74 +30,44 @@ func SignFundCommunityPoolTx(from string, amount int64, gas, nonce uint64, priv 
 	return tx.Bytes(), nil
 }
 
-
-func SignMsgSetWithdrawAddress(from, withdrawAddress sdk.AccAddress, priv string) (sdk.Msg, error) {
-
-	privateKey, err := hex.DecodeString(priv)
-	if err != nil {
-		return nil, err
-	}
-
+func SignMsgSetWithdrawAddress(from, withdrawAddress sdk.AccAddress, gas, nonce uint64, priv string) ([]byte, error) {
 	msg := types.NewMsgSetWithdrawAddress(from, withdrawAddress, from)
-
-	eth := cryptosuit.NewETHSignIdentity()
-	signature, err := eth.Sign(msg.GetSignBytes(), privateKey)
+	txByte, err := app.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, priv, cdc)
 	if err != nil {
 		return nil, err
 	}
-	msg.SetSignature(signature)
-
-	return msg, nil
+	return txByte, nil
 }
 
-func SignWithdrawDelegatorRewardTx(from, validatorAddress, delegatorAddress sdk.AccAddress, priv string) (sdk.Msg, error) {
-	privateKey, err := hex.DecodeString(priv)
-	if err != nil {
-		return nil, err
-	}
+func NewMsgSetWithdrawAddressMsg(from, withdrawAddress sdk.AccAddress) []byte {
+	msg := types.NewMsgSetWithdrawAddress(from, withdrawAddress, from)
+	return msg.Bytes()
+}
 
+func SignWithdrawDelegatorRewardTx(from, validatorAddress, delegatorAddress sdk.AccAddress, gas, nonce uint64, priv string) ([]byte, error) {
 	msg := types.NewMsgWithdrawDelegatorReward(from, validatorAddress, delegatorAddress)
-	/*sid := cryptosuit.NewFabSignIdentity()
-	pub, err  := sid.GetPubKey(privateKey)
+	txByte, err := app.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, priv, cdc)
 	if err != nil {
 		return nil, err
 	}
-
-	tx.SetPubKey(pub)
-	signbyte := tx.GetSignBytes()
-	signature, err := sid.Sign(signbyte, privateKey)*/
-	eth := cryptosuit.NewETHSignIdentity()
-	signature, err := eth.Sign(msg.GetSignBytes(), privateKey)
-	if err != nil {
-		return nil, err
-	}
-	msg.SetSignature(signature)
-
-	return msg, nil
+	return txByte, nil
 }
 
-func SignWithdrawValidatorCommissionTx(from, validatorAddress sdk.AccAddress, priv string) (sdk.Msg, error) {
-	privateKey, err := hex.DecodeString(priv)
-	if err != nil {
-		return nil, err
-	}
+func NewWithdrawDelegatorRewardMsg(from, validatorAddress, delegatorAddress sdk.AccAddress) []byte {
+	msg := types.NewMsgWithdrawDelegatorReward(from, validatorAddress, delegatorAddress)
+	return msg.Bytes()
+}
 
+func SignWithdrawValidatorCommissionTx(from, validatorAddress sdk.AccAddress, gas, nonce uint64, priv string) ([]byte, error) {
 	msg := types.NewMsgWithdrawValidatorCommission(from, validatorAddress)
-	/*sid := cryptosuit.NewFabSignIdentity()
-	pub, err  := sid.GetPubKey(privateKey)
+	txByte, err := app.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, priv, cdc)
 	if err != nil {
 		return nil, err
 	}
+	return txByte, nil
+}
 
-	tx.SetPubKey(pub)
-	signbyte := tx.GetSignBytes()
-	signature, err := sid.Sign(signbyte, privateKey)*/
-	eth := cryptosuit.NewETHSignIdentity()
-	signature, err := eth.Sign(msg.GetSignBytes(), privateKey)
-	if err != nil {
-		return nil, err
-	}
-	msg.SetSignature(signature)
-
-	return msg, nil
+func NewWithdrawValidatorCommissionMsg(from, validatorAddress sdk.AccAddress) []byte {
+	msg := types.NewMsgWithdrawValidatorCommission(from, validatorAddress)
+	return msg.Bytes()
 }

@@ -7,8 +7,6 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/ibc"
 )
 
-// 生成 MortgageDone 完成交易
-
 func SignApplyIBCMsg(from string, uniqueID, observerID, priv []byte) ([]byte, error) {
 
 	tx, err := buildApplyIBCMsg(from, uniqueID, observerID)
@@ -25,9 +23,7 @@ func SignApplyIBCMsg(from string, uniqueID, observerID, priv []byte) ([]byte, er
 	return tx.Bytes(), nil
 }
 
-
-
-func buildApplyIBCMsg (from string, uniqueID, observerID []byte) (sdk.Msg, error) {
+func buildApplyIBCMsg(from string, uniqueID, observerID []byte) (sdk.Msg, error) {
 	fromAddr, err := helper.StrToAddress(from)
 	if err != nil {
 		return nil, err
@@ -36,4 +32,8 @@ func buildApplyIBCMsg (from string, uniqueID, observerID []byte) (sdk.Msg, error
 	return ibcMsg, nil
 }
 
+func NewApplyIBCMsg(from sdk.AccAddress, uniqueID, observerID []byte) []byte {
+	msg := ibc.NewApplyIBCTx(from, uniqueID, observerID)
+	return msg.Bytes()
+}
 

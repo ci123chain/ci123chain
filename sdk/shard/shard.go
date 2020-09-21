@@ -1,10 +1,9 @@
 package shard
 
 import (
-	"encoding/hex"
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
+	"github.com/ci123chain/ci123chain/pkg/app"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -13,19 +12,21 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/order"
 )
 
+var cdc = app.MakeCodec()
 //off line
-func SignUpgradeMsg(t, name string, height int64, priv string) (sdk.Msg, error){
+func SignUpgradeMsg(t, name string, height int64, from string, gas, nonce uint64, priv string) ([]byte, error){
+	fromAddr := sdk.HexToAddress(from)
 	msg := order.NewMsgUpgrade(t, name, height)
-
-	var signature []byte
-	privPub, err := hex.DecodeString(priv)
-	eth := cryptosuit.NewETHSignIdentity()
-	signature, err = eth.Sign(msg.GetSignBytes(), privPub)
+	txByte, err := app.SignCommonTx(fromAddr, nonce, gas, []sdk.Msg{msg}, priv, cdc)
 	if err != nil {
 		return nil, err
 	}
-	msg.SetSignature(signature)
-	return msg, nil
+	return txByte, nil
+}
+
+func NewUpgradeMsg(t, name string, height int64) []byte {
+	msg := order.NewMsgUpgrade(t, name, height)
+	return msg.Bytes()
 }
 
 //on line

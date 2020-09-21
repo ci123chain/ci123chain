@@ -3,16 +3,16 @@ package staking
 import (
 	"encoding/hex"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
+	"github.com/ci123chain/ci123chain/pkg/app"
 	"github.com/ci123chain/ci123chain/pkg/staking"
 	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/crypto"
 	cryptoAmino "github.com/tendermint/tendermint/crypto/encoding/amino"
 )
 
-func SignCreateValidatorMSg(from sdk.AccAddress, amount uint64, priv string, minSelfDelegation int64,
+func SignCreateValidatorMSg(from sdk.AccAddress, gas, nonce, amount uint64, priv string, minSelfDelegation int64,
 	validatorAddress, delegatorAddress sdk.AccAddress, rate, maxRate, maxChangeRate int64,
-	moniker, identity, website, securityContact, details string, publicKey string) (sdk.Msg, error) {
+	moniker, identity, website, securityContact, details string, publicKey string) ([]byte, error) {
 
 	by, err := hex.DecodeString(publicKey)
 	if err != nil {
@@ -29,17 +29,18 @@ func SignCreateValidatorMSg(from sdk.AccAddress, amount uint64, priv string, min
 	msg := staking.NewCreateValidatorMsg(from, amt, selfDelegation, validatorAddress, delegatorAddress, r, mr, mxr,
 	moniker, identity, website, securityContact, details, public)
 
-	var signature []byte
-	privPub, err := hex.DecodeString(priv)
-	eth := cryptosuit.NewETHSignIdentity()
-	signature, err = eth.Sign(msg.GetSignBytes(), privPub)
-
+	txByte, err := app.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, priv, cdc)
 	if err != nil {
 		return nil, err
 	}
-	msg.SetSignature(signature)
+	return txByte, nil
+}
 
-	return msg, nil
+func NewCreateValidatorMsg(from sdk.AccAddress, amt sdk.Coin, selfDelegation sdk.Int, validatorAddress, delegatorAddress sdk.AccAddress, r, mr, mxr sdk.Dec,
+	moniker, identity, website, securityContact, details string, public crypto.PubKey) []byte {
+	msg := staking.NewCreateValidatorMsg(from, amt, selfDelegation, validatorAddress, delegatorAddress, r, mr, mxr,
+		moniker, identity, website, securityContact, details, public)
+	return msg.Bytes()
 }
 
 var cdc = amino.NewCodec()

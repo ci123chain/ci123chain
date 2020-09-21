@@ -104,7 +104,7 @@ func main() {
 			fmt.Println("---------------抵押在线签名交易完成----------------------")
 		}else {
 			fmt.Println("---------------抵押离线签名交易----------------------")
-			delegateTx, err := SignDelegateTx(froms, amount, pri, validatorAddresss, delegatorAddresss)
+			delegateTx, err := SignDelegateTx(froms, gas, nonce, amount, pri, validatorAddresss, delegatorAddresss)
 			if err != nil {
 				fmt.Println("签名失败，参数错误")
 				fmt.Println(err)
@@ -137,7 +137,7 @@ func main() {
 			fmt.Println("---------------重新抵押在线签名交易完成----------------------")
 		}else {
 			fmt.Println("---------------重新抵押离线签名交易----------------------")
-			redelegateTx, err := SignRelegateTx(froms, amount, pri, validatorSrcAddresss, validatorDstAddresss, delegatorAddresss)
+			redelegateTx, err := SignRelegateTx(froms, gas, nonce, amount, pri, validatorSrcAddresss, validatorDstAddresss, delegatorAddresss)
 			if err != nil {
 				fmt.Println("签名失败，参数错误")
 				fmt.Println(err)
@@ -170,7 +170,7 @@ func main() {
 			fmt.Println("---------------解除抵押在线签名交易完成----------------------")
 		}else {
 			fmt.Println("---------------解除抵押离线签名交易----------------------")
-			undelegateTx, err := SignUndelegate(froms, amount, pri, validatorAddresss, delegatorAddresss)
+			undelegateTx, err := SignUndelegate(froms, gas, nonce, amount, pri, validatorAddresss, delegatorAddresss)
 			if err != nil {
 				fmt.Println("签名失败，参数错误")
 				fmt.Println(err)

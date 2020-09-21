@@ -1,21 +1,15 @@
 package staking
 
 import (
-	"encoding/hex"
 	"errors"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
+	"github.com/ci123chain/ci123chain/pkg/app"
 	"github.com/ci123chain/ci123chain/pkg/staking"
 	"github.com/ci123chain/ci123chain/pkg/staking/types"
 )
 
-func SignEditValidator(from sdk.AccAddress, priv, moniker, identity, website, secu, details string,
-	minSelfDelegation, newRate int64) (sdk.Msg, error) {
-
-	privateKey, err := hex.DecodeString(priv)
-	if err != nil {
-		return nil, err
-	}
+func SignEditValidator(from sdk.AccAddress, gas, nonce uint64, priv, moniker, identity, website, secu, details string,
+	minSelfDelegation, newRate int64) ([]byte, error) {
 	var nrArg *sdk.Dec
 	var minArg *sdk.Int
 	if newRate < 0 {
@@ -48,12 +42,15 @@ func SignEditValidator(from sdk.AccAddress, priv, moniker, identity, website, se
 
 	msg := staking.NewEditValidatorMsg(from, desc, nrArg, minArg)
 
-	eth := cryptosuit.NewETHSignIdentity()
-	signature, err := eth.Sign(msg.GetSignBytes(), privateKey)
+	txByte, err := app.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, priv, cdc)
 	if err != nil {
 		return nil, err
 	}
-	msg.SetSignature(signature)
 
-	return msg, nil
+	return txByte, nil
+}
+
+func NewEditValidatorMsg(from sdk.AccAddress, desc types.Description, nrArg *sdk.Dec, minArg *sdk.Int) []byte {
+	msg := staking.NewEditValidatorMsg(from, desc, nrArg, minArg)
+	return msg.Bytes()
 }

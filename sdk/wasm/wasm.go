@@ -1,51 +1,44 @@
 package wasm
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
+	"github.com/ci123chain/ci123chain/pkg/app"
 	"github.com/ci123chain/ci123chain/pkg/wasm"
 )
 
-func SignInstantiateContractMsg(code []byte,from sdk.AccAddress, priv string, name, version, author, email, describe string,
-	initMsg json.RawMessage) (sdk.Msg, error) {
-	tx := wasm.NewInstantiateTx(code, from, name, version, author, email, describe, initMsg)
-	var signature []byte
-	privPub, err := hex.DecodeString(priv)
-	eth := cryptosuit.NewETHSignIdentity()
-	signature, err = eth.Sign(tx.GetSignBytes(), privPub)
+var cdc = app.MakeCodec()
+
+func SignInstantiateContractMsg(code []byte,from sdk.AccAddress, gas, nonce uint64, priv string, name, version, author, email, describe string,
+	initMsg json.RawMessage) ([]byte, error) {
+	msg := wasm.NewInstantiateTx(code, from, name, version, author, email, describe, initMsg)
+	txByte, err := app.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, priv, cdc)
 	if err != nil {
 		return nil, err
 	}
-	tx.SetSignature(signature)
-	return tx, nil
+	return txByte, nil
 }
 
-func SignExecuteContractMsg(from sdk.AccAddress, priv string, contractAddress sdk.AccAddress, msg json.RawMessage) (sdk.Msg, error) {
-	tx := wasm.NewExecuteTx(from, contractAddress, msg)
-	var signature []byte
-	privPub, err := hex.DecodeString(priv)
-	eth := cryptosuit.NewETHSignIdentity()
-	signature, err = eth.Sign(tx.GetSignBytes(), privPub)
-	if err != nil {
-		return nil, err
-	}
-	tx.SetSignature(signature)
-	return tx, nil
+func NewInstantiateMsg(code []byte, from sdk.AccAddress, name, version, author, email, describe string, initMsg json.RawMessage) []byte {
+	msg := wasm.NewInstantiateTx(code, from, name, version, author, email, describe, initMsg)
+	return msg.Bytes()
 }
 
-func SignMigrateContractMsg(code []byte, from sdk.AccAddress, priv string, name, version, author, email, describe string,
-	contractAddr sdk.AccAddress, initMsg json.RawMessage) (sdk.Msg, error) {
-	tx := wasm.NewMigrateTx(code, from, name, version, author, email, describe, contractAddr, initMsg)
-	var signature []byte
-	privPub, err := hex.DecodeString(priv)
-	eth := cryptosuit.NewETHSignIdentity()
-	signature, err = eth.Sign(tx.GetSignBytes(), privPub)
+func SignExecuteContractMsg(from sdk.AccAddress, gas, nonce uint64, priv string, contractAddress sdk.AccAddress, args json.RawMessage) ([]byte, error) {
+	msg := wasm.NewExecuteTx(from, contractAddress, args)
+	txByte, err := app.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, priv, cdc)
 	if err != nil {
 		return nil, err
 	}
+	return txByte, nil
+}
 
-	tx.SetSignature(signature)
-	return tx, nil
+func SignMigrateContractMsg(code []byte, from sdk.AccAddress, gas, nonce uint64, priv string, name, version, author, email, describe string,
+	contractAddr sdk.AccAddress, initMsg json.RawMessage) ([]byte, error) {
+	msg := wasm.NewMigrateTx(code, from, name, version, author, email, describe, contractAddr, initMsg)
+	txByte, err := app.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, priv, cdc)
+	if err != nil {
+		return nil, err
+	}
+	return txByte, nil
 }
