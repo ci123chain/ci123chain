@@ -26,7 +26,7 @@ func RegisterRoutes(cliCtx context.Context, r *mux.Router) {
 	r.HandleFunc("/account/new", NewAccountRequestHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/bank/balance", QueryBalancesRequestHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/account/nonce", QueryNonceRequestHandleFn(cliCtx)).Methods("POST")
-	r.HandleFunc("/node/new_validator", rest.MiddleHandler(cliCtx, CreateNewValidatorKey, types.DefaultCodespace)).Methods("POST")
+	r.HandleFunc("/node/new_validator", CreateNewValidatorKey(cliCtx)).Methods("POST")
 	r.HandleFunc("/transaction/multi_msgs_tx", rest.MiddleHandler(cliCtx, MultiMsgsRequest, types.DefaultCodespace)).Methods("POST")
 }
 
@@ -89,7 +89,7 @@ func QueryBalancesRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		}
 
 		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, request, height)
-		if !ok {
+		if !ok || err != nil {
 			rest.WriteErrorRes(w, err)
 			return
 		}
@@ -131,7 +131,7 @@ func QueryNonceRequestHandleFn(cliCtx context.Context) http.HandlerFunc {
 		}
 
 		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r, "")
-		if !ok {
+		if !ok || err != nil {
 			rest.WriteErrorRes(w, err)
 			return
 		}
@@ -155,17 +155,19 @@ func QueryNonceRequestHandleFn(cliCtx context.Context) http.HandlerFunc {
 	}
 }
 
-func CreateNewValidatorKey(cliCtx context.Context, w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	validatorKey := secp256k1.GenPrivKey()
+func CreateNewValidatorKey(cliCtx context.Context) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		validatorKey := secp256k1.GenPrivKey()
 
-	cdc := amino.NewCodec()
-	keyByte, err := cdc.MarshalJSON(validatorKey)
-	if err != nil {
-		rest.WriteErrorRes(w, client.ErrGenValidatorKey(types.DefaultCodespace, err))
+		cdc := amino.NewCodec()
+		keyByte, err := cdc.MarshalJSON(validatorKey)
+		if err != nil {
+			rest.WriteErrorRes(w, client.ErrGenValidatorKey(types.DefaultCodespace, err))
+		}
+		resp := Key{ValidatorKey:string(keyByte[1:len(keyByte)-1])}
+		rest.PostProcessResponseBare(w, cliCtx, resp)
 	}
-	resp := Key{ValidatorKey:string(keyByte[1:len(keyByte)-1])}
-	rest.PostProcessResponseBare(w, cliCtx, resp)
 }
 
 func MultiMsgsRequest(cliCtx context.Context, w http.ResponseWriter, r *http.Request) {
