@@ -12,8 +12,7 @@ type Coin struct {
 	Amount Int `json:"amount"`
 }
 const (
-	blankCoin = ""
-	DefaultCoinDenom = "stake"
+	DefaultCoinDenom = DefaultBondDenom
 )
 
 // NewCoin returns a new coin with a denomination and amount. It will panic if
@@ -72,7 +71,7 @@ func (c Coin) AmountOf(denom string) Int {
 }
 
 func (c Coin) Add(coinB Coin) Coin {
-	if c.Denom != coinB.Denom && c.Denom != blankCoin {
+	if c.Denom != coinB.Denom {
 		panic(fmt.Sprintf("invalid coin denominations; %s, %s", c.Denom, coinB.Denom))
 	}
 

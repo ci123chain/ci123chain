@@ -10,6 +10,9 @@ import (
 
 func (ak AccountKeeper) GetBalance(ctx sdk.Context, addr sdk.AccAddress) sdk.Coin {
 	coin := ak.getBalance(ctx, addr)
+	if coin.IsZero() {
+		return sdk.NewEmptyCoin()
+	}
 	return coin
 }
 
