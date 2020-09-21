@@ -7,8 +7,6 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/ibc"
 )
 
-// 生成 MortgageDone 完成交易
-
 func SignIBCBankSendMsg(from string, raw, priv []byte) ([]byte, error) {
 	tx, err := buildIBCBankSendMsg(from, raw)
 	if err != nil {
@@ -24,13 +22,18 @@ func SignIBCBankSendMsg(from string, raw, priv []byte) ([]byte, error) {
 	return tx.Bytes(), nil
 }
 
-func buildIBCBankSendMsg (from string, raw []byte) (sdk.Msg, error) {
+func buildIBCBankSendMsg(from string, raw []byte) (sdk.Msg, error) {
 	fromAddr, err := helper.StrToAddress(from)
 	if err != nil {
 		return nil, err
 	}
 	ibcMsg := ibc.NewIBCMsgBankSendMsg(fromAddr, raw)
 	return ibcMsg, nil
+}
+
+func NewIBCBankSendMsg(from sdk.AccAddress, raw []byte) []byte {
+	msg := ibc.NewIBCMsgBankSendMsg(from, raw)
+	return msg.Bytes()
 }
 
 

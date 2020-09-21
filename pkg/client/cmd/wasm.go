@@ -44,7 +44,7 @@ var wasmCmd = &cobra.Command{
 	Use: "wasm [functionName]",
 	Short: "Wasm transaction subcommands",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		_ = viper.BindPFlags(cmd.Flags())
+		viper.BindPFlags(cmd.Flags())
 
 		funcName := args[0]
 		switch funcName {
@@ -65,7 +65,7 @@ func initContract() error {
 	if err != nil {
 		return  err
 	}
-	from, _, _, key, args, err := GetArgs(ctx)
+	from, gas, nonce, key, args, err := GetArgs(ctx)
 	if err != nil {
 		return err
 	}
@@ -84,11 +84,11 @@ func initContract() error {
 	email := viper.GetString(helper.FlagEmail)
 	describe := viper.GetString(helper.FlagDescribe)
 
-	tx, err := sdk.SignInstantiateContractMsg(code, from, key, name, version, author, email, describe, args)
+	tx, err := sdk.SignInstantiateContractMsg(code, from, gas, nonce, key, name, version, author, email, describe, args)
 	if err != nil {
 		return err
 	}
-	txid, err := ctx.BroadcastSignedData(tx.Bytes())
+	txid, err := ctx.BroadcastSignedData(tx)
 	if err != nil {
 		return err
 	}
@@ -101,18 +101,15 @@ func executeContract() error {
 	if err != nil {
 		return  err
 	}
-	from, _, _, key, args, err := GetArgs(ctx)
+	from, gas, nonce, key, args, err := GetArgs(ctx)
 	if err != nil {
 		return err
 	}
 	contractAddr := viper.GetString(helper.FlagContractAddress)
 	addrs := types.HexToAddress(contractAddr)
 	contractAddress := addrs
-	tx, err := sdk.SignExecuteContractMsg(from, key, contractAddress, args)
-	if err != nil {
-		return err
-	}
-	txid, err := ctx.BroadcastSignedData(tx.Bytes())
+	tx, err := sdk.SignExecuteContractMsg(from, gas, nonce, key, contractAddress, args)
+	txid, err := ctx.BroadcastSignedData(tx)
 	if err != nil {
 		return err
 	}
@@ -125,7 +122,7 @@ func migrateContract() error {
 	if err != nil {
 		return  err
 	}
-	from, _, _, key, args, err := GetArgs(ctx)
+	from, gas, nonce, key, args, err := GetArgs(ctx)
 	if err != nil {
 		return err
 	}
@@ -145,11 +142,11 @@ func migrateContract() error {
 	describe := viper.GetString(helper.FlagDescribe)
 	contract := viper.GetString(helper.FlagContractAddress)
 	contractAddr := types.HexToAddress(contract)
-	tx, err := sdk.SignMigrateContractMsg(code, from, key, name, version, author, email, describe, contractAddr, args)
+	tx, err := sdk.SignMigrateContractMsg(code, from, gas, nonce, key, name, version, author, email, describe, contractAddr, args)
 	if err != nil {
 		return err
 	}
-	txid, err := ctx.BroadcastSignedData(tx.Bytes())
+	txid, err := ctx.BroadcastSignedData(tx)
 	if err != nil {
 		return err
 	}

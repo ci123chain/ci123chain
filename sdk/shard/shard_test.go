@@ -29,7 +29,7 @@ var (
 
 func TestSignUpgradeMsg(t *testing.T) {
 
-	signdata, err := SignUpgradeMsg(ty, name, offlineHeight, priv)
+	signdata, err := SignUpgradeMsg(ty, name, offlineHeight, from, offlineGas, offlineNonce, priv)
 	if err != nil {
 		panic(err)
 	}

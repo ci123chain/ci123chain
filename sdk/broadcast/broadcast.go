@@ -31,5 +31,4 @@ func httpBroadcastTx(tx, reqUrl string) ([]byte, error) {
 		return nil, err
 	}
 	return body, nil
-
 }

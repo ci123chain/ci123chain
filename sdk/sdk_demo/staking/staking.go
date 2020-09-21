@@ -11,38 +11,39 @@ func SignCreateValidatorTx(from types.AccAddress, amount uint64, priv string, mi
 	moniker, identity, website, securityContact, details string, publicKey string) (string, error) {
 	//
 
-	tx, err := sdk.SignCreateValidatorMSg(from, amount, priv, minSelfDelegation, validatorAddress,
+	tx, err := sdk.SignCreateValidatorMSg(from, gas, nonce, amount, priv, minSelfDelegation, validatorAddress,
 		delegatorAddress, rate, maxRate, maxChangeRate, moniker, identity, website, securityContact, details, publicKey)
 
 	if err != nil {
 		return "", err
 	}
-	return hex.EncodeToString(tx.Bytes()), nil
+	return hex.EncodeToString(tx), nil
 }
 
-func SignDelegateTx(from types.AccAddress, amount uint64, priv string, validatorAddress, delegatorAddress types.AccAddress) (string, error) {
+func SignDelegateTx(from types.AccAddress, gas, nonce, amount uint64, priv string, validatorAddress, delegatorAddress types.AccAddress) (string, error) {
 
-	tx, err := sdk.SignDelegateMsg(from, amount, priv, validatorAddress, delegatorAddress)
+	tx, err := sdk.SignDelegateMsg(from, gas, nonce, amount, priv, validatorAddress, delegatorAddress)
 	if err != nil {
 		return "", err
 	}
-	return hex.EncodeToString(tx.Bytes()), nil
+	return hex.EncodeToString(tx), nil
 }
 
-func SignRelegateTx(from types.AccAddress, amount uint64, priv string, validatorSrcAddress, validatorDstAddress, delegatorAddress types.AccAddress) (string, error) {
+func SignRelegateTx(from types.AccAddress, gas, nonce, amount uint64, priv string, validatorSrcAddress, validatorDstAddress, delegatorAddress types.AccAddress) (string, error) {
 
 	//
-	tx, err := sdk.SignRedelegateMsg(from, amount, priv, validatorSrcAddress, validatorDstAddress, delegatorAddress)
+	tx, err := sdk.SignRedelegateMsg(from, gas, nonce ,amount, priv, validatorSrcAddress, validatorDstAddress, delegatorAddress)
 	if err != nil {
 		return "", err
 	}
-	return hex.EncodeToString(tx.Bytes()), nil
+
+	return hex.EncodeToString(tx), nil
 }
 
-func SignUndelegate(from types.AccAddress, amount uint64, priv string, validatorAddress, delegatorAddress types.AccAddress) (string, error) {
-	tx, err := sdk.SignUndelegateMsg(from, amount, priv, validatorAddress, delegatorAddress)
+func SignUndelegate(from types.AccAddress, gas, nonce, amount uint64, priv string, validatorAddress, delegatorAddress types.AccAddress) (string, error) {
+	tx, err := sdk.SignUndelegateMsg(from, gas, nonce, amount, priv, validatorAddress, delegatorAddress)
 	if err != nil {
 		return "", err
 	}
-	return hex.EncodeToString(tx.Bytes()), nil
+	return hex.EncodeToString(tx), nil
 }

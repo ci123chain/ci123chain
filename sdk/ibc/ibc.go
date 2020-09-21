@@ -2,15 +2,10 @@ package ibc
 
 import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	"github.com/ci123chain/ci123chain/pkg/app"
 	"github.com/ci123chain/ci123chain/pkg/client/helper"
 	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
 	"github.com/ci123chain/ci123chain/pkg/ibc"
 )
-var cdc = app.MakeCodec()
-
-// 生成 MortgageDone 完成交易
-
 func SignIBCTransferMsg(from string, to string, amount uint64, priv []byte) ([]byte, error) {
 	tx, err := buildIBCTransferMsg(from, to, amount)
 	if err != nil {
@@ -26,7 +21,7 @@ func SignIBCTransferMsg(from string, to string, amount uint64, priv []byte) ([]b
 	return tx.Bytes(), nil
 }
 
-func buildIBCTransferMsg (from, to string, amount uint64) (sdk.Msg, error) {
+func buildIBCTransferMsg(from, to string, amount uint64) (sdk.Msg, error) {
 	fromAddr, err := helper.StrToAddress(from)
 	if err != nil {
 		return nil, err
@@ -37,5 +32,10 @@ func buildIBCTransferMsg (from, to string, amount uint64) (sdk.Msg, error) {
 	}
 	ibcMsg := ibc.NewIBCTransfer(fromAddr, toAddr, sdk.NewUInt64Coin(amount))
 	return ibcMsg, nil
+}
+
+func NewIBCTransferMsg(from, to sdk.AccAddress, amount uint64) []byte{
+	msg := ibc.NewIBCTransfer(from, to, sdk.NewUInt64Coin(amount))
+	return msg.Bytes()
 }
 

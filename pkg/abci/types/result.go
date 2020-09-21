@@ -67,7 +67,7 @@ type TxResponse struct {
 	Height    int64           `json:"height,omitempty"`
 	TxHash    string          `json:"txhash"`
 	Code      uint32          `json:"code"`
-	FormatData	string		  `json:"format_data,omitempty"`
+	FormatData string		  `json:"format_data,omitempty"`
 	Data      string          `json:"data,omitempty"`
 	RawLog    string          `json:"raw_log,omitempty"`
 	Log       string		  `json:"log,omitempty"`
