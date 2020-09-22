@@ -21,9 +21,9 @@ func ToAccAddress(addr []byte) AccAddress {
 	}
 }
 
-func HexToAddress(addres string) AccAddress {
+func HexToAddress(addr string) AccAddress {
 	return AccAddress{
-		common.HexToAddress(addres),
+		common.HexToAddress(addr),
 	}
 }
 

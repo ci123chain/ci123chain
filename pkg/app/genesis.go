@@ -25,7 +25,6 @@ func AppGenStateJSON(validators []tmtypes.GenesisValidator) (json.RawMessage, er
 type GenesisState map[string]json.RawMessage
 
 func (c *Chain) InitChainer (ctx sdk.Context, req tmabci.RequestInitChain) tmabci.ResponseInitChain {
-
 	var genesisState GenesisState
 	c.cdc.MustUnmarshalJSON(req.AppStateBytes, &genesisState)
 	return c.mm.InitGenesis(ctx, genesisState)

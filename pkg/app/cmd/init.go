@@ -178,7 +178,6 @@ func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Com
 func gentxWithConfig(cdc *amino.Codec, appInit app.AppInit, config *cfg.Config, genTxConfig config.GenTx) (
 	cliPrint json.RawMessage, genTxFile json.RawMessage, err error ) {
 
-
 	pv := validator.GenFilePV(
 		config.PrivValidatorKeyFile(),
 		config.PrivValidatorStateFile(),
@@ -374,12 +373,14 @@ func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initCo
 		panic(errors.New("validator key can not be empty"))
 	}
 
+	//create priv_validator_key.json
 	pv := validator.GenFilePV(
 		c.PrivValidatorKeyFile(),
 		c.PrivValidatorStateFile(),
 		validatorKey,
 	)
 
+	//create node_key.json
 	nodeKey, err = node.GenNodeKeyByPrivKey(c.NodeKeyFile(), pv.Key.PrivKey)
 	if err != nil {
 		panic(err)
@@ -405,14 +406,14 @@ func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initCo
 	if err != nil {
 		return
 	}
+
+	//create genesis.json
 	err = writeGenesisFile(cdc, genFile, initConfig.ChainID, validators, appState, initConfig.GenesisTime)
 	if err != nil {
 		return
 	}
 	return
 }
-
-
 
 func writeGenesisFile(cdc *amino.Codec, genesisFile string, chainID string,
 	validators []tmtypes.GenesisValidator, appState json.RawMessage, genesisTime time.Time) error {
