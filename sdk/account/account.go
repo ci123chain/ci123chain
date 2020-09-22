@@ -11,6 +11,11 @@ import (
 	"strings"
 )
 
+type Account struct {
+	Address string `json:"address"`
+	PrivKey string `json:"priv_key"`
+}
+
 //off line
 func NewAccountOffLine() (string, string, error) {
 	key, err := crypto.GenerateKey()
@@ -50,4 +55,19 @@ func NewAccountOnLine(reqUrl, proxy string) ([]byte, error) {
 		return nil, err
 	}
 	return b, nil
+}
+
+func NewAccount() Account {
+	key, err := crypto.GenerateKey()
+	if err != nil {
+		fmt.Println("Error: ", err.Error());
+	}
+
+	address := crypto.PubkeyToAddress(key.PublicKey).Hex()
+	privKey := hex.EncodeToString(key.D.Bytes())
+
+	return Account{
+		Address:	address,
+		PrivKey:	privKey,
+	}
 }
