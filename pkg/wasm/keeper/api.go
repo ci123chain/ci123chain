@@ -400,7 +400,7 @@ func getValidatorPower(context unsafe.Pointer, dataPtr, dataSize, valuePtr int32
 		if !ok {
 			value[i] = sdk.NewRustU128(big.NewInt(0))
 		}else {
-			value[i] = sdk.NewRustU128(big.NewInt(val.DelegatorShares.TruncateInt64() + 123456789))
+			value[i] = sdk.NewRustU128(big.NewInt(val.DelegatorShares.TruncateInt64()))
 		}
 		i++
 	}
