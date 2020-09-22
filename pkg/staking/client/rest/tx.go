@@ -14,7 +14,6 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/util"
 	sSdk "github.com/ci123chain/ci123chain/sdk/staking"
 	"github.com/gorilla/mux"
-	"github.com/tendermint/tendermint/crypto"
 	"net/http"
 	"strconv"
 )
@@ -59,7 +58,7 @@ func CreateValidatorRequest(cliCtx context.Context, writer http.ResponseWriter, 
 		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
 		return
 	}
-	by, err := hex.DecodeString(publicKey)
+	/*by, err := hex.DecodeString(publicKey)
 	if err != nil {
 		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
 		return
@@ -69,12 +68,12 @@ func CreateValidatorRequest(cliCtx context.Context, writer http.ResponseWriter, 
 	if err != nil {
 		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
 		return
-	}
+	}*/
 
 	coin := sdk.NewUInt64Coin(amount)
 	MSD, R, MR, MXR := sSdk.CreateParseArgs(msd, r, mr, mcr)
 	msg := staking.NewCreateValidatorMsg(from, coin, MSD, validatorAddr,
-		delegatorAddr, R, MR, MXR, moniker, identity, website, securityContact, details, public)
+		delegatorAddr, R, MR, MXR, moniker, identity, website, securityContact, details, publicKey)
 
 	if !broadcast {
 		rest.PostProcessResponseBare(writer, cliCtx, hex.EncodeToString(msg.Bytes()))

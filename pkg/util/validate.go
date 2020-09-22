@@ -3,9 +3,16 @@ package util
 import (
 	"encoding/json"
 	"errors"
-
-	"net/http"
+	"fmt"
+	"github.com/ci123chain/ci123chain/pkg/abci/codec"
+	"github.com/tendermint/go-amino"
+	"github.com/tendermint/tendermint/crypto"
+	cryptoAmino "github.com/tendermint/tendermint/crypto/encoding/amino"
 	"strconv"
+)
+
+var (
+	cdc *codec.Codec
 )
 
 func CheckBool(async string) (bool, error) {
@@ -87,7 +94,7 @@ func CheckJsonArgs(str string, param interface{}) (bool, error) {
 	return true, nil
 }
 
-func CheckFromAddressVar(r *http.Request) (string, bool) {
+/*func CheckFromAddressVar(r *http.Request) (string, bool) {
 	address := r.FormValue("from")
 	checkErr := CheckStringLength(42, 100, address)
 	if checkErr != nil {
@@ -121,4 +128,20 @@ func CheckPrivateKey(r *http.Request) (string, bool) {
 		return "", false
 	}
 	return privKey, true
+}*/
+
+func ParsePubKey(pub string) (crypto.PubKey, error) {
+
+	pubByte := fmt.Sprintf(`{"type":"tendermint/PubKeySecp256k1", "value":"%s"}`, pub)
+	var public crypto.PubKey
+	err := cdc.UnmarshalJSON([]byte(pubByte), &public)
+	if err != nil {
+		return nil, err
+	}
+	return public, nil
+}
+
+func init() {
+	cdc = amino.NewCodec()
+	cryptoAmino.RegisterAmino(cdc)
 }

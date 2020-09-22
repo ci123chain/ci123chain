@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"encoding/base64"
-	"encoding/hex"
+	///"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -16,6 +16,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/tendermint/go-amino"
 	cfg "github.com/tendermint/tendermint/config"
+	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	tmcli "github.com/tendermint/tendermint/libs/cli"
 	cmn "github.com/tendermint/tendermint/libs/common"
@@ -147,7 +148,7 @@ func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Com
 				ChainID    string          `json:"chain_id"`
 				NodeID     string          `json:"node_id"`
 				AppMessage json.RawMessage `json:"app_message"`
-				PubKey     string          `json:"pub_key"`
+				PubKey     crypto.PubKey          `json:"pub_key"`
 			}{
 				chainID,
 				nodeID,
@@ -338,7 +339,7 @@ func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initCo
 
 */
 func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initConfig InitConfig)(
-	chainID string, nodeID string, appMessage json.RawMessage, pubKey string, err error) {
+	chainID string, nodeID string, appMessage json.RawMessage, pubKey crypto.PubKey, err error) {
 	var validatorKey secp256k1.PrivKeySecp256k1
 	var privStr string
 	nodeKey, err := node.LoadNodeKey(c.NodeKeyFile())
@@ -397,7 +398,7 @@ func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initCo
 	validators := []tmtypes.GenesisValidator{val}
 
 
-	pubKey = hex.EncodeToString(cdc.MustMarshalJSON(nodeKey.PubKey()))
+	pubKey = nodeKey.PubKey()//hex.EncodeToString(cdc.MustMarshalJSON(nodeKey.PubKey()))
 
 	appState, err := appInit.AppGenState(validators)
 

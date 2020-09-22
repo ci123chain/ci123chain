@@ -7,6 +7,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/staking/keeper"
 	"github.com/ci123chain/ci123chain/pkg/staking/types"
 	staking "github.com/ci123chain/ci123chain/pkg/staking/types"
+	"github.com/ci123chain/ci123chain/pkg/util"
 	gogotypes "github.com/gogo/protobuf/types"
 	"time"
 )
@@ -37,7 +38,7 @@ func handleMsgCreateValidator(ctx sdk.Context, k keeper.StakingKeeper, msg staki
 	if _, found := k.GetValidator(ctx, msg.ValidatorAddress); found {
 		return types.ErrValidatorExisted(types.DefaultCodespace, errors.New(fmt.Sprintf("validator %s has existed", msg.ValidatorAddress.String()))).Result()
 	}
-	pk := msg.PublicKey
+	pk, _ := util.ParsePubKey(msg.PublicKey)
 
 	if _, found := k.GetValidatorByConsAddr(ctx, sdk.GetConsAddress(pk)); found {
 		return types.ErrValidatorExisted(types.DefaultCodespace, errors.New(fmt.Sprintf("the pubKey has been bonded"))).Result()

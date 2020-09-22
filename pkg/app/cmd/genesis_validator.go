@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
@@ -9,9 +8,9 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/app"
 	distr "github.com/ci123chain/ci123chain/pkg/distribution/types"
 	staking "github.com/ci123chain/ci123chain/pkg/staking/types"
+	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/libs/cli"
 	"strconv"
 	"time"
@@ -30,12 +29,12 @@ func AddGenesisValidatorCmd(ctx *app.Context, cdc *codec.Codec) *cobra.Command {
 
 			addr := ParseAccAddress(args[0])
 
-			coin, err := parseAmount(args[1])
+			coin, err := util.CheckInt64(args[1])
 			if err != nil {
 				return err
 			}
 
-			_, err = parsePubKey(args[2], cdc)
+			_, err = util.ParsePubKey(args[2])
 			if err != nil {
 				return err
 			}
@@ -60,7 +59,6 @@ func AddGenesisValidatorCmd(ctx *app.Context, cdc *codec.Codec) *cobra.Command {
 			genesisValidator = staking.Validator{
 				OperatorAddress:   addr,
 				ConsensusKey:      args[2],
-
 				Jailed:            false,
 				Status:            1,
 				Tokens:            types.NewInt(coin),
@@ -115,33 +113,12 @@ func AddGenesisValidatorCmd(ctx *app.Context, cdc *codec.Codec) *cobra.Command {
 	return cmd
 }
 
-func parseAmount(amt string) (int64, error) {
-	amount, err := strconv.ParseInt(amt, 10, 64)
-	if err != nil {
-		return 0, err
-	}
-	return amount, nil
-}
-
-func parsePubKey(pub string, cdc *codec.Codec) (crypto.PubKey, error) {
-	pubByte, err := hex.DecodeString(pub)
-	if err != nil {
-		return nil, err
-	}
-	var public crypto.PubKey
-	err = cdc.UnmarshalJSON(pubByte, &public)
-	if err != nil {
-		return nil, err
-	}
-	return public, nil
-}
-
 func parseCommission(rateStr, maxRateStr, maxChangeRateStr string, timeNow time.Time) (staking.Commission, error) {
 	rate, err := strconv.ParseInt(rateStr, 10, 64)
 	if err != nil {
 		return staking.Commission{}, err
 	}
-	maxRae, err := strconv.ParseInt(maxRateStr, 10, 64)
+	maxRate, err := strconv.ParseInt(maxRateStr, 10, 64)
 	if err != nil {
 		return staking.Commission{}, err
 	}
@@ -149,14 +126,20 @@ func parseCommission(rateStr, maxRateStr, maxChangeRateStr string, timeNow time.
 	if err != nil {
 		return staking.Commission{}, err
 	}
-	err = checkParam(rate, maxRae, maxChangeRate)
+	err = checkParam(rate, maxRate, maxChangeRate)
 	if err != nil {
 		return staking.Commission{}, err
+	}
+	if rate > maxRate {
+		return staking.Commission{}, errors.New("rate can't grater than max_rate")
+	}
+	if maxChangeRate > maxRate {
+		return staking.Commission{}, errors.New("max_change_rate can't grater than max_rate")
 	}
 	return staking.Commission{
 		CommissionRates: staking.CommissionRates{
 			Rate:          types.NewDecWithPrec(rate, 2),
-			MaxRate:       types.NewDecWithPrec(maxRae, 2),
+			MaxRate:       types.NewDecWithPrec(maxRate, 2),
 			MaxChangeRate: types.NewDecWithPrec(maxChangeRate, 2),
 		},
 		UpdateTime:      timeNow,

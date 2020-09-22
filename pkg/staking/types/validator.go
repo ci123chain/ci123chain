@@ -2,8 +2,8 @@ package types
 
 import (
 	"bytes"
-	"encoding/hex"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/tendermint/go-amino"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto"
@@ -28,21 +28,11 @@ type Validator struct {
 }
 
 //crypto pubKey
-func NewValidator(operator sdk.AccAddress, pubKey crypto.PubKey, description Description)( Validator, error) {
-	/*var pkStr string
-	if pubKey != nil {
-		pkStr = string(pubKey)
-	}*/
-	pubByte, err := cdc.MarshalJSON(pubKey)
-	if err != nil {
-		//
-		return Validator{}, err
-	}
-	pubStr := hex.EncodeToString(pubByte)
+func NewValidator(operator sdk.AccAddress, pubKey string, description Description)( Validator, error) {
 
 	return Validator{
 		OperatorAddress: operator,
-		ConsensusKey: pubStr,
+		ConsensusKey: pubKey,
 		Jailed:          false,
 		Status:          sdk.Unbonded,
 		Tokens:          sdk.ZeroInt(),
@@ -225,10 +215,8 @@ func (v Validator) GetConsAddr() sdk.AccAddress {return sdk.ToAccAddress(v.GetCo
 
 func (v Validator) GetConsPubKey() crypto.PubKey {
 	var pubKey crypto.PubKey
-	pubByte, _ := hex.DecodeString(v.ConsensusKey)
-	_ = cdc.UnmarshalJSON(pubByte, &pubKey)
+	pubKey, _ = util.ParsePubKey(v.ConsensusKey)
 	return pubKey
-	//return v.ConsensusKey
 }
 
 // calculate the token worth of provided shares, truncated

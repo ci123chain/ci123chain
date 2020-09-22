@@ -4,15 +4,13 @@ import (
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/util"
-	"github.com/tendermint/tendermint/crypto"
 )
 
 type MsgCreateValidator struct {
 	FromAddress		  types.AccAddress	 `json:"from_address"`
 	Signature 		  []byte   			 `json:"signature"`
 	PubKey			  []byte			 `json:"pub_key"`
-
-	PublicKey         crypto.PubKey      `json:"public_key"`
+	PublicKey         string      		 `json:"public_key"`
 	Value             types.Coin         `json:"value"`
 	ValidatorAddress  types.AccAddress   `json:"validator_address"`
 	DelegatorAddress  types.AccAddress   `json:"delegator_address"`
@@ -22,7 +20,7 @@ type MsgCreateValidator struct {
 }
 
 func NewMsgCreateValidator(from types.AccAddress, value types.Coin, minSelfDelegation types.Int, validatorAddr types.AccAddress, delegatorAddr types.AccAddress,
-	rate, maxRate, maxChangeRate types.Dec, moniker, identity, website, securityContact, details string, publicKey crypto.PubKey ) *MsgCreateValidator {
+	rate, maxRate, maxChangeRate types.Dec, moniker, identity, website, securityContact, details string, publicKey string ) *MsgCreateValidator {
 	return &MsgCreateValidator{
 		FromAddress: from,
 		PublicKey:publicKey,
@@ -50,7 +48,7 @@ func (msg *MsgCreateValidator) ValidateBasic() types.Error {
 	if !msg.ValidatorAddress.Equals(msg.DelegatorAddress) {
 		return ErrInvalidAddress(DefaultCodespace, fmt.Sprintf("expected %s, got %s", msg.DelegatorAddress, msg.ValidatorAddress))
 	}
-	if msg.PublicKey == nil {
+	if msg.PublicKey == "" {
 		return ErrEmptyPublicKey(DefaultCodespace, "empty publicKey")
 	}
 	if !msg.Value.Amount.IsPositive() {
