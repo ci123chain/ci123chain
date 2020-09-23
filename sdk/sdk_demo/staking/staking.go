@@ -6,7 +6,7 @@ import (
 	sdk "github.com/ci123chain/ci123chain/sdk/staking"
 )
 
-func SignCreateValidatorTx(from types.AccAddress, amount uint64, priv string, minSelfDelegation int64,
+func SignCreateValidatorTx(from types.AccAddress, amount types.Coin, priv string, minSelfDelegation int64,
 	validatorAddress, delegatorAddress types.AccAddress, rate, maxRate, maxChangeRate int64,
 	moniker, identity, website, securityContact, details string, publicKey string) (string, error) {
 	//
@@ -20,7 +20,7 @@ func SignCreateValidatorTx(from types.AccAddress, amount uint64, priv string, mi
 	return hex.EncodeToString(tx), nil
 }
 
-func SignDelegateTx(from types.AccAddress, gas, nonce, amount uint64, priv string, validatorAddress, delegatorAddress types.AccAddress) (string, error) {
+func SignDelegateTx(from types.AccAddress, gas, nonce uint64, amount types.Coin, priv string, validatorAddress, delegatorAddress types.AccAddress) (string, error) {
 
 	tx, err := sdk.SignDelegateMsg(from, gas, nonce, amount, priv, validatorAddress, delegatorAddress)
 	if err != nil {
@@ -29,7 +29,7 @@ func SignDelegateTx(from types.AccAddress, gas, nonce, amount uint64, priv strin
 	return hex.EncodeToString(tx), nil
 }
 
-func SignRelegateTx(from types.AccAddress, gas, nonce, amount uint64, priv string, validatorSrcAddress, validatorDstAddress, delegatorAddress types.AccAddress) (string, error) {
+func SignRelegateTx(from types.AccAddress, gas, nonce uint64, amount types.Coin, priv string, validatorSrcAddress, validatorDstAddress, delegatorAddress types.AccAddress) (string, error) {
 
 	//
 	tx, err := sdk.SignRedelegateMsg(from, gas, nonce ,amount, priv, validatorSrcAddress, validatorDstAddress, delegatorAddress)
@@ -40,7 +40,7 @@ func SignRelegateTx(from types.AccAddress, gas, nonce, amount uint64, priv strin
 	return hex.EncodeToString(tx), nil
 }
 
-func SignUndelegate(from types.AccAddress, gas, nonce, amount uint64, priv string, validatorAddress, delegatorAddress types.AccAddress) (string, error) {
+func SignUndelegate(from types.AccAddress, gas, nonce uint64, amount types.Coin, priv string, validatorAddress, delegatorAddress types.AccAddress) (string, error) {
 	tx, err := sdk.SignUndelegateMsg(from, gas, nonce, amount, priv, validatorAddress, delegatorAddress)
 	if err != nil {
 		return "", err

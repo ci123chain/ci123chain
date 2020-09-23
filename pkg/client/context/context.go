@@ -66,25 +66,25 @@ func (ctx *Context) GetBlocked() (bool) {
 	return ctx.Blocked
 }
 
-func (ctx *Context) GetBalanceByAddress(addr sdk.AccAddress, isProve bool) (uint64, *merkle.Proof, error) {
+func (ctx *Context) GetBalanceByAddress(addr sdk.AccAddress, isProve bool) (sdk.Coin, *merkle.Proof, error) {
 	qparams := keeper.NewQueryAccountParams(addr)
 	bz, err := ctx.Cdc.MarshalJSON(qparams)
 	if err != nil {
-		return 0, nil , err
+		return sdk.NewEmptyCoin(), nil , err
 	}
 	res, _, proof, err := ctx.Query("/custom/" + types.ModuleName + "/" + types.QueryAccount, bz, false)
 	if err != nil {
-		return 0, nil, err
+		return sdk.NewEmptyCoin(), nil, err
 	}
 	if res == nil{
-		return 0, nil, errors.New("The account does not exist")
+		return sdk.NewEmptyCoin(), nil, errors.New("The account does not exist")
 	}
 	var acc exported.Account
 	err2 := ctx.Cdc.UnmarshalBinaryLengthPrefixed(res, &acc)
 	if err2 != nil {
-		return 0, nil, err2
+		return sdk.NewEmptyCoin(), nil, err2
 	}
-	balance := uint64(acc.GetCoin().Amount.Int64())
+	balance := acc.GetCoin()
 	return balance, proof, nil
 }
 

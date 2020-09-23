@@ -36,7 +36,7 @@ var balanceCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		fmt.Println(v)
+		fmt.Println(v.Amount.String())
 		return nil
 	},
 }

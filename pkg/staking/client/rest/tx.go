@@ -40,9 +40,9 @@ func CreateValidatorRequest(cliCtx context.Context, writer http.ResponseWriter, 
 	}
 	delegatorAddr := from
 	validatorAddr := from
-	amount, err := strconv.ParseUint(request.FormValue("amount"), 10, 64)
-	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
+	amount, ok := sdk.NewIntFromString(request.FormValue("amount"))
+	if !ok {
+		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, "invalid amount"))
 		return
 	}
 	//verify account exists
@@ -58,19 +58,12 @@ func CreateValidatorRequest(cliCtx context.Context, writer http.ResponseWriter, 
 		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
 		return
 	}
-	/*by, err := hex.DecodeString(publicKey)
-	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
+
+	coin := sdk.NewCoin(amount)
+	if coin.IsNegative() || coin.IsZero() {
+		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, "invalid amount"))
 		return
 	}
-	var public crypto.PubKey
-	err = cdc.UnmarshalJSON(by, &public)
-	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
-		return
-	}*/
-
-	coin := sdk.NewUInt64Coin(amount)
 	MSD, R, MR, MXR := sSdk.CreateParseArgs(msd, r, mr, mcr)
 	msg := staking.NewCreateValidatorMsg(from, coin, MSD, validatorAddr,
 		delegatorAddr, R, MR, MXR, moniker, identity, website, securityContact, details, publicKey)
@@ -105,9 +98,14 @@ func DelegateTX(cliCtx context.Context, writer http.ResponseWriter, request *htt
 	}
 	delegatorAddr := from
 	validatorAddr := sdk.HexToAddress(request.FormValue("validator_address"))
-	amount, err := strconv.ParseUint(request.FormValue("amount"), 10, 64)
-	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
+	amount, ok := sdk.NewIntFromString(request.FormValue("amount"))
+	if !ok {
+		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, "invalid amount"))
+		return
+	}
+	coin := sdk.NewCoin(amount)
+	if coin.IsNegative() || coin.IsZero() {
+		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, "invalid amount"))
 		return
 	}
 	//verify account exists
@@ -117,7 +115,7 @@ func DelegateTX(cliCtx context.Context, writer http.ResponseWriter, request *htt
 		return
 	}
 
-	coin := sdk.NewUInt64Coin(amount)
+
 	msg := staking.NewDelegateMsg(from, delegatorAddr, validatorAddr, coin)
 	if !broadcast {
 		rest.PostProcessResponseBare(writer, cliCtx, hex.EncodeToString(msg.Bytes()))
@@ -150,9 +148,9 @@ func RedelegateTX(cliCtx context.Context, writer http.ResponseWriter, request *h
 	delegatorAddr := from
 	validatorSrcAddr := sdk.HexToAddress(request.FormValue("validator_src_address"))
 	validatorDstAddr := sdk.HexToAddress(request.FormValue("validator_dst_address"))
-	amount, err := strconv.ParseUint(request.FormValue("amount"), 10, 64)
-	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
+	amount, ok := sdk.NewIntFromString(request.FormValue("amount"))
+	if !ok {
+		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, "invalid amount"))
 		return
 	}
 	//verify account exists
@@ -162,7 +160,11 @@ func RedelegateTX(cliCtx context.Context, writer http.ResponseWriter, request *h
 		return
 	}
 
-	coin := sdk.NewUInt64Coin(amount)
+	coin := sdk.NewCoin(amount)
+	if coin.IsNegative() || coin.IsZero() {
+		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, "invalid amount"))
+		return
+	}
 	msg := staking.NewRedelegateMsg(from, delegatorAddr, validatorSrcAddr, validatorDstAddr, coin)
 
 	if !broadcast {
@@ -195,9 +197,9 @@ func UndelegateTX(cliCtx context.Context, writer http.ResponseWriter, request *h
 	}
 	delegatorAddr := from
 	validatorAddr := sdk.HexToAddress(request.FormValue("validator_address"))
-	amount, err := strconv.ParseUint(request.FormValue("amount"), 10, 64)
-	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
+	amount, ok := sdk.NewIntFromString(request.FormValue("amount"))
+	if !ok {
+		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, "invalid amount"))
 		return
 	}
 	//verify account exists
@@ -207,7 +209,11 @@ func UndelegateTX(cliCtx context.Context, writer http.ResponseWriter, request *h
 		return
 	}
 
-	coin := sdk.NewUInt64Coin(amount)
+	coin := sdk.NewCoin(amount)
+	if coin.IsNegative() || coin.IsZero() {
+		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, "invalid amount"))
+		return
+	}
 	msg := staking.NewUndelegateMsg(from, delegatorAddr, validatorAddr, coin)
 	if !broadcast {
 		rest.PostProcessResponseBare(writer, cliCtx, hex.EncodeToString(msg.Bytes()))

@@ -19,6 +19,8 @@ const (
 	CodePhrasesNotMatchError		CodeType = 610
 	CodeNodeError					CodeType = 611
 	CodeParseParamsError       		CodeType = 612
+	CodeGenValidatorErr             CodeType = 613
+	CodeGenAccountErr               CodeType = 614
 )
 
 func ErrNewClientCtx(codespace sdk.CodespaceType, err error) sdk.Error {
@@ -66,10 +68,14 @@ func ErrNode(codespace sdk.CodespaceType, err error) sdk.Error {
 }
 
 func ErrGenValidatorKey(codespace sdk.CodespaceType, err error) sdk.Error {
-	return sdk.NewError(codespace, CodeNodeError,"Gen Validator Key Error: %s", err.Error())
+	return sdk.NewError(codespace, CodeGenValidatorErr,"Gen Validator Key Error: %s", err.Error())
 }
 
 
 func ErrParseParam(codespace sdk.CodespaceType, err error) sdk.Error {
 	return sdk.NewError(codespace, CodeParseParamsError,"Parse params Error: %s", err.Error())
+}
+
+func ErrGenAccount(codespace sdk.CodespaceType, err error) sdk.Error {
+	return sdk.NewError(codespace, CodeGenAccountErr,"Gen account: %s", err.Error())
 }

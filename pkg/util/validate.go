@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
+	"github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/crypto"
 	cryptoAmino "github.com/tendermint/tendermint/crypto/encoding/amino"
@@ -37,6 +38,16 @@ func CheckFabric(isFabric string) (bool, error) {
 	return isAysnc, nil
 }
 
+func CheckBigInt(num string) (types.Coin, error) {
+	if num == "" {
+		return types.NewEmptyCoin(), errors.New("it is empty")
+	}
+	n, ok := types.NewIntFromString(num)
+	if !ok {
+		return types.NewEmptyCoin(), errors.New(fmt.Sprintf("invalid %s", num))
+	}
+	return types.NewCoin(n), nil
+}
 
 func CheckInt64(num string) (int64, error) {
 	if num == "" {

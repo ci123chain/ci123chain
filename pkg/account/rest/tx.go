@@ -3,7 +3,7 @@ package rest
 import (
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
+	"errors"
 	abcitype "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
 	"github.com/ci123chain/ci123chain/pkg/account/types"
@@ -31,7 +31,7 @@ func RegisterRoutes(cliCtx context.Context, r *mux.Router) {
 }
 
 type BalanceData struct {
-	Balance uint64 	 `json:"balance"`
+	Balance string 	 `json:"balance"`
 }
 
 type NonceData struct {
@@ -58,7 +58,12 @@ func NewAccountRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 
 		key, err := crypto.GenerateKey()
 		if err != nil {
-			fmt.Println("Error: ", err.Error());
+			rest.WriteErrorRes(w, client.ErrGenAccount(types.DefaultCodespace, err))
+			return
+		}
+		if key == nil {
+			rest.WriteErrorRes(w, client.ErrGenAccount(types.DefaultCodespace, errors.New("key is empty")))
+			return
 		}
 
 		address := crypto.PubkeyToAddress(key.PublicKey).Hex()
@@ -108,7 +113,7 @@ func QueryBalancesRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			rest.WriteErrorRes(w, transfer.ErrQueryTx(types.DefaultCodespace, err2.Error()))
 			return
 		}
-		value := BalanceData{Balance:res}
+		value := BalanceData{Balance:res.Amount.String()}
 		resp := rest.BuildQueryRes(height, isProve, value, proof)
 		rest.PostProcessResponseBare(w, cliCtx, resp)
 	}

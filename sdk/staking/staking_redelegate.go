@@ -11,10 +11,10 @@ import (
 	"strings"
 )
 
-func SignRedelegateMsg(from sdk.AccAddress, gas, nonce, amount uint64, priv string, validatorSrcAddress,
+func SignRedelegateMsg(from sdk.AccAddress, gas, nonce uint64, amount sdk.Coin, priv string, validatorSrcAddress,
 	validatorDstAddress, delegatorAddress sdk.AccAddress) ([]byte, error) {
-	amt := sdk.NewUInt64Coin(amount)
-	msg := staking.NewRedelegateMsg(from, delegatorAddress, validatorSrcAddress, validatorDstAddress, amt)
+	//amt := sdk.NewUInt64Coin(amount)
+	msg := staking.NewRedelegateMsg(from, delegatorAddress, validatorSrcAddress, validatorDstAddress, amount)
 
 	txByte, err := app.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, priv, cdc)
 	if err != nil {
