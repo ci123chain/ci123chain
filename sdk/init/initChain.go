@@ -52,7 +52,7 @@ type ValidatorInfo struct {
 type StakingInfo struct {
 	Address 			types.AccAddress	`json:"address"`
 	PubKey				crypto.PubKey		`json:"pub_key"`
-	Tokens				int64 				`json:"tokens"`
+	Tokens				string				`json:"tokens"`
 	CommissionInfo  	CommissionInfo 		`json:"commission_info"`
 	UpdateTime 			time.Time 			`json:"update_time"`
 }
@@ -64,12 +64,12 @@ type CommissionInfo struct {
 }
 
 type SupplyInfo struct {
-	Amount   uint64	`json:"amount"`
+	Amount   string	`json:"amount"`
 }
 
 type AccountInfo struct {
 	Address  types.AccAddress `json:"address"`
-	Amount	 uint64 `json:"amount"`
+	Amount	 string `json:"amount"`
 }
 
 func NewInitChainFiles(chainInfo ChainInfo,
@@ -138,8 +138,14 @@ func createGenesis(chainInfo ChainInfo, validatorInfo ValidatorInfo,
 	validators := []tmtypes.GenesisValidator{val}
 	appState := app.ModuleBasics.DefaultGenesis(validators)
 
-	genesisStakingModule(appState, *validatorKey, stakingInfo, cdc)
-	genesisSupplyModule(appState, supplyInfo, cdc)
+	err = genesisStakingModule(appState, *validatorKey, stakingInfo, cdc)
+	if err != nil {
+		return nil, err
+	}
+	err = genesisSupplyModule(appState, supplyInfo, cdc)
+	if err != nil {
+		return nil, err
+	}
 	err = genesisAccountModule(appState, accountInfo, cdc)
 	if err != nil {
 		return nil, err
@@ -232,7 +238,7 @@ func createNodeKey(privStr string) (nodeKeyBytes []byte, err error) {
 	return nodeKeyBytes, nil
 }
 
-func genesisStakingModule(appState map[string]json.RawMessage, validatorKey secp256k1.PrivKeySecp256k1, stakingInfo StakingInfo, cdc *codec.Codec)  {
+func genesisStakingModule(appState map[string]json.RawMessage, validatorKey secp256k1.PrivKeySecp256k1, stakingInfo StakingInfo, cdc *codec.Codec) error {
 	var stakingGenesisState stypes.GenesisState
 	var genesisValidator stypes.Validator
 	if _, ok := appState[staking.ModuleName]; !ok{
@@ -241,13 +247,18 @@ func genesisStakingModule(appState map[string]json.RawMessage, validatorKey secp
 		cdc.MustUnmarshalJSON(appState[staking.ModuleName], &stakingGenesisState)
 	}
 
+	tokens, ok := types.NewIntFromString(stakingInfo.Tokens)
+	if !ok {
+		return errors.New("staking tokens converts to bigInt failed")
+	}
+	shares := types.NewDecFromInt(tokens)
 	genesisValidator = stypes.Validator{
 		OperatorAddress:   stakingInfo.Address,
 		ConsensusKey:      hex.EncodeToString(cdc.MustMarshalJSON(validatorKey.PubKey())),
 		Jailed:            false,
 		Status:            1,
-		Tokens:            types.NewInt(stakingInfo.Tokens),
-		DelegatorShares:   types.NewDec(stakingInfo.Tokens),
+		Tokens:            tokens,
+		DelegatorShares:   shares,
 		Description:       stypes.Description{},
 		UnbondingHeight:   0,
 		UnbondingTime:     time.Time{},
@@ -259,20 +270,20 @@ func genesisStakingModule(appState map[string]json.RawMessage, validatorKey secp
 			},
 			UpdateTime:      stakingInfo.UpdateTime,
 		},
-		MinSelfDelegation: types.NewInt(stakingInfo.Tokens),
+		MinSelfDelegation: tokens,
 	}
 
-	delegation := stypes.NewDelegation(stakingInfo.Address, stakingInfo.Address, types.NewDec(stakingInfo.Tokens))
+	delegation := stypes.NewDelegation(stakingInfo.Address, stakingInfo.Address, shares)
 
 	stakingGenesisState.Validators = append(stakingGenesisState.Validators, genesisValidator)
 	stakingGenesisState.Delegations = append(stakingGenesisState.Delegations, delegation)
 
 	genesisStateBz := cdc.MustMarshalJSON(stakingGenesisState)
 	appState[staking.ModuleName] = genesisStateBz
-	return
+	return nil
 }
 
-func genesisSupplyModule(appState map[string]json.RawMessage, supplyInfo SupplyInfo, cdc *codec.Codec) {
+func genesisSupplyModule(appState map[string]json.RawMessage, supplyInfo SupplyInfo, cdc *codec.Codec) error {
 	var supplyGenesisState suptypes.GenesisState
 	if _, ok := appState[supply.ModuleName]; !ok{
 		supplyGenesisState = suptypes.GenesisState{}
@@ -280,13 +291,18 @@ func genesisSupplyModule(appState map[string]json.RawMessage, supplyInfo SupplyI
 		cdc.MustUnmarshalJSON(appState[supply.ModuleName], &supplyGenesisState)
 	}
 
-	supplyGenesisState.Supply = types.NewUInt64Coin(supplyInfo.Amount)
+	amount, ok := types.NewIntFromString(supplyInfo.Amount)
+	if !ok {
+		return errors.New("supply amount converts to bigInt failed")
+	}
+
+	supplyGenesisState.Supply = types.NewCoin(amount)
 	genesisStateBz := cdc.MustMarshalJSON(supplyGenesisState.Supply)
 	appState[supply.ModuleName] = genesisStateBz
-	return
+	return nil
 }
 
-func genesisAccountModule(appState map[string]json.RawMessage, accountInfo AccountInfo, cdc *codec.Codec) error{
+func genesisAccountModule(appState map[string]json.RawMessage, accountInfo AccountInfo, cdc *codec.Codec) error {
 	var genesisAccounts acc_type.GenesisAccounts
 	if _, ok := appState[account.ModuleName]; !ok {
 		genesisAccounts = acc_type.GenesisAccounts{}
@@ -294,9 +310,15 @@ func genesisAccountModule(appState map[string]json.RawMessage, accountInfo Accou
 		cdc.MustUnmarshalJSON(appState[account.ModuleName], &genesisAccounts)
 	}
 	if genesisAccounts.Contains(accountInfo.Address) {
-		_ = fmt.Errorf("cannot add account at existing address %v", accountInfo.Address)
+		return errors.New(fmt.Sprintf("cannot add account at existing address %v", accountInfo.Address))
 	}
-	genAcc := account.NewGenesisAccountRaw(accountInfo.Address, types.NewUInt64Coin(accountInfo.Amount))
+
+	amount, ok := types.NewIntFromString(accountInfo.Amount)
+	if !ok {
+		return errors.New("account amount converts to bigInt failed")
+	}
+
+	genAcc := account.NewGenesisAccountRaw(accountInfo.Address, types.NewCoin(amount))
 	if err := genAcc.Validate(); err != nil {
 		return err
 	}

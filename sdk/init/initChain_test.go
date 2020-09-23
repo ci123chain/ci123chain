@@ -28,7 +28,7 @@ func TestNewInitChainFiles(t *testing.T) {
 	var sInfo = StakingInfo{
 		Address:           sdk.HexToAddress(acc.Address),
 		PubKey:            pubKey,
-		Tokens:            10000000,
+		Tokens:            "10000000",
 		CommissionInfo:    CommissionInfo{
 			Rate:          1,
 			MaxRate:       40,
@@ -37,11 +37,11 @@ func TestNewInitChainFiles(t *testing.T) {
 		UpdateTime:        time.Now(),
 	}
 	var supInfo = SupplyInfo{
-		Amount: 200000000000,
+		Amount: "200000000000",
 	}
 	var accInfo = AccountInfo{
 		Address: sdk.HexToAddress(acc.Address),
-		Amount: 1000000000000000,
+		Amount: "1000000000000000",
 	}
 	persistentPeers := address + "@127.0.0.1:80"
 
