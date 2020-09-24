@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/couchdb"
 	"github.com/ci123chain/ci123chain/pkg/gateway/logger"
+	"github.com/ci123chain/ci123chain/sdk/domain"
 	"github.com/spf13/viper"
 	"regexp"
 	"strings"
@@ -67,10 +68,9 @@ func (s *CouchDBSourceImp) FetchSource() (hostArr []string) {
 			continue
 		}
 		name := item["name"].(string)
-		domain := viper.GetString(Domain)
-		if len(domain) > 0 {
-			domains := strings.SplitN(domain, ".", 2)
-			name = name + "." + domains[1]
+		selfDomain := viper.GetString(Domain)
+		if len(selfDomain) > 0 {
+			name = domain.GetShardDomain(selfDomain, name)
 		}
 		host := s.getAdjustHost(HostPattern, name)
 

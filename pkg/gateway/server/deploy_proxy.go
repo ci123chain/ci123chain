@@ -15,6 +15,16 @@ type DeployProxy struct {
 	ResponseChannel chan []byte
 }
 
+type deployParam struct {
+	Type  string 		`json:"type"`
+	Value interface{} 	`json:"value"`
+}
+
+type networkValue struct {
+	Type  string 				   `json:"type"`
+	Hosts []map[string]interface{} `json:"hosts"`
+}
+
 func NewDeployProxy(pt types.ProxyType) *DeployProxy {
 	dp := &DeployProxy{
 		ProxyType: pt,
@@ -63,8 +73,44 @@ func handleDeployParams(deployParams map[string]string) (map[string]interface{},
 	params["instance_properties"] = deployParams["instance_properties"]
 	params["from_id"] = deployParams["idempotent_id"]
 	params["from_type"] = deployParams["idempotent_type"]
-	params["extra_info"] = deployParams["env"]
 
+	hosts := make(map[string]interface{})
+	var env []deployParam
+	err = json.Unmarshal([]byte(deployParams["env"]), &env)
+	if err != nil {
+		return nil, err
+	}
+	for _, v := range env {
+		if v.Type == "environment" {
+			environment := v.Value.(map[string]interface{})
+			hosts["domain"] = environment["CI_CHAIN_ID"]
+			break
+		}
+	}
+
+	hosts["backend_protocal"] = "HTTP"
+	hosts["need_https"] = 0
+	hosts["ssl_certificate_data"] = ""
+	hosts["ssl_key_data"] = ""
+	hosts["target_port"] = 80
+	hosts["type"] = "HTTP"
+
+	networksParam := deployParam{
+		Type:  "networks",
+		Value: networkValue{
+			Type: "DOMAIN",
+			Hosts: []map[string]interface{}{hosts},
+		},
+	}
+
+	extraInfo := []deployParam{networksParam}
+	for i := 0; i < len(env); i++ {
+		if env[i].Type == "environment" || env[i].Type == "volume_mounts" {
+			extraInfo = append(extraInfo, env[i])
+		}
+	}
+
+	params["extra_info"] = extraInfo
 	return params, nil
 }
 
