@@ -69,11 +69,11 @@ func checkFromAddressVar(_ http.ResponseWriter, r *http.Request) (string, bool) 
 	return address, true
 }
 
-func checkAmountVar(_ http.ResponseWriter, r *http.Request) (int64, bool) {
+func checkAmountVar(_ http.ResponseWriter, r *http.Request) (sdk.Coin, bool) {
 	amount := r.FormValue("amount")
-	amt, checkErr := util.CheckInt64(amount)
+	amt, checkErr := util.CheckBigInt(amount)
 	if checkErr != nil {
-		return 0, false
+		return amt, false
 	}
 	return amt, true
 }

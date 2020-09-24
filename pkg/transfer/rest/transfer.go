@@ -2,6 +2,7 @@ package rest
 
 import (
 	"encoding/hex"
+	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/app"
 	"github.com/ci123chain/ci123chain/pkg/client/helper"
 	transfer2 "github.com/ci123chain/ci123chain/pkg/transfer"
@@ -46,6 +47,10 @@ func SendRequestHandlerFn(cliCtx context.Context, writer http.ResponseWriter, re
 		return
 	}
 	coin := sdk.NewUInt64Coin(amount)
+	if coin.IsNegative() || coin.IsZero() {
+		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, "invalid amount"))
+		return
+	}
 	msg := transfer2.NewMsgTransfer(from, to, coin, isFabric)
 	if !broadcast {
 		rest.PostProcessResponseBare(writer, cliCtx, hex.EncodeToString(msg.Bytes()))
@@ -80,9 +85,12 @@ func CheckAccountAndBalanceFromParams(ctx context.Context, r *http.Request, w ht
 		rest.WriteErrorRes(w, sdk.ErrInternal("get balances of from account failed"))
 		return false
 	}
-	amountU, _ := strconv.ParseUint(amount,10,64)
-	if balance < amountU {
-		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace,"The balance is not enough to pay the delegate"))
+	amountI, ok := sdk.NewIntFromString(amount)
+	if !ok {
+		rest.WriteErrorRes(w, sdk.ErrInternal(fmt.Sprintf("invalid amount %s", amount)))
+		return false
+	}
+	if balance.Amount.LT(amountI) {
 		return false
 	}
 	return true

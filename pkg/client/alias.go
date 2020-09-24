@@ -16,6 +16,7 @@ var (
 	ErrPhrasesNotMatch	= types.ErrPhrasesNotMatch
 	ErrNode				= types.ErrNode
 	ErrGenValidatorKey  = types.ErrGenValidatorKey
+	ErrGenAccount       = types.ErrGenAccount
 )
 
 type TMResponse struct {

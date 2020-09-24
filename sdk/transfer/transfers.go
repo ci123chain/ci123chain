@@ -1,6 +1,7 @@
 package transfer
 
 import (
+	"errors"
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/app"
@@ -13,10 +14,13 @@ import (
 
 var cdc = app.MakeCodec()
 //off line
-func SignMsgTransfer(from, to string, gas, nonce, amount uint64, priv string, isfabric bool) ([]byte, error) {
+func SignMsgTransfer(from, to string, gas, nonce uint64, amount sdk.Coin, priv string, isfabric bool) ([]byte, error) {
+	if amount.IsNegative() || amount.IsZero() {
+		return nil, errors.New("invalid amount")
+	}
 	fromAddr := sdk.HexToAddress(from)
 	toAddr := sdk.HexToAddress(to)
-	msg := transfer.NewMsgTransfer(fromAddr, toAddr, sdk.NewUInt64Coin(amount), isfabric)
+	msg := transfer.NewMsgTransfer(fromAddr, toAddr, amount, isfabric)
 	txByte, err := app.SignCommonTx(fromAddr, nonce, gas, []sdk.Msg{msg}, priv, cdc)
 	if err != nil {
 		return nil, err

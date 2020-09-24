@@ -2,6 +2,7 @@ package distribution
 
 import (
 	"encoding/hex"
+	"errors"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/app"
 	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
@@ -11,15 +12,18 @@ import (
 var cdc = app.MakeCodec()
 
 //todo
-func SignFundCommunityPoolTx(from string, amount int64, gas, nonce uint64, priv string) ([]byte, error) {
+func SignFundCommunityPoolTx(from string, amount sdk.Coin, gas, nonce uint64, priv string) ([]byte, error) {
 	//
 	privateKey, err := hex.DecodeString(priv)
 	if err != nil {
 		return nil, err
 	}
-	Amount := sdk.NewCoin(sdk.NewInt(amount))
+	//Amount := sdk.NewCoin(sdk.NewInt(amount))
+	if amount.IsNegative() || amount.IsZero() {
+		return nil, errors.New("invalid amount")
+	}
 	accountAddr := sdk.HexToAddress(from)
-	tx := types.NewMsgFundCommunityPool(accountAddr, Amount, gas, nonce, accountAddr)
+	tx := types.NewMsgFundCommunityPool(accountAddr, amount, gas, nonce, accountAddr)
 	eth := cryptosuit.NewETHSignIdentity()
 	signature, err := eth.Sign(tx.GetSignBytes(), privateKey)
 	if err != nil {

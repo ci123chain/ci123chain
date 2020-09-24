@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/ci123chain/ci123chain/pkg/abci/types"
 	sdk "github.com/ci123chain/ci123chain/sdk/broadcast"
 	transfersdk "github.com/ci123chain/ci123chain/sdk/transfer"
 )
@@ -20,7 +21,7 @@ var (
 	// requestURL = "http://ciChain:3030/tx/broadcast_async"
 	offlineGas = uint64(20000)
 	offlineNonce = uint64(2)
-	offlineAmount = uint64(2)
+	offlineAmount = types.NewCoin(types.NewInt(2))
 	onlineReqUrl = "http://ciChain:3030/tx/transfers"
 )
 

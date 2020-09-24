@@ -44,6 +44,10 @@ func fundCommunityPoolHandler(cliCtx context.Context, writer http.ResponseWriter
 	if !ok {
 		return
 	}
+	if amount.IsNegative() || amount.IsZero() {
+		rest.WriteErrorRes(writer, types.ErrParams(types.DefaultCodespace, errors.New("invalid amount")))
+		return
+	}
 
 	txByte, err := sSDK.SignFundCommunityPoolTx(accountAddress, amount, gas, nonce, privateKey)
 	if err != nil {
