@@ -6,11 +6,12 @@ import (
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/couchdb"
 	"github.com/ci123chain/ci123chain/pkg/gateway/logger"
+	"github.com/spf13/viper"
 	"regexp"
 	"strings"
 )
 
-
+const Domain = "DOMAIN"
 const SharedKey  = "s/k:order/OrderBook"
 const HostPattern  = "[*]+"
 const DefaultDBName = "ci123"
@@ -59,13 +60,18 @@ func (s *CouchDBSourceImp) FetchSource() (hostArr []string) {
 		return
 	}
 
+	//gateway.nodekey.suffix
 	for _, value := range lists {
 		item, ok := value.(map[string]interface{})
 		if !ok {
 			continue
 		}
 		name := item["name"].(string)
-
+		domain := viper.GetString(Domain)
+		if len(domain) > 0 {
+			domains := strings.SplitN(domain, ".", 2)
+			name = name + "." + domains[1]
+		}
 		host := s.getAdjustHost(HostPattern, name)
 
 		//if !strings.HasPrefix(name, "http") {
@@ -129,7 +135,7 @@ func (svr *CouchDBSourceImp) GetDBConnection() (db *couchdb.GoCouchDB, err error
 	return
 }
 
-func (s *CouchDBSourceImp)getAdjustHost(pattern, name string) string {
+func (s *CouchDBSourceImp) getAdjustHost(pattern, name string) string {
 	reg, err := regexp.Compile(pattern)
 	if err != nil {
 		return ""

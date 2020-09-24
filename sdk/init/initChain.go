@@ -78,7 +78,30 @@ func NewInitChainFiles(chainInfo ChainInfo,
 	privKey, persistentPeers string) (*InitFiles, error) {
 
 	//todo check infos
+	err := checkChainInfo(chainInfo)
+	if err != nil {
+		return nil, err
+	}
 
+	err = checkValidatorInfo(validatorInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	err = checkStakingInfo(stakingInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	err = checkSupplyInfo(supplyInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	err = checkAccountInfo(accountInfo)
+	if err != nil {
+		return nil, err
+	}
 
 	//genesis.json
 	genesisBytes, err := createGenesis(chainInfo, validatorInfo, stakingInfo, supplyInfo, accountInfo, privKey)
@@ -394,5 +417,26 @@ func unmarshalWithViper(vp *viper.Viper, c *cfg.Config) error {
 	if err := vp.Unmarshal(c); err != nil {
 		return err
 	}
+	return nil
+}
+
+//check
+func checkChainInfo(chainInfo ChainInfo) error {
+	return nil
+}
+
+func checkValidatorInfo(validatorInfo ValidatorInfo) error {
+	return nil
+}
+
+func checkStakingInfo(stakingInfo StakingInfo) error {
+	return nil
+}
+
+func checkSupplyInfo(supplyInfo SupplyInfo) error {
+	return nil
+}
+
+func checkAccountInfo(accountInfo AccountInfo) error {
 	return nil
 }

@@ -37,7 +37,7 @@ func (s *ServerPool) MarkBackendStatus(backendUrl *url.URL, alive bool) {
 	}
 }
 
-func (s *ServerPool)ConfigServerPool(tokens []string)  {
+func (s *ServerPool) ConfigServerPool(tokens []string)  {
 	for _, tok := range tokens {
 		exist := false
 		for _, back := range s.backends {
