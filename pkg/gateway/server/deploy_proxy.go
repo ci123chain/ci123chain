@@ -40,7 +40,7 @@ func (dp *DeployProxy) Handle(r *http.Request, backends []types.Instance, Reques
 		return res
 	}
 
-	res, err := dynamic.CreateChannel(params)
+	res, err := dynamic.CreateChannel(r, params)
 	if err != nil {
 		res := dp.ErrorRes(err)
 		return res
