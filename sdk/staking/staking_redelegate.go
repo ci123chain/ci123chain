@@ -3,7 +3,7 @@ package staking
 import (
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	"github.com/ci123chain/ci123chain/pkg/app"
+	"github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/staking"
 	"io/ioutil"
 	"net/http"
@@ -16,7 +16,7 @@ func SignRedelegateMsg(from sdk.AccAddress, gas, nonce uint64, amount sdk.Coin, 
 	//amt := sdk.NewUInt64Coin(amount)
 	msg := staking.NewRedelegateMsg(from, delegatorAddress, validatorSrcAddress, validatorDstAddress, amount)
 
-	txByte, err := app.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, priv, cdc)
+	txByte, err := types.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, priv, cdc)
 	if err != nil {
 		return nil, err
 	}

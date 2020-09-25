@@ -2,14 +2,14 @@ package sdk
 
 import (
 	"github.com/ci123chain/ci123chain/pkg/abci/types"
-	"github.com/ci123chain/ci123chain/pkg/app"
+	types3 "github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/client"
 	"github.com/ci123chain/ci123chain/pkg/client/helper"
 	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
 	"github.com/ci123chain/ci123chain/pkg/mortgage"
 	types2 "github.com/ci123chain/ci123chain/pkg/mortgage/types"
 )
-var cdc = app.MakeCodec()
+var cdc = types3.MakeCodec()
 // 生成 Mortgage 消息，抵押coin
 func SignMortgage(from, to string, amount, gas uint64, uniqueID string, priv []byte) ([]byte, error) {
 	tx, err := buildMortgageTx(from, to, amount, gas, uniqueID)

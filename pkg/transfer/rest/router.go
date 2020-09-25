@@ -2,13 +2,13 @@ package rest
 
 import (
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
-	"github.com/ci123chain/ci123chain/pkg/app"
+	types2 "github.com/ci123chain/ci123chain/pkg/app/types"
+	"github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/transfer/types"
 	"github.com/gorilla/mux"
-	"github.com/ci123chain/ci123chain/pkg/client/context"
 )
 
-var cdc = app.MakeCodec()
+var cdc = types2.MakeCodec()
 func RegisterTxRoutes(cliCtx context.Context, r *mux.Router)  {
 	r.HandleFunc("/tx/query", QueryTxRequestHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/tx/transfers", rest.MiddleHandler(cliCtx, SendRequestHandlerFn, types.DefaultCodespace)).Methods("POST")

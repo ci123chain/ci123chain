@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	"github.com/ci123chain/ci123chain/pkg/app"
+	"github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/transfer"
 	"io/ioutil"
 	"net/http"
@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-var cdc = app.MakeCodec()
+var cdc = types.MakeCodec()
 //off line
 func SignMsgTransfer(from, to string, gas, nonce uint64, amount sdk.Coin, priv string, isfabric bool) ([]byte, error) {
 	if amount.IsNegative() || amount.IsZero() {
@@ -21,7 +21,7 @@ func SignMsgTransfer(from, to string, gas, nonce uint64, amount sdk.Coin, priv s
 	fromAddr := sdk.HexToAddress(from)
 	toAddr := sdk.HexToAddress(to)
 	msg := transfer.NewMsgTransfer(fromAddr, toAddr, amount, isfabric)
-	txByte, err := app.SignCommonTx(fromAddr, nonce, gas, []sdk.Msg{msg}, priv, cdc)
+	txByte, err := types.SignCommonTx(fromAddr, nonce, gas, []sdk.Msg{msg}, priv, cdc)
 	if err != nil {
 		return nil, err
 	}

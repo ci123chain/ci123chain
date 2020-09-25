@@ -3,7 +3,7 @@ package shard
 import (
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	"github.com/ci123chain/ci123chain/pkg/app"
+	"github.com/ci123chain/ci123chain/pkg/app/types"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -12,12 +12,12 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/order"
 )
 
-var cdc = app.MakeCodec()
+var cdc = types.MakeCodec()
 //off line
 func SignUpgradeMsg(t, name string, height int64, from string, gas, nonce uint64, priv string) ([]byte, error){
 	fromAddr := sdk.HexToAddress(from)
 	msg := order.NewMsgUpgrade(t, name, height)
-	txByte, err := app.SignCommonTx(fromAddr, nonce, gas, []sdk.Msg{msg}, priv, cdc)
+	txByte, err := types.SignCommonTx(fromAddr, nonce, gas, []sdk.Msg{msg}, priv, cdc)
 	if err != nil {
 		return nil, err
 	}

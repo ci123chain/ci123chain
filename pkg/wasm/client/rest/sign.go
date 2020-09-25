@@ -4,13 +4,13 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/ci123chain/ci123chain/pkg/app"
+	"github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/util"
 	"io/ioutil"
 	"net/http"
 )
 
-var cdc = app.MakeCodec()
+var cdc = types.MakeCodec()
 
 func getWasmCode(r *http.Request) (wasmcode []byte, err error){
 	codeStr := r.FormValue("wasm_code_str")

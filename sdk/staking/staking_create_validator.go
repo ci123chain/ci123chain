@@ -3,7 +3,7 @@ package staking
 import (
 	"errors"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	"github.com/ci123chain/ci123chain/pkg/app"
+	"github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/staking"
 	"github.com/tendermint/go-amino"
 	cryptoAmino "github.com/tendermint/tendermint/crypto/encoding/amino"
@@ -21,7 +21,7 @@ func SignCreateValidatorMSg(from sdk.AccAddress, gas, nonce uint64, amount sdk.C
 	msg := staking.NewCreateValidatorMsg(from, amount, selfDelegation, validatorAddress, delegatorAddress, r, mr, mxr,
 	moniker, identity, website, securityContact, details, publicKey)
 
-	txByte, err := app.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, priv, cdc)
+	txByte, err := types.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, priv, cdc)
 	if err != nil {
 		return nil, err
 	}

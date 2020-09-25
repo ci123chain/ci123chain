@@ -5,7 +5,7 @@ import (
 	"errors"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
-	"github.com/ci123chain/ci123chain/pkg/app"
+	types2 "github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/client"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/distribution/types"
@@ -84,7 +84,7 @@ func withdrawValidatorCommissionsHandler(cliCtx context.Context, writer http.Res
 		rest.PostProcessResponseBare(writer, cliCtx, hex.EncodeToString(msg.Bytes()))
 		return
 	}
-	txByte, err := app.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
+	txByte, err := types2.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
 	if err != nil {
 		rest.WriteErrorRes(writer, types.ErrParams(types.DefaultCodespace, err))
 		return
@@ -117,7 +117,7 @@ func withdrawDelegationRewardsHandler(cliCtx context.Context, writer http.Respon
 		return
 	}
 
-	txByte, err := app.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
+	txByte, err := types2.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
 	if err != nil {
 		rest.WriteErrorRes(writer, types.ErrParams(types.DefaultCodespace, err))
 		return
@@ -148,7 +148,7 @@ func setDelegatorWithdrawalAddrHandler(cliCtx context.Context, writer http.Respo
 		rest.PostProcessResponseBare(writer, cliCtx, hex.EncodeToString(msg.Bytes()))
 		return
 	}
-	txByte, err := app.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
+	txByte, err := types2.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
 	if err != nil {
 		rest.WriteErrorRes(writer, types.ErrParams(types.DefaultCodespace, err))
 		return

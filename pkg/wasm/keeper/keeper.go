@@ -15,6 +15,7 @@ import (
 	"github.com/ethereum/go-ethereum/rlp"
 	dbm "github.com/tendermint/tm-db"
 	"io/ioutil"
+	"math"
 	"os"
 	"path"
 	"strings"
@@ -69,7 +70,13 @@ func (k Keeper) Upload(ctx sdk.Context, wasmCode []byte, creator sdk.AccAddress)
 	return codeHash, nil
 }
 
-func (k Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAddress, nonce uint64, args json.RawMessage, name, version, author, email, describe string, isGenesis bool, genesisContractAddress sdk.AccAddress) (sdk.AccAddress, error) {
+func (k Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAddress, nonce uint64, args json.RawMessage, name, version, author, email, describe string, genesisContractAddress sdk.AccAddress) (sdk.AccAddress, error) {
+	isGenesis := ctx.Value(types.SystemContract).(bool)
+	// 如果是官方合约，不限制gas数量
+	if isGenesis {
+		SetGasWanted(math.MaxInt64)
+	}
+
 	SetGasUsed()
 	SetCtx(&ctx)
 	var codeInfo types.CodeInfo
@@ -225,7 +232,7 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, invoker
 }
 
 func (k Keeper) Migrate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAddress, oldContract sdk.AccAddress, nonce uint64, args json.RawMessage, name, version, author, email, describe string) (sdk.AccAddress, error) {
-	newContract, err := k.Instantiate(ctx, codeHash, invoker, nonce, args, name, version, author, email, describe, false, types.EmptyAddress)
+	newContract, err := k.Instantiate(ctx, codeHash, invoker, nonce, args, name, version, author, email, describe, types.EmptyAddress)
 	if err != nil {
 		return sdk.AccAddress{}, err
 	}

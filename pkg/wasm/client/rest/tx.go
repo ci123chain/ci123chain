@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
-	"github.com/ci123chain/ci123chain/pkg/app"
+	types2 "github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/client"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/util"
@@ -37,7 +37,7 @@ func uploadContractHandler(cliCtx context.Context,w http.ResponseWriter, r *http
 		return
 	}
 
-	txByte, err := app.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
+	txByte, err := types2.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
 	if err != nil {
 		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
 		return
@@ -91,7 +91,7 @@ func instantiateContractHandler(cliCtx context.Context,w http.ResponseWriter, r 
 		return
 	}
 
-	txByte, err := app.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
+	txByte, err := types2.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
 	if err != nil {
 		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
 		return
@@ -150,7 +150,7 @@ func executeContractHandler(cliCtx context.Context,w http.ResponseWriter, r *htt
 		return
 	}
 
-	txByte, err := app.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
+	txByte, err := types2.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
 	if err != nil {
 		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
 		return
@@ -226,7 +226,7 @@ func migrateContractHandler(cliCtx context.Context,w http.ResponseWriter, r *htt
 		return
 	}
 
-	txByte, err := app.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
+	txByte, err := types2.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
 	if err != nil {
 		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
 		return

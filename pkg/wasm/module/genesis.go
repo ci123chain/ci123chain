@@ -1,4 +1,4 @@
-package wasm
+package module
 
 import (
 	"bytes"
@@ -8,16 +8,12 @@ import (
 	"errors"
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	"github.com/ci123chain/ci123chain/pkg/wasm/keeper"
 	"github.com/ci123chain/ci123chain/pkg/wasm/types"
 	"io/ioutil"
 )
 
-const (
-	gasWanted = uint64(80000000)
-)
 
-func InitGenesis(ctx sdk.Context, wasmer keeper.Keeper) {
+func InitGenesis(ctx sdk.Context, wasmer types.WasmKeeperI) {
 	var contracts = types.DefaultGenesisState()
 	for i := 0; i < len(contracts.Contracts); i++ {
 		for _, v := range contracts.Contracts {
@@ -38,9 +34,9 @@ func InitGenesis(ctx sdk.Context, wasmer keeper.Keeper) {
 				if err != nil {
 					panic(err)
 				}
-				keeper.SetGasWanted(gasWanted)
+				ctx = ctx.WithValue(types.SystemContract, true)
 				if v.Method == types.InitMethod {
-					_, err = wasmer.Instantiate(ctx, code, invoker, 0, args, contracts.Name, contracts.Version, contracts.Author, contracts.Email, contracts.Describe, true, address)
+					_, err = wasmer.Instantiate(ctx, code, invoker, 0, args, contracts.Name, contracts.Version, contracts.Author, contracts.Email, contracts.Describe, address)
 					if err != nil {
 						panic(err)
 					}

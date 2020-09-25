@@ -5,6 +5,9 @@ import (
 	"errors"
 	"github.com/ci123chain/ci123chain/pkg/abci/baseapp"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	app_module "github.com/ci123chain/ci123chain/pkg/app/module"
+	module2 "github.com/ci123chain/ci123chain/pkg/wasm/module"
+
 	"github.com/ci123chain/ci123chain/pkg/abci/types/module"
 	"github.com/ci123chain/ci123chain/pkg/account"
 	"github.com/ci123chain/ci123chain/pkg/account/keeper"
@@ -70,16 +73,7 @@ var (
 	wasmStoreKey     = sdk.NewKVStoreKey(wasm.StoreKey)
 	mintStoreKey     = sdk.NewKVStoreKey(mint.StoreKey)
 
-	ModuleBasics = module.NewBasicManager(
-		account.AppModuleBasic{},
-		auth.AppModuleBasic{},
-		supply.AppModuleBasic{},
-		order.AppModuleBasic{},
-		staking.AppModuleBasic{},
-		mint.AppModuleBasic{},
-		wasm.AppModuleBasic{},
-		distr.AppModuleBasic{},
-		)
+
 
 	maccPerms = map[string][]string{
 		//mortgage.ModuleName: nil,
@@ -111,8 +105,8 @@ type Chain struct {
 }
 
 func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer) *Chain {
-	cdc := MakeCodec()
-	app := baseapp.NewBaseApp("ci123", logger, ldb, cdb, DefaultTxDecoder(cdc))
+	cdc := app_types.MakeCodec()
+	app := baseapp.NewBaseApp("ci123", logger, ldb, cdb, app_types.DefaultTxDecoder(cdc))
 
 	c := &Chain{
 		BaseApp: 			app,
@@ -166,7 +160,7 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 
 		order.AppModule{OrderKeeper: &orderKeeper},
 		staking.AppModule{StakingKeeper:stakingKeeper, AccountKeeper:accKeeper, SupplyKeeper:supplyKeeper},
-		wasm.AppModule{WasmKeeper:wasmKeeper},
+		module2.AppModule{WasmKeeper: wasmKeeper},
 		mint.AppModule{Keeper:mintKeeper},
 		)
 	// invoke router
@@ -196,8 +190,8 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 	c.SetInitChainer(c.InitChainer)
 	c.SetEndBlocker(c.EndBlocker)
 	shardID := viper.GetString("ShardID")
-	app_types.CommitInfoKeyFmt = shardID + "s/%d"
-	app_types.LatestVersionKey = shardID + "s/latest"
+	sdk.CommitInfoKeyFmt = shardID + "s/%d"
+	sdk.LatestVersionKey = shardID + "s/latest"
 
 	err := c.mountStores()
 	if err != nil {
@@ -275,7 +269,7 @@ func NewAppInit() AppInit {
 		//FlagsAppGenTx:    fsAppGenTx,
 		AppGenTx:         CreateAppGenTx,
 		AppGenState:      AppGenStateJSON,
-		GetValidator:     AppGetValidator,
+		GetValidator:     app_module.AppGetValidator,
 	}
 }
 
@@ -293,14 +287,7 @@ type AppGenTx struct {
 	Address string `json:"address"`
 }
 
-func AppGetValidator(pk crypto.PubKey, name string) types.GenesisValidator {
-	validator := types.GenesisValidator{
-		PubKey: pk,
-		Power:  1,
-		Name:   name,
-	}
-	return validator
-}
+
 
 // Generate a genesis transfer with flags
 // pk: publickey of validator
@@ -325,7 +312,7 @@ func CreateAppGenTxNF(cdc *amino.Codec, pk crypto.PubKey, addr string, gentTxCon
 	tx := AppGenTx{
 		Address: addr,
 	}
-	bz, err = MarshalJSONIndent(cdc, tx)
+	bz, err = app_types.MarshalJSONIndent(cdc, tx)
 	if err != nil {
 		return
 	}

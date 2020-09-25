@@ -3,11 +3,11 @@ package rest
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/ci123chain/ci123chain/pkg/app"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	types2 "github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/client/helper"
 	transfer2 "github.com/ci123chain/ci123chain/pkg/transfer"
 	"github.com/ci123chain/ci123chain/pkg/util"
-	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	//"encoding/hex"
 	"github.com/pkg/errors"
 	"strconv"
@@ -57,7 +57,7 @@ func SendRequestHandlerFn(cliCtx context.Context, writer http.ResponseWriter, re
 		return
 	}
 
-	txByte, err := app.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
+	txByte, err := types2.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
 	if err != nil {
 		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
 		return

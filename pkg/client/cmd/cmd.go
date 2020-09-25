@@ -1,15 +1,15 @@
 package cmd
 
 import (
+	"github.com/ci123chain/ci123chain/pkg/app/types"
+	"github.com/ci123chain/ci123chain/pkg/client/helper"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/ci123chain/ci123chain/pkg/app"
-	"github.com/ci123chain/ci123chain/pkg/client/helper"
 	"os"
 )
 
 var homeDir = os.ExpandEnv("$HOME/.ci123_client")
-var cdc = app.MakeCodec()
+var cdc = types.MakeCodec()
 
 var rootCmd = &cobra.Command{
 	Use: 	"cli", 

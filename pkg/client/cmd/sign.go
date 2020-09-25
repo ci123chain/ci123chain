@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	"github.com/ci123chain/ci123chain/pkg/app"
+	types2 "github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/client/helper"
 	"github.com/ci123chain/ci123chain/pkg/client/types"
@@ -65,7 +65,7 @@ var signCmd = &cobra.Command{
 			return types.ErrParseParam(types.DefaultCodespace, err)
 		}
 
-		txByte, err := app.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
+		txByte, err := types2.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
 		if err != nil {
 			return types.ErrParseParam(types.DefaultCodespace, err)
 		}

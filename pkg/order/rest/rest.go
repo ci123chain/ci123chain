@@ -4,7 +4,7 @@ import (
 	"encoding/hex"
 	abcitypes "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
-	"github.com/ci123chain/ci123chain/pkg/app"
+	types2 "github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/client"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/order/types"
@@ -17,7 +17,7 @@ func RegisterTxRoutes(cliCtx context.Context, r *mux.Router)  {
 	r.HandleFunc("/shared/add", rest.MiddleHandler(cliCtx, AddShardTxRequest, types.DefaultCodespace)).Methods("POST")
 }
 
-var cdc = app.MakeCodec()
+var cdc = types2.MakeCodec()
 
 func AddShardTxRequest(cliCtx context.Context, writer http.ResponseWriter, request *http.Request) {
 	broatcast, err := strconv.ParseBool(request.FormValue("broadcast"))
@@ -45,7 +45,7 @@ func AddShardTxRequest(cliCtx context.Context, writer http.ResponseWriter, reque
 		return
 	}
 
-	txByte, err := app.SignCommonTx(from, nonce, gas, []abcitypes.Msg{msg}, privKey, cdc)
+	txByte, err := types2.SignCommonTx(from, nonce, gas, []abcitypes.Msg{msg}, privKey, cdc)
 	if err != nil {
 		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
 		return

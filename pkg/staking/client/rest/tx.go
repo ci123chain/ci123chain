@@ -6,7 +6,7 @@ import (
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
-	"github.com/ci123chain/ci123chain/pkg/app"
+	types2 "github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/client"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/staking"
@@ -26,7 +26,7 @@ func RegisterRestTxRoutes(cliCtx context.Context, r *mux.Router)  {
 	r.HandleFunc("/staking/validator/edit", rest.MiddleHandler(cliCtx, EditValidatorTX, types.DefaultCodespace)).Methods("POST")
 }
 
-var cdc = app.MakeCodec()
+var cdc = types2.MakeCodec()
 
 func CreateValidatorRequest(cliCtx context.Context, writer http.ResponseWriter, request *http.Request) {
 	broadcast, err := strconv.ParseBool(request.FormValue("broadcast"))
@@ -73,7 +73,7 @@ func CreateValidatorRequest(cliCtx context.Context, writer http.ResponseWriter, 
 		return
 	}
 
-	txByte, err := app.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
+	txByte, err := types2.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
 	if err != nil {
 		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
 		return
@@ -122,7 +122,7 @@ func DelegateTX(cliCtx context.Context, writer http.ResponseWriter, request *htt
 		return
 	}
 
-	txByte, err := app.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
+	txByte, err := types2.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
 	if err != nil {
 		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
 		return
@@ -172,7 +172,7 @@ func RedelegateTX(cliCtx context.Context, writer http.ResponseWriter, request *h
 		return
 	}
 
-	txByte, err := app.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
+	txByte, err := types2.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
 	if err != nil {
 		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
 		return
@@ -220,7 +220,7 @@ func UndelegateTX(cliCtx context.Context, writer http.ResponseWriter, request *h
 		return
 	}
 
-	txByte, err := app.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
+	txByte, err := types2.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
 	if err != nil {
 		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
 		return
@@ -291,7 +291,7 @@ func EditValidatorTX(cliCtx context.Context, writer http.ResponseWriter, request
 		return
 	}
 
-	txByte, err := app.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
+	txByte, err := types2.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
 	if err != nil {
 		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
 		return

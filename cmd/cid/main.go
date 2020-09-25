@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/ci123chain/ci123chain/pkg/app"
 	"github.com/ci123chain/ci123chain/pkg/app/cmd"
+	types2 "github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/logger"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -53,7 +54,7 @@ func main()  {
 
 	cmd.AddServerCommands(
 		ctx,
-		app.MakeCodec(),
+		types2.MakeCodec(),
 		rootCmd,
 		app.NewAppInit(),
 		app.ConstructAppCreator(newApp, appName),

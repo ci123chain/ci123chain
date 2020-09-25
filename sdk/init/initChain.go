@@ -11,12 +11,13 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/account"
 	acc_type "github.com/ci123chain/ci123chain/pkg/account/types"
-	"github.com/ci123chain/ci123chain/pkg/app"
+	app_module "github.com/ci123chain/ci123chain/pkg/app/module"
+	app_types "github.com/ci123chain/ci123chain/pkg/app/types"
 	distr "github.com/ci123chain/ci123chain/pkg/distribution/types"
 	"github.com/ci123chain/ci123chain/pkg/staking"
-	stypes"github.com/ci123chain/ci123chain/pkg/staking/types"
-	suptypes"github.com/ci123chain/ci123chain/pkg/supply/types"
+	stypes "github.com/ci123chain/ci123chain/pkg/staking/types"
 	"github.com/ci123chain/ci123chain/pkg/supply"
+	suptypes "github.com/ci123chain/ci123chain/pkg/supply/types"
 	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/spf13/viper"
 	cfg "github.com/tendermint/tendermint/config"
@@ -158,11 +159,11 @@ func createGenesis(chainInfo ChainInfo, validatorInfo ValidatorInfo,
 		return nil, err
 	}
 
-	cdc := app.MakeCodec()
-	val := app.AppGetValidator(validatorKey.PubKey(), validatorInfo.Name)
+	cdc := app_types.MakeCodec()
+	val := app_module.AppGetValidator(validatorKey.PubKey(), validatorInfo.Name)
 	val.Address = validatorKey.PubKey().Address()
 	validators := []tmtypes.GenesisValidator{val}
-	appState := app.ModuleBasics.DefaultGenesis(validators)
+	appState := app_module.ModuleBasics.DefaultGenesis(validators)
 
 	err = genesisStakingModule(appState, *validatorKey, stakingInfo, cdc)
 	if err != nil {
@@ -226,7 +227,7 @@ func createPrivValidator(privKey string) (privValidatorKey, privValidatorState [
 	if err != nil {
 		return nil, nil, err
 	}
-	cdc := app.MakeCodec()
+	cdc := app_types.MakeCodec()
 	privValidator := &pvm.FilePV{
 		Key:           pvm.FilePVKey{},
 		LastSignState: pvm.FilePVLastSignState{},
@@ -255,7 +256,7 @@ func createNodeKey(privStr string) (nodeKeyBytes []byte, err error) {
 	nodeKey := &p2p.NodeKey{
 		PrivKey: privKey,
 	}
-	cdc := app.MakeCodec()
+	cdc := app_types.MakeCodec()
 	nodeKeyBytes, err = cdc.MarshalJSON(nodeKey)
 	if err != nil {
 		return nil, err
@@ -408,7 +409,7 @@ func privStrToPrivKey(privStr string) (*secp256k1.PrivKeySecp256k1, error) {
 
 	var realKey *secp256k1.PrivKeySecp256k1
 	privKey := fmt.Sprintf(`{"type":"%s","value":"%s"}`, secp256k1.PrivKeyAminoName, privStr)
-	cdc := app.MakeCodec()
+	cdc := app_types.MakeCodec()
 	err := cdc.UnmarshalJSON([]byte(privKey), &realKey)
 	if err != nil {
 		return nil, err
