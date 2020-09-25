@@ -2,15 +2,14 @@ package module
 
 import (
 	"encoding/json"
-	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	wasm_types "github.com/ci123chain/ci123chain/pkg/wasm/types"
+	"github.com/ci123chain/ci123chain/pkg/wasm/module/basic"
 	abci "github.com/tendermint/tendermint/abci/types"
-	tmtypes "github.com/tendermint/tendermint/types"
 )
 
 type AppModule struct {
-	AppModuleBasic
+	basic.AppModuleBasic
 	WasmKeeper  wasm_types.WasmKeeperI
 }
 
@@ -32,19 +31,3 @@ func (am AppModule)EndBlock(ctx sdk.Context, req abci.RequestEndBlock) []abci.Va
 	return nil
 }
 
-
-type AppModuleBasic struct {}
-
-
-func (am AppModuleBasic) RegisterCodec(codec *codec.Codec) {
-	wasm_types.RegisterCodec(codec)
-}
-
-func (am AppModuleBasic) DefaultGenesis(vals []tmtypes.GenesisValidator) json.RawMessage {
-	return nil
-}
-
-
-func (am AppModuleBasic) Name() string {
-	return wasm_types.ModuleName
-}

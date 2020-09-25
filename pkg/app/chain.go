@@ -6,7 +6,12 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/abci/baseapp"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	app_module "github.com/ci123chain/ci123chain/pkg/app/module"
-	module2 "github.com/ci123chain/ci123chain/pkg/wasm/module"
+	dist_module "github.com/ci123chain/ci123chain/pkg/distribution/module"
+	mint_module "github.com/ci123chain/ci123chain/pkg/mint/module"
+	order_module "github.com/ci123chain/ci123chain/pkg/order/module"
+	staking_module "github.com/ci123chain/ci123chain/pkg/staking/module"
+	supply_module "github.com/ci123chain/ci123chain/pkg/supply/module"
+	wasm_module "github.com/ci123chain/ci123chain/pkg/wasm/module"
 
 	"github.com/ci123chain/ci123chain/pkg/abci/types/module"
 	"github.com/ci123chain/ci123chain/pkg/account"
@@ -154,14 +159,12 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 	c.mm = module.NewManager(
 		auth.AppModule{AuthKeeper: c.authKeeper},
 		account.AppModule{AccountKeeper: accKeeper},
-		supply.AppModule{Keeper:supplyKeeper},
-
-		distr.AppModule{DistributionKeeper: distrKeeper, AccountKeeper:accKeeper, SupplyKeeper:supplyKeeper},
-
-		order.AppModule{OrderKeeper: &orderKeeper},
-		staking.AppModule{StakingKeeper:stakingKeeper, AccountKeeper:accKeeper, SupplyKeeper:supplyKeeper},
-		module2.AppModule{WasmKeeper: wasmKeeper},
-		mint.AppModule{Keeper:mintKeeper},
+		supply_module.AppModule{Keeper: supplyKeeper},
+		dist_module.AppModule{DistributionKeeper: distrKeeper, AccountKeeper:accKeeper, SupplyKeeper:supplyKeeper},
+		order_module.AppModule{OrderKeeper: &orderKeeper},
+		staking_module.AppModule{StakingKeeper: stakingKeeper, AccountKeeper:accKeeper, SupplyKeeper:supplyKeeper},
+		wasm_module.AppModule{WasmKeeper: wasmKeeper},
+		mint_module.AppModule{Keeper: mintKeeper},
 		)
 	// invoke router
 	c.Router().AddRoute(transfer.RouteKey, handler.NewHandler(accKeeper))

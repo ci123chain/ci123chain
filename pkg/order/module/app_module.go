@@ -1,17 +1,16 @@
-package order
+package module
 
 import (
 	"encoding/json"
-	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/order/keeper"
+	"github.com/ci123chain/ci123chain/pkg/order/module/basic"
 	"github.com/ci123chain/ci123chain/pkg/order/types"
 	abci "github.com/tendermint/tendermint/abci/types"
-	tmtypes "github.com/tendermint/tendermint/types"
 )
 
 type AppModule struct {
-	AppModuleBasic
+	basic.AppModuleBasic
 
 	OrderKeeper	*keeper.OrderKeeper
 }
@@ -30,26 +29,6 @@ func (am AppModule) Committer(ctx sdk.Context) {
 	//do you want to do
 }
 
-type AppModuleBasic struct {
-
-}
-
-func (am AppModuleBasic) RegisterCodec(codec *codec.Codec) {
-	types.RegisterCodec(codec)
-}
-
-func (am AppModuleBasic) DefaultGenesis(_ []tmtypes.GenesisValidator) json.RawMessage {
-	return types.ModuleCdc.MustMarshalJSON(types.DefaultGenesisState())
-}
-
-func (am AppModuleBasic) Name() string {
-	return ModuleName
-}
-/*
-func RegisterCodec(cdc *codec.Codec)  {
-
-}
-*/
 
 func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.ValidatorUpdate  {
 	if am.OrderKeeper.ExistOrderBook(ctx) {
