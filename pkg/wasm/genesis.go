@@ -29,8 +29,13 @@ func InitGenesis(ctx sdk.Context, wasmer keeper.Keeper) {
 				if err != nil {
 					panic(err)
 				}
+
 				address := sdk.HexToAddress(v.Address)
 				invoker := sdk.HexToAddress(contracts.Invoker)
+				codeHash, err := wasmer.Upload(ctx, code, invoker)
+				if err != nil {
+					panic(err)
+				}
 				var params types.CallContractParam
 				params.Args = v.Params
 				params.Method = v.Method
@@ -40,7 +45,7 @@ func InitGenesis(ctx sdk.Context, wasmer keeper.Keeper) {
 				}
 				keeper.SetGasWanted(gasWanted)
 				if v.Method == types.InitMethod {
-					_, err = wasmer.Instantiate(ctx, code, invoker, 0, args, contracts.Name, contracts.Version, contracts.Author, contracts.Email, contracts.Describe, true, address)
+					_, err = wasmer.Instantiate(ctx, codeHash, invoker, 0, args, contracts.Name, contracts.Version, contracts.Author, contracts.Email, contracts.Describe, true, address)
 					if err != nil {
 						panic(err)
 					}
