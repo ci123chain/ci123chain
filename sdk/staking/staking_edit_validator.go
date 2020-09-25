@@ -3,7 +3,7 @@ package staking
 import (
 	"errors"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	"github.com/ci123chain/ci123chain/pkg/app"
+	types2 "github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/staking"
 	"github.com/ci123chain/ci123chain/pkg/staking/types"
 )
@@ -42,7 +42,7 @@ func SignEditValidator(from sdk.AccAddress, gas, nonce uint64, priv, moniker, id
 
 	msg := staking.NewEditValidatorMsg(from, desc, nrArg, minArg)
 
-	txByte, err := app.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, priv, cdc)
+	txByte, err := types2.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, priv, cdc)
 	if err != nil {
 		return nil, err
 	}

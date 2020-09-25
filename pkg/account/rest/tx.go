@@ -7,7 +7,7 @@ import (
 	abcitype "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
 	"github.com/ci123chain/ci123chain/pkg/account/types"
-	"github.com/ci123chain/ci123chain/pkg/app"
+	types2 "github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/client"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/client/helper"
@@ -20,7 +20,7 @@ import (
 	"net/http"
 )
 
-var cdc = app.MakeCodec()
+var cdc = types2.MakeCodec()
 // RegisterRoutes - Central function to define routes that get registered by the main application
 func RegisterRoutes(cliCtx context.Context, r *mux.Router) {
 	r.HandleFunc("/account/new", NewAccountRequestHandlerFn(cliCtx)).Methods("POST")
@@ -204,7 +204,7 @@ func MultiMsgsRequest(cliCtx context.Context, w http.ResponseWriter, r *http.Req
 		}
 		msgs = append(msgs, msg)
 	}
-	txByte, err := app.SignCommonTx(from, nonce, gas, msgs, privKey, cdc)
+	txByte, err := types2.SignCommonTx(from, nonce, gas, msgs, privKey, cdc)
 	if err != nil {
 		rest.WriteErrorRes(w, client.ErrParseParam(types.DefaultCodespace, err))
 		return

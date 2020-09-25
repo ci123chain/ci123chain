@@ -155,7 +155,7 @@ func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Com
 				appMessage,
 				pubKey,
 			}
-			out, err := app.MarshalJSONIndent(cdc, toPrint)
+			out, err := types.MarshalJSONIndent(cdc, toPrint)
 			if err != nil {
 				return abci.ErrInternal("Marshal failed")
 			}
@@ -201,7 +201,7 @@ func gentxWithConfig(cdc *amino.Codec, appInit app.AppInit, config *cfg.Config, 
 		AppGenTx:  appGenTx,
 	}
 
-	bz, err := app.MarshalJSONIndent(cdc, tx)
+	bz, err := types.MarshalJSONIndent(cdc, tx)
 	if err != nil {
 		return
 	}

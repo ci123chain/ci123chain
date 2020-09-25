@@ -1,6 +1,7 @@
 package init
 
 import (
+	"encoding/json"
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/sdk/account"
@@ -50,5 +51,6 @@ func TestNewInitChainFiles(t *testing.T) {
 	if err != nil{
 		fmt.Println(err)
 	}
-	fmt.Println(initFiles)
+	b, _ := json.Marshal(initFiles)
+	fmt.Println(string(b))
 }

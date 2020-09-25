@@ -3,7 +3,6 @@ package store
 import (
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	"github.com/ci123chain/ci123chain/pkg/app/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 	dbm "github.com/tendermint/tm-db"
 	"io"
@@ -116,7 +115,7 @@ func (bs *baseMultiStore) LastCommitID() CommitID {
 func (bs *baseMultiStore) Commit() CommitID {
 	var CommitInfo commitInfo
 	version := bs.lastCommitID.Version + 1
-	cInfoKey := fmt.Sprintf(types.CommitInfoKeyFmt, version)
+	cInfoKey := fmt.Sprintf(sdk.CommitInfoKeyFmt, version)
 	cInfoBytes := bs.db.Get([]byte(cInfoKey))
 	if cInfoBytes == nil {
 		// Commit stores.
@@ -270,10 +269,10 @@ func (bs *baseMultiStore) getStoreByName(name string) KVStore {
 
 func SetCommitInfo(db dbm.DB, version int64, info commitInfo) {
 	infoByte, _ := cdc.MarshalBinaryLengthPrefixed(info)
-	db.Set([]byte(fmt.Sprintf(types.CommitInfoKeyFmt, version)),infoByte)
+	db.Set([]byte(fmt.Sprintf(sdk.CommitInfoKeyFmt, version)),infoByte)
 }
 
 func SetLatestVersion(db dbm.DB, version int64) {
 	versionByte, _ := cdc.MarshalBinaryLengthPrefixed(version)
-	db.Set([]byte(types.LatestVersionKey),versionByte)
+	db.Set([]byte(sdk.LatestVersionKey),versionByte)
 }

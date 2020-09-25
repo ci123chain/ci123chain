@@ -3,7 +3,7 @@ package rest
 import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
-	"github.com/ci123chain/ci123chain/pkg/app"
+	types2 "github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/client"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/distribution/types"
@@ -11,7 +11,7 @@ import (
 	"github.com/gorilla/mux"
 	"net/http"
 )
-var cdc = app.MakeCodec()
+var cdc = types2.MakeCodec()
 
 func RegisterRoutes(cliCtx context.Context, r *mux.Router) {
 	RegisterQueryRoutes(cliCtx, r)

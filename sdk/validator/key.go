@@ -2,7 +2,7 @@ package validator
 
 import (
 	"fmt"
-	"github.com/ci123chain/ci123chain/pkg/app"
+	"github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
@@ -18,7 +18,7 @@ func NewValidatorKey() (validatorKey string, pubKey crypto.PubKey, address strin
 	}
 	validatorKey = string(keyByte[1:len(keyByte)-1])
 	privStr := fmt.Sprintf(`{"type":"%s","value":"%s"}`, secp256k1.PrivKeyAminoName, validatorKey)
-	cdc = app.MakeCodec()
+	cdc = types.MakeCodec()
 	err = cdc.UnmarshalJSON([]byte(privStr), &valKey)
 	if err != nil {
 		return "",nil, "", err

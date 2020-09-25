@@ -15,6 +15,8 @@ const (
 	QueryContractList  = "queryContractList"
 	QueryContractExist  = "queryContractExist"
 
+	SystemContract = "system_contract"
+
 	ModePerm os.FileMode = 0666
 	SuffixName = ".wasm"
 	FolderName = "wasm"

@@ -6,6 +6,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/abci"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/app/module"
 	"github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ethereum/go-ethereum/common"
 	tmabci "github.com/tendermint/tendermint/abci/types"
@@ -13,7 +14,7 @@ import (
 )
 
 func AppGenStateJSON(validators []tmtypes.GenesisValidator) (json.RawMessage, error) {
-	appState := ModuleBasics.DefaultGenesis(validators)
+	appState := module.ModuleBasics.DefaultGenesis(validators)
 	stateBytes, err := json.Marshal(appState)
 	if err != nil {
 		return nil, abci.ErrInternal("Marshal failed")

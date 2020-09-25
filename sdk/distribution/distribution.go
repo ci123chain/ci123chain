@@ -4,12 +4,12 @@ import (
 	"encoding/hex"
 	"errors"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	"github.com/ci123chain/ci123chain/pkg/app"
+	types2 "github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
 	"github.com/ci123chain/ci123chain/pkg/distribution/types"
 )
 
-var cdc = app.MakeCodec()
+var cdc = types2.MakeCodec()
 
 //todo
 func SignFundCommunityPoolTx(from string, amount sdk.Coin, gas, nonce uint64, priv string) ([]byte, error) {
@@ -36,7 +36,7 @@ func SignFundCommunityPoolTx(from string, amount sdk.Coin, gas, nonce uint64, pr
 
 func SignMsgSetWithdrawAddress(from, withdrawAddress sdk.AccAddress, gas, nonce uint64, priv string) ([]byte, error) {
 	msg := types.NewMsgSetWithdrawAddress(from, withdrawAddress, from)
-	txByte, err := app.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, priv, cdc)
+	txByte, err := types2.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, priv, cdc)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +50,7 @@ func NewMsgSetWithdrawAddressMsg(from, withdrawAddress sdk.AccAddress) []byte {
 
 func SignWithdrawDelegatorRewardTx(from, validatorAddress, delegatorAddress sdk.AccAddress, gas, nonce uint64, priv string) ([]byte, error) {
 	msg := types.NewMsgWithdrawDelegatorReward(from, validatorAddress, delegatorAddress)
-	txByte, err := app.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, priv, cdc)
+	txByte, err := types2.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, priv, cdc)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +64,7 @@ func NewWithdrawDelegatorRewardMsg(from, validatorAddress, delegatorAddress sdk.
 
 func SignWithdrawValidatorCommissionTx(from, validatorAddress sdk.AccAddress, gas, nonce uint64, priv string) ([]byte, error) {
 	msg := types.NewMsgWithdrawValidatorCommission(from, validatorAddress)
-	txByte, err := app.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, priv, cdc)
+	txByte, err := types2.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, priv, cdc)
 	if err != nil {
 		return nil, err
 	}

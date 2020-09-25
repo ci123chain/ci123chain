@@ -48,7 +48,8 @@ func handleMsgInstantiateContract(ctx sdk.Context, k Keeper, msg wasm.MsgInstant
 	SetGasWanted(gasWanted)
 	nonce := ctx.Nonce()
 
-	contractAddr, err := k.Instantiate(ctx, msg.CodeHash, msg.FromAddress, nonce, msg.Args, msg.Name, msg.Version, msg.Author, msg.Email, msg.Describe, false, wasm.EmptyAddress)
+	contractAddr, err := k.Instantiate(ctx, msg.CodeHash, msg.FromAddress, nonce, msg.Args, msg.Name, msg.Version, msg.Author, msg.Email, msg.Describe, wasm.EmptyAddress)
+
 	if err != nil {
 		return wasm.ErrInstantiateFailed(wasm.DefaultCodespace, err).Result()
 	}
