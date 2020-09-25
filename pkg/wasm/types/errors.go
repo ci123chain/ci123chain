@@ -26,8 +26,8 @@ func ErrInvalidMsg(codespce sdk.CodespaceType, err error) sdk.Error {
 	return sdk.NewError(codespce, CodeInvalidMsgError, "msg invalid: %s", err.Error())
 }
 
-func ErrCreateFailed(codespce sdk.CodespaceType, err error) sdk.Error {
-	return sdk.NewError(codespce, CodeHandleMsgFailedError, "create failed: %s", err.Error())
+func ErrUploadFailed(codespce sdk.CodespaceType, err error) sdk.Error {
+	return sdk.NewError(codespce, CodeHandleMsgFailedError, "upload failed: %s", err.Error())
 }
 
 func ErrUninstallFailed(codespce sdk.CodespaceType, err error) sdk.Error {
@@ -41,7 +41,6 @@ func ErrUninstallFailed(codespce sdk.CodespaceType, err error) sdk.Error {
 func ErrInstantiateFailed(codespce sdk.CodespaceType, err error) sdk.Error {
 	return sdk.NewError(codespce, CodeHandleMsgFailedError, "instantiate failed: %s", err.Error())
 }
-
 
 func ErrExecuteFailed(codespce sdk.CodespaceType, err error) sdk.Error {
 	return sdk.NewError(codespce, CodeHandleMsgFailedError, "execute failed: %s", err.Error())

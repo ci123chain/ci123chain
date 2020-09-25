@@ -55,6 +55,7 @@ type StakingInfo struct {
 	Tokens				string				`json:"tokens"`
 	CommissionInfo  	CommissionInfo 		`json:"commission_info"`
 	UpdateTime 			time.Time 			`json:"update_time"`
+	MinSelfDelegation   string				`json:"min_self_delegation"`
 }
 
 type CommissionInfo struct {
@@ -103,15 +104,17 @@ func NewInitChainFiles(chainInfo ChainInfo,
 		return nil, err
 	}
 
-	//genesis.json
-	genesisBytes, err := createGenesis(chainInfo, validatorInfo, stakingInfo, supplyInfo, accountInfo, privKey)
-	if err != nil {
-		return nil, err
+	var genesisBytes []byte
+	if chainInfo != (ChainInfo{}) {
+		//genesis.json
+		genesisBytes, err = createGenesis(chainInfo, validatorInfo, stakingInfo, supplyInfo, accountInfo, privKey)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	//config.toml
-	ctx := app.NewDefaultContext()
-	err = createConfig(ctx, persistentPeers)
+	config, err := createConfig(persistentPeers)
 	if err != nil {
 		return nil, err
 	}
@@ -120,7 +123,7 @@ func NewInitChainFiles(chainInfo ChainInfo,
 	if configTemplate, err = template.New("configFileTemplate").Parse(defaultConfigTemplate); err != nil {
 		panic(err)
 	}
-	if err := configTemplate.Execute(&buffer, ctx.Config); err != nil {
+	if err := configTemplate.Execute(&buffer, config); err != nil {
 		panic(err)
 	}
 	configBytes := buffer.Bytes()
@@ -198,7 +201,7 @@ func createGenesis(chainInfo ChainInfo, validatorInfo ValidatorInfo,
 	return genesisBytes, nil
 }
 
-func createConfig(ctx *app.Context, persistentPeers string) error {
+func createConfig (persistentPeers string) (*cfg.Config, error) {
 	c := cfg.DefaultConfig()
 	c.Moniker = common.RandStr(8)
 	c.Instrumentation.Prometheus = true
@@ -213,10 +216,9 @@ func createConfig(ctx *app.Context, persistentPeers string) error {
 
 	err := unmarshalWithViper(viper.GetViper(), c)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	ctx.Config = c
-	return nil
+	return c, nil
 }
 
 func createPrivValidator(privKey string) (privValidatorKey, privValidatorState []byte, err error) {
@@ -274,6 +276,10 @@ func genesisStakingModule(appState map[string]json.RawMessage, validatorKey secp
 	if !ok {
 		return errors.New("staking tokens converts to bigInt failed")
 	}
+	minSelfTokens, ok := types.NewIntFromString(stakingInfo.MinSelfDelegation)
+	if !ok {
+		return errors.New("staking minSelfDelegation converts to bigInt failed")
+	}
 	shares := types.NewDecFromInt(tokens)
 	genesisValidator = stypes.Validator{
 		OperatorAddress:   stakingInfo.Address,
@@ -293,7 +299,7 @@ func genesisStakingModule(appState map[string]json.RawMessage, validatorKey secp
 			},
 			UpdateTime:      stakingInfo.UpdateTime,
 		},
-		MinSelfDelegation: tokens,
+		MinSelfDelegation: minSelfTokens,
 	}
 
 	delegation := stypes.NewDelegation(stakingInfo.Address, stakingInfo.Address, shares)

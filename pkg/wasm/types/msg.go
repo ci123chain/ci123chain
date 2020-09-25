@@ -7,6 +7,75 @@ import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/util"
 )
+
+type MsgUploadContract struct {
+	FromAddress sdk.AccAddress		`json:"from_address"`
+	Signature 	[]byte   			`json:"signature"`
+	PubKey		[]byte				`json:"pub_key"`
+
+	Code    	[]byte              `json:"code"`
+}
+
+func NewMsgUploadContract(code []byte, from sdk.AccAddress) *MsgInstantiateContract {
+	return &MsgInstantiateContract {
+		FromAddress: from,
+		Code:        code,
+	}
+}
+
+//TODO
+func (msg *MsgUploadContract) ValidateBasic() sdk.Error {
+	if msg.Code == nil {
+		return ErrInvalidMsg(DefaultCodespace, errors.New("code is invalid"))
+	}
+
+	if msg.FromAddress.Empty() {
+		return ErrInvalidMsg(DefaultCodespace, errors.New("sender is invalid"))
+	}
+
+	return nil
+}
+
+func (msg *MsgUploadContract) GetSignBytes() []byte {
+	ntx := *msg
+	ntx.SetSignature(nil)
+	return util.TxHash(ntx.Bytes())
+}
+
+func (msg *MsgUploadContract) SetSignature(sig []byte) {
+	msg.Signature = sig
+}
+
+func (msg *MsgUploadContract) Bytes() []byte {
+	bytes, err := WasmCodec.MarshalBinaryLengthPrefixed(msg)
+	if err != nil {
+		panic(err)
+	}
+
+	return bytes
+}
+
+func (msg *MsgUploadContract) SetPubKey(pub []byte) {
+	msg.PubKey = pub
+}
+
+func (msg *MsgUploadContract) Route() string {
+	return RouteKey
+}
+
+func (msg *MsgUploadContract) MsgType() string {
+	return "upload"
+}
+
+func (msg *MsgUploadContract) GetFromAddress() sdk.AccAddress {
+	return msg.FromAddress
+}
+
+func (msg *MsgUploadContract) GetSignature() []byte {
+	return msg.Signature
+}
+
+
 type MsgInstantiateContract struct {
 	FromAddress sdk.AccAddress		`json:"from_address"`
 	Signature 	[]byte   			`json:"signature"`

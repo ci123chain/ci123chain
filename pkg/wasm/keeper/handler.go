@@ -10,6 +10,8 @@ func NewHandler(k Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 		switch tx := msg.(type) {
+		case *wasm.MsgUploadContract:
+			return handleMsgUploadContract(ctx, k, *tx)
 		case *wasm.MsgInstantiateContract:
 			return handleMsgInstantiateContract(ctx, k, *tx)
 		case *wasm.MsgExecuteContract:
@@ -22,6 +24,23 @@ func NewHandler(k Keeper) sdk.Handler {
 		}
 	}
 }
+
+func handleMsgUploadContract(ctx sdk.Context, k Keeper, msg wasm.MsgUploadContract) (res sdk.Result) {
+	gasLimit := ctx.GasLimit()
+	gasWanted := gasLimit - ctx.GasMeter().GasConsumed()
+	SetGasWanted(gasWanted)
+
+	codeHash, err := k.Upload(ctx, msg.Code, msg.FromAddress)
+	if err != nil {
+		return wasm.ErrUploadFailed(wasm.DefaultCodespace, err).Result()
+	}
+	res = sdk.Result{
+		Data:  []byte(fmt.Sprintf("%s", codeHash)),
+		Events: ctx.EventManager().Events(),
+	}
+	return
+}
+
 
 func handleMsgInstantiateContract(ctx sdk.Context, k Keeper, msg wasm.MsgInstantiateContract) (res sdk.Result) {
 	gasLimit := ctx.GasLimit()

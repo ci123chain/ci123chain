@@ -263,7 +263,6 @@ func callContract(context unsafe.Pointer, addrPtr, inputPtr, inputSize int32) in
 	prefixStore := NewStore(ctx.KVStore(keeper.storeKey), prefixStoreKey)
 
 	newcreator := keeper.GetCreator(*ctx, contractAddress)
-
 	tempSelfAddr := selfAddr
 	tempCreator := creator
 	tempStore := store

@@ -16,6 +16,39 @@ import (
 )
 
 const CAN_MIGRATE string = `{"method":"canMigrate","args": [""]}`
+func uploadContractHandler(cliCtx context.Context,w http.ResponseWriter, r *http.Request) {
+	broadcast, err := strconv.ParseBool(r.FormValue("broadcast"))
+	if err != nil {
+		broadcast = true
+	}
+	privKey, from, nonce, gas, err := rest.GetNecessaryParams(cliCtx, r, cdc, broadcast)
+	if err != nil {
+		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
+		return
+	}
+	wasmCode, err := getWasmCode(r)
+	if err != nil || wasmCode == nil {
+		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "get wasmcode failed"))
+		return
+	}
+	msg := wasm2.NewUploadTx(wasmCode, from)
+	if !broadcast {
+		rest.PostProcessResponseBare(w, cliCtx, hex.EncodeToString(msg.Bytes()))
+		return
+	}
+
+	txByte, err := app.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
+	if err != nil {
+		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
+		return
+	}
+	res, err := cliCtx.BroadcastSignedTx(txByte)
+	if err != nil {
+		rest.WriteErrorRes(w, client.ErrBroadcast(types.DefaultCodespace, err))
+		return
+	}
+	rest.PostProcessResponseBare(w, cliCtx, res)
+}
 
 func instantiateContractHandler(cliCtx context.Context,w http.ResponseWriter, r *http.Request) {
 	broadcast, err := strconv.ParseBool(r.FormValue("broadcast"))

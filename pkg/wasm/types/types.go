@@ -1,10 +1,8 @@
 package types
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	"strings"
 )
 
 var (
@@ -64,10 +62,10 @@ func NewCreatedAt(ctx sdk.Context) *CreatedAt {
 	}
 }
 
-func NewContractInfo(CodeHash []byte, creator sdk.AccAddress, initMsg []byte, name, version, author, email, describe string, createdAt *CreatedAt) ContractInfo {
+func NewContractInfo(codeInfo CodeInfo, initMsg []byte, name, version, author, email, describe string, createdAt *CreatedAt) ContractInfo {
 
 	return ContractInfo{
-		CodeInfo:	NewCodeInfo(strings.ToUpper(hex.EncodeToString(CodeHash)),creator),
+		CodeInfo:	codeInfo,
 		Name:   	name,
 		Version:	version,
 		Author: 	author,

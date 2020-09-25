@@ -53,12 +53,23 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, homeDir string, wasmConf
 }
 
 //
-func (k Keeper) Instantiate(ctx sdk.Context, wasmCode []byte, invoker sdk.AccAddress, nonce uint64, args json.RawMessage, name, version, author, email, describe string, isGenesis bool, genesisContractAddress sdk.AccAddress) (sdk.AccAddress, error) {
-	codeHash, isExist, err := k.create(ctx, invoker, wasmCode)
+func (k Keeper) Upload(ctx sdk.Context, wasmCode []byte, creator sdk.AccAddress) (codeHash []byte, err error) {
+	codeHash, isExist, err := k.create(ctx, creator, wasmCode)
 	if err != nil {
-		return sdk.AccAddress{}, err
+		return nil, err
 	}
+	//store code in local
+	if !isExist {
+		hash := fmt.Sprintf("%x", codeHash)
+		err = ioutil.WriteFile(k.wasmer.HomeDir + "/" + k.wasmer.FilePathMap[hash], wasmCode, types.ModePerm)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return codeHash, nil
+}
 
+func (k Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAddress, nonce uint64, args json.RawMessage, name, version, author, email, describe string, isGenesis bool, genesisContractAddress sdk.AccAddress) (sdk.AccAddress, error) {
 	SetGasUsed()
 	SetCtx(&ctx)
 	var codeInfo types.CodeInfo
@@ -75,7 +86,7 @@ func (k Keeper) Instantiate(ctx sdk.Context, wasmCode []byte, invoker sdk.AccAdd
 	if isGenesis {
 		contractAddress = genesisContractAddress
 	}else {
-		contractAddress = k.generateContractAddress(invoker, nonce)
+		contractAddress = k.generateContractAddress(codeHash, invoker, args)
 	}
 	existingAcct := k.AccountKeeper.GetAccount(ctx, contractAddress)
 	if existingAcct != nil {
@@ -133,7 +144,7 @@ func (k Keeper) Instantiate(ctx sdk.Context, wasmCode []byte, invoker sdk.AccAdd
 
 	//save the contract info.
 	createdAt := types.NewCreatedAt(ctx)
-	contractInfo := types.NewContractInfo(codeHash, invoker, args, name, version, author, email, describe, createdAt)
+	contractInfo := types.NewContractInfo(codeInfo, args, name, version, author, email, describe, createdAt)
 	store.Set(types.GetContractAddressKey(contractAddress), k.cdc.MustMarshalBinaryBare(contractInfo))
 
 	//save contractAddress into account
@@ -157,15 +168,6 @@ func (k Keeper) Instantiate(ctx sdk.Context, wasmCode []byte, invoker sdk.AccAdd
 		store.Set(types.GetAccountContractListKey(accountAddr), contractListBytes)
 	}
 	ctx.GasMeter().ConsumeGas(sdk.Gas(GasUsed),"wasm cost")
-
-	//store code in local.
-	if !isExist {
-		hash := fmt.Sprintf("%x", codeHash)
-		err = ioutil.WriteFile(k.wasmer.HomeDir + "/" + k.wasmer.FilePathMap[hash], wasmCode, types.ModePerm)
-		if err != nil {
-			return sdk.AccAddress{}, err
-		}
-	}
 	return contractAddress, nil
 }
 
@@ -222,8 +224,8 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, invoker
 	}, nil
 }
 
-func (k Keeper) Migrate(ctx sdk.Context, wasmCode []byte, invoker sdk.AccAddress, oldContract sdk.AccAddress, nonce uint64, args json.RawMessage, name, version, author, email, describe string) (sdk.AccAddress, error) {
-	newContract, err := k.Instantiate(ctx, wasmCode, invoker, nonce, args, name, version, author, email, describe, false, types.EmptyAddress)
+func (k Keeper) Migrate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAddress, oldContract sdk.AccAddress, nonce uint64, args json.RawMessage, name, version, author, email, describe string) (sdk.AccAddress, error) {
+	newContract, err := k.Instantiate(ctx, codeHash, invoker, nonce, args, name, version, author, email, describe, false, types.EmptyAddress)
 	if err != nil {
 		return sdk.AccAddress{}, err
 	}
@@ -450,8 +452,8 @@ func (k Keeper) create(ctx sdk.Context, invokerAddr sdk.AccAddress, wasmCode []b
 	return codeHash, false, nil
 }
 
-func (k Keeper) generateContractAddress(creatorAddr sdk.AccAddress, nonce uint64) sdk.AccAddress {
-	contract, _ := rlp.EncodeToBytes([]interface{}{creatorAddr, nonce})
+func (k Keeper) generateContractAddress(codeHash []byte, creatorAddr sdk.AccAddress, payload json.RawMessage) sdk.AccAddress {
+	contract, _ := rlp.EncodeToBytes([]interface{}{codeHash, creatorAddr, payload})
 	return sdk.ToAccAddress(crypto.Keccak256Hash(contract).Bytes()[12:])
 }
 

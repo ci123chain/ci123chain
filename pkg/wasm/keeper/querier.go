@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"encoding/json"
-	"errors"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/wasm/types"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -114,7 +113,7 @@ func queryContractExist(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byt
 	store := ctx.KVStore(k.storeKey)
 	byCode := store.Get(params.WasmCodeHash)
 	if byCode != nil {
-		return nil, types.ErrCreateFailed(types.DefaultCodespace,errors.New("the code already exists"))
+		return []byte("The contract already exists"), nil
 	}
 	return nil, nil
 }

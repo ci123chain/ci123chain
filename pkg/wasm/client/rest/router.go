@@ -13,6 +13,7 @@ func RegisterRoutes(cliCtx context.Context, r *mux.Router) {
 }
 
 func registerTxRoutes(cliCtx context.Context, r *mux.Router)  {
+	r.HandleFunc("/wasm/contract/upload", rest.MiddleHandler(cliCtx, uploadContractHandler, types.DefaultCodespace)).Methods("POST")
 	r.HandleFunc("/wasm/contract/init", rest.MiddleHandler(cliCtx, instantiateContractHandler, types.DefaultCodespace)).Methods("POST")
 	r.HandleFunc("/wasm/contract/execute", rest.MiddleHandler(cliCtx, executeContractHandler, types.DefaultCodespace)).Methods("POST")
 	r.HandleFunc("/wasm/contract/migrate", rest.MiddleHandler(cliCtx, migrateContractHandler, types.DefaultCodespace)).Methods("POST")

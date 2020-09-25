@@ -17,7 +17,6 @@ require (
 	github.com/golang/protobuf v1.3.3
 	github.com/gorilla/mux v1.7.3
 	github.com/mattn/go-isatty v0.0.10
-	github.com/panjf2000/ants/v2 v2.2.2
 	github.com/pborman/uuid v1.2.0 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/pretty66/gosdk v1.0.3

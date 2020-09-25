@@ -18,6 +18,7 @@ var (
 	NewHandler = keeper.NewHandler
 	NewQuerier = keeper.NewQuerier
 
+	NewUploadTx = types.NewMsgUploadContract
 	NewInstantiateTx = types.NewMsgInstantiateContract
 	NewExecuteTx = types.NewMsgExecuteContract
 	NewMigrateTx = types.NewMsgMigrateContract

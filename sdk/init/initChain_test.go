@@ -35,6 +35,7 @@ func TestNewInitChainFiles(t *testing.T) {
 			MaxChangeRate: 5,
 		},
 		UpdateTime:        time.Now(),
+		MinSelfDelegation: "10000000",
 	}
 	var supInfo = SupplyInfo{
 		Amount: "200000000000",
