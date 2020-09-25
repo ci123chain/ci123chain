@@ -9,9 +9,8 @@ import (
 
 var cdc = app.MakeCodec()
 
-func SignInstantiateContractMsg(code []byte,from sdk.AccAddress, gas, nonce uint64, priv string, name, version, author, email, describe string,
-	initMsg json.RawMessage) ([]byte, error) {
-	msg := wasm.NewInstantiateTx(code, from, name, version, author, email, describe, initMsg)
+func SignUploadContractMsg(code []byte,from sdk.AccAddress, gas, nonce uint64, priv string) ([]byte, error) {
+	msg := wasm.NewUploadTx(code, from)
 	txByte, err := app.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, priv, cdc)
 	if err != nil {
 		return nil, err
@@ -19,8 +18,18 @@ func SignInstantiateContractMsg(code []byte,from sdk.AccAddress, gas, nonce uint
 	return txByte, nil
 }
 
-func NewInstantiateMsg(code []byte, from sdk.AccAddress, name, version, author, email, describe string, initMsg json.RawMessage) []byte {
-	msg := wasm.NewInstantiateTx(code, from, name, version, author, email, describe, initMsg)
+func SignInstantiateContractMsg(codeHash []byte, from sdk.AccAddress, gas, nonce uint64, priv string, name, version, author, email, describe string,
+	initMsg json.RawMessage) ([]byte, error) {
+	msg := wasm.NewInstantiateTx(codeHash, from, name, version, author, email, describe, initMsg)
+	txByte, err := app.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, priv, cdc)
+	if err != nil {
+		return nil, err
+	}
+	return txByte, nil
+}
+
+func NewInstantiateMsg(codeHash []byte, from sdk.AccAddress, name, version, author, email, describe string, initMsg json.RawMessage) []byte {
+	msg := wasm.NewInstantiateTx(codeHash, from, name, version, author, email, describe, initMsg)
 	return msg.Bytes()
 }
 
@@ -33,9 +42,9 @@ func SignExecuteContractMsg(from sdk.AccAddress, gas, nonce uint64, priv string,
 	return txByte, nil
 }
 
-func SignMigrateContractMsg(code []byte, from sdk.AccAddress, gas, nonce uint64, priv string, name, version, author, email, describe string,
+func SignMigrateContractMsg(codeHash []byte, from sdk.AccAddress, gas, nonce uint64, priv string, name, version, author, email, describe string,
 	contractAddr sdk.AccAddress, initMsg json.RawMessage) ([]byte, error) {
-	msg := wasm.NewMigrateTx(code, from, name, version, author, email, describe, contractAddr, initMsg)
+	msg := wasm.NewMigrateTx(codeHash, from, name, version, author, email, describe, contractAddr, initMsg)
 	txByte, err := app.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, priv, cdc)
 	if err != nil {
 		return nil, err

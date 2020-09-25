@@ -13,6 +13,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/wasm/types"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 const CAN_MIGRATE string = `{"method":"canMigrate","args": [""]}`
@@ -60,10 +61,10 @@ func instantiateContractHandler(cliCtx context.Context,w http.ResponseWriter, r 
 		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
 		return
 	}
-	wasmCode, err := getWasmCode(r)
-	if err != nil || wasmCode == nil {
-		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "get wasmcode failed"))
-		return
+	codeHash := r.FormValue("codeHash")
+	hash, err := hex.DecodeString(strings.ToLower(codeHash))
+	if err != nil {
+		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
 	}
 	name, version, author, email, describe, err := adjustInstantiateParams(r)
 	if err != nil {
@@ -85,7 +86,7 @@ func instantiateContractHandler(cliCtx context.Context,w http.ResponseWriter, r 
 		args = argsByte
 	}
 	JsonArgs := json.RawMessage(args)
-	msg := wasm2.NewInstantiateTx(wasmCode, from, name, version, author, email, describe, JsonArgs)
+	msg := wasm2.NewInstantiateTx(hash, from, name, version, author, email, describe, JsonArgs)
 	if !broadcast {
 		rest.PostProcessResponseBare(w, cliCtx, hex.EncodeToString(msg.Bytes()))
 		return
@@ -193,9 +194,10 @@ func migrateContractHandler(cliCtx context.Context,w http.ResponseWriter, r *htt
 		return
 	}
 
-	wasmCode, err := getWasmCode(r)
-	if err != nil || wasmCode == nil {
-		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "get wasmcode failed"))
+	codeHash := r.FormValue("codeHash")
+	hash, err := hex.DecodeString(strings.ToLower(codeHash))
+	if err != nil {
+		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "codeHash error"))
 		return
 	}
 	name, version, author, email, describe, err := adjustInstantiateParams(r)
@@ -220,7 +222,7 @@ func migrateContractHandler(cliCtx context.Context,w http.ResponseWriter, r *htt
 	}
 	JsonArgs := json.RawMessage(args)
 
-	msg := types.NewMsgMigrateContract(wasmCode, from, name, version, author, email, describe, contractAddress, JsonArgs)
+	msg := types.NewMsgMigrateContract(hash, from, name, version, author, email, describe, contractAddress, JsonArgs)
 	if !broadcast {
 		rest.PostProcessResponseBare(w, cliCtx, hex.EncodeToString(msg.Bytes()))
 		return

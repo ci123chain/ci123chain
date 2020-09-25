@@ -32,6 +32,7 @@ const (
 	//FlagMsg = "msg"
 	FlagArgs = "args"
 	FlagName = "name"
+	FlagCodeHash = "codeHash"
 	FlagVersion = "version"
 	FlagAuthor = "author"
 	FlagEmail = "email"

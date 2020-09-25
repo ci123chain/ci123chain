@@ -35,7 +35,7 @@ func handleMsgUploadContract(ctx sdk.Context, k Keeper, msg wasm.MsgUploadContra
 		return wasm.ErrUploadFailed(wasm.DefaultCodespace, err).Result()
 	}
 	res = sdk.Result{
-		Data:  []byte(fmt.Sprintf("%s", codeHash)),
+		Data:  codeHash,
 		Events: ctx.EventManager().Events(),
 	}
 	return
@@ -48,7 +48,7 @@ func handleMsgInstantiateContract(ctx sdk.Context, k Keeper, msg wasm.MsgInstant
 	SetGasWanted(gasWanted)
 	nonce := ctx.Nonce()
 
-	contractAddr, err := k.Instantiate(ctx, msg.Code, msg.FromAddress, nonce, msg.Args, msg.Name, msg.Version, msg.Author, msg.Email, msg.Describe, false, wasm.EmptyAddress)
+	contractAddr, err := k.Instantiate(ctx, msg.CodeHash, msg.FromAddress, nonce, msg.Args, msg.Name, msg.Version, msg.Author, msg.Email, msg.Describe, false, wasm.EmptyAddress)
 	if err != nil {
 		return wasm.ErrInstantiateFailed(wasm.DefaultCodespace, err).Result()
 	}
@@ -77,7 +77,7 @@ func handleMsgMigrateContract(ctx sdk.Context, k Keeper, msg wasm.MsgMigrateCont
 	gasWanted := gasLimit - ctx.GasMeter().GasConsumed()
 	SetGasWanted(gasWanted)
 	nonce := ctx.Nonce()
-	contractAddr, err := k.Migrate(ctx, msg.Code, msg.FromAddress, msg.Contract, nonce, msg.Args, msg.Name, msg.Version, msg.Author, msg.Email, msg.Describe)
+	contractAddr, err := k.Migrate(ctx, msg.CodeHash, msg.FromAddress, msg.Contract, nonce, msg.Args, msg.Name, msg.Version, msg.Author, msg.Email, msg.Describe)
 	if err != nil {
 		return wasm.ErrInstantiateFailed(wasm.DefaultCodespace, err).Result()
 	}

@@ -15,6 +15,7 @@ func init() {
 
 func RegisterCodec(cdc *codec.Codec) {
 	//
+	cdc.RegisterConcrete(&MsgUploadContract{}, "ci123chain/MsgUploadContract", nil)
 	cdc.RegisterConcrete(&MsgInstantiateContract{}, "ci123Chain/MsgInstantiateContract", nil)
 	cdc.RegisterConcrete(&MsgExecuteContract{}, "ci123Chain/MsgExecuteContract", nil)
 	cdc.RegisterConcrete(&MsgMigrateContract{}, "ci123Chain/MsgMigrateContract", nil)

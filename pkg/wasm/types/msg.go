@@ -16,8 +16,8 @@ type MsgUploadContract struct {
 	Code    	[]byte              `json:"code"`
 }
 
-func NewMsgUploadContract(code []byte, from sdk.AccAddress) *MsgInstantiateContract {
-	return &MsgInstantiateContract {
+func NewMsgUploadContract(code []byte, from sdk.AccAddress) *MsgUploadContract {
+	return &MsgUploadContract {
 		FromAddress: from,
 		Code:        code,
 	}
@@ -81,7 +81,7 @@ type MsgInstantiateContract struct {
 	Signature 	[]byte   			`json:"signature"`
 	PubKey		[]byte				`json:"pub_key"`
 
-	Code    	[]byte              `json:"code"`
+	CodeHash    []byte              `json:"code"`
 	Name		string				`json:"name,omitempty"`
 	Version     string				`json:"version,omitempty"`
 	Author      string				`json:"author,omitempty"`
@@ -90,12 +90,12 @@ type MsgInstantiateContract struct {
 	Args      	json.RawMessage     `json:"args,omitempty"`
 }
 
-func NewMsgInstantiateContract(code []byte, from sdk.AccAddress, name, version, author, email, describe string,
+func NewMsgInstantiateContract(codeHash []byte, from sdk.AccAddress, name, version, author, email, describe string,
 	initMsg json.RawMessage) *MsgInstantiateContract {
 
 		return &MsgInstantiateContract {
 			FromAddress: from,
-			Code:        code,
+			CodeHash:    codeHash,
 			Name:     	 name,
 			Version: 	 version,
 			Author: 	 author,
@@ -107,7 +107,7 @@ func NewMsgInstantiateContract(code []byte, from sdk.AccAddress, name, version, 
 
 //TODO
 func (msg *MsgInstantiateContract) ValidateBasic() sdk.Error {
-	if msg.Code == nil {
+	if len(msg.CodeHash) == 0 {
 		return ErrInvalidMsg(DefaultCodespace, errors.New("code is invalid"))
 	}
 
@@ -235,7 +235,7 @@ type MsgMigrateContract struct {
 	Signature 	[]byte   			`json:"signature"`
 	PubKey		[]byte				`json:"pub_key"`
 
-	Code    	[]byte              `json:"code"`
+	CodeHash    []byte              `json:"code"`
 	Contract	sdk.AccAddress		`json:"contract"`
 	Name		string				`json:"name,omitempty"`
 	Version     string				`json:"version,omitempty"`
@@ -245,12 +245,12 @@ type MsgMigrateContract struct {
 	Args      	json.RawMessage     `json:"args,omitempty"`
 }
 
-func NewMsgMigrateContract(code []byte, from sdk.AccAddress, name, version, author, email, describe string,
+func NewMsgMigrateContract(codeHash []byte, from sdk.AccAddress, name, version, author, email, describe string,
 	contract sdk.AccAddress, initMsg json.RawMessage) *MsgMigrateContract{
 
 	return &MsgMigrateContract{
 		FromAddress: from,
-		Code:        code,
+		CodeHash:    codeHash,
 		Contract:    contract,
 		Name:        name,
 		Version:     version,
@@ -262,7 +262,7 @@ func NewMsgMigrateContract(code []byte, from sdk.AccAddress, name, version, auth
 }
 
 func (msg *MsgMigrateContract) ValidateBasic() sdk.Error {
-	if msg.Code == nil {
+	if len(msg.CodeHash) == 0 {
 		return ErrInvalidMsg(DefaultCodespace, errors.New("code is invalid"))
 	}
 

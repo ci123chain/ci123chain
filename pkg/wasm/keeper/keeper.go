@@ -53,23 +53,34 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, homeDir string, wasmConf
 }
 
 //
-func (k Keeper) Upload(ctx sdk.Context, wasmCode []byte, creator sdk.AccAddress) (codeHash []byte, err error) {
+func (k *Keeper) Upload(ctx sdk.Context, wasmCode []byte, creator sdk.AccAddress) (codeHash []byte, err error) {
+	ccstore := ctx.KVStore(k.storeKey)
+	var wasmer Wasmer
+	wasmerBz := ccstore.Get(types.GetWasmerKey())
+	if wasmerBz != nil {
+		k.cdc.MustUnmarshalJSON(wasmerBz, &wasmer)
+		if wasmer.LastFileID == 0 {
+			return nil, sdk.ErrInternal("empty wasmer")
+		}
+		k.wasmer = wasmer
+	}
 	codeHash, isExist, err := k.create(ctx, creator, wasmCode)
 	if err != nil {
 		return nil, err
 	}
 	//store code in local
 	if !isExist {
-		hash := fmt.Sprintf("%x", codeHash)
-		err = ioutil.WriteFile(k.wasmer.HomeDir + "/" + k.wasmer.FilePathMap[hash], wasmCode, types.ModePerm)
+		err = ioutil.WriteFile(k.wasmer.HomeDir + "/" + k.wasmer.FilePathMap[fmt.Sprintf("%x", codeHash)], wasmCode, types.ModePerm)
 		if err != nil {
 			return nil, err
 		}
+	} else {
+		//todo somebody else has already uploaded it
 	}
 	return codeHash, nil
 }
 
-func (k Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAddress, nonce uint64, args json.RawMessage, name, version, author, email, describe string, isGenesis bool, genesisContractAddress sdk.AccAddress) (sdk.AccAddress, error) {
+func (k *Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAddress, nonce uint64, args json.RawMessage, name, version, author, email, describe string, isGenesis bool, genesisContractAddress sdk.AccAddress) (sdk.AccAddress, error) {
 	SetGasUsed()
 	SetCtx(&ctx)
 	var codeInfo types.CodeInfo
@@ -81,6 +92,11 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAdd
 		if err != nil {
 			return sdk.AccAddress{}, sdk.ErrInternal("invalid instantiate message")
 		}
+	}
+	ccstore := ctx.KVStore(k.storeKey)
+	bz := ccstore.Get(types.GetCodeKey(codeHash))
+	if bz == nil {
+		return sdk.AccAddress{}, sdk.ErrInternal("codeHash not found")
 	}
 	var contractAddress sdk.AccAddress
 	if isGenesis {
@@ -100,12 +116,8 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAdd
 	contractAccount = k.AccountKeeper.NewAccountWithAddress(ctx, contractAddress)
 	k.AccountKeeper.SetAccount(ctx, contractAccount)
 
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.GetCodeKey(codeHash))
-	if bz == nil {
-		return sdk.AccAddress{}, sdk.ErrInternal("codeHash not found")
-	}
-	wasmerBz := store.Get(types.GetWasmerKey())
+
+	wasmerBz := ccstore.Get(types.GetWasmerKey())
 	if wasmerBz != nil {
 		k.cdc.MustUnmarshalJSON(wasmerBz, &wasmer)
 		if wasmer.LastFileID == 0 {
@@ -115,9 +127,9 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAdd
 	}
 	k.cdc.MustUnmarshalBinaryBare(bz, &codeInfo)
 
-	wc, err := k.wasmer.GetWasmCode(codeHash)
+	wc, err := k.wasmer.GetWasmCode([]byte(codeHash))
 	if err != nil {
-		wc = store.Get(codeHash)
+		wc = ccstore.Get([]byte(codeHash))
 
 		fileName := k.wasmer.FilePathMap[strings.ToLower(codeInfo.CodeHash)]
 		err = ioutil.WriteFile(k.wasmer.HomeDir + "/" + fileName, wc, types.ModePerm)
@@ -145,7 +157,7 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAdd
 	//save the contract info.
 	createdAt := types.NewCreatedAt(ctx)
 	contractInfo := types.NewContractInfo(codeInfo, args, name, version, author, email, describe, createdAt)
-	store.Set(types.GetContractAddressKey(contractAddress), k.cdc.MustMarshalBinaryBare(contractInfo))
+	ccstore.Set(types.GetContractAddressKey(contractAddress), k.cdc.MustMarshalBinaryBare(contractInfo))
 
 	//save contractAddress into account
 	if !isGenesis {
@@ -165,14 +177,14 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAdd
 		if err != nil{
 			return sdk.AccAddress{}, err
 		}
-		store.Set(types.GetAccountContractListKey(accountAddr), contractListBytes)
+		ccstore.Set(types.GetAccountContractListKey(accountAddr), contractListBytes)
 	}
 	ctx.GasMeter().ConsumeGas(sdk.Gas(GasUsed),"wasm cost")
 	return contractAddress, nil
 }
 
 //
-func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, invoker sdk.AccAddress, args json.RawMessage) (sdk.Result, error) {
+func (k *Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, invoker sdk.AccAddress, args json.RawMessage) (sdk.Result, error) {
 	SetGasUsed()
 	SetSelfAddr(contractAddress)
 	SetInvoker(invoker)
@@ -224,7 +236,7 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, invoker
 	}, nil
 }
 
-func (k Keeper) Migrate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAddress, oldContract sdk.AccAddress, nonce uint64, args json.RawMessage, name, version, author, email, describe string) (sdk.AccAddress, error) {
+func (k *Keeper) Migrate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAddress, oldContract sdk.AccAddress, nonce uint64, args json.RawMessage, name, version, author, email, describe string) (sdk.AccAddress, error) {
 	newContract, err := k.Instantiate(ctx, codeHash, invoker, nonce, args, name, version, author, email, describe, false, types.EmptyAddress)
 	if err != nil {
 		return sdk.AccAddress{}, err
@@ -377,7 +389,7 @@ func (k Keeper) GetCreator(ctx sdk.Context, contractAddress sdk.AccAddress) sdk.
 	return contract.CodeInfo.Creator
 }
 
-func (k Keeper) create(ctx sdk.Context, invokerAddr sdk.AccAddress, wasmCode []byte) (codeHash []byte, isExist bool, err error) {
+func (k *Keeper) create(ctx sdk.Context, invokerAddr sdk.AccAddress, wasmCode []byte) (codeHash []byte, isExist bool, err error) {
 	wasmCode, err = UnCompress(wasmCode)
 	if err != nil {
 		return nil, false, err
@@ -436,7 +448,7 @@ func (k Keeper) create(ctx sdk.Context, invokerAddr sdk.AccAddress, wasmCode []b
 			return codeHash, true,nil
 		}
 	}
-	newWasmer, codeHash, err := k.wasmer.Create(wasmCode)
+	newWasmer, err := k.wasmer.Create(fmt.Sprintf("%x", codeHash))
 	if err != nil {
 		return nil, false, err
 	}

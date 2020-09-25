@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -16,6 +17,7 @@ import (
 	"io/ioutil"
 	"path"
 	"strconv"
+	"strings"
 )
 
 func init() {
@@ -48,6 +50,8 @@ var wasmCmd = &cobra.Command{
 
 		funcName := args[0]
 		switch funcName {
+		case "upload":
+			return uploadContract()
 		case "init":
 			return initContract()
 		case "execute":
@@ -58,6 +62,37 @@ var wasmCmd = &cobra.Command{
 
 		return nil
 	},
+}
+
+func uploadContract() error {
+	ctx, err := client.NewClientContextFromViper(cdc)
+	if err != nil {
+		return  err
+	}
+	from, gas, nonce, key, _, err := GetArgs(ctx)
+	if err != nil {
+		return err
+	}
+	fpath := viper.GetString(helper.FlagFile)
+	fext := path.Ext(fpath)
+	if fext != ".wasm" {
+		return errors.New("unexpected file")
+	}
+	code, err := ioutil.ReadFile(fpath)
+	if err != nil {
+		return err
+	}
+
+	tx, err := sdk.SignUploadContractMsg(code, from, gas, nonce, key)
+	if err != nil {
+		return err
+	}
+	txid, err := ctx.BroadcastSignedData(tx)
+	if err != nil {
+		return err
+	}
+	fmt.Println(txid)
+	return nil
 }
 
 func initContract() error {
@@ -74,17 +109,18 @@ func initContract() error {
 	if fext != ".wasm" {
 		return errors.New("unexpected file")
 	}
-	code, err := ioutil.ReadFile(fpath)
-	if err != nil {
-		return err
-	}
+	codeHash := viper.GetString(helper.FlagCodeHash)
 	name := viper.GetString(helper.FlagName)
 	version := viper.GetString(helper.FlagVersion)
 	author := viper.GetString(helper.FlagAuthor)
 	email := viper.GetString(helper.FlagEmail)
 	describe := viper.GetString(helper.FlagDescribe)
 
-	tx, err := sdk.SignInstantiateContractMsg(code, from, gas, nonce, key, name, version, author, email, describe, args)
+	hash, err := hex.DecodeString(strings.ToLower(codeHash))
+	if err != nil {
+		return err
+	}
+	tx, err := sdk.SignInstantiateContractMsg(hash, from, gas, nonce, key, name, version, author, email, describe, args)
 	if err != nil {
 		return err
 	}
@@ -131,10 +167,7 @@ func migrateContract() error {
 	if fext != ".wasm" {
 		return errors.New("unexpected file")
 	}
-	code, err := ioutil.ReadFile(fpath)
-	if err != nil {
-		return err
-	}
+	codeHash := viper.GetString(helper.FlagCodeHash)
 	name := viper.GetString(helper.FlagName)
 	version := viper.GetString(helper.FlagVersion)
 	author := viper.GetString(helper.FlagAuthor)
@@ -142,7 +175,11 @@ func migrateContract() error {
 	describe := viper.GetString(helper.FlagDescribe)
 	contract := viper.GetString(helper.FlagContractAddress)
 	contractAddr := types.HexToAddress(contract)
-	tx, err := sdk.SignMigrateContractMsg(code, from, gas, nonce, key, name, version, author, email, describe, contractAddr, args)
+	hash, err := hex.DecodeString(strings.ToLower(codeHash))
+	if err != nil {
+		return err
+	}
+	tx, err := sdk.SignMigrateContractMsg(hash, from, gas, nonce, key, name, version, author, email, describe, contractAddr, args)
 	if err != nil {
 		return err
 	}

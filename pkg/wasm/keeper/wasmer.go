@@ -237,21 +237,18 @@ func FileExist(path string) bool {
 	return !os.IsNotExist(err)
 }
 
-func (w *Wasmer) Create(code []byte) (Wasmer,[]byte, error) {
-
-	codeHash := MakeCodeHash(code)
-	hash := fmt.Sprintf("%x", codeHash)
-	if fName := w.FilePathMap[hash]; fName != "" {
+func (w *Wasmer) Create(codeHash string) (Wasmer, error) {
+	if fName := w.FilePathMap[codeHash]; fName != "" {
 		if FileExist(path.Join(w.HomeDir, fName)) {
 			//file exist, remove file and delete
 			err := os.Remove(path.Join(w.HomeDir, fName))
 			if err != nil {
-				return Wasmer{}, nil, err
+				return Wasmer{}, err
 			}
-			delete(w.FilePathMap, hash)
+			delete(w.FilePathMap, codeHash)
 		}else {
 			//file not exist, delete
-			delete(w.FilePathMap, hash)
+			delete(w.FilePathMap, codeHash)
 		}
 	}
 	id, fileName := makeFilePath(w.LastFileID)
@@ -261,13 +258,13 @@ func (w *Wasmer) Create(code []byte) (Wasmer,[]byte, error) {
 		return Wasmer{}, nil, err
 	}
 */
-	w.FilePathMap[hash] = fileName
+	w.FilePathMap[codeHash] = fileName
 	newWasmer := Wasmer{
 		HomeDir:     w.HomeDir,
 		FilePathMap: w.FilePathMap,
 		LastFileID:  id,
 	}
-	return newWasmer,codeHash, nil
+	return newWasmer, nil
 }
 
 func (w *Wasmer) Call(code []byte, input []byte, method string) (res []byte, err error) {
