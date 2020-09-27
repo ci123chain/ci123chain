@@ -123,7 +123,7 @@ func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Com
 
 			fmt.Println("validator_key:", viper.GetString(FlagWithValidator))
 			fmt.Println("home:", viper.GetString(tmcli.HomeFlag))
-			fmt.Println("chainid:", viper.GetString(FlagChainID),)
+			fmt.Println("chainid:", viper.GetString(FlagChainID))
 
 			config := ctx.Config
 			config.SetRoot(viper.GetString(tmcli.HomeFlag))

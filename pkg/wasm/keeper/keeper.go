@@ -13,7 +13,9 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/wasm/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/rlp"
+	"github.com/pkg/errors"
 	dbm "github.com/tendermint/tm-db"
+	"github.com/wasmerio/go-ext-wasm/wasmer"
 	"io/ioutil"
 	"os"
 	"path"
@@ -402,7 +404,7 @@ func (k *Keeper) create(ctx sdk.Context, invokerAddr sdk.AccAddress, wasmCode []
 		return nil, false, err
 	}
 	//checks if the file contents are of wasm binary
-	ok := types.IsValidaWasmFile(wasmCode)
+	ok := IsValidaWasmFile(wasmCode)
 	if ok != nil {
 		return nil, false, ok
 	}
@@ -500,4 +502,22 @@ func EndKey(startKey []byte) (endKey []byte){
 	end := key[:length-1] + string(last[0] + 1)
 	endKey = []byte(end)
 	return
+}
+
+
+func IsValidaWasmFile(code []byte) error {
+	if !IsWasm(code) {
+		return errors.New("it is not a wasm file")
+	}else {
+		_, err := wasmer.Compile(code)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// IsWasm checks if the file contents are of wasm binary
+func IsWasm(input []byte) bool {
+	return bytes.Equal(input[:4], types.WasmIdent)
 }
