@@ -41,7 +41,7 @@ func InitGenesis(ctx sdk.Context, wasmer types.WasmKeeperI) {
 				}
 				ctx = ctx.WithValue(types.SystemContract, true)
 				if v.Method == types.InitMethod {
-					_, err = wasmer.Instantiate(ctx, codeHash, invoker, 0, args, contracts.Name, contracts.Version, contracts.Author, contracts.Email, contracts.Describe, address)
+					_, err = wasmer.Instantiate(ctx, codeHash, invoker, args, contracts.Name, contracts.Version, contracts.Author, contracts.Email, contracts.Describe, address)
 
 					if err != nil {
 						panic(err)

@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"math/big"
 	"strconv"
+	"strings"
 	"unsafe"
 )
 
@@ -288,6 +289,27 @@ func callContract(context unsafe.Pointer, addrPtr, inputPtr, inputSize int32) in
 	token := int32(InputDataTypeContractResult)
 	inputData[token] = res
 	return token
+}
+
+func newContract(context unsafe.Pointer, newContractPtr, codeHashPtr, codeHashSize, argsPtr, argsSize int32) {
+	var instanceContext = wasm.IntoInstanceContext(context)
+	var memory = instanceContext.Memory().Data()
+
+	args := memory[argsPtr : argsPtr + argsSize]
+	codeHash := memory[codeHashPtr : codeHashPtr+codeHashSize]
+	hash, err := hex.DecodeString(strings.ToLower(string(codeHash)))
+	if err != nil {
+		panic(err)
+	}
+
+	newContractAddress, err := keeper.Instantiate(*ctx, hash, invoker, args, "", "", "", "", "", wasmtypes.EmptyAddress)
+	if err != nil {
+		panic(err)
+	}
+
+	contractAddress := Address{}
+	copy(contractAddress[:], newContractAddress.Bytes())
+	copy(memory[newContractPtr:newContractPtr+AddressSize], contractAddress[:])
 }
 
 func destroyContract(context unsafe.Pointer) {

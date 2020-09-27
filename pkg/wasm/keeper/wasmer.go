@@ -18,6 +18,7 @@ package keeper
 // extern void notify_contract(void*, int, int);
 // extern void return_contract(void*, int, int);
 // extern int call_contract(void*, int, int, int);
+// extern void new_contract(void*, int, int, int, int, int);
 // extern void destroy_contract(void*);
 // extern void panic_contract(void*, int, int);
 // extern void get_validator_power(void*, int, int, int);
@@ -119,6 +120,11 @@ func return_contract(context unsafe.Pointer, ptr, size int32) {
 //export call_contract
 func call_contract(context unsafe.Pointer, addrPtr, paramPtr, paramSize int32) int32 {
 	return callContract(context, addrPtr, paramPtr, paramSize)
+}
+
+//export new_contract
+func new_contract(context unsafe.Pointer, newContractPtr, codeHashPtr, codeHashSize, argsPtr, argsSize int32) {
+	newContract(context, newContractPtr, codeHashPtr, codeHashSize, argsPtr, argsSize)
 }
 
 //export destroy_contract
@@ -335,6 +341,7 @@ func getInstance(code []byte) (*wasmer.Instance, error) {
 	_, _ = imports.Append("return_contract", return_contract, C.return_contract)
 	_, _ = imports.Append("notify_contract", notify_contract, C.notify_contract)
 	_, _ = imports.Append("call_contract", call_contract, C.call_contract)
+	_, _ = imports.Append("new_contract", new_contract, C.new_contract)
 	_, _ = imports.Append("destroy_contract", destroy_contract, C.destroy_contract)
 	_, _ = imports.Append("panic_contract", panic_contract, C.panic_contract)
 

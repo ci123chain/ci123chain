@@ -82,7 +82,7 @@ func (k *Keeper) Upload(ctx sdk.Context, wasmCode []byte, creator sdk.AccAddress
 	return codeHash, nil
 }
 
-func (k *Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAddress, nonce uint64, args json.RawMessage, name, version, author, email, describe string, genesisContractAddress sdk.AccAddress) (sdk.AccAddress, error) {
+func (k *Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAddress, args json.RawMessage, name, version, author, email, describe string, genesisContractAddress sdk.AccAddress) (sdk.AccAddress, error) {
 	// 如果是官方合约，不限制gas数量
 	isGenesis, ok := ctx.Value(types.SystemContract).(bool)
 	if ok && isGenesis {
@@ -135,9 +135,9 @@ func (k *Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAd
 	}
 	k.cdc.MustUnmarshalBinaryBare(bz, &codeInfo)
 
-	wc, err := k.wasmer.GetWasmCode([]byte(codeHash))
+	wc, err := k.wasmer.GetWasmCode(codeHash)
 	if err != nil {
-		wc = ccstore.Get([]byte(codeHash))
+		wc = ccstore.Get(codeHash)
 
 		fileName := k.wasmer.FilePathMap[strings.ToLower(codeInfo.CodeHash)]
 		err = ioutil.WriteFile(k.wasmer.HomeDir + "/" + fileName, wc, types.ModePerm)
@@ -244,8 +244,8 @@ func (k *Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, invoke
 	}, nil
 }
 
-func (k *Keeper) Migrate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAddress, oldContract sdk.AccAddress, nonce uint64, args json.RawMessage, name, version, author, email, describe string) (sdk.AccAddress, error) {
-	newContract, err := k.Instantiate(ctx, codeHash, invoker, nonce, args, name, version, author, email, describe, types.EmptyAddress)
+func (k *Keeper) Migrate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAddress, oldContract sdk.AccAddress, args json.RawMessage, name, version, author, email, describe string) (sdk.AccAddress, error) {
+	newContract, err := k.Instantiate(ctx, codeHash, invoker, args, name, version, author, email, describe, types.EmptyAddress)
 
 	if err != nil {
 		return sdk.AccAddress{}, err

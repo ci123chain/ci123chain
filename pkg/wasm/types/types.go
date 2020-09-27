@@ -85,7 +85,7 @@ type WasmConfig struct {}
 type WasmKeeperI interface {
 	Upload(ctx sdk.Context, wasmCode []byte, creator sdk.AccAddress) (codeHash []byte, err error)
 
-	Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAddress, nonce uint64, args json.RawMessage, name, version, author, email, describe string, genesisContractAddress sdk.AccAddress) (sdk.AccAddress, error)
+	Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAddress, args json.RawMessage, name, version, author, email, describe string, genesisContractAddress sdk.AccAddress) (sdk.AccAddress, error)
 
 	Execute(ctx sdk.Context, contractAddress sdk.AccAddress, invoker sdk.AccAddress, args json.RawMessage) (sdk.Result, error)
 }
