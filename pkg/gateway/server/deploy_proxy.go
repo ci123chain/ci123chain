@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/ci123chain/ci123chain/pkg/gateway/dynamic"
+	"github.com/ci123chain/ci123chain/pkg/gateway/logger"
 	"github.com/ci123chain/ci123chain/pkg/gateway/types"
 	"net/http"
 )
@@ -39,7 +40,7 @@ func (dp *DeployProxy) Handle(r *http.Request, backends []types.Instance, Reques
 		res := dp.ErrorRes(err)
 		return res
 	}
-
+	logger.Info("===\n deploy params: %v", params)
 	res, err := dynamic.CreateChannel(r, params)
 	if err != nil {
 		res := dp.ErrorRes(err)
@@ -110,7 +111,11 @@ func handleDeployParams(deployParams map[string]string) (map[string]interface{},
 		}
 	}
 
-	params["extra_info"] = extraInfo
+	extra, err := json.Marshal(extraInfo)
+	if err != nil {
+		return nil, err
+	}
+	params["extra_info"] = string(extra)
 	return params, nil
 }
 
