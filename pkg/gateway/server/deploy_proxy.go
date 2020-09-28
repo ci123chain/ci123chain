@@ -3,9 +3,12 @@ package server
 import (
 	"encoding/json"
 	"errors"
+	"github.com/ci123chain/ci123chain/pkg/gateway/couchdbsource"
 	"github.com/ci123chain/ci123chain/pkg/gateway/dynamic"
 	"github.com/ci123chain/ci123chain/pkg/gateway/logger"
 	"github.com/ci123chain/ci123chain/pkg/gateway/types"
+	"github.com/ci123chain/ci123chain/sdk/domain"
+	"github.com/spf13/viper"
 	"net/http"
 )
 
@@ -84,29 +87,36 @@ func handleDeployParams(deployParams map[string]string) (map[string]interface{},
 	for _, v := range env {
 		if v.Type == "environment" {
 			environment := v.Value.(map[string]interface{})
-			hosts["domain"] = environment["CI_CHAIN_ID"]
-			break
+			selfDomain := viper.GetString(couchdbsource.Domain)
+			if environment["CI_CHAIN_ID"] != nil {
+				hosts["domain"] = domain.GetShardDomain(selfDomain, environment["CI_CHAIN_ID"].(string))
+			}
 		}
 	}
 
-	hosts["backend_protocal"] = "HTTP"
-	hosts["need_https"] = 0
-	hosts["ssl_certificate_data"] = ""
-	hosts["ssl_key_data"] = ""
-	hosts["target_port"] = 80
-	hosts["type"] = "HTTP"
+	var networksParam deployParam
+	if hosts["domain"] != nil {
+		hosts["backend_protocal"] = "HTTP"
+		hosts["need_https"] = 0
+		hosts["ssl_certificate_data"] = ""
+		hosts["ssl_key_data"] = ""
+		hosts["target_port"] = 80
+		hosts["type"] = "HTTP"
 
-	networksParam := deployParam{
-		Type:  "networks",
-		Value: networkValue{
-			Type: "DOMAIN",
-			Hosts: []map[string]interface{}{hosts},
-		},
+		networksParam = deployParam{
+			Type:  "networks",
+			Value: networkValue{
+				Type: "DOMAIN",
+				Hosts: []map[string]interface{}{hosts},
+			},
+		}
+	} else {
+		return nil, errors.New("CHAIN_ID is null")
 	}
 
 	extraInfo := []deployParam{networksParam}
 	for i := 0; i < len(env); i++ {
-		if env[i].Type == "environment" || env[i].Type == "volume_mounts" {
+		if env[i].Type == "environment" || env[i].Type == "volume_mounts"{
 			extraInfo = append(extraInfo, env[i])
 		}
 	}
