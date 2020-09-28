@@ -11,11 +11,11 @@ import (
 	"time"
 )
 
-var pubKey crypto.PubKey
+var vpubKey crypto.PubKey
 var privKey string
 var address string
 func TestNewInitChainFiles(t *testing.T) {
-	privKey, pubKey, address, _ = validator.NewValidatorKey() //node address and privKey/pubKey
+	privKey, vpubKey, address, _ = validator.NewValidatorKey() //node address and privKey/pubKey
 	acc := account.NewAccount() //account address and privKey
 
 	var cInfo = ChainInfo{
@@ -23,12 +23,12 @@ func TestNewInitChainFiles(t *testing.T) {
 		GenesisTime: time.Now(),
 	}
 	var vInfo = ValidatorInfo{
-		PubKey:  pubKey,
+		PubKey:  vpubKey,
 		Name:    "validator1",
 	}
 	var sInfo = StakingInfo{
 		Address:           sdk.HexToAddress(acc.Address),
-		PubKey:            pubKey,
+		PubKey:            vpubKey,
 		Tokens:            "10000000",
 		CommissionInfo:    CommissionInfo{
 			Rate:          1,

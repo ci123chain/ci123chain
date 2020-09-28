@@ -302,10 +302,20 @@ func newContract(context unsafe.Pointer, newContractPtr, codeHashPtr, codeHashSi
 		panic(err)
 	}
 
+	tempSelfAddr := selfAddr
+	tempCreator := creator
+	tempStore := store
+	tempPreCaller := precaller
+
 	newContractAddress, err := keeper.Instantiate(*ctx, hash, invoker, args, "", "", "", "", "", wasmtypes.EmptyAddress)
 	if err != nil {
 		panic(err)
 	}
+
+	SetStore(tempStore)
+	SetCreator(tempCreator)
+	SetSelfAddr(tempSelfAddr)
+	SetPreCaller(tempPreCaller)
 
 	contractAddress := Address{}
 	copy(contractAddress[:], newContractAddress.Bytes())

@@ -338,7 +338,7 @@ func genesisSupplyModule(appState map[string]json.RawMessage, supplyInfo SupplyI
 	}
 
 	supplyGenesisState.Supply = types.NewCoin(amount)
-	genesisStateBz := cdc.MustMarshalJSON(supplyGenesisState.Supply)
+	genesisStateBz := cdc.MustMarshalJSON(supplyGenesisState)
 	appState[supply.ModuleName] = genesisStateBz
 	return nil
 }
