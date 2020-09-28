@@ -3,7 +3,6 @@ package init
 import (
 	"bytes"
 	"encoding/base64"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -72,6 +71,11 @@ type SupplyInfo struct {
 type AccountInfo struct {
 	Address  types.AccAddress `json:"address"`
 	Amount	 string `json:"amount"`
+}
+
+type pubKey struct {
+	Type  string `json:"type"`
+	Value string `json:"value"`
 }
 
 func NewInitChainFiles(chainInfo ChainInfo,
@@ -273,6 +277,13 @@ func genesisStakingModule(appState map[string]json.RawMessage, validatorKey secp
 		cdc.MustUnmarshalJSON(appState[staking.ModuleName], &stakingGenesisState)
 	}
 
+	var pubKey pubKey
+	pb, _ :=cdc.MarshalJSON(validatorKey.PubKey())
+	err := json.Unmarshal(pb, &pubKey)
+	if err != nil {
+		return err
+	}
+
 	tokens, ok := types.NewIntFromString(stakingInfo.Tokens)
 	if !ok {
 		return errors.New("staking tokens converts to bigInt failed")
@@ -284,7 +295,7 @@ func genesisStakingModule(appState map[string]json.RawMessage, validatorKey secp
 	shares := types.NewDecFromInt(tokens)
 	genesisValidator = stypes.Validator{
 		OperatorAddress:   stakingInfo.Address,
-		ConsensusKey:      hex.EncodeToString(cdc.MustMarshalJSON(validatorKey.PubKey())),
+		ConsensusKey:      pubKey.Value,
 		Jailed:            false,
 		Status:            1,
 		Tokens:            tokens,
