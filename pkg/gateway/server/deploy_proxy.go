@@ -105,9 +105,11 @@ func handleDeployParams(deployParams map[string]string) (map[string]interface{},
 
 		networksParam = deployParam{
 			Type:  "networks",
-			Value: networkValue{
-				Type: "DOMAIN",
-				Hosts: []map[string]interface{}{hosts},
+			Value: []networkValue{
+				{
+					Type: "DOMAIN",
+					Hosts: []map[string]interface{}{hosts},
+				},
 			},
 		}
 	} else {
