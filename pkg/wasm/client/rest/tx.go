@@ -61,7 +61,7 @@ func instantiateContractHandler(cliCtx context.Context,w http.ResponseWriter, r 
 		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
 		return
 	}
-	codeHash := r.FormValue("codeHash")
+	codeHash := r.FormValue("code_hash")
 	hash, err := hex.DecodeString(strings.ToLower(codeHash))
 	if err != nil {
 		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
@@ -194,7 +194,7 @@ func migrateContractHandler(cliCtx context.Context,w http.ResponseWriter, r *htt
 		return
 	}
 
-	codeHash := r.FormValue("codeHash")
+	codeHash := r.FormValue("code_hash")
 	hash, err := hex.DecodeString(strings.ToLower(codeHash))
 	if err != nil {
 		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "codeHash error"))
