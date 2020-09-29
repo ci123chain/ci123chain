@@ -114,7 +114,8 @@ func (k *Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAd
 	}
 	existingAcct := k.AccountKeeper.GetAccount(ctx, contractAddress)
 	if existingAcct != nil {
-		return sdk.AccAddress{}, sdk.ErrInternal("Contract account exists")
+		//return sdk.AccAddress{}, sdk.ErrInternal("Contract account exists")
+		return contractAddress, nil
 	}
 	SetPreCaller(invoker)
 	SetInvoker(invoker)
