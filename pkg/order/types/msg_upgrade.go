@@ -15,8 +15,9 @@ type MsgUpgrade struct {
 	Name      	string   		`json:"name"`
 }
 
-func NewMsgUpgrade(t, name string, height int64) *MsgUpgrade{
+func NewMsgUpgrade(from sdk.AccAddress, t, name string, height int64) *MsgUpgrade{
 	return &MsgUpgrade{
+		FromAddress: from,
 		Type:t,
 		Height:height,
 		Name:name,

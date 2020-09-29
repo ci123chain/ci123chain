@@ -16,7 +16,7 @@ var cdc = types.MakeCodec()
 //off line
 func SignUpgradeMsg(t, name string, height int64, from string, gas, nonce uint64, priv string) ([]byte, error){
 	fromAddr := sdk.HexToAddress(from)
-	msg := order.NewMsgUpgrade(t, name, height)
+	msg := order.NewMsgUpgrade(fromAddr, t, name, height)
 	txByte, err := types.SignCommonTx(fromAddr, nonce, gas, []sdk.Msg{msg}, priv, cdc)
 	if err != nil {
 		return nil, err
@@ -24,8 +24,8 @@ func SignUpgradeMsg(t, name string, height int64, from string, gas, nonce uint64
 	return txByte, nil
 }
 
-func NewUpgradeMsg(t, name string, height int64) []byte {
-	msg := order.NewMsgUpgrade(t, name, height)
+func NewUpgradeMsg(fromAddr sdk.AccAddress, t, name string, height int64) []byte {
+	msg := order.NewMsgUpgrade(fromAddr, t, name, height)
 	return msg.Bytes()
 }
 

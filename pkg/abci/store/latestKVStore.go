@@ -73,7 +73,7 @@ func (ks *latestStore) parentGet(key []byte) (value []byte) {
 			p = p.Parent()
 			if reflect.TypeOf(p) == reflect.TypeOf(prefixStore{}) {
 				pre := p.(prefixStore).prefix
-				key = append(pre, key...)
+				key = append([]byte("s/k:" + string(pre) + "/"), key...)
 			}
 		} else {
 			break

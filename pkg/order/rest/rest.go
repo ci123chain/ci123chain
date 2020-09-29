@@ -39,7 +39,7 @@ func AddShardTxRequest(cliCtx context.Context, writer http.ResponseWriter, reque
 		return
 	}
 
-	msg := types.NewMsgUpgrade(Type, name, Height)
+	msg := types.NewMsgUpgrade(from, Type, name, Height)
 	if !broatcast {
 		rest.PostProcessResponseBare(writer, cliCtx, hex.EncodeToString(msg.Bytes()))
 		return
