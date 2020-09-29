@@ -13,6 +13,8 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
+const INITCHAINKEY string = "isInitChain"
+
 func AppGenStateJSON(validators []tmtypes.GenesisValidator) (json.RawMessage, error) {
 	appState := module.ModuleBasics.DefaultGenesis(validators)
 	stateBytes, err := json.Marshal(appState)
@@ -27,10 +29,16 @@ type GenesisState map[string]json.RawMessage
 
 func (c *Chain) InitChainer (ctx sdk.Context, req tmabci.RequestInitChain) tmabci.ResponseInitChain {
 	var genesisState GenesisState
-	c.cdc.MustUnmarshalJSON(req.AppStateBytes, &genesisState)
+	store := ctx.KVStore(c.capKeyMainStore)
+	isInitChain := store.Get([]byte(INITCHAINKEY))
+	if isInitChain != nil {
+		return tmabci.ResponseInitChain{}
+	} else {
+		c.cdc.MustUnmarshalJSON(req.AppStateBytes, &genesisState)
+		store.Set([]byte(INITCHAINKEY), []byte("true"))
+	}
 	return c.mm.InitGenesis(ctx, genesisState)
 }
-
 
 func GenesisStateFromGenFile(cdc *codec.Codec, genFile string) (genesisState map[string]json.RawMessage, genDoc *tmtypes.GenesisDoc, err error)  {
 	if !common.FileExist(genFile) {

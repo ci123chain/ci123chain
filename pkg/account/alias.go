@@ -8,6 +8,7 @@ import (
 const (
 	ModuleName = types.ModuleName
 	RouteKey = types.RouteKey
+	StoreKey = types.StoreKey
 )
 
 var (

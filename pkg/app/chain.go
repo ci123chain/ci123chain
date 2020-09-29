@@ -64,6 +64,7 @@ var (
 	MainStoreKey     = sdk.NewKVStoreKey("main")
 	ContractStoreKey = sdk.NewKVStoreKey("contract")
 	TxIndexStoreKey  = sdk.NewTransientStoreKey("tx_index")
+	AccountStoreKey  = sdk.NewKVStoreKey(account.StoreKey)
 	ParamStoreKey  	 = sdk.NewKVStoreKey(params.StoreKey)
 	ParamTransStoreKey  = sdk.NewTransientStoreKey(params.TStoreKey)
 	AuthStoreKey 	 = sdk.NewKVStoreKey(auth.StoreKey)
@@ -122,7 +123,7 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 	}
 
 	// todo mainkey?
-	accKeeper := keeper.NewAccountKeeper(cdc, c.capKeyMainStore, acc_types.ProtoBaseAccount)
+	accKeeper := keeper.NewAccountKeeper(cdc, AccountStoreKey, acc_types.ProtoBaseAccount)
 
 	paramsKeeper := params.NewKeeper(cdc, ParamStoreKey, ParamTransStoreKey, params.DefaultCodespace)
 
@@ -207,6 +208,7 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 func (c *Chain) mountStores() error {
 	keys := []*sdk.KVStoreKey{
 		c.capKeyMainStore,
+		AccountStoreKey,
 		c.contractStore,
 		ParamStoreKey,
 		AuthStoreKey,

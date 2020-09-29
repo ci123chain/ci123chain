@@ -81,6 +81,7 @@ func NewManager(modules ...AppModule) *AppManager {
 
 func (am AppManager) InitGenesis(ctx types.Context, data map[string]json.RawMessage) abci.ResponseInitChain {
 	var validatorUpdates []abci.ValidatorUpdate
+
 	for _, name := range am.Orders {
 		m := am.Modules[name]
 		moduleValUpdates := m.InitGenesis(ctx, data[m.Name()])
