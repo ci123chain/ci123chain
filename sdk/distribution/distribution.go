@@ -1,11 +1,9 @@
 package distribution
 
 import (
-	"encoding/hex"
 	"errors"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	types2 "github.com/ci123chain/ci123chain/pkg/app/types"
-	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
 	"github.com/ci123chain/ci123chain/pkg/distribution/types"
 )
 
@@ -13,25 +11,18 @@ var cdc = types2.MakeCodec()
 
 //todo
 func SignFundCommunityPoolTx(from string, amount sdk.Coin, gas, nonce uint64, priv string) ([]byte, error) {
-	//
-	privateKey, err := hex.DecodeString(priv)
-	if err != nil {
-		return nil, err
-	}
 	//Amount := sdk.NewCoin(sdk.NewInt(amount))
 	if amount.IsNegative() || amount.IsZero() {
 		return nil, errors.New("invalid amount")
 	}
 	accountAddr := sdk.HexToAddress(from)
-	tx := types.NewMsgFundCommunityPool(accountAddr, amount, gas, nonce, accountAddr)
-	eth := cryptosuit.NewETHSignIdentity()
-	signature, err := eth.Sign(tx.GetSignBytes(), privateKey)
+	msg := types.NewMsgFundCommunityPool(accountAddr, amount, gas, nonce, accountAddr)
+	txByte, err := types2.SignCommonTx(accountAddr, nonce, gas, []sdk.Msg{msg}, priv, cdc)
 	if err != nil {
 		return nil, err
 	}
-	tx.SetSignature(signature)
 
-	return tx.Bytes(), nil
+	return txByte, nil
 }
 
 func SignMsgSetWithdrawAddress(from, withdrawAddress sdk.AccAddress, gas, nonce uint64, priv string) ([]byte, error) {

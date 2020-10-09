@@ -12,8 +12,8 @@ type MsgFundCommunityPool struct {
 	Depositor    sdk.AccAddress    `json:"depositor"`
 }
 
-func NewMsgFundCommunityPool(from sdk.AccAddress,amount sdk.Coin, gas, nonce uint64, depositor sdk.AccAddress) MsgFundCommunityPool {
-	return MsgFundCommunityPool{
+func NewMsgFundCommunityPool(from sdk.AccAddress,amount sdk.Coin, gas, nonce uint64, depositor sdk.AccAddress) *MsgFundCommunityPool {
+	return &MsgFundCommunityPool{
 		FromAddress: from,
 		Amount:    amount,
 		Depositor: depositor,
@@ -33,7 +33,6 @@ func (msg *MsgFundCommunityPool) Bytes() []byte{
 
 	return bytes
 }
-
 
 // ValidateBasic performs basic MsgFundCommunityPool message validation.
 func (msg *MsgFundCommunityPool) ValidateBasic() sdk.Error {
