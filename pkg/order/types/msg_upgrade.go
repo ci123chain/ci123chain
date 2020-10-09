@@ -2,14 +2,10 @@ package types
 
 import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	"github.com/ci123chain/ci123chain/pkg/util"
 )
 
 type MsgUpgrade struct {
 	FromAddress sdk.AccAddress	`json:"from_address"`
-	Signature 	[]byte   		`json:"signature"`
-	PubKey		[]byte			`json:"pub_key"`
-
 	Type      	string   		`json:"type"`
 	Height    	int64    		`json:"height"`
 	Name      	string   		`json:"name"`
@@ -27,16 +23,6 @@ func NewMsgUpgrade(from sdk.AccAddress, t, name string, height int64) *MsgUpgrad
 func (msg *MsgUpgrade) Route() string { return RouteKey }
 
 func (msg *MsgUpgrade) MsgType() string { return "upgrade"}
-
-func (msg *MsgUpgrade) GetSignBytes() []byte{
-	ntx := *msg
-	ntx.SetSignature(nil)
-	return util.TxHash(ntx.Bytes())
-}
-
-func (msg *MsgUpgrade) SetSignature(sig []byte) {
-	msg.Signature = sig
-}
 
 func (msg *MsgUpgrade) ValidateBasic() sdk.Error{
 	if len(msg.Type) == 0 {
@@ -62,12 +48,4 @@ func (msg *MsgUpgrade) Bytes() []byte {
 
 func (msg *MsgUpgrade) GetFromAddress() sdk.AccAddress {
 	return msg.FromAddress
-}
-
-func (msg *MsgUpgrade) SetPubKey(pubKey []byte) {
-	msg.PubKey = pubKey
-}
-
-func (msg *MsgUpgrade) GetSignature() []byte {
-	return msg.Signature
 }

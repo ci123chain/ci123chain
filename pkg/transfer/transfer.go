@@ -4,7 +4,6 @@ import (
 	"errors"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/transfer/types"
-	"github.com/ci123chain/ci123chain/pkg/util"
 )
 
 const RouteKey = "Transfer"
@@ -14,8 +13,6 @@ type MsgTransfer struct {
 	To     		sdk.AccAddress  `json:"to"`
 	Amount 		sdk.Coin        `json:"amount"`
 	FabricMode 	bool         	`json:"fabric_mode"`
-	Signature 	[]byte   		`json:"signature"`
-	PubKey 	    []byte			`json:"pub_key"`
 }
 
 func NewMsgTransfer(from, to sdk.AccAddress, amount sdk.Coin, isFabric bool ) *MsgTransfer {
@@ -26,14 +23,6 @@ func NewMsgTransfer(from, to sdk.AccAddress, amount sdk.Coin, isFabric bool ) *M
 		FabricMode: 	isFabric,
 	}
 	return msg
-}
-
-func (msg *MsgTransfer) SetSignature(sig []byte) {
-	msg.Signature = sig
-}
-
-func (msg *MsgTransfer) GetSignature() []byte{
-	return msg.Signature
 }
 
 func (msg *MsgTransfer) ValidateBasic() sdk.Error {
@@ -50,12 +39,6 @@ func (msg *MsgTransfer) Route() string { return RouteKey }
 
 func (msg *MsgTransfer) MsgType() string { return "transfer"}
 
-func (msg *MsgTransfer) GetSignBytes() []byte {
-	ntx := *msg
-	ntx.SetSignature(nil)
-	return util.TxHash(ntx.Bytes())
-}
-
 func (msg *MsgTransfer) Bytes() []byte {
 	bytes, err := transferCdc.MarshalBinaryLengthPrefixed(msg)
 	if err != nil {
@@ -67,8 +50,4 @@ func (msg *MsgTransfer) Bytes() []byte {
 
 func (msg *MsgTransfer) GetFromAddress() sdk.AccAddress {
 	return msg.FromAddress
-}
-
-func (msg *MsgTransfer) SetPubKey(pub []byte) {
-	msg.PubKey = pub
 }

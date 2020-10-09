@@ -4,10 +4,6 @@ type Msg interface {
 	Route() string
 	MsgType() string
 	ValidateBasic() Error
-	GetSignBytes() []byte
-	GetSignature() []byte
-	SetSignature([]byte)
-	SetPubKey([]byte)
 	GetFromAddress() AccAddress
 	Bytes() []byte
 }

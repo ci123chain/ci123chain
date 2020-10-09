@@ -5,14 +5,10 @@ import (
 	"errors"
 
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	"github.com/ci123chain/ci123chain/pkg/util"
 )
 
 type MsgUploadContract struct {
 	FromAddress sdk.AccAddress		`json:"from_address"`
-	Signature 	[]byte   			`json:"signature"`
-	PubKey		[]byte				`json:"pub_key"`
-
 	Code    	[]byte              `json:"code"`
 }
 
@@ -36,15 +32,6 @@ func (msg *MsgUploadContract) ValidateBasic() sdk.Error {
 	return nil
 }
 
-func (msg *MsgUploadContract) GetSignBytes() []byte {
-	ntx := *msg
-	ntx.SetSignature(nil)
-	return util.TxHash(ntx.Bytes())
-}
-
-func (msg *MsgUploadContract) SetSignature(sig []byte) {
-	msg.Signature = sig
-}
 
 func (msg *MsgUploadContract) Bytes() []byte {
 	bytes, err := WasmCodec.MarshalBinaryLengthPrefixed(msg)
@@ -53,10 +40,6 @@ func (msg *MsgUploadContract) Bytes() []byte {
 	}
 
 	return bytes
-}
-
-func (msg *MsgUploadContract) SetPubKey(pub []byte) {
-	msg.PubKey = pub
 }
 
 func (msg *MsgUploadContract) Route() string {
@@ -71,16 +54,8 @@ func (msg *MsgUploadContract) GetFromAddress() sdk.AccAddress {
 	return msg.FromAddress
 }
 
-func (msg *MsgUploadContract) GetSignature() []byte {
-	return msg.Signature
-}
-
-
 type MsgInstantiateContract struct {
 	FromAddress sdk.AccAddress		`json:"from_address"`
-	Signature 	[]byte   			`json:"signature"`
-	PubKey		[]byte				`json:"pub_key"`
-
 	CodeHash    []byte              `json:"code"`
 	Name		string				`json:"name,omitempty"`
 	Version     string				`json:"version,omitempty"`
@@ -118,16 +93,6 @@ func (msg *MsgInstantiateContract) ValidateBasic() sdk.Error {
 	return nil
 }
 
-func (msg *MsgInstantiateContract) GetSignBytes() []byte {
-	ntx := *msg
-	ntx.SetSignature(nil)
-	return util.TxHash(ntx.Bytes())
-}
-
-func (msg *MsgInstantiateContract) SetSignature(sig []byte) {
-	msg.Signature = sig
-}
-
 func (msg *MsgInstantiateContract) Bytes() []byte {
 	bytes, err := WasmCodec.MarshalBinaryLengthPrefixed(msg)
 	if err != nil {
@@ -135,10 +100,6 @@ func (msg *MsgInstantiateContract) Bytes() []byte {
 	}
 
 	return bytes
-}
-
-func (msg *MsgInstantiateContract) SetPubKey(pub []byte) {
-	msg.PubKey = pub
 }
 
 func (msg *MsgInstantiateContract) Route() string {
@@ -153,21 +114,13 @@ func (msg *MsgInstantiateContract) GetFromAddress() sdk.AccAddress {
 	return msg.FromAddress
 }
 
-func (msg *MsgInstantiateContract) GetSignature() []byte {
-	return msg.Signature
-}
-
 type MsgExecuteContract struct {
 	FromAddress sdk.AccAddress		`json:"from_address"`
-	Signature 	[]byte   			`json:"signature"`
-	PubKey		[]byte				`json:"pub_key"`
-
 	Contract         sdk.AccAddress      `json:"contract"`
 	Args              json.RawMessage    `json:"args"`
 }
 
 func NewMsgExecuteContract(from sdk.AccAddress, contractAddress sdk.AccAddress, msg json.RawMessage) *MsgExecuteContract {
-
 	return &MsgExecuteContract{
 		FromAddress: from,
 		Contract:    contractAddress,
@@ -191,16 +144,6 @@ func (msg *MsgExecuteContract) ValidateBasic() sdk.Error {
 	return nil
 }
 
-func (msg *MsgExecuteContract) GetSignBytes() []byte {
-	ntx := *msg
-	ntx.SetSignature(nil)
-	return util.TxHash(ntx.Bytes())
-}
-
-func (msg *MsgExecuteContract) SetSignature(sig []byte) {
-	msg.Signature = sig
-}
-
 func (msg *MsgExecuteContract) Bytes() []byte {
 	bytes, err := WasmCodec.MarshalBinaryLengthPrefixed(msg)
 	if err != nil {
@@ -208,10 +151,6 @@ func (msg *MsgExecuteContract) Bytes() []byte {
 	}
 
 	return bytes
-}
-
-func (msg *MsgExecuteContract) SetPubKey(pub []byte) {
-	msg.PubKey = pub
 }
 
 func (msg *MsgExecuteContract) Route() string {
@@ -226,15 +165,8 @@ func (msg *MsgExecuteContract) GetFromAddress() sdk.AccAddress {
 	return msg.FromAddress
 }
 
-func (msg *MsgExecuteContract) GetSignature() []byte {
-	return msg.Signature
-}
-
 type MsgMigrateContract struct {
 	FromAddress sdk.AccAddress		`json:"from_address"`
-	Signature 	[]byte   			`json:"signature"`
-	PubKey		[]byte				`json:"pub_key"`
-
 	CodeHash    []byte              `json:"code"`
 	Contract	sdk.AccAddress		`json:"contract"`
 	Name		string				`json:"name,omitempty"`
@@ -247,7 +179,6 @@ type MsgMigrateContract struct {
 
 func NewMsgMigrateContract(codeHash []byte, from sdk.AccAddress, name, version, author, email, describe string,
 	contract sdk.AccAddress, initMsg json.RawMessage) *MsgMigrateContract{
-
 	return &MsgMigrateContract{
 		FromAddress: from,
 		CodeHash:    codeHash,
@@ -276,16 +207,6 @@ func (msg *MsgMigrateContract) ValidateBasic() sdk.Error {
 	return nil
 }
 
-func (msg *MsgMigrateContract) GetSignBytes() []byte {
-	ntx := *msg
-	ntx.SetSignature(nil)
-	return util.TxHash(ntx.Bytes())
-}
-
-func (msg *MsgMigrateContract) SetSignature(sig []byte) {
-	msg.Signature = sig
-}
-
 func (msg *MsgMigrateContract) Bytes() []byte {
 	bytes, err := WasmCodec.MarshalBinaryLengthPrefixed(msg)
 	if err != nil {
@@ -293,10 +214,6 @@ func (msg *MsgMigrateContract) Bytes() []byte {
 	}
 
 	return bytes
-}
-
-func (msg *MsgMigrateContract) SetPubKey(pub []byte) {
-	msg.PubKey = pub
 }
 
 func (msg *MsgMigrateContract) Route() string {
@@ -309,8 +226,4 @@ func (msg *MsgMigrateContract) MsgType() string {
 
 func (msg *MsgMigrateContract) GetFromAddress() sdk.AccAddress {
 	return msg.FromAddress
-}
-
-func (msg *MsgMigrateContract) GetSignature() []byte {
-	return msg.Signature
 }

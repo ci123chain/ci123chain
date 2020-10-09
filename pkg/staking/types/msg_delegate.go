@@ -3,14 +3,10 @@ package types
 import (
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/types"
-	"github.com/ci123chain/ci123chain/pkg/util"
 )
 
 type MsgDelegate struct {
 	FromAddress			types.AccAddress	`json:"from_address"`
-	Signature 			[]byte  			`json:"signature"`
-	PubKey			  	[]byte				`json:"pub_key"`
-
 	DelegatorAddress  	types.AccAddress    `json:"delegator_address"`
 	ValidatorAddress  	types.AccAddress    `json:"validator_address"`
 	Amount            	types.Coin		  	`json:"amount"`
@@ -43,15 +39,6 @@ func (msg *MsgDelegate) ValidateBasic() types.Error {
 	return nil
 }
 
-func (msg *MsgDelegate) GetSignBytes() []byte {
-	tmsg := *msg
-	tmsg.Signature = nil
-	signBytes := tmsg.Bytes()
-	return util.TxHash(signBytes)
-}
-func (msg *MsgDelegate) SetSignature(sig []byte) {
-	msg.Signature = sig
-}
 func (msg *MsgDelegate) Bytes() []byte {
 	bytes, err := StakingCodec.MarshalBinaryLengthPrefixed(msg)
 	if err != nil {
@@ -60,12 +47,8 @@ func (msg *MsgDelegate) Bytes() []byte {
 
 	return bytes
 }
-func (msg *MsgDelegate) SetPubKey(pub []byte) {
-	msg.PubKey = pub
-}
+
 func (msg *MsgDelegate) Route() string {return RouteKey}
 func (msg *MsgDelegate) MsgType() string {return "delegate"}
 func (msg *MsgDelegate) GetFromAddress() types.AccAddress { return msg.FromAddress}
-func (msg *MsgDelegate) GetSignature() []byte {
-	return msg.Signature
-}
+

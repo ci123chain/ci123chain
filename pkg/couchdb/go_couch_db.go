@@ -326,7 +326,7 @@ func (mBatch *goCouchDBBatch) ensureBatchResult(res []BulkDocumentResult) {
 		if v.Ok != true {
 			fmt.Println(v.Ok)
 			fmt.Println(k)
-			err := nBatch.batch.Save(mBatch.batch.docs[k], mBatch.batch.docs[k]._id, mBatch.batch.docs[k]._rev)
+			err := nBatch.batch.Save(mBatch.batch.docs[k].doc, mBatch.batch.docs[k]._id, mBatch.batch.docs[k]._rev)
 			if err != nil {
 				panic(err)
 			}

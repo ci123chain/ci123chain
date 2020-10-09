@@ -22,6 +22,7 @@ const (
 	flagPruning        = "pruning"
 	//flagLogLevel       = "log-level"
 	flagStateDB 	   = "statedb" // couchdb://admin:password@192.168.2.89:5984
+	version 		   = "CiChain v1.1.14"
 )
 
 func startCmd(ctx *app.Context, appCreator app.AppCreator) *cobra.Command {
@@ -33,6 +34,7 @@ func startCmd(ctx *app.Context, appCreator app.AppCreator) *cobra.Command {
 				ctx.Logger.Info("Starting ABCI Without Tendermint")
 				return startStandAlone(ctx, appCreator)
 			}
+			ctx.Logger.Info(version)
 			ctx.Logger.Info("Starting ABCI with Tendermint")
 			_, err := StartInProcess(ctx, appCreator)
 			if err != nil {

@@ -3,13 +3,10 @@ package types
 import (
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/types"
-	"github.com/ci123chain/ci123chain/pkg/util"
 )
 
 type MsgCreateValidator struct {
 	FromAddress		  types.AccAddress	 `json:"from_address"`
-	Signature 		  []byte   			 `json:"signature"`
-	PubKey			  []byte			 `json:"pub_key"`
 	PublicKey         string      		 `json:"public_key"`
 	Value             types.Coin         `json:"value"`
 	ValidatorAddress  types.AccAddress   `json:"validator_address"`
@@ -73,19 +70,6 @@ func (msg *MsgCreateValidator) ValidateBasic() types.Error {
 	return nil
 }
 
-func (msg *MsgCreateValidator) GetSignBytes() []byte {
-	ntx := *msg
-	ntx.SetSignature(nil)
-	return util.TxHash(ntx.Bytes())
-}
-func (msg *MsgCreateValidator) SetSignature(sig []byte) {
-	msg.Signature = sig
-}
-
-func (msg *MsgCreateValidator) SetPubKey(pub []byte) {
-	msg.PubKey = pub
-}
-
 func (msg *MsgCreateValidator) GetFromAddress() types.AccAddress { return msg.FromAddress}
 
 func (msg *MsgCreateValidator) Bytes() []byte {
@@ -94,8 +78,4 @@ func (msg *MsgCreateValidator) Bytes() []byte {
 		panic(err)
 	}
 	return bytes
-}
-
-func (msg *MsgCreateValidator) GetSignature() []byte {
-	return msg.Signature
 }

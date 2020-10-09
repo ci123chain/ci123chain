@@ -3,14 +3,10 @@ package types
 import (
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	"github.com/ci123chain/ci123chain/pkg/util"
 )
 
 type MsgEditValidator struct {
 	FromAddress		  sdk.AccAddress	`json:"from_address"`
-	Signature 		  []byte   			`json:"signature"`
-	PubKey			  []byte			`json:"pub_key"`
-
 	Description       Description      	`json:"description"`
 	ValidatorAddress  sdk.AccAddress   	`json:"validator_address"`
 	CommissionRate    *sdk.Dec          `json:"commission_rate"`
@@ -46,16 +42,6 @@ func (tx *MsgEditValidator) ValidateBasic() sdk.Error {
 	return nil
 }
 
-func (tx *MsgEditValidator) GetSignBytes() []byte {
-	tmsg := *tx
-	tmsg.Signature = nil
-	return util.TxHash(tmsg.Bytes())
-}
-
-func (tx *MsgEditValidator) SetSignature(sig []byte) {
-	tx.Signature = sig
-}
-
 func (tx *MsgEditValidator) Bytes() []byte {
 	bytes, err := StakingCodec.MarshalBinaryLengthPrefixed(tx)
 	if err != nil {
@@ -65,16 +51,8 @@ func (tx *MsgEditValidator) Bytes() []byte {
 	return bytes
 }
 
-func (tx *MsgEditValidator) SetPubKey(pub []byte) {
-	tx.PubKey = pub
-}
-
 func (tx *MsgEditValidator) Route() string { return RouteKey }
 
 func (tx *MsgEditValidator) MsgType() string { return "edit-validator" }
 
 func (tx *MsgEditValidator) GetFromAddress() sdk.AccAddress { return tx.FromAddress }
-
-func (tx *MsgEditValidator) GetSignature() []byte {
-	return tx.Signature
-}

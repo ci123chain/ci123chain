@@ -3,15 +3,11 @@ package types
 import (
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	"github.com/ci123chain/ci123chain/pkg/util"
 )
 
 
 type MsgFundCommunityPool struct {
 	FromAddress		  	sdk.AccAddress	 `json:"from_address"`
-	Signature 		  	[]byte   		 `json:"signature"`
-	PubKey			  	[]byte			 `json:"pub_key"`
-
 	Amount       sdk.Coin          `json:"amount"`
 	Depositor    sdk.AccAddress    `json:"depositor"`
 }
@@ -38,21 +34,6 @@ func (msg *MsgFundCommunityPool) Bytes() []byte{
 	return bytes
 }
 
-func (msg *MsgFundCommunityPool) SetSignature(sig []byte) {
-	msg.Signature = sig
-}
-
-func (msg *MsgFundCommunityPool) SetPubKey(pub []byte) {
-	msg.PubKey = pub
-}
-
-// GetSignBytes returns the raw bytes for a MsgFundCommunityPool message that
-// the expected signer needs to sign.
-func (msg *MsgFundCommunityPool) GetSignBytes() []byte {
-	tmsg := *msg
-	tmsg.Signature = nil
-	return util.TxHash(tmsg.Bytes())
-}
 
 // ValidateBasic performs basic MsgFundCommunityPool message validation.
 func (msg *MsgFundCommunityPool) ValidateBasic() sdk.Error {
@@ -71,13 +52,8 @@ func (msg *MsgFundCommunityPool) ValidateBasic() sdk.Error {
 
 func (msg *MsgFundCommunityPool) GetFromAddress() sdk.AccAddress { return msg.FromAddress}
 
-func (msg *MsgFundCommunityPool) GetSignature() []byte { return msg.Signature}
-
 type MsgSetWithdrawAddress struct {
 	FromAddress		  	sdk.AccAddress	 `json:"from_address"`
-	Signature 		  	[]byte   		 `json:"signature"`
-	PubKey			  	[]byte			 `json:"pub_key"`
-
 	DelegatorAddress     sdk.AccAddress  `json:"delegator_address"`
 	WithdrawAddress      sdk.AccAddress  `json:"withdraw_address"`
 }
@@ -120,30 +96,11 @@ func (msg *MsgSetWithdrawAddress) Bytes() []byte {
 	return bytes
 }
 
-func (msg *MsgSetWithdrawAddress) SetSignature(sig []byte) {
-	msg.Signature = sig
-}
-
-func (msg *MsgSetWithdrawAddress) SetPubKey(pubKey []byte) {
-	msg.PubKey = pubKey
-}
-
-func (msg *MsgSetWithdrawAddress) GetSignBytes() []byte {
-	tmsg := *msg
-	tmsg.Signature = nil
-	return util.TxHash(tmsg.Bytes())
-}
 
 func (msg *MsgSetWithdrawAddress) GetFromAddress() sdk.AccAddress { return msg.FromAddress}
 
-func (msg *MsgSetWithdrawAddress) GetSignature() []byte { return msg.Signature}
-
-
 type MsgWithdrawDelegatorReward struct {
 	FromAddress		  	sdk.AccAddress	 `json:"from_address"`
-	Signature 		  	[]byte   		 `json:"signature"`
-	PubKey			  	[]byte			 `json:"pub_key"`
-
 	DelegatorAddress     sdk.AccAddress    `json:"delegator_address"`
 	ValidatorAddress     sdk.AccAddress    `json:"validator_address"`
 }
@@ -185,32 +142,11 @@ func (msg *MsgWithdrawDelegatorReward) Bytes() []byte {
 	return bytes
 }
 
-func (msg *MsgWithdrawDelegatorReward) SetSignature(sig []byte) {
-	msg.Signature = sig
-}
-
-func (msg *MsgWithdrawDelegatorReward) SetPubKey(pubKey []byte) {
-	msg.PubKey = pubKey
-}
-
-func (msg *MsgWithdrawDelegatorReward) GetSignBytes() []byte {
-	tmsg := *msg
-	tmsg.Signature = nil
-	return util.TxHash(tmsg.Bytes())
-}
-
-func (msg *MsgWithdrawDelegatorReward) GetSignature() []byte {
-	return msg.Signature
-}
-
 func (msg *MsgWithdrawDelegatorReward) GetFromAddress() sdk.AccAddress { return msg.FromAddress}
 
 
 type MsgWithdrawValidatorCommission struct {
 	FromAddress		  	sdk.AccAddress	 `json:"from_address"`
-	Signature 		  	[]byte   		 `json:"signature"`
-	PubKey			  	[]byte			 `json:"pub_key"`
-
 	ValidatorAddress    sdk.AccAddress   `json:"validator_address"`
 }
 
@@ -245,24 +181,6 @@ func (msg *MsgWithdrawValidatorCommission) Bytes() []byte {
 	}
 
 	return bytes
-}
-
-func (msg *MsgWithdrawValidatorCommission) SetSignature(sig []byte) {
-	msg.Signature = sig
-}
-
-func (msg *MsgWithdrawValidatorCommission) SetPubKey(pubKey []byte) {
-	msg.PubKey = pubKey
-}
-
-func (msg *MsgWithdrawValidatorCommission) GetSignBytes() []byte {
-	tmsg := *msg
-	tmsg.Signature = nil
-	return util.TxHash(tmsg.Bytes())
-}
-
-func (msg *MsgWithdrawValidatorCommission) GetSignature() []byte {
-	return msg.Signature
 }
 
 func (msg *MsgWithdrawValidatorCommission) GetFromAddress() sdk.AccAddress { return msg.FromAddress}
