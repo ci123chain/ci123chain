@@ -21,6 +21,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/auth"
 	"github.com/ci123chain/ci123chain/pkg/auth/ante"
 	_defer "github.com/ci123chain/ci123chain/pkg/auth/defer"
+	auth_types "github.com/ci123chain/ci123chain/pkg/auth/types"
 	"github.com/ci123chain/ci123chain/pkg/config"
 	"github.com/ci123chain/ci123chain/pkg/couchdb"
 	distr "github.com/ci123chain/ci123chain/pkg/distribution"
@@ -34,6 +35,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/staking"
 	stakingTypes "github.com/ci123chain/ci123chain/pkg/staking/types"
 	"github.com/ci123chain/ci123chain/pkg/supply"
+	supply_types "github.com/ci123chain/ci123chain/pkg/supply/types"
 	"github.com/ci123chain/ci123chain/pkg/transfer"
 	"github.com/ci123chain/ci123chain/pkg/transfer/handler"
 	"github.com/ci123chain/ci123chain/pkg/wasm"
@@ -155,9 +157,10 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 	wasmKeeper := wasm.NewKeeper(cdc, wasmStoreKey,homeDir, wasmconfig, accKeeper, stakingKeeper, cdb)
 
 	stakingKeeper.SetHooks(staking.NewMultiStakingHooks(distrKeeper.Hooks()))
-
+	module_order := []string{auth_types.ModuleName, acc_types.ModuleName, supply_types.ModuleName, distr.ModuleName, order.ModuleName,stakingTypes.ModuleName, wasm_types.ModuleName, mint.ModuleName}
 	// 设置modules
 	c.mm = module.NewManager(
+		module_order,
 		auth.AppModule{AuthKeeper: c.authKeeper},
 		account.AppModule{AccountKeeper: accKeeper},
 		supply_module.AppModule{Keeper: supplyKeeper},

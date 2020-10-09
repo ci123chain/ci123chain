@@ -66,10 +66,9 @@ func readDB(context unsafe.Pointer, keyPtr, keySize, valuePtr, valueSize, offset
 
 	realKey := memory[keyPtr: keyPtr + keySize]
 
-	fmt.Printf("read key [%s]\n", string(realKey))
+	//fmt.Printf("read key [%s]\n", string(realKey))
 
 	var size int;
-	var valueStr string;
 	v := store.Get(realKey)
 	if v == nil {
 		/*
@@ -78,8 +77,10 @@ func readDB(context unsafe.Pointer, keyPtr, keySize, valuePtr, valueSize, offset
 		*/
 		return -1
 	} else {
-		valueStr = string(v)
-		size = len(valueStr)
+		size = len(v)
+	}
+	if offset >= int32(size) {
+		return 0
 	}
 
 	index := offset + valueSize
@@ -101,10 +102,10 @@ func writeDB(context unsafe.Pointer, keyPtr, keySize, valuePtr, valueSize int32)
 	realKey := memory[keyPtr: keyPtr + keySize]
 	realValue := memory[valuePtr: valuePtr + valueSize]
 
-	fmt.Printf("write key [%s], value [%s]\n", string(realKey), string(realValue))
+	//fmt.Printf("key [%s], value [%v]\n", string(realKey), realValue)
 
-	valueStr := string(realValue)
-	Value := []byte(valueStr)
+	var Value = make([]byte, len(realValue))
+	copy(Value[:], realValue[:])
 
 	store.Set(realKey, Value)
 }

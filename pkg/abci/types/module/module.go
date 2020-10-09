@@ -66,12 +66,12 @@ type AppManager struct {
 	Orders     []string
 }
 
-func NewManager(modules ...AppModule) *AppManager {
+func NewManager(orders []string,modules ...AppModule) *AppManager {
 	moduleMap := make(map[string]AppModule)
-	var orders []string
+	//var orders []string
 	for _, module := range modules {
 		moduleMap[module.Name()] = module
-		orders = append(orders, module.Name())
+		//orders = append(orders, module.Name())
 	}
 	return &AppManager{
 		Modules: moduleMap,
