@@ -306,28 +306,36 @@ func (mBatch *goCouchDBBatch) Delete(key []byte) {
 
 // Implements Batch.
 func (mBatch *goCouchDBBatch) Write() {
-	if mBatch.batch.docs == nil {
+	if mBatch.batch.docs == nil || mBatch.batch.closed{
 		return
 	}
 	resp, err := mBatch.batch.Commit()
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
+		mBatch.batch.closed = false
+		mBatch.Write()
+	} else {
+		mBatch.ensureBatchResult(resp)
 	}
-	mBatch.ensureBatchResult(resp)
 }
 
 // Implements Batch.
 func (mBatch *goCouchDBBatch) ensureBatchResult(res []BulkDocumentResult) {
-	nBatch := mBatch.cdb.NewBatch()
+	nBatch := mBatch.cdb.NewBatch().(*goCouchDBBatch)
 	for k, v := range res {
 		if v.Ok != true {
-			err := nBatch.(*goCouchDBBatch).batch.Save(mBatch.batch.docs[k], mBatch.batch.docs[k]._id, mBatch.batch.docs[k]._rev)
+			fmt.Println(v.Ok)
+			fmt.Println(k)
+			err := nBatch.batch.Save(mBatch.batch.docs[k], mBatch.batch.docs[k]._id, mBatch.batch.docs[k]._rev)
 			if err != nil {
 				panic(err)
 			}
+			fmt.Println(mBatch.batch)
+			fmt.Println(res)
 		}
 	}
-	if len(nBatch.(*goCouchDBBatch).batch.docs) != 0 {
+	if len(nBatch.batch.docs) != 0 {
+		fmt.Println(nBatch.batch)
 		nBatch.Write()
 	}
 }

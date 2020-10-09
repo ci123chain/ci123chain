@@ -56,6 +56,7 @@ type StakingInfo struct {
 	CommissionInfo  	CommissionInfo 		`json:"commission_info"`
 	UpdateTime 			time.Time 			`json:"update_time"`
 	MinSelfDelegation   string				`json:"min_self_delegation"`
+	Description			stypes.Description  `json:"description"`
 }
 
 type CommissionInfo struct {
@@ -300,7 +301,7 @@ func genesisStakingModule(appState map[string]json.RawMessage, validatorKey secp
 		Status:            1,
 		Tokens:            tokens,
 		DelegatorShares:   shares,
-		Description:       stypes.Description{},
+		Description:       stakingInfo.Description,
 		UnbondingHeight:   0,
 		UnbondingTime:     time.Time{},
 		Commission:        stypes.Commission{

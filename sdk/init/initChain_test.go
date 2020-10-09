@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/staking/types"
 	"github.com/ci123chain/ci123chain/sdk/account"
 	"github.com/ci123chain/ci123chain/sdk/validator"
 	"github.com/tendermint/tendermint/crypto"
@@ -37,6 +38,13 @@ func TestNewInitChainFiles(t *testing.T) {
 		},
 		UpdateTime:        time.Now(),
 		MinSelfDelegation: "10000000",
+		Description: types.Description{
+			Moniker:         "moniker1",
+			Identity:        "",
+			Website:         "",
+			SecurityContact: "",
+			Details:         "",
+		},
 	}
 	var supInfo = SupplyInfo{
 		Amount: "200000000000",

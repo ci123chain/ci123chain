@@ -35,7 +35,11 @@ else
     echo "----------"
 fi
 
+CI_LOGDIR = $CI_HOME/logs
+if [ ! -d $CI_LOGDIR ]; then
+    mkdir $CI_LOGDIR
+fi
 
 # start
-nohup ./cli-linux rest-server --laddr=tcp://0.0.0.0:80 > rest-output.log 2>&1 &
-./cid-linux start > cid-output.log 2>&1
+nohup ./cli-linux rest-server --laddr=tcp://0.0.0.0:80 > $CI_LOGDIR/rest-output.log 2>&1 &
+./cid-linux start > $CI_LOGDIR/cid-output.log 2>&1
