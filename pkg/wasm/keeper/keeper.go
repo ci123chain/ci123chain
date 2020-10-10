@@ -74,7 +74,7 @@ func (k *Keeper) Upload(ctx sdk.Context, wasmCode []byte, creator sdk.AccAddress
 	}
 	//store code in local
 	if !isExist {
-		err = ioutil.WriteFile(k.homeDir + "/" + k.wasmer.FilePathMap[fmt.Sprintf("%x", codeHash)], wasmCode, types.ModePerm)
+		err = ioutil.WriteFile(k.homeDir + WASMDIR + k.wasmer.FilePathMap[fmt.Sprintf("%x", codeHash)], wasmCode, types.ModePerm)
 		if err != nil {
 			return nil, err
 		}
@@ -143,7 +143,7 @@ func (k *Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAd
 		wc = ccstore.Get(codeHash)
 
 		fileName := k.wasmer.FilePathMap[strings.ToLower(codeInfo.CodeHash)]
-		err = ioutil.WriteFile(k.homeDir + "/" + fileName, wc, types.ModePerm)
+		err = ioutil.WriteFile(k.homeDir + WASMDIR + fileName, wc, types.ModePerm)
 		if err != nil {
 			return sdk.AccAddress{}, err
 		}
@@ -223,7 +223,7 @@ func (k *Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, invoke
 		wc = ccstore.Get(codeHash)
 
 		fileName := k.wasmer.FilePathMap[strings.ToLower(codeInfo.CodeHash)]
-		err = ioutil.WriteFile(k.homeDir + "/" + fileName, wc, types.ModePerm)
+		err = ioutil.WriteFile(k.homeDir + WASMDIR + fileName, wc, types.ModePerm)
 		if err != nil {
 			return sdk.Result{}, err
 		}
@@ -305,7 +305,7 @@ func (k Keeper) Query(ctx sdk.Context, contractAddress, invokerAddress sdk.AccAd
 		wc = store.Get(codeHash)
 
 		fileName := k.wasmer.FilePathMap[strings.ToLower(codeInfo.CodeHash)]
-		err = ioutil.WriteFile(k.homeDir + "/" + fileName, wc, types.ModePerm)
+		err = ioutil.WriteFile(k.homeDir + WASMDIR + fileName, wc, types.ModePerm)
 		if err != nil {
 			return types.ContractState{}, err
 		}
@@ -432,7 +432,7 @@ func (k *Keeper) create(ctx sdk.Context, invokerAddr sdk.AccAddress, wasmCode []
 	codeByte := ccstore.Get(codeHash)
 	if codeByte != nil {
 		hash := fmt.Sprintf("%x", codeHash)
-		filePath := path.Join(k.homeDir, k.wasmer.FilePathMap[hash])
+		filePath := path.Join(k.homeDir, WASMDIR, k.wasmer.FilePathMap[hash])
 		if FileExist(filePath) {
 			//the file content needs to be one
 			localCode, err := ioutil.ReadFile(filePath)

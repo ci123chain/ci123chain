@@ -15,7 +15,10 @@ import (
 	"unsafe"
 )
 
-const AddressSize = 20
+const (
+	AddressSize = 20
+	WASMDIR = "/wasm/"
+)
 
 type Address [AddressSize]byte
 
@@ -253,7 +256,7 @@ func callContract(context unsafe.Pointer, addrPtr, inputPtr, inputSize int32) in
 		wc = ccstore.Get(codeHash)
 
 		fileName := keeper.wasmer.FilePathMap[fmt.Sprintf("%x",codeInfo.CodeHash)]
-		err = ioutil.WriteFile(keeper.homeDir + "/" + fileName, wc, wasmtypes.ModePerm)
+		err = ioutil.WriteFile(keeper.homeDir + WASMDIR + fileName, wc, wasmtypes.ModePerm)
 		if err != nil {
 			panic(err)
 		}

@@ -243,9 +243,9 @@ func FileExist(path string) bool {
 
 func (w *Wasmer) Create(homeDir, codeHash string) (Wasmer, error) {
 	if fName := w.FilePathMap[codeHash]; fName != "" {
-		if FileExist(path.Join(homeDir, fName)) {
+		if FileExist(path.Join(homeDir, WASMDIR, fName)) {
 			//file exist, remove file and delete
-			err := os.Remove(path.Join(homeDir, fName))
+			err := os.Remove(path.Join(homeDir, WASMDIR, fName))
 			if err != nil {
 				return Wasmer{}, err
 			}
@@ -377,7 +377,7 @@ func MakeCodeHash(code []byte) []byte {
 func (w *Wasmer) GetWasmCode(homeDir string, hash []byte) ([]byte, error) {
 	Hash := fmt.Sprintf("%x", hash)
 	filePath := w.FilePathMap[Hash]
-	code, err := ioutil.ReadFile(homeDir + "/" + filePath)
+	code, err := ioutil.ReadFile(homeDir + WASMDIR + filePath)
 	if err != nil {
 		return nil, err
 	}
@@ -388,9 +388,9 @@ func (w *Wasmer) GetWasmCode(homeDir string, hash []byte) ([]byte, error) {
 func (w *Wasmer) DeleteCode(homeDir string, hash []byte) error {
 	Hash := fmt.Sprintf("%x", hash)
 	filePath := w.FilePathMap[Hash]
-	_, err := os.Lstat(homeDir + "/" + filePath)
+	_, err := os.Lstat(homeDir + WASMDIR + filePath)
 	if err == nil {
-		err := os.Remove(homeDir + "/" + filePath)
+		err := os.Remove(homeDir + WASMDIR + filePath)
 		if err != nil {
 			return err
 		}
