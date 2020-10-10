@@ -29,6 +29,7 @@ type Keeper struct {
 	storeKey    		sdk.StoreKey
 	cdc         		*codec.Codec
 	wasmer     	 		Wasmer
+	homeDir				string
 	AccountKeeper 		account.AccountKeeper
 	StakingKeeper       keeper2.StakingKeeper
 	cdb					dbm.DB
@@ -43,7 +44,8 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, homeDir string, wasmConf
 	wk := Keeper{
 		storeKey:      storeKey,
 		cdc:           cdc,
-		wasmer:        wasmer,
+		wasmer:        *wasmer,
+		homeDir:       homeDir,
 		AccountKeeper: accountKeeper,
 		StakingKeeper: stakingKeeper,
 		cdb:		   cdb,
@@ -72,7 +74,7 @@ func (k *Keeper) Upload(ctx sdk.Context, wasmCode []byte, creator sdk.AccAddress
 	}
 	//store code in local
 	if !isExist {
-		err = ioutil.WriteFile(k.wasmer.HomeDir + "/" + k.wasmer.FilePathMap[fmt.Sprintf("%x", codeHash)], wasmCode, types.ModePerm)
+		err = ioutil.WriteFile(k.homeDir + "/" + k.wasmer.FilePathMap[fmt.Sprintf("%x", codeHash)], wasmCode, types.ModePerm)
 		if err != nil {
 			return nil, err
 		}
@@ -136,12 +138,12 @@ func (k *Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAd
 	}
 	k.cdc.MustUnmarshalBinaryBare(bz, &codeInfo)
 
-	wc, err := k.wasmer.GetWasmCode(codeHash)
+	wc, err := k.wasmer.GetWasmCode(k.homeDir, codeHash)
 	if err != nil {
 		wc = ccstore.Get(codeHash)
 
 		fileName := k.wasmer.FilePathMap[strings.ToLower(codeInfo.CodeHash)]
-		err = ioutil.WriteFile(k.wasmer.HomeDir + "/" + fileName, wc, types.ModePerm)
+		err = ioutil.WriteFile(k.homeDir + "/" + fileName, wc, types.ModePerm)
 		if err != nil {
 			return sdk.AccAddress{}, err
 		}
@@ -215,13 +217,13 @@ func (k *Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, invoke
 	}
 	var code []byte
 	codeHash, _ := hex.DecodeString(codeInfo.CodeHash)
-	wc, err := k.wasmer.GetWasmCode(codeHash)
+	wc, err := k.wasmer.GetWasmCode(k.homeDir, codeHash)
 	ccstore := ctx.KVStore(k.storeKey)
 	if err != nil {
 		wc = ccstore.Get(codeHash)
 
 		fileName := k.wasmer.FilePathMap[strings.ToLower(codeInfo.CodeHash)]
-		err = ioutil.WriteFile(k.wasmer.HomeDir + "/" + fileName, wc, types.ModePerm)
+		err = ioutil.WriteFile(k.homeDir + "/" + fileName, wc, types.ModePerm)
 		if err != nil {
 			return sdk.Result{}, err
 		}
@@ -298,12 +300,12 @@ func (k Keeper) Query(ctx sdk.Context, contractAddress, invokerAddress sdk.AccAd
 	var code []byte
 	store := ctx.KVStore(k.storeKey)
 	codeHash, _ := hex.DecodeString(codeInfo.CodeHash)
-	wc, err := k.wasmer.GetWasmCode(codeHash)
+	wc, err := k.wasmer.GetWasmCode(k.homeDir, codeHash)
 	if err != nil {
 		wc = store.Get(codeHash)
 
 		fileName := k.wasmer.FilePathMap[strings.ToLower(codeInfo.CodeHash)]
-		err = ioutil.WriteFile(k.wasmer.HomeDir + "/" + fileName, wc, types.ModePerm)
+		err = ioutil.WriteFile(k.homeDir + "/" + fileName, wc, types.ModePerm)
 		if err != nil {
 			return types.ContractState{}, err
 		}
@@ -416,21 +418,21 @@ func (k *Keeper) create(ctx sdk.Context, invokerAddr sdk.AccAddress, wasmCode []
 	}
 
 	ccstore := ctx.KVStore(k.storeKey)
-	var wasmer Wasmer
-	wasmerBz := ccstore.Get(types.GetWasmerKey())
-	if wasmerBz != nil {
-		k.cdc.MustUnmarshalJSON(wasmerBz, &wasmer)
-		if wasmer.LastFileID == 0 {
-			return nil, false, sdk.ErrInternal("empty wasmer")
-		}
-		k.wasmer = wasmer
-	}
+	//var wasmer Wasmer
+	//wasmerBz := ccstore.Get(types.GetWasmerKey())
+	//if wasmerBz != nil {
+	//	k.cdc.MustUnmarshalJSON(wasmerBz, &wasmer)
+	//	if wasmer.LastFileID == 0 {
+	//		return nil, false, sdk.ErrInternal("empty wasmer")
+	//	}
+	//	k.wasmer = wasmer
+	//}
 	codeHash = MakeCodeHash(wasmCode)
 	//check if it has been saved in couchDB.
 	codeByte := ccstore.Get(codeHash)
 	if codeByte != nil {
 		hash := fmt.Sprintf("%x", codeHash)
-		filePath := path.Join(k.wasmer.HomeDir, k.wasmer.FilePathMap[hash])
+		filePath := path.Join(k.homeDir, k.wasmer.FilePathMap[hash])
 		if FileExist(filePath) {
 			//the file content needs to be one
 			localCode, err := ioutil.ReadFile(filePath)
@@ -458,7 +460,7 @@ func (k *Keeper) create(ctx sdk.Context, invokerAddr sdk.AccAddress, wasmCode []
 			return codeHash, true,nil
 		}
 	}
-	newWasmer, err := k.wasmer.Create(fmt.Sprintf("%x", codeHash))
+	newWasmer, err := k.wasmer.Create(k.homeDir, fmt.Sprintf("%x", codeHash))
 	if err != nil {
 		return nil, false, err
 	}

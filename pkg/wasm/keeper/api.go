@@ -248,12 +248,12 @@ func callContract(context unsafe.Pointer, addrPtr, inputPtr, inputSize int32) in
 	ccstore := ctx.KVStore(keeper.storeKey)
 	var code []byte
 	codeHash, _ := hex.DecodeString(codeInfo.CodeHash)
-	wc, err := keeper.wasmer.GetWasmCode(codeHash)
+	wc, err := keeper.wasmer.GetWasmCode(keeper.homeDir, codeHash)
 	if err != nil {
 		wc = ccstore.Get(codeHash)
 
 		fileName := keeper.wasmer.FilePathMap[fmt.Sprintf("%x",codeInfo.CodeHash)]
-		err = ioutil.WriteFile(keeper.wasmer.HomeDir + "/" + fileName, wc, wasmtypes.ModePerm)
+		err = ioutil.WriteFile(keeper.homeDir + "/" + fileName, wc, wasmtypes.ModePerm)
 		if err != nil {
 			panic(err)
 		}

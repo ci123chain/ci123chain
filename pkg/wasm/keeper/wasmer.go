@@ -217,22 +217,20 @@ func SetCtx(con *sdk.Context) {
 }
 
 type Wasmer struct {
-	HomeDir      string             `json:"home_dir"`
 	FilePathMap  map[string]string  `json:"file_path_map"`
 	LastFileID   int				`json:"last_file_id"`
 }
 
-func NewWasmer(homeDir string, _ types.WasmConfig) (Wasmer, error){
+func NewWasmer(homeDir string, _ types.WasmConfig) (*Wasmer, error){
 	dir := filepath.Join(homeDir, types.FolderName)
 	err := os.MkdirAll(dir, os.ModePerm)
 	if err != nil {
-		return Wasmer{}, err
+		return nil, err
 	}
 	filePathMap := make(map[string]string)
 	LastFileID := 0
 
-	return Wasmer{
-		HomeDir:     dir,
+	return &Wasmer{
 		FilePathMap: filePathMap,
 		LastFileID:  LastFileID,
 	}, nil
@@ -243,11 +241,11 @@ func FileExist(path string) bool {
 	return !os.IsNotExist(err)
 }
 
-func (w *Wasmer) Create(codeHash string) (Wasmer, error) {
+func (w *Wasmer) Create(homeDir, codeHash string) (Wasmer, error) {
 	if fName := w.FilePathMap[codeHash]; fName != "" {
-		if FileExist(path.Join(w.HomeDir, fName)) {
+		if FileExist(path.Join(homeDir, fName)) {
 			//file exist, remove file and delete
-			err := os.Remove(path.Join(w.HomeDir, fName))
+			err := os.Remove(path.Join(homeDir, fName))
 			if err != nil {
 				return Wasmer{}, err
 			}
@@ -266,7 +264,6 @@ func (w *Wasmer) Create(codeHash string) (Wasmer, error) {
 */
 	w.FilePathMap[codeHash] = fileName
 	newWasmer := Wasmer{
-		HomeDir:     w.HomeDir,
 		FilePathMap: w.FilePathMap,
 		LastFileID:  id,
 	}
@@ -377,10 +374,10 @@ func MakeCodeHash(code []byte) []byte {
 	return Result
 }
 
-func (w *Wasmer) GetWasmCode(hash []byte) ([]byte, error) {
+func (w *Wasmer) GetWasmCode(homeDir string, hash []byte) ([]byte, error) {
 	Hash := fmt.Sprintf("%x", hash)
 	filePath := w.FilePathMap[Hash]
-	code, err := ioutil.ReadFile(w.HomeDir + "/" + filePath)
+	code, err := ioutil.ReadFile(homeDir + "/" + filePath)
 	if err != nil {
 		return nil, err
 	}
@@ -388,12 +385,12 @@ func (w *Wasmer) GetWasmCode(hash []byte) ([]byte, error) {
 	return code, nil
 }
 
-func (w *Wasmer) DeleteCode(hash []byte) error {
+func (w *Wasmer) DeleteCode(homeDir string, hash []byte) error {
 	Hash := fmt.Sprintf("%x", hash)
 	filePath := w.FilePathMap[Hash]
-	_, err := os.Lstat(w.HomeDir + "/" + filePath)
+	_, err := os.Lstat(homeDir + "/" + filePath)
 	if err == nil {
-		err := os.Remove(w.HomeDir + "/" + filePath)
+		err := os.Remove(homeDir + "/" + filePath)
 		if err != nil {
 			return err
 		}
