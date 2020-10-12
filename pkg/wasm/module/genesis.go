@@ -15,6 +15,7 @@ import (
 
 func InitGenesis(ctx sdk.Context, wasmer types.WasmKeeperI) {
 	var contracts = types.DefaultGenesisState()
+	ctx = ctx.WithValue(types.SystemContract, true)
 	for i := 0; i < len(contracts.Contracts); i++ {
 		for _, v := range contracts.Contracts {
 			if v.Index == i {
@@ -25,7 +26,6 @@ func InitGenesis(ctx sdk.Context, wasmer types.WasmKeeperI) {
 				if err != nil {
 					panic(err)
 				}
-
 				address := sdk.HexToAddress(v.Address)
 				invoker := sdk.HexToAddress(contracts.Invoker)
 				var params types.CallContractParam
@@ -35,7 +35,6 @@ func InitGenesis(ctx sdk.Context, wasmer types.WasmKeeperI) {
 				if err != nil {
 					panic(err)
 				}
-				ctx = ctx.WithValue(types.SystemContract, true)
 				if v.Method == types.InitMethod {
 					codeHash, err := wasmer.Upload(ctx, code, invoker)
 					if err != nil {
