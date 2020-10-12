@@ -66,7 +66,11 @@ func (k *Keeper) Upload(ctx sdk.Context, wasmCode []byte, creator sdk.AccAddress
 		if wasmer.LastFileID == 0 {
 			return nil, sdk.ErrInternal("empty wasmer")
 		}
-		k.wasmer = wasmer
+		k.wasmer = Wasmer{
+			FilePathMap: mapFromSortMaps(wasmer.SortMaps),
+			SortMaps:    nil,
+			LastFileID:  wasmer.LastFileID,
+		}
 	}
 	codeHash, isExist, err := k.create(ctx, creator, wasmCode)
 	if err != nil {
@@ -127,14 +131,17 @@ func (k *Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAd
 	contractAccount = k.AccountKeeper.NewAccountWithAddress(ctx, contractAddress)
 	k.AccountKeeper.SetAccount(ctx, contractAccount)
 
-
 	wasmerBz := ccstore.Get(types.GetWasmerKey())
 	if wasmerBz != nil {
 		k.cdc.MustUnmarshalJSON(wasmerBz, &wasmer)
 		if wasmer.LastFileID == 0 {
 			return sdk.AccAddress{}, sdk.ErrInternal("empty wasmer")
 		}
-		k.wasmer = wasmer
+		k.wasmer = Wasmer{
+			FilePathMap: mapFromSortMaps(wasmer.SortMaps),
+			SortMaps:    nil,
+			LastFileID:  wasmer.LastFileID,
+		}
 	}
 	k.cdc.MustUnmarshalBinaryBare(bz, &codeInfo)
 
@@ -334,25 +341,29 @@ func (k Keeper) Query(ctx sdk.Context, contractAddress, invokerAddress sdk.AccAd
 func (k *Keeper) contractInstance(ctx sdk.Context, contractAddress sdk.AccAddress) (types.CodeInfo, error) {
 
 	var wasmer Wasmer
-	store := ctx.KVStore(k.storeKey)
-	contractBz := store.Get(types.GetContractAddressKey(contractAddress))
+	ccstore := ctx.KVStore(k.storeKey)
+	contractBz := ccstore.Get(types.GetContractAddressKey(contractAddress))
 	if contractBz == nil {
 		return types.CodeInfo{}, sdk.ErrInternal(" get contract address failed")
 	}
 	var contract types.ContractInfo
 	k.cdc.MustUnmarshalBinaryBare(contractBz, &contract)
 	codeHash, _ := hex.DecodeString(contract.CodeInfo.CodeHash)
-	bz := store.Get(types.GetCodeKey(codeHash))
+	bz := ccstore.Get(types.GetCodeKey(codeHash))
 	if bz == nil {
 		return types.CodeInfo{}, sdk.ErrInternal("get code key failed")
 	}
-	wasmerBz := store.Get(types.GetWasmerKey())
+	wasmerBz := ccstore.Get(types.GetWasmerKey())
 	if wasmerBz != nil {
 		k.cdc.MustUnmarshalJSON(wasmerBz, &wasmer)
 		if wasmer.LastFileID == 0 {
 			return types.CodeInfo{}, sdk.ErrInternal("unexpected wasmer info")
 		}
-		k.wasmer = wasmer
+		k.wasmer = Wasmer{
+			FilePathMap: mapFromSortMaps(wasmer.SortMaps),
+			SortMaps:    nil,
+			LastFileID:  wasmer.LastFileID,
+		}
 	}
 
 	var codeInfo types.CodeInfo
@@ -418,17 +429,9 @@ func (k *Keeper) create(ctx sdk.Context, invokerAddr sdk.AccAddress, wasmCode []
 	}
 
 	ccstore := ctx.KVStore(k.storeKey)
-	//var wasmer Wasmer
-	//wasmerBz := ccstore.Get(types.GetWasmerKey())
-	//if wasmerBz != nil {
-	//	k.cdc.MustUnmarshalJSON(wasmerBz, &wasmer)
-	//	if wasmer.LastFileID == 0 {
-	//		return nil, false, sdk.ErrInternal("empty wasmer")
-	//	}
-	//	k.wasmer = wasmer
-	//}
 	codeHash = MakeCodeHash(wasmCode)
 	//check if it has been saved in couchDB.
+
 	codeByte := ccstore.Get(codeHash)
 	if codeByte != nil {
 		hash := fmt.Sprintf("%x", codeHash)

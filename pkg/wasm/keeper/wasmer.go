@@ -40,6 +40,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"unicode/utf8"
 	"unsafe"
@@ -218,6 +219,7 @@ func SetCtx(con *sdk.Context) {
 
 type Wasmer struct {
 	FilePathMap  map[string]string  `json:"file_path_map"`
+	SortMaps     SortMaps 			`json:"sort_maps"`
 	LastFileID   int				`json:"last_file_id"`
 }
 
@@ -232,6 +234,7 @@ func NewWasmer(homeDir string, _ types.WasmConfig) (*Wasmer, error){
 
 	return &Wasmer{
 		FilePathMap: filePathMap,
+		SortMaps: nil,
 		LastFileID:  LastFileID,
 	}, nil
 }
@@ -264,7 +267,8 @@ func (w *Wasmer) Create(homeDir, codeHash string) (Wasmer, error) {
 */
 	w.FilePathMap[codeHash] = fileName
 	newWasmer := Wasmer{
-		FilePathMap: w.FilePathMap,
+		FilePathMap: nil,
+		SortMaps:    sortMapByValue(w.FilePathMap),
 		LastFileID:  id,
 	}
 	return newWasmer, nil
@@ -448,4 +452,37 @@ func Serialize(raw []interface{}) (res []byte) {
 	}
 
 	return sink.Bytes()
+}
+
+
+type SortMap struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+
+// A slice of Pairs that implements sort.Interface to sort by Value.
+type SortMaps []SortMap
+
+func (s SortMaps) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+func (s SortMaps) Len() int           { return len(s) }
+func (s SortMaps) Less(i, j int) bool { return s[i].Value < s[j].Value }
+
+func sortMapByValue(m map[string]string) SortMaps {
+	s := make(SortMaps, len(m))
+	i := 0
+	for k, v := range m {
+		s[i] = SortMap{k, v}
+		i++
+	}
+	sort.Sort(s)
+	return s
+}
+
+func mapFromSortMaps(s SortMaps) map[string]string {
+	m := make(map[string]string, len(s))
+	for _, v := range s {
+		m[v.Key] = v.Value
+	}
+
+	return m
 }
