@@ -3,10 +3,7 @@ package couchdb
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/spf13/viper"
 	dbm "github.com/tendermint/tm-db"
-	"io"
-	"io/ioutil"
 )
 
 const DBAuthUser = "DBAuthUser"
@@ -68,9 +65,6 @@ func (cdb *GoCouchDB) Get(key []byte) []byte {
 			}
 		}
 		res, err := hex.DecodeString(doc.Value)
-		if err != nil {
-			panic(err)
-		}
 		if len(res) == 0 {
 			if err != nil {
 				fmt.Println("***********Retry***********", retry)
@@ -125,9 +119,9 @@ func (cdb *GoCouchDB) SetSync(key []byte, value []byte) {
 // Implements DB.
 func (cdb *GoCouchDB) Delete(key []byte) {
 	retry := 0
+	key = nonNilBytes(key)
+	id := hex.EncodeToString(key)
 	for {
-		key = nonNilBytes(key)
-		id := hex.EncodeToString(key)
 		// read oldDoc & now rev
 		rev := cdb.GetRev(key)
 		if rev == "" {
@@ -138,7 +132,6 @@ func (cdb *GoCouchDB) Delete(key []byte) {
 			fmt.Println("***************Retry******************", retry)
 			fmt.Println("Method: Delete, ","key: ", string(key), ", id:", hex.EncodeToString(key))
 			fmt.Println(err)
-			cdb.Delete(key)
 		} else {
 			return
 		}
@@ -195,12 +188,18 @@ func (cdb *GoCouchDB) ReverseIterator(start, end []byte) dbm.Iterator {
 }
 
 func (cdb *GoCouchDB) newCouchIterator(start, end []byte, isReverse bool) dbm.Iterator{
-	var results *RangeQueryResponse
-	results, err := cdb.db.ReadRange(hex.EncodeToString(start), hex.EncodeToString(end))
-	if err != nil {
-		panic(err)
+	retry := 0
+	for {
+		results, err := cdb.db.ReadRange(hex.EncodeToString(start), hex.EncodeToString(end))
+		if err != nil {
+			fmt.Println("***************Retry******************", retry)
+			fmt.Println("Method: ReadRange, ","start: ", string(start), ", end:", string(end))
+			fmt.Println(err)
+		} else {
+			return &CouchIterator{cdb,results,0,start,end,isReverse,true}
+		}
+		retry++
 	}
-	return &CouchIterator{cdb,results,0,start,end,isReverse,true}
 }
 
 // Implements Iterator.
@@ -324,14 +323,10 @@ func (mBatch *goCouchDBBatch) ensureBatchResult(res []BulkDocumentResult) {
 	nBatch := mBatch.cdb.NewBatch().(*goCouchDBBatch)
 	for k, v := range res {
 		if v.Ok != true {
-			fmt.Println(v.Ok)
-			fmt.Println(k)
 			err := nBatch.batch.Save(mBatch.batch.docs[k].doc, mBatch.batch.docs[k]._id, mBatch.batch.docs[k]._rev)
 			if err != nil {
 				panic(err)
 			}
-			fmt.Println(mBatch.batch)
-			fmt.Println(res)
 		}
 	}
 	if len(nBatch.batch.docs) != 0 {
@@ -357,141 +352,26 @@ func nonNilBytes(bz []byte) []byte {
 	return bz
 }
 
-
-func (cdb *GoCouchDB) GetRev2(key []byte) (string, error) {
-	id := hex.EncodeToString(key)
-	// read oldDoc & now rev
-	rev, err := cdb.db.Read(id, nil, nil)
-	if err != nil {
-		switch t := err.(type) {
-		case *Error:
-			if t.ErrorCode == "not_found" {
-				return "", err
-			}
-		default:
-			fmt.Println("***********")
-			fmt.Println(err)
-			fmt.Println("***********")
-			panic(err)
-		}
-	}
-	return rev, nil
-}
-
-
 func (cdb *GoCouchDB) GetRev(key []byte) string {
 	id := hex.EncodeToString(key)
 	// read oldDoc & now rev
-	rev, err := cdb.db.Read(id, nil, nil)
-	if err != nil {
-		switch t := err.(type) {
-		case *Error:
-			if t.ErrorCode == "not_found" {
-				return ""
+	retry := 0
+	for {
+		rev, err := cdb.db.Read(id, nil, nil)
+		if err != nil {
+			switch t := err.(type) {
+			case *Error:
+				if t.ErrorCode == "not_found" {
+					return ""
+				}
+			default:
+				fmt.Println("***************Retry******************", retry)
+				fmt.Println("Method: GetRev, ","key: ", string(key), ", id:", hex.EncodeToString(key))
+				fmt.Println(err)
 			}
-		default:
-			fmt.Println("***********")
-			fmt.Println(err)
-			fmt.Println("***********")
-			panic(err)
+		} else {
+			return rev
 		}
+		retry++
 	}
-	return rev
-}
-
-func (cdb *GoCouchDB) SetRev(key, value []byte, rev string) (string, error) {
-	key = nonNilBytes(key)
-	value = nonNilBytes(value)
-	id := hex.EncodeToString(key)
-	var newDoc KVWrite
-	newDoc = KVWrite{
-		Value:	hex.EncodeToString(value),
-	}
-	// save newDoc
-	rev, err := cdb.db.Save(newDoc, id, rev)
-	if err != nil {
-		return "",err
-	}
-	return rev, nil
-}
-
-// Implements DB.
-func (cdb *GoCouchDB) GetRevAndValue(key []byte) (string, []byte) {
-	key = nonNilBytes(key)
-	var doc KVRead
-	rev, err := cdb.db.Read(hex.EncodeToString(key), &doc,nil)
-	if err != nil {
-		switch t := err.(type) {
-		case *Error:
-			if t.ErrorCode == "not_found" {
-				return "", nil
-			}
-		default:
-			fmt.Println("***********")
-			fmt.Println(err)
-			fmt.Println("***********")
-			panic(err)
-		}
-	}
-	res, err := hex.DecodeString(doc.Value)
-	if err != nil {
-		panic(err)
-	}
-	if len(res) == 0 {
-		return "", nil
-	}
-	return rev, res
-}
-
-func (cdb *GoCouchDB) ResetDB() error {
-	var auth *BasicAuth
-	name := viper.GetString(DBName)
-	user := viper.GetString(DBAuthUser)
-	pwd := viper.GetString(DBAuthPwd)
-	if user == "" && pwd == "" {
-		err := cdb.db.connection.DeleteDB(name, nil)
-		if err != nil {
-			return err
-		}
-		err = cdb.db.connection.CreateDB(name, nil)
-		if err != nil {
-			return err
-		}
-	} else {
-		auth = &BasicAuth{user,pwd}
-		err := cdb.db.connection.DeleteDB(name, auth)
-		if err != nil {
-			return err
-		}
-		err = cdb.db.connection.CreateDB(name, auth)
-		if err != nil {
-			return err
-		}
-	}
-
-
-	return nil
-}
-
-func (cdb *GoCouchDB) SaveAttachment(key []byte, rev, attName, attType string, attContent io.Reader) string {
-	key = nonNilBytes(key)
-	rev, err := cdb.db.SaveAttachment(hex.EncodeToString(key), rev, attName, attType, attContent)
-	if err != nil {
-		panic(err)
-	}
-	return rev
-}
-
-func (cdb *GoCouchDB) GetAttachment(key []byte, rev, attType, attName string) []byte {
-	key = nonNilBytes(key)
-	reader, err := cdb.db.GetAttachment(hex.EncodeToString(key), rev, attType, attName)
-	if err != nil {
-		panic(err)
-	}
-	defer reader.Close()
-	by, err := ioutil.ReadAll(reader)
-	if err != nil {
-		panic(err)
-	}
-	return by
 }
