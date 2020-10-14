@@ -22,7 +22,7 @@ const (
 	flagPruning        = "pruning"
 	//flagLogLevel       = "log-level"
 	flagStateDB 	   = "statedb" // couchdb://admin:password@192.168.2.89:5984
-	version 		   = "CiChain v1.1.19"
+	version 		   = "CiChain v1.1.20"
 )
 
 func startCmd(ctx *app.Context, appCreator app.AppCreator) *cobra.Command {
