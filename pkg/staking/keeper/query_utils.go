@@ -13,9 +13,8 @@ func (k StakingKeeper) GetDelegatorValidators(
 
 	validators := make([]types.Validator, maxRetrieve)
 
-	store := ctx.KVStore(k.storeKey)
 	delegatorPrefixKey := types.GetDelegationsKey(delegatorAddr)
-	iterator := sdk.KVStorePrefixIterator(store, delegatorPrefixKey) // smallest to largest
+	iterator := k.cdb.Iterator(sdk.NewPrefixedKey([]byte(k.storeKey.Name()), delegatorPrefixKey), sdk.NewPrefixedKey([]byte(k.storeKey.Name()), sdk.PrefixEndBytes(delegatorPrefixKey)))
 	defer iterator.Close()
 
 	i := 0
@@ -57,10 +56,9 @@ func (k StakingKeeper) GetDelegatorValidator(
 func (k StakingKeeper) GetAllRedelegations(
 	ctx sdk.Context, delegator sdk.AccAddress, srcValAddress, dstValAddress sdk.AccAddress,
 ) []types.Redelegation {
-
-	store := ctx.KVStore(k.storeKey)
 	delegatorPrefixKey := types.GetREDsKey(delegator)
-	iterator := sdk.KVStorePrefixIterator(store, delegatorPrefixKey) // smallest to largest
+	iterator := k.cdb.Iterator(sdk.NewPrefixedKey([]byte(k.storeKey.Name()), delegatorPrefixKey), sdk.NewPrefixedKey([]byte(k.storeKey.Name()), sdk.PrefixEndBytes(delegatorPrefixKey)))
+
 	defer iterator.Close()
 
 	srcValFilter := !(srcValAddress.Empty())
@@ -87,10 +85,9 @@ func (k StakingKeeper) GetAllRedelegations(
 // return all delegations for a delegator
 func (k StakingKeeper) GetAllDelegatorDelegations(ctx sdk.Context, delegator sdk.AccAddress) []types.Delegation {
 	delegations := make([]types.Delegation, 0)
-
-	store := ctx.KVStore(k.storeKey)
 	delegatorPrefixKey := types.GetDelegationsKey(delegator)
-	iterator := sdk.KVStorePrefixIterator(store, delegatorPrefixKey) //smallest to largest
+	iterator := k.cdb.Iterator(sdk.NewPrefixedKey([]byte(k.storeKey.Name()), delegatorPrefixKey), sdk.NewPrefixedKey([]byte(k.storeKey.Name()), sdk.PrefixEndBytes(delegatorPrefixKey)))
+
 	defer iterator.Close()
 
 	i := 0

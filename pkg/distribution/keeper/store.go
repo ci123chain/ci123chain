@@ -10,6 +10,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/params"
 	staking "github.com/ci123chain/ci123chain/pkg/staking/keeper"
 	"github.com/ci123chain/ci123chain/pkg/supply"
+	dbm "github.com/tendermint/tm-db"
 	"strconv"
 )
 
@@ -22,6 +23,7 @@ type DistrKeeper struct {
 	AccountKeeper       account.AccountKeeper
 	ParamSpace          params.Subspace
 	StakingKeeper       staking.StakingKeeper
+	cdb					dbm.DB
 }
 
 var (
@@ -32,7 +34,7 @@ var (
 
 // create a new keeper
 func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, sk supply.Keeper, ak account.AccountKeeper, feeCollector string, paramSpace params.Subspace,
-	stakingKeeper staking.StakingKeeper) DistrKeeper {
+	stakingKeeper staking.StakingKeeper, cdb dbm.DB) DistrKeeper {
 
 	// ensure distribution module account is set
 	if addr := sk.GetModuleAddress(types.ModuleName); addr.Bytes() == nil {
@@ -47,10 +49,11 @@ func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, sk supply.Keeper, ak account.
 		storeKey:            key,
 		cdc:                 cdc,
 		SupplyKeeper:        sk,
-		AccountKeeper:                  ak,
+		AccountKeeper:       ak,
 		FeeCollectorName:    feeCollector,
 		ParamSpace:          paramSpace,
 		StakingKeeper:       stakingKeeper,
+		cdb:				 cdb,
 	}
 	return keeper
 }
@@ -330,7 +333,9 @@ func (k DistrKeeper) SetValidatorHistoricalRewards(ctx sdk.Context, val sdk.AccA
 // delete historical rewards for a validator
 func (k DistrKeeper) DeleteValidatorHistoricalRewards(ctx sdk.Context, val sdk.AccAddress) {
 	store := ctx.KVStore(k.storeKey)
-	iter := sdk.KVStorePrefixIterator(store, types.GetValidatorHistoricalRewardsPrefix(val))
+	prefix := types.GetValidatorHistoricalRewardsPrefix(val)
+	iter := k.cdb.Iterator(sdk.NewPrefixedKey([]byte(k.storeKey.Name()), prefix), sdk.NewPrefixedKey([]byte(k.storeKey.Name()), sdk.PrefixEndBytes(prefix)))
+
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
 		store.Delete(iter.Key())
@@ -390,7 +395,9 @@ func (k DistrKeeper) SetValidatorSlashEvent(ctx sdk.Context, val sdk.AccAddress,
 // delete slash events for a particular validator
 func (k DistrKeeper) DeleteValidatorSlashEvents(ctx sdk.Context, val sdk.AccAddress) {
 	store := ctx.KVStore(k.storeKey)
-	iter := sdk.KVStorePrefixIterator(store, types.GetValidatorSlashEventPrefix(val))
+	prefix := types.GetValidatorSlashEventPrefix(val)
+	iter := k.cdb.Iterator(sdk.NewPrefixedKey([]byte(k.storeKey.Name()), prefix), sdk.NewPrefixedKey([]byte(k.storeKey.Name()), sdk.PrefixEndBytes(prefix)))
+
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
 		store.Delete(iter.Key())

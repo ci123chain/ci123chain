@@ -140,9 +140,9 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 
 	//fcKeeper := fc.NewFcKeeper(cdc, fcStoreKey, accKeeper)
 
-	stakingKeeper := staking.NewKeeper(cdc, stakingStoreKey, accKeeper,supplyKeeper, paramsKeeper.Subspace(params.ModuleName))
+	stakingKeeper := staking.NewKeeper(cdc, stakingStoreKey, accKeeper,supplyKeeper, paramsKeeper.Subspace(params.ModuleName), cdb)
 
-	distrKeeper := k.NewKeeper(cdc, disrtStoreKey, supplyKeeper, accKeeper, auth.FeeCollectorName, paramsKeeper.Subspace(distr.DefaultCodespace), stakingKeeper)
+	distrKeeper := k.NewKeeper(cdc, disrtStoreKey, supplyKeeper, accKeeper, auth.FeeCollectorName, paramsKeeper.Subspace(distr.DefaultCodespace), stakingKeeper, cdb)
 
 	mintSubspace := paramsKeeper.Subspace(mint.DefaultCodeSpce)
 	mintKeeper := mint.NewKeeper(cdc, mintStoreKey, mintSubspace, stakingKeeper, supplyKeeper, auth.FeeCollectorName)

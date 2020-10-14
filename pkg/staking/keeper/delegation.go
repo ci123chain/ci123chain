@@ -220,9 +220,9 @@ func (k StakingKeeper) Undelegate(ctx sdk.Context, delAddr sdk.AccAddress, valAd
 }
 
 func (k StakingKeeper) HasReceivingRedelegation(ctx sdk.Context, delAddr sdk.AccAddress, valDstAddr sdk.AccAddress) bool {
-	store := ctx.KVStore(k.storeKey)
 	prefix := types.GetREDsByDelToValDstIndexKey(delAddr, valDstAddr)
-	iterator := sdk.KVStorePrefixIterator(store, prefix)
+
+	iterator := k.cdb.Iterator(sdk.NewPrefixedKey([]byte(k.storeKey.Name()), prefix), sdk.NewPrefixedKey([]byte(k.storeKey.Name()), sdk.PrefixEndBytes(prefix)))
 	defer iterator.Close()
 
 	return iterator.Valid()
@@ -272,9 +272,8 @@ func (k StakingKeeper) GetUnbondingDelegations(ctx sdk.Context, delegator sdk.Ac
 
 	unbondingDelegations = make([]types.UnbondingDelegation, maxRetrieve)
 
-	store := ctx.KVStore(k.storeKey)
 	delegatorPrefixKey := types.GetUBDsKey(delegator)
-	iterator := sdk.KVStorePrefixIterator(store, delegatorPrefixKey)
+	iterator := k.cdb.Iterator(sdk.NewPrefixedKey([]byte(k.storeKey.Name()), delegatorPrefixKey), sdk.NewPrefixedKey([]byte(k.storeKey.Name()), sdk.PrefixEndBytes(delegatorPrefixKey)))
 	defer iterator.Close()
 
 	i := 0
@@ -505,8 +504,10 @@ func (k StakingKeeper) DequeueAllMatureRedelegationQueue(ctx sdk.Context, currTi
 
 // Returns all the redelegation queue timeslices from time 0 until endTime
 func (k StakingKeeper) RedelegationQueueIterator(ctx sdk.Context, endTime time.Time) sdk.Iterator {
-	store := ctx.KVStore(k.storeKey)
-	return store.Iterator(types.RedelegationQueueKey, sdk.InclusiveEndBytes(types.GetRedelegationTimeKey(endTime)))
+	prefix := types.GetRedelegationTimeKey(endTime)
+	iterator := k.cdb.Iterator(sdk.NewPrefixedKey([]byte(k.storeKey.Name()), prefix), sdk.NewPrefixedKey([]byte(k.storeKey.Name()), sdk.PrefixEndBytes(prefix)))
+
+	return iterator
 }
 
 // CompleteRedelegationWithAmount completes the redelegations of all mature entries in the
@@ -595,9 +596,10 @@ func (k StakingKeeper) CompleteUnbondingWithAmount(ctx sdk.Context, delAddr sdk.
 
 // Returns all the unbonding queue timeslices from time 0 until endTime
 func (k StakingKeeper) UBDQueueIterator(ctx sdk.Context, endTime time.Time) sdk.Iterator {
-	store := ctx.KVStore(k.storeKey)
-	return store.Iterator(types.UnbondingQueueKey,
-		sdk.InclusiveEndBytes(types.GetUnbondingDelegationTimeKey(endTime)))
+	prefix := types.GetUnbondingDelegationTimeKey(endTime)
+	iterator := k.cdb.Iterator(sdk.NewPrefixedKey([]byte(k.storeKey.Name()), prefix), sdk.NewPrefixedKey([]byte(k.storeKey.Name()), sdk.PrefixEndBytes(prefix)))
+
+	return iterator
 }
 
 // Returns a concatenated list of all the timeslices inclusively previous to
@@ -631,7 +633,8 @@ func (k StakingKeeper) RemoveRedelegation(ctx sdk.Context, red types.Redelegatio
 // return all redelegations from a particular validator
 func (k StakingKeeper) GetRedelegationsFromSrcValidator(ctx sdk.Context, valAddr sdk.AccAddress) (reds []types.Redelegation) {
 	store := ctx.KVStore(k.storeKey)
-	iterator := sdk.KVStorePrefixIterator(store, types.GetREDsFromValSrcIndexKey(valAddr))
+	prefix := types.GetREDsFromValSrcIndexKey(valAddr)
+	iterator := k.cdb.Iterator(sdk.NewPrefixedKey([]byte(k.storeKey.Name()), prefix), sdk.NewPrefixedKey([]byte(k.storeKey.Name()), sdk.PrefixEndBytes(prefix)))
 	defer iterator.Close()
 	var red types.Redelegation
 
@@ -646,8 +649,7 @@ func (k StakingKeeper) GetRedelegationsFromSrcValidator(ctx sdk.Context, valAddr
 
 // return all delegations to a specific validator. Useful for querier.
 func (k StakingKeeper) GetValidatorDelegations(ctx sdk.Context, valAddr sdk.AccAddress) (delegations []types.Delegation) { //nolint:interfacer
-	store := ctx.KVStore(k.storeKey)
-	iterator := sdk.KVStorePrefixIterator(store, types.DelegationKey)
+	iterator := k.cdb.Iterator(sdk.NewPrefixedKey([]byte(k.storeKey.Name()), types.DelegationKey), sdk.NewPrefixedKey([]byte(k.storeKey.Name()), sdk.PrefixEndBytes(types.DelegationKey)))
 	defer iterator.Close()
 
 	for ; iterator.Valid(); iterator.Next() {

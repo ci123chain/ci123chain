@@ -194,6 +194,14 @@ func (st *iavlStore) ReverseIterator(start, end []byte) Iterator {
 	return newIAVLIterator(st.tree.ImmutableTree, start, end, false)
 }
 
+func (st *iavlStore) DbIterator(start, end []byte) Iterator {
+	return newIAVLIterator(st.tree.ImmutableTree, start, end, true)
+}
+
+func (st *iavlStore) DbReverseIterator(start, end []byte) Iterator {
+	return newIAVLIterator(st.tree.ImmutableTree, start, end, false)
+}
+
 // Handle gatest the latest height, if height is 0
 func getHeight(tree *iavl.MutableTree, req abci.RequestQuery) int64 {
 	height := req.Height
