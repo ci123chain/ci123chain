@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/couchdb"
 	"github.com/ci123chain/ci123chain/pkg/staking/types"
 	gogotypes "github.com/gogo/protobuf/types"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
@@ -299,8 +300,13 @@ func (k StakingKeeper) getLastValidatorsByAddr(ctx sdk.Context) validatorsByAddr
 	iterator := k.LastValidatorsIterator(ctx)
 	defer iterator.Close()
 	for ; iterator.Valid(); iterator.Next() {
+		realKey := iterator.Key()
+		_, ok := iterator.(*couchdb.CouchIterator)
+		if ok {
+			realKey = sdk.GetRealKey(iterator.Key())
+		}
 		var valAddr [sdk.AddrLen]byte
-		copy(valAddr[:], iterator.Key()[1:])
+		copy(valAddr[:], realKey[1:])
 		powerBytes := iterator.Value()
 		last[valAddr] = make([]byte, len(powerBytes))
 		copy(last[valAddr], powerBytes)

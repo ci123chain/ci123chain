@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/couchdb"
 	"github.com/ci123chain/ci123chain/pkg/staking/types"
 	"time"
 )
@@ -221,12 +222,12 @@ func (k StakingKeeper) Undelegate(ctx sdk.Context, delAddr sdk.AccAddress, valAd
 
 func (k StakingKeeper) HasReceivingRedelegation(ctx sdk.Context, delAddr sdk.AccAddress, valDstAddr sdk.AccAddress) bool {
 	prefix := types.GetREDsByDelToValDstIndexKey(delAddr, valDstAddr)
-
-	iterator := k.cdb.Iterator(sdk.NewPrefixedKey([]byte(k.storeKey.Name()), prefix), sdk.NewPrefixedKey([]byte(k.storeKey.Name()), sdk.PrefixEndBytes(prefix)))
+	key := sdk.NewPrefixedKey([]byte(k.storeKey.Name()), prefix)
+	iterator := k.cdb.Iterator(key, sdk.PrefixEndBytes(key))
 	if !iterator.Valid() {
 		iterator.Close()
 		store := ctx.KVStore(k.storeKey)
-		iterator = sdk.KVStoreReversePrefixIterator(store, prefix)
+		iterator = sdk.KVStorePrefixIterator(store, prefix)
 	}
 	defer iterator.Close()
 
@@ -278,11 +279,12 @@ func (k StakingKeeper) GetUnbondingDelegations(ctx sdk.Context, delegator sdk.Ac
 	unbondingDelegations = make([]types.UnbondingDelegation, maxRetrieve)
 
 	prefix := types.GetUBDsKey(delegator)
-	iterator := k.cdb.Iterator(sdk.NewPrefixedKey([]byte(k.storeKey.Name()), prefix), sdk.NewPrefixedKey([]byte(k.storeKey.Name()), sdk.PrefixEndBytes(prefix)))
+	key := sdk.NewPrefixedKey([]byte(k.storeKey.Name()), prefix)
+	iterator := k.cdb.Iterator(key, sdk.PrefixEndBytes(key))
 	if !iterator.Valid() {
 		iterator.Close()
 		store := ctx.KVStore(k.storeKey)
-		iterator = sdk.KVStoreReversePrefixIterator(store, prefix)
+		iterator = sdk.KVStorePrefixIterator(store, prefix)
 	}
 	defer iterator.Close()
 
@@ -499,14 +501,20 @@ func (k StakingKeeper) DequeueAllMatureRedelegationQueue(ctx sdk.Context, currTi
 	store := ctx.KVStore(k.storeKey)
 
 	// gets an iterator for all timeslices from time 0 until the current Blockheader time
-	redelegationTimesliceIterator := k.RedelegationQueueIterator(ctx, ctx.BlockHeader().Time)
-	for ; redelegationTimesliceIterator.Valid(); redelegationTimesliceIterator.Next() {
+	iterator := k.RedelegationQueueIterator(ctx, ctx.BlockHeader().Time)
+	for ; iterator.Valid(); iterator.Next() {
 		timeslice := types.DVVTriplets{}
-		value := redelegationTimesliceIterator.Value()
+		value := iterator.Value()
 		k.cdc.MustUnmarshalBinaryLengthPrefixed(value, &timeslice)
 
 		matureRedelegations = append(matureRedelegations, timeslice.Triplets...)
-		store.Delete(redelegationTimesliceIterator.Key())
+
+		realKey := iterator.Key()
+		_, ok := iterator.(*couchdb.CouchIterator)
+		if ok {
+			realKey = sdk.GetRealKey(iterator.Key())
+		}
+		store.Delete(realKey)
 	}
 
 	return matureRedelegations
@@ -515,11 +523,12 @@ func (k StakingKeeper) DequeueAllMatureRedelegationQueue(ctx sdk.Context, currTi
 // Returns all the redelegation queue timeslices from time 0 until endTime
 func (k StakingKeeper) RedelegationQueueIterator(ctx sdk.Context, endTime time.Time) sdk.Iterator {
 	prefix := types.GetRedelegationTimeKey(endTime)
-	iterator := k.cdb.Iterator(sdk.NewPrefixedKey([]byte(k.storeKey.Name()), prefix), sdk.NewPrefixedKey([]byte(k.storeKey.Name()), sdk.PrefixEndBytes(prefix)))
+	key := sdk.NewPrefixedKey([]byte(k.storeKey.Name()), prefix)
+	iterator := k.cdb.Iterator(key, sdk.PrefixEndBytes(key))
 	if !iterator.Valid() {
 		iterator.Close()
 		store := ctx.KVStore(k.storeKey)
-		iterator = sdk.KVStoreReversePrefixIterator(store, prefix)
+		iterator = sdk.KVStorePrefixIterator(store, prefix)
 	}
 	return iterator
 }
@@ -626,14 +635,20 @@ func (k StakingKeeper) DequeueAllMatureUBDQueue(ctx sdk.Context, currTime time.T
 	store := ctx.KVStore(k.storeKey)
 
 	// gets an iterator for all timeslices from time 0 until the current Blockheader time
-	unbondingTimesliceIterator := k.UBDQueueIterator(ctx, ctx.BlockHeader().Time)
-	for ; unbondingTimesliceIterator.Valid(); unbondingTimesliceIterator.Next() {
+	iterator := k.UBDQueueIterator(ctx, ctx.BlockHeader().Time)
+	for ; iterator.Valid(); iterator.Next() {
 		timeslice := types.DVPairs{}
-		value := unbondingTimesliceIterator.Value()
+		value := iterator.Value()
 		k.cdc.MustUnmarshalBinaryLengthPrefixed(value, &timeslice)
 
 		matureUnbonds = append(matureUnbonds, timeslice.Pairs...)
-		store.Delete(unbondingTimesliceIterator.Key())
+
+		realKey := iterator.Key()
+		_, ok := iterator.(*couchdb.CouchIterator)
+		if ok {
+			realKey = sdk.GetRealKey(iterator.Key())
+		}
+		store.Delete(realKey)
 	}
 
 	return matureUnbonds
@@ -652,17 +667,22 @@ func (k StakingKeeper) RemoveRedelegation(ctx sdk.Context, red types.Redelegatio
 func (k StakingKeeper) GetRedelegationsFromSrcValidator(ctx sdk.Context, valAddr sdk.AccAddress) (reds []types.Redelegation) {
 	store := ctx.KVStore(k.storeKey)
 	prefix := types.GetREDsFromValSrcIndexKey(valAddr)
-	iterator := k.cdb.Iterator(sdk.NewPrefixedKey([]byte(k.storeKey.Name()), prefix), sdk.NewPrefixedKey([]byte(k.storeKey.Name()), sdk.PrefixEndBytes(prefix)))
+	key := sdk.NewPrefixedKey([]byte(k.storeKey.Name()), prefix)
+	iterator := k.cdb.Iterator(key, sdk.PrefixEndBytes(key))
 	if !iterator.Valid() {
 		iterator.Close()
-		store := ctx.KVStore(k.storeKey)
-		iterator = sdk.KVStoreReversePrefixIterator(store, prefix)
+		iterator = sdk.KVStorePrefixIterator(store, prefix)
 	}
 	defer iterator.Close()
 	var red types.Redelegation
 
 	for ; iterator.Valid(); iterator.Next() {
-		key := types.GetREDKeyFromValSrcIndexKey(iterator.Key())
+		realKey := iterator.Key()
+		_, ok := iterator.(*couchdb.CouchIterator)
+		if ok {
+			realKey = sdk.GetRealKey(iterator.Key())
+		}
+		key := types.GetREDKeyFromValSrcIndexKey(realKey)
 		value := store.Get(key)
 		types.StakingCodec.MustUnmarshalBinaryLengthPrefixed(value, &red)
 		reds = append(reds, red)
@@ -673,11 +693,12 @@ func (k StakingKeeper) GetRedelegationsFromSrcValidator(ctx sdk.Context, valAddr
 // return all delegations to a specific validator. Useful for querier.
 func (k StakingKeeper) GetValidatorDelegations(ctx sdk.Context, valAddr sdk.AccAddress) (delegations []types.Delegation) { //nolint:interfacer
 	prefix := types.DelegationKey
-	iterator := k.cdb.Iterator(sdk.NewPrefixedKey([]byte(k.storeKey.Name()), prefix), sdk.NewPrefixedKey([]byte(k.storeKey.Name()), sdk.PrefixEndBytes(prefix)))
+	key := sdk.NewPrefixedKey([]byte(k.storeKey.Name()), prefix)
+	iterator := k.cdb.Iterator(key, sdk.PrefixEndBytes(key))
 	if !iterator.Valid() {
 		iterator.Close()
 		store := ctx.KVStore(k.storeKey)
-		iterator = sdk.KVStoreReversePrefixIterator(store, prefix)
+		iterator = sdk.KVStorePrefixIterator(store, prefix)
 	}
 	defer iterator.Close()
 

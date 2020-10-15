@@ -1,7 +1,16 @@
 package types
 
-func NewPrefixedKey(prefix, key []byte) (realKey []byte){
+import "strings"
+
+func NewPrefixedKey(prefix, realKey []byte) (prefixedKey []byte){
 	prefixKey := []byte("s/k:" + string(prefix) + "/")
-	realKey = append(prefixKey, key...)
+	prefixedKey = append(prefixKey, realKey...)
 	return
+}
+
+func GetRealKey(prefixedKey []byte) []byte {
+	//iterator.Key()
+	key := string(prefixedKey)
+	realKey := strings.Split(key, "/")
+	return []byte(realKey[2])
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/account"
+	"github.com/ci123chain/ci123chain/pkg/couchdb"
 	"github.com/ci123chain/ci123chain/pkg/distribution/types"
 	"github.com/ci123chain/ci123chain/pkg/params"
 	staking "github.com/ci123chain/ci123chain/pkg/staking/keeper"
@@ -333,11 +334,22 @@ func (k DistrKeeper) SetValidatorHistoricalRewards(ctx sdk.Context, val sdk.AccA
 func (k DistrKeeper) DeleteValidatorHistoricalRewards(ctx sdk.Context, val sdk.AccAddress) {
 	store := ctx.KVStore(k.storeKey)
 	prefix := types.GetValidatorHistoricalRewardsPrefix(val)
-	iter := k.cdb.Iterator(sdk.NewPrefixedKey([]byte(k.storeKey.Name()), prefix), sdk.NewPrefixedKey([]byte(k.storeKey.Name()), sdk.PrefixEndBytes(prefix)))
+	key := sdk.NewPrefixedKey([]byte(k.storeKey.Name()), prefix)
+	iterator := k.cdb.Iterator(key, sdk.PrefixEndBytes(key))
+	if !iterator.Valid() {
+		iterator.Close()
+		store := ctx.KVStore(k.storeKey)
+		iterator = sdk.KVStorePrefixIterator(store, prefix)
+	}
 
-	defer iter.Close()
-	for ; iter.Valid(); iter.Next() {
-		store.Delete(iter.Key())
+	defer iterator.Close()
+	for ; iterator.Valid(); iterator.Next() {
+		realKey := iterator.Key()
+		_, ok := iterator.(*couchdb.CouchIterator)
+		if ok {
+			realKey = sdk.GetRealKey(iterator.Key())
+		}
+		store.Delete(realKey)
 	}
 }
 
@@ -395,11 +407,22 @@ func (k DistrKeeper) SetValidatorSlashEvent(ctx sdk.Context, val sdk.AccAddress,
 func (k DistrKeeper) DeleteValidatorSlashEvents(ctx sdk.Context, val sdk.AccAddress) {
 	store := ctx.KVStore(k.storeKey)
 	prefix := types.GetValidatorSlashEventPrefix(val)
-	iter := k.cdb.Iterator(sdk.NewPrefixedKey([]byte(k.storeKey.Name()), prefix), sdk.NewPrefixedKey([]byte(k.storeKey.Name()), sdk.PrefixEndBytes(prefix)))
+	key := sdk.NewPrefixedKey([]byte(k.storeKey.Name()), prefix)
+	iterator := k.cdb.Iterator(key, sdk.PrefixEndBytes(key))
+	if !iterator.Valid() {
+		iterator.Close()
+		store := ctx.KVStore(k.storeKey)
+		iterator = sdk.KVStorePrefixIterator(store, prefix)
+	}
 
-	defer iter.Close()
-	for ; iter.Valid(); iter.Next() {
-		store.Delete(iter.Key())
+	defer iterator.Close()
+	for ; iterator.Valid(); iterator.Next() {
+		realKey := iterator.Key()
+		_, ok := iterator.(*couchdb.CouchIterator)
+		if ok {
+			realKey = sdk.GetRealKey(iterator.Key())
+		}
+		store.Delete(realKey)
 	}
 }
 
