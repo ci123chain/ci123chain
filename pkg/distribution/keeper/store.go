@@ -210,7 +210,6 @@ func (k *DistrKeeper) DeleteValidatorsInfo(ctx sdk.Context, height int64) {
 	store.Delete(GetValidatorsInfoKey(key))
 }
 
-
 func getKey(val sdk.AccAddr, height int64) sdk.AccAddr {
 	add := fmt.Sprintf("%X", val)
 	h := strconv.FormatInt(height, 10)

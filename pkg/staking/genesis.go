@@ -99,7 +99,7 @@ func InitGenesis(
 	}
 
 	// add coins if not provided on genesis
-	if ak.GetAllBalances(ctx, bondedPool.GetAddress()).IsZero() {
+	if ak.GetBalance(ctx, bondedPool.GetAddress()).IsZero() {
 		ModuleAcc := ak.GetAccount(ctx, bondedPool.GetAddress()).(exported.ModuleAccountI)
 		err := ModuleAcc.SetCoin(sdk.NewCoin(bondedTokens))
 		if err != nil {
@@ -114,7 +114,7 @@ func InitGenesis(
 		panic(fmt.Sprintf("%s module account has not been set", types.NotBondedPoolName))
 	}
 
-	if ak.GetAllBalances(ctx, notBondedPool.GetAddress()).IsZero() {
+	if ak.GetBalance(ctx, notBondedPool.GetAddress()).IsZero() {
 		ModuleAcc := ak.GetAccount(ctx, notBondedPool.GetAddress()).(exported.ModuleAccountI)
 		err := ModuleAcc.SetCoin(sdk.NewCoin(notBondedTokens))
 		if err != nil {

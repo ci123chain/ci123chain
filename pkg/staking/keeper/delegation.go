@@ -223,6 +223,11 @@ func (k StakingKeeper) HasReceivingRedelegation(ctx sdk.Context, delAddr sdk.Acc
 	prefix := types.GetREDsByDelToValDstIndexKey(delAddr, valDstAddr)
 
 	iterator := k.cdb.Iterator(sdk.NewPrefixedKey([]byte(k.storeKey.Name()), prefix), sdk.NewPrefixedKey([]byte(k.storeKey.Name()), sdk.PrefixEndBytes(prefix)))
+	if !iterator.Valid() {
+		iterator.Close()
+		store := ctx.KVStore(k.storeKey)
+		iterator = sdk.KVStoreReversePrefixIterator(store, prefix)
+	}
 	defer iterator.Close()
 
 	return iterator.Valid()
@@ -272,8 +277,13 @@ func (k StakingKeeper) GetUnbondingDelegations(ctx sdk.Context, delegator sdk.Ac
 
 	unbondingDelegations = make([]types.UnbondingDelegation, maxRetrieve)
 
-	delegatorPrefixKey := types.GetUBDsKey(delegator)
-	iterator := k.cdb.Iterator(sdk.NewPrefixedKey([]byte(k.storeKey.Name()), delegatorPrefixKey), sdk.NewPrefixedKey([]byte(k.storeKey.Name()), sdk.PrefixEndBytes(delegatorPrefixKey)))
+	prefix := types.GetUBDsKey(delegator)
+	iterator := k.cdb.Iterator(sdk.NewPrefixedKey([]byte(k.storeKey.Name()), prefix), sdk.NewPrefixedKey([]byte(k.storeKey.Name()), sdk.PrefixEndBytes(prefix)))
+	if !iterator.Valid() {
+		iterator.Close()
+		store := ctx.KVStore(k.storeKey)
+		iterator = sdk.KVStoreReversePrefixIterator(store, prefix)
+	}
 	defer iterator.Close()
 
 	i := 0
@@ -506,7 +516,11 @@ func (k StakingKeeper) DequeueAllMatureRedelegationQueue(ctx sdk.Context, currTi
 func (k StakingKeeper) RedelegationQueueIterator(ctx sdk.Context, endTime time.Time) sdk.Iterator {
 	prefix := types.GetRedelegationTimeKey(endTime)
 	iterator := k.cdb.Iterator(sdk.NewPrefixedKey([]byte(k.storeKey.Name()), prefix), sdk.NewPrefixedKey([]byte(k.storeKey.Name()), sdk.PrefixEndBytes(prefix)))
-
+	if !iterator.Valid() {
+		iterator.Close()
+		store := ctx.KVStore(k.storeKey)
+		iterator = sdk.KVStoreReversePrefixIterator(store, prefix)
+	}
 	return iterator
 }
 
@@ -598,7 +612,11 @@ func (k StakingKeeper) CompleteUnbondingWithAmount(ctx sdk.Context, delAddr sdk.
 func (k StakingKeeper) UBDQueueIterator(ctx sdk.Context, endTime time.Time) sdk.Iterator {
 	prefix := types.GetUnbondingDelegationTimeKey(endTime)
 	iterator := k.cdb.Iterator(sdk.NewPrefixedKey([]byte(k.storeKey.Name()), prefix), sdk.NewPrefixedKey([]byte(k.storeKey.Name()), sdk.PrefixEndBytes(prefix)))
-
+	if !iterator.Valid() {
+		iterator.Close()
+		store := ctx.KVStore(k.storeKey)
+		iterator = sdk.KVStoreReversePrefixIterator(store, prefix)
+	}
 	return iterator
 }
 
@@ -635,6 +653,11 @@ func (k StakingKeeper) GetRedelegationsFromSrcValidator(ctx sdk.Context, valAddr
 	store := ctx.KVStore(k.storeKey)
 	prefix := types.GetREDsFromValSrcIndexKey(valAddr)
 	iterator := k.cdb.Iterator(sdk.NewPrefixedKey([]byte(k.storeKey.Name()), prefix), sdk.NewPrefixedKey([]byte(k.storeKey.Name()), sdk.PrefixEndBytes(prefix)))
+	if !iterator.Valid() {
+		iterator.Close()
+		store := ctx.KVStore(k.storeKey)
+		iterator = sdk.KVStoreReversePrefixIterator(store, prefix)
+	}
 	defer iterator.Close()
 	var red types.Redelegation
 
@@ -649,7 +672,13 @@ func (k StakingKeeper) GetRedelegationsFromSrcValidator(ctx sdk.Context, valAddr
 
 // return all delegations to a specific validator. Useful for querier.
 func (k StakingKeeper) GetValidatorDelegations(ctx sdk.Context, valAddr sdk.AccAddress) (delegations []types.Delegation) { //nolint:interfacer
-	iterator := k.cdb.Iterator(sdk.NewPrefixedKey([]byte(k.storeKey.Name()), types.DelegationKey), sdk.NewPrefixedKey([]byte(k.storeKey.Name()), sdk.PrefixEndBytes(types.DelegationKey)))
+	prefix := types.DelegationKey
+	iterator := k.cdb.Iterator(sdk.NewPrefixedKey([]byte(k.storeKey.Name()), prefix), sdk.NewPrefixedKey([]byte(k.storeKey.Name()), sdk.PrefixEndBytes(prefix)))
+	if !iterator.Valid() {
+		iterator.Close()
+		store := ctx.KVStore(k.storeKey)
+		iterator = sdk.KVStoreReversePrefixIterator(store, prefix)
+	}
 	defer iterator.Close()
 
 	for ; iterator.Valid(); iterator.Next() {

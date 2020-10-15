@@ -203,22 +203,41 @@ func (k StakingKeeper) SetLastValidatorPower(ctx sdk.Context, operator sdk.AccAd
 
 // returns an iterator for the current validator power store
 func (k StakingKeeper) ValidatorsPowerStoreIterator(ctx sdk.Context) sdk.Iterator {
-	iterator := k.cdb.ReverseIterator(sdk.NewPrefixedKey([]byte(k.storeKey.Name()), types.ValidatorsByPowerIndexKey), sdk.NewPrefixedKey([]byte(k.storeKey.Name()), sdk.PrefixEndBytes(types.ValidatorsByPowerIndexKey)))
-	return iterator
+	prefix := types.ValidatorsByPowerIndexKey
+	iterator := k.cdb.ReverseIterator(sdk.NewPrefixedKey([]byte(k.storeKey.Name()), prefix), sdk.NewPrefixedKey([]byte(k.storeKey.Name()), sdk.PrefixEndBytes(prefix)))
+	if iterator.Valid() {
+		return iterator
+	} else {
+		iterator.Close()
+		store := ctx.KVStore(k.storeKey)
+		return sdk.KVStoreReversePrefixIterator(store, prefix)
+	}
 }
 
 // returns an iterator for the consensus validators in the last block
 func (k StakingKeeper) LastValidatorsIterator(ctx sdk.Context) (iterator sdk.Iterator) {
-	iterator = k.cdb.Iterator(sdk.NewPrefixedKey([]byte(k.storeKey.Name()), types.LastValidatorPowerKey), sdk.NewPrefixedKey([]byte(k.storeKey.Name()), sdk.PrefixEndBytes(types.LastValidatorPowerKey)))
-	return iterator
+	prefix := types.LastValidatorPowerKey
+	iterator = k.cdb.Iterator(sdk.NewPrefixedKey([]byte(k.storeKey.Name()), prefix), sdk.NewPrefixedKey([]byte(k.storeKey.Name()), sdk.PrefixEndBytes(prefix)))
+	if iterator.Valid() {
+		return iterator
+	} else {
+		iterator.Close()
+		store := ctx.KVStore(k.storeKey)
+		return sdk.KVStoreReversePrefixIterator(store, prefix)
+	}
 }
 
 // Returns all the validator queue timeslices from time 0 until endTime
 func (k StakingKeeper) ValidatorQueueIterator(ctx sdk.Context, endTime time.Time) sdk.Iterator {
 	prefix := types.GetValidatorQueueTimeKey(endTime)
 	iterator := k.cdb.Iterator(sdk.NewPrefixedKey([]byte(k.storeKey.Name()), prefix), sdk.NewPrefixedKey([]byte(k.storeKey.Name()), sdk.PrefixEndBytes(prefix)))
-
-	return iterator
+	if iterator.Valid() {
+		return iterator
+	} else {
+		iterator.Close()
+		store := ctx.KVStore(k.storeKey)
+		return sdk.KVStoreReversePrefixIterator(store, prefix)
+	}
 }
 
 // Unbonds all the unbonding validators that have finished their unbonding period
@@ -256,7 +275,14 @@ func (k StakingKeeper) GetLastValidators(ctx sdk.Context) (validators []types.Va
 	maxValidators := k.MaxValidators(ctx)
 	validators = make([]types.Validator, maxValidators)
 
-	iterator := k.cdb.Iterator(sdk.NewPrefixedKey([]byte(k.storeKey.Name()), types.LastValidatorPowerKey), sdk.NewPrefixedKey([]byte(k.storeKey.Name()), sdk.PrefixEndBytes(types.LastValidatorPowerKey)))
+	prefix := types.LastValidatorPowerKey
+	iterator := k.cdb.Iterator(sdk.NewPrefixedKey([]byte(k.storeKey.Name()), prefix), sdk.NewPrefixedKey([]byte(k.storeKey.Name()), sdk.PrefixEndBytes(prefix)))
+	if !iterator.Valid() {
+		iterator.Close()
+		store := ctx.KVStore(k.storeKey)
+		iterator = sdk.KVStoreReversePrefixIterator(store, prefix)
+	}
+
 	defer iterator.Close()
 
 	i := 0
@@ -276,8 +302,15 @@ func (k StakingKeeper) GetLastValidators(ctx sdk.Context) (validators []types.Va
 }
 
 // get the set of all validators with no limits, used during genesis dump
-func (k StakingKeeper) GetAllValidators() (validators []types.Validator) {
-	iterator := k.cdb.Iterator(sdk.NewPrefixedKey([]byte(k.storeKey.Name()),types.ValidatorsKey), sdk.NewPrefixedKey([]byte(k.storeKey.Name()), sdk.PrefixEndBytes(types.ValidatorsKey)))
+func (k StakingKeeper) GetAllValidators(ctx sdk.Context) (validators []types.Validator) {
+	prefix := types.ValidatorsKey
+	iterator := k.cdb.Iterator(sdk.NewPrefixedKey([]byte(k.storeKey.Name()), prefix), sdk.NewPrefixedKey([]byte(k.storeKey.Name()), sdk.PrefixEndBytes(prefix)))
+	if !iterator.Valid() {
+		iterator.Close()
+		store := ctx.KVStore(k.storeKey)
+		iterator = sdk.KVStoreReversePrefixIterator(store, prefix)
+	}
+
 	defer iterator.Close()
 
 	for ; iterator.Valid(); iterator.Next() {

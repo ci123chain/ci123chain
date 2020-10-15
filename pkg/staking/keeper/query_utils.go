@@ -13,8 +13,14 @@ func (k StakingKeeper) GetDelegatorValidators(
 
 	validators := make([]types.Validator, maxRetrieve)
 
-	delegatorPrefixKey := types.GetDelegationsKey(delegatorAddr)
-	iterator := k.cdb.Iterator(sdk.NewPrefixedKey([]byte(k.storeKey.Name()), delegatorPrefixKey), sdk.NewPrefixedKey([]byte(k.storeKey.Name()), sdk.PrefixEndBytes(delegatorPrefixKey)))
+	prefix := types.GetDelegationsKey(delegatorAddr)
+	iterator := k.cdb.Iterator(sdk.NewPrefixedKey([]byte(k.storeKey.Name()), prefix), sdk.NewPrefixedKey([]byte(k.storeKey.Name()), sdk.PrefixEndBytes(prefix)))
+	if !iterator.Valid(){
+		iterator.Close()
+		store := ctx.KVStore(k.storeKey)
+		iterator = sdk.KVStoreReversePrefixIterator(store, prefix)
+	}
+
 	defer iterator.Close()
 
 	i := 0
@@ -56,8 +62,13 @@ func (k StakingKeeper) GetDelegatorValidator(
 func (k StakingKeeper) GetAllRedelegations(
 	ctx sdk.Context, delegator sdk.AccAddress, srcValAddress, dstValAddress sdk.AccAddress,
 ) []types.Redelegation {
-	delegatorPrefixKey := types.GetREDsKey(delegator)
-	iterator := k.cdb.Iterator(sdk.NewPrefixedKey([]byte(k.storeKey.Name()), delegatorPrefixKey), sdk.NewPrefixedKey([]byte(k.storeKey.Name()), sdk.PrefixEndBytes(delegatorPrefixKey)))
+	prefix := types.GetREDsKey(delegator)
+	iterator := k.cdb.Iterator(sdk.NewPrefixedKey([]byte(k.storeKey.Name()), prefix), sdk.NewPrefixedKey([]byte(k.storeKey.Name()), sdk.PrefixEndBytes(prefix)))
+	if !iterator.Valid() {
+		iterator.Close()
+		store := ctx.KVStore(k.storeKey)
+		iterator = sdk.KVStoreReversePrefixIterator(store, prefix)
+	}
 
 	defer iterator.Close()
 
@@ -85,9 +96,13 @@ func (k StakingKeeper) GetAllRedelegations(
 // return all delegations for a delegator
 func (k StakingKeeper) GetAllDelegatorDelegations(ctx sdk.Context, delegator sdk.AccAddress) []types.Delegation {
 	delegations := make([]types.Delegation, 0)
-	delegatorPrefixKey := types.GetDelegationsKey(delegator)
-	iterator := k.cdb.Iterator(sdk.NewPrefixedKey([]byte(k.storeKey.Name()), delegatorPrefixKey), sdk.NewPrefixedKey([]byte(k.storeKey.Name()), sdk.PrefixEndBytes(delegatorPrefixKey)))
-
+	prefix := types.GetDelegationsKey(delegator)
+	iterator := k.cdb.Iterator(sdk.NewPrefixedKey([]byte(k.storeKey.Name()), prefix), sdk.NewPrefixedKey([]byte(k.storeKey.Name()), sdk.PrefixEndBytes(prefix)))
+	if !iterator.Valid() {
+		iterator.Close()
+		store := ctx.KVStore(k.storeKey)
+		iterator = sdk.KVStoreReversePrefixIterator(store, prefix)
+	}
 	defer iterator.Close()
 
 	i := 0

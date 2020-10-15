@@ -96,7 +96,7 @@ func queryValidators(ctx sdk.Context, req abci.RequestQuery, k StakingKeeper) ([
 		return nil, sdk.ErrInternal("unmarshal failed")
 	}
 
-	validators := k.GetAllValidators()
+	validators := k.GetAllValidators(ctx)
 	filteredVals := make([]types.Validator, 0, len(validators))
 
 	if params.Status == sdk.BondStatusAll {
