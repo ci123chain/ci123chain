@@ -22,7 +22,8 @@ const (
 	flagPruning        = "pruning"
 	//flagLogLevel       = "log-level"
 	flagStateDB 	   = "statedb" // couchdb://admin:password@192.168.2.89:5984
-	version 		   = "CiChain v1.1.21"
+	flagShardIndex     = "shardIndex"
+	version 		   = "CiChain v1.1.22"
 )
 
 func startCmd(ctx *app.Context, appCreator app.AppCreator) *cobra.Command {
@@ -49,6 +50,7 @@ func startCmd(ctx *app.Context, appCreator app.AppCreator) *cobra.Command {
 	cmd.Flags().String(flagTraceStore, "", "Enable KVStore tracing to an output file")
 	cmd.Flags().String(flagPruning, "syncable", "Pruning strategy: syncable, nothing, everything")
 	cmd.Flags().String(flagStateDB, "leveldb", "db of abci persistent")
+	cmd.Flags().String(flagShardIndex, "", "index of shard")
 
 	//cmd.Flags().String(flagLogLevel, "debug", "Run abci app with different log level")
 	tcmd.AddNodeFlags(cmd)

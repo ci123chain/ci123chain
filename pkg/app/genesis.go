@@ -9,12 +9,15 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/app/module"
 	"github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/spf13/viper"
 	tmabci "github.com/tendermint/tendermint/abci/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
-const INITCHAINKEY string = "isInitChain"
-
+const (
+	INITCHAINKEY  = "isInitChain"
+	FIRSTSHARD    = "1"
+)
 func AppGenStateJSON(validators []tmtypes.GenesisValidator) (json.RawMessage, error) {
 	appState := module.ModuleBasics.DefaultGenesis(validators)
 	stateBytes, err := json.Marshal(appState)
@@ -28,16 +31,21 @@ func AppGenStateJSON(validators []tmtypes.GenesisValidator) (json.RawMessage, er
 type GenesisState map[string]json.RawMessage
 
 func (c *Chain) InitChainer (ctx sdk.Context, req tmabci.RequestInitChain) tmabci.ResponseInitChain {
-	var genesisState GenesisState
-	store := ctx.KVStore(c.capKeyMainStore)
-	isInitChain := store.Get([]byte(INITCHAINKEY))
-	if isInitChain != nil {
+	index := viper.GetString(flagShardIndex)
+	if len(index) != 0 && index != FIRSTSHARD {
 		return tmabci.ResponseInitChain{}
 	} else {
-		c.cdc.MustUnmarshalJSON(req.AppStateBytes, &genesisState)
-		store.Set([]byte(INITCHAINKEY), []byte("true"))
+		var genesisState GenesisState
+		store := ctx.KVStore(c.capKeyMainStore)
+		isInitChain := store.Get([]byte(INITCHAINKEY))
+		if isInitChain != nil {
+			return tmabci.ResponseInitChain{}
+		} else {
+			c.cdc.MustUnmarshalJSON(req.AppStateBytes, &genesisState)
+			store.Set([]byte(INITCHAINKEY), []byte("true"))
+		}
+		return c.mm.InitGenesis(ctx, genesisState)
 	}
-	return c.mm.InitGenesis(ctx, genesisState)
 }
 
 func GenesisStateFromGenFile(cdc *codec.Codec, genFile string) (genesisState map[string]json.RawMessage, genDoc *tmtypes.GenesisDoc, err error)  {

@@ -56,6 +56,7 @@ const (
 	flagAddress    = "address"
 	flagName       = "name"
 	flagClientHome = "home-client"
+	flagShardIndex = "shardIndex"
 )
 
 var (
