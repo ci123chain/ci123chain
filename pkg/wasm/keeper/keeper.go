@@ -32,10 +32,10 @@ type Keeper struct {
 	homeDir				string
 	AccountKeeper 		account.AccountKeeper
 	StakingKeeper       keeper2.StakingKeeper
-	cdb					dbm.DB
+	sdb					dbm.DB
 }
 
-func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, homeDir string, wasmConfig types.WasmConfig,  accountKeeper account.AccountKeeper, stakingKeeper keeper2.StakingKeeper, cdb dbm.DB) Keeper {
+func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, homeDir string, wasmConfig types.WasmConfig,  accountKeeper account.AccountKeeper, stakingKeeper keeper2.StakingKeeper, sdb dbm.DB) Keeper {
 	wasmer, err := NewWasmer(homeDir, wasmConfig)
 	if err != nil {
 		panic(err)
@@ -48,7 +48,7 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, homeDir string, wasmConf
 		homeDir:       homeDir,
 		AccountKeeper: accountKeeper,
 		StakingKeeper: stakingKeeper,
-		cdb:		   cdb,
+		sdb:		   sdb,
 	}
 	SetAccountKeeper(accountKeeper)
 	SetWasmKeeper(&wk)
@@ -267,7 +267,7 @@ func (k *Keeper) Migrate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAddres
 	startKey := append([]byte(prefix), oldKey...)
 	endKey := EndKey(startKey)
 
-	iter := k.cdb.Iterator(startKey, endKey)
+	iter := k.sdb.Iterator(startKey, endKey)
 	defer iter.Close()
 
 	prefixStoreKey := types.GetContractStorePrefixKey(newContract)

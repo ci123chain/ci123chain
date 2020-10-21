@@ -2,6 +2,7 @@ package store
 
 import (
 	"fmt"
+	"github.com/ci123chain/ci123chain/pkg/couchdb"
 	"io"
 	"sync"
 
@@ -62,11 +63,19 @@ type iavlStore struct {
 // CONTRACT: tree should be fully loaded.
 // nolint: unparam
 func newIAVLStore(db dbm.DB, tree *iavl.MutableTree, numRecent int64, storeEvery int64, key sdk.StoreKey) *iavlStore {
+	var parent CommitStore
+	_, ok := db.(*couchdb.GoCouchDB)
+	if ok {
+		parent = NewBaseKVStore(dbStoreAdapter{db}, storeEvery, numRecent, key).Prefix([]byte(key.Name())).(CommitStore)
+	} else {
+		parent = NewBaseKVStore(dbStoreAdapter{db}, storeEvery, numRecent, key)
+	}
+
 	st := &iavlStore{
 		tree:       tree,
 		numRecent:  numRecent,
 		storeEvery: storeEvery,
-		parent: 	NewBaseKVStore(dbStoreAdapter{db}, storeEvery, numRecent, key).Prefix([]byte(key.Name())).(CommitStore),
+		parent: 	parent,
 	}
 	return st
 }

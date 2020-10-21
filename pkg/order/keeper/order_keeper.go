@@ -4,22 +4,19 @@ import (
 	"errors"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/account"
-	"github.com/ci123chain/ci123chain/pkg/couchdb"
 	"github.com/ci123chain/ci123chain/pkg/order/types"
 	"github.com/ci123chain/ci123chain/pkg/params/subspace"
 	"time"
 )
 
 type OrderKeeper struct {
-	Cdb 		*couchdb.GoCouchDB
 	StoreKey	sdk.StoreKey
 	paramSubspace subspace.Subspace
 	AccountKeeper  account.AccountKeeper
 }
 
-func NewOrderKeeper(cdb *couchdb.GoCouchDB, key sdk.StoreKey, ak account.AccountKeeper) OrderKeeper {
+func NewOrderKeeper(key sdk.StoreKey, ak account.AccountKeeper) OrderKeeper {
 	return OrderKeeper{
-		Cdb:		cdb,
 		StoreKey:	key,
 		AccountKeeper:ak,
 	}

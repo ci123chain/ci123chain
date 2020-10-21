@@ -15,7 +15,7 @@ import (
 // keys for the substores.
 type cacheMultiStore struct {
 	ldb        CacheKVStore
-	cdb		   CacheKVStore
+	sdb		   CacheKVStore
 	stores     map[StoreKey]CacheWrap
 	keysByName map[string]StoreKey
 
@@ -28,7 +28,7 @@ var _ CacheMultiStore = cacheMultiStore{}
 func newCacheMultiStoreFromRMS(rms *rootMultiStore) cacheMultiStore {
 	cms := cacheMultiStore{
 		ldb:          NewCacheKVStore(dbStoreAdapter{rms.ldb}),
-		cdb:		  NewCacheKVStore(dbStoreAdapter{rms.cdb}),
+		sdb:		  NewCacheKVStore(dbStoreAdapter{rms.sdb}),
 		stores:       make(map[StoreKey]CacheWrap, len(rms.stores)),
 		keysByName:   rms.keysByName,
 		traceWriter:  rms.traceWriter,
@@ -49,7 +49,7 @@ func newCacheMultiStoreFromRMS(rms *rootMultiStore) cacheMultiStore {
 func newCacheMultiStoreFromCMS(cms cacheMultiStore) cacheMultiStore {
 	cms2 := cacheMultiStore{
 		ldb:           NewCacheKVStore(cms.ldb),
-		cdb:           NewCacheKVStore(cms.cdb),
+		sdb:           NewCacheKVStore(cms.sdb),
 		stores:       make(map[StoreKey]CacheWrap, len(cms.stores)),
 		traceWriter:  cms.traceWriter,
 		traceContext: cms.traceContext,
@@ -108,7 +108,7 @@ func (cms cacheMultiStore) GetStoreType() StoreType {
 // Implements CacheMultiStore.
 func (cms cacheMultiStore) Write() {
 	cms.ldb.Write()
-	cms.cdb.Write()
+	cms.sdb.Write()
 	for _, store := range cms.stores {
 		store.Write()
 	}

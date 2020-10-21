@@ -42,10 +42,21 @@ func ConstructAppCreator(appFn AppCreatorInit, name string) AppCreator {
 		if err != nil {
 			return nil, err
 		}
-		cdb, err := GetCDB(statedb)
-		if err != nil {
-			return nil, types.ErrNewDB(types.DefaultCodespace, err)
+		var sdb dbm.DB
+		sdbType := strings.Split(statedb, ":")[0]
+		switch sdbType {
+		case "leveldb":
+			sdb, err = GetLDB(statedb, name)
+			if err != nil {
+				return nil, err
+			}
+		case "couchdb":
+			sdb, err = GetCDB(statedb)
+			if err != nil {
+				return nil, types.ErrNewDB(types.DefaultCodespace, err)
+			}
 		}
+
 		var traceStoreWriter io.Writer
 		if traceStore != "" {
 			traceStoreWriter, err = os.OpenFile(
@@ -57,7 +68,7 @@ func ConstructAppCreator(appFn AppCreatorInit, name string) AppCreator {
 				return nil, abci.ErrInternal("Open file failed")
 			}
 		}
-		app := appFn(logger, ldb, cdb, traceStoreWriter)
+		app := appFn(logger, ldb, sdb, traceStoreWriter)
 		return app, nil
 	}
 }
@@ -140,4 +151,14 @@ func GetCDB(statedb string) (db dbm.DB, err error) {
 		}
 	}
 	return
+}
+
+func GetLDB(statedb, name string) (dbm.DB, error) {
+	//leveldb:/Users/hy/sharedDB
+	root := strings.Split(statedb, ":")[1]
+	ldb, err := dbm.NewGoLevelDB(name, root)
+	if err != nil {
+		return nil, err
+	}
+	return ldb, nil
 }

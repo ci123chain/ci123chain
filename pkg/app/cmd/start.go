@@ -1,11 +1,11 @@
 package cmd
 
 import (
+	"github.com/ci123chain/ci123chain/pkg/app"
+	hnode "github.com/ci123chain/ci123chain/pkg/node"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/ci123chain/ci123chain/pkg/app"
-	hnode "github.com/ci123chain/ci123chain/pkg/node"
 	abcis "github.com/tendermint/tendermint/abci/server"
 	tcmd "github.com/tendermint/tendermint/cmd/tendermint/commands"
 	cmn "github.com/tendermint/tendermint/libs/common"
@@ -21,7 +21,7 @@ const (
 	flagTraceStore     = "trace-store"
 	flagPruning        = "pruning"
 	//flagLogLevel       = "log-level"
-	flagStateDB 	   = "statedb" // couchdb://admin:password@192.168.2.89:5984
+	flagStateDB 	   = "statedb" // couchdb://admin:password@192.168.2.89:5984  || leveldb:/Users/hy/sharedDB
 	flagShardIndex     = "shardIndex"
 	version 		   = "CiChain v1.1.22"
 )

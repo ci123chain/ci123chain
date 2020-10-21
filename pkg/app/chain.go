@@ -23,7 +23,6 @@ import (
 	_defer "github.com/ci123chain/ci123chain/pkg/auth/defer"
 	auth_types "github.com/ci123chain/ci123chain/pkg/auth/types"
 	"github.com/ci123chain/ci123chain/pkg/config"
-	"github.com/ci123chain/ci123chain/pkg/couchdb"
 	distr "github.com/ci123chain/ci123chain/pkg/distribution"
 	k "github.com/ci123chain/ci123chain/pkg/distribution/keeper"
 	"github.com/ci123chain/ci123chain/pkg/ibc"
@@ -113,9 +112,9 @@ type Chain struct {
 	mm *module.AppManager
 }
 
-func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer) *Chain {
+func NewChain(logger log.Logger, ldb tmdb.DB, sdb tmdb.DB, traceStore io.Writer) *Chain {
 	cdc := app_types.MakeCodec()
-	app := baseapp.NewBaseApp("ci123", logger, ldb, cdb, app_types.DefaultTxDecoder(cdc))
+	app := baseapp.NewBaseApp("ci123", logger, ldb, sdb, app_types.DefaultTxDecoder(cdc))
 
 	c := &Chain{
 		BaseApp: 			app,
@@ -141,21 +140,18 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 
 	//fcKeeper := fc.NewFcKeeper(cdc, fcStoreKey, accKeeper)
 
-	stakingKeeper := staking.NewKeeper(cdc, stakingStoreKey, accKeeper,supplyKeeper, paramsKeeper.Subspace(params.ModuleName), cdb)
+	stakingKeeper := staking.NewKeeper(cdc, stakingStoreKey, accKeeper,supplyKeeper, paramsKeeper.Subspace(params.ModuleName), sdb)
 
-	distrKeeper := k.NewKeeper(cdc, disrtStoreKey, supplyKeeper, accKeeper, auth.FeeCollectorName, paramsKeeper.Subspace(distr.DefaultCodespace), stakingKeeper, cdb)
+	distrKeeper := k.NewKeeper(cdc, disrtStoreKey, supplyKeeper, accKeeper, auth.FeeCollectorName, paramsKeeper.Subspace(distr.DefaultCodespace), stakingKeeper, sdb)
 
 	mintSubspace := paramsKeeper.Subspace(mint.DefaultCodeSpce)
 	mintKeeper := mint.NewKeeper(cdc, mintStoreKey, mintSubspace, stakingKeeper, supplyKeeper, auth.FeeCollectorName)
 
-
-	odb := cdb.(*couchdb.GoCouchDB)
-	orderKeeper := order.NewKeeper(odb, OrderStoreKey, accKeeper)
-
+	orderKeeper := order.NewKeeper(OrderStoreKey, accKeeper)
 
 	homeDir := viper.GetString(cli.HomeFlag)
 	var wasmconfig wasm_types.WasmConfig
-	wasmKeeper := wasm.NewKeeper(cdc, wasmStoreKey,homeDir, wasmconfig, accKeeper, stakingKeeper, cdb)
+	wasmKeeper := wasm.NewKeeper(cdc, wasmStoreKey,homeDir, wasmconfig, accKeeper, stakingKeeper, sdb)
 
 	stakingKeeper.SetHooks(staking.NewMultiStakingHooks(distrKeeper.Hooks()))
 	module_order := []string{auth_types.ModuleName, acc_types.ModuleName, supply_types.ModuleName, distr.ModuleName, order.ModuleName,stakingTypes.ModuleName, wasm_types.ModuleName, mint.ModuleName}

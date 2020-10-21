@@ -2,6 +2,7 @@ package store
 
 import (
 	"fmt"
+	"github.com/ci123chain/ci123chain/pkg/couchdb"
 	"io"
 	"reflect"
 	"strings"
@@ -23,8 +24,8 @@ const (
 // cacheMultiStore which is for cache-wrapping other MultiStores. It implements
 // the CommitMultiStore interface.
 type rootMultiStore struct {
-	ldb 	     dbm.DB
-	cdb          dbm.DB
+	ldb 	     dbm.DB //localDB
+	sdb          dbm.DB //sharedDB
 	lastCommitID CommitID
 	pruning      sdk.PruningStrategy
 	storesParams map[StoreKey]storeParams
@@ -39,10 +40,10 @@ var _ CommitMultiStore = (*rootMultiStore)(nil)
 var _ Queryable = (*rootMultiStore)(nil)
 
 // nolint
-func NewCommitMultiStore(ldb dbm.DB, cdb dbm.DB) *rootMultiStore {
+func NewCommitMultiStore(ldb dbm.DB, sdb dbm.DB) *rootMultiStore {
 	return &rootMultiStore{
 		ldb:          ldb,
-		cdb:		  cdb,
+		sdb:		  sdb,
 		storesParams: make(map[StoreKey]storeParams),
 		stores:       make(map[StoreKey]CommitStore),
 		keysByName:   make(map[string]StoreKey),
@@ -341,13 +342,23 @@ func parsePath(path string) (storeName string, subpath string, err sdk.Error) {
 
 func (rs *rootMultiStore) loadCommitStoreFromParams(key sdk.StoreKey, id CommitID, params storeParams) (store CommitStore, err error) {
 	var ldb dbm.DB
-	var cdb dbm.DB
+	var sdb dbm.DB
 	if params.db != nil {
 		ldb = dbm.NewPrefixDB(params.db, []byte("s/_/"))
-		cdb = rs.cdb
+		_, ok := rs.sdb.(*couchdb.GoCouchDB)
+		if ok { // couchdb
+			sdb = rs.sdb
+		} else { // leveldb
+			sdb = dbm.NewPrefixDB(rs.sdb, []byte("s/_/"))
+		}
 	} else {
 		ldb = dbm.NewPrefixDB(rs.ldb, []byte("s/k:"+params.key.Name()+"/"))
-		cdb = rs.cdb
+		_, ok := rs.sdb.(*couchdb.GoCouchDB)
+		if ok { // couchdb
+			sdb = rs.sdb
+		} else { // leveldb
+			sdb = dbm.NewPrefixDB(rs.sdb, []byte("s/k:"+params.key.Name()+"/"))
+		}
 	}
 
 	switch params.typ {
@@ -356,7 +367,7 @@ func (rs *rootMultiStore) loadCommitStoreFromParams(key sdk.StoreKey, id CommitI
 		// TODO: id?
 		// return NewCommitMultiStore(db, id)
 	case sdk.StoreTypeIAVL:
-		store, err = LoadIAVLStore(ldb, cdb, id, rs.pruning, key)
+		store, err = LoadIAVLStore(ldb, sdb, id, rs.pruning, key)
 		return
 	case sdk.StoreTypeDB:
 		panic("dbm.DB is not a CommitStore")
@@ -482,11 +493,16 @@ func setLatestVersion(batch dbm.Batch, version int64) {
 // Commits each store and returns a new commitInfo.
 func(rs *rootMultiStore) commitStores(version int64, storeMap map[StoreKey]CommitStore) commitInfo {
 	storeInfos := make([]storeInfo, 0, len(storeMap))
-	batch := rs.cdb.NewBatch()
+	batch := rs.sdb.NewBatch()
 	for key, store := range storeMap {
 		// Commit
 		if reflect.TypeOf(store).Elem() == reflect.TypeOf(iavlStore{}){
-			store.(*iavlStore).Parent().(prefixStore).BatchSet(batch)
+			_, ok := store.(*iavlStore).Parent().(prefixStore)
+			if ok {
+				store.(*iavlStore).Parent().(prefixStore).BatchSet(batch)
+			} else {
+				store.(*iavlStore).Parent().(*baseKVStore).BatchSet(batch)
+			}
 		}
 		commitID := store.Commit()
 
