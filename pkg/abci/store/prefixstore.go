@@ -111,6 +111,11 @@ func (s prefixStore) BatchSet(batch db.Batch) {
 }
 
 // Implements KVStore
+func (s prefixStore) GetCache() map[string][]byte{
+	return s.parent.(*baseKVStore).GetCache()
+}
+
+// Implements KVStore
 func (s prefixStore) Gas(meter GasMeter, config GasConfig) KVStore {
 	return NewGasKVStore(meter, config, s)
 }

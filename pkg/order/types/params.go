@@ -1,12 +1,12 @@
 package types
 
 import (
-	"github.com/ci123chain/ci123chain/pkg/params/subspace"
 	"time"
 )
 
 const SleepTime = 1 * time.Second
 const StateDone = "Done"
+const StateCommitting = "Committing"
 const StateInit = "Init"
 const OrderBookKey = "OrderBook"
 const OpADD = "ADD"
@@ -87,12 +87,3 @@ func DefaultGenesisState() GenesisState {
 	return NewGenesisState(DefaultParams())
 }
 
-func ParamKeyTable() subspace.KeyTable {
-	return subspace.NewKeyTable().RegisterParamSet(&Params{})
-}
-
-func (p *Params) ParamSetPairs() subspace.ParamSetPairs {
-	return subspace.ParamSetPairs{
-		{KeyOrderBook, &p.OrderBook, nil},
-	}
-}

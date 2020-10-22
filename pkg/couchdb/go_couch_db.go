@@ -347,7 +347,7 @@ func (mBatch *goCouchDBBatch) WriteSync() {
 
 // Implements Batch.
 func (mBatch *goCouchDBBatch) Close() {
-
+	mBatch = nil
 }
 
 func nonNilBytes(bz []byte) []byte {

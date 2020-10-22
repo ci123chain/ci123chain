@@ -1,8 +1,13 @@
 package store
 
 import (
+	"encoding/json"
 	"fmt"
+	order "github.com/ci123chain/ci123chain/pkg/order/types"
 	"io"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 
@@ -17,6 +22,7 @@ import (
 const (
 	latestVersionKey = "s/latest"
 	commitInfoKeyFmt = "s/%d" // s/<version>
+	CacheName        = "cache"
 )
 
 // rootMultiStore is composed of many CommitStores. Name contrasts with
@@ -30,6 +36,7 @@ type rootMultiStore struct {
 	storesParams map[StoreKey]storeParams
 	stores       map[StoreKey]CommitStore
 	keysByName   map[string]StoreKey
+	cacheDir     string
 
 	traceWriter  io.Writer
 	traceContext TraceContext
@@ -39,13 +46,14 @@ var _ CommitMultiStore = (*rootMultiStore)(nil)
 var _ Queryable = (*rootMultiStore)(nil)
 
 // nolint
-func NewCommitMultiStore(ldb dbm.DB, cdb dbm.DB) *rootMultiStore {
+func NewCommitMultiStore(ldb dbm.DB, cdb dbm.DB, cacheDir string) *rootMultiStore {
 	return &rootMultiStore{
 		ldb:          ldb,
 		cdb:		  cdb,
 		storesParams: make(map[StoreKey]storeParams),
 		stores:       make(map[StoreKey]CommitStore),
 		keysByName:   make(map[string]StoreKey),
+		cacheDir:     cacheDir,
 	}
 }
 
@@ -194,16 +202,54 @@ func (rs *rootMultiStore) LastCommitID() CommitID {
 
 // Implements Committer/CommitStore.
 func (rs *rootMultiStore) Commit() CommitID {
+	var commitInfo commitInfo
+	cacheMap := make(map[string][]byte)
 
-	// Commit stores.
 	version := rs.lastCommitID.Version + 1
-	commitInfo := rs.commitStores(version, rs.stores)
+	// check cache
+	cacheName := filepath.Join(rs.cacheDir, CacheName)
+	if _, err := os.Stat(cacheName); os.IsNotExist(err) {
+		for _, store := range rs.stores {
+			if reflect.TypeOf(store).Elem() == reflect.TypeOf(iavlStore{}){
+				s := store.(*iavlStore).Parent().(prefixStore).GetCache()
+				for k, v := range s{
+					cacheMap[k] = v
+				}
+			}
+		}
+		cache, err := json.Marshal(cacheMap)
+		if err != nil {
+			panic(err)
+		}
+		err = ioutil.WriteFile(cacheName, cache, os.ModePerm)
+		if err != nil {
+			panic(err)
+		}
+		//stores = rs.stores
+	}
+	// commitLocalStores
+	commitInfo = rs.commitStores(version, rs.stores)
 
-	// Need to update atomically.
+	// updateCommitInfo Need to update atomically.
 	batch := rs.ldb.NewBatch()
 	setCommitInfo(batch, version, commitInfo)
 	setLatestVersion(batch, version)
 	batch.Write()
+
+	// commitSharedDB
+	rs.commitSharedDB(rs.stores)
+
+	//remove cache
+	os.Remove(cacheName)
+
+	//done
+	var orderBook order.OrderBook
+	orderBookKey := sdk.NewPrefixedKey([]byte(order.StoreKey), []byte(order.OrderBookKey))
+	orderBytes := rs.cdb.Get(orderBookKey)
+	order.ModuleCdc.UnmarshalJSON(orderBytes, &orderBook)
+	orderBook.Current.State = order.StateDone
+	orderBytes, _ = order.ModuleCdc.MarshalJSON(orderBook)
+	rs.cdb.Set(orderBookKey, orderBytes)
 
 	// Prepare for next version.
 	commitID := CommitID{
@@ -480,16 +526,11 @@ func setLatestVersion(batch dbm.Batch, version int64) {
 }
 
 // Commits each store and returns a new commitInfo.
-func(rs *rootMultiStore) commitStores(version int64, storeMap map[StoreKey]CommitStore) commitInfo {
+func (rs *rootMultiStore) commitStores(version int64, storeMap map[StoreKey]CommitStore) commitInfo {
 	storeInfos := make([]storeInfo, 0, len(storeMap))
-	batch := rs.cdb.NewBatch()
 	for key, store := range storeMap {
-		// Commit
-		if reflect.TypeOf(store).Elem() == reflect.TypeOf(iavlStore{}){
-			store.(*iavlStore).Parent().(prefixStore).BatchSet(batch)
-		}
+		// Commit localDB
 		commitID := store.Commit()
-
 		if store.GetStoreType() == sdk.StoreTypeTransient {
 			continue
 		}
@@ -501,12 +542,23 @@ func(rs *rootMultiStore) commitStores(version int64, storeMap map[StoreKey]Commi
 		// si.Core.StoreType = store.GetStoreType()
 		storeInfos = append(storeInfos, si)
 	}
-	batch.Write()
 	ci := commitInfo{
 		Version:    version,
 		StoreInfos: storeInfos,
 	}
 	return ci
+}
+
+func (rs *rootMultiStore) commitSharedDB(storeMap map[StoreKey]CommitStore) {
+	batch := rs.cdb.NewBatch()
+	defer batch.Close()
+	for _, store := range storeMap {
+		// Commit sharedDB
+		if reflect.TypeOf(store).Elem() == reflect.TypeOf(iavlStore{}){
+			store.(*iavlStore).Parent().(prefixStore).BatchSet(batch)
+		}
+	}
+	batch.Write()
 }
 
 // Gets commitInfo from disk.
@@ -534,4 +586,35 @@ func setCommitInfo(batch dbm.Batch, version int64, cInfo commitInfo) {
 	cInfoBytes := cdc.MustMarshalBinaryLengthPrefixed(cInfo)
 	cInfoKey := fmt.Sprintf(commitInfoKeyFmt, version)
 	batch.Set([]byte(cInfoKey), cInfoBytes)
+}
+
+type StoreStruct struct {
+	StoreKey string 		`json:"store_key"`
+	Store    CommitStore 	`json:"store"`
+}
+
+func StoresToSlice(stores map[StoreKey]CommitStore) (storesSlice []StoreStruct) {
+	for key, value := range stores {
+		storesSlice = append(storesSlice, StoreStruct{
+			StoreKey: key.Name(),
+			Store:    value,
+		})
+	}
+	return storesSlice
+}
+
+func SliceToStores(storesSlice []StoreStruct) map[string]CommitStore {
+	stores := make(map[string]CommitStore)
+	for _, v := range storesSlice {
+		stores[v.StoreKey] = v.Store
+	}
+	return stores
+}
+
+func StringToStoreKey(sC map[string]CommitStore, sS map[string]StoreKey) map[StoreKey]CommitStore {
+	realMap := make(map[StoreKey]CommitStore)
+	for k, v := range sC {
+		realMap[sS[k]] = v
+	}
+	return realMap
 }

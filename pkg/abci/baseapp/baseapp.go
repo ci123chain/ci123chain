@@ -86,11 +86,11 @@ var _ abci.Application = (*BaseApp)(nil)
 // NOTE: The db is used to store the version number for now.
 // Accepts a user-defined txDecoder
 // Accepts variable number of option functions, which act on the BaseApp to set configuration choices
-func NewBaseApp(name string, logger log.Logger, ldb dbm.DB, cdb dbm.DB, txDecoder sdk.TxDecoder, options ...func(*BaseApp)) *BaseApp {
+func NewBaseApp(name string, logger log.Logger, ldb dbm.DB, cdb dbm.DB, cacheDir string, txDecoder sdk.TxDecoder, options ...func(*BaseApp)) *BaseApp {
 	app := &BaseApp{
 		Logger:      logger,
 		name:        name,
-		cms:         store.NewCommitMultiStore(ldb, cdb),
+		cms:         store.NewCommitMultiStore(ldb, cdb, cacheDir),
 		//cms:         store.NewBaseMultiStore(db),
 		queryRouter: NewQueryRouter(),
 		router: 	 NewRouter(),
@@ -709,7 +709,6 @@ func (app *BaseApp) Commit() (res abci.ResponseCommit) {
 	*/
 	// Write the Deliver state and commit the MultiStore
 	app.deliverState.ms.Write()
-	//todo: fix bug
 	commitID := app.cms.Commit()
 
 	// TODO: this is missing a module identifier and dumps byte array

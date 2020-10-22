@@ -271,8 +271,7 @@ func (ks *baseKVStore) BatchSet(batch db.Batch) {
 	sort.Strings(keys)
 
 	var valueBytes []cValue
-	// TODO: Consider allowing usage of Batch, which would allow the write to
-	// at least happen atomically.
+
 	for _, key := range keys {
 		cacheValue := ks.cache[key]
 		if cacheValue.deleted {
@@ -284,6 +283,36 @@ func (ks *baseKVStore) BatchSet(batch db.Batch) {
 			valueBytes = append(valueBytes, cacheValue)
 		}
 	}
+}
+
+func (ks *baseKVStore) GetCache() map[string][]byte{
+	ks.mtx.Lock()
+	defer ks.mtx.Unlock()
+
+	// We need a copy of all of the keys.
+	// Not the best, but probably not a bottleneck depending.
+	keys := make([]string, 0, len(ks.cache))
+	for key, dbValue := range ks.cache {
+		if dbValue.dirty {
+			keys = append(keys, key)
+		}
+	}
+
+	sort.Strings(keys)
+
+	valueBytes := make(map[string][]byte)
+
+	for _, key := range keys {
+		cacheValue := ks.cache[key]
+		if cacheValue.deleted {
+			ks.parent.Delete([]byte(key))
+		} else if cacheValue.value == nil {
+			// Skip, it already doesn't exist in parent.
+		} else {
+			valueBytes[key] = cacheValue.value
+		}
+	}
+	return valueBytes
 }
 
 func (ks *baseKVStore) LastCommitID() CommitID {

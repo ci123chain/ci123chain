@@ -12,6 +12,8 @@ import (
 	staking_module "github.com/ci123chain/ci123chain/pkg/staking/module"
 	supply_module "github.com/ci123chain/ci123chain/pkg/supply/module"
 	wasm_module "github.com/ci123chain/ci123chain/pkg/wasm/module"
+	"io/ioutil"
+	"path/filepath"
 
 	"github.com/ci123chain/ci123chain/pkg/abci/types/module"
 	"github.com/ci123chain/ci123chain/pkg/account"
@@ -115,7 +117,28 @@ type Chain struct {
 
 func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer) *Chain {
 	cdc := app_types.MakeCodec()
-	app := baseapp.NewBaseApp("ci123", logger, ldb, cdb, app_types.DefaultTxDecoder(cdc))
+	cacheDir := os.ExpandEnv(filepath.Join(viper.GetString(cli.HomeFlag) , "cache"))
+	if _, err := os.Stat(cacheDir); os.IsNotExist(err) {
+		os.MkdirAll(cacheDir, os.ModePerm)
+		os.Chmod(cacheDir, os.ModePerm)
+	}
+	cacheName := filepath.Join(cacheDir, "cache")
+	if _, err := os.Stat(cacheName); !os.IsNotExist(err) {
+		//commit
+		cacheMap := make(map[string][]byte)
+		cache, _ := ioutil.ReadFile(cacheName)
+		json.Unmarshal(cache, &cacheMap)
+		batch := cdb.NewBatch()
+		defer batch.Close()
+		for key, v := range cacheMap {
+			batch.Set([]byte(key), v)
+		}
+		batch.Write()
+		//remove cache
+		os.Remove(cacheName)
+	}
+
+	app := baseapp.NewBaseApp("ci123", logger, ldb, cdb, cacheDir, app_types.DefaultTxDecoder(cdc))
 
 	c := &Chain{
 		BaseApp: 			app,

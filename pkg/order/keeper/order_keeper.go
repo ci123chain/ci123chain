@@ -67,7 +67,7 @@ func (ok *OrderKeeper) UpdateOrderBook(ctx sdk.Context, orderbook types.OrderBoo
 		if orderbook.Lists[i].Name == ctx.ChainID(){
 			orderbook.Lists[i].Height = ctx.BlockHeight()
 			orderbook.Current.Index = i
-			orderbook.Current.State = types.StateDone
+			orderbook.Current.State = types.StateCommitting
 			break
 		}
 	}
@@ -137,6 +137,20 @@ func (ok *OrderKeeper) isReady(orderbook types.OrderBook, shardID string, height
 			return false
 		}
 	}
+
+	//handle crash
+	if orderbook.Lists[orderbook.Current.Index].Name == shardID &&
+		orderbook.Current.State == types.StateCommitting {
+		if orderbook.Lists[orderbook.Current.Index].Height + 1 == height {
+			orderbook.Current.State = types.StateDone
+			orderBytes, _ :=types.ModuleCdc.MarshalJSON(orderbook)
+			ok.Cdb.Set(sdk.NewPrefixedKey([]byte(types.StoreKey), []byte(types.OrderBookKey)), orderBytes)
+			return false
+		} else if orderbook.Lists[orderbook.Current.Index].Height == height {
+			return true
+		}
+	}
+
 	var nextIndex int
 	if orderbook.Current.Index == len(orderbook.Lists) - 1 {
 		nextIndex = 0
