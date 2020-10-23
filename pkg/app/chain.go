@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/ci123chain/ci123chain/pkg/abci/baseapp"
+	"github.com/ci123chain/ci123chain/pkg/abci/store"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	app_module "github.com/ci123chain/ci123chain/pkg/app/module"
 	dist_module "github.com/ci123chain/ci123chain/pkg/distribution/module"
@@ -125,13 +126,13 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 	cacheName := filepath.Join(cacheDir, "cache")
 	if _, err := os.Stat(cacheName); !os.IsNotExist(err) {
 		//commit
-		cacheMap := make(map[string][]byte)
+		var cacheMap []store.CacheMap
 		cache, _ := ioutil.ReadFile(cacheName)
 		json.Unmarshal(cache, &cacheMap)
 		batch := cdb.NewBatch()
 		defer batch.Close()
-		for key, v := range cacheMap {
-			batch.Set([]byte(key), v)
+		for _, v := range cacheMap {
+			batch.Set(v.Key, v.Value)
 		}
 		batch.Write()
 		//remove cache

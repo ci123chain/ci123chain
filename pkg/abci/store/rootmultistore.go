@@ -203,7 +203,7 @@ func (rs *rootMultiStore) LastCommitID() CommitID {
 // Implements Committer/CommitStore.
 func (rs *rootMultiStore) Commit() CommitID {
 	var commitInfo commitInfo
-	cacheMap := make(map[string][]byte)
+	var cacheMap []CacheMap
 
 	version := rs.lastCommitID.Version + 1
 	// check cache
@@ -213,7 +213,10 @@ func (rs *rootMultiStore) Commit() CommitID {
 			if reflect.TypeOf(store).Elem() == reflect.TypeOf(iavlStore{}){
 				s := store.(*iavlStore).Parent().(prefixStore).GetCache()
 				for k, v := range s{
-					cacheMap[k] = v
+					cacheMap = append(cacheMap, CacheMap{
+						Key:   []byte(k),
+						Value: v,
+					})
 				}
 			}
 		}
@@ -588,33 +591,7 @@ func setCommitInfo(batch dbm.Batch, version int64, cInfo commitInfo) {
 	batch.Set([]byte(cInfoKey), cInfoBytes)
 }
 
-type StoreStruct struct {
-	StoreKey string 		`json:"store_key"`
-	Store    CommitStore 	`json:"store"`
-}
-
-func StoresToSlice(stores map[StoreKey]CommitStore) (storesSlice []StoreStruct) {
-	for key, value := range stores {
-		storesSlice = append(storesSlice, StoreStruct{
-			StoreKey: key.Name(),
-			Store:    value,
-		})
-	}
-	return storesSlice
-}
-
-func SliceToStores(storesSlice []StoreStruct) map[string]CommitStore {
-	stores := make(map[string]CommitStore)
-	for _, v := range storesSlice {
-		stores[v.StoreKey] = v.Store
-	}
-	return stores
-}
-
-func StringToStoreKey(sC map[string]CommitStore, sS map[string]StoreKey) map[StoreKey]CommitStore {
-	realMap := make(map[StoreKey]CommitStore)
-	for k, v := range sC {
-		realMap[sS[k]] = v
-	}
-	return realMap
+type CacheMap struct {
+	Key		 []byte `json:"key"`
+	Value    []byte `json:"value"`
 }

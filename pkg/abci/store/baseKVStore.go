@@ -283,6 +283,8 @@ func (ks *baseKVStore) BatchSet(batch db.Batch) {
 			valueBytes = append(valueBytes, cacheValue)
 		}
 	}
+	// Clear the cache
+	ks.cache = make(map[string]cValue)
 }
 
 func (ks *baseKVStore) GetCache() map[string][]byte{
