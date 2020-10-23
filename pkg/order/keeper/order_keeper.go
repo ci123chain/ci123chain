@@ -146,8 +146,6 @@ func (ok *OrderKeeper) isReady(orderbook types.OrderBook, shardID string, height
 			orderBytes, _ :=types.ModuleCdc.MarshalJSON(orderbook)
 			ok.Cdb.Set(sdk.NewPrefixedKey([]byte(types.StoreKey), []byte(types.OrderBookKey)), orderBytes)
 			return false
-		} else if orderbook.Lists[orderbook.Current.Index].Height == height {
-			return true
 		}
 	}
 
