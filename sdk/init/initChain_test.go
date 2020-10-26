@@ -86,17 +86,26 @@ func TestNewInitChainFiles(t *testing.T) {
 	}
 	persistentPeers := address1 + "@127.0.0.1:26656" + "," + address2 + "@127.0.0.1:36656"
 
-	//生成的nodeKey是privKey1的
-	initFiles, err := NewInitChainFiles(cInfo, vInfo, sInfo, supInfo, accInfo, privKey1, persistentPeers)
+	//生成genesisFile
+	genesisFiles, err := NewGenesisFiles(cInfo, vInfo, sInfo, supInfo, accInfo)
 	if err != nil{
 		fmt.Println(err)
 	}
 
-	//生成的nodeKey是privKey2的
-	initFiles, err = NewInitChainFiles(cInfo, vInfo, sInfo, supInfo, accInfo, privKey2, persistentPeers)
+	//生成的nodeKey是privKey1的
+	initFiles1, err := NewInitFiles(privKey1, persistentPeers)
 	if err != nil{
 		fmt.Println(err)
 	}
-	b, _ := json.Marshal(initFiles)
+	//生成的nodeKey是privKey2的
+	initFiles2, err := NewInitFiles(privKey2, persistentPeers)
+	if err != nil{
+		fmt.Println(err)
+	}
+	b, _ := json.Marshal(genesisFiles)
 	fmt.Println(string(b))
+	c, _ := json.Marshal(initFiles1)
+	fmt.Println(string(c))
+	d, _ := json.Marshal(initFiles2)
+	fmt.Println(string(d))
 }

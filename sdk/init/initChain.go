@@ -31,12 +31,15 @@ import (
 	"time"
 )
 
+type GenesisFiles struct {
+	GenesisBytes			[]byte `json:"genesis_bytes"`
+}
+
 type InitFiles struct {
 	ConfigBytes				[]byte `json:"config_bytes"`
 	PrivValidatorKeyBytes	[]byte `json:"priv_validator_key_bytes"`
 	PrivValidatorStateBytes	[]byte `json:"priv_validator_state_bytes"`
 	NodeKeyBytes			[]byte `json:"node_key_bytes"`
-	GenesisBytes			[]byte `json:"genesis_bytes"`
 }
 
 type ChainInfo struct {
@@ -79,10 +82,9 @@ type pubKey struct {
 	Value string `json:"value"`
 }
 
-func NewInitChainFiles(chainInfo ChainInfo,
+func NewGenesisFiles(chainInfo ChainInfo,
 	validatorInfo []ValidatorInfo, stakingInfo []StakingInfo,
-	supplyInfo SupplyInfo, accountInfo []AccountInfo,
-	privKey string, persistentPeers string) (*InitFiles, error) {
+	supplyInfo SupplyInfo, accountInfo []AccountInfo) (*GenesisFiles, error) {
 
 	//todo check infos
 	err := checkChainInfo(chainInfo)
@@ -119,6 +121,13 @@ func NewInitChainFiles(chainInfo ChainInfo,
 		}
 	}
 
+	genesisFiles := &GenesisFiles{
+		GenesisBytes:            genesisBytes,
+	}
+	return genesisFiles, nil
+}
+
+func NewInitFiles(privKey string, persistentPeers string) (*InitFiles, error){
 	//config.toml
 	config, err := createConfig(persistentPeers)
 	if err != nil {
@@ -151,7 +160,6 @@ func NewInitChainFiles(chainInfo ChainInfo,
 		PrivValidatorKeyBytes:   privValidatorKeyBytes,
 		PrivValidatorStateBytes: privValidatorStateBytes,
 		NodeKeyBytes: 			 nodeKeyBytes,
-		GenesisBytes:            genesisBytes,
 	}
 	return initFiles, nil
 }
