@@ -80,9 +80,9 @@ type pubKey struct {
 }
 
 func NewInitChainFiles(chainInfo ChainInfo,
-	validatorInfo ValidatorInfo, stakingInfo StakingInfo,
-	supplyInfo SupplyInfo, accountInfo AccountInfo,
-	privKey, persistentPeers string) (*InitFiles, error) {
+	validatorInfo []ValidatorInfo, stakingInfo []StakingInfo,
+	supplyInfo SupplyInfo, accountInfo []AccountInfo,
+	privKey string, persistentPeers string) (*InitFiles, error) {
 
 	//todo check infos
 	err := checkChainInfo(chainInfo)
@@ -113,7 +113,7 @@ func NewInitChainFiles(chainInfo ChainInfo,
 	var genesisBytes []byte
 	if chainInfo != (ChainInfo{}) {
 		//genesis.json
-		genesisBytes, err = createGenesis(chainInfo, validatorInfo, stakingInfo, supplyInfo, accountInfo, privKey)
+		genesisBytes, err = createGenesis(chainInfo, validatorInfo, stakingInfo, supplyInfo, accountInfo)
 		if err != nil {
 			return nil, err
 		}
@@ -156,24 +156,28 @@ func NewInitChainFiles(chainInfo ChainInfo,
 	return initFiles, nil
 }
 
-func createGenesis(chainInfo ChainInfo, validatorInfo ValidatorInfo,
-	stakingInfo StakingInfo, supplyInfo SupplyInfo,
-	accountInfo AccountInfo, privKey string) (genesisBytes []byte, err error) {
-	validatorKey, err := privStrToPrivKey(privKey)
-	if err != nil {
-		return nil, err
-	}
-
+func createGenesis(chainInfo ChainInfo, validatorInfo []ValidatorInfo,
+	stakingInfo []StakingInfo, supplyInfo SupplyInfo,
+	accountInfo []AccountInfo) (genesisBytes []byte, err error) {
 	cdc := app_types.MakeCodec()
-	val := app_module.AppGetValidator(validatorKey.PubKey(), validatorInfo.Name)
-	val.Address = validatorKey.PubKey().Address()
-	validators := []tmtypes.GenesisValidator{val}
+
+	var validators []tmtypes.GenesisValidator
+	var validatorKeys []crypto.PubKey
+	for _, v := range validatorInfo {
+		val := app_module.AppGetValidator(v.PubKey, v.Name)
+		val.Address = v.PubKey.Address()
+		validators = append(validators, val)
+		validatorKeys = append(validatorKeys, v.PubKey)
+	}
 	appState := app_module.ModuleBasics.DefaultGenesis(validators)
 
-	err = genesisStakingModule(appState, *validatorKey, stakingInfo, cdc)
+	err = genesisStakingModule(appState, stakingInfo, cdc)
 	if err != nil {
 		return nil, err
 	}
+	genesisDistributionModule(appState, stakingInfo, cdc)
+
+
 	err = genesisSupplyModule(appState, supplyInfo, cdc)
 	if err != nil {
 		return nil, err
@@ -182,7 +186,6 @@ func createGenesis(chainInfo ChainInfo, validatorInfo ValidatorInfo,
 	if err != nil {
 		return nil, err
 	}
-	genesisDistributionModule(appState, stakingInfo, cdc)
 
 	appStateRaw, err := json.Marshal(appState)
 	if err != nil {
@@ -269,56 +272,58 @@ func createNodeKey(privStr string) (nodeKeyBytes []byte, err error) {
 	return nodeKeyBytes, nil
 }
 
-func genesisStakingModule(appState map[string]json.RawMessage, validatorKey secp256k1.PrivKeySecp256k1, stakingInfo StakingInfo, cdc *codec.Codec) error {
+func genesisStakingModule(appState map[string]json.RawMessage, stakingInfo []StakingInfo, cdc *codec.Codec) error {
 	var stakingGenesisState stypes.GenesisState
-	var genesisValidator stypes.Validator
+	var genesisValidators []stypes.Validator
+	var delegations []stypes.Delegation
 	if _, ok := appState[staking.ModuleName]; !ok{
 		stakingGenesisState = stypes.GenesisState{}
 	} else {
 		cdc.MustUnmarshalJSON(appState[staking.ModuleName], &stakingGenesisState)
 	}
 
-	var pubKey pubKey
-	pb, _ :=cdc.MarshalJSON(validatorKey.PubKey())
-	err := json.Unmarshal(pb, &pubKey)
-	if err != nil {
-		return err
-	}
-
-	tokens, ok := types.NewIntFromString(stakingInfo.Tokens)
-	if !ok {
-		return errors.New("staking tokens converts to bigInt failed")
-	}
-	minSelfTokens, ok := types.NewIntFromString(stakingInfo.MinSelfDelegation)
-	if !ok {
-		return errors.New("staking minSelfDelegation converts to bigInt failed")
-	}
-	shares := types.NewDecFromInt(tokens)
-	genesisValidator = stypes.Validator{
-		OperatorAddress:   stakingInfo.Address,
-		ConsensusKey:      pubKey.Value,
-		Jailed:            false,
-		Status:            1,
-		Tokens:            tokens,
-		DelegatorShares:   shares,
-		Description:       stakingInfo.Description,
-		UnbondingHeight:   0,
-		UnbondingTime:     time.Time{},
-		Commission:        stypes.Commission{
-			CommissionRates: stypes.CommissionRates{
-				Rate:          types.NewDecWithPrec(stakingInfo.CommissionInfo.Rate, 2),
-				MaxRate:       types.NewDecWithPrec(stakingInfo.CommissionInfo.MaxRate, 2),
-				MaxChangeRate: types.NewDecWithPrec(stakingInfo.CommissionInfo.MaxChangeRate, 2),
+	for _, v := range stakingInfo {
+		var pubKey pubKey
+		pb, _ :=cdc.MarshalJSON(v.PubKey)
+		err := json.Unmarshal(pb, &pubKey)
+		if err != nil {
+			return err
+		}
+		tokens, ok := types.NewIntFromString(v.Tokens)
+		if !ok {
+			return errors.New("staking tokens converts to bigInt failed")
+		}
+		minSelfTokens, ok := types.NewIntFromString(v.MinSelfDelegation)
+		if !ok {
+			return errors.New("staking minSelfDelegation converts to bigInt failed")
+		}
+		shares := types.NewDecFromInt(tokens)
+		genesisValidators = append(genesisValidators, stypes.Validator{
+			OperatorAddress:   v.Address,
+			ConsensusKey:      pubKey.Value,
+			Jailed:            false,
+			Status:            1,
+			Tokens:            tokens,
+			DelegatorShares:   shares,
+			Description:       v.Description,
+			UnbondingHeight:   0,
+			UnbondingTime:     time.Time{},
+			Commission:        stypes.Commission{
+				CommissionRates: stypes.CommissionRates{
+					Rate:          types.NewDecWithPrec(v.CommissionInfo.Rate, 2),
+					MaxRate:       types.NewDecWithPrec(v.CommissionInfo.MaxRate, 2),
+					MaxChangeRate: types.NewDecWithPrec(v.CommissionInfo.MaxChangeRate, 2),
+				},
+				UpdateTime:      v.UpdateTime,
 			},
-			UpdateTime:      stakingInfo.UpdateTime,
-		},
-		MinSelfDelegation: minSelfTokens,
+			MinSelfDelegation: minSelfTokens,
+		})
+
+		delegations = append(delegations, stypes.NewDelegation(v.Address, v.Address, shares))
 	}
 
-	delegation := stypes.NewDelegation(stakingInfo.Address, stakingInfo.Address, shares)
-
-	stakingGenesisState.Validators = append(stakingGenesisState.Validators, genesisValidator)
-	stakingGenesisState.Delegations = append(stakingGenesisState.Delegations, delegation)
+	stakingGenesisState.Validators = append(stakingGenesisState.Validators, genesisValidators...)
+	stakingGenesisState.Delegations = append(stakingGenesisState.Delegations, delegations...)
 
 	genesisStateBz := cdc.MustMarshalJSON(stakingGenesisState)
 	appState[staking.ModuleName] = genesisStateBz
@@ -344,52 +349,60 @@ func genesisSupplyModule(appState map[string]json.RawMessage, supplyInfo SupplyI
 	return nil
 }
 
-func genesisAccountModule(appState map[string]json.RawMessage, accountInfo AccountInfo, cdc *codec.Codec) error {
+func genesisAccountModule(appState map[string]json.RawMessage, accountInfo []AccountInfo, cdc *codec.Codec) error {
 	var genesisAccounts acc_type.GenesisAccounts
 	if _, ok := appState[account.ModuleName]; !ok {
 		genesisAccounts = acc_type.GenesisAccounts{}
 	} else {
 		cdc.MustUnmarshalJSON(appState[account.ModuleName], &genesisAccounts)
 	}
-	if genesisAccounts.Contains(accountInfo.Address) {
-		return errors.New(fmt.Sprintf("cannot add account at existing address %v", accountInfo.Address))
+
+	for _, v := range accountInfo {
+		if genesisAccounts.Contains(v.Address) {
+			return errors.New(fmt.Sprintf("cannot add account at existing address %v", v.Address))
+		}
+		amount, ok := types.NewIntFromString(v.Amount)
+		if !ok {
+			return errors.New("account amount converts to bigInt failed")
+		}
+
+		genAcc := account.NewGenesisAccountRaw(v.Address, types.NewCoin(amount))
+		if err := genAcc.Validate(); err != nil {
+			return err
+		}
+		genesisAccounts = append(genesisAccounts, genAcc)
 	}
 
-	amount, ok := types.NewIntFromString(accountInfo.Amount)
-	if !ok {
-		return errors.New("account amount converts to bigInt failed")
-	}
-
-	genAcc := account.NewGenesisAccountRaw(accountInfo.Address, types.NewCoin(amount))
-	if err := genAcc.Validate(); err != nil {
-		return err
-	}
-	genesisAccounts = append(genesisAccounts, genAcc)
 	genesisStateBz := cdc.MustMarshalJSON(account.GenesisState(genesisAccounts))
 	appState[account.ModuleName] = genesisStateBz
 	return nil
 }
 
-func genesisDistributionModule(appState map[string]json.RawMessage, stakingInfo StakingInfo, cdc *codec.Codec) {
+func genesisDistributionModule(appState map[string]json.RawMessage, stakingInfo []StakingInfo, cdc *codec.Codec) {
 	var distributionGenesisState distr.GenesisState
+	var outstanddingRewards []distr.ValidatorOutstandingRewardsRecord
+	var currentRewards []distr.ValidatorCurrentRewardsRecord
 	if _, ok := appState[distr.ModuleName]; !ok {
 		distributionGenesisState = distr.GenesisState{}
 	}else {
 		cdc.MustUnmarshalJSON(appState[distr.ModuleName], &distributionGenesisState)
 	}
-	outstanddingReward := distr.ValidatorOutstandingRewardsRecord{
-		ValidatorAddress:   stakingInfo.Address,
-		OutstandingRewards: types.NewEmptyDecCoin(),
+	for _, v := range stakingInfo {
+		outstanddingRewards = append(outstanddingRewards, distr.ValidatorOutstandingRewardsRecord{
+			ValidatorAddress:   v.Address,
+			OutstandingRewards: types.NewEmptyDecCoin(),
+		})
+		currentRewards = append(currentRewards, distr.ValidatorCurrentRewardsRecord{
+			ValidatorAddress: v.Address,
+			Rewards:          distr.ValidatorCurrentRewards{
+				Rewards: types.NewEmptyDecCoin(),
+				Period:  0,
+			},
+		})
 	}
-	currentReward := distr.ValidatorCurrentRewardsRecord{
-		ValidatorAddress: stakingInfo.Address,
-		Rewards:          distr.ValidatorCurrentRewards{
-			Rewards: types.NewEmptyDecCoin(),
-			Period:  0,
-		},
-	}
-	distributionGenesisState.ValidatorCurrentRewards = append(distributionGenesisState.ValidatorCurrentRewards, currentReward)
-	distributionGenesisState.OutstandingRewards = append(distributionGenesisState.OutstandingRewards, outstanddingReward)
+
+	distributionGenesisState.ValidatorCurrentRewards = append(distributionGenesisState.ValidatorCurrentRewards, currentRewards...)
+	distributionGenesisState.OutstandingRewards = append(distributionGenesisState.OutstandingRewards, outstanddingRewards...)
 	distrGenesisStateBz := cdc.MustMarshalJSON(distributionGenesisState)
 	appState[distr.ModuleName] = distrGenesisStateBz
 }
@@ -444,11 +457,11 @@ func checkChainInfo(chainInfo ChainInfo) error {
 	return nil
 }
 
-func checkValidatorInfo(validatorInfo ValidatorInfo) error {
+func checkValidatorInfo(validatorInfo []ValidatorInfo) error {
 	return nil
 }
 
-func checkStakingInfo(stakingInfo StakingInfo) error {
+func checkStakingInfo(stakingInfo []StakingInfo) error {
 	return nil
 }
 
@@ -456,6 +469,6 @@ func checkSupplyInfo(supplyInfo SupplyInfo) error {
 	return nil
 }
 
-func checkAccountInfo(accountInfo AccountInfo) error {
+func checkAccountInfo(accountInfo []AccountInfo) error {
 	return nil
 }
