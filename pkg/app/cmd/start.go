@@ -23,7 +23,7 @@ const (
 	//flagLogLevel       = "log-level"
 	flagStateDB 	   = "statedb" // couchdb://admin:password@192.168.2.89:5984
 	flagShardIndex     = "shardIndex"
-	version 		   = "CiChain v1.1.22"
+	version 		   = "CiChain v1.1.24"
 )
 
 func startCmd(ctx *app.Context, appCreator app.AppCreator) *cobra.Command {

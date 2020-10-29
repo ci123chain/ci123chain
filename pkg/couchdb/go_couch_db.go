@@ -2,6 +2,7 @@ package couchdb
 
 import (
 	"encoding/hex"
+	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/logger"
 	dbm "github.com/tendermint/tm-db"
 )
@@ -60,9 +61,10 @@ func (cdb *GoCouchDB) Get(key []byte) []byte {
 					return nil
 				}
 			default:
-				cdb.lg.Info("***********Retry***********", retry)
-				cdb.lg.Info("Method: Get, ","key: ", string(key), " id:", hex.EncodeToString(key))
-				cdb.lg.Error("Error", err)
+				cdb.lg.Info("***************Retry******************")
+				cdb.lg.Info(fmt.Sprintf("Retry: %d", retry))
+				cdb.lg.Info(fmt.Sprintf("Method: Get, key: %s, id: %s", string(key), hex.EncodeToString(key)))
+				cdb.lg.Error(fmt.Sprintf("Error: %s", err.Error()))
 				retry ++
 				continue
 			}
@@ -93,9 +95,10 @@ func (cdb *GoCouchDB) Set(key []byte, value []byte) {
 		// save newDoc
 		rev, err := cdb.db.Save(newDoc, id, rev)
 		if err != nil {
-			cdb.lg.Info("***************Retry******************", retry)
-			cdb.lg.Info("Method: Set, ","key: ", string(key), ", id:", hex.EncodeToString(key))
-			cdb.lg.Error("Error", err)
+			cdb.lg.Info("***************Retry******************")
+			cdb.lg.Info(fmt.Sprintf("Retry: %d", retry))
+			cdb.lg.Info(fmt.Sprintf("Method: Set, key: %s, id: %s", string(key), hex.EncodeToString(key)))
+			cdb.lg.Error(fmt.Sprintf("Error: %s", err.Error()))
 			retry++
 		} else {
 			return
@@ -121,9 +124,10 @@ func (cdb *GoCouchDB) Delete(key []byte) {
 		}
 		rev, err := cdb.db.Delete(id, rev)
 		if err != nil {
-			cdb.lg.Info("***************Retry******************", retry)
-			cdb.lg.Info("Method: Delete, ","key: ", string(key), ", id:", hex.EncodeToString(key))
-			cdb.lg.Info("Error", err)
+			cdb.lg.Info("***************Retry******************")
+			cdb.lg.Info(fmt.Sprintf("Retry: %d", retry))
+			cdb.lg.Info(fmt.Sprintf("Method: Delete, key: %s, id: %s", string(key), hex.EncodeToString(key)))
+			cdb.lg.Error(fmt.Sprintf("Error: %s", err.Error()))
 			retry++
 		} else {
 			return
@@ -184,9 +188,10 @@ func (cdb *GoCouchDB) newCouchIterator(start, end []byte, isReverse bool) dbm.It
 	for {
 		results, err := cdb.db.ReadRange(hex.EncodeToString(start), hex.EncodeToString(end))
 		if err != nil {
-			cdb.lg.Info("***************Retry******************", retry)
-			cdb.lg.Info("Method: ReadRange, ","start: ", string(start), ", end:", string(end))
-			cdb.lg.Error("Error", err)
+			cdb.lg.Info("***************Retry******************")
+			cdb.lg.Info(fmt.Sprintf("Retry: %d", retry))
+			cdb.lg.Info(fmt.Sprintf("Method: ReadRange, start: %s, end: %s", hex.EncodeToString(start), hex.EncodeToString(end)))
+			cdb.lg.Error(fmt.Sprintf("Error: %s", err.Error()))
 			retry++
 		} else {
 			return &CouchIterator{cdb,results,0,start,end,isReverse,true}
@@ -306,8 +311,9 @@ func (mBatch *goCouchDBBatch) Write() {
 	for {
 		resp, err := mBatch.batch.Commit()
 		if err != nil {
-			mBatch.cdb.lg.Error("BatchCommit Error", err)
-			mBatch.cdb.lg.Info("***************Retry******************", retry)
+			mBatch.cdb.lg.Error(fmt.Sprintf("BatchCommit Error: %s", err.Error()))
+			mBatch.cdb.lg.Info("***************Retry******************")
+			mBatch.cdb.lg.Info(fmt.Sprintf("Retry: %d", retry))
 			mBatch.batch.closed = false
 			retry++
 			continue
@@ -329,7 +335,8 @@ func (mBatch *goCouchDBBatch) Write() {
 			if len(docs) != 0 {
 				mBatch.cdb.lg.Error("BatchCommit not write, fail docs:", docs)
 				mBatch.batch.docs = docs
-				mBatch.cdb.lg.Info("***************Retry******************", retry)
+				mBatch.cdb.lg.Info("***************Retry******************")
+				mBatch.cdb.lg.Info(fmt.Sprintf("Retry: %d", retry))
 				mBatch.batch.closed = false
 				retry++
 				continue
@@ -370,9 +377,10 @@ func (cdb *GoCouchDB) GetRev(key []byte) string {
 					return ""
 				}
 			default:
-				cdb.lg.Info("***************Retry******************", retry)
-				cdb.lg.Info("Method: GetRev, ","key: ", string(key), ", id:", hex.EncodeToString(key))
-				cdb.lg.Error("Error", err)
+				cdb.lg.Info("***************Retry******************")
+				cdb.lg.Info(fmt.Sprintf("Retry: %d", retry))
+				cdb.lg.Info(fmt.Sprintf("Method: GetRev, key: %s, id: %s", string(key), hex.EncodeToString(key)))
+				cdb.lg.Error(fmt.Sprintf("Error: %s", err.Error()))
 				retry++
 			}
 		} else {
