@@ -48,13 +48,13 @@ type ChainInfo struct {
 }
 
 type ValidatorInfo struct {
-	PubKey		crypto.PubKey 		`json:"pub_key"`
+	PubKey		string 		`json:"pub_key"`
 	Name		string 				`json:"name"`
 }
 
 type StakingInfo struct {
 	Address 			types.AccAddress	`json:"address"`
-	PubKey				crypto.PubKey		`json:"pub_key"`
+	PubKey				string		`json:"pub_key"`
 	Tokens				string				`json:"tokens"`
 	CommissionInfo  	CommissionInfo 		`json:"commission_info"`
 	UpdateTime 			time.Time 			`json:"update_time"`
@@ -77,7 +77,7 @@ type AccountInfo struct {
 	Amount	 string `json:"amount"`
 }
 
-type pubKey struct {
+type PubKey struct {
 	Type  string `json:"type"`
 	Value string `json:"value"`
 }
@@ -170,12 +170,16 @@ func createGenesis(chainInfo ChainInfo, validatorInfo []ValidatorInfo,
 	cdc := app_types.MakeCodec()
 
 	var validators []tmtypes.GenesisValidator
-	var validatorKeys []crypto.PubKey
 	for _, v := range validatorInfo {
-		val := app_module.AppGetValidator(v.PubKey, v.Name)
-		val.Address = v.PubKey.Address()
+		var valKey crypto.PubKey
+		pubStr := fmt.Sprintf(`{"type":"%s","value":"%s"}`, secp256k1.PubKeyAminoName, v.PubKey)
+		err = cdc.UnmarshalJSON([]byte(pubStr), &valKey)
+		if err != nil {
+			return nil, err
+		}
+		val := app_module.AppGetValidator(valKey, v.Name)
+		val.Address =valKey.Address()
 		validators = append(validators, val)
-		validatorKeys = append(validatorKeys, v.PubKey)
 	}
 	appState := app_module.ModuleBasics.DefaultGenesis(validators)
 
@@ -184,7 +188,6 @@ func createGenesis(chainInfo ChainInfo, validatorInfo []ValidatorInfo,
 		return nil, err
 	}
 	genesisDistributionModule(appState, stakingInfo, cdc)
-
 
 	err = genesisSupplyModule(appState, supplyInfo, cdc)
 	if err != nil {
@@ -291,12 +294,6 @@ func genesisStakingModule(appState map[string]json.RawMessage, stakingInfo []Sta
 	}
 
 	for _, v := range stakingInfo {
-		var pubKey pubKey
-		pb, _ :=cdc.MarshalJSON(v.PubKey)
-		err := json.Unmarshal(pb, &pubKey)
-		if err != nil {
-			return err
-		}
 		tokens, ok := types.NewIntFromString(v.Tokens)
 		if !ok {
 			return errors.New("staking tokens converts to bigInt failed")
@@ -308,7 +305,7 @@ func genesisStakingModule(appState map[string]json.RawMessage, stakingInfo []Sta
 		shares := types.NewDecFromInt(tokens)
 		genesisValidators = append(genesisValidators, stypes.Validator{
 			OperatorAddress:   v.Address,
-			ConsensusKey:      pubKey.Value,
+			ConsensusKey:      v.PubKey,
 			Jailed:            false,
 			Status:            1,
 			Tokens:            tokens,
