@@ -106,6 +106,23 @@ func (cdb *GoCouchDB) Set(key []byte, value []byte) {
 	}
 }
 
+func (cdb *GoCouchDB) SetDoc(id, rev string, doc interface{}) {
+	retry := 0
+	for {
+		// save newDoc
+		_, err := cdb.db.Save(doc, id, rev)
+		if err != nil {
+			cdb.lg.Info("***************Retry******************")
+			cdb.lg.Info(fmt.Sprintf("Retry: %d", retry))
+			cdb.lg.Info(fmt.Sprintf("Method: SetDoc, id: %s, rev: %s", id, rev))
+			cdb.lg.Error(fmt.Sprintf("Error: %s", err.Error()))
+			retry++
+		} else {
+			return
+		}
+	}
+}
+
 // Implements DB.
 func (cdb *GoCouchDB) SetSync(key []byte, value []byte) {
 	cdb.Set(key, value)
@@ -320,20 +337,21 @@ func (mBatch *goCouchDBBatch) Write() {
 		} else {
 			var docs []bulkDoc
 			for k, v := range resp {
-				if v.Ok != true {
-					key, err := hex.DecodeString(mBatch.batch.docs[k]._id)
-					if err != nil {
-						mBatch.cdb.lg.Error("decode id error", err)
-						mBatch.cdb.lg.Info("id", mBatch.batch.docs[k]._id)
-						panic(err)
-					}
-					rev := mBatch.cdb.GetRev(key)
-					mBatch.batch.docs[k]._rev = rev
+				if !v.Ok {
+					//key, err := hex.DecodeString(mBatch.batch.docs[k]._id)
+					//if err != nil {
+					//	mBatch.cdb.lg.Error("decode id error", err)
+					//	mBatch.cdb.lg.Info("id", mBatch.batch.docs[k]._id)
+					//	panic(err)
+					//}
+					//rev := mBatch.cdb.GetRev(key)
+					//mBatch.batch.docs[k]._rev = rev
+					mBatch.cdb.lg.Error(fmt.Sprintf("BatchCommit error, fail doc: %v", v))
 					docs = append(docs, mBatch.batch.docs[k])
+					mBatch.cdb.SetDoc(mBatch.batch.docs[k]._id, mBatch.batch.docs[k]._rev, mBatch.batch.docs[k].doc)
 				}
 			}
 			if len(docs) != 0 {
-				mBatch.cdb.lg.Error("BatchCommit not write, fail docs:", docs)
 				mBatch.batch.docs = docs
 				mBatch.cdb.lg.Info("***************Retry******************")
 				mBatch.cdb.lg.Info(fmt.Sprintf("Retry: %d", retry))
@@ -341,6 +359,7 @@ func (mBatch *goCouchDBBatch) Write() {
 				retry++
 				continue
 			} else {
+				mBatch.cdb.lg.Info("BatchCommit success")
 				return
 			}
 		}
