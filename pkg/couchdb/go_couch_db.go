@@ -335,7 +335,7 @@ func (mBatch *goCouchDBBatch) Write() {
 			retry++
 			continue
 		} else {
-			var docs []bulkDoc
+			//var docs []bulkDoc
 			for k, v := range resp {
 				if !v.Ok {
 					//key, err := hex.DecodeString(mBatch.batch.docs[k]._id)
@@ -346,22 +346,13 @@ func (mBatch *goCouchDBBatch) Write() {
 					//}
 					//rev := mBatch.cdb.GetRev(key)
 					//mBatch.batch.docs[k]._rev = rev
+					//docs = append(docs, mBatch.batch.docs[k])
 					mBatch.cdb.lg.Error(fmt.Sprintf("BatchCommit error, fail doc: %v", v))
-					docs = append(docs, mBatch.batch.docs[k])
 					mBatch.cdb.SetDoc(mBatch.batch.docs[k]._id, mBatch.batch.docs[k]._rev, mBatch.batch.docs[k].doc)
 				}
 			}
-			if len(docs) != 0 {
-				mBatch.batch.docs = docs
-				mBatch.cdb.lg.Info("***************Retry******************")
-				mBatch.cdb.lg.Info(fmt.Sprintf("Retry: %d", retry))
-				mBatch.batch.closed = false
-				retry++
-				continue
-			} else {
-				mBatch.cdb.lg.Info("BatchCommit success")
-				return
-			}
+			mBatch.cdb.lg.Info("BatchCommit success")
+			return
 		}
 	}
 }
