@@ -8,6 +8,7 @@ import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/app/module"
 	"github.com/ci123chain/ci123chain/pkg/ibc"
+	i_types "github.com/ci123chain/ci123chain/pkg/infrastructure/types"
 	"github.com/ci123chain/ci123chain/pkg/mortgage"
 	"github.com/ci123chain/ci123chain/pkg/transaction"
 	"github.com/ci123chain/ci123chain/pkg/transfer"
@@ -41,6 +42,7 @@ func MakeCodec() *codec.Codec {
 	mortgage.RegisterCodec(cdc)
 	module.ModuleBasics.RegisterCodec(cdc)
 	ibc.RegisterCodec(cdc)
+	i_types.RegisterCodec(cdc)
 	//acc_types.RegisterCodec(cdc)
 	//cdc.RegisterConcrete(secp256k1.PubKeySecp256k1{},
 	//	secp256k1.PubKeyAminoName, nil)

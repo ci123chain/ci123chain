@@ -24,6 +24,7 @@ import (
 	"time"
 
 	dRest "github.com/ci123chain/ci123chain/pkg/distribution/client/rest"
+	iRest "github.com/ci123chain/ci123chain/pkg/infrastructure/client/rest"
 	mRest "github.com/ci123chain/ci123chain/pkg/mint/client/rest"
 	orQuery "github.com/ci123chain/ci123chain/pkg/order"
 	order "github.com/ci123chain/ci123chain/pkg/order/rest"
@@ -93,6 +94,7 @@ func NewRestServer() *RestServer {
 	sRest.RegisterRoutes(cliCtx, r)
 	wRest.RegisterRoutes(cliCtx, r)
 	mRest.RegisterRoutes(cliCtx, r)
+	iRest.RegisterRoutes(cliCtx, r)
 
 	return &RestServer{
 		Mux: r,

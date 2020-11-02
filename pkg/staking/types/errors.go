@@ -2,8 +2,8 @@ package types
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/pkg/errors"
 )
 
 type CodeType = sdk.CodeType
