@@ -11,6 +11,6 @@ func NewPrefixedKey(prefix, realKey []byte) (prefixedKey []byte){
 func GetRealKey(prefixedKey []byte) []byte {
 	//iterator.Key()
 	key := string(prefixedKey)
-	realKey := strings.Split(key, "/")
-	return []byte(realKey[2])
+	keys := strings.SplitAfterN(key, "/",3)
+	return []byte(keys[2])
 }
