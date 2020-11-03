@@ -46,7 +46,8 @@ func (dp *DeployProxy) Response() *chan []byte {
 
 func (dp *DeployProxy) ErrorRes(err error) []byte {
 	res, _ := json.Marshal(types.ErrorResponse{
-		Err:  err.Error(),
+		Ret: 0,
+		Message:  err.Error(),
 	})
 	dp.ResponseChannel <- res
 	return res

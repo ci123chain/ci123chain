@@ -89,7 +89,8 @@ func (ct *ClasterTask) Do() {
 	res, _, err := SendRequest(ct.url, ct.r, ct.requestParmas)
 	if err != nil {
 		res, _ := json.Marshal(types.ErrorResponse{
-			Err:  err.Error(),
+			Ret: 0,
+			Message:  err.Error(),
 		})
 		ct.responseChan <- res
 		return

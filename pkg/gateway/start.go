@@ -88,7 +88,8 @@ func AllHandle(w http.ResponseWriter, r *http.Request) {
 	}else {
 		err := errors.New("arguments error")
 		res, _ := json.Marshal(types.ErrorResponse{
-			Err:  err.Error(),
+			Ret: 0,
+			Message:  err.Error(),
 		})
 		_, _ = w.Write(res)
 	}

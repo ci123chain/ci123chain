@@ -25,7 +25,8 @@ func (sjob *SpecificJob) Do() {
 	if reflect.TypeOf(sjob.Proxy).Elem() != reflect.TypeOf(server.DeployProxy{}) {
 		if len(sjob.BackEnds) < 1 {
 			res, _ := json.Marshal(types.ErrorResponse{
-				Err:  "service backend not found",
+				Ret: 0,
+				Message:  "service backend not found",
 			})
 			*sjob.ResponseChan <- res
 			return

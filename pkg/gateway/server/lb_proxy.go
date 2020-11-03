@@ -30,7 +30,8 @@ func (lbp *LBProxy) Handle(r *http.Request, backends []types.Instance, RequestPa
 	b, _, err := SendRequest(url, r, RequestParams)
 	if err != nil {
 		res, _ := json.Marshal(types.ErrorResponse{
-			Err:  err.Error(),
+			Ret: 0,
+			Message:  err.Error(),
 		})
 		lbp.ResponseChannel <- res
 		return res

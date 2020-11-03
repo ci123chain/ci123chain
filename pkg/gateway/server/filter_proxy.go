@@ -34,7 +34,8 @@ func (fp *FilterProxy) Handle(r *http.Request, backEnds []types.Instance, Reques
 		if err != nil {
 			err = errors.New("failed get response")
 			res, _ := json.Marshal(types.ErrorResponse{
-				Err:  err.Error(),
+				Ret: 0,
+				Message:  err.Error(),
 			})
 			fp.ResponseChannel <- res
 			return res
@@ -66,7 +67,8 @@ func (fp *FilterProxy) Handle(r *http.Request, backEnds []types.Instance, Reques
 	if len(Responses) == 0 || len(resultResp) == 0 {
 		err := errors.New("responses is empty")
 		res, _ := json.Marshal(types.ErrorResponse{
-			Err:  err.Error(),
+			Ret: 0,
+			Message:  err.Error(),
 		})
 		fp.ResponseChannel <- res
 		return res

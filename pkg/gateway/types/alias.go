@@ -29,8 +29,9 @@ type ResultRep struct {
 
 
 type ErrorResponse struct {
-	Err string `json:"err"`
-	//Code uint32 `json:"code"`
+	Ret 	interface{} 	`json:"ret"`
+	Data 	interface{}	    `json:"data"`
+	Message	string	        `json:"message"`
 }
 
 type RequestParams struct {

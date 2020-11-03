@@ -71,7 +71,8 @@ func (cp *ConcretProxy) Handle(r *http.Request, backends []types.Instance, Reque
 		if err != nil {
 			err = errors.New("failed get response")
 			res, _ := json.Marshal(types.ErrorResponse{
-				Err:  err.Error(),
+				Ret: 0,
+				Message:  err.Error(),
 			})
 			cp.ResponseChannel <- res
 			return res
@@ -105,7 +106,8 @@ func (cp *ConcretProxy) Handle(r *http.Request, backends []types.Instance, Reque
 	if len(resultResp) == 0 {
 		err := errors.New("sorry, responses is empty")
 		res, _ := json.Marshal(types.ErrorResponse{
-			Err:  err.Error(),
+			Ret: 0,
+			Message: err.Error(),
 		})
 		cp.ResponseChannel <- res
 		return res
