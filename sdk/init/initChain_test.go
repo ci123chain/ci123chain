@@ -7,6 +7,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/staking/types"
 	"github.com/ci123chain/ci123chain/sdk/account"
 	"github.com/ci123chain/ci123chain/sdk/validator"
+	"strings"
 	"testing"
 	"time"
 )
@@ -42,7 +43,7 @@ func TestNewInitChainFiles(t *testing.T) {
 				MaxChangeRate: 5,
 			},
 			UpdateTime:        time.Now(),
-			MinSelfDelegation: "10000000",
+			MinSelfDelegation: "1000000",
 			Description: types.Description{
 				Moniker:         "moniker1",
 				Identity:        "",
@@ -61,7 +62,7 @@ func TestNewInitChainFiles(t *testing.T) {
 				MaxChangeRate: 5,
 			},
 			UpdateTime:        time.Now(),
-			MinSelfDelegation: "10000000",
+			MinSelfDelegation: "1000000",
 			Description: types.Description{
 				Moniker:         "moniker1",
 				Identity:        "",
@@ -84,7 +85,7 @@ func TestNewInitChainFiles(t *testing.T) {
 			Amount: "1000000000000000",
 		},
 	}
-	persistentPeers := address1 + "@127.0.0.1:26656" + "," + address2 + "@127.0.0.1:36656"
+	persistentPeers := strings.ToLower(address1) + "@127.0.0.1:26656" + "," + strings.ToLower(address2) + "@127.0.0.1:36656"
 
 	//生成genesisFile
 	genesisFiles, err := NewGenesisFiles(cInfo, vInfo, sInfo, supInfo, accInfo)

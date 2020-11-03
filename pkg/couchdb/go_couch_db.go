@@ -324,6 +324,12 @@ func (mBatch *goCouchDBBatch) Write() {
 	if mBatch.batch.docs == nil || mBatch.batch.closed{
 		return
 	}
+
+	batchDocsMap := make(map[string]bulkDoc)
+	for _, v := range mBatch.batch.docs {
+		batchDocsMap[v._id] = v
+	}
+
 	retry := 0
 	for {
 		resp, err := mBatch.batch.Commit()
@@ -336,22 +342,19 @@ func (mBatch *goCouchDBBatch) Write() {
 			continue
 		} else {
 			//var docs []bulkDoc
-			for k, v := range resp {
-				if !v.Ok {
-					//key, err := hex.DecodeString(mBatch.batch.docs[k]._id)
-					//if err != nil {
-					//	mBatch.cdb.lg.Error("decode id error", err)
-					//	mBatch.cdb.lg.Info("id", mBatch.batch.docs[k]._id)
-					//	panic(err)
-					//}
-					//rev := mBatch.cdb.GetRev(key)
-					//mBatch.batch.docs[k]._rev = rev
-					//docs = append(docs, mBatch.batch.docs[k])
-					mBatch.cdb.lg.Error(fmt.Sprintf("BatchCommit error, fail doc: %v", v))
-					mBatch.cdb.SetDoc(mBatch.batch.docs[k]._id, mBatch.batch.docs[k]._rev, mBatch.batch.docs[k].doc)
+			for _, v := range resp {
+				if v.Ok {
+					delete(batchDocsMap, v.ID)
 				}
 			}
-			mBatch.cdb.lg.Info("BatchCommit success")
+			if len(batchDocsMap) != 0 {
+				for _, v := range batchDocsMap {
+					mBatch.cdb.SetDoc(v._id, v._rev, v.doc)
+				}
+				mBatch.cdb.lg.Info("BatchCommit retry success")
+			} else {
+				mBatch.cdb.lg.Info("BatchCommit success")
+			}
 			return
 		}
 	}
