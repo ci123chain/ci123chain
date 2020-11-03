@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/base64"
 	"github.com/ci123chain/ci123chain/pkg/app"
 	hnode "github.com/ci123chain/ci123chain/pkg/node"
 	"github.com/pkg/errors"
@@ -13,6 +14,8 @@ import (
 	pvm "github.com/tendermint/tendermint/privval"
 	"github.com/tendermint/tendermint/proxy"
 	"github.com/tendermint/tendermint/types"
+	"io/ioutil"
+	"os"
 )
 
 const (
@@ -23,7 +26,11 @@ const (
 	//flagLogLevel       = "log-level"
 	flagStateDB 	   = "statedb" // couchdb://admin:password@192.168.2.89:5984
 	flagShardIndex     = "shardIndex"
-	version 		   = "CiChain v1.1.24"
+	flagGenesis        = "genesis" //genesis.json
+	flagNodeKey        = "nodeKey" //node_key.json
+	flagPvs            = "pvs" //priv_validator_state.json
+	flagPvk            = "pvk" //priv_validator_key.json
+	version 		   = "CiChain v1.1.26"
 )
 
 func startCmd(ctx *app.Context, appCreator app.AppCreator) *cobra.Command {
@@ -37,6 +44,7 @@ func startCmd(ctx *app.Context, appCreator app.AppCreator) *cobra.Command {
 			}
 			ctx.Logger.Info(version)
 			ctx.Logger.Info("Starting ABCI with Tendermint")
+			preSetConfig(ctx)
 			_, err := StartInProcess(ctx, appCreator)
 			if err != nil {
 				return err
@@ -90,9 +98,9 @@ func startStandAlone(ctx *app.Context, appCreator app.AppCreator) error {
 func StartInProcess(ctx *app.Context, appCreator app.AppCreator) (*node.Node, error) {
 	cfg := ctx.Config
 	home := cfg.RootDir
-	viper.SetEnvPrefix("CI")
 	traceStore := viper.GetString(flagTraceStore)
 	stateDB := viper.GetString(flagStateDB)
+
 	gendoc, err := types.GenesisDocFromFile(cfg.GenesisFile())
 	if err != nil {
 		panic(err)
@@ -135,6 +143,23 @@ func StartInProcess(ctx *app.Context, appCreator app.AppCreator) (*node.Node, er
 		tmNode.Stop()
 	})
 
-
 	return tmNode, nil
+}
+
+func preSetConfig(ctx *app.Context) {
+	cfg := ctx.Config
+	genesis := viper.GetString(flagGenesis)
+	nodeKey := viper.GetString(flagNodeKey)
+	pvs := viper.GetString(flagPvs)
+	pvk := viper.GetString(flagPvk)
+	if len(genesis) != 0 {
+		genesisBytes, _ := base64.StdEncoding.DecodeString(genesis)
+		ioutil.WriteFile(cfg.GenesisFile(), genesisBytes, os.ModePerm)
+		nodeKeyBytes, _ := base64.StdEncoding.DecodeString(nodeKey)
+		ioutil.WriteFile(cfg.NodeKeyFile(), nodeKeyBytes, os.ModePerm)
+		pvsBytes, _ := base64.StdEncoding.DecodeString(pvs)
+		ioutil.WriteFile(cfg.PrivValidatorStateFile(), pvsBytes, os.ModePerm)
+		pvkBytes, _ := base64.StdEncoding.DecodeString(pvk)
+		ioutil.WriteFile(cfg.PrivValidatorKeyFile(), pvkBytes, os.ModePerm)
+	}
 }

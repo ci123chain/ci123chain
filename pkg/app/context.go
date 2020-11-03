@@ -1,6 +1,7 @@
 package app
 
 import (
+	"encoding/base64"
 	"github.com/spf13/viper"
 	"github.com/ci123chain/ci123chain/pkg/config"
 	"github.com/ci123chain/ci123chain/pkg/logger"
@@ -8,7 +9,16 @@ import (
 	"github.com/tendermint/tendermint/libs/cli"
 	"github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/libs/log"
+	"io/ioutil"
 	"os"
+	"path/filepath"
+)
+
+const (
+	flagConfig         = "config" //config.toml
+	defaultConfigFilePath = "config.toml"
+	defaultConfigPath  = "config"
+	defaultDataPath    = "data"
 )
 
 type Context struct {
@@ -32,11 +42,24 @@ func SetupContext(ctx *Context, level string) error {
 	root := viper.GetString(cli.HomeFlag)
 	c, err := config.GetConfig(root)
 	if err == config.ErrConfigNotFound {
-		c, err = config.CreateConfig(common.RandStr(8), root)
-		if err != nil {
-			return config.ErrGetConfig
+		configEnv := viper.GetString(flagConfig)
+		if len(configEnv) != 0 {
+			os.MkdirAll(filepath.Join(root, defaultConfigPath), os.ModePerm)
+			os.MkdirAll(filepath.Join(root, defaultDataPath), os.ModePerm)
+			configBytes, _ := base64.StdEncoding.DecodeString(configEnv)
+			ioutil.WriteFile(filepath.Join(root, defaultConfigPath, defaultConfigFilePath), configBytes, os.ModePerm)
+			viper.ReadInConfig()
+			c, err = config.GetConfig(root)
+			if err != nil {
+				return config.ErrGetConfig
+			}
+		} else {
+			c, err = config.CreateConfig(common.RandStr(8), root)
+			if err != nil {
+				return config.ErrGetConfig
+			}
+			config.SaveConfig(c)
 		}
-		config.SaveConfig(c)
 	}
 	if err != nil {
 		return config.ErrGetConfig
