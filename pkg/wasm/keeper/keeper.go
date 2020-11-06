@@ -422,14 +422,14 @@ func (k *Keeper) create(ctx sdk.Context, invokerAddr sdk.AccAddress, wasmCode []
 	if ok != nil {
 		return nil, false, ok
 	}
+	ccstore := ctx.KVStore(k.storeKey)
+	codeHash = MakeCodeHash(wasmCode)
+
 	// addgas
 	wasmCode, err = tryAddgas(wasmCode)
 	if err != nil {
 		return nil, false, err
 	}
-
-	ccstore := ctx.KVStore(k.storeKey)
-	codeHash = MakeCodeHash(wasmCode)
 	//check if it has been saved in couchDB.
 
 	codeByte := ccstore.Get(codeHash)
