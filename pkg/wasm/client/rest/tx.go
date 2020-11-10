@@ -10,6 +10,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/util"
 	wasm2 "github.com/ci123chain/ci123chain/pkg/wasm"
+	"github.com/ci123chain/ci123chain/pkg/wasm/keeper"
 	"github.com/ci123chain/ci123chain/pkg/wasm/types"
 	"net/http"
 	"strconv"
@@ -27,12 +28,33 @@ func uploadContractHandler(cliCtx context.Context,w http.ResponseWriter, r *http
 		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
 		return
 	}
-	wasmCode, err := getWasmCode(r)
-	if err != nil || wasmCode == nil {
+	code, err := getWasmCode(r)
+	if err != nil || code == nil {
 		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "get wasmcode failed"))
 		return
 	}
-	msg := wasm2.NewUploadTx(wasmCode, from)
+	wasmCode, err := keeper.UnCompress(code)
+	if err != nil {
+		rest.WriteErrorRes(w, sdk.ErrInternal("UnCompress code failed"))
+		return
+	}
+	codeHash := keeper.MakeCodeHash(wasmCode)
+	params := types.NewQueryCodeInfoParams(string(codeHash))
+	bz, Er := cliCtx.Cdc.MarshalJSON(params)
+	if Er != nil {
+		rest.WriteErrorRes(w, sdk.ErrInternal("marshal failed"))
+		return
+	}
+	res, _, _, Err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryCodeInfo, bz, false)
+	if Err != nil {
+		rest.WriteErrorRes(w, Err)
+		return
+	}
+	if len(res) > 0 { //already exists
+		rest.PostProcessResponseBare(w, cliCtx, string(codeHash))
+		return
+	}
+	msg := wasm2.NewUploadTx(code, from)
 	if !broadcast {
 		rest.PostProcessResponseBare(w, cliCtx, hex.EncodeToString(msg.Bytes()))
 		return
@@ -43,12 +65,12 @@ func uploadContractHandler(cliCtx context.Context,w http.ResponseWriter, r *http
 		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
 		return
 	}
-	res, err := cliCtx.BroadcastSignedTx(txByte)
+	resp, err := cliCtx.BroadcastSignedTx(txByte)
 	if err != nil {
 		rest.WriteErrorRes(w, client.ErrBroadcast(types.DefaultCodespace, err))
 		return
 	}
-	rest.PostProcessResponseBare(w, cliCtx, res)
+	rest.PostProcessResponseBare(w, cliCtx, resp)
 }
 
 func instantiateContractHandler(cliCtx context.Context,w http.ResponseWriter, r *http.Request) {

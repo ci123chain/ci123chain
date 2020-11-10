@@ -295,6 +295,7 @@ func (mBatch *goCouchDBBatch) Set(key, value []byte) {
 	value = nonNilBytes(value)
 	id := hex.EncodeToString(key)
 	rev := mBatch.cdb.GetRev(key)
+	mBatch.cdb.lg.Info(fmt.Sprintf("BatchSet: key:%s GetRev:%s", string(key), rev))
 	newDoc = KVWrite{
 		Value:	hex.EncodeToString(value),
 	}
@@ -319,17 +320,31 @@ func (mBatch *goCouchDBBatch) Delete(key []byte) {
 	}
 }
 
+type logBulk struct {
+	RealKey string `json:"real_key"`
+	BulkDoc bulkDoc
+}
+
+type logBulkResult struct {
+	RealKey string `json:"real_key"`
+	BulkDoc BulkDocumentResult
+}
+
 // Implements Batch.
 func (mBatch *goCouchDBBatch) Write() {
 	if mBatch.batch.docs == nil || mBatch.batch.closed{
 		return
 	}
 
-	batchDocsMap := make(map[string]bulkDoc)
+	batchDocsMap := make(map[string]logBulk)
 	for _, v := range mBatch.batch.docs {
-		batchDocsMap[v._id] = v
+		rk, _ := hex.DecodeString(v._id)
+		batchDocsMap[v._id] = logBulk{
+			RealKey: string(rk),
+			BulkDoc: v,
+		}
 	}
-
+	mBatch.cdb.lg.Info(fmt.Sprintf("Before batchCommit docsMap: %v", batchDocsMap))
 	retry := 0
 	for {
 		resp, err := mBatch.batch.Commit()
@@ -341,15 +356,23 @@ func (mBatch *goCouchDBBatch) Write() {
 			retry++
 			continue
 		} else {
+			//mBatch.cdb.lg.Info(fmt.Sprintf("BatchCommit response: %v", resp))
 			//var docs []bulkDoc
+			respDocsMap := make(map[string]logBulkResult)
 			for _, v := range resp {
+				rk, _ := hex.DecodeString(v.ID)
+				respDocsMap[v.ID] = logBulkResult{
+					RealKey: string(rk),
+					BulkDoc: v,
+				}
 				if v.Ok {
 					delete(batchDocsMap, v.ID)
 				}
 			}
+			mBatch.cdb.lg.Info(fmt.Sprintf("BatchCommit response docsMap: %v", respDocsMap))
 			if len(batchDocsMap) != 0 {
 				for _, v := range batchDocsMap {
-					mBatch.cdb.SetDoc(v._id, v._rev, v.doc)
+					mBatch.cdb.SetDoc(v.BulkDoc._id, v.BulkDoc._rev, v.BulkDoc.doc)
 				}
 				mBatch.cdb.lg.Info("BatchCommit retry success")
 			} else {
@@ -387,6 +410,7 @@ func (cdb *GoCouchDB) GetRev(key []byte) string {
 			switch t := err.(type) {
 			case *Error:
 				if t.ErrorCode == "not_found" {
+					cdb.lg.Info(fmt.Sprintf("GetRev not_found, key: %s, id: %s", string(key), hex.EncodeToString(key)))
 					return ""
 				}
 			default:
