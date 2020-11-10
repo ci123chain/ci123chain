@@ -22,6 +22,8 @@ import (
 const DefaultLogDir  = "$HOME/.gateway"
 var serverPool *ServerPool
 
+var pubsubRoom *types.PubSubRoom
+
 func Start() {
 	var logDir, logLevel, serverList string
 	var statedb, urlreg string
@@ -33,12 +35,13 @@ func Start() {
 	flag.String("statedb", "couchdb://couchdb_service:5984/ci123", "server resource")
 	flag.StringVar(&urlreg, "urlreg", "http://***:80", "reg for url connection to node")
 	flag.IntVar(&port, "port", 3030, "Port to serve")
+	flag.String("rpcaddress", "tcp://0.0.0.0:26657", "rpc address for websocket")
 	//flag.Parse()
 
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 	pflag.Parse()
 	viper.SetEnvPrefix("CI")
-	viper.BindPFlags(pflag.CommandLine)
+	_ = viper.BindPFlags(pflag.CommandLine)
 	viper.AutomaticEnv()
 	//viper.BindEnv("statedb")
 	//viper.BindEnv("logdir")
@@ -46,13 +49,20 @@ func Start() {
 	logDir = viper.GetString("logdir")
 	port = viper.GetInt("port")
 	urlreg = viper.GetString("urlreg")
+	rpcAddress := viper.GetString("rpcaddress")
+	if rpcAddress == "" {
+		rpcAddress = types.DefaultRPCAddress
+	}
 
 	if ok, err :=  regexp.MatchString("[*]+", urlreg); !ok {
 		panic(err)
 	}
 	// 初始化logger
-	logger.Init(logDir, "gateway", "", logLevel)
+	_ = logger.Init(logDir, "gateway", "", logLevel)
 	//dynamic.Init()
+	//init PubSubRoom
+	pubsubRoom = &types.PubSubRoom{}
+	pubsubRoom.GetPubSubRoom(rpcAddress)
 
 	svr := couchdbsource.NewCouchSource(statedb, urlreg)
 
@@ -67,6 +77,7 @@ func Start() {
 	timeoutHandler := http.TimeoutHandler(http.HandlerFunc(AllHandle), time.Second*60, "server timeout")
 	http.HandleFunc("/healthcheck", healthCheckHandlerFn)
 	http.Handle("/", timeoutHandler)
+	http.HandleFunc("/pubsub", PubSubHandle)
 
 	// start health checking
 	go healthCheck()
@@ -92,6 +103,7 @@ func AllHandle(w http.ResponseWriter, r *http.Request) {
 			Message:  err.Error(),
 		})
 		_, _ = w.Write(res)
+		return
 	}
 	select {
 	 case resp := <- *job.ResponseChan:
@@ -99,7 +111,7 @@ func AllHandle(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func healthCheckHandlerFn(w http.ResponseWriter, req *http.Request) {
+func healthCheckHandlerFn(w http.ResponseWriter, _ *http.Request) {
 	deadList := serverPool.getDeadList()
 	if len(deadList) != 0{
 		w.Header().Set("Content-Type","application/json")
@@ -110,7 +122,7 @@ func healthCheckHandlerFn(w http.ResponseWriter, req *http.Request) {
 		}
 
 		resultByte, _ := json.Marshal(resultResponse)
-		w.Write(resultByte)
+		_, _ = w.Write(resultByte)
 		return
 	}
 	resultResponse := client.HealthcheckResponse{
@@ -119,5 +131,5 @@ func healthCheckHandlerFn(w http.ResponseWriter, req *http.Request) {
 	}
 	resultByte, _ := json.Marshal(resultResponse)
 	w.Header().Set("Content-Type","application/json")
-	w.Write(resultByte)
+	_, _ = w.Write(resultByte)
 }
