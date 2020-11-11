@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"github.com/gorilla/websocket"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
+	"log"
+	"strings"
 	"time"
 )
 
@@ -22,12 +24,9 @@ const (
 	//time out
 	timeOut = time.Second * 10
 
-	DefaultRPCAddress = "tcp://0.0.0.0:26657"
+	DefaultRPCAddress = "tcp://localhost:26657"
 
 	DefaultWSEndpoint = "/websocket"
-
-	TMEVENT = "tm.event = "
-	ANDCONNECT = " AND "
 )
 
 type PubSubRoom struct {
@@ -35,12 +34,25 @@ type PubSubRoom struct {
 
 	TMConnection  *rpcclient.HTTP
 	HasCreatedConn map[string]bool
+
+	backends 		[]Instance
+	Connections    map[string]*rpcclient.HTTP
+}
+
+func (r *PubSubRoom) SetBackends(bs []Instance) {
+	r.backends = bs
+}
+
+func (r PubSubRoom) GetBackends() []Instance {
+	return r.backends
 }
 
 func (r *PubSubRoom)GetPubSubRoom(rpcAddress string) {
 	r.ConnMap = make(map[string][]*websocket.Conn)
-	r.TMConnection = GetConnection(rpcAddress)
+	//r.TMConnection = GetConnection(rpcAddress)
 	r.HasCreatedConn = make(map[string]bool)
+	r.Connections = make(map[string]*rpcclient.HTTP)
+	r.backends = make([]Instance, 0)
 }
 
 
@@ -50,10 +62,8 @@ func (r *PubSubRoom)Receive(c *websocket.Conn) {
 		switch rt := err.(type) {
 		case ClientError:
 			r.HandleUnsubscribeAll(rt.Connect)
-			fmt.Println(r)
 		default:
-			fmt.Println("here")
-			fmt.Println(r)
+			log.Println(r)
 		}
 	}()
 	for {
@@ -61,15 +71,15 @@ func (r *PubSubRoom)Receive(c *websocket.Conn) {
 		if err != nil {
 			panic(NewServerError(err, c))
 		}
-		fmt.Println("receive:")
-		fmt.Println(string(data))
+		log.Println("receive:")
+		log.Println(string(data))
 		var m ReceiveMessage
 		ok := IsValidMessage(data)
 		if !ok {
 			panic(errors.New("invalid message from client"))
 		}
 		_ = json.Unmarshal(data, &m)
-		topic := m.Content.Args[0]
+		topic := m.Content.GetTopic()
 		switch m.Content.CommandType() {
 		case DefaultSubscribeMethod:
 			r.HandleSubscribe(topic, c)
@@ -120,32 +130,115 @@ func (r *PubSubRoom) HandleUnsubscribeAll(c *websocket.Conn) {
 
 func (r *PubSubRoom) Subscribe(topic string) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeOut)
-	defer cancel()
-	query := "tm.event = " + "'" + topic + "'"
-	respones, err := r.TMConnection.Subscribe(ctx, subscribeClient, query)
-	if err != nil {
-		panic(err)
-	}
+	//query := topic
+	//responses, err := r.TMConnection.Subscribe(ctx, subscribeClient, query)
+	//if err != nil {
+	//	panic(err)
+	//}
+	//
+	//go func() {
+	//	for e := range responses {
+	//		res, _ := json.Marshal(e.Data)
+	//		response := SendMessage{
+	//			Time:   time.Now().Format(time.RFC3339),
+	//			Content: string(res),
+	//		}
+	//		Notify(r, topic, response)
+	//	}
+	//}()
+
+	//for _, conn := range r.Connectionns {
+	//	responses, err := conn.Subscribe(ctx, subscribeClient, topic)
+	//	if err != nil {
+	//		panic(err)
+	//	}
+	//
+	//	go func() {
+	//		for e := range responses {
+	//			res, _ := json.Marshal(e.Data)
+	//			response := SendMessage{
+	//				Time:   time.Now().Format(time.RFC3339),
+	//				Content: string(res),
+	//			}
+	//			Notify(r, topic, response)
+	//		}
+	//	}()
+	//}
 
 	go func() {
-		for e := range respones {
-			res, _ := json.Marshal(e.Data)
-			response := SendMessage{
-				Time:   time.Now().Format(time.RFC3339),
-				Content: string(res),
+		defer cancel()
+		for _, conn := range r.Connections {
+			responses, err := conn.Subscribe(ctx, subscribeClient, topic)
+			if err != nil {
+				panic(err)
 			}
-			Notify(r, topic, response)
+			go func() {
+				for e := range responses {
+					res, _ := json.Marshal(e.Data)
+					response := SendMessage{
+						Time:   time.Now().Format(time.RFC3339),
+						Content: string(res),
+					}
+					Notify(r, topic, response)
+				}
+			}()
 		}
 	}()
+}
+
+//func (r *PubSubRoom) NewSub() {
+//	//
+//	ctx, cancel := context.WithTimeout(context.Background(), timeOut)
+//	defer cancel()
+//	for _, v := range r.Connectionns {
+//		//
+//	}
+//}
+
+func (r *PubSubRoom) AddShard() {
+	ctx, cancel := context.WithTimeout(context.Background(), timeOut)
+	defer cancel()
+	for _, v := range r.backends {
+		addr := rpcAddress(v.URL().Host)
+		if r.Connections[addr] == nil {
+			conn := GetConnection(addr)
+			r.Connections[addr] = conn
+			if r.ConnMap != nil {
+				for topic := range r.ConnMap {
+					responses, err := conn.Subscribe(ctx, subscribeClient, topic)
+					if err != nil {
+						panic(err)
+					}
+
+					go func() {
+						for e := range responses {
+							res, _ := json.Marshal(e.Data)
+							response := SendMessage{
+								Time:   time.Now().Format(time.RFC3339),
+								Content: string(res),
+							}
+							Notify(r, topic, response)
+						}
+					}()
+				}
+			}
+		}
+	}
 }
 
 func (r *PubSubRoom) Unsubscribe(topic string) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeOut)
 	defer cancel()
-	query := "tm.event = " + "'" + topic + "'"
-	err := r.TMConnection.Unsubscribe(ctx, subscribeClient, query)
-	if err != nil {
-		panic(err)
+	//query := topic
+	//err := r.TMConnection.Unsubscribe(ctx, subscribeClient, query)
+	//if err != nil {
+	//	panic(err)
+	//}
+	for _, conn := range r.Connections {
+		err := conn.Unsubscribe(ctx, subscribeClient, topic)
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 
@@ -201,7 +294,15 @@ func (msg ReceiveMessage) String() string {
 
 type MessageContent struct {
 	Method    string   	`json:"method"`
-	Args      []string  `json:"args"`
+	Args      []Description  `json:"args"`
+}
+
+type Description struct {
+	MessageType  string   	   `json:"message_type"`
+	Key          string   	   `json:"key"`
+	Connect      string   	   `json:"connect"`
+	Value        string        `json:"value"`
+	ValueType    string        `json:"value_type"`
 }
 
 func (msg MessageContent) GetTopic() string {
@@ -209,30 +310,38 @@ func (msg MessageContent) GetTopic() string {
 	if len(msg.Args) == 0 {
 		panic(errors.New("unexpected number of args"))
 	}
-	var topic = TMEVENT + "'"
+	var topic string
 	for k, v := range msg.Args {
-		if k == 0 {
-			topic += v
-			topic += "'"
-		}else {
-			topic += ANDCONNECT
-			topic += v
+		if k != 0 {
+			topic += " AND "
 		}
+		str := fmt.Sprintf("%s.%s %s ", v.MessageType, v.Key, v.Connect)
+		switch v.ValueType {
+		case "string":
+			str = str + "'" + v.Value + "'"
+		case "Time":
+			str = str + " TIME " + v.Value
+		case "Date":
+			str = str + " DATE " + v.Value
+		default:
+			str = str + v.Value
+		}
+		topic += str
 	}
 	return topic
 }
 
-
-func (msg MessageContent) String() string {
-	var str string
-	for _, v := range msg.Args {
-		str += v
-		if len(msg.Args) > 1 {
-			str += " "
-		}
-	}
-	return fmt.Sprintf("Method: %s, Args: %s", msg.Method, str)
-}
+//
+//func (msg MessageContent) String() string {
+//	var str string
+//	for _, v := range msg.Args {
+//		str += v
+//		if len(msg.Args) > 1 {
+//			str += " "
+//		}
+//	}
+//	return fmt.Sprintf("Method: %s, Args: %s", msg.Method, str)
+//}
 
 func (msg MessageContent) CommandType() string {
 	switch msg.Method {
@@ -250,7 +359,7 @@ func (msg MessageContent) CommandType() string {
 
 func (msg MessageContent) IsUnsubscribeAll() bool {
 	if msg.Method == DefaultUnsubscribeMethod {
-		if len(msg.Args) == 1 && msg.Args[0] == "all" {
+		if len(msg.Args) == 0 {
 			return true
 		}
 	}
@@ -264,4 +373,11 @@ func GetConnection(addr string) *rpcclient.HTTP {
 		panic(err)
 	}
 	return client
+}
+
+func rpcAddress(host string) string {
+	res := "tcp://"
+	str := strings.Split(host, ":")
+	res = res + str[0] + ":26657"
+	return res
 }

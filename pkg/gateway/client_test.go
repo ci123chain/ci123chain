@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/gorilla/websocket"
 	"log"
@@ -9,9 +10,17 @@ import (
 	"time"
 )
 
+type Description struct {
+	MessageType  string   	   `json:"message_type"`
+	Key          string   	   `json:"key"`
+	Connect      string   	   `json:"connect"`
+	Value        string        `json:"value"`
+	ValueType    string        `json:"value_type"`
+}
+
 type MessageContent struct {
 	Method    string   	`json:"method"`
-	Args      []string  `json:"args"`
+	Args      []Description  `json:"args"`
 }
 
 // 消息结构
@@ -51,12 +60,19 @@ func TestSubscribeNewBlock(t *testing.T) {
 			log.Fatal(fmt.Sprintf("something error: %v", r))
 		}
 	}()
+	var args = Description{
+		MessageType: "tm",
+		Key:         "event",
+		Connect:     "=",
+		Value:       "NewBlock",
+		ValueType:   "string",
+	}
 
 	subMsg := Message{
 		Time:   time.Now().Format(time.RFC3339),
 		Content:MessageContent{
 			Method: "subscribe",
-			Args:   []string{"NewBlock"},
+			Args:   []Description{args},
 		},
 	}
 	sender.send <- subMsg
@@ -87,16 +103,22 @@ func TestSubscribeNewBlockAndUnsubscribeNewBlock(t *testing.T) {
 			log.Fatal(fmt.Sprintf("something error: %v", r))
 		}
 	}()
+	var args = Description{
+		MessageType: "tm",
+		Key:         "event",
+		Connect:     "=",
+		Value:       "NewBlock",
+		ValueType:   "string",
+	}
 
 	subMsg := Message{
 		Time:   time.Now().Format(time.RFC3339),
 		Content:MessageContent{
 			Method: "subscribe",
-			Args:   []string{"NewBlock"},
+			Args:   []Description{args},
 		},
 	}
 	sender.send <- subMsg
-
 
 	select {
 	case _ = <- ch:
@@ -104,7 +126,7 @@ func TestSubscribeNewBlockAndUnsubscribeNewBlock(t *testing.T) {
 			Time:   time.Now().Format(time.RFC3339),
 			Content:MessageContent{
 				Method: "unsubscribe",
-				Args:   []string{"NewBlock"},
+				Args:   []Description{args},
 			},
 		}
 		sender.send <- subMsg
@@ -127,11 +149,20 @@ func (sender *Sender) Message() {
 		if err != nil {
 			panic(err)
 		}
+		var Topic []Description
+		if topic == "" {
+			Topic = nil
+		}else {
+			err = json.Unmarshal([]byte(topic), &Topic)
+			if err != nil {
+				panic(err)
+			}
+		}
 		message := Message{
 			Time:   time.Now().Format(time.RFC3339),
 			Content:MessageContent{
 				Method: str,
-				Args:   []string{topic},
+				Args:   Topic,
 			},
 		}
 		sender.send <- message

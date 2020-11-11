@@ -34,9 +34,18 @@ func handleMsgUploadContract(ctx sdk.Context, k Keeper, msg wasm.MsgUploadContra
 	if err != nil {
 		return wasm.ErrUploadFailed(wasm.DefaultCodespace, err).Result()
 	}
+	em := ctx.EventManager()
+	em.EmitEvents(sdk.Events{
+		sdk.NewEvent(wasm.EventTypeUpload,
+			sdk.NewAttribute(wasm.AttributeKeyMethod, wasm.AttributeValueUpload),
+			sdk.NewAttribute(wasm.AttributeKeyCodeHash, string(codeHash)),
+			sdk.NewAttribute(sdk.AttributeKeyModule, wasm.AttributeValueCategory),
+			sdk.NewAttribute(sdk.AttributeKeySender, msg.FromAddress.String()),
+		),
+	})
 	res = sdk.Result{
 		Data:  codeHash,
-		Events: ctx.EventManager().Events(),
+		Events: em.Events(),
 	}
 	return
 }
@@ -52,9 +61,18 @@ func handleMsgInstantiateContract(ctx sdk.Context, k Keeper, msg wasm.MsgInstant
 	if err != nil {
 		return wasm.ErrInstantiateFailed(wasm.DefaultCodespace, err).Result()
 	}
+	em := ctx.EventManager()
+	em.EmitEvents(sdk.Events{
+		sdk.NewEvent(wasm.EventTypeInitiate,
+			sdk.NewAttribute(wasm.AttributeKeyMethod, wasm.AttributeValueInitiate),
+			sdk.NewAttribute(wasm.AttributeKeyAddress, contractAddr.String()),
+			sdk.NewAttribute(sdk.AttributeKeyModule, wasm.AttributeValueCategory),
+			sdk.NewAttribute(sdk.AttributeKeySender, msg.FromAddress.String()),
+		),
+	})
 	res = sdk.Result{
 		Data:  []byte(fmt.Sprintf("%s", contractAddr.String())),
-		Events: ctx.EventManager().Events(),
+		Events: em.Events(),
 	}
 	return
 }
@@ -68,7 +86,16 @@ func handleMsgExecuteContract(ctx sdk.Context, k Keeper, msg wasm.MsgExecuteCont
 	if err != nil {
 		return wasm.ErrExecuteFailed(wasm.DefaultCodespace, err).Result()
 	}
-	res.Events = ctx.EventManager().Events()
+	em := ctx.EventManager()
+	em.EmitEvents(sdk.Events{
+		sdk.NewEvent(wasm.EventTypeInvoke,
+			sdk.NewAttribute(wasm.AttributeKeyMethod, wasm.AttributeValueInvoke),
+			sdk.NewAttribute(wasm.AttributeKeyAddress, msg.Contract.String()),
+			sdk.NewAttribute(sdk.AttributeKeyModule, wasm.AttributeValueCategory),
+			sdk.NewAttribute(sdk.AttributeKeySender, msg.FromAddress.String()),
+		),
+	})
+	res.Events = em.Events()
 	return
 }
 
@@ -81,9 +108,18 @@ func handleMsgMigrateContract(ctx sdk.Context, k Keeper, msg wasm.MsgMigrateCont
 	if err != nil {
 		return wasm.ErrInstantiateFailed(wasm.DefaultCodespace, err).Result()
 	}
+	em := ctx.EventManager()
+	em.EmitEvents(sdk.Events{
+		sdk.NewEvent(wasm.EventTypeMigrate,
+			sdk.NewAttribute(wasm.AttributeKeyMethod, wasm.AttributeValueMigrate),
+			sdk.NewAttribute(wasm.AttributeKeyAddress, contractAddr.String()),
+			sdk.NewAttribute(sdk.AttributeKeyModule, wasm.AttributeValueCategory),
+			sdk.NewAttribute(sdk.AttributeKeySender, msg.FromAddress.String()),
+		),
+	})
 	res = sdk.Result{
 		Data:  []byte(fmt.Sprintf("%s", contractAddr.String())),
-		Events: ctx.EventManager().Events(),
+		Events: em.Events(),
 	}
 	return
 }

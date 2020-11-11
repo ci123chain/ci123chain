@@ -83,6 +83,8 @@ func Start() {
 	go healthCheck()
 
 	go fetchSharedRoutine()
+	//check pubsub backends.
+	go checkBackend()
 
 	logger.Info("Load Balancer started at :%d\n", port)
 	if err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil); err != nil {

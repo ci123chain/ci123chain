@@ -295,7 +295,7 @@ func (mBatch *goCouchDBBatch) Set(key, value []byte) {
 	value = nonNilBytes(value)
 	id := hex.EncodeToString(key)
 	rev := mBatch.cdb.GetRev(key)
-	mBatch.cdb.lg.Info(fmt.Sprintf("BatchSet: key:%s GetRev:%s", string(key), rev))
+	//mBatch.cdb.lg.Info(fmt.Sprintf("BatchSet: key:%s GetRev:%s", string(key), rev))
 	newDoc = KVWrite{
 		Value:	hex.EncodeToString(value),
 	}
@@ -344,14 +344,14 @@ func (mBatch *goCouchDBBatch) Write() {
 			BulkDoc: v,
 		}
 	}
-	mBatch.cdb.lg.Info(fmt.Sprintf("Before batchCommit docsMap: %v", batchDocsMap))
+	//mBatch.cdb.lg.Info(fmt.Sprintf("Before batchCommit docsMap: %v", batchDocsMap))
 	retry := 0
 	for {
 		resp, err := mBatch.batch.Commit()
 		if err != nil {
-			mBatch.cdb.lg.Error(fmt.Sprintf("BatchCommit Error: %s", err.Error()))
-			mBatch.cdb.lg.Info("***************Retry******************")
-			mBatch.cdb.lg.Info(fmt.Sprintf("Retry: %d", retry))
+			//mBatch.cdb.lg.Error(fmt.Sprintf("BatchCommit Error: %s", err.Error()))
+			//mBatch.cdb.lg.Info("***************Retry******************")
+			//mBatch.cdb.lg.Info(fmt.Sprintf("Retry: %d", retry))
 			mBatch.batch.closed = false
 			retry++
 			continue
@@ -369,7 +369,7 @@ func (mBatch *goCouchDBBatch) Write() {
 					delete(batchDocsMap, v.ID)
 				}
 			}
-			mBatch.cdb.lg.Info(fmt.Sprintf("BatchCommit response docsMap: %v", respDocsMap))
+			//mBatch.cdb.lg.Info(fmt.Sprintf("BatchCommit response docsMap: %v", respDocsMap))
 			if len(batchDocsMap) != 0 {
 				for _, v := range batchDocsMap {
 					mBatch.cdb.SetDoc(v.BulkDoc._id, v.BulkDoc._rev, v.BulkDoc.doc)
