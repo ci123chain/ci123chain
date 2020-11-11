@@ -17,7 +17,7 @@ import (
 	"strings"
 )
 
-const CAN_MIGRATE string = `{"method":"canMigrate","args": [""]}`
+const CAN_MIGRATE string = `{"method":"invoke","args": ["canMigrate"]}`
 func uploadContractHandler(cliCtx context.Context,w http.ResponseWriter, r *http.Request) {
 	broadcast, err := strconv.ParseBool(r.FormValue("broadcast"))
 	if err != nil {
