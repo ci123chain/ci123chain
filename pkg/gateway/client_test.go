@@ -84,6 +84,64 @@ func TestSubscribeNewBlock(t *testing.T) {
 	}
 }
 
+func TestSubscribeContract(t *testing.T) {
+
+	u := url.URL{Scheme: "ws", Host: "127.0.0.1:3030", Path: "/pubsub"}
+	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
+	if err != nil {
+		panic(err)
+	}
+	sender := &Sender{
+		conn: c,
+		send: make(chan Message, 128),
+	}
+	//go sender.Message()
+	go sender.loopSendMessage()
+	go sender.Receive()
+	defer func() {
+		if r := recover(); r != nil {
+			_ = c.Close()
+			log.Fatal(fmt.Sprintf("something error: %v", r))
+		}
+	}()
+	var arg1 = Description{
+		MessageType: "tm",
+		Key:         "event",
+		Connect:     "=",
+		Value:       "Tx",
+		ValueType:   "string",
+	}
+	var arg2 = Description{
+		MessageType: "contract",
+		Key:         "operation",
+		Connect:     "=",
+		Value:       "init_contract",
+		ValueType:   "string",
+	}
+	//var arg3 = Description{
+	//	MessageType: "contract",
+	//	Key:         "module",
+	//	Connect:     "=",
+	//	Value:       "wasm",
+	//	ValueType:   "string",
+	//}
+	// tx.event = 'Tx' AND contract.operation = 'init_contract'
+	subMsg := Message{
+		Time:   time.Now().Format(time.RFC3339),
+		Content:MessageContent{
+			Method: "subscribe",
+			Args:   []Description{arg1, arg2},
+		},
+	}
+	sender.send <- subMsg
+
+
+	select {
+	case _ = <- ch:
+		log.Println("exit")
+	}
+}
+
 func TestSubscribeNewBlockAndUnsubscribeNewBlock(t *testing.T) {
 	u := url.URL{Scheme: "ws", Host: "127.0.0.1:3030", Path: "/pubsub"}
 	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)

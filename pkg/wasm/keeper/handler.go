@@ -36,7 +36,7 @@ func handleMsgUploadContract(ctx sdk.Context, k Keeper, msg wasm.MsgUploadContra
 	}
 	em := ctx.EventManager()
 	em.EmitEvents(sdk.Events{
-		sdk.NewEvent(wasm.EventTypeUpload,
+		sdk.NewEvent(wasm.EventType,
 			sdk.NewAttribute(wasm.AttributeKeyMethod, wasm.AttributeValueUpload),
 			sdk.NewAttribute(wasm.AttributeKeyCodeHash, string(codeHash)),
 			sdk.NewAttribute(sdk.AttributeKeyModule, wasm.AttributeValueCategory),
@@ -63,7 +63,7 @@ func handleMsgInstantiateContract(ctx sdk.Context, k Keeper, msg wasm.MsgInstant
 	}
 	em := ctx.EventManager()
 	em.EmitEvents(sdk.Events{
-		sdk.NewEvent(wasm.EventTypeInitiate,
+		sdk.NewEvent(wasm.EventType,
 			sdk.NewAttribute(wasm.AttributeKeyMethod, wasm.AttributeValueInitiate),
 			sdk.NewAttribute(wasm.AttributeKeyAddress, contractAddr.String()),
 			sdk.NewAttribute(sdk.AttributeKeyModule, wasm.AttributeValueCategory),
@@ -88,7 +88,7 @@ func handleMsgExecuteContract(ctx sdk.Context, k Keeper, msg wasm.MsgExecuteCont
 	}
 	em := ctx.EventManager()
 	em.EmitEvents(sdk.Events{
-		sdk.NewEvent(wasm.EventTypeInvoke,
+		sdk.NewEvent(wasm.EventType,
 			sdk.NewAttribute(wasm.AttributeKeyMethod, wasm.AttributeValueInvoke),
 			sdk.NewAttribute(wasm.AttributeKeyAddress, msg.Contract.String()),
 			sdk.NewAttribute(sdk.AttributeKeyModule, wasm.AttributeValueCategory),
@@ -110,7 +110,7 @@ func handleMsgMigrateContract(ctx sdk.Context, k Keeper, msg wasm.MsgMigrateCont
 	}
 	em := ctx.EventManager()
 	em.EmitEvents(sdk.Events{
-		sdk.NewEvent(wasm.EventTypeMigrate,
+		sdk.NewEvent(wasm.EventType,
 			sdk.NewAttribute(wasm.AttributeKeyMethod, wasm.AttributeValueMigrate),
 			sdk.NewAttribute(wasm.AttributeKeyAddress, contractAddr.String()),
 			sdk.NewAttribute(sdk.AttributeKeyModule, wasm.AttributeValueCategory),

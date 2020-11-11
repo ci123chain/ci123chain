@@ -35,7 +35,7 @@ func Start() {
 	flag.String("statedb", "couchdb://couchdb_service:5984/ci123", "server resource")
 	flag.StringVar(&urlreg, "urlreg", "http://***:80", "reg for url connection to node")
 	flag.IntVar(&port, "port", 3030, "Port to serve")
-	flag.String("rpcaddress", "tcp://0.0.0.0:26657", "rpc address for websocket")
+	flag.String("rpcport", "26657", "rpc address for websocket")
 	//flag.Parse()
 
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
@@ -49,9 +49,9 @@ func Start() {
 	logDir = viper.GetString("logdir")
 	port = viper.GetInt("port")
 	urlreg = viper.GetString("urlreg")
-	rpcAddress := viper.GetString("rpcaddress")
+	rpcAddress := viper.GetString("rpcport")
 	if rpcAddress == "" {
-		rpcAddress = types.DefaultRPCAddress
+		rpcAddress = types.DefaultRPCPort
 	}
 
 	if ok, err :=  regexp.MatchString("[*]+", urlreg); !ok {
@@ -62,7 +62,8 @@ func Start() {
 	//dynamic.Init()
 	//init PubSubRoom
 	pubsubRoom = &types.PubSubRoom{}
-	pubsubRoom.GetPubSubRoom(rpcAddress)
+	types.SetDefaultPort(rpcAddress)
+	pubsubRoom.GetPubSubRoom()
 
 	svr := couchdbsource.NewCouchSource(statedb, urlreg)
 

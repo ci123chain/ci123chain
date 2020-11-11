@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"github.com/gorilla/websocket"
 	"go.uber.org/zap"
-	"log"
 	"net/http"
 	"time"
 )
@@ -40,15 +39,15 @@ func checkBackend() {
 		select {
 		case <-t.C:
 			spByte, _ := json.Marshal(serverPool.backends)
-			log.Println("serverpool backends:")
-			log.Println(serverPool.backends)
+			//log.Println("serverpool backends:")
+			//log.Println(serverPool.backends)
 			spHash := makeHash(spByte)
 			prByte, _ := json.Marshal(pubsubRoom.GetBackends())
 			prHash := makeHash(prByte)
 			if !bytes.Equal(spHash, prHash) {
 				pubsubRoom.SetBackends(serverPool.backends)
-				log.Println("get backends:")
-				log.Println(pubsubRoom.GetBackends()[0].URL().Host)
+				//log.Println("get backends:")
+				//log.Println(pubsubRoom.GetBackends()[0].URL().Host)
 				pubsubRoom.AddShard()
 			}
 		}

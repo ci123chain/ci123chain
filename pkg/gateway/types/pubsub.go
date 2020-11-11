@@ -19,15 +19,24 @@ const (
 	DefaultUnsubscribeAllMethod = "unsubscribe_all"
 
 	//subscribe clinet
-	subscribeClient = "test-client"
+	subscribeClient = "abci-client"
 
 	//time out
 	timeOut = time.Second * 10
 
-	DefaultRPCAddress = "tcp://localhost:26657"
+	DefaultTCP = "tcp://"
+	DefaultRPCPort = "26657"
 
 	DefaultWSEndpoint = "/websocket"
 )
+
+var (
+	DefaultPort = "26657"
+)
+
+func SetDefaultPort(port string) {
+	DefaultPort = port
+}
 
 type PubSubRoom struct {
 	ConnMap    map[string][]*websocket.Conn
@@ -47,7 +56,7 @@ func (r PubSubRoom) GetBackends() []Instance {
 	return r.backends
 }
 
-func (r *PubSubRoom)GetPubSubRoom(rpcAddress string) {
+func (r *PubSubRoom)GetPubSubRoom() {
 	r.ConnMap = make(map[string][]*websocket.Conn)
 	//r.TMConnection = GetConnection(rpcAddress)
 	r.HasCreatedConn = make(map[string]bool)
@@ -129,8 +138,7 @@ func (r *PubSubRoom) HandleUnsubscribeAll(c *websocket.Conn) {
 }
 
 func (r *PubSubRoom) Subscribe(topic string) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeOut)
-	//query := topic
+	ctx, _ := context.WithTimeout(context.Background(), timeOut)
 	//responses, err := r.TMConnection.Subscribe(ctx, subscribeClient, query)
 	//if err != nil {
 	//	panic(err)
@@ -147,30 +155,19 @@ func (r *PubSubRoom) Subscribe(topic string) {
 	//	}
 	//}()
 
-	//for _, conn := range r.Connectionns {
-	//	responses, err := conn.Subscribe(ctx, subscribeClient, topic)
-	//	if err != nil {
-	//		panic(err)
-	//	}
-	//
-	//	go func() {
-	//		for e := range responses {
-	//			res, _ := json.Marshal(e.Data)
-	//			response := SendMessage{
-	//				Time:   time.Now().Format(time.RFC3339),
-	//				Content: string(res),
-	//			}
-	//			Notify(r, topic, response)
-	//		}
-	//	}()
-	//}
 
 	go func() {
-		defer cancel()
-		for _, conn := range r.Connections {
+		defer func() {
+			err := recover()
+			if err != nil {
+				log.Println(err)
+			}
+		}()
+		for k, conn := range r.Connections {
 			responses, err := conn.Subscribe(ctx, subscribeClient, topic)
 			if err != nil {
-				panic(err)
+				delete(r.Connections, k)
+				continue
 			}
 			go func() {
 				for e := range responses {
@@ -186,15 +183,6 @@ func (r *PubSubRoom) Subscribe(topic string) {
 	}()
 }
 
-//func (r *PubSubRoom) NewSub() {
-//	//
-//	ctx, cancel := context.WithTimeout(context.Background(), timeOut)
-//	defer cancel()
-//	for _, v := range r.Connectionns {
-//		//
-//	}
-//}
-
 func (r *PubSubRoom) AddShard() {
 	ctx, cancel := context.WithTimeout(context.Background(), timeOut)
 	defer cancel()
@@ -207,7 +195,8 @@ func (r *PubSubRoom) AddShard() {
 				for topic := range r.ConnMap {
 					responses, err := conn.Subscribe(ctx, subscribeClient, topic)
 					if err != nil {
-						panic(err)
+						delete(r.Connections, addr)
+						continue
 					}
 
 					go func() {
@@ -227,17 +216,18 @@ func (r *PubSubRoom) AddShard() {
 }
 
 func (r *PubSubRoom) Unsubscribe(topic string) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeOut)
-	defer cancel()
+	ctx, _ := context.WithTimeout(context.Background(), timeOut)
+	//defer cancel()
 	//query := topic
 	//err := r.TMConnection.Unsubscribe(ctx, subscribeClient, query)
 	//if err != nil {
 	//	panic(err)
 	//}
-	for _, conn := range r.Connections {
+	for k, conn := range r.Connections {
 		err := conn.Unsubscribe(ctx, subscribeClient, topic)
 		if err != nil {
-			panic(err)
+			delete(r.Connections, k)
+			continue
 		}
 	}
 }
@@ -376,8 +366,8 @@ func GetConnection(addr string) *rpcclient.HTTP {
 }
 
 func rpcAddress(host string) string {
-	res := "tcp://"
+	res := DefaultTCP
 	str := strings.Split(host, ":")
-	res = res + str[0] + ":26657"
+	res = res + str[0] + ":" + DefaultPort
 	return res
 }

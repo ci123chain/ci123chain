@@ -38,6 +38,11 @@ func uploadContractHandler(cliCtx context.Context,w http.ResponseWriter, r *http
 		rest.WriteErrorRes(w, sdk.ErrInternal("UnCompress code failed"))
 		return
 	}
+	err = keeper.IsValidaWasmFile(wasmCode)
+	if err != nil {
+		rest.WriteErrorRes(w, sdk.ErrInternal("the file is not wasm file"))
+		return
+	}
 	codeHash := keeper.MakeCodeHash(wasmCode)
 	params := types.CodeInfoParams{Hash: codeHash}
 	bz, Er := cliCtx.Cdc.MarshalJSON(params)

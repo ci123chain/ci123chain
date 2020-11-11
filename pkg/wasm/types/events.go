@@ -3,10 +3,12 @@ package types
 
 
 const (
-	EventTypeUpload = "upload_contract"
-	EventTypeInitiate = "init_contract"
-	EventTypeInvoke = "invoke_contract"
-	EventTypeMigrate = "migrate_contract"
+	EventType = "contract"
+
+	//EventTypeUpload = "upload_contract"
+	//EventTypeInitiate = "init_contract"
+	//EventTypeInvoke = "invoke_contract"
+	//EventTypeMigrate = "migrate_contract"
 
 
 	AttributeKeyCodeHash = "code_hash"
