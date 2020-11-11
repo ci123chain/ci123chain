@@ -32,22 +32,16 @@ func PubSubHandle(w http.ResponseWriter, r *http.Request) {
 }
 
 func checkBackend() {
-
-	//serverPool.SharedCheck()
 	t := time.NewTicker(time.Second * 17)
 	for {
 		select {
 		case <-t.C:
 			spByte, _ := json.Marshal(serverPool.backends)
-			//log.Println("serverpool backends:")
-			//log.Println(serverPool.backends)
 			spHash := makeHash(spByte)
 			prByte, _ := json.Marshal(pubsubRoom.GetBackends())
 			prHash := makeHash(prByte)
 			if !bytes.Equal(spHash, prHash) {
 				pubsubRoom.SetBackends(serverPool.backends)
-				//log.Println("get backends:")
-				//log.Println(pubsubRoom.GetBackends()[0].URL().Host)
 				pubsubRoom.AddShard()
 			}
 		}

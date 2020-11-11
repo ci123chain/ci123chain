@@ -12,7 +12,6 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/gateway/types"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	"log"
 	"net/http"
 	"regexp"
 	"strings"
@@ -89,7 +88,7 @@ func Start() {
 
 	logger.Info("Load Balancer started at :%d\n", port)
 	if err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil); err != nil {
-		log.Fatal(err)
+		logger.Info("info: %s", err)
 	}
 }
 

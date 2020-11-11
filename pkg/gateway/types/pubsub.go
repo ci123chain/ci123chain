@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/ci123chain/ci123chain/pkg/gateway/logger"
 	"github.com/gorilla/websocket"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
-	"log"
 	"strings"
 	"time"
 )
@@ -72,7 +72,7 @@ func (r *PubSubRoom)Receive(c *websocket.Conn) {
 		case ClientError:
 			r.HandleUnsubscribeAll(rt.Connect)
 		default:
-			log.Println(r)
+			logger.Info("info: %s", r)
 		}
 	}()
 	for {
@@ -80,8 +80,7 @@ func (r *PubSubRoom)Receive(c *websocket.Conn) {
 		if err != nil {
 			panic(NewServerError(err, c))
 		}
-		log.Println("receive:")
-		log.Println(string(data))
+		logger.Info("receive: %s", string(data))
 		var m ReceiveMessage
 		ok := IsValidMessage(data)
 		if !ok {
@@ -160,7 +159,7 @@ func (r *PubSubRoom) Subscribe(topic string) {
 		defer func() {
 			err := recover()
 			if err != nil {
-				log.Println(err)
+				logger.Info("info: %s", err)
 			}
 		}()
 		for k, conn := range r.Connections {
