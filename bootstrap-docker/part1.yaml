@@ -13,4 +13,4 @@ services:
       couchDB:
 
 networks: ##定义网络组
-  couchDB: ## 网络组名称     
+  couchDB: ## 网络组名称
