@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"crypto/md5"
 	"encoding/json"
+	"fmt"
+	"github.com/ci123chain/ci123chain/pkg/gateway/logger"
+	"github.com/ci123chain/ci123chain/pkg/gateway/types"
 	"github.com/gorilla/websocket"
-	"go.uber.org/zap"
 	"net/http"
 	"time"
 )
@@ -20,10 +22,14 @@ var (
 )
 
 func PubSubHandle(w http.ResponseWriter, r *http.Request) {
-	logg := zap.S()
 	conn, err := ug.Upgrade(w, r, nil)
 	if err != nil {
-		logg.Error(err)
+		logger.Error("err: %s", err)
+		res, _ := json.Marshal(types.ErrorResponse{
+			Ret: -1,
+			Message:  fmt.Sprintf("invalid request you have sent to server, err: %s", err.Error()),
+		})
+		_, _ = w.Write(res)
 		return
 	}
 	//根据订阅的topic来建立新的map.

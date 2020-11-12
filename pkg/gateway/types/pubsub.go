@@ -84,7 +84,13 @@ func (r *PubSubRoom)Receive(c *websocket.Conn) {
 		var m ReceiveMessage
 		ok := IsValidMessage(data)
 		if !ok {
-			panic(errors.New("invalid message from client"))
+			logger.Info("received invalid message from client")
+			res := SendMessage{
+				Time:    time.Now().Format(time.RFC3339),
+				Content: fmt.Sprintf("invalid %s message you have sent to server", string(data)),
+			}
+			_ = c.WriteJSON(res)
+			continue
 		}
 		_ = json.Unmarshal(data, &m)
 		topic := m.Content.GetTopic()
