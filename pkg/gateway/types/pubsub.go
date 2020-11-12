@@ -212,6 +212,7 @@ func (r *PubSubRoom) Subscribe(topic string) {
 			responses, err := conn.Subscribe(ctx, subscribeClient, topic)
 			if err != nil {
 				delete(r.Connections, k)
+				_ = conn.Stop()
 				continue
 			}
 			go func() {
@@ -244,6 +245,7 @@ func (r *PubSubRoom) AddShard() {
 					responses, err := conn.Subscribe(ctx, subscribeClient, topic)
 					if err != nil {
 						delete(r.Connections, addr)
+						_ = conn.Stop()
 						continue
 					}
 
@@ -275,6 +277,7 @@ func (r *PubSubRoom) Unsubscribe(topic string) {
 		err := conn.Unsubscribe(ctx, subscribeClient, topic)
 		if err != nil {
 			delete(r.Connections, k)
+			_ = conn.Stop()
 			logger.Error("unsubscribe error: %s", err)
 			continue
 		}
