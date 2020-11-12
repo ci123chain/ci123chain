@@ -40,8 +40,6 @@ func SetDefaultPort(port string) {
 
 type PubSubRoom struct {
 	ConnMap    map[string][]*websocket.Conn
-
-	TMConnection  *rpcclient.HTTP
 	HasCreatedConn map[string]bool
 
 	backends 		[]Instance
@@ -58,10 +56,36 @@ func (r PubSubRoom) GetBackends() []Instance {
 
 func (r *PubSubRoom)GetPubSubRoom() {
 	r.ConnMap = make(map[string][]*websocket.Conn)
-	//r.TMConnection = GetConnection(rpcAddress)
 	r.HasCreatedConn = make(map[string]bool)
 	r.Connections = make(map[string]*rpcclient.HTTP)
 	r.backends = make([]Instance, 0)
+}
+
+func (r *PubSubRoom) HasClientConnect() bool {
+	var has bool
+	for _, v := range r.ConnMap {
+		if len(v) != 0 {
+			has = true
+		}
+	}
+	return has
+}
+
+func (r *PubSubRoom)HasTMConnections() bool {
+	return len(r.Connections) != 0
+}
+
+func (r *PubSubRoom)SetTMConnections() {
+	for _, v := range r.backends {
+		addr := rpcAddress(v.URL().Host)
+		if r.Connections[addr] == nil {
+			conn, ok := GetConnection(addr)
+			if !ok {
+				continue
+			}
+			r.Connections[addr] = conn
+		}
+	}
 }
 
 
@@ -91,6 +115,9 @@ func (r *PubSubRoom)Receive(c *websocket.Conn) {
 			}
 			_ = c.WriteJSON(res)
 			continue
+		}
+		if len(r.backends) != 0 && !r.HasTMConnections() {
+			r.SetTMConnections()
 		}
 		_ = json.Unmarshal(data, &m)
 		topic := m.Content.GetTopic()
@@ -160,7 +187,6 @@ func (r *PubSubRoom) Subscribe(topic string) {
 	//	}
 	//}()
 
-
 	go func() {
 		defer func() {
 			err := recover()
@@ -189,12 +215,15 @@ func (r *PubSubRoom) Subscribe(topic string) {
 }
 
 func (r *PubSubRoom) AddShard() {
-	ctx, cancel := context.WithTimeout(context.Background(), timeOut)
-	defer cancel()
+	ctx, _ := context.WithTimeout(context.Background(), timeOut)
+	//defer cancel()
 	for _, v := range r.backends {
 		addr := rpcAddress(v.URL().Host)
 		if r.Connections[addr] == nil {
-			conn := GetConnection(addr)
+			conn, ok := GetConnection(addr)
+			if !ok {
+				continue
+			}
 			r.Connections[addr] = conn
 			if r.ConnMap != nil {
 				for topic := range r.ConnMap {
@@ -232,6 +261,7 @@ func (r *PubSubRoom) Unsubscribe(topic string) {
 		err := conn.Unsubscribe(ctx, subscribeClient, topic)
 		if err != nil {
 			delete(r.Connections, k)
+			logger.Error("unsubscribe error: %s", err)
 			continue
 		}
 	}
@@ -274,11 +304,49 @@ type ReceiveMessage struct {
 
 func IsValidMessage(msg []byte) bool {
 	var rm ReceiveMessage
+	var trueOperation bool
+	var trueValueType bool
 	err := json.Unmarshal(msg, &rm)
-	if err != nil {
+	if err != nil || len(rm.Content.Args) == 0 {
 		return false
 	}
-	return true
+	for _, v := range rm.Content.Args {
+		switch v.ValueType {
+		case "string":
+			trueValueType = true
+		case "number":
+			trueValueType = true
+		case "date":
+			trueValueType = true
+		case "time":
+			trueValueType = true
+		default:
+			trueValueType = false
+		}
+
+		switch v.Connect {
+		case "=":
+			trueOperation = true
+		case "<":
+			trueOperation = true
+		case "<=":
+			trueOperation = true
+		case ">":
+			trueOperation = true
+		case ">=":
+			trueOperation = true
+		case "CONTAINS":
+			trueOperation = true
+		case "EXISTS":
+			trueOperation = true
+		default:
+			trueOperation = false
+		}
+	}
+	if trueOperation && trueValueType {
+		return true
+	}
+	return false
 }
 
 func (msg ReceiveMessage) String() string {
@@ -293,7 +361,6 @@ type MessageContent struct {
 }
 
 type Description struct {
-	MessageType  string   	   `json:"message_type"`
 	Key          string   	   `json:"key"`
 	Connect      string   	   `json:"connect"`
 	Value        string        `json:"value"`
@@ -301,22 +368,18 @@ type Description struct {
 }
 
 func (msg MessageContent) GetTopic() string {
-
-	if len(msg.Args) == 0 {
-		panic(errors.New("unexpected number of args"))
-	}
 	var topic string
 	for k, v := range msg.Args {
 		if k != 0 {
 			topic += " AND "
 		}
-		str := fmt.Sprintf("%s.%s %s ", v.MessageType, v.Key, v.Connect)
+		str := fmt.Sprintf("%s %s ", v.Key, v.Connect)
 		switch v.ValueType {
 		case "string":
 			str = str + "'" + v.Value + "'"
-		case "Time":
+		case "time":
 			str = str + " TIME " + v.Value
-		case "Date":
+		case "date":
 			str = str + " DATE " + v.Value
 		default:
 			str = str + v.Value
@@ -361,13 +424,14 @@ func (msg MessageContent) IsUnsubscribeAll() bool {
 	return false
 }
 
-func GetConnection(addr string) *rpcclient.HTTP {
+func GetConnection(addr string) (*rpcclient.HTTP, bool){
 	client := rpcclient.NewHTTP(addr, DefaultWSEndpoint)
 	err := client.Start()
 	if err != nil {
-		panic(err)
+		logger.Error("connect error: %s", err)
+		return nil, false
 	}
-	return client
+	return client, true
 }
 
 func rpcAddress(host string) string {

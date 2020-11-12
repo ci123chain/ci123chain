@@ -3,6 +3,7 @@ package gateway
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/ci123chain/ci123chain/pkg/gateway/types"
 	"github.com/gorilla/websocket"
 	"log"
 	"net/url"
@@ -10,17 +11,17 @@ import (
 	"time"
 )
 
-type Description struct {
-	MessageType  string   	   `json:"message_type"`
-	Key          string   	   `json:"key"`
-	Connect      string   	   `json:"connect"`
-	Value        string        `json:"value"`
-	ValueType    string        `json:"value_type"`
-}
+//type Description struct {
+//	MessageType  string   	   `json:"message_type"`
+//	Key          string   	   `json:"key"`
+//	Connect      string   	   `json:"connect"`
+//	Value        string        `json:"value"`
+//	ValueType    string        `json:"value_type"`
+//}
 
 type MessageContent struct {
 	Method    string   	`json:"method"`
-	Args      []Description  `json:"args"`
+	Args      []types.Description  `json:"args"`
 }
 
 // 消息结构
@@ -35,7 +36,7 @@ type Sender struct {
 }
 
 var (
-	count int = 0
+	count = 0
 	ch = make(chan int, 1)
 	sendch = make(chan int, 1)
 )
@@ -60,9 +61,8 @@ func TestSubscribeNewBlock(t *testing.T) {
 			log.Fatal(fmt.Sprintf("something error: %v", r))
 		}
 	}()
-	var args = Description{
-		MessageType: "tm",
-		Key:         "event",
+	var args = types.Description{
+		Key:         "tm.event",
 		Connect:     "=",
 		Value:       "NewBlock",
 		ValueType:   "string",
@@ -72,7 +72,7 @@ func TestSubscribeNewBlock(t *testing.T) {
 		Time:   time.Now().Format(time.RFC3339),
 		Content:MessageContent{
 			Method: "subscribe",
-			Args:   []Description{args},
+			Args:   []types.Description{args},
 		},
 	}
 	sender.send <- subMsg
@@ -104,16 +104,14 @@ func TestSubscribeContract(t *testing.T) {
 			log.Fatal(fmt.Sprintf("something error: %v", r))
 		}
 	}()
-	var arg1 = Description{
-		MessageType: "tm",
-		Key:         "event",
+	var arg1 = types.Description{
+		Key:         "tm.event",
 		Connect:     "=",
 		Value:       "Tx",
 		ValueType:   "string",
 	}
-	var arg2 = Description{
-		MessageType: "contract",
-		Key:         "operation",
+	var arg2 = types.Description{
+		Key:         "contract.operation",
 		Connect:     "=",
 		Value:       "init_contract",
 		ValueType:   "string",
@@ -130,7 +128,7 @@ func TestSubscribeContract(t *testing.T) {
 		Time:   time.Now().Format(time.RFC3339),
 		Content:MessageContent{
 			Method: "subscribe",
-			Args:   []Description{arg1, arg2},
+			Args:   []types.Description{arg1, arg2},
 		},
 	}
 	sender.send <- subMsg
@@ -161,9 +159,8 @@ func TestSubscribeNewBlockAndUnsubscribeNewBlock(t *testing.T) {
 			log.Fatal(fmt.Sprintf("something error: %v", r))
 		}
 	}()
-	var args = Description{
-		MessageType: "tm",
-		Key:         "event",
+	var args = types.Description{
+		Key:         "tm.event",
 		Connect:     "=",
 		Value:       "NewBlock",
 		ValueType:   "string",
@@ -173,7 +170,7 @@ func TestSubscribeNewBlockAndUnsubscribeNewBlock(t *testing.T) {
 		Time:   time.Now().Format(time.RFC3339),
 		Content:MessageContent{
 			Method: "subscribe",
-			Args:   []Description{args},
+			Args:   []types.Description{args},
 		},
 	}
 	sender.send <- subMsg
@@ -184,7 +181,7 @@ func TestSubscribeNewBlockAndUnsubscribeNewBlock(t *testing.T) {
 			Time:   time.Now().Format(time.RFC3339),
 			Content:MessageContent{
 				Method: "unsubscribe",
-				Args:   []Description{args},
+				Args:   []types.Description{args},
 			},
 		}
 		sender.send <- subMsg
@@ -207,7 +204,7 @@ func (sender *Sender) Message() {
 		if err != nil {
 			panic(err)
 		}
-		var Topic []Description
+		var Topic []types.Description
 		if topic == "" {
 			Topic = nil
 		}else {

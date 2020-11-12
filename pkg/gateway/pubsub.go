@@ -48,7 +48,9 @@ func checkBackend() {
 			prHash := makeHash(prByte)
 			if !bytes.Equal(spHash, prHash) {
 				pubsubRoom.SetBackends(serverPool.backends)
-				pubsubRoom.AddShard()
+				if pubsubRoom.HasClientConnect() {
+					pubsubRoom.AddShard()
+				}
 			}
 		}
 	}
