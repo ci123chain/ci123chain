@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/gateway/logger"
 	"github.com/gorilla/websocket"
+	"github.com/tendermint/tendermint/libs/pubsub/query"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
 	"strings"
 	"time"
@@ -90,6 +91,8 @@ func (r *PubSubRoom)SetTMConnections() {
 
 
 func (r *PubSubRoom)Receive(c *websocket.Conn) {
+
+	//query.MustParse("")
 	defer func() {
 		err := recover()
 		switch rt := err.(type) {
@@ -111,7 +114,7 @@ func (r *PubSubRoom)Receive(c *websocket.Conn) {
 			logger.Info("received invalid message from client")
 			res := SendMessage{
 				Time:    time.Now().Format(time.RFC3339),
-				Content: fmt.Sprintf("invalid %s message you have sent to server", string(data)),
+				Content: fmt.Sprintf("invalid message: %s, you have sent to server", string(data)),
 			}
 			_ = c.WriteJSON(res)
 			continue
@@ -121,6 +124,17 @@ func (r *PubSubRoom)Receive(c *websocket.Conn) {
 		}
 		_ = json.Unmarshal(data, &m)
 		topic := m.Content.GetTopic()
+		//query check
+		q, err := query.New(topic)
+		if err != nil {
+			logger.Info("invalid topic from client")
+			res := SendMessage{
+				Time:    time.Now().Format(time.RFC3339),
+				Content: fmt.Sprintf("invalid topic: %s, you have sent to server", q.String()),
+			}
+			_ = c.WriteJSON(res)
+			continue
+		}
 		switch m.Content.CommandType() {
 		case DefaultSubscribeMethod:
 			r.HandleSubscribe(topic, c)

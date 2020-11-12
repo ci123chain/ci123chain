@@ -5,11 +5,22 @@ import (
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/gateway/types"
 	"github.com/gorilla/websocket"
+	"github.com/tendermint/tendermint/libs/pubsub/query"
 	"log"
 	"net/url"
 	"testing"
 	"time"
 )
+
+func TestQuery(t *testing.T) {
+	var s = "tm.\nevent = 'Tx'"
+	//var s = "tm.event = 'Tx' AND account\n.owner CONTAINS 'Igor'"
+	q, err := query.New(s)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(q)
+}
 
 //type Description struct {
 //	MessageType  string   	   `json:"message_type"`
