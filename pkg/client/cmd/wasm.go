@@ -10,7 +10,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/client/helper"
 	"github.com/ci123chain/ci123chain/pkg/util"
-	wasm "github.com/ci123chain/ci123chain/pkg/wasm/types"
+	wasm "github.com/ci123chain/ci123chain/pkg/vm/wasmtypes"
 	sdk "github.com/ci123chain/ci123chain/sdk/wasm"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

@@ -29,7 +29,7 @@ func NewQuerier(keeper DistrKeeper) sdk.Querier {
 			return queryDelegationRewards(ctx, req, keeper)
 
 		default:
-			return nil, sdk.ErrUnknownRequest("unknown nameservice query endpoint")
+			return nil, sdk.ErrUnknownRequest("unknown query endpoint")
 		}
 	}
 }

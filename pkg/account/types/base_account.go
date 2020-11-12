@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	ethcmn "github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 	"github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/account/exported"
@@ -21,7 +22,8 @@ type BaseAccount struct {
 	Sequence      	uint64         `json:"sequence_number" yaml:"sequence_number"`
 	AccountNumber 	uint64         `json:"account_number" yaml:"account_number"`
 	PubKey 			crypto.PubKey  `json:"pub_key" yaml:"pub_key"`
-	ContractList    []string        `json:"contract_list"`
+	ContractList    []string        `json:"contract_list" yaml:"contract_list"`
+	CodeHash		[]byte 			`json:"code_hash" yaml:"code_hash"`
 }
 
 // NewBaseAccount creates a new BaseAccount object
@@ -59,7 +61,7 @@ func NewBaseAccountWithAddress(addr types.AccAddress) BaseAccount {
 //}
 
 // GetAddress - Implements sdk.Account.
-func (acc BaseAccount) GetAddress() types.AccAddress {
+func (acc *BaseAccount) GetAddress() types.AccAddress {
 	return acc.Address
 }
 
@@ -74,7 +76,7 @@ func (acc *BaseAccount) SetAddress(addr types.AccAddress) error {
 
 
 // GetPubKey - Implements sdk.Account.
-func (acc BaseAccount) GetPubKey() crypto.PubKey {
+func (acc *BaseAccount) GetPubKey() crypto.PubKey {
 	return acc.PubKey
 }
 
@@ -132,4 +134,24 @@ func (acc *BaseAccount) String() string {
   Sequence:         %d`,
 		acc.Address, acc.PubKey, acc.Coin, acc.AccountNumber, acc.Sequence,
 	)
+}
+
+// EthAddress returns the account address ethereum format.
+func (acc *BaseAccount) EthAddress() ethcmn.Address {
+	return ethcmn.BytesToAddress(acc.Address.Bytes())
+}
+
+// Balance returns the balance of an account.
+func (acc *BaseAccount) Balance(denom string) types.Int {
+	return acc.GetCoin().AmountOf(denom)
+}
+
+// SetBalance sets an account's balance of the given coin denomination.
+//
+// CONTRACT: assumes the denomination is valid.
+func (acc *BaseAccount) SetBalance(denom string, amt types.Int) {
+	newCoin := types.NewCoin(amt)
+	if err := acc.SetCoin(newCoin); err != nil {
+		panic(fmt.Errorf("could not set %s coins for address %s: %w", denom, acc.EthAddress().String(), err))
+	}
 }

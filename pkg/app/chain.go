@@ -13,7 +13,7 @@ import (
 	order_module "github.com/ci123chain/ci123chain/pkg/order/module"
 	staking_module "github.com/ci123chain/ci123chain/pkg/staking/module"
 	supply_module "github.com/ci123chain/ci123chain/pkg/supply/module"
-	wasm_module "github.com/ci123chain/ci123chain/pkg/wasm/module"
+	vm_module "github.com/ci123chain/ci123chain/pkg/vm/module"
 	"io/ioutil"
 	"path/filepath"
 
@@ -43,8 +43,8 @@ import (
 	supply_types "github.com/ci123chain/ci123chain/pkg/supply/types"
 	"github.com/ci123chain/ci123chain/pkg/transfer"
 	"github.com/ci123chain/ci123chain/pkg/transfer/handler"
-	"github.com/ci123chain/ci123chain/pkg/wasm"
-	wasm_types "github.com/ci123chain/ci123chain/pkg/wasm/types"
+	"github.com/ci123chain/ci123chain/pkg/vm"
+	wasm_types "github.com/ci123chain/ci123chain/pkg/vm/wasmtypes"
 	"github.com/spf13/viper"
 	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/crypto"
@@ -84,7 +84,7 @@ var (
 
 	disrtStoreKey    = sdk.NewKVStoreKey(k.DisrtKey)
 	stakingStoreKey  = sdk.NewKVStoreKey(staking.StoreKey)
-	wasmStoreKey     = sdk.NewKVStoreKey(wasm.StoreKey)
+	wasmStoreKey     = sdk.NewKVStoreKey(vm.StoreKey)
 	mintStoreKey     = sdk.NewKVStoreKey(mint.StoreKey)
 	infrastructureStoreKey = sdk.NewKVStoreKey(infrastructure.StoreKey)
 
@@ -184,10 +184,11 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 
 	homeDir := viper.GetString(cli.HomeFlag)
 	var wasmconfig wasm_types.WasmConfig
-	wasmKeeper := wasm.NewKeeper(cdc, wasmStoreKey,homeDir, wasmconfig, accKeeper, stakingKeeper, cdb)
+	vmSubspace := paramsKeeper.Subspace(vm.DefaultCodespace)
+	vmKeeper := vm.NewKeeper(cdc, wasmStoreKey, homeDir, wasmconfig, vmSubspace, accKeeper, stakingKeeper, cdb)
 
 	stakingKeeper.SetHooks(staking.NewMultiStakingHooks(distrKeeper.Hooks()))
-	module_order := []string{auth_types.ModuleName, acc_types.ModuleName, supply_types.ModuleName, distr.ModuleName, order.ModuleName,stakingTypes.ModuleName, wasm_types.ModuleName, mint.ModuleName, infrastructure.ModuleName}
+	module_order := []string{auth_types.ModuleName, acc_types.ModuleName, supply_types.ModuleName, distr.ModuleName, order.ModuleName,stakingTypes.ModuleName, vm.ModuleName, mint.ModuleName, infrastructure.ModuleName}
 	// 设置modules
 	c.mm = module.NewManager(
 		module_order,
@@ -197,7 +198,7 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 		dist_module.AppModule{DistributionKeeper: distrKeeper, AccountKeeper:accKeeper, SupplyKeeper:supplyKeeper},
 		order_module.AppModule{OrderKeeper: &orderKeeper},
 		staking_module.AppModule{StakingKeeper: stakingKeeper, AccountKeeper:accKeeper, SupplyKeeper:supplyKeeper},
-		wasm_module.AppModule{WasmKeeper: &wasmKeeper},
+		vm_module.AppModule{Keeper: &vmKeeper},
 		mint_module.AppModule{Keeper: mintKeeper},
 		infrastructure_module.AppModule{Keeper: infrastructureKeeper},
 		)
@@ -207,7 +208,7 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 	c.Router().AddRoute(order.RouteKey, orhandler.NewHandler(&orderKeeper))
 	c.Router().AddRoute(staking.RouteKey, staking.NewHandler(stakingKeeper))
 	c.Router().AddRoute(distr.RouteKey, distr.NewHandler(distrKeeper))
-	c.Router().AddRoute(wasm.RouteKey, wasm.NewHandler(wasmKeeper))
+	c.Router().AddRoute(vm.RouteKey, vm.NewHandler(vmKeeper))
 	c.Router().AddRoute(infrastructure.RouteKey, infrastructure.NewHandler(infrastructureKeeper))
 	// query router
 	c.QueryRouter().AddRoute(ibc.RouterKey, ibc.NewQuerier(ibcKeeper))
@@ -218,7 +219,7 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 
 	c.QueryRouter().AddRoute(staking.RouteKey, staking.NewQuerier(stakingKeeper))
 	c.QueryRouter().AddRoute(account.RouteKey, account.NewQuerier(accKeeper))
-	c.QueryRouter().AddRoute(wasm.RouteKey, wasm.NewQuerier(wasmKeeper))
+	c.QueryRouter().AddRoute(vm.RouteKey, vm.NewQuerier(vmKeeper))
 	c.QueryRouter().AddRoute(mint.RouteKey, mint.NewQuerier(mintKeeper))
 	c.QueryRouter().AddRoute(infrastructure.RouteKey, infrastructure.NewQuerier(infrastructureKeeper))
 

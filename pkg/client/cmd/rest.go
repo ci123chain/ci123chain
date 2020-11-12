@@ -29,7 +29,7 @@ import (
 	orQuery "github.com/ci123chain/ci123chain/pkg/order"
 	order "github.com/ci123chain/ci123chain/pkg/order/rest"
 	sRest "github.com/ci123chain/ci123chain/pkg/staking/client/rest"
-	wRest "github.com/ci123chain/ci123chain/pkg/wasm/client/rest"
+	wRest "github.com/ci123chain/ci123chain/pkg/vm/client/rest"
 	"github.com/gorilla/mux"
 )
 

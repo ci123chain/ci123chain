@@ -22,7 +22,7 @@ func NewQuerier(k AccountKeeper) sdk.Querier {
 		case types.QueryAccount:
 			return queryAccount(ctx, req, k)
 		default:
-			return nil, sdk.ErrUnknownRequest("unknown nameservice query endpoint")
+			return nil, sdk.ErrUnknownRequest("unknown query endpoint")
 		}
 	}
 }

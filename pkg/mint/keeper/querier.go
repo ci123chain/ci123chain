@@ -17,7 +17,7 @@ func NewQuerier(k MinterKeeper) sdk.Querier {
 		case types.QueryParameters:
 			return QueryParams(ctx, k)
 		default:
-			return nil, sdk.ErrUnknownRequest("unknown nameservice query endpoint")
+			return nil, sdk.ErrUnknownRequest("unknown query endpoint")
 		}
 	}
 }

@@ -9,7 +9,7 @@ import (
 	order_basic "github.com/ci123chain/ci123chain/pkg/order/module/basic"
 	staking_basic "github.com/ci123chain/ci123chain/pkg/staking/module/basic"
 	supply_basic "github.com/ci123chain/ci123chain/pkg/supply/module/basic"
-	wasm_basic "github.com/ci123chain/ci123chain/pkg/wasm/module/basic"
+	wasm_basic "github.com/ci123chain/ci123chain/pkg/vm/module/basic"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/types"
 )

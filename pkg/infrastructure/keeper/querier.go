@@ -12,7 +12,7 @@ func NewQuerier(k InfrastructureKeeper) sdk.Querier {
 		case types.QueryContent:
 			return QueryContent(ctx, req,  k)
 		default:
-			return nil, sdk.ErrUnknownRequest("unknown nameservice query endpoint")
+			return nil, sdk.ErrUnknownRequest("unknown query endpoint")
 		}
 	}
 }
