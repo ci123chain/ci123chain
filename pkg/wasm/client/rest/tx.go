@@ -56,7 +56,7 @@ func uploadContractHandler(cliCtx context.Context,w http.ResponseWriter, r *http
 		return
 	}
 	if len(res) > 0 { //already exists
-		rest.PostProcessResponseBare(w, cliCtx, strings.ToUpper(hex.EncodeToString(codeHash)))
+		rest.PostProcessResponseBare(w, cliCtx, sdk.TxResponse{Code: 0, Data: strings.ToUpper(hex.EncodeToString(codeHash))})
 		return
 	}
 	msg := wasm2.NewUploadTx(code, from)
