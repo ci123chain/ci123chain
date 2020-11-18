@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"encoding/json"
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	evm "github.com/ci123chain/ci123chain/pkg/vm/evmtypes"
@@ -175,7 +176,10 @@ func handleMsgEvmTx(ctx sdk.Context, k Keeper, msg evm.MsgEvmTx) sdk.Result {
 		)
 	}
 
+	data, _  := evm.DecodeResultData(executionResult.Result.Data)
+	a, _ := json.Marshal(data)
 	// set the events to the result
 	executionResult.Result.Events = ctx.EventManager().Events()
+	executionResult.Result.Data = a
 	return *executionResult.Result
 }
