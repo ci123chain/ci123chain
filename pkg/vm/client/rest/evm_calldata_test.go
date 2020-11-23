@@ -1,7 +1,9 @@
 package rest
 
 import (
+	"encoding/base64"
 	"encoding/hex"
+	"fmt"
 	"github.com/ethereum/go-ethereum/crypto"
 	"gotest.tools/assert"
 	"math/big"
@@ -18,10 +20,29 @@ type signature struct {
 	Retargs []string
 }
 
+func TestEncodeData(t *testing.T) {
+	s, err := base64.StdEncoding.DecodeString("AAAAAAAAAAAAAAAAYUWSO06FhN6z0gIhTWhoLX2GuXw=")
+	if err != nil {
+		panic(err)
+	}
+	a := hex.EncodeToString(s)
+	fmt.Println(a)
+}
+
 func TestCallData(t *testing.T) {
 	a := hex.EncodeToString(methodID("baz", []string{"uint32", "bool"}))
 	b := hex.EncodeToString(rawEncode([]string{"uint32", "bool"}, []interface{}{"69", true}))
 	assert.Equal(t, "cdcd77c000000000000000000000000000000000000000000000000000000000000000450000000000000000000000000000000000000000000000000000000000000001", a+b)
+
+	a = hex.EncodeToString(methodID("balanceOf", []string{"address"}))
+	b = hex.EncodeToString(rawEncode([]string{"address"}, []interface{}{"0x3f43e75aaba2c2fd6e227c10c6e7dc125a93de3c"}))
+	fmt.Println(a+b)
+	assert.Equal(t, "70a082310000000000000000000000003f43e75aaba2c2fd6e227c10c6e7dc125a93de3c", a+b)
+
+	a = hex.EncodeToString(methodID("createPair", []string{"address", "address"}))
+	b = hex.EncodeToString(rawEncode([]string{"address", "address"}, []interface{}{"0xCAdc375A06bcBb0BAC4207fdbA2D413cAb1A6265", "0xA3c0daf03Df1527f23DD9Cfd74dcd6047707a81b"}))
+	fmt.Println(a+b)
+	assert.Equal(t, "c9c65396000000000000000000000000cadc375a06bcbb0bac4207fdba2d413cab1a6265000000000000000000000000a3c0daf03df1527f23dd9cfd74dcd6047707a81b", a+b)
 
 	a = hex.EncodeToString(methodID("sam", []string{"bytes", "bool", "uint256[]"}))
 	b = hex.EncodeToString(rawEncode([]string{"bytes", "bool", "uint256[]"}, []interface{}{[]byte("dave"), true, []int64{1, 2, 3}}))
@@ -44,6 +65,9 @@ func TestMethodSig(t *testing.T) {
 
 	a = hex.EncodeToString(methodID("test", []string{"uint", "uint"}))
 	assert.Equal(t, "eb8ac921", a)
+
+	a = hex.EncodeToString(methodID("allPairs", nil))
+	fmt.Println(a)
 }
 
 func TestRawEncode(t *testing.T) {

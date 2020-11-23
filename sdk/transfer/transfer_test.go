@@ -3,6 +3,7 @@ package transfer
 import (
 	"encoding/hex"
 	"fmt"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
@@ -28,7 +29,7 @@ var (
 
 func TestSignMsgTransfer(t *testing.T) {
 
-	signdata, err := SignMsgTransfer(from, to, offlineGas, offlineNonce, offlineAmount, priv, false)
+	signdata, err := SignMsgTransfer(from, to, offlineGas, offlineNonce, , priv, false)
 
 	assert.NoError(t, err)
 	httpTransfer(hex.EncodeToString(signdata))
