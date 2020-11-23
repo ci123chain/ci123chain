@@ -1,6 +1,7 @@
 package types
 
 import (
+	"bytes"
 	"encoding/hex"
 	"errors"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
@@ -8,6 +9,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
 	"github.com/ci123chain/ci123chain/pkg/transaction/types"
 	"github.com/ci123chain/ci123chain/pkg/util"
+	"github.com/ethereum/go-ethereum/crypto"
 )
 
 type CommonTx struct {
@@ -108,6 +110,9 @@ func SignCommonTx(from types2.AccAddress, nonce, gas uint64, msgs []types2.Msg, 
 	var signature []byte
 	privPub, err := hex.DecodeString(priv)
 	eth := cryptosuit.NewETHSignIdentity()
+	if !IsValidPrivateKey(from, privPub){
+		return nil, errors.New("invalid private_key, the private key does not match the from account")
+	}
 	signature, err = eth.Sign(tx.GetSignBytes(), privPub)
 	if err != nil {
 		return nil, err
@@ -125,5 +130,16 @@ func DefaultTxDecoder(cdc *codec.Codec) types2.TxDecoder {
 			return nil, types2.ErrTxDecode("decode msg failed").TraceSDK(err.Error())
 		}
 		return transfer, nil
+	}
+}
+
+func IsValidPrivateKey(from types2.AccAddress,identity []byte) bool {
+	key := crypto.ToECDSAUnsafe(identity)
+	by1 := crypto.PubkeyToAddress(key.PublicKey).Bytes()
+	by2 := from.Bytes()
+	if bytes.Equal(by1, by2) {
+		return true
+	}else {
+		return false
 	}
 }
