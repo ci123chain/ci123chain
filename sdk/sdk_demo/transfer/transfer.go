@@ -9,7 +9,7 @@ import (
 func SignTransferTxDemo() (string, error) {
 	isFabric = false
 	//isFabric = true
-	msg, err := sdk.SignMsgTransfer(from, to, offlineGas, offlineNonce, offlineAmount, priv, isFabric)
+	msg, err := sdk.SignMsgTransfer(from, to, offlineGas, offlineNonce, amount, priv, isFabric)
 	if err != nil {
 		return "", err
 	}

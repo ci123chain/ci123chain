@@ -15,7 +15,7 @@ var (
 	from = "0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c"
 	to = "0x505A74675dc9C71eF3CB5DF309256952917E801e"
 	amount = "2"
-	offlineAmount = uint64(2)
+	//offlineAmount = uint64(2)
 	gas = "20000"
 	offlineGas = uint64(20000)
 	nonce = "2"
@@ -28,7 +28,7 @@ var (
 
 func TestSignMsgTransfer(t *testing.T) {
 
-	signdata, err := SignMsgTransfer(from, to, offlineGas, offlineNonce, offlineAmount, priv, false)
+	signdata, err := SignMsgTransfer(from, to, offlineGas, offlineNonce, amount, priv, false)
 
 	assert.NoError(t, err)
 	httpTransfer(hex.EncodeToString(signdata))
