@@ -50,7 +50,7 @@ func NewEventFromSlice(raw []byte) (Event, error) {
 		Attr: map[string]interface{}{},
 	}
 
-	sink := NewSink(raw)
+	sink := wasmtypes.NewSink(raw)
 
 	tp, err := sink.ReadString()
 	if err != nil {
@@ -175,7 +175,7 @@ func getBlockHeader(context unsafe.Pointer, valuePtr int32) {
 	var height = ctx.BlockHeader().Height
 	var now = ctx.BlockHeader().Time.Unix()
 
-	sink := NewSink([]byte{})
+	sink := wasmtypes.NewSink([]byte{})
 	sink.WriteU64(uint64(height))                      // 高度
 	sink.WriteU64(uint64(now)) // 区块头时间
 
@@ -208,7 +208,7 @@ func returnContract(context unsafe.Pointer, ptr, size int32) {
 
 	result := memory[ptr : ptr+size]
 
-	sink := NewSink(result)
+	sink := wasmtypes.NewSink(result)
 	success, err := sink.ReadBool()
 	if err != nil {
 		panic(err)
@@ -405,7 +405,7 @@ func getValidatorPower(context unsafe.Pointer, dataPtr, dataSize, valuePtr int32
 	var instanceContext = wasm.IntoInstanceContext(context)
 	var memory = instanceContext.Memory().Data()
 
-	source := NewSink(memory[dataPtr : dataPtr+dataSize])
+	source := wasmtypes.NewSink(memory[dataPtr : dataPtr+dataSize])
 
 	var validators []Address
 	{
@@ -441,7 +441,7 @@ func getValidatorPower(context unsafe.Pointer, dataPtr, dataSize, valuePtr int32
 		value[i] = uint64(i)
 	}*/
 
-	sink := NewSink([]byte{})
+	sink := wasmtypes.NewSink([]byte{})
 	for i := range value {
 		sink.WriteU128(value[i])
 	}

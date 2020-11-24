@@ -107,6 +107,9 @@ func (k *Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAd
 			return sdk.AccAddress{}, sdk.ErrInternal("invalid instantiate message")
 		}
 	}
+	if err := types.ValidCallArgs(params.Args); err != nil {
+		return sdk.AccAddress{}, sdk.ErrInvalidContractArgs(err.Error())
+	}
 	ccstore := ctx.KVStore(k.storeKey)
 	bz := ccstore.Get(types.GetCodeKey(codeHash))
 	if bz == nil {
@@ -484,17 +487,11 @@ func (k Keeper) generateContractAddress(codeHash []byte, creatorAddr sdk.AccAddr
 	return sdk.ToAccAddress(crypto.Keccak256Hash(contract).Bytes()[12:])
 }
 
-func handleArgs(args json.RawMessage) ([]byte, error){
-	var param types.CallContractParam
-	inputByte, _ := args.MarshalJSON()
-	err := json.Unmarshal(inputByte, &param)
-	if err != nil {
-		return nil, err
-	}
 
+func handleArgs(args map[string]interface{}) ([]byte, error){
 	var inputArgs []interface{}
-	for i := 0; i < len(param.Args); i++ {
-		inputArgs = append(inputArgs, param.Args[i])
+	for k, v := range args {
+		inputArgs = append(inputArgs, v)
 	}
 
 	input := Serialize(inputArgs)

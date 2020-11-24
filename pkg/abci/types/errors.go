@@ -51,6 +51,8 @@ const (
 
 	CodeBadSharesAmount  CodeType = 33
 
+	CodeInvalidContractArgs CodeType = 40
+
 	// CodespaceRoot is a codespace for error codes in this file only.
 	// Notice that 0 is an "unset" codespace, which can be overridden with
 	// Error.WithDefaultCodespace().
@@ -95,6 +97,8 @@ func CodeToDefaultMsg(code CodeType) string {
 		return "insufficient fee"
 	case CodeTooManySignatures:
 		return "maximum numer of signatures exceeded"
+	case CodeInvalidContractArgs:
+		return "contract args error"
 	default:
 		return unknownCodeMsg(code)
 	}
@@ -172,6 +176,10 @@ func ErrNoRedelegation(msg string) Error {
 
 func ErrBadSharesAmount(msg string) Error {
 	return newErrorWithRootCodespace(CodeBadSharesAmount, msg)
+}
+
+func ErrInvalidContractArgs(msg string) Error {
+	return newErrorWithRootCodespace(CodeInvalidContractArgs, msg)
 }
 
 //----------------------------------------
