@@ -4,13 +4,13 @@ import "encoding/json"
 
 const (
 	communityContractAddress = "\"0xfffffffffffffffffffffffffffffffffffffff1\""
-	isOfficial = "true"
+	isOfficial = "\"true\""
 	aclContractAddress = "\"0xfffffffffffffffffffffffffffffffffffffff2\""
 	votingContractAddress = "\"0xfffffffffffffffffffffffffffffffffffffff3\""
 	supportRequiredPct = "\"600000000000000000\""  //60*10^16 :60%
 	minAcceptQuorumPct = "\"500000000000000000\""  //50*10^16 :50%
 	openTime = "\"1290600000\""  //2 weeks
-	InitMethodBool = "init(bool)"
+	//InitMethodBool = "init(bool)"
 	InitMethodStr = "init(string)"
 	InvokeMethodStr3 = "init(string, string, string)"
 	InitMethodStr6 = "init(string, string, string, string, string, string)"
@@ -43,7 +43,7 @@ func DefaultGenesisState() GenesisState{
 		{
 			Index:   0,
 			Code:    communityCode,
-			Method:  InitMethodBool,
+			Method:  InitMethodStr,
 			Params:  []json.RawMessage{json.RawMessage(isOfficial)},
 			Address: communityContractAddress,
 		},
