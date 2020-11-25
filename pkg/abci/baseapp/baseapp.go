@@ -508,6 +508,7 @@ func (app *BaseApp) runMsgs(ctx sdk.Context, msgs []sdk.Msg, mode runTxMode) sdk
 
 	for msgIdx, msg := range msgs{
 		msgRoute := msg.Route()
+		app.Logger.Info("msgType: " + msg.MsgType())
 		handler := app.router.Route(msgRoute)
 		if handler == nil {
 			return sdk.ErrUnknownRequest("Unrecognized Msg type: " + msgRoute).Result()
