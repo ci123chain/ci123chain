@@ -12,48 +12,26 @@ import (
 
 var cdc = types.MakeCodec()
 
-func getWasmCode(r *http.Request) (wasmcode []byte, err error){
-	codeStr := r.FormValue("wasm_code_str")
+func getCode(r *http.Request) (code []byte, err error){
+	codeStr := r.FormValue("code_str")
 	if codeStr != "" {
 		Byte, err := hex.DecodeString(codeStr)
 		if err != nil {
-			return nil, errors.New("invalid wasm_code")
+			return nil, errors.New("invalid code")
 		}
-		wasmcode = Byte
+		code = Byte
 	}else {
-		file, _, err := r.FormFile("wasm_code")
+		file, _, err := r.FormFile("code_file")
 		if err != nil {
-			return nil, errors.New("wasm_code cannot get wasm file: " + err.Error())
+			return nil, errors.New("cannot get code file: " + err.Error())
 		}
-		wasmcode, err = ioutil.ReadAll(file)
+		code, err = ioutil.ReadAll(file)
 		if err != nil {
 			return nil, err
 		}
 	}
 	return
 }
-
-func getEvmCode(r *http.Request) (evmcode []byte, err error){
-	codeStr := r.FormValue("evm_code_str")
-	if codeStr != "" {
-		Byte, err := hex.DecodeString(codeStr)
-		if err != nil {
-			return nil, errors.New("invalid wasm_code")
-		}
-		evmcode = Byte
-	}else {
-		file, _, err := r.FormFile("evm_code")
-		if err != nil {
-			return nil, errors.New("wasm_code cannot get wasm file: " + err.Error())
-		}
-		evmcode, err = ioutil.ReadAll(file)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return
-}
-
 
 func adjustInstantiateParams(r *http.Request) (name, version, author, email, describe string, err error) {
 	name, err = validParam(r, "name")

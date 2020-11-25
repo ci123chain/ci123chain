@@ -2,15 +2,20 @@ package types
 
 import (
 	"fmt"
-	ethcmn "github.com/ethereum/go-ethereum/common"
-	"github.com/pkg/errors"
 	"github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/account/exported"
+	ethcmn "github.com/ethereum/go-ethereum/common"
+	"github.com/pkg/errors"
 	"github.com/tendermint/tendermint/crypto"
 	"time"
 )
 
 var _ exported.Account = (*BaseAccount)(nil)
+
+const (
+	EvmContractType string = "evm"
+	WasmContractType string = "wasm"
+)
 
 func ProtoBaseAccount() exported.Account  {
 	return &BaseAccount{}
@@ -18,11 +23,12 @@ func ProtoBaseAccount() exported.Account  {
 
 type BaseAccount struct {
 	Address       	types.AccAddress `json:"address" yaml:"address"`
-	Coin        	types.Coin         `json:"coin" yaml:"coin"`
+	Coin        	types.Coin       `json:"coin" yaml:"coin"`
 	Sequence      	uint64         `json:"sequence_number" yaml:"sequence_number"`
 	AccountNumber 	uint64         `json:"account_number" yaml:"account_number"`
 	PubKey 			crypto.PubKey  `json:"pub_key" yaml:"pub_key"`
 	ContractList    []string        `json:"contract_list" yaml:"contract_list"`
+	ContractType    string         `json:"contract_type" yaml:"contract_type"`
 	CodeHash		[]byte 			`json:"code_hash" yaml:"code_hash"`
 }
 
@@ -36,9 +42,9 @@ func NewBaseAccount(address types.AccAddress, coin types.Coin,
 		PubKey:        pubKey,
 		AccountNumber: accountNumber,
 		Sequence:      sequence,
-		ContractList:  []string{},
 	}
 }
+
 // NewBaseAccountWithAddress - returns a new base account with a given address
 func NewBaseAccountWithAddress(addr types.AccAddress) BaseAccount {
 	return BaseAccount{
@@ -154,4 +160,16 @@ func (acc *BaseAccount) SetBalance(denom string, amt types.Int) {
 	if err := acc.SetCoin(newCoin); err != nil {
 		panic(fmt.Errorf("could not set %s coins for address %s: %w", denom, acc.EthAddress().String(), err))
 	}
+}
+
+func (acc *BaseAccount) SetContractType(contractType string) error {
+	if contractType != EvmContractType && contractType != WasmContractType {
+		return errors.New("error contractType")
+	}
+	acc.ContractType = contractType
+	return nil
+}
+
+func (acc *BaseAccount) GetContractType() string {
+	return acc.ContractType
 }

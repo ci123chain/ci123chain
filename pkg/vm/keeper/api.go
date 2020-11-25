@@ -2,10 +2,12 @@ package keeper
 
 import (
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/client/helper"
+	"github.com/ci123chain/ci123chain/pkg/vm/moduletypes/utils"
 	wasmtypes "github.com/ci123chain/ci123chain/pkg/vm/wasmtypes"
 	wasm "github.com/wasmerio/go-ext-wasm/wasmer"
 	"io/ioutil"
@@ -50,7 +52,7 @@ func NewEventFromSlice(raw []byte) (Event, error) {
 		Attr: map[string]interface{}{},
 	}
 
-	sink := NewSink(raw)
+	sink := wasmtypes.NewSink(raw)
 
 	tp, err := sink.ReadString()
 	if err != nil {
@@ -175,7 +177,7 @@ func getBlockHeader(context unsafe.Pointer, valuePtr int32) {
 	var height = ctx.BlockHeader().Height
 	var now = ctx.BlockHeader().Time.Unix()
 
-	sink := NewSink([]byte{})
+	sink := wasmtypes.NewSink([]byte{})
 	sink.WriteU64(uint64(height))                      // 高度
 	sink.WriteU64(uint64(now)) // 区块头时间
 
@@ -208,7 +210,7 @@ func returnContract(context unsafe.Pointer, ptr, size int32) {
 
 	result := memory[ptr : ptr+size]
 
-	sink := NewSink(result)
+	sink := wasmtypes.NewSink(result)
 	success, err := sink.ReadBool()
 	if err != nil {
 		panic(err)
@@ -293,7 +295,6 @@ func callContract(context unsafe.Pointer, addrPtr, inputPtr, inputSize int32) in
 func newContract(context unsafe.Pointer, newContractPtr, codeHashPtr, codeHashSize, argsPtr, argsSize int32) {
 	var instanceContext = wasm.IntoInstanceContext(context)
 	var memory = instanceContext.Memory().Data()
-
 	args := memory[argsPtr : argsPtr + argsSize]
 	codeHash := memory[codeHashPtr : codeHashPtr+codeHashSize]
 	hash, err := hex.DecodeString(strings.ToLower(string(codeHash)))
@@ -306,7 +307,13 @@ func newContract(context unsafe.Pointer, newContractPtr, codeHashPtr, codeHashSi
 	tempStore := store
 	tempPreCaller := precaller
 
-	newContractAddress, err := keeper.Instantiate(*ctx, hash, invoker, args, "", "", "", "", "", wasmtypes.EmptyAddress)
+	var calldata utils.CallData
+	err = json.Unmarshal(args, &calldata)
+	if err != nil {
+		panic(err)
+	}
+
+	newContractAddress, err := keeper.Instantiate(*ctx, hash, invoker, calldata, "", "", "", "", "", wasmtypes.EmptyAddress)
 	if err != nil {
 		panic(err)
 	}
@@ -405,7 +412,7 @@ func getValidatorPower(context unsafe.Pointer, dataPtr, dataSize, valuePtr int32
 	var instanceContext = wasm.IntoInstanceContext(context)
 	var memory = instanceContext.Memory().Data()
 
-	source := NewSink(memory[dataPtr : dataPtr+dataSize])
+	source := wasmtypes.NewSink(memory[dataPtr : dataPtr+dataSize])
 
 	var validators []Address
 	{
@@ -423,14 +430,14 @@ func getValidatorPower(context unsafe.Pointer, dataPtr, dataSize, valuePtr int32
 			validators = append(validators, NewAddress(bytes))
 		}
 	}
-	value := make([]*sdk.RustU128, len(validators))
+	value := make([]*wasmtypes.RustU128, len(validators))
 	for _, v := range validators {
 		i := 0
 		val, ok := stakingKeeper.GetValidator(*ctx, sdk.HexToAddress(v.ToString()))
 		if !ok {
-			value[i] = sdk.NewRustU128(big.NewInt(0))
+			value[i] = wasmtypes.NewRustU128(big.NewInt(0))
 		}else {
-			value[i] = sdk.NewRustU128(big.NewInt(val.DelegatorShares.TruncateInt64()))
+			value[i] = wasmtypes.NewRustU128(big.NewInt(val.DelegatorShares.TruncateInt64()))
 		}
 		i++
 	}
@@ -441,7 +448,7 @@ func getValidatorPower(context unsafe.Pointer, dataPtr, dataSize, valuePtr int32
 		value[i] = uint64(i)
 	}*/
 
-	sink := NewSink([]byte{})
+	sink := wasmtypes.NewSink([]byte{})
 	for i := range value {
 		sink.WriteU128(value[i])
 	}
@@ -455,7 +462,7 @@ func totalPower(context unsafe.Pointer, valuePtr int32) {
 	var instanceContext = wasm.IntoInstanceContext(context)
 	var memory = instanceContext.Memory().Data()
 	bondedPool := stakingKeeper.GetBondedPool(*ctx)
-	u128 := sdk.NewRustU128(bondedPool.GetCoin().Amount.BigInt())
+	u128 := wasmtypes.NewRustU128(bondedPool.GetCoin().Amount.BigInt())
 	copy(memory[valuePtr:valuePtr+16], u128.Bytes())
 	//根据链上信息返回总权益
 	//return 123456789

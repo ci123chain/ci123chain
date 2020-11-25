@@ -42,7 +42,6 @@ import (
 	"path/filepath"
 	"sort"
 	"strconv"
-	"unicode/utf8"
 	"unsafe"
 )
 
@@ -414,46 +413,6 @@ func (w *Wasmer) DeleteCode(homeDir string, hash []byte) error {
 
 	return nil
 }
-
-func Serialize(raw []interface{}) (res []byte) {
-	//fmt.Println(raw)
-	sink := NewSink(res)
-
-	for i := range raw {
-		switch r := raw[i].(type) {
-		case string:
-			//字符串必须是合法的utf8字符串
-			if !utf8.ValidString(r) {
-				panic("invalid utf8 string")
-			}
-			sink.WriteString(r)
-
-		case uint32:
-			sink.WriteU32(r)
-
-		case uint64:
-			sink.WriteU64(r)
-
-		case int32:
-			sink.WriteI32(r)
-
-		case int64:
-			sink.WriteI64(r)
-
-		case []byte:
-			sink.WriteBytes(r)
-
-		case Address:
-			sink.WriteAddress(r)
-
-		default:
-			panic("unexpected type")
-		}
-	}
-
-	return sink.Bytes()
-}
-
 
 type SortMap struct {
 	Key   string `json:"key"`

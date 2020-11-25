@@ -1,9 +1,9 @@
 package types
 
 import (
-	"encoding/json"
 	"errors"
 	vmmodule "github.com/ci123chain/ci123chain/pkg/vm/moduletypes"
+	"github.com/ci123chain/ci123chain/pkg/vm/moduletypes/utils"
 
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 )
@@ -63,11 +63,11 @@ type MsgInstantiateContract struct {
 	Author      string				`json:"author,omitempty"`
 	Email       string				`json:"email,omitempty"`
 	Describe	string				`json:"describe,omitempty"`
-	Args      	json.RawMessage     `json:"args,omitempty"`
+	Args      	utils.CallData    	`json:"args,omitempty"`
 }
 
 func NewMsgInstantiateContract(codeHash []byte, from sdk.AccAddress, name, version, author, email, describe string,
-	initMsg json.RawMessage) *MsgInstantiateContract {
+	initMsg utils.CallData) *MsgInstantiateContract {
 
 		return &MsgInstantiateContract {
 			FromAddress: from,
@@ -116,12 +116,12 @@ func (msg *MsgInstantiateContract) GetFromAddress() sdk.AccAddress {
 }
 
 type MsgExecuteContract struct {
-	FromAddress sdk.AccAddress		`json:"from_address"`
-	Contract         sdk.AccAddress      `json:"contract"`
-	Args              json.RawMessage    `json:"args"`
+	FromAddress 	sdk.AccAddress		`json:"from_address"`
+	Contract        sdk.AccAddress      `json:"contract"`
+	Args            utils.CallData    	`json:"args"`
 }
 
-func NewMsgExecuteContract(from sdk.AccAddress, contractAddress sdk.AccAddress, msg json.RawMessage) *MsgExecuteContract {
+func NewMsgExecuteContract(from sdk.AccAddress, contractAddress sdk.AccAddress, msg utils.CallData) *MsgExecuteContract {
 	return &MsgExecuteContract{
 		FromAddress: from,
 		Contract:    contractAddress,
@@ -139,7 +139,7 @@ func (msg *MsgExecuteContract) ValidateBasic() sdk.Error {
 		return ErrInvalidMsg(DefaultCodespace, errors.New("sender is invalid"))
 	}
 
-	if msg.Args == nil {
+	if msg.Args.Method == "" {
 		return ErrInvalidMsg(DefaultCodespace, errors.New("args is invalid"))
 	}
 	return nil
@@ -175,11 +175,11 @@ type MsgMigrateContract struct {
 	Author      string				`json:"author,omitempty"`
 	Email       string				`json:"email,omitempty"`
 	Describe	string				`json:"describe,omitempty"`
-	Args      	json.RawMessage     `json:"args,omitempty"`
+	Args      	utils.CallData     `json:"args,omitempty"`
 }
 
 func NewMsgMigrateContract(codeHash []byte, from sdk.AccAddress, name, version, author, email, describe string,
-	contract sdk.AccAddress, initMsg json.RawMessage) *MsgMigrateContract{
+	contract sdk.AccAddress, initMsg utils.CallData) *MsgMigrateContract{
 	return &MsgMigrateContract{
 		FromAddress: from,
 		CodeHash:    codeHash,

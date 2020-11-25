@@ -7,6 +7,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/transfer"
 	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/ci123chain/ci123chain/pkg/vm/moduletypes"
+	"github.com/ci123chain/ci123chain/pkg/vm/moduletypes/utils"
 	"github.com/ci123chain/ci123chain/pkg/vm/wasmtypes"
 	"net/http"
 )
@@ -142,22 +143,19 @@ func queryContractHandlerFn(cliCtx context.Context) http.HandlerFunc {
 
 func queryContractStateAllHandlerFn(cliCtx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var queryParam []byte
 		contractAddr := r.FormValue("contract_address")
 		contractAddress := sdk.HexToAddress(contractAddr)
 		msg := r.FormValue("args")
 		height := r.FormValue("height")
 		prove := r.FormValue("prove")
+		var argsStr utils.CallData
 		if msg == "" {
-			queryParam = nil
+			rest.WriteErrorRes(w, transfer.ErrQueryTx(types.DefaultCodespace, "query param parse failed"))
 		}else {
-			var argsStr types.CallContractParam
 			ok, err := util.CheckJsonArgs(msg, argsStr)
 			if err != nil || !ok {
-				//return types.AccAddress{}, 0, 0, "", nil, errors.New("unexpected args")
+				rest.WriteErrorRes(w, transfer.ErrQueryTx(types.DefaultCodespace, "query param parse failed"))
 			}
-			queryParam = []byte(msg)
-
 		}
 
 		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r, "")
@@ -168,7 +166,7 @@ func queryContractStateAllHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		if !rest.CheckHeightAndProve(w, height, prove, types.DefaultCodespace) {
 			return
 		}
-		params := types.NewContractStateParam(contractAddress, sdk.AccAddress{}, queryParam)
+		params := types.NewContractStateParam(contractAddress, sdk.AccAddress{}, argsStr)
 		bz, Er := cliCtx.Cdc.MarshalJSON(params)
 		if Er != nil {
 			rest.WriteErrorRes(w, sdk.ErrInternal("marshal failed"))

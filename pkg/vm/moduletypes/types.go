@@ -1,9 +1,9 @@
 package moduletypes
 
 import (
-	"encoding/json"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/vm/evmtypes"
+	"github.com/ci123chain/ci123chain/pkg/vm/moduletypes/utils"
 	ethcmn "github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -25,9 +25,9 @@ type KeeperI interface {
 
 	Upload(ctx sdk.Context, wasmCode []byte, creator sdk.AccAddress) (codeHash []byte, err error)
 
-	Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAddress, args json.RawMessage, name, version, author, email, describe string, genesisContractAddress sdk.AccAddress) (sdk.AccAddress, error)
+	Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAddress, args utils.CallData, name, version, author, email, describe string, genesisContractAddress sdk.AccAddress) (sdk.AccAddress, error)
 
-	Execute(ctx sdk.Context, contractAddress sdk.AccAddress, invoker sdk.AccAddress, args json.RawMessage) (sdk.Result, error)
+	Execute(ctx sdk.Context, contractAddress sdk.AccAddress, invoker sdk.AccAddress, args utils.CallData) (sdk.Result, error)
 
 	SetBalance(ctx sdk.Context, addr ethcmn.Address, amount *big.Int)
 

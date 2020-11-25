@@ -35,6 +35,7 @@ require (
 	github.com/wasmerio/go-ext-wasm v0.3.1
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	gopkg.in/yaml.v2 v2.3.0
+	gotest.tools v2.2.0+incompatible
 
 )
 

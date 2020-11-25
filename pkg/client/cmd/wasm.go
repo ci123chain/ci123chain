@@ -10,7 +10,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/client/helper"
 	"github.com/ci123chain/ci123chain/pkg/util"
-	wasm "github.com/ci123chain/ci123chain/pkg/vm/wasmtypes"
+	"github.com/ci123chain/ci123chain/pkg/vm/moduletypes/utils"
 	sdk "github.com/ci123chain/ci123chain/sdk/wasm"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -191,35 +191,33 @@ func migrateContract() error {
 	return nil
 }
 
-func GetArgs(ctx context.Context) (types.AccAddress, uint64, uint64, string, json.RawMessage,  error) {
-	var args json.RawMessage
+func GetArgs(ctx context.Context) (types.AccAddress, uint64, uint64, string, utils.CallData,  error) {
 	addrs := viper.GetString(helper.FlagAddress)
 	address := types.HexToAddress(addrs)
 
 	nonce, _, err := ctx.GetNonceByAddress(address, false)
 	if err != nil {
-		return types.AccAddress{}, 0, 0, "", nil, err
+		return types.AccAddress{}, 0, 0, "", utils.CallData{}, err
 	}
 	gas := viper.GetString(helper.FlagGas)
 	Gas, err := strconv.ParseUint(gas, 10, 64)
 	if err != nil {
-		return types.AccAddress{}, 0, 0, "", nil, err
+		return types.AccAddress{}, 0, 0, "", utils.CallData{}, err
 	}
 	key := viper.GetString(helper.FlagPrivateKey)
 	if key == "" {
-		return types.AccAddress{}, 0, 0, "", nil, errors.New("privateKey can not be empty")
+		return types.AccAddress{}, 0, 0, "", utils.CallData{}, errors.New("privateKey can not be empty")
 	}
 	Msg := viper.GetString(helper.FlagArgs)
+	var params utils.CallData
 	if Msg == "" {
-		args = json.RawMessage{}
+		return types.AccAddress{}, 0, 0, "", utils.CallData{}, errors.New("calldata can not be empty")
 	}else {
-		var params wasm.CallContractParam
 		argsByte := []byte(Msg)
 		err := json.Unmarshal(argsByte, &params)
 		if err != nil {
-			return types.AccAddress{}, 0, 0, "", nil, errors.New("unexpected args")
+			return types.AccAddress{}, 0, 0, "", utils.CallData{}, errors.New("unexpected args")
 		}
-		args = argsByte
 	}
-	return address, Gas, nonce, key, args, nil
+	return address, Gas, nonce, key, params, nil
 }

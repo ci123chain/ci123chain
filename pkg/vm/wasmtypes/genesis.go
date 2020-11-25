@@ -1,15 +1,19 @@
 package types
 
+import "encoding/json"
+
 const (
-	communityContractAddress = "0xfffffffffffffffffffffffffffffffffffffff1"
+	communityContractAddress = "\"0xfffffffffffffffffffffffffffffffffffffff1\""
 	isOfficial = "true"
-	aclContractAddress = "0xfffffffffffffffffffffffffffffffffffffff2"
-	votingContractAddress = "0xfffffffffffffffffffffffffffffffffffffff3"
-	supportRequiredPct = "600000000000000000"  //60*10^16 :60%
-	minAcceptQuorumPct = "500000000000000000"  //50*10^16 :50%
-	openTime = "1290600000"  //2 weeks
-	InitMethod = "init"
-	InvokeMethod = "invoke"
+	aclContractAddress = "\"0xfffffffffffffffffffffffffffffffffffffff2\""
+	votingContractAddress = "\"0xfffffffffffffffffffffffffffffffffffffff3\""
+	supportRequiredPct = "\"600000000000000000\""  //60*10^16 :60%
+	minAcceptQuorumPct = "\"500000000000000000\""  //50*10^16 :50%
+	openTime = "\"1290600000\""  //2 weeks
+	InitMethodBool = "init(bool)"
+	InitMethodStr = "init(string)"
+	InvokeMethodStr3 = "init(string, string, string)"
+	InitMethodStr6 = "init(string, string, string, string, string, string)"
 	SetContractMethod = "initial_contract"
 	invoker = communityContractAddress
 )
@@ -18,7 +22,7 @@ type Contract struct {
 	Index    int        `json:"index"`
 	Code     string     `json:"code"`
 	Method   string     `json:"method"`
-	Params   []string   `json:"params"`
+	Params   []json.RawMessage   `json:"params"`
 	Address  string     `json:"address"`
 }
 
@@ -39,29 +43,29 @@ func DefaultGenesisState() GenesisState{
 		{
 			Index:   0,
 			Code:    communityCode,
-			Method:  InitMethod,
-			Params:  []string{isOfficial},
+			Method:  InitMethodBool,
+			Params:  []json.RawMessage{json.RawMessage(isOfficial)},
 			Address: communityContractAddress,
 		},
 		{
 			Index:   1,
 			Code:    aclCode,
-			Method:  InitMethod,
-			Params:  []string{communityContractAddress},
+			Method:  InitMethodStr,
+			Params:  []json.RawMessage{json.RawMessage(communityContractAddress)},
 			Address: aclContractAddress,
 		},
 		{
 			Index:   2,
 			Code:    votingCode,
-			Method:  InitMethod,
-			Params:  []string{aclContractAddress, communityContractAddress, supportRequiredPct, minAcceptQuorumPct, openTime, isOfficial},
+			Method:  InitMethodStr6,
+			Params:  []json.RawMessage{json.RawMessage(aclContractAddress), json.RawMessage(communityContractAddress), json.RawMessage(supportRequiredPct), json.RawMessage(minAcceptQuorumPct), json.RawMessage(openTime), json.RawMessage(isOfficial)},
 			Address: votingContractAddress,
 		},
 		{
 			Index:   3,
 			Code:    communityCode,
-			Method:  InvokeMethod,
-			Params:  []string{SetContractMethod, aclContractAddress, votingContractAddress},
+			Method:  InvokeMethodStr3,
+			Params:  []json.RawMessage{json.RawMessage(SetContractMethod), json.RawMessage(aclContractAddress), json.RawMessage(votingContractAddress)},
 			Address: communityContractAddress,
 		},
 

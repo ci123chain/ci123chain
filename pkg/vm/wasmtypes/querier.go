@@ -3,6 +3,7 @@ package types
 import (
 	"encoding/hex"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/vm/moduletypes/utils"
 	"strings"
 )
 
@@ -28,10 +29,10 @@ func NewQueryCodeInfoParams(hashStr string) CodeInfoParams {
 type ContractStateParam struct {
 	ContractAddress  sdk.AccAddress  `json:"contract_address"`
 	InvokerAddress	 sdk.AccAddress	 `json:"invoker_address"`
-	QueryMessage     []byte          `json:"query_message"`
+	QueryMessage     utils.CallData         `json:"query_message"`
 }
 
-func NewContractStateParam(addr, invokerAddr sdk.AccAddress,msg []byte) ContractStateParam {
+func NewContractStateParam(addr, invokerAddr sdk.AccAddress,msg utils.CallData) ContractStateParam {
 	param := ContractStateParam{
 		ContractAddress: addr,
 		InvokerAddress:  invokerAddr,

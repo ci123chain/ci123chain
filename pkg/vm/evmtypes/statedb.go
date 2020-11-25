@@ -517,6 +517,10 @@ func (csdb *CommitStateDB) updateStateObject(so *stateObject) error {
 		return err
 	}
 
+	if csdb.GetCode(so.address) != nil && so.account.GetContractType() == "" {
+		so.account.SetContractType(types.EvmContractType)
+	}
+
 	csdb.accountKeeper.SetAccount(csdb.ctx, so.account)
 	// return csdb.bankKeeper.SetBalance(csdb.ctx, so.account.Address, newBalance)
 	return nil
@@ -642,7 +646,6 @@ func (csdb *CommitStateDB) UpdateAccounts() {
 		if !ok {
 			continue
 		}
-
 		evmDenom := csdb.GetParams().EvmDenom
 		balance := sdk.Coin{
 			Denom:  evmDenom,

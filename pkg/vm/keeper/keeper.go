@@ -7,22 +7,24 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
-	vmmodule "github.com/ci123chain/ci123chain/pkg/vm/moduletypes"
-	"github.com/ethereum/go-ethereum/common"
-	ethtypes "github.com/ethereum/go-ethereum/core/types"
-	"github.com/tendermint/tendermint/libs/log"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/account"
 	"github.com/ci123chain/ci123chain/pkg/account/exported"
+	types2 "github.com/ci123chain/ci123chain/pkg/account/types"
+	"github.com/ci123chain/ci123chain/pkg/params"
 	keeper2 "github.com/ci123chain/ci123chain/pkg/staking/keeper"
 	"github.com/ci123chain/ci123chain/pkg/vm/evmtypes"
+	vmmodule "github.com/ci123chain/ci123chain/pkg/vm/moduletypes"
+	"github.com/ci123chain/ci123chain/pkg/vm/moduletypes/utils"
 	"github.com/ci123chain/ci123chain/pkg/vm/wasmtypes"
+	"github.com/ethereum/go-ethereum/common"
+	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/pkg/errors"
+	"github.com/tendermint/tendermint/libs/log"
 	dbm "github.com/tendermint/tm-db"
 	"github.com/wasmerio/go-ext-wasm/wasmer"
-	"github.com/ci123chain/ci123chain/pkg/params"
 	"io/ioutil"
 	"math/big"
 	"os"
@@ -112,7 +114,7 @@ func (k *Keeper) Upload(ctx sdk.Context, wasmCode []byte, creator sdk.AccAddress
 	return codeHash, nil
 }
 
-func (k *Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAddress, args json.RawMessage, name, version, author, email, describe string, genesisContractAddress sdk.AccAddress) (sdk.AccAddress, error) {
+func (k *Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAddress, args utils.CallData, name, version, author, email, describe string, genesisContractAddress sdk.AccAddress) (sdk.AccAddress, error) {
 	// 如果是官方合约，不限制gas数量
 	isGenesis, ok := ctx.Value(types.SystemContract).(bool)
 	if ok && isGenesis {
@@ -124,13 +126,6 @@ func (k *Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAd
 	var codeInfo types.CodeInfo
 	var wasmer Wasmer
 	var code []byte
-	var params types.CallContractParam
-	if args != nil {
-		err := json.Unmarshal(args, &params)
-		if err != nil {
-			return sdk.AccAddress{}, sdk.ErrInternal("invalid instantiate message")
-		}
-	}
 	ccstore := ctx.KVStore(k.storeKey)
 	bz := ccstore.Get(types.GetCodeKey(codeHash))
 	if bz == nil {
@@ -142,6 +137,7 @@ func (k *Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAd
 	}else {
 		contractAddress = k.generateContractAddress(codeHash, invoker, args)
 	}
+
 	existingAcct := k.AccountKeeper.GetAccount(ctx, contractAddress)
 	if existingAcct != nil {
 		//return sdk.AccAddress{}, sdk.ErrInternal("Contract account exists")
@@ -153,6 +149,7 @@ func (k *Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAd
 	SetSelfAddr(contractAddress)
 	var contractAccount exported.Account
 	contractAccount = k.AccountKeeper.NewAccountWithAddress(ctx, contractAddress)
+	contractAccount.SetContractType(types2.WasmContractType)
 	k.AccountKeeper.SetAccount(ctx, contractAccount)
 
 	wasmerBz := ccstore.Get(types.GetWasmerKey())
@@ -185,20 +182,23 @@ func (k *Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAd
 	prefixStoreKey := types.GetContractStorePrefixKey(contractAddress)
 	prefixStore := NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
 	SetStore(prefixStore)
-	if len(args) != 0 {
-		input, err := handleArgs(args)
-		if err != nil {
-			return sdk.AccAddress{}, err
-		}
-		_, err = k.wasmer.Call(code, input, INIT)
-		if err != nil {
-			return sdk.AccAddress{}, err
-		}
+	input, err := types.ArgsToInput(args)
+	if err != nil {
+		return sdk.AccAddress{}, err
+	}
+	sig, err := utils.ParseSignature(args.Method)
+	if err != nil {
+		return sdk.AccAddress{}, err
+	}
+	_, err = k.wasmer.Call(code, input, sig.Method)
+	if err != nil {
+		return sdk.AccAddress{}, err
 	}
 
+	initArgs, _ := json.Marshal(args)
 	//save the contract info.
 	createdAt := types.NewCreatedAt(ctx)
-	contractInfo := types.NewContractInfo(codeInfo, args, name, version, author, email, describe, createdAt)
+	contractInfo := types.NewContractInfo(codeInfo, initArgs, name, version, author, email, describe, createdAt)
 	ccstore.Set(types.GetContractAddressKey(contractAddress), k.cdc.MustMarshalBinaryBare(contractInfo))
 
 	//save contractAddress into account
@@ -226,7 +226,7 @@ func (k *Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAd
 }
 
 //
-func (k *Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, invoker sdk.AccAddress, args json.RawMessage) (sdk.Result, error) {
+func (k *Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, invoker sdk.AccAddress, args utils.CallData) (sdk.Result, error) {
 	SetGasUsed()
 	SetSelfAddr(contractAddress)
 	SetInvoker(invoker)
@@ -235,13 +235,6 @@ func (k *Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, invoke
 
 	contract := k.GetContractInfo(ctx, contractAddress)
 	SetCreator(contract.CodeInfo.Creator)
-	var params types.CallContractParam
-	if args != nil {
-		err := json.Unmarshal(args, &params)
-		if err != nil {
-			return sdk.Result{}, sdk.ErrInternal("invalid handle message")
-		}
-	}
 	codeInfo, err := k.contractInstance(ctx, contractAddress)
 	if err != nil {
 		return sdk.Result{}, err
@@ -264,11 +257,15 @@ func (k *Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, invoke
 	prefixStoreKey := types.GetContractStorePrefixKey(contractAddress)
 	prefixStore := NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
 	SetStore(prefixStore)
-	input, err := handleArgs(args)
+	input, err := types.ArgsToInput(args)
 	if err != nil {
 		return sdk.Result{}, err
 	}
-	res, err := k.wasmer.Call(code, input, INVOKE)
+	sig, err := utils.ParseSignature(args.Method)
+	if err != nil {
+		return sdk.Result{}, err
+	}
+	res, err := k.wasmer.Call(code, input, sig.Method)
 	if err != nil {
 		return sdk.Result{}, err
 	}
@@ -278,7 +275,7 @@ func (k *Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, invoke
 	}, nil
 }
 
-func (k *Keeper) Migrate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAddress, oldContract sdk.AccAddress, args json.RawMessage, name, version, author, email, describe string) (sdk.AccAddress, error) {
+func (k *Keeper) Migrate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAddress, oldContract sdk.AccAddress, args utils.CallData, name, version, author, email, describe string) (sdk.AccAddress, error) {
 	newContract, err := k.Instantiate(ctx, codeHash, invoker, args, name, version, author, email, describe, types.EmptyAddress)
 
 	if err != nil {
@@ -309,7 +306,7 @@ func (k *Keeper) Migrate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAddres
 }
 
 // query?
-func (k Keeper) Query(ctx sdk.Context, contractAddress, invokerAddress sdk.AccAddress, args json.RawMessage) (types.ContractState, error) {
+func (k Keeper) Query(ctx sdk.Context, contractAddress, invokerAddress sdk.AccAddress, args utils.CallData) (types.ContractState, error) {
 	SetCreator(k.GetCreator(ctx, contractAddress))
 	SetPreCaller(invokerAddress)
 	SetInvoker(invokerAddress)
@@ -317,13 +314,6 @@ func (k Keeper) Query(ctx sdk.Context, contractAddress, invokerAddress sdk.AccAd
 	SetCtx(&ctx)
 	SetGasUsed()
 	SetGasWanted(UINT_MAX)
-	var params types.CallContractParam
-	if args != nil {
-		err := json.Unmarshal(args, &params)
-		if err != nil {
-			return types.ContractState{}, sdk.ErrInternal("invalid query message")
-		}
-	}
 	codeInfo, err := k.contractInstance(ctx, contractAddress)
 	if err != nil {
 		return types.ContractState{}, err
@@ -347,11 +337,15 @@ func (k Keeper) Query(ctx sdk.Context, contractAddress, invokerAddress sdk.AccAd
 	prefixStoreKey := types.GetContractStorePrefixKey(contractAddress)
 	prefixStore := NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
 	SetStore(prefixStore)
-	input, err := handleArgs(args)
+	input, err := types.ArgsToInput(args)
 	if err != nil {
 		return types.ContractState{}, err
 	}
-	res, err := k.wasmer.Call(code, input, INVOKE)
+	sig, err := utils.ParseSignature(args.Method)
+	if err != nil {
+		return types.ContractState{}, err
+	}
+	res, err := k.wasmer.Call(code, input, sig.Method)
 	if err != nil {
 		return types.ContractState{}, err
 	}
@@ -363,7 +357,6 @@ func (k Keeper) Query(ctx sdk.Context, contractAddress, invokerAddress sdk.AccAd
 
 
 func (k *Keeper) contractInstance(ctx sdk.Context, contractAddress sdk.AccAddress) (types.CodeInfo, error) {
-
 	var wasmer Wasmer
 	ccstore := ctx.KVStore(k.storeKey)
 	contractBz := ccstore.Get(types.GetContractAddressKey(contractAddress))
@@ -503,7 +496,7 @@ func (k *Keeper) create(ctx sdk.Context, invokerAddr sdk.AccAddress, wasmCode []
 	return codeHash, false, nil
 }
 
-func (k Keeper) generateContractAddress(codeHash []byte, creatorAddr sdk.AccAddress, payload json.RawMessage) sdk.AccAddress {
+func (k Keeper) generateContractAddress(codeHash []byte, creatorAddr sdk.AccAddress, payload utils.CallData) sdk.AccAddress {
 	contract, _ := rlp.EncodeToBytes([]interface{}{codeHash, creatorAddr, payload})
 	return sdk.ToAccAddress(crypto.Keccak256Hash(contract).Bytes()[12:])
 }
@@ -624,23 +617,6 @@ func (k *Keeper) GetParams(ctx sdk.Context) (params evmtypes.Params) {
 // SetParams sets the evm parameters to the param space.
 func (k *Keeper) SetParams(ctx sdk.Context, params evmtypes.Params) {
 	k.CommitStateDB.WithContext(ctx).SetParams(params)
-}
-
-func handleArgs(args json.RawMessage) ([]byte, error){
-	var param types.CallContractParam
-	inputByte, _ := args.MarshalJSON()
-	err := json.Unmarshal(inputByte, &param)
-	if err != nil {
-		return nil, err
-	}
-
-	var inputArgs []interface{}
-	for i := 0; i < len(param.Args); i++ {
-		inputArgs = append(inputArgs, param.Args[i])
-	}
-
-	input := Serialize(inputArgs)
-	return input, nil
 }
 
 func EndKey(startKey []byte) (endKey []byte){

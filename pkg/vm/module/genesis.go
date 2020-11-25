@@ -4,16 +4,21 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/vm/evmtypes"
 	"github.com/ci123chain/ci123chain/pkg/vm/moduletypes"
+	"github.com/ci123chain/ci123chain/pkg/vm/moduletypes/utils"
 	"github.com/ci123chain/ci123chain/pkg/vm/wasmtypes"
 	"io/ioutil"
+	"strings"
 )
 
+const (
+	InitMethodPrefix = "init"
+	InvokeMethodPrefix = "invoke"
+)
 
 func WasmInitGenesis(ctx sdk.Context, wasmer moduletypes.KeeperI) {
 	var contracts = types.DefaultGenesisState()
@@ -30,25 +35,21 @@ func WasmInitGenesis(ctx sdk.Context, wasmer moduletypes.KeeperI) {
 				}
 				address := sdk.HexToAddress(v.Address)
 				invoker := sdk.HexToAddress(contracts.Invoker)
-				var params types.CallContractParam
+				var params utils.CallData
 				params.Args = v.Params
 				params.Method = v.Method
-				args, err := json.Marshal(params)
-				if err != nil {
-					panic(err)
-				}
-				if v.Method == types.InitMethod {
+				if strings.HasPrefix(v.Method, InitMethodPrefix) {
 					codeHash, err := wasmer.Upload(ctx, code, invoker)
 					if err != nil {
 						panic(err)
 					}
-					_, err = wasmer.Instantiate(ctx, codeHash, invoker, args, contracts.Name, contracts.Version, contracts.Author, contracts.Email, contracts.Describe, address)
+					_, err = wasmer.Instantiate(ctx, codeHash, invoker, params, contracts.Name, contracts.Version, contracts.Author, contracts.Email, contracts.Describe, address)
 
 					if err != nil {
 						panic(err)
 					}
-				}else if v.Method == types.InvokeMethod {
-					_, err = wasmer.Execute(ctx, address, invoker, args)
+				}else if strings.HasPrefix(v.Method, InvokeMethodPrefix) {
+					_, err = wasmer.Execute(ctx, address, invoker, params)
 					if err != nil {
 						panic(err)
 					}
