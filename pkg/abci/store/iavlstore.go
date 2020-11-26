@@ -152,16 +152,11 @@ func (st *iavlStore) CacheWrapWithTrace(w io.Writer, tc TraceContext) CacheWrap 
 func (st *iavlStore) Set(key, value []byte) {
 	st.parent.(KVStore).Set(key, value)
 	st.tree.Set(key, value)
-
-	st.lg.With("store", st.key.Name()).Info("Set key:" + string(key) + " value: " + string(value))
 }
 
 // Implements KVStore.
 func (st *iavlStore) Get(key []byte) (value []byte) {
 	value = st.parent.(KVStore).Get(key)
-
-	st.lg.With(st.key)
-	st.lg.Info("Get key:" + string(key) + " value: " + string(value))
 	return
 }
 
