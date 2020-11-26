@@ -33,6 +33,7 @@ import (
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/account"
+	logger2 "github.com/ci123chain/ci123chain/pkg/logger"
 	keeper2 "github.com/ci123chain/ci123chain/pkg/staking/keeper"
 	"github.com/ci123chain/ci123chain/pkg/wasm/types"
 	"github.com/wasmerio/go-ext-wasm/wasmer"
@@ -127,6 +128,8 @@ func call_contract(context unsafe.Pointer, addrPtr, paramPtr, paramSize int32) i
 func new_contract(context unsafe.Pointer, newContractPtr, codeHashPtr, codeHashSize, argsPtr, argsSize int32) {
 	newContract(context, newContractPtr, codeHashPtr, codeHashSize, argsPtr, argsSize)
 }
+
+
 
 //export destroy_contract
 func destroy_contract(context unsafe.Pointer) {
@@ -313,7 +316,7 @@ func (w *Wasmer) Call(code []byte, input []byte, method string) (res []byte, err
 			}
 		}
 	}()
-
+	logger2.GetLogger().With("func", "wasmCall").Info("contract call: " + method)
 	_, err2 := call()
 	if err2 != nil {
 		panic(err2)

@@ -3,6 +3,7 @@ package keeper
 import (
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/logger"
 	wasm "github.com/wasmerio/go-ext-wasm/wasmer"
 	"unsafe"
 )
@@ -69,6 +70,7 @@ func readDB(context unsafe.Pointer, keyPtr, keySize, valuePtr, valueSize, offset
 	//fmt.Printf("read key [%s]\n", string(realKey))
 
 	var size int;
+	logger.GetLogger().With("func","readDB").Info("contract get:" + string(realKey))
 	v := store.Get(realKey)
 	if v == nil {
 		/*
