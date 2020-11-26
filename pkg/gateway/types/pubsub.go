@@ -2,6 +2,7 @@ package types
 
 import (
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -9,6 +10,8 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/tendermint/tendermint/libs/pubsub/query"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
+	"github.com/tendermint/tendermint/types"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -200,7 +203,6 @@ func (r *PubSubRoom) Subscribe(topic string) {
 	//		Notify(r, topic, response)
 	//	}
 	//}()
-
 	go func() {
 		defer func() {
 			err := recover()
@@ -217,10 +219,39 @@ func (r *PubSubRoom) Subscribe(topic string) {
 			}
 			go func() {
 				for e := range responses {
-					res, _ := json.Marshal(e.Data)
+					var v interface{}
+					switch value := e.Data.(type) {
+					case types.EventDataTx:
+						ok, _ := regexp.MatchString("tm.event = 'Tx'", topic)
+						if !ok {
+							continue
+						}
+						tx := e.Data.(types.EventDataTx)
+						var sender string
+						var operation string
+						if len(tx.Result.Events) == 0{
+							v = e.Data
+						}else {
+							for _, kv := range tx.Result.Events[0].Attributes {
+								if string(kv.Key) == "sender" {
+									sender = string(kv.Value)
+								}
+								if string(kv.Key) == "operation" {
+									operation = string(kv.Value)
+								}
+							}
+							height := tx.Height
+							gas := tx.Result.GasUsed
+							hash := hex.EncodeToString(value.Tx.Hash())
+							a := NewGotTxData(operation, sender , hash ,height, gas)
+							v = a
+						}
+					default:
+						v = e.Data
+					}
 					response := SendMessage{
 						Time:   time.Now().Format(time.RFC3339),
-						Content: string(res),
+						Content: v,
 					}
 					Notify(r, topic, response)
 				}
@@ -251,10 +282,52 @@ func (r *PubSubRoom) AddShard() {
 
 					go func() {
 						for e := range responses {
-							res, _ := json.Marshal(e.Data)
+							//res, _ := json.Marshal(e.Data)
+							var v interface{}
+							switch value := e.Data.(type) {
+							case types.EventDataTx:
+								ok, _ := regexp.MatchString("tm.event = 'Tx'", topic)
+								if !ok {
+									continue
+								}
+								tx := e.Data.(types.EventDataTx)
+								var sender string
+								var operation string
+								if len(tx.Result.Events) == 0{
+									v = e.Data
+								}else {
+									for _, kv := range tx.Result.Events[0].Attributes {
+										if string(kv.Key) == "sender" {
+											sender = string(kv.Value)
+										}
+										if string(kv.Key) == "operation" {
+											operation = string(kv.Value)
+										}
+									}
+									height := tx.Height
+									gas := tx.Result.GasUsed
+									hash := hex.EncodeToString(value.Tx.Hash())
+									a := NewGotTxData(operation, sender , hash , height, gas)
+									v = a
+								}
+							//case types.EventDataNewBlockHeader:
+							//	ok, _ := regexp.MatchString("NewBlockHeader", topic)
+							//	if !ok {
+							//		continue
+							//	}
+							//	v = e.Data
+							//case types.EventDataNewBlock:
+							//	ok, _ := regexp.MatchString("NewBlock", topic)
+							//	if !ok {
+							//		continue
+							//	}
+							//	v = e.Data
+							default:
+								v = e.Data
+							}
 							response := SendMessage{
 								Time:   time.Now().Format(time.RFC3339),
-								Content: string(res),
+								Content: v,
 							}
 							Notify(r, topic, response)
 						}
@@ -310,7 +383,7 @@ func DeleteSlice(res []*websocket.Conn, s *websocket.Conn) []*websocket.Conn {
 // Server端消息结构
 type SendMessage struct {
 	Time   string  `json:"time"`   //time
-	Content string `json:"content"` //content表示消息内容，这里简化别的消息
+	Content interface{} `json:"content"` //content表示消息内容，这里简化别的消息
 }
 
 //client端消息结构
@@ -456,4 +529,27 @@ func rpcAddress(host string) string {
 	str := strings.Split(host, ":")
 	res = res + str[0] + ":" + DefaultPort
 	return res
+}
+
+type GotTxData struct {
+	TxType    string   `json:"tx_type"`
+	TxSender  string   `json:"tx_sender"`
+	TxHeight  int64   `json:"tx_height"`
+	TxHash    string   `json:"tx_hash"`
+	TxGasUsed  interface{}   `json:"tx_gas_used"`
+}
+
+type Attribute struct {
+	Key   string   `json:"key"`
+	Value string   `json:"value"`
+}
+
+func NewGotTxData(ty, sender, hash string, height int64, gas interface{}) GotTxData {
+	return GotTxData{
+		TxType:   ty,
+		TxSender: sender,
+		TxHeight: height,
+		TxHash:   hash,
+		TxGasUsed: gas,
+	}
 }

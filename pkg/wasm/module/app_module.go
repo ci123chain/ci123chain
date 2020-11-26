@@ -26,8 +26,8 @@ func (am AppModule)Committer(ctx sdk.Context) {
 	//
 }
 
-func (am AppModule)EndBlock(ctx sdk.Context, req abci.RequestEndBlock) []abci.ValidatorUpdate {
+func (am AppModule)EndBlock(ctx sdk.Context, req abci.RequestEndBlock) ([]abci.ValidatorUpdate, []abci.Event) {
 	//
-	return nil
+	return nil, nil
 }
 
