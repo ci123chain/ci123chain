@@ -9,6 +9,7 @@ import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/account"
 	"github.com/ci123chain/ci123chain/pkg/account/exported"
+	"github.com/ci123chain/ci123chain/pkg/logger"
 	keeper2 "github.com/ci123chain/ci123chain/pkg/staking/keeper"
 	"github.com/ci123chain/ci123chain/pkg/wasm/types"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -208,7 +209,7 @@ func (k *Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, invoke
 	SetInvoker(invoker)
 	SetPreCaller(invoker)
 	SetCtx(&ctx)
-
+	logger.GetLogger().With("keeper", "wasm").Info("enter execute func")
 	contract := k.GetContractInfo(ctx, contractAddress)
 	SetCreator(contract.CodeInfo.Creator)
 	var params types.CallContractParam
