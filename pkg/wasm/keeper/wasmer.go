@@ -33,7 +33,7 @@ import (
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/account"
-	logger2 "github.com/ci123chain/ci123chain/pkg/logger"
+	"github.com/ci123chain/ci123chain/pkg/logger"
 	keeper2 "github.com/ci123chain/ci123chain/pkg/staking/keeper"
 	"github.com/ci123chain/ci123chain/pkg/wasm/types"
 	"github.com/wasmerio/go-ext-wasm/wasmer"
@@ -278,6 +278,7 @@ func (w *Wasmer) Create(homeDir, codeHash string) (Wasmer, error) {
 }
 
 func (w *Wasmer) Call(code []byte, input []byte, method string) (res []byte, err error) {
+	logger.GetLogger().Info(("!!!!!!!!!!!!!Enter Wasmer.Call!!!!!!!!!!!!! "))
 	instance , err := getInstance(code)
 	if err != nil {
 		return nil, err
@@ -316,7 +317,6 @@ func (w *Wasmer) Call(code []byte, input []byte, method string) (res []byte, err
 			}
 		}
 	}()
-	logger2.GetLogger().With("func", "wasmCall").Info("contract call: " + method)
 	_, err2 := call()
 	if err2 != nil {
 		panic(err2)
@@ -325,6 +325,7 @@ func (w *Wasmer) Call(code []byte, input []byte, method string) (res []byte, err
 }
 
 func getInstance(code []byte) (*wasmer.Instance, error) {
+	logger.GetLogger().Info(("!!!!!!!!!!!!!Enter getInstance!!!!!!!!!!!!! "))
 	imports, err := wasmer.NewImports().Namespace("env").Append("send", send, C.send)
 	if err != nil {
 		panic(err)

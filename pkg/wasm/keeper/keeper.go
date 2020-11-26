@@ -209,7 +209,7 @@ func (k *Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, invoke
 	SetInvoker(invoker)
 	SetPreCaller(invoker)
 	SetCtx(&ctx)
-	logger.GetLogger().With("keeper", "wasm").Info("enter execute func")
+	logger.GetLogger().Info(("!!!!!!!!!!!!!Enter Execute!!!!!!!!!!!!! "))
 	contract := k.GetContractInfo(ctx, contractAddress)
 	SetCreator(contract.CodeInfo.Creator)
 	var params types.CallContractParam
@@ -340,7 +340,7 @@ func (k Keeper) Query(ctx sdk.Context, contractAddress, invokerAddress sdk.AccAd
 
 
 func (k *Keeper) contractInstance(ctx sdk.Context, contractAddress sdk.AccAddress) (types.CodeInfo, error) {
-
+	logger.GetLogger().Info(("!!!!!!!!!!!!!Enter contractInstance!!!!!!!!!!!!! "))
 	var wasmer Wasmer
 	ccstore := ctx.KVStore(k.storeKey)
 	contractBz := ccstore.Get(types.GetContractAddressKey(contractAddress))

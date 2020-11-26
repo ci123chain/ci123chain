@@ -3,6 +3,7 @@ package keeper
 import (
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/logger"
 	wasm "github.com/ci123chain/ci123chain/pkg/wasm/types"
 )
 
@@ -82,6 +83,7 @@ func handleMsgExecuteContract(ctx sdk.Context, k Keeper, msg wasm.MsgExecuteCont
 	gasWanted := gasLimit - ctx.GasMeter().GasConsumed()
 	SetGasWanted(gasWanted)
 
+	logger.GetLogger().Info(("!!!!!!!!!!!!!Enter HandleMsgExecuteContract!!!!!!!!!!!!! "))
 	res, err := k.Execute(ctx, msg.Contract, msg.FromAddress, msg.Args)
 	if err != nil {
 		return wasm.ErrExecuteFailed(wasm.DefaultCodespace, err).Result()

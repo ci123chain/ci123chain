@@ -3,6 +3,7 @@ package baseapp
 import (
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/store"
+	"github.com/ci123chain/ci123chain/pkg/logger"
 	"io"
 	"runtime/debug"
 	"strings"
@@ -508,7 +509,7 @@ func (app *BaseApp) runMsgs(ctx sdk.Context, msgs []sdk.Msg, mode runTxMode) sdk
 
 	for msgIdx, msg := range msgs{
 		msgRoute := msg.Route()
-		app.Logger.Info("msgType: " + msg.MsgType())
+		logger.GetLogger().Info(("msgType: " + msg.MsgType()))
 		handler := app.router.Route(msgRoute)
 		if handler == nil {
 			return sdk.ErrUnknownRequest("Unrecognized Msg type: " + msgRoute).Result()
@@ -518,6 +519,7 @@ func (app *BaseApp) runMsgs(ctx sdk.Context, msgs []sdk.Msg, mode runTxMode) sdk
 
 		// check 不实际执行
 		if mode != runTxModeCheck {
+			logger.GetLogger().Info(("enterHandler " + msg.Route()))
 			msgResult = handler(ctx, msg)
 		}
 
