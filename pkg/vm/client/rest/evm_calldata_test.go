@@ -3,7 +3,10 @@ package rest
 import (
 	"encoding/base64"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
+	evm "github.com/ci123chain/ci123chain/pkg/vm/evmtypes"
+	"github.com/ci123chain/ci123chain/pkg/vm/moduletypes/utils"
 	"github.com/ethereum/go-ethereum/crypto"
 	"gotest.tools/assert"
 	"math/big"
@@ -32,8 +35,18 @@ func TestEncodeData(t *testing.T) {
 func TestCallData(t *testing.T) {
 	a := hex.EncodeToString(methodID("baz", []string{"uint32", "bool"}))
 	b := hex.EncodeToString(rawEncode([]string{"uint32", "bool"}, []interface{}{"69", true}))
+	fmt.Println(a+b)
 	assert.Equal(t, "cdcd77c000000000000000000000000000000000000000000000000000000000000000450000000000000000000000000000000000000000000000000000000000000001", a+b)
 
+	aa, err := evm.EVMEncode(utils.CallData{
+		Method: "createPair(address, address)",
+		Args:   []json.RawMessage{json.RawMessage("0x3f43e75aaba2c2fd6e227c10c6e7dc125a93de3c"),  json.RawMessage("0x2f43e75aaba2c2fd6e227c10c6e7dc125a93de3c")},
+	})
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(hex.EncodeToString(aa))
+	
 	a = hex.EncodeToString(methodID("balanceOf", []string{"address"}))
 	b = hex.EncodeToString(rawEncode([]string{"address"}, []interface{}{"0x3f43e75aaba2c2fd6e227c10c6e7dc125a93de3c"}))
 	fmt.Println(a+b)
@@ -264,7 +277,11 @@ func encodeSingle(paramType string, args interface{}) []byte {
 	case "address":
 		numStr, ok := args.(string)
 		if !ok {
-			panic("number invalid")
+			numBig, ok := args.(*big.Int)
+			if !ok {
+				panic("parse address failed")
+			}
+			return encodeSingle("uint160", parseNumber(numBig))
 		}
 		return encodeSingle("uint160", parseNumber(numStr))
 	case "bool":

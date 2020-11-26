@@ -57,7 +57,7 @@ func validKey(typeName string) error {
 				return errors.New("uint size is valid")
 			}
 		}
-	} else if typeName == typeAddress || typeName == typeString || typeName == typeBool {
+	} else if typeName == typeAddress || typeName == typeString || typeName == typeBool || typeName == ""{
 		return nil
 	} else {
 		return errors.New("paramtype invalid : " + typeName )
@@ -66,7 +66,7 @@ func validKey(typeName string) error {
 }
 
 func EVMEncode(args utils.CallData) ([]byte, error) {
-	sig, err := utils.ParseSignature(args.Method)
+	sig, err := utils.ParseSignature(strings.Replace(args.Method, " ", "", -1))
 	if err != nil {
 		return nil, err
 	}
@@ -95,11 +95,17 @@ func EVMEncode(args utils.CallData) ([]byte, error) {
 			rawArg = append(rawArg, boolean)
 			continue
 		case typeAddress:
+			//todo 0x format
 			var addr string
+			x  := new(big.Int)
 			if err := json.Unmarshal(v, &addr); err != nil {
-				return nil , errors.New("parse " + sig.Args[i] + " to address failed" )
+				if err := x.UnmarshalText(v); err != nil {
+					return nil , errors.New("parse " + sig.Args[i] + " to address failed" )
+				}
+				rawArg = append(rawArg, x)
+			} else {
+				rawArg = append(rawArg, addr)
 			}
-			rawArg = append(rawArg, addr)
 			continue
 		default:
 			if isArray(sig.Args[i]) { //array

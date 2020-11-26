@@ -12,7 +12,6 @@ import (
 	types2 "github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/client"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
-	"github.com/ci123chain/ci123chain/pkg/util"
 	evm "github.com/ci123chain/ci123chain/pkg/vm/evmtypes"
 	"github.com/ci123chain/ci123chain/pkg/vm/keeper"
 	vmmodule "github.com/ci123chain/ci123chain/pkg/vm/moduletypes"
@@ -40,7 +39,7 @@ func uploadContractHandler(cliCtx context.Context, w http.ResponseWriter, r *htt
 
 	code, err := getCode(r)
 	if err != nil || code == nil {
-		rest.WriteErrorRes(w, wasmtypes.ErrCheckParams(vmmodule.DefaultCodespace, "get wasmcode failed"))
+		rest.WriteErrorRes(w, wasmtypes.ErrCheckParams(vmmodule.DefaultCodespace, "get contract code failed"))
 		return
 	}
 
@@ -113,13 +112,13 @@ func instantiateContractHandler(cliCtx context.Context,w http.ResponseWriter, r 
 		return
 	}
 	var args utils.CallData
-	args_str := r.FormValue("args")
+	args_str := r.FormValue("calldata")
 	if args_str == "" {
 		rest.WriteErrorRes(w, wasmtypes.ErrCheckParams(vmmodule.DefaultCodespace, "get callData failed"))
 		return
 	}else {
-		ok, err := util.CheckJsonArgs(args_str, args)
-		if err != nil || !ok {
+		err := json.Unmarshal([]byte(args_str), &args)
+		if err != nil  {
 			rest.WriteErrorRes(w, wasmtypes.ErrCheckParams(vmmodule.DefaultCodespace, "get callData failed"))
 			return
 		}
@@ -179,19 +178,19 @@ func executeContractHandler(cliCtx context.Context,w http.ResponseWriter, r *htt
 		return
 	}
 	var msg sdk.Msg
-	if acc.GetContractType() == types.WasmContractType {
-		var args utils.CallData
-		args_str := r.FormValue("args")
-		if args_str == "" {
+	var args utils.CallData
+	args_str := r.FormValue("calldata")
+	if args_str == "" {
+		rest.WriteErrorRes(w, wasmtypes.ErrCheckParams(vmmodule.DefaultCodespace, "get callData failed"))
+		return
+	}else {
+		err := json.Unmarshal([]byte(args_str), &args)
+		if err != nil  {
 			rest.WriteErrorRes(w, wasmtypes.ErrCheckParams(vmmodule.DefaultCodespace, "get callData failed"))
 			return
-		}else {
-			ok, err := util.CheckJsonArgs(args_str, args)
-			if err != nil || !ok {
-				rest.WriteErrorRes(w, wasmtypes.ErrCheckParams(vmmodule.DefaultCodespace, "get callData failed"))
-				return
-			}
 		}
+	}
+	if acc.GetContractType() == types.WasmContractType {
 		msg = wasmtypes.NewMsgExecuteContract(from, contractAddress, args)
 	} else if acc.GetContractType() == types.EvmContractType {
 		var to *ethcmn.Address
@@ -204,21 +203,15 @@ func executeContractHandler(cliCtx context.Context,w http.ResponseWriter, r *htt
 			to = &to_addr
 		}
 		amount_str := r.FormValue("amount")
-		amount_int64, _ := strconv.ParseInt(amount_str, 10, 64)
-		amount := big.NewInt(amount_int64)
-
-		var args utils.CallData
-		args_str := r.FormValue("args")
-		if args_str == "" {
-			rest.WriteErrorRes(w, wasmtypes.ErrCheckParams(vmmodule.DefaultCodespace, "get callData failed"))
-			return
-		}else {
-			ok, err := util.CheckJsonArgs(args_str, args)
-			if err != nil || !ok {
-				rest.WriteErrorRes(w, wasmtypes.ErrCheckParams(vmmodule.DefaultCodespace, "get callData failed"))
-				return
-			}
+		amount := new(big.Int)
+		if len(amount_str) < 2 {
+			amount.SetString(amount_str, 10)
+		} else if amount_str[:2] == "0x" {
+			amount.SetString(amount_str[2:], 16)
+		} else {
+			amount.SetString(amount_str, 10)
 		}
+
 		payload, err := evm.EVMEncode(args)
 		s := hex.EncodeToString(payload)
 		fmt.Println(s)
@@ -297,13 +290,13 @@ func migrateContractHandler(cliCtx context.Context,w http.ResponseWriter, r *htt
 	}
 
 	var args utils.CallData
-	args_str := r.FormValue("args")
+	args_str := r.FormValue("calldata")
 	if args_str == "" {
 		rest.WriteErrorRes(w, wasmtypes.ErrCheckParams(vmmodule.DefaultCodespace, "get callData failed"))
 		return
 	}else {
-		ok, err := util.CheckJsonArgs(args_str, args)
-		if err != nil || !ok {
+		err := json.Unmarshal([]byte(args_str), &args)
+		if err != nil  {
 			rest.WriteErrorRes(w, wasmtypes.ErrCheckParams(vmmodule.DefaultCodespace, "get callData failed"))
 			return
 		}

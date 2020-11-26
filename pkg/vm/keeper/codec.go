@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
-	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/vm/wasmtypes"
 	"unicode/utf8"
 )
 
@@ -26,7 +26,7 @@ func (sink Sink) WriteU64(i uint64) {
 	sink.writeLittleEndian(i)
 }
 
-func (sink Sink) WriteU128(u *sdk.RustU128) {
+func (sink Sink) WriteU128(u *types.RustU128) {
 	sink.writeRawBytes(u[:])
 }
 

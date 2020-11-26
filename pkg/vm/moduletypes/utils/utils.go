@@ -88,12 +88,15 @@ func(doc wasmDoc) DocType() string {return "wasmDoc"}
 
 //[ 'uint32', 'bool' ], [ 69, 1 ]
 func RawEncode(paramTypes []string, values []interface{}) []byte {
+	if len(paramTypes) == 1 && paramTypes[0] == "" {
+		return nil
+	}
 	var output, data []byte
 	headLength := 0
 	for _, v := range paramTypes{
 		if isArray(v){
 			var size = parseTypeArray(v)
-			if size != "dynamic" {
+			if size != "dynamic" && size != ""{
 				length, err := strconv.Atoi(size)
 				if err != nil {
 					panic("err parseTypeArray length")
@@ -229,7 +232,11 @@ func encodeSingle(paramType string, args interface{}) []byte {
 	case "address":
 		numStr, ok := args.(string)
 		if !ok {
-			panic("number invalid")
+			numBig, ok := args.(*big.Int)
+			if !ok {
+				panic("parse address failed")
+			}
+			return encodeSingle("uint160", parseNumber(numBig))
 		}
 		return encodeSingle("uint160", parseNumber(numStr))
 	case "bool":

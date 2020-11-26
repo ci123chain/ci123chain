@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/vm/moduletypes/utils"
 	"math/big"
+	"strings"
 )
 
 const typeInt32 = "int32"
@@ -16,7 +17,8 @@ const typeInt128 = "int128"
 const typeUint128 = "uint128"
 const typeString = "string"
 const typeBool = "bool"
-const validtypesTip = "; valid types: " + typeInt32 + typeUint32 + typeInt64 + typeUint64 + typeInt128 + typeUint128 + typeString + typeBool
+const space = " "
+const validtypesTip = "; valid types: " + typeInt32 + space + typeUint32 + space + typeInt64 + space + typeUint64 + space  + typeInt128 + space  + typeUint128 + space  + typeString + space  + typeBool
 
 var WasmIdent = []byte("\x00\x61\x73\x6D")
 
@@ -37,7 +39,8 @@ func validKey(typeName string) error {
 		typeName == typeUint128 ||
 		typeName == typeInt128 ||
 		typeName == typeString ||
-		typeName == typeBool {
+		typeName == typeBool ||
+		typeName == "" {
 		return nil
 	} else {
 		return errors.New("paramtype invalid : " + typeName + validtypesTip)
@@ -46,7 +49,7 @@ func validKey(typeName string) error {
 
 func ArgsToInput(args utils.CallData) (res []byte, err error){
 	sink := NewSink(res)
-	sig, err := utils.ParseSignature(args.Method)
+	sig, err := utils.ParseSignature(strings.Replace(args.Method, " ", "", -1))
 	if err != nil {
 		return nil, err
 	}
