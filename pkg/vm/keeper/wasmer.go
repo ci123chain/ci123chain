@@ -29,6 +29,7 @@ package keeper
 import "C"
 import (
 	"crypto/md5"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
@@ -280,6 +281,7 @@ func (w *Wasmer) Call(code []byte, input []byte, method string) (res []byte, err
 	}
 	defer instance.Close()
 
+	method = "x" + hex.EncodeToString([]byte(method))
 	call, exist := instance.Exports[method]
 	if !exist {
 		fmt.Println(exist)
