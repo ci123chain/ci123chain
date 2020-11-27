@@ -10,6 +10,7 @@ import (
 
 func NewHandler(k keeper.IBCKeeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
+		ctx = ctx.WithEventManager(sdk.NewEventManager())
 		switch msg := msg.(type) {
 		case *types.IBCTransfer:
 			return handleMsgIBCTransfer(ctx, k, *msg)

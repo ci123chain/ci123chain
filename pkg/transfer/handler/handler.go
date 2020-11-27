@@ -9,6 +9,7 @@ import (
 
 func NewHandler(am keeper.AccountKeeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
+		ctx = ctx.WithEventManager(sdk.NewEventManager())
 		switch msg := msg.(type) {
 		case *transfer.MsgTransfer:
 			return handlerMsgTransfer(ctx, am, msg)

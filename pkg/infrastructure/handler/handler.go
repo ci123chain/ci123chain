@@ -9,7 +9,7 @@ import (
 
 func NewHandler(k keeper.InfrastructureKeeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
-
+		ctx = ctx.WithEventManager(sdk.NewEventManager())
 		switch msg := msg.(type) {
 		case *infrastructure.MsgStoreContent:
 			return HandleMsgStoreContent(ctx, k, *msg)
