@@ -47,7 +47,9 @@ func checkBackend() {
 			prByte, _ := json.Marshal(pubsubRoom.GetBackends())
 			prHash := makeHash(prByte)
 			if !bytes.Equal(spHash, prHash) {
+				pubsubRoom.Mutex.Lock()
 				pubsubRoom.SetBackends(serverPool.backends)
+				pubsubRoom.Mutex.Unlock()
 				if pubsubRoom.HasClientConnect() {
 					pubsubRoom.AddShard()
 				}

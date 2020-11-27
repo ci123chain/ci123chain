@@ -13,6 +13,7 @@ import (
 	"github.com/tendermint/tendermint/types"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -48,6 +49,7 @@ type PubSubRoom struct {
 
 	backends 		[]Instance
 	Connections    map[string]*rpcclient.HTTP
+	Mutex          sync.Mutex
 }
 
 func (r *PubSubRoom) SetBackends(bs []Instance) {
@@ -102,7 +104,7 @@ func (r *PubSubRoom)Receive(c *websocket.Conn) {
 		case ClientError:
 			r.HandleUnsubscribeAll(rt.Connect)
 		default:
-			logger.Info("info: %s", r)
+			logger.Info("info: %s", rt)
 		}
 	}()
 	for {
@@ -123,7 +125,9 @@ func (r *PubSubRoom)Receive(c *websocket.Conn) {
 			continue
 		}
 		if len(r.backends) != 0 && !r.HasTMConnections() {
+			r.Mutex.Lock()
 			r.SetTMConnections()
+			r.Mutex.Unlock()
 		}
 		_ = json.Unmarshal(data, &m)
 		topic := m.Content.GetTopic()
@@ -151,10 +155,10 @@ func (r *PubSubRoom)Receive(c *websocket.Conn) {
 
 
 func (r *PubSubRoom) HandleSubscribe(topic string, c *websocket.Conn) {
+	r.Mutex.Lock()
 	if len(r.ConnMap[topic]) == 0 {
 		r.ConnMap[topic] = make([]*websocket.Conn, 0)
 		r.ConnMap[topic] = append(r.ConnMap[topic], c)
-
 		if !r.HasCreatedConn[topic] {
 			r.Subscribe(topic)
 		}
@@ -162,9 +166,11 @@ func (r *PubSubRoom) HandleSubscribe(topic string, c *websocket.Conn) {
 	}else {
 		r.ConnMap[topic] = append(r.ConnMap[topic], c)
 	}
+	r.Mutex.Unlock()
 }
 
 func (r *PubSubRoom) HandleUnsubscribe(topic string, c *websocket.Conn) {
+	r.Mutex.Lock()
 	if len(r.ConnMap[topic]) == 0 {
 		//do nothing
 	}else {
@@ -173,9 +179,11 @@ func (r *PubSubRoom) HandleUnsubscribe(topic string, c *websocket.Conn) {
 			r.Unsubscribe(topic)
 		}
 	}
+	r.Mutex.Unlock()
 }
 
 func (r *PubSubRoom) HandleUnsubscribeAll(c *websocket.Conn) {
+	r.Mutex.Lock()
 	for k, v := range r.ConnMap {
 		if r.ConnMap[k] != nil {
 			r.ConnMap[k] = DeleteSlice(v, c)
@@ -184,6 +192,7 @@ func (r *PubSubRoom) HandleUnsubscribeAll(c *websocket.Conn) {
 			}
 		}
 	}
+	r.Mutex.Unlock()
 }
 
 func (r *PubSubRoom) Subscribe(topic string) {
@@ -270,12 +279,16 @@ func (r *PubSubRoom) AddShard() {
 			if !ok {
 				continue
 			}
+			r.Mutex.Lock()
 			r.Connections[addr] = conn
+			r.Mutex.Unlock()
 			if r.ConnMap != nil {
 				for topic := range r.ConnMap {
 					responses, err := conn.Subscribe(ctx, subscribeClient, topic)
 					if err != nil {
+						r.Mutex.Lock()
 						delete(r.Connections, addr)
+						r.Mutex.Unlock()
 						_ = conn.Stop()
 						continue
 					}
