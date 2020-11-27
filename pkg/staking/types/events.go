@@ -8,7 +8,7 @@ const (
 	EventTypeCreateValidator      = "create_validator"
 	EventTypeEditValidator        = "edit_validator"
 	EventTypeDelegate             = "delegate"
-	EventTypeUnbond               = "unbond"
+	EventTypeUndelegate           = "undelegate"
 	EventTypeRedelegate           = "redelegate"
 
 	AttributeKeyValidator         = "validator"

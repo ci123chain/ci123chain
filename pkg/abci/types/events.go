@@ -135,6 +135,7 @@ var (
 	EventTypeMessage = "message"
 
 	//AttributeKeyAction = "action"
+	AttributeKeyMethod = "operation"
 	AttributeKeyModule = "module"
 	AttributeKeySender = "sender"
 	AttributeKeyAmount = "amount"
