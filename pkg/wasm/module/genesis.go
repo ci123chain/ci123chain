@@ -40,13 +40,13 @@ func InitGenesis(ctx sdk.Context, wasmer types.WasmKeeperI) {
 					if err != nil {
 						panic(err)
 					}
-					_, err = wasmer.Instantiate(ctx, codeHash, invoker, args, contracts.Name, contracts.Version, contracts.Author, contracts.Email, contracts.Describe, address)
+					_, err = wasmer.Instantiate(ctx, codeHash, invoker, args, contracts.Name, contracts.Version, contracts.Author, contracts.Email, contracts.Describe, address, 0)
 
 					if err != nil {
 						panic(err)
 					}
 				}else if v.Method == types.InvokeMethod {
-					_, err = wasmer.Execute(ctx, address, invoker, args)
+					_, err = wasmer.Execute(ctx, address, invoker, args, 0)
 					if err != nil {
 						panic(err)
 					}
