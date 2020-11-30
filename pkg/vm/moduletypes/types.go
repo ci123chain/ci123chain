@@ -25,9 +25,9 @@ type KeeperI interface {
 
 	Upload(ctx sdk.Context, wasmCode []byte, creator sdk.AccAddress) (codeHash []byte, err error)
 
-	Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAddress, args utils.CallData, name, version, author, email, describe string, genesisContractAddress sdk.AccAddress) (sdk.AccAddress, error)
+	Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAddress, args utils.CallData, name, version, author, email, describe string, genesisContractAddress sdk.AccAddress, gasWanted uint64) (sdk.AccAddress, error)
 
-	Execute(ctx sdk.Context, contractAddress sdk.AccAddress, invoker sdk.AccAddress, args utils.CallData) (sdk.Result, error)
+	Execute(ctx sdk.Context, contractAddress sdk.AccAddress, invoker sdk.AccAddress, args utils.CallData, gasWanted uint64) (sdk.Result, error)
 
 	SetBalance(ctx sdk.Context, addr ethcmn.Address, amount *big.Int)
 

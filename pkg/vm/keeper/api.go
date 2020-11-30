@@ -116,14 +116,19 @@ func performSend(context unsafe.Pointer, to int32, amount int64) int32 {
 		return 0
 	}
 
-	fromAcc := creator
+	data := instanceContext.Data()
+	runtimeCfg, ok := data.(*runtimeConfig)
+	if !ok {
+		panic(fmt.Sprintf("%#v", data))
+	}
+	fromAcc := runtimeCfg.Creator
 
 	toAcc, err := helper.StrToAddress(toAddr.ToString())
 	if err != nil {
 		return 0
 	}
 	coin := sdk.NewUInt64Coin(coinUint)
-	err = accountKeeper.Transfer(*ctx, fromAcc, toAcc, coin)
+	err = runtimeCfg.Keeper.AccountKeeper.Transfer(*runtimeCfg.Context, fromAcc, toAcc, coin)
 	if err != nil {
 		return 0
 	}
@@ -131,51 +136,76 @@ func performSend(context unsafe.Pointer, to int32, amount int64) int32 {
 }
 
 func getPreCaller(context unsafe.Pointer, callerPtr int32) {
+	instanceContext := wasm.IntoInstanceContext(context)
+	data := instanceContext.Data()
+	runtimeCfg, ok := data.(*runtimeConfig)
+	if !ok {
+		panic(fmt.Sprintf("%#v", data))
+	}
 	precallerAddress := Address{}
-	copy(precallerAddress[:], precaller.Bytes())
+	copy(precallerAddress[:], runtimeCfg.PreCaller.Bytes())
 
-	var instanceContext = wasm.IntoInstanceContext(context)
 	var memory = instanceContext.Memory().Data()
 
 	copy(memory[callerPtr:callerPtr+AddressSize], precallerAddress[:])
 }
 
 func getCreator(context unsafe.Pointer, CreatorPtr int32) {
+	instanceContext := wasm.IntoInstanceContext(context)
+	data := instanceContext.Data()
+	runtimeCfg, ok := data.(*runtimeConfig)
+	if !ok {
+		panic(fmt.Sprintf("%#v", data))
+	}
 	creatorAddr := Address{} //contractAddress
-	copy(creatorAddr[:], creator.Bytes())
+	copy(creatorAddr[:], runtimeCfg.Creator.Bytes())
 
-	var instanceContext = wasm.IntoInstanceContext(context)
 	var memory = instanceContext.Memory().Data()
 
 	copy(memory[CreatorPtr:CreatorPtr+AddressSize], creatorAddr[:])
 }
 
 func getInvoker(context unsafe.Pointer, invokerPtr int32) {
+	instanceContext := wasm.IntoInstanceContext(context)
+	data := instanceContext.Data()
+	runtimeCfg, ok := data.(*runtimeConfig)
+	if !ok {
+		panic(fmt.Sprintf("%#v", data))
+	}
 	invokerAddr := Address{} //contractAddress
-	copy(invokerAddr[:], invoker.Bytes())
+	copy(invokerAddr[:], runtimeCfg.Invoker.Bytes())
 
-	var instanceContext = wasm.IntoInstanceContext(context)
 	var memory = instanceContext.Memory().Data()
 
 	copy(memory[invokerPtr:invokerPtr+AddressSize], invokerAddr[:])
 }
 
 func selfAddress(context unsafe.Pointer, contractPtr int32) {
+	instanceContext := wasm.IntoInstanceContext(context)
+	data := instanceContext.Data()
+	runtimeCfg, ok := data.(*runtimeConfig)
+	if !ok {
+		panic(fmt.Sprintf("%#v", data))
+	}
 	contractAddress := Address{}
-	copy(contractAddress[:], selfAddr.Bytes())
+	copy(contractAddress[:], runtimeCfg.SelfAddress.Bytes())
 
-	var instanceContext = wasm.IntoInstanceContext(context)
 	var memory = instanceContext.Memory().Data()
 
 	copy(memory[contractPtr:contractPtr+AddressSize], contractAddress[:])
 }
 
 func getBlockHeader(context unsafe.Pointer, valuePtr int32) {
-	var instanceContext = wasm.IntoInstanceContext(context)
+	instanceContext := wasm.IntoInstanceContext(context)
+	data := instanceContext.Data()
+	runtimeCfg, ok := data.(*runtimeConfig)
+	if !ok {
+		panic(fmt.Sprintf("%#v", data))
+	}
 	var memory = instanceContext.Memory().Data()
 
-	var height = ctx.BlockHeader().Height
-	var now = ctx.BlockHeader().Time.Unix()
+	var height = runtimeCfg.Context.BlockHeader().Height
+	var now = runtimeCfg.Context.BlockHeader().Time.Unix()
 
 	sink := wasmtypes.NewSink([]byte{})
 	sink.WriteU64(uint64(height))                      // 高度
@@ -185,7 +215,12 @@ func getBlockHeader(context unsafe.Pointer, valuePtr int32) {
 }
 
 func notifyContract(context unsafe.Pointer, ptr, size int32) {
-	var instanceContext = wasm.IntoInstanceContext(context)
+	instanceContext := wasm.IntoInstanceContext(context)
+	data := instanceContext.Data()
+	runtimeCfg, ok := data.(*runtimeConfig)
+	if !ok {
+		panic(fmt.Sprintf("%#v", data))
+	}
 	var memory = instanceContext.Memory().Data()
 
 	event, err := NewEventFromSlice(memory[ptr : ptr+size])
@@ -197,8 +232,8 @@ func notifyContract(context unsafe.Pointer, ptr, size int32) {
 	for key, value := range event.Attr {
 		attrs = append(attrs, sdk.NewAttribute(key, toString(value)))
 	}
-	if ctx != nil {
-		ctx.EventManager().EmitEvent(
+	if runtimeCfg.Context != nil {
+		runtimeCfg.Context.EventManager().EmitEvent(
 			sdk.NewEvent(event.Type, attrs...),
 		)
 	}
@@ -233,7 +268,12 @@ func returnContract(context unsafe.Pointer, ptr, size int32) {
 }
 
 func callContract(context unsafe.Pointer, addrPtr, inputPtr, inputSize int32) int32 {
-	var instanceContext = wasm.IntoInstanceContext(context)
+	instanceContext := wasm.IntoInstanceContext(context)
+	data := instanceContext.Data()
+	runtimeCfg, ok := data.(*runtimeConfig)
+	if !ok {
+		panic(fmt.Sprintf("%#v", data))
+	}
 	var memory = instanceContext.Memory().Data()
 
 	var addr Address
@@ -242,23 +282,23 @@ func callContract(context unsafe.Pointer, addrPtr, inputPtr, inputSize int32) in
 	input := memory[inputPtr : inputPtr+inputSize]
 
 	contractAddress := sdk.ToAccAddress(addr[:])
-	if contractAddress == selfAddr {
-		panic(errors.New("don't call yourself"))
+	if contractAddress == runtimeCfg.SelfAddress {
+		panic(errors.New("Cannot call contract self"))
 	}
 
-	codeInfo, err := keeper.contractInstance(*ctx, contractAddress)
+	codeInfo, err := runtimeCfg.Keeper.contractInstance(*runtimeCfg.Context, contractAddress)
 	if err != nil {
 		panic(err)
 	}
-	ccstore := ctx.KVStore(keeper.storeKey)
+	ccstore := runtimeCfg.Context.KVStore(runtimeCfg.Keeper.storeKey)
 	var code []byte
 	codeHash, _ := hex.DecodeString(codeInfo.CodeHash)
-	wc, err := keeper.wasmer.GetWasmCode(keeper.homeDir, codeHash)
+	wc, err := runtimeCfg.Keeper.wasmer.GetWasmCode(runtimeCfg.Keeper.homeDir, codeHash)
 	if err != nil {
 		wc = ccstore.Get(codeHash)
 
-		fileName := keeper.wasmer.FilePathMap[fmt.Sprintf("%x",codeInfo.CodeHash)]
-		err = ioutil.WriteFile(keeper.homeDir + WASMDIR + fileName, wc, wasmtypes.ModePerm)
+		fileName := runtimeCfg.Keeper.wasmer.FilePathMap[fmt.Sprintf("%x",codeInfo.CodeHash)]
+		err = ioutil.WriteFile(runtimeCfg.Keeper.homeDir + WASMDIR + fileName, wc, wasmtypes.ModePerm)
 		if err != nil {
 			panic(err)
 		}
@@ -266,23 +306,22 @@ func callContract(context unsafe.Pointer, addrPtr, inputPtr, inputSize int32) in
 	code = wc
 
 	prefixStoreKey := wasmtypes.GetContractStorePrefixKey(contractAddress)
-	prefixStore := NewStore(ctx.KVStore(keeper.storeKey), prefixStoreKey)
+	prefixStore := NewStore(runtimeCfg.Context.KVStore(runtimeCfg.Keeper.storeKey), prefixStoreKey)
 
-	newcreator := keeper.GetCreator(*ctx, contractAddress)
-	tempSelfAddr := selfAddr
-	tempCreator := creator
-	tempStore := store
-	tempPreCaller := precaller
-	SetStore(prefixStore)
-	SetCreator(newcreator)
-	SetPreCaller(selfAddr)
-	SetSelfAddr(contractAddress)
-	res, err := keeper.wasmer.Call(code, input, INVOKE)
+	newCreator := runtimeCfg.Keeper.GetCreator(*runtimeCfg.Context, contractAddress)
+	newRuntimeCfg := &runtimeConfig{
+		Store:       prefixStore,
+		GasUsed:     runtimeCfg.GasUsed,
+		GasWanted:   runtimeCfg.GasWanted,
+		PreCaller:   runtimeCfg.SelfAddress,
+		Creator:     newCreator,
+		Invoker:     runtimeCfg.Invoker,
+		SelfAddress: contractAddress,
+		Keeper:      runtimeCfg.Keeper,
+		Context:     runtimeCfg.Context,
+	}
 
-	SetStore(tempStore)
-	SetCreator(tempCreator)
-	SetSelfAddr(tempSelfAddr)
-	SetPreCaller(tempPreCaller)
+	res, err := runtimeCfg.Keeper.wasmer.Call(code, input, INVOKE, newRuntimeCfg)
 	if err != nil {
 		panic(err)
 	}
@@ -293,7 +332,12 @@ func callContract(context unsafe.Pointer, addrPtr, inputPtr, inputSize int32) in
 }
 
 func newContract(context unsafe.Pointer, newContractPtr, codeHashPtr, codeHashSize, argsPtr, argsSize int32) {
-	var instanceContext = wasm.IntoInstanceContext(context)
+	instanceContext := wasm.IntoInstanceContext(context)
+	data := instanceContext.Data()
+	runtimeCfg, ok := data.(*runtimeConfig)
+	if !ok {
+		panic(fmt.Sprintf("%#v", data))
+	}
 	var memory = instanceContext.Memory().Data()
 	args := memory[argsPtr : argsPtr + argsSize]
 	codeHash := memory[codeHashPtr : codeHashPtr+codeHashSize]
@@ -302,26 +346,16 @@ func newContract(context unsafe.Pointer, newContractPtr, codeHashPtr, codeHashSi
 		panic(err)
 	}
 
-	tempSelfAddr := selfAddr
-	tempCreator := creator
-	tempStore := store
-	tempPreCaller := precaller
-
 	var calldata utils.CallData
 	err = json.Unmarshal(args, &calldata)
 	if err != nil {
 		panic(err)
 	}
 
-	newContractAddress, err := keeper.Instantiate(*ctx, hash, invoker, calldata, "", "", "", "", "", wasmtypes.EmptyAddress)
+	newContractAddress, err := runtimeCfg.Keeper.Instantiate(*runtimeCfg.Context, hash, runtimeCfg.Invoker, calldata, "", "", "", "", "", wasmtypes.EmptyAddress, runtimeCfg.GasWanted)
 	if err != nil {
 		panic(err)
 	}
-
-	SetStore(tempStore)
-	SetCreator(tempCreator)
-	SetSelfAddr(tempSelfAddr)
-	SetPreCaller(tempPreCaller)
 
 	contractAddress := Address{}
 	copy(contractAddress[:], newContractAddress.Bytes())
@@ -329,10 +363,16 @@ func newContract(context unsafe.Pointer, newContractPtr, codeHashPtr, codeHashSi
 }
 
 func destroyContract(context unsafe.Pointer) {
-	fmt.Printf("destroy contract :%s", creator.String())
+	instanceContext := wasm.IntoInstanceContext(context)
+	data := instanceContext.Data()
+	runtimeCfg, ok := data.(*runtimeConfig)
+	if !ok {
+		panic(fmt.Sprintf("%#v", data))
+	}
+	fmt.Printf("destroy contract :%s", runtimeCfg.SelfAddress.String())
 
-	contractAddr := creator
-	ccstore := ctx.KVStore(keeper.storeKey)
+	contractAddr := runtimeCfg.SelfAddress
+	ccstore := runtimeCfg.Context.KVStore(runtimeCfg.Keeper.storeKey)
 	ccstore.Delete(wasmtypes.GetContractAddressKey(contractAddr))
 	//contractBz := ccstore.Get(wasmtypes.GetContractAddressKey(contractAddr))
 	//if contractBz == nil {
@@ -409,7 +449,12 @@ func debugPrint(context unsafe.Pointer, msgPtr, msgSize int32) {
 }
 
 func getValidatorPower(context unsafe.Pointer, dataPtr, dataSize, valuePtr int32) {
-	var instanceContext = wasm.IntoInstanceContext(context)
+	instanceContext := wasm.IntoInstanceContext(context)
+	data := instanceContext.Data()
+	runtimeCfg, ok := data.(*runtimeConfig)
+	if !ok {
+		panic(fmt.Sprintf("%#v", data))
+	}
 	var memory = instanceContext.Memory().Data()
 
 	source := wasmtypes.NewSink(memory[dataPtr : dataPtr+dataSize])
@@ -433,7 +478,7 @@ func getValidatorPower(context unsafe.Pointer, dataPtr, dataSize, valuePtr int32
 	value := make([]*wasmtypes.RustU128, len(validators))
 	for _, v := range validators {
 		i := 0
-		val, ok := stakingKeeper.GetValidator(*ctx, sdk.HexToAddress(v.ToString()))
+		val, ok := runtimeCfg.Keeper.StakingKeeper.GetValidator(*runtimeCfg.Context, sdk.HexToAddress(v.ToString()))
 		if !ok {
 			value[i] = wasmtypes.NewRustU128(big.NewInt(0))
 		}else {
@@ -458,10 +503,14 @@ func getValidatorPower(context unsafe.Pointer, dataPtr, dataSize, valuePtr int32
 }
 
 func totalPower(context unsafe.Pointer, valuePtr int32) {
-
-	var instanceContext = wasm.IntoInstanceContext(context)
+	instanceContext := wasm.IntoInstanceContext(context)
+	data := instanceContext.Data()
+	runtimeCfg, ok := data.(*runtimeConfig)
+	if !ok {
+		panic(fmt.Sprintf("%#v", data))
+	}
 	var memory = instanceContext.Memory().Data()
-	bondedPool := stakingKeeper.GetBondedPool(*ctx)
+	bondedPool := runtimeCfg.Keeper.StakingKeeper.GetBondedPool(*runtimeCfg.Context)
 	u128 := wasmtypes.NewRustU128(bondedPool.GetCoin().Amount.BigInt())
 	copy(memory[valuePtr:valuePtr+16], u128.Bytes())
 	//根据链上信息返回总权益
