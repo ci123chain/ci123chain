@@ -240,19 +240,37 @@ func (r *PubSubRoom) Subscribe(topic string) {
 						var operation string
 						if len(tx.Result.Events) == 0{
 							v = e.Data
+							continue
 						}else {
+							var success bool
+							var amount string
+							var isTransfer bool
 							for _, kv := range tx.Result.Events[0].Attributes {
 								if string(kv.Key) == "sender" {
 									sender = string(kv.Value)
 								}
 								if string(kv.Key) == "operation" {
 									operation = string(kv.Value)
+									isTransfer = true
 								}
 							}
+							if isTransfer {
+								for _, kv := range tx.Result.Events[0].Attributes {
+									if string(kv.Key) == "amount" {
+										amount = string(kv.Value)
+									}
+								}
+							}
+							if tx.TxResult.Result.Code == 0 {
+								success = true
+							}else {
+								success = false
+							}
 							height := tx.Height
-							gas := tx.Result.GasUsed
+							gas_used := tx.Result.GasUsed
+							gas_wanted := tx.Result.GasWanted
 							hash := hex.EncodeToString(value.Tx.Hash())
-							a := NewGotTxData(operation, sender , hash ,height, gas)
+							a := NewGotTxData(operation, sender , hash ,height, gas_used, gas_wanted, success, amount)
 							v = a
 						}
 					default:
@@ -295,7 +313,6 @@ func (r *PubSubRoom) AddShard() {
 
 					go func() {
 						for e := range responses {
-							//res, _ := json.Marshal(e.Data)
 							var v interface{}
 							switch value := e.Data.(type) {
 							case types.EventDataTx:
@@ -309,32 +326,37 @@ func (r *PubSubRoom) AddShard() {
 								if len(tx.Result.Events) == 0{
 									v = e.Data
 								}else {
+									var success bool
+									var amount string
+									var isTransfer bool
 									for _, kv := range tx.Result.Events[0].Attributes {
 										if string(kv.Key) == "sender" {
 											sender = string(kv.Value)
 										}
 										if string(kv.Key) == "operation" {
 											operation = string(kv.Value)
+											isTransfer = true
 										}
 									}
+									if isTransfer {
+										for _, kv := range tx.Result.Events[0].Attributes {
+											if string(kv.Key) == "amount" {
+												amount = string(kv.Value)
+											}
+										}
+									}
+									if tx.TxResult.Result.Code == 0 {
+										success = true
+									}else {
+										success = false
+									}
 									height := tx.Height
-									gas := tx.Result.GasUsed
+									gas_used := tx.Result.GasUsed
+									gas_wanted := tx.Result.GasWanted
 									hash := hex.EncodeToString(value.Tx.Hash())
-									a := NewGotTxData(operation, sender , hash , height, gas)
+									a := NewGotTxData(operation, sender , hash ,height, gas_used, gas_wanted, success, amount)
 									v = a
 								}
-							//case types.EventDataNewBlockHeader:
-							//	ok, _ := regexp.MatchString("NewBlockHeader", topic)
-							//	if !ok {
-							//		continue
-							//	}
-							//	v = e.Data
-							//case types.EventDataNewBlock:
-							//	ok, _ := regexp.MatchString("NewBlock", topic)
-							//	if !ok {
-							//		continue
-							//	}
-							//	v = e.Data
 							default:
 								v = e.Data
 							}
@@ -550,6 +572,9 @@ type GotTxData struct {
 	TxHeight  int64   `json:"tx_height"`
 	TxHash    string   `json:"tx_hash"`
 	TxGasUsed  interface{}   `json:"tx_gas_used"`
+	TxGasWanted int64    `json:"tx_gas_wanted"`
+	TxSuccess  bool    `json:"tx_success"`
+	TxAmount   string   `json:"tx_amount"`
 }
 
 type Attribute struct {
@@ -557,12 +582,15 @@ type Attribute struct {
 	Value string   `json:"value"`
 }
 
-func NewGotTxData(ty, sender, hash string, height int64, gas interface{}) GotTxData {
+func NewGotTxData(ty, sender, hash string, height, gas_used, gas_wanted int64, success bool, amount string) GotTxData {
 	return GotTxData{
 		TxType:   ty,
 		TxSender: sender,
 		TxHeight: height,
 		TxHash:   hash,
-		TxGasUsed: gas,
+		TxGasUsed: gas_used,
+		TxGasWanted: gas_wanted,
+		TxSuccess:  success,
+		TxAmount:  amount,
 	}
 }

@@ -26,7 +26,7 @@ type TMResponse struct {
 }
 
 type Response struct {
-	Ret 	uint32 	`json:"ret"`
+	Ret 	int64 	`json:"ret"`
 	Data 	interface{}	`json:"data"`
 	Message	string	`json:"message"`
 }

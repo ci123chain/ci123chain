@@ -253,7 +253,7 @@ func Handle404() http.Handler {
 			}
 
 			resultResponse = client.Response{
-				Ret:     0,
+				Ret:     1,
 				Data:    result,
 				Message: "",
 			}

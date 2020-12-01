@@ -125,8 +125,6 @@ func PostProcessResponseBare(w http.ResponseWriter, ctx context.Context, body in
 				Message: b.Log,
 			}
 		}
-
-
 	default:
 		res = Response{
 			Ret:     1,
