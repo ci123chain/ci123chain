@@ -29,7 +29,7 @@ func NewQuerier(k StakingKeeper) sdk.Querier {
 			return queryDelegatorDelegations(ctx, req, k)
 
 		default:
-			return nil, sdk.ErrUnknownRequest("unknown nameservice query endpoint")
+			return nil, sdk.ErrUnknownRequest("unknown query endpoint")
 		}
 	}
 }
