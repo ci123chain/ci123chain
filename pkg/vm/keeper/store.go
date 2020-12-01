@@ -24,6 +24,7 @@ func (s Store) Set(key, value []byte) {
 	AssertValidKey(key)
 	AssertValidValue(value)
 	s.parent.Set(s.key(key), value)
+	return
 }
 
 // Implements KVStore

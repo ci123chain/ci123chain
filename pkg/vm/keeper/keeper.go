@@ -195,7 +195,8 @@ func (k *Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAd
 	if err != nil {
 		return sdk.AccAddress{}, err
 	}
-	_, err = k.wasmer.Call(code, input, sig.Method, runtimeCfg)
+	wasmRuntime := new(wasmRuntime)
+	_, err = wasmRuntime.Call(code, input, sig.Method, runtimeCfg)
 	if err != nil {
 		return sdk.AccAddress{}, err
 	}
@@ -242,7 +243,6 @@ func (k *Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, invoke
 		Context:     &ctx,
 	}
 
-
 	contract := k.GetContractInfo(ctx, contractAddress)
 	if contract == nil {
 		return sdk.Result{}, errors.New("Cannot found this contract address")
@@ -278,7 +278,8 @@ func (k *Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, invoke
 	if err != nil {
 		return sdk.Result{}, err
 	}
-	res, err := k.wasmer.Call(code, input, sig.Method, runtimeCfg)
+	wasmRuntime := new(wasmRuntime)
+	res, err := wasmRuntime.Call(code, input, sig.Method, runtimeCfg)
 	if err != nil {
 		return sdk.Result{}, err
 	}
@@ -362,7 +363,8 @@ func (k Keeper) Query(ctx sdk.Context, contractAddress, invoker sdk.AccAddress, 
 	if err != nil {
 		return types.ContractState{}, err
 	}
-	res, err := k.wasmer.Call(code, input, sig.Method, runtimeCfg)
+	wasmRuntime := new(wasmRuntime)
+	res, err := wasmRuntime.Call(code, input, sig.Method, runtimeCfg)
 	if err != nil {
 		return types.ContractState{}, err
 	}

@@ -63,6 +63,11 @@ type runtimeConfig struct {
 	Context *sdk.Context
 }
 
+
+type wasmRuntime struct {
+
+}
+
 //set the store that be used by rust contract.
 func(cfg *runtimeConfig) SetStore(kvStore Store) {
 	cfg.Store = kvStore
@@ -276,7 +281,7 @@ func (w *Wasmer) Create(homeDir, codeHash string) (Wasmer, error) {
 	return newWasmer, nil
 }
 
-func (w *Wasmer) Call(code []byte, input []byte, method string, cfg *runtimeConfig) (res []byte, err error) {
+func (w wasmRuntime) Call(code []byte, input []byte, method string, cfg *runtimeConfig) (res []byte, err error) {
 	instance , err := getInstance(code, cfg)
 	if err != nil {
 		return nil, err
