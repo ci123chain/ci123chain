@@ -91,7 +91,8 @@ func queryAccountContractList(ctx sdk.Context, req abci.RequestQuery, k Keeper) 
 		return nil, sdk.ErrInternal("account doesn't exists")
 	}
 	var contractList []string
-	contractListBytes := store.Get(types.GetAccountContractListKey(account.GetAddress()))
+	ccstore := ctx.KVStore(k.storeKey)
+	contractListBytes := ccstore.Get(types.GetAccountContractListKey(account.GetAddress()))
 	if contractListBytes == nil {
 		return nil, nil
 	}

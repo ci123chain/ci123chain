@@ -9,7 +9,6 @@ import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/account"
 	"github.com/ci123chain/ci123chain/pkg/account/exported"
-	"github.com/ci123chain/ci123chain/pkg/logger"
 	keeper2 "github.com/ci123chain/ci123chain/pkg/staking/keeper"
 	"github.com/ci123chain/ci123chain/pkg/wasm/types"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -51,9 +50,6 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, homeDir string, wasmConf
 		StakingKeeper: stakingKeeper,
 		cdb:		   cdb,
 	}
-	SetAccountKeeper(accountKeeper)
-	SetWasmKeeper(&wk)
-	SetStakingKeeper(stakingKeeper)
 	return wk
 }
 
@@ -89,15 +85,25 @@ func (k *Keeper) Upload(ctx sdk.Context, wasmCode []byte, creator sdk.AccAddress
 	return codeHash, nil
 }
 
-func (k *Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAddress, args json.RawMessage, name, version, author, email, describe string, genesisContractAddress sdk.AccAddress) (sdk.AccAddress, error) {
+func (k *Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAddress, args json.RawMessage, name, version, author, email, describe string, genesisContractAddress sdk.AccAddress, gasWanted uint64) (sdk.AccAddress, error) {
+	runtimeCfg := &runtimeConfig{
+		GasUsed: 0,
+		PreCaller:   invoker,
+		Invoker:     invoker,
+		Creator:     invoker,
+		SelfAddress: sdk.AccAddress{},
+		Keeper:      k,
+		Context:     &ctx,
+	}
+
 	// 如果是官方合约，不限制gas数量
 	isGenesis, ok := ctx.Value(types.SystemContract).(bool)
 	if ok && isGenesis {
-		 SetGasWanted(UINT_MAX)
+		runtimeCfg.SetGasWanted(UINT_MAX)
+	} else {
+		runtimeCfg.SetGasWanted(gasWanted)
 	}
 
-	SetGasUsed()
-	SetCtx(&ctx)
 	var codeInfo types.CodeInfo
 	var wasmer Wasmer
 	var code []byte
@@ -124,10 +130,7 @@ func (k *Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAd
 		//return sdk.AccAddress{}, sdk.ErrInternal("Contract account exists")
 		return contractAddress, nil
 	}
-	SetPreCaller(invoker)
-	SetInvoker(invoker)
-	SetCreator(invoker)
-	SetSelfAddr(contractAddress)
+	runtimeCfg.SetSelfAddr(contractAddress)
 	var contractAccount exported.Account
 	contractAccount = k.AccountKeeper.NewAccountWithAddress(ctx, contractAddress)
 	k.AccountKeeper.SetAccount(ctx, contractAccount)
@@ -161,13 +164,14 @@ func (k *Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAd
 
 	prefixStoreKey := types.GetContractStorePrefixKey(contractAddress)
 	prefixStore := NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
-	SetStore(prefixStore)
+	runtimeCfg.SetStore(prefixStore)
 	if len(args) != 0 {
 		input, err := handleArgs(args)
 		if err != nil {
 			return sdk.AccAddress{}, err
 		}
-		_, err = k.wasmer.Call(code, input, INIT)
+		wasmRuntime := new(wasmRuntime)
+		_, err = wasmRuntime.Call(code, input, INIT, runtimeCfg)
 		if err != nil {
 			return sdk.AccAddress{}, err
 		}
@@ -184,7 +188,7 @@ func (k *Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAd
 		accountAddr := k.AccountKeeper.GetAccount(ctx, invoker).GetAddress()
 
 		var contractList []string
-		contractListBytes := store.Get(types.GetAccountContractListKey(accountAddr))
+		contractListBytes := ccstore.Get(types.GetAccountContractListKey(accountAddr))
 		if contractListBytes != nil {
 			err := json.Unmarshal(contractListBytes, &contractList)
 			if err != nil{
@@ -198,20 +202,27 @@ func (k *Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAd
 		}
 		ccstore.Set(types.GetAccountContractListKey(accountAddr), contractListBytes)
 	}
-	ctx.GasMeter().ConsumeGas(sdk.Gas(GasUsed),"wasm cost")
+	ctx.GasMeter().ConsumeGas(sdk.Gas(runtimeCfg.GasUsed),"wasm cost")
 	return contractAddress, nil
 }
 
 //
-func (k *Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, invoker sdk.AccAddress, args json.RawMessage) (sdk.Result, error) {
-	SetGasUsed()
-	SetSelfAddr(contractAddress)
-	SetInvoker(invoker)
-	SetPreCaller(invoker)
-	SetCtx(&ctx)
-	logger.GetLogger().Info(("!!!!!!!!!!!!!Enter Execute!!!!!!!!!!!!! "))
+func (k *Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, invoker sdk.AccAddress, args json.RawMessage, gasWanted uint64) (sdk.Result, error) {
+	runtimeCfg := &runtimeConfig{
+		GasUsed:     0,
+		GasWanted: 	 gasWanted,
+		PreCaller:   invoker,
+		Invoker:     invoker,
+		SelfAddress: contractAddress,
+		Keeper:      k,
+		Context:     &ctx,
+	}
+
 	contract := k.GetContractInfo(ctx, contractAddress)
-	SetCreator(contract.CodeInfo.Creator)
+	if contract == nil {
+		return sdk.Result{}, errors.New("Cannot found this contract address")
+	}
+	runtimeCfg.SetCreator(contract.CodeInfo.Creator)
 	var params types.CallContractParam
 	if args != nil {
 		err := json.Unmarshal(args, &params)
@@ -240,23 +251,24 @@ func (k *Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, invoke
 	//get store
 	prefixStoreKey := types.GetContractStorePrefixKey(contractAddress)
 	prefixStore := NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
-	SetStore(prefixStore)
+	runtimeCfg.SetStore(prefixStore)
 	input, err := handleArgs(args)
 	if err != nil {
 		return sdk.Result{}, err
 	}
-	res, err := k.wasmer.Call(code, input, INVOKE)
+	wasmRuntime := new(wasmRuntime)
+	res, err := wasmRuntime.Call(code, input, INVOKE, runtimeCfg)
 	if err != nil {
 		return sdk.Result{}, err
 	}
-	ctx.GasMeter().ConsumeGas(sdk.Gas(GasUsed),"wasm cost")
+	ctx.GasMeter().ConsumeGas(sdk.Gas(runtimeCfg.GasUsed), "wasm cost")
 	return sdk.Result{
 		Data:   []byte(fmt.Sprintf("%s", string(res))),
 	}, nil
 }
 
-func (k *Keeper) Migrate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAddress, oldContract sdk.AccAddress, args json.RawMessage, name, version, author, email, describe string) (sdk.AccAddress, error) {
-	newContract, err := k.Instantiate(ctx, codeHash, invoker, args, name, version, author, email, describe, types.EmptyAddress)
+func (k *Keeper) Migrate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAddress, oldContract sdk.AccAddress, args json.RawMessage, name, version, author, email, describe string, gasWanted uint64) (sdk.AccAddress, error) {
+	newContract, err := k.Instantiate(ctx, codeHash, invoker, args, name, version, author, email, describe, types.EmptyAddress, gasWanted)
 
 	if err != nil {
 		return sdk.AccAddress{}, err
@@ -285,15 +297,19 @@ func (k *Keeper) Migrate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAddres
 	return newContract, nil
 }
 
-// query?
-func (k Keeper) Query(ctx sdk.Context, contractAddress, invokerAddress sdk.AccAddress, args json.RawMessage) (types.ContractState, error) {
-	SetCreator(k.GetCreator(ctx, contractAddress))
-	SetPreCaller(invokerAddress)
-	SetInvoker(invokerAddress)
-	SetSelfAddr(contractAddress)
-	SetCtx(&ctx)
-	SetGasUsed()
-	SetGasWanted(UINT_MAX)
+// queryContract
+func (k Keeper) Query(ctx sdk.Context, contractAddress, invoker sdk.AccAddress, args json.RawMessage) (types.ContractState, error) {
+	runtimeCfg := &runtimeConfig{
+		GasUsed:     0,
+		GasWanted:   UINT_MAX,
+		PreCaller:   invoker,
+		Creator:     k.GetCreator(ctx, contractAddress),
+		Invoker:     invoker,
+		SelfAddress: contractAddress,
+		Keeper:      &k,
+		Context:     &ctx,
+	}
+
 	var params types.CallContractParam
 	if args != nil {
 		err := json.Unmarshal(args, &params)
@@ -323,12 +339,13 @@ func (k Keeper) Query(ctx sdk.Context, contractAddress, invokerAddress sdk.AccAd
 	//get store
 	prefixStoreKey := types.GetContractStorePrefixKey(contractAddress)
 	prefixStore := NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
-	SetStore(prefixStore)
+	runtimeCfg.SetStore(prefixStore)
 	input, err := handleArgs(args)
 	if err != nil {
 		return types.ContractState{}, err
 	}
-	res, err := k.wasmer.Call(code, input, INVOKE)
+	wasmRuntime := new(wasmRuntime)
+	res, err := wasmRuntime.Call(code, input, INVOKE, runtimeCfg)
 	if err != nil {
 		return types.ContractState{}, err
 	}
@@ -340,7 +357,6 @@ func (k Keeper) Query(ctx sdk.Context, contractAddress, invokerAddress sdk.AccAd
 
 
 func (k *Keeper) contractInstance(ctx sdk.Context, contractAddress sdk.AccAddress) (types.CodeInfo, error) {
-	logger.GetLogger().Info(("!!!!!!!!!!!!!Enter contractInstance!!!!!!!!!!!!! "))
 	var wasmer Wasmer
 	ccstore := ctx.KVStore(k.storeKey)
 	contractBz := ccstore.Get(types.GetContractAddressKey(contractAddress))

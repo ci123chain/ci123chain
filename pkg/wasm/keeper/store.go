@@ -3,7 +3,6 @@ package keeper
 import (
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/types"
-	"github.com/ci123chain/ci123chain/pkg/logger"
 	wasm "github.com/wasmerio/go-ext-wasm/wasmer"
 	"unsafe"
 )
@@ -13,7 +12,6 @@ type Store struct {
 	prefix []byte
 }
 
-var store Store
 func NewStore(parent types.KVStore, prefix []byte) Store {
 	return Store{
 		parent: parent,
@@ -26,6 +24,7 @@ func (s Store) Set(key, value []byte) {
 	AssertValidKey(key)
 	AssertValidValue(value)
 	s.parent.Set(s.key(key), value)
+	return
 }
 
 // Implements KVStore
@@ -55,14 +54,14 @@ func cloneAppend(bz []byte, tail []byte) (res []byte) {
 	return
 }
 
-//set the store that be used by rust contract.
-func SetStore(kvStore Store) {
-	store = kvStore
-}
-
 //export read_db
 func readDB(context unsafe.Pointer, keyPtr, keySize, valuePtr, valueSize, offset int32) int32 {
-	var instanceContext = wasm.IntoInstanceContext(context)
+	instanceContext := wasm.IntoInstanceContext(context)
+	data := instanceContext.Data()
+	runtimeCfg, ok := data.(*runtimeConfig)
+	if !ok {
+		panic(fmt.Sprintf("%#v", data))
+	}
 	var memory = instanceContext.Memory().Data()
 
 	realKey := memory[keyPtr: keyPtr + keySize]
@@ -70,8 +69,8 @@ func readDB(context unsafe.Pointer, keyPtr, keySize, valuePtr, valueSize, offset
 	//fmt.Printf("read key [%s]\n", string(realKey))
 
 	var size int;
-	logger.GetLogger().With("func","readDB").Info("contract get:" + string(realKey))
-	v := store.Get(realKey)
+
+	v := runtimeCfg.Store.Get(realKey)
 	if v == nil {
 		/*
 		valueStr = ""
@@ -92,13 +91,17 @@ func readDB(context unsafe.Pointer, keyPtr, keySize, valuePtr, valueSize, offset
 
 	copiedData := v[offset: index]
 	copy(memory[valuePtr:valuePtr+valueSize], copiedData)
-
 	return int32(size)
 }
 
 //export write_db
 func writeDB(context unsafe.Pointer, keyPtr, keySize, valuePtr, valueSize int32) {
-	var instanceContext = wasm.IntoInstanceContext(context)
+	instanceContext := wasm.IntoInstanceContext(context)
+	data := instanceContext.Data()
+	runtimeCfg, ok := data.(*runtimeConfig)
+	if !ok {
+		panic(fmt.Sprintf("%#v", data))
+	}
 	var memory = instanceContext.Memory().Data()
 
 	realKey := memory[keyPtr: keyPtr + keySize]
@@ -109,17 +112,22 @@ func writeDB(context unsafe.Pointer, keyPtr, keySize, valuePtr, valueSize int32)
 	var Value = make([]byte, len(realValue))
 	copy(Value[:], realValue[:])
 
-	store.Set(realKey, Value)
+	runtimeCfg.Store.Set(realKey, Value)
 }
 
 //export delete_db
 func deleteDB(context unsafe.Pointer, keyPtr, keySize int32) {
-	var instanceContext = wasm.IntoInstanceContext(context)
+	instanceContext := wasm.IntoInstanceContext(context)
+	data := instanceContext.Data()
+	runtimeCfg, ok := data.(*runtimeConfig)
+	if !ok {
+		panic(fmt.Sprintf("%#v", data))
+	}
 	var memory = instanceContext.Memory().Data()
 
 	realKey := memory[keyPtr: keyPtr + keySize]
 
 	fmt.Printf("delete key [%s]\n", string(realKey))
 
-	store.Delete(realKey)
+	runtimeCfg.Store.Delete(realKey)
 }
