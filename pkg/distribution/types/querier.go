@@ -11,6 +11,7 @@ const (
 	QueryWithdrawAddress  =  "withdraw_address"
 	QueryValidatorCommission         = "validator_commission"
 	QueryDelegationRewards           = "delegation_rewards"
+	QueryAccountInfo  =  "account_info"
 )
 
 
@@ -74,4 +75,12 @@ func NewQueryDelegationRewardsParams(delegatorAddr sdk.AccAddress, validatorAddr
 		DelegatorAddress: delegatorAddr,
 		ValidatorAddress: validatorAddr,
 	}
+}
+
+type QueryDelegatorBalanceParams struct {
+	AccountAddress   sdk.AccAddress    `json:"account_address" yaml:"account_address"`
+}
+
+func NewQueryDelegatorBalanceParams(accountAddr sdk.AccAddress) QueryDelegatorBalanceParams {
+	return QueryDelegatorBalanceParams{AccountAddress:accountAddr}
 }

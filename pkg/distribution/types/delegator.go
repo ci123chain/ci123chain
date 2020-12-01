@@ -22,3 +22,21 @@ func NewDelegatorStartingInfo(previousPeriod uint64, stake sdk.Dec, height uint6
 		Height:         height,
 	}
 }
+
+type DelegatorAccountInfo struct {
+	Available      sdk.Coin   `json:"available"`
+	Delegated      sdk.Coin   `json:"delegated"`
+	Unbonding      sdk.Coin   `json:"unbonding"`
+	Reward         sdk.Coin   `json:"reward"`
+	Commission     sdk.Coin   `json:"commission"`
+}
+
+func NewDelegatorAccountInfo(available, delegated, unbonding, reward, commission sdk.Coin) DelegatorAccountInfo {
+	return DelegatorAccountInfo{
+		Available:  available,
+		Delegated:  delegated,
+		Unbonding:  unbonding,
+		Reward:     reward,
+		Commission: commission,
+	}
+}

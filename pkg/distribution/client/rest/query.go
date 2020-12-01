@@ -17,6 +17,7 @@ func RegisterQueryRoutes(cliCtx context.Context, r *mux.Router)  {
 	r.HandleFunc("/distribution/delegator/query_withdraw_address", QueryWithDrawAddress(cliCtx)).Methods("POST")
 	r.HandleFunc("/distribution/validator/query_commission", validatorCommissionInfoHandleFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/distribution/delegator/query_rewards", queryDelegatorRewardsHandleFn(cliCtx)).Methods("POST")
+	r.HandleFunc("/distribution/delegator/account_info", QueryDelegatorAccountInfoHandleFn(cliCtx)).Methods("POST")
 }
 
 type RewardsData struct {
@@ -201,6 +202,26 @@ func queryDelegatorRewardsHandleFn(cliCtx context.Context) http.HandlerFunc {
 		var rewards sdk.DecCoin
 		cliCtx.Cdc.MustUnmarshalJSON(resp, &rewards)
 
+		rest.PostProcessResponseBare(writer, cliCtx, rewards)
+	}
+}
+
+func QueryDelegatorAccountInfoHandleFn(cliCtx context.Context) http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		deledatorAddress, ok := checkValidatorAddressVar(writer, request)
+		if !ok {
+			return
+		}
+		b := cliCtx.Cdc.MustMarshalJSON(types.NewQueryDelegatorBalanceParams(sdk.HexToAddress(deledatorAddress)))
+
+		res, _, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryAccountInfo, b, false)
+
+		if err != nil {
+			rest.WriteErrorRes(writer, err)
+			return
+		}
+		var rewards types.DelegatorAccountInfo
+		cliCtx.Cdc.MustUnmarshalJSON(res, &rewards)
 		rest.PostProcessResponseBare(writer, cliCtx, rewards)
 	}
 }

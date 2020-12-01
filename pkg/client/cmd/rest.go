@@ -31,6 +31,9 @@ import (
 	sRest "github.com/ci123chain/ci123chain/pkg/staking/client/rest"
 	wRest "github.com/ci123chain/ci123chain/pkg/vm/client/rest"
 	"github.com/gorilla/mux"
+
+	ctypes "github.com/tendermint/tendermint/rpc/core/types"
+	ltypes "github.com/tendermint/tendermint/rpc/lib/types"
 )
 
 const (
@@ -118,6 +121,14 @@ type Response struct {
 	Message	string	`json:"message"`
 }
 
+type ResBlock ctypes.ResultBlock
+
+type Res struct {
+	Ret 	uint32 	`json:"ret"`
+	Data 	ctypes.ResultBlock	`json:"data"`
+	Message	string	`json:"message"`
+}
+
 func Handle404() http.Handler {
 	return http.HandlerFunc(func (w http.ResponseWriter, req *http.Request) {
 		//req.RequestURI = ""
@@ -170,13 +181,82 @@ func Handle404() http.Handler {
 		}
 
 		resBody, err := ioutil.ReadAll(rep.Body)
+		var resultResponse client.Response
+		if err != nil {
+			resultResponse = client.Response{
+				Ret:     -1,
+				Data:    nil,
+				Message: err.Error(),
+			}
+		}
 
-		var tmResponse client.TMResponse
+		var tmResponse ltypes.RPCResponse
 		err = json.Unmarshal(resBody, &tmResponse)
-		resultResponse := client.Response{
-			Ret:     0,
-			Data:    tmResponse,
-			Message: "",
+		if err != nil {
+			resultResponse = client.Response{
+				Ret:     -1,
+				Data:    nil,
+				Message: err.Error(),
+			}
+		}else {
+			resStr := string(tmResponse.Result)
+			var result interface{}
+			switch newPath {
+			case "/block":
+				var a ctypes.ResultBlock
+				err = cdc.UnmarshalJSON([]byte(resStr), &a)
+				if err != nil {
+					resultResponse = client.Response{
+						Ret:     -1,
+						Data:    nil,
+						Message: err.Error(),
+					}
+				}else {
+					result = a
+				}
+			case "/status":
+				var a ctypes.ResultStatus
+				err = cdc.UnmarshalJSON([]byte(resStr), &a)
+				if err != nil {
+					resultResponse = client.Response{
+						Ret:     -1,
+						Data:    nil,
+						Message: err.Error(),
+					}
+				}else {
+					result = a
+				}
+			case "/tx":
+				var a ctypes.ResultTx
+				err = cdc.UnmarshalJSON([]byte(resStr), &a)
+				if err != nil {
+					resultResponse = client.Response{
+						Ret:     -1,
+						Data:    nil,
+						Message: err.Error(),
+					}
+				}else {
+					result = a
+				}
+			case "/health":
+				var a ctypes.ResultHealth
+				err = cdc.UnmarshalJSON([]byte(resStr), &a)
+				if err != nil {
+					resultResponse = client.Response{
+						Ret:     -1,
+						Data:    nil,
+						Message: err.Error(),
+					}
+				}else {
+					result = a
+				}
+			}
+
+			resultResponse = client.Response{
+				Ret:     0,
+				Data:    result,
+				Message: "",
+			}
 		}
 
 		resultByte, err := json.Marshal(resultResponse)
@@ -186,10 +266,7 @@ func Handle404() http.Handler {
 		}
 
 		w.Header().Set("Content-Type","application/json")
-		w.Write(resultByte)
-
-		//w.Header().Set("Content-Type","application/json")
-		//proxy.ServeHTTP(w, req)
+		_, _ = w.Write(resultByte)
 
 	})
 }
