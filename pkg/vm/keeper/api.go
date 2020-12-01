@@ -322,7 +322,12 @@ func callContract(context unsafe.Pointer, addrPtr, inputPtr, inputSize int32) in
 		Context:     runtimeCfg.Context,
 	}
 	wasmRuntime := new(wasmRuntime)
-	res, err := wasmRuntime.Call(code, input, INVOKE, newRuntimeCfg)
+	sink := NewSink(input)
+	method, err := sink.ReadString()
+	if err != nil {
+		panic(err)
+	}
+	res, err := wasmRuntime.Call(code, sink.Bytes(), method, newRuntimeCfg)
 	if err != nil {
 		panic(err)
 	}
