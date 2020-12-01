@@ -348,9 +348,9 @@ func (mBatch *goCouchDBBatch) Write() {
 	for {
 		resp, err := mBatch.batch.Commit()
 		if err != nil {
-			mBatch.cdb.lg.Error(fmt.Sprintf("BatchCommit Error: %s", err.Error()))
-			mBatch.cdb.lg.Info("***************Retry******************")
-			mBatch.cdb.lg.Info(fmt.Sprintf("Retry: %d", retry))
+			//mBatch.cdb.lg.Error(fmt.Sprintf("BatchCommit Error: %s", err.Error()))
+			//mBatch.cdb.lg.Info("***************Retry******************")
+			//mBatch.cdb.lg.Info(fmt.Sprintf("Retry: %d", retry))
 			mBatch.batch.closed = false
 			retry++
 			continue

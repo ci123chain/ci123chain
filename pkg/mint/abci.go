@@ -3,6 +3,8 @@ package mint
 import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/mint/keeper"
+	"github.com/ci123chain/ci123chain/pkg/mint/types"
+	abci "github.com/tendermint/tendermint/abci/types"
 )
 
 func BeginBlocker(ctx sdk.Context, k keeper.MinterKeeper) {
@@ -36,13 +38,24 @@ func BeginBlocker(ctx sdk.Context, k keeper.MinterKeeper) {
 		panic(err)
 	}
 
-	/*ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			types.EventTypeMint,
-			sdk.NewAttribute(types.AttributeKeyBondedRatio, bondedRatio.String()),
-			sdk.NewAttribute(types.AttributeKeyInflation, minter.Inflation.String()),
-			sdk.NewAttribute(types.AttributeKeyAnnualProvisions, minter.AnnualProvisions.String()),
-			sdk.NewAttribute(sdk.AttributeKeyAmount, mintedCoin.Amount.String()),
-		),
-	)*/
+	//ctx.EventManager().EmitEvent(
+	//	sdk.NewEvent(
+	//		types.EventTypeMint,
+	//		sdk.NewAttribute(types.AttributeKeyBondedRatio, bondedRatio.String()),
+	//		sdk.NewAttribute(types.AttributeKeyInflation, minter.Inflation.String()),
+	//		sdk.NewAttribute(types.AttributeKeyAnnualProvisions, minter.AnnualProvisions.String()),
+	//		sdk.NewAttribute(sdk.AttributeKeyAmount, mintedCoin.Amount.String()),
+	//	),
+	//)
+}
+
+func EndBlocker(ctx sdk.Context, k keeper.MinterKeeper) []abci.Event {
+	events := make([]abci.Event, 0)
+	totalStakingSupply := k.StakingTokenSupply(ctx)
+	event := abci.Event(sdk.NewEvent(
+		types.EventTypeMint,
+		sdk.NewAttribute(sdk.AttributeKeyTotalSupply, totalStakingSupply.String()),
+	))
+	events = append(events, event)
+	return events
 }

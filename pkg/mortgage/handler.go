@@ -10,6 +10,7 @@ import (
 
 func NewHandler(k MortgageKeeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
+		ctx = ctx.WithEventManager(sdk.NewEventManager())
 		switch msg := msg.(type) {
 		case *types.MsgMortgage:
 			return handleMsgMortgage(ctx, k, *msg)

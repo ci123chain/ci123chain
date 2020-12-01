@@ -49,9 +49,10 @@ func handleMsgModifyWithdrawAddress(ctx sdk.Context, msg types.MsgSetWithdrawAdd
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
-			sdk.EventTypeMessage,
+			types.EventTypeModifyWithdrawAddress,
+			sdk.NewAttribute(sdk.AttributeKeyMethod, types.EventTypeModifyWithdrawAddress),
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(sdk.AttributeKeySender, msg.DelegatorAddress.String()),
+			sdk.NewAttribute(sdk.AttributeKeySender, msg.FromAddress.String()),
 		),
 	)
 
@@ -72,9 +73,11 @@ func handleMsgWithdrawDelegatorReward(ctx sdk.Context, msg types.MsgWithdrawDele
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
-			sdk.EventTypeMessage,
+			types.EventTypeWithdrawRewards,
+			sdk.NewAttribute(sdk.AttributeKeyMethod, types.EventTypeWithdrawRewards),
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(sdk.AttributeKeySender, msg.DelegatorAddress.String()),
+			sdk.NewAttribute(types.AttributeKeyWithdrawAddress, msg.FromAddress.String()),
+			sdk.NewAttribute(sdk.AttributeKeySender, msg.FromAddress.String()),
 		),
 	)
 
@@ -99,9 +102,11 @@ func handleMsgWithdrawValidatorCommission(ctx sdk.Context, msg types.MsgWithdraw
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
-			sdk.EventTypeMessage,
+			types.EventTypeWithdrawCommission,
+			sdk.NewAttribute(sdk.AttributeKeyMethod, types.EventTypeWithdrawCommission),
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(sdk.AttributeKeySender, msg.ValidatorAddress.String()),
+			sdk.NewAttribute(types.AttributeKeyWithdrawAddress, msg.FromAddress.String()),
+			sdk.NewAttribute(sdk.AttributeKeySender, msg.FromAddress.String()),
 		),
 	)
 
@@ -116,9 +121,10 @@ func handleMsgFundCommunityPool(ctx sdk.Context, msg types.MsgFundCommunityPool,
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
-			sdk.EventTypeMessage,
+			types.EventTypeFundCommunityPool,
+			sdk.NewAttribute(sdk.AttributeKeyMethod, types.EventTypeFundCommunityPool),
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(sdk.AttributeKeySender, msg.Depositor.String()),
+			sdk.NewAttribute(sdk.AttributeKeySender, msg.FromAddress.String()),
 		),
 	)
 

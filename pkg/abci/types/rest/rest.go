@@ -238,9 +238,9 @@ func GetNecessaryParams(cliCtx context.Context, request *http.Request, cdc *code
 		gas = 0
 		return
 	}
-	Gas, err2 := strconv.ParseUint(request.FormValue("gas"), 10, 64)
-	if err2 != nil || Gas < 0 {
-		err = errors.New("gas error")
+	Gas, err := strconv.ParseUint(request.FormValue("gas"), 10, 64)
+	if err != nil || Gas < 0 {
+		err = errors.New("invalid gas")
 		return
 	}
 	gas = Gas
@@ -248,7 +248,7 @@ func GetNecessaryParams(cliCtx context.Context, request *http.Request, cdc *code
 	if userNonce != "" {
 		Nonce, err2 := strconv.ParseInt(userNonce, 10, 64)
 		if err2 != nil || Nonce < 0 {
-			err = errors.New("nonce err")
+			err = err2
 			return
 		}
 		nonce = uint64(Nonce)
@@ -256,12 +256,11 @@ func GetNecessaryParams(cliCtx context.Context, request *http.Request, cdc *code
 	}else {
 		ctx, err2 := client.NewClientContextFromViper(cdc)
 		if err2 != nil {
-			err = errors.New("new client context error")
+			err = err2
 			return
 		}
-		nonce, _, err2 = ctx.GetNonceByAddress(from, false)
-		if err2 != nil {
-			err = errors.New("get nonce error")
+		nonce, _, err = ctx.GetNonceByAddress(from, false)
+		if err != nil {
 			return
 		}
 	}

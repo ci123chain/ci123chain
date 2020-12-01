@@ -14,7 +14,7 @@ import (
 
 func NewHandler(k keeper.StakingKeeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
-		//ctx = ctx.WithEventManager(sdk.NewEventManager())
+		ctx = ctx.WithEventManager(sdk.NewEventManager())
 
 		switch msg := msg.(type) {
 		case *staking.MsgCreateValidator:
@@ -88,14 +88,17 @@ func handleMsgCreateValidator(ctx sdk.Context, k keeper.StakingKeeper, msg staki
 	em := sdk.NewEventManager()
 	em.EmitEvents(sdk.Events{
 		sdk.NewEvent(types.EventTypeCreateValidator,
+			sdk.NewAttribute(sdk.AttributeKeyMethod, types.EventTypeCreateValidator),
 			sdk.NewAttribute(types.AttributeKeyValidator, msg.ValidatorAddress.String()),
 			sdk.NewAttribute(sdk.AttributeKeyAmount, msg.Value.Amount.String()),
-		),
-		sdk.NewEvent(
-			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(sdk.AttributeKeySender, msg.DelegatorAddress.String()),
-			),
+			sdk.NewAttribute(sdk.AttributeKeySender, msg.FromAddress.String()),
+		),
+		//sdk.NewEvent(
+		//	sdk.EventTypeMessage,
+		//	sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+		//	sdk.NewAttribute(sdk.AttributeKeySender, msg.DelegatorAddress.String()),
+		//	),
 	})
 
 	return sdk.Result{Events: em.Events()}
@@ -142,14 +145,17 @@ func handleMsgEditValidator(ctx sdk.Context, k keeper.StakingKeeper, msg staking
 	em.EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventTypeEditValidator,
+			sdk.NewAttribute(sdk.AttributeKeyMethod, types.EventTypeEditValidator),
 			sdk.NewAttribute(types.AttributeKeyCommissionRate, validator.Commission.String()),
 			sdk.NewAttribute(types.AttributeKeyMinSelfDelegation, validator.MinSelfDelegation.String()),
-		),
-		sdk.NewEvent(
-			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(sdk.AttributeKeySender, msg.ValidatorAddress.String()),
+			sdk.NewAttribute(sdk.AttributeKeySender, msg.FromAddress.String()),
 		),
+		//sdk.NewEvent(
+		//	sdk.EventTypeMessage,
+		//	sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+		//	sdk.NewAttribute(sdk.AttributeKeySender, msg.ValidatorAddress.String()),
+		//),
 	})
 
 	return sdk.Result{Events: em.Events()}
@@ -172,14 +178,17 @@ func handleMsgDelegate(ctx sdk.Context, k keeper.StakingKeeper, msg staking.MsgD
 	em := sdk.NewEventManager()
 	em.EmitEvents(sdk.Events{
 		sdk.NewEvent(types.EventTypeDelegate,
+			sdk.NewAttribute(sdk.AttributeKeyMethod, types.EventTypeDelegate),
 			sdk.NewAttribute(types.AttributeKeyValidator, msg.ValidatorAddress.String()),
 			sdk.NewAttribute(sdk.AttributeKeyAmount, msg.Amount.Amount.String()),
-			),
-		sdk.NewEvent(
-			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(sdk.AttributeKeySender, msg.DelegatorAddress.String()),
+			sdk.NewAttribute(sdk.AttributeKeySender, msg.FromAddress.String()),
 			),
+		//sdk.NewEvent(
+		//	sdk.EventTypeMessage,
+		//	sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+		//	sdk.NewAttribute(sdk.AttributeKeySender, msg.DelegatorAddress.String()),
+		//	),
 	})
 
 	return sdk.Result{Events: em.Events()}
@@ -210,16 +219,19 @@ func handleMsgRedelegate(ctx sdk.Context, k keeper.StakingKeeper, msg staking.Ms
 	em.EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventTypeRedelegate,
+			sdk.NewAttribute(sdk.AttributeKeyMethod, types.EventTypeRedelegate),
 			sdk.NewAttribute(types.AttributeKeySrcValidator, msg.ValidatorSrcAddress.String()),
 			sdk.NewAttribute(types.AttributeKeyDstValidator, msg.ValidatorDstAddress.String()),
 			sdk.NewAttribute(sdk.AttributeKeyAmount, msg.Amount.Amount.String()),
 			sdk.NewAttribute(types.AttributeKeyCompletionTime, completionTime.Format(time.RFC3339)),
-			),
-		sdk.NewEvent(
-			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(sdk.AttributeKeySender, msg.DelegatorAddress.String()),
+			sdk.NewAttribute(sdk.AttributeKeySender, msg.FromAddress.String()),
 			),
+		//sdk.NewEvent(
+		//	sdk.EventTypeMessage,
+		//	sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+		//	sdk.NewAttribute(sdk.AttributeKeySender, msg.DelegatorAddress.String()),
+		//	),
 	})
 
 	return sdk.Result{Data: completionTimeBz, Events: em.Events()}
@@ -247,16 +259,19 @@ func handleMsgUndelegate(ctx sdk.Context, k keeper.StakingKeeper, msg staking.Ms
 	em := sdk.NewEventManager()
 	em.EmitEvents(
 		sdk.Events{
-			sdk.NewEvent(types.EventTypeUnbond,
+			sdk.NewEvent(types.EventTypeUndelegate,
+				sdk.NewAttribute(sdk.AttributeKeyMethod, types.EventTypeUndelegate),
 				sdk.NewAttribute(types.AttributeKeyValidator, msg.ValidatorAddress.String()),
 				sdk.NewAttribute(sdk.AttributeKeyAmount, msg.Amount.Amount.String()),
 				sdk.NewAttribute(types.AttributeKeyCompletionTime, completionTime.Format(time.RFC3339)),
+				sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+				sdk.NewAttribute(sdk.AttributeKeySender, msg.FromAddress.String()),
 		),
-		sdk.NewEvent(
-			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(sdk.AttributeKeySender, msg.DelegatorAddress.String()),
-			),
+		//sdk.NewEvent(
+		//	sdk.EventTypeMessage,
+		//	sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+		//	sdk.NewAttribute(sdk.AttributeKeySender, msg.DelegatorAddress.String()),
+		//	),
 		})
 
 	return sdk.Result{Data: completionTimeBz, Events: em.Events()}

@@ -68,14 +68,9 @@ func withdrawValidatorCommissionsHandler(cliCtx context.Context, writer http.Res
 	if err != nil {
 		broadcast = true
 	}
-	gas, err := strconv.ParseUint(req.FormValue("gas"), 10, 64)
-	if err != nil || gas < 0 {
-		rest.WriteErrorRes(writer, types.ErrParams(types.DefaultCodespace,errors.New("gas error")))
-		return
-	}
 	privKey, from, nonce, gas, err := rest.GetNecessaryParams(cliCtx, req, cdc, broadcast)
 	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrParams(types.DefaultCodespace, errors.New("get params error")))
+		rest.WriteErrorRes(writer, types.ErrParams(types.DefaultCodespace, err))
 		return
 	}
 	validator := from
@@ -105,7 +100,7 @@ func withdrawDelegationRewardsHandler(cliCtx context.Context, writer http.Respon
 
 	privKey, from, nonce, gas, err := rest.GetNecessaryParams(cliCtx, req, cdc, broadcast)
 	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrParams(types.DefaultCodespace, errors.New("get params error")))
+		rest.WriteErrorRes(writer, types.ErrParams(types.DefaultCodespace, err))
 		return
 	}
 
@@ -137,7 +132,7 @@ func setDelegatorWithdrawalAddrHandler(cliCtx context.Context, writer http.Respo
 	}
 	privKey, from, nonce, gas, err := rest.GetNecessaryParams(cliCtx, req, cdc, broadcast)
 	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrParams(types.DefaultCodespace, errors.New("get params error")))
+		rest.WriteErrorRes(writer, types.ErrParams(types.DefaultCodespace, err))
 		return
 	}
 

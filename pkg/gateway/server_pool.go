@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/gateway/logger"
 	"github.com/ci123chain/ci123chain/pkg/gateway/types"
-	"log"
 	"net/url"
 )
 
@@ -51,7 +50,7 @@ func (s *ServerPool) ConfigServerPool(tokens []string)  {
 		}
 		serverUrl, err := url.Parse(tok)
 		if err != nil {
-			log.Fatal(err)
+			logger.Info("info %s", err)
 		}
 		
 		if !isBackendAlive(serverUrl) {
