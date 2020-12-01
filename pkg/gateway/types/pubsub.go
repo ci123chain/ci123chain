@@ -6,7 +6,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	apptypes "github.com/ci123chain/ci123chain/pkg/app/types"
+	distypes "github.com/ci123chain/ci123chain/pkg/distribution/types"
 	"github.com/ci123chain/ci123chain/pkg/gateway/logger"
+	ibctypes "github.com/ci123chain/ci123chain/pkg/ibc/types"
+	iftypes "github.com/ci123chain/ci123chain/pkg/infrastructure/types"
+	ordertypes "github.com/ci123chain/ci123chain/pkg/order/types"
+	staktypes "github.com/ci123chain/ci123chain/pkg/staking/types"
+	"github.com/ci123chain/ci123chain/pkg/transfer"
+	wasmtypes "github.com/ci123chain/ci123chain/pkg/wasm/types"
 	"github.com/gorilla/websocket"
 	"github.com/tendermint/tendermint/libs/pubsub/query"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
@@ -240,7 +248,64 @@ func (r *PubSubRoom) Subscribe(topic string) {
 						var operation string
 						if len(tx.Result.Events) == 0{
 							v = e.Data
-							continue
+							var comTx apptypes.CommonTx
+							err = json.Unmarshal(tx.Tx, &comTx)
+							if err != nil {
+								logger.Error(fmt.Sprintf("got invalid tx %x", tx))
+								continue
+							}
+							switch vt := comTx.Msgs[0].(type) {
+							case *transfer.MsgTransfer:
+								operation = "transfer"
+							case *distypes.MsgSetWithdrawAddress:
+								operation = "set_withdraw_address"
+							case *distypes.MsgFundCommunityPool:
+								operation = "fund_community_pool"
+							case *distypes.MsgWithdrawDelegatorReward:
+								operation = "withdraw_delegator_reward"
+							case *distypes.MsgWithdrawValidatorCommission:
+								operation = "withdraw_validator_commission"
+							case *staktypes.MsgEditValidator:
+								operation = "edit_validator"
+							case *staktypes.MsgCreateValidator:
+								operation = "create_validator"
+							case *staktypes.MsgDelegate:
+								operation = "delegate"
+							case *staktypes.MsgRedelegate:
+								operation = "redelegate"
+							case *staktypes.MsgUndelegate:
+								operation = "undelegate"
+							case *wasmtypes.MsgExecuteContract:
+								operation = "invoke_contract"
+							case *wasmtypes.MsgInstantiateContract:
+								operation = "init_contract"
+							case *wasmtypes.MsgMigrateContract:
+								operation = "migrate_contract"
+							case *wasmtypes.MsgUploadContract:
+								operation = "upload_contract"
+							case *ordertypes.MsgUpgrade:
+								operation = "upgrade"
+							case *ibctypes.MsgApplyIBC:
+								operation = "apply_ibc"
+							case *iftypes.MsgStoreContent:
+								operation = "store_content"
+							default:
+								logger.Error(fmt.Sprintf("got invalid tx type %x", vt))
+								continue
+							}
+							var success bool
+							sender := comTx.From.String()
+							hash := hex.EncodeToString(tx.Tx.Hash())
+							height := tx.Height
+							gasUsed := tx.Result.GasUsed
+							gasWanted := tx.Result.GasWanted
+							if tx.TxResult.Result.Code == 0 {
+								success = true
+							}else {
+								success = false
+							}
+							a := NewGotTxData(operation, sender , hash ,height, gasUsed, gasWanted, success, "")
+							v = a
 						}else {
 							var success bool
 							var amount string
@@ -251,7 +316,9 @@ func (r *PubSubRoom) Subscribe(topic string) {
 								}
 								if string(kv.Key) == "operation" {
 									operation = string(kv.Value)
-									isTransfer = true
+									if operation == "transfer" {
+										isTransfer = true
+									}
 								}
 							}
 							if isTransfer {
@@ -267,10 +334,10 @@ func (r *PubSubRoom) Subscribe(topic string) {
 								success = false
 							}
 							height := tx.Height
-							gas_used := tx.Result.GasUsed
-							gas_wanted := tx.Result.GasWanted
+							gasUsed := tx.Result.GasUsed
+							gasWanted := tx.Result.GasWanted
 							hash := hex.EncodeToString(value.Tx.Hash())
-							a := NewGotTxData(operation, sender , hash ,height, gas_used, gas_wanted, success, amount)
+							a := NewGotTxData(operation, sender , hash ,height, gasUsed, gasWanted, success, amount)
 							v = a
 						}
 					default:
@@ -325,6 +392,64 @@ func (r *PubSubRoom) AddShard() {
 								var operation string
 								if len(tx.Result.Events) == 0{
 									v = e.Data
+									var comTx apptypes.CommonTx
+									err = json.Unmarshal(tx.Tx, &comTx)
+									if err != nil {
+										logger.Error(fmt.Sprintf("got invalid tx %x", tx))
+										continue
+									}
+									switch vt := comTx.Msgs[0].(type) {
+									case *transfer.MsgTransfer:
+										operation = "transfer"
+									case *distypes.MsgSetWithdrawAddress:
+										operation = "set_withdraw_address"
+									case *distypes.MsgFundCommunityPool:
+										operation = "fund_community_pool"
+									case *distypes.MsgWithdrawDelegatorReward:
+										operation = "withdraw_delegator_reward"
+									case *distypes.MsgWithdrawValidatorCommission:
+										operation = "withdraw_validator_commission"
+									case *staktypes.MsgEditValidator:
+										operation = "edit_validator"
+									case *staktypes.MsgCreateValidator:
+										operation = "create_validator"
+									case *staktypes.MsgDelegate:
+										operation = "delegate"
+									case *staktypes.MsgRedelegate:
+										operation = "redelegate"
+									case *staktypes.MsgUndelegate:
+										operation = "undelegate"
+									case *wasmtypes.MsgExecuteContract:
+										operation = "invoke_contract"
+									case *wasmtypes.MsgInstantiateContract:
+										operation = "init_contract"
+									case *wasmtypes.MsgMigrateContract:
+										operation = "migrate_contract"
+									case *wasmtypes.MsgUploadContract:
+										operation = "upload_contract"
+									case *ordertypes.MsgUpgrade:
+										operation = "upgrade"
+									case *ibctypes.MsgApplyIBC:
+										operation = "apply_ibc"
+									case *iftypes.MsgStoreContent:
+										operation = "store_content"
+									default:
+										logger.Error(fmt.Sprintf("got invalid tx type %x", vt))
+										continue
+									}
+									var success bool
+									sender := comTx.From.String()
+									hash := hex.EncodeToString(tx.Tx.Hash())
+									height := tx.Height
+									gasUsed := tx.Result.GasUsed
+									gasWanted := tx.Result.GasWanted
+									if tx.TxResult.Result.Code == 0 {
+										success = true
+									}else {
+										success = false
+									}
+									a := NewGotTxData(operation, sender , hash ,height, gasUsed, gasWanted, success, "")
+									v = a
 								}else {
 									var success bool
 									var amount string
@@ -335,7 +460,9 @@ func (r *PubSubRoom) AddShard() {
 										}
 										if string(kv.Key) == "operation" {
 											operation = string(kv.Value)
-											isTransfer = true
+											if operation == "transfer" {
+												isTransfer = true
+											}
 										}
 									}
 									if isTransfer {
@@ -351,10 +478,10 @@ func (r *PubSubRoom) AddShard() {
 										success = false
 									}
 									height := tx.Height
-									gas_used := tx.Result.GasUsed
-									gas_wanted := tx.Result.GasWanted
+									gasUsed := tx.Result.GasUsed
+									gasWanted := tx.Result.GasWanted
 									hash := hex.EncodeToString(value.Tx.Hash())
-									a := NewGotTxData(operation, sender , hash ,height, gas_used, gas_wanted, success, amount)
+									a := NewGotTxData(operation, sender , hash ,height, gasUsed, gasWanted, success, amount)
 									v = a
 								}
 							default:
@@ -571,7 +698,7 @@ type GotTxData struct {
 	TxSender  string   `json:"tx_sender"`
 	TxHeight  int64   `json:"tx_height"`
 	TxHash    string   `json:"tx_hash"`
-	TxGasUsed  interface{}   `json:"tx_gas_used"`
+	TxGasUsed  int64   `json:"tx_gas_used"`
 	TxGasWanted int64    `json:"tx_gas_wanted"`
 	TxSuccess  bool    `json:"tx_success"`
 	TxAmount   string   `json:"tx_amount"`
@@ -582,15 +709,15 @@ type Attribute struct {
 	Value string   `json:"value"`
 }
 
-func NewGotTxData(ty, sender, hash string, height, gas_used, gas_wanted int64, success bool, amount string) GotTxData {
+func NewGotTxData(ty, sender, hash string, height, gasUsed, gasWanted int64, success bool, amount string) GotTxData {
 	return GotTxData{
-		TxType:   ty,
-		TxSender: sender,
-		TxHeight: height,
-		TxHash:   hash,
-		TxGasUsed: gas_used,
-		TxGasWanted: gas_wanted,
-		TxSuccess:  success,
-		TxAmount:  amount,
+		TxType:      ty,
+		TxSender:    sender,
+		TxHeight:    height,
+		TxHash:      hash,
+		TxGasUsed:   gasUsed,
+		TxGasWanted: gasWanted,
+		TxSuccess:   success,
+		TxAmount:    amount,
 	}
 }
