@@ -73,11 +73,11 @@ func (ctx *Context) GetBalanceByAddress(addr sdk.AccAddress, isProve bool) (sdk.
 		return sdk.NewEmptyCoin(), nil , err
 	}
 	res, _, proof, err := ctx.Query("/custom/" + types.ModuleName + "/" + types.QueryAccount, bz, false)
-	if err != nil {
-		return sdk.NewEmptyCoin(), nil, err
-	}
 	if res == nil{
 		return sdk.NewEmptyCoin(), nil, errors.New("The account does not exist")
+	}
+	if err != nil {
+		return sdk.NewEmptyCoin(), nil, err
 	}
 	var acc exported.Account
 	err2 := ctx.Cdc.UnmarshalBinaryLengthPrefixed(res, &acc)
@@ -95,11 +95,11 @@ func (ctx *Context) GetNonceByAddress(addr sdk.AccAddress, isProve bool) (uint64
 		return 0, nil , err
 	}
 	res, _, proof, err := ctx.Query("/custom/" + types.ModuleName + "/" + types.QueryAccount, bz, false)
-	if err != nil {
-		return 0, nil, err
-	}
 	if res == nil{
 		return 0, nil, errors.New("The account does not exist")
+	}
+	if err != nil {
+		return 0, nil, err
 	}
 	var acc exported.Account
 	err2 := ctx.Cdc.UnmarshalBinaryLengthPrefixed(res, &acc)

@@ -2,6 +2,7 @@ package store
 
 import (
 	"fmt"
+	logger2 "github.com/ci123chain/ci123chain/pkg/logger"
 	"io"
 	"sync"
 
@@ -57,16 +58,22 @@ type iavlStore struct {
 
 	// KVStore save to shared DB
 	parent CommitStore
+
+	key   sdk.StoreKey
+	lg logger2.Logger
 }
 
 // CONTRACT: tree should be fully loaded.
 // nolint: unparam
 func newIAVLStore(db dbm.DB, tree *iavl.MutableTree, numRecent int64, storeEvery int64, key sdk.StoreKey) *iavlStore {
+	logger := logger2.GetLogger()
 	st := &iavlStore{
 		tree:       tree,
 		numRecent:  numRecent,
 		storeEvery: storeEvery,
 		parent: 	NewBaseKVStore(dbStoreAdapter{db}, storeEvery, numRecent, key).Prefix([]byte(key.Name())).(CommitStore),
+		lg:         logger,
+		key:        key,
 	}
 	return st
 }
@@ -149,8 +156,8 @@ func (st *iavlStore) Set(key, value []byte) {
 
 // Implements KVStore.
 func (st *iavlStore) Get(key []byte) (value []byte) {
-	v := st.parent.(KVStore).Get(key)
-	return v
+	value = st.parent.(KVStore).Get(key)
+	return
 }
 
 // Implements KVStore.

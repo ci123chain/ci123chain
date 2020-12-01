@@ -16,7 +16,7 @@ type AppModuleGenesis interface {
 	InitGenesis(ctx types.Context, data json.RawMessage) []abci.ValidatorUpdate
 	BeginBlocker(ctx types.Context, req abci.RequestBeginBlock)
 	Committer(ctx types.Context)
-	EndBlock(ctx types.Context, req abci.RequestEndBlock) []abci.ValidatorUpdate
+	EndBlock(ctx types.Context, req abci.RequestEndBlock) ([]abci.ValidatorUpdate, []abci.Event)
 }
 
 type AppModuleBasic interface {
@@ -125,13 +125,17 @@ func (am AppManager) Committer(ctx types.Context) abci.ResponseCommit {
 
 func (am AppManager) EndBlocker(ctx types.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
 
-	validatorUpdates := []abci.ValidatorUpdate{}
+	validatorUpdates := make([]abci.ValidatorUpdate, 0)
+	all_events := make([]abci.Event, 0)
 	for _, name := range am.Orders {
 		m := am.Modules[name]
 		if m == am.Modules[order.ModuleName] {
 			continue
 		}
-		moduleValUpdates := m.EndBlock(ctx, req)
+		moduleValUpdates, sub_events := m.EndBlock(ctx, req)
+		for _,v := range sub_events {
+			all_events = append(all_events, v)
+		}
 		if len(moduleValUpdates) > 0 {
 			if len(validatorUpdates) > 0 {
 				panic("validator EndBlock updates already set by a previous module")
@@ -140,5 +144,5 @@ func (am AppManager) EndBlocker(ctx types.Context, req abci.RequestEndBlock) abc
 			validatorUpdates = moduleValUpdates
 		}
 	}
-	return abci.ResponseEndBlock{ValidatorUpdates:validatorUpdates}
+	return abci.ResponseEndBlock{ValidatorUpdates:validatorUpdates, Events: all_events}
 }

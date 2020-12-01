@@ -9,7 +9,9 @@ services:
       CI_STATEDB: couchdb://admin:password@couchdb_service:5984/test
       CI_HOME: /root/cid
       CI_CLIHOME: /root/cli
-      CI_VALIDATOR_KEY: oQLmM5pM5wL78a6LJntQY8tPGQPpp050udIA5YZMkCc=
+      CI_VALIDATOR_KEY: BpiPMqeXTNJLBg6hRoWJjsjOLSHIQRIrkQlykLQ/0AE=
+      CI_PUBKEY: Ap0lbWGAnzfqpc0D0GL081WCnWatdk2d5B21orPl30AS
+      CI_SHARDINDEX: 1
       GENESIS_SHARED: ci0,ci1,ci2
     ports:
       - 26606:26656
@@ -19,7 +21,7 @@ services:
     #    depends_on:
     #      - couchdb_service
     networks:
-      testdocker_couchDB:
+      bootstrap-docker_couchDB:
 
   ci1:
     image: cichain:v0.0.1
@@ -30,7 +32,9 @@ services:
       CI_STATEDB: couchdb://admin:password@couchdb_service:5984/test
       CI_HOME: /root/cid
       CI_CLIHOME: /root/cli
-      CI_VALIDATOR_KEY: oQLmM5pM5wL78a6LJntQY8tPGQPpp050udIA5YZMkCc=
+      CI_VALIDATOR_KEY: BpiPMqeXTNJLBg6hRoWJjsjOLSHIQRIrkQlykLQ/0AE=
+      CI_PUBKEY: Ap0lbWGAnzfqpc0D0GL081WCnWatdk2d5B21orPl30AS
+      CI_SHARDINDEX: 2
       GENESIS_SHARED: ci0,ci1,ci2
     ports:
       - 26616:26656
@@ -38,7 +42,7 @@ services:
     volumes:
       - ./node1:/root/cid
     networks:
-      testdocker_couchDB:
+      bootstrap-docker_couchDB:
 
   ci2:
     image: cichain:v0.0.1
@@ -49,7 +53,9 @@ services:
       CI_STATEDB: couchdb://admin:password@couchdb_service:5984/test
       CI_HOME: /root/cid
       CI_CLIHOME: /root/cli
-      CI_VALIDATOR_KEY: oQLmM5pM5wL78a6LJntQY8tPGQPpp050udIA5YZMkCc=
+      CI_VALIDATOR_KEY: BpiPMqeXTNJLBg6hRoWJjsjOLSHIQRIrkQlykLQ/0AE=
+      CI_PUBKEY: Ap0lbWGAnzfqpc0D0GL081WCnWatdk2d5B21orPl30AS
+      CI_SHARDINDEX: 3
       GENESIS_SHARED: ci0,ci1,ci2
     ports:
       - 26626:26656
@@ -57,7 +63,7 @@ services:
     volumes:
       - ./node2:/root/cid
     networks:
-      testdocker_couchDB:
+      bootstrap-docker_couchDB:
 
   gateway:
     image: cichain:v0.0.1
@@ -72,8 +78,8 @@ services:
     ports:
       - 3030:3030
     networks:
-      testdocker_couchDB:
+      bootstrap-docker_couchDB:
 
 networks: ##定义网络组
-  testdocker_couchDB: ## 网络组名称
+  bootstrap-docker_couchDB: ## 网络组名称
     external: true

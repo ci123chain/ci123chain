@@ -20,8 +20,8 @@ type AppModule struct {
 	SupplyKeeper       supply.Keeper
 }
 
-func (am AppModule) EndBlock(ctx types.Context, req abci.RequestEndBlock) []abci.ValidatorUpdate {
-	return nil
+func (am AppModule) EndBlock(ctx types.Context, req abci.RequestEndBlock) ([]abci.ValidatorUpdate, []abci.Event) {
+	return nil, nil
 }
 
 func (am AppModule) BeginBlocker(ctx types.Context, req abci.RequestBeginBlock) {

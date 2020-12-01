@@ -13,6 +13,10 @@ var (
 	ErrQueryTx				= types.ErrQueryTx
 	NewMsgUpgrade           = types.NewMsgUpgrade
 	StoreKey				= types.StoreKey
+
+	//EventType                = types.EventType
+	//AttributeValueCategory  = types.AttributeValueCategory
+	//AttributeValueAddShard  = types.AttributeValueAddShard
 )
 
 const (

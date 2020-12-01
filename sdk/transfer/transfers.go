@@ -9,12 +9,21 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 )
 
 var cdc = types.MakeCodec()
 //off line
-func SignMsgTransfer(from, to string, gas, nonce uint64, amount sdk.Coin, priv string, isfabric bool) ([]byte, error) {
+func SignMsgTransfer(from, to string, gas, nonce uint64, amt string, priv string, isfabric bool) ([]byte, error) {
+	a, err := strconv.ParseInt(amt, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	if a <= 0 {
+		return nil, errors.New(fmt.Sprintf("invalid amount:%s", amt))
+	}
+	amount := sdk.NewCoin(sdk.NewInt(a))
 	if amount.IsNegative() || amount.IsZero() {
 		return nil, errors.New("invalid amount")
 	}
