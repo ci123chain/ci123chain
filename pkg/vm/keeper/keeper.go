@@ -141,7 +141,8 @@ func (k *Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAd
 	if isGenesis {
 		contractAddress = genesisContractAddress
 	}else {
-		contractAddress = k.generateContractAddress(codeHash, invoker, args)
+		nonce := k.AccountKeeper.GetAccount(ctx, invoker).GetSequence()
+		contractAddress = k.generateContractAddress(codeHash, invoker, args, nonce)
 	}
 
 	existingAcct := k.AccountKeeper.GetAccount(ctx, contractAddress)
@@ -515,8 +516,8 @@ func (k *Keeper) create(ctx sdk.Context, invokerAddr sdk.AccAddress, wasmCode []
 	return codeHash, false, nil
 }
 
-func (k Keeper) generateContractAddress(codeHash []byte, creatorAddr sdk.AccAddress, payload utils.CallData) sdk.AccAddress {
-	contract, _ := rlp.EncodeToBytes([]interface{}{codeHash, creatorAddr, payload})
+func (k Keeper) generateContractAddress(codeHash []byte, creatorAddr sdk.AccAddress, payload utils.CallData, nonce uint64) sdk.AccAddress {
+	contract, _ := rlp.EncodeToBytes([]interface{}{codeHash, creatorAddr, payload, nonce})
 	return sdk.ToAccAddress(crypto.Keccak256Hash(contract).Bytes()[12:])
 }
 
