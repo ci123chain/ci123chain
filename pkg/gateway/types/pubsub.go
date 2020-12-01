@@ -14,7 +14,7 @@ import (
 	ordertypes "github.com/ci123chain/ci123chain/pkg/order/types"
 	staktypes "github.com/ci123chain/ci123chain/pkg/staking/types"
 	"github.com/ci123chain/ci123chain/pkg/transfer"
-	wasmtypes "github.com/ci123chain/ci123chain/pkg/wasm/types"
+	wasmtypes "github.com/ci123chain/ci123chain/pkg/vm/wasmtypes"
 	"github.com/gorilla/websocket"
 	"github.com/tendermint/tendermint/libs/pubsub/query"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
