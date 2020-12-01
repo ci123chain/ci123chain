@@ -3,7 +3,6 @@ package keeper
 import (
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/types"
-	"github.com/ci123chain/ci123chain/pkg/logger"
 	wasm "github.com/wasmerio/go-ext-wasm/wasmer"
 	"unsafe"
 )
@@ -25,6 +24,7 @@ func (s Store) Set(key, value []byte) {
 	AssertValidKey(key)
 	AssertValidValue(value)
 	s.parent.Set(s.key(key), value)
+	return
 }
 
 // Implements KVStore
@@ -69,7 +69,7 @@ func readDB(context unsafe.Pointer, keyPtr, keySize, valuePtr, valueSize, offset
 	//fmt.Printf("read key [%s]\n", string(realKey))
 
 	var size int;
-	logger.GetLogger().With("func","readDB").Info("contract get:" + string(realKey))
+
 	v := runtimeCfg.Store.Get(realKey)
 	if v == nil {
 		/*
@@ -91,7 +91,6 @@ func readDB(context unsafe.Pointer, keyPtr, keySize, valuePtr, valueSize, offset
 
 	copiedData := v[offset: index]
 	copy(memory[valuePtr:valuePtr+valueSize], copiedData)
-
 	return int32(size)
 }
 

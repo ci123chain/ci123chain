@@ -326,7 +326,8 @@ func callContract(context unsafe.Pointer, addrPtr, inputPtr, inputSize int32) in
 		Context:     runtimeCfg.Context,
 	}
 
-	res, err := runtimeCfg.Keeper.wasmer.Call(code, input, INVOKE, newRuntimeCfg)
+	wasmRuntime := new(wasmRuntime)
+	res, err := wasmRuntime.Call(code, input, INVOKE, newRuntimeCfg)
 	if err != nil {
 		panic(err)
 	}

@@ -32,7 +32,6 @@ import (
 	"errors"
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	"github.com/ci123chain/ci123chain/pkg/logger"
 	"github.com/ci123chain/ci123chain/pkg/wasm/types"
 	"github.com/wasmerio/go-ext-wasm/wasmer"
 	"io/ioutil"
@@ -62,6 +61,10 @@ type runtimeConfig struct {
 	SelfAddress sdk.AccAddress
 	Keeper *Keeper
 	Context *sdk.Context
+}
+
+type wasmRuntime struct {
+
 }
 
 //set the store that be used by rust contract.
@@ -277,8 +280,7 @@ func (w *Wasmer) Create(homeDir, codeHash string) (Wasmer, error) {
 	return newWasmer, nil
 }
 
-func (w *Wasmer) Call(code []byte, input []byte, method string, cfg *runtimeConfig) (res []byte, err error) {
-	logger.GetLogger().Info(("!!!!!!!!!!!!!Enter Wasmer.Call!!!!!!!!!!!!! "))
+func (w wasmRuntime) Call(code []byte, input []byte, method string, cfg *runtimeConfig) (res []byte, err error) {
 	instance , err := getInstance(code, cfg)
 	if err != nil {
 		return nil, err
@@ -325,7 +327,6 @@ func (w *Wasmer) Call(code []byte, input []byte, method string, cfg *runtimeConf
 }
 
 func getInstance(code []byte, cfg *runtimeConfig) (*wasmer.Instance, error) {
-	logger.GetLogger().Info(("!!!!!!!!!!!!!Enter getInstance!!!!!!!!!!!!! "))
 	imports, err := wasmer.NewImports().Namespace("env").Append("send", send, C.send)
 	if err != nil {
 		panic(err)

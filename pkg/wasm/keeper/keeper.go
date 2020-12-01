@@ -9,7 +9,6 @@ import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/account"
 	"github.com/ci123chain/ci123chain/pkg/account/exported"
-	"github.com/ci123chain/ci123chain/pkg/logger"
 	keeper2 "github.com/ci123chain/ci123chain/pkg/staking/keeper"
 	"github.com/ci123chain/ci123chain/pkg/wasm/types"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -171,7 +170,8 @@ func (k *Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAd
 		if err != nil {
 			return sdk.AccAddress{}, err
 		}
-		_, err = k.wasmer.Call(code, input, INIT, runtimeCfg)
+		wasmRuntime := new(wasmRuntime)
+		_, err = wasmRuntime.Call(code, input, INIT, runtimeCfg)
 		if err != nil {
 			return sdk.AccAddress{}, err
 		}
@@ -208,7 +208,6 @@ func (k *Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAd
 
 //
 func (k *Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, invoker sdk.AccAddress, args json.RawMessage, gasWanted uint64) (sdk.Result, error) {
-	logger.GetLogger().Info(("!!!!!!!!!!!!!Enter Execute!!!!!!!!!!!!! "))
 	runtimeCfg := &runtimeConfig{
 		GasUsed:     0,
 		GasWanted: 	 gasWanted,
@@ -257,7 +256,8 @@ func (k *Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, invoke
 	if err != nil {
 		return sdk.Result{}, err
 	}
-	res, err := k.wasmer.Call(code, input, INVOKE, runtimeCfg)
+	wasmRuntime := new(wasmRuntime)
+	res, err := wasmRuntime.Call(code, input, INVOKE, runtimeCfg)
 	if err != nil {
 		return sdk.Result{}, err
 	}
@@ -344,7 +344,8 @@ func (k Keeper) Query(ctx sdk.Context, contractAddress, invoker sdk.AccAddress, 
 	if err != nil {
 		return types.ContractState{}, err
 	}
-	res, err := k.wasmer.Call(code, input, INVOKE, runtimeCfg)
+	wasmRuntime := new(wasmRuntime)
+	res, err := wasmRuntime.Call(code, input, INVOKE, runtimeCfg)
 	if err != nil {
 		return types.ContractState{}, err
 	}
@@ -356,7 +357,6 @@ func (k Keeper) Query(ctx sdk.Context, contractAddress, invoker sdk.AccAddress, 
 
 
 func (k *Keeper) contractInstance(ctx sdk.Context, contractAddress sdk.AccAddress) (types.CodeInfo, error) {
-	logger.GetLogger().Info(("!!!!!!!!!!!!!Enter contractInstance!!!!!!!!!!!!! "))
 	var wasmer Wasmer
 	ccstore := ctx.KVStore(k.storeKey)
 	contractBz := ccstore.Get(types.GetContractAddressKey(contractAddress))
