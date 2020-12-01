@@ -33,8 +33,6 @@ import (
 	"errors"
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	"github.com/ci123chain/ci123chain/pkg/account"
-	keeper2 "github.com/ci123chain/ci123chain/pkg/staking/keeper"
 	"github.com/ci123chain/ci123chain/pkg/vm/wasmtypes"
 	"github.com/wasmerio/go-ext-wasm/wasmer"
 	"io/ioutil"
@@ -52,6 +50,55 @@ const (
 	InputDataTypeParam          = 0
 	InputDataTypeContractResult = 1
 )
+
+type runtimeConfig struct {
+	Store Store
+	GasUsed int64
+	GasWanted uint64
+	PreCaller sdk.AccAddress
+	Creator sdk.AccAddress
+	Invoker sdk.AccAddress
+	SelfAddress sdk.AccAddress
+	Keeper *Keeper
+	Context *sdk.Context
+}
+
+//set the store that be used by rust contract.
+func(cfg *runtimeConfig) SetStore(kvStore Store) {
+	cfg.Store = kvStore
+}
+
+func(cfg *runtimeConfig) SetGasUsed(){
+	cfg.GasUsed = 0
+}
+
+func(cfg *runtimeConfig) SetGasWanted(gaswanted uint64){
+	cfg.GasWanted = gaswanted
+}
+
+func(cfg *runtimeConfig) SetPreCaller(addr sdk.AccAddress) {
+	cfg.PreCaller = addr
+}
+
+func(cfg *runtimeConfig) SetCreator(addr sdk.AccAddress) {
+	cfg.Creator = addr
+}
+
+func(cfg *runtimeConfig) SetInvoker(addr sdk.AccAddress) {
+	cfg.Invoker = addr
+}
+
+func(cfg *runtimeConfig) SetSelfAddr(addr sdk.AccAddress) {
+	cfg.SelfAddress = addr
+}
+
+func(cfg *runtimeConfig) SetWasmKeeper(wk *Keeper) {
+	cfg.Keeper = wk
+}
+
+func(cfg *runtimeConfig) SetCtx(con *sdk.Context) {
+	cfg.Context = con
+}
 
 //export read_db
 func read_db(context unsafe.Pointer, keyPtr, keySize, valuePtr, valueSize, offset int32) int32 {
@@ -157,64 +204,19 @@ type VMRes struct {
 	res []byte // success
 }
 
-var GasUsed int64
-var GasWanted uint64
-
-func SetGasUsed(){
-	GasUsed = 0
-}
-
-func SetGasWanted(gaswanted uint64){
-	GasWanted = gaswanted
-}
-
 //export addgas
 func addgas(context unsafe.Pointer, gas int32) {
-	GasUsed += int64(gas)
-	if(uint64(GasUsed) > GasWanted) {
+	instanceContext := wasmer.IntoInstanceContext(context)
+	data := instanceContext.Data()
+	runtimeCfg, ok := data.(*runtimeConfig)
+	if !ok {
+		panic(fmt.Sprintf("%#v", data))
+	}
+	runtimeCfg.GasUsed += int64(gas)
+	if(uint64(runtimeCfg.GasUsed) > runtimeCfg.GasWanted) {
 		panic(sdk.ErrorOutOfGas{Descriptor: "run vm"})
 	}
 	return
-}
-
-var precaller sdk.AccAddress
-func SetPreCaller(addr sdk.AccAddress) {
-	precaller = addr
-}
-
-var creator sdk.AccAddress
-func SetCreator(addr sdk.AccAddress) {
-	creator = addr
-}
-
-var invoker sdk.AccAddress
-func SetInvoker(addr sdk.AccAddress) {
-	invoker = addr
-}
-
-var selfAddr sdk.AccAddress
-func SetSelfAddr(addr sdk.AccAddress) {
-	selfAddr = addr
-}
-
-var keeper *Keeper
-func SetWasmKeeper(wk *Keeper) {
-	keeper = wk
-}
-
-var accountKeeper account.AccountKeeper
-func SetAccountKeeper(ac account.AccountKeeper) {
-	accountKeeper = ac
-}
-
-var stakingKeeper keeper2.StakingKeeper
-func SetStakingKeeper(sk keeper2.StakingKeeper) {
-	stakingKeeper = sk
-}
-
-var ctx *sdk.Context
-func SetCtx(con *sdk.Context) {
-	ctx = con
 }
 
 type Wasmer struct {
@@ -274,8 +276,8 @@ func (w *Wasmer) Create(homeDir, codeHash string) (Wasmer, error) {
 	return newWasmer, nil
 }
 
-func (w *Wasmer) Call(code []byte, input []byte, method string) (res []byte, err error) {
-	instance , err := getInstance(code)
+func (w *Wasmer) Call(code []byte, input []byte, method string, cfg *runtimeConfig) (res []byte, err error) {
+	instance , err := getInstance(code, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -322,7 +324,7 @@ func (w *Wasmer) Call(code []byte, input []byte, method string) (res []byte, err
 	return res, err
 }
 
-func getInstance(code []byte) (*wasmer.Instance, error) {
+func getInstance(code []byte, cfg *runtimeConfig) (*wasmer.Instance, error) {
 	imports, err := wasmer.NewImports().Namespace("env").Append("send", send, C.send)
 	if err != nil {
 		panic(err)
@@ -361,6 +363,7 @@ func getInstance(code []byte) (*wasmer.Instance, error) {
 	if err != nil {
 		panic(err)
 	}
+	instance.SetContextData(cfg)
 	return &instance, nil
 }
 

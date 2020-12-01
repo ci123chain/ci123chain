@@ -1,18 +1,9 @@
 package module
 
 import (
-	"bytes"
-	"compress/gzip"
-	"encoding/base64"
-	"errors"
-	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/vm/evmtypes"
 	"github.com/ci123chain/ci123chain/pkg/vm/moduletypes"
-	"github.com/ci123chain/ci123chain/pkg/vm/moduletypes/utils"
-	"github.com/ci123chain/ci123chain/pkg/vm/wasmtypes"
-	"io/ioutil"
-	"strings"
 )
 
 const (
@@ -21,44 +12,45 @@ const (
 )
 
 func WasmInitGenesis(ctx sdk.Context, wasmer moduletypes.KeeperI) {
-	var contracts = types.DefaultGenesisState()
-	ctx = ctx.WithValue(types.SystemContract, true)
-	for i := 0; i < len(contracts.Contracts); i++ {
-		for _, v := range contracts.Contracts {
-			if v.Index == i {
-				cdata, _ := base64.StdEncoding.DecodeString(v.Code)
-				rdata := bytes.NewReader(cdata)
-				r, _ := gzip.NewReader(rdata)
-				code, err := ioutil.ReadAll(r)
-				if err != nil {
-					panic(err)
-				}
-				address := sdk.HexToAddress(v.Address)
-				invoker := sdk.HexToAddress(contracts.Invoker)
-				var params utils.CallData
-				params.Args = v.Params
-				params.Method = v.Method
-				if strings.HasPrefix(v.Method, InitMethodPrefix) {
-					codeHash, err := wasmer.Upload(ctx, code, invoker)
-					if err != nil {
-						panic(err)
-					}
-					_, err = wasmer.Instantiate(ctx, codeHash, invoker, params, contracts.Name, contracts.Version, contracts.Author, contracts.Email, contracts.Describe, address)
+	//var contracts = types.DefaultGenesisState()
+	//ctx = ctx.WithValue(types.SystemContract, true)
+	//for i := 0; i < len(contracts.Contracts); i++ {
+	//	for _, v := range contracts.Contracts {
+	//		if v.Index == i {
+	//			cdata, _ := base64.StdEncoding.DecodeString(v.Code)
+	//			rdata := bytes.NewReader(cdata)
+	//			r, _ := gzip.NewReader(rdata)
+	//			code, err := ioutil.ReadAll(r)
+	//			if err != nil {
+	//				panic(err)
+	//			}
+	//			address := sdk.HexToAddress(v.Address)
+	//			invoker := sdk.HexToAddress(contracts.Invoker)
+	//			var params utils.CallData
+	//			params.Args = v.Params
+	//			params.Method = v.Method
+	//			if strings.HasPrefix(v.Method, InitMethodPrefix) {
+	//				codeHash, err := wasmer.Upload(ctx, code, invoker)
+	//				if err != nil {
+	//					panic(err)
+	//				}
+	//				_, err = wasmer.Instantiate(ctx, codeHash, invoker, params, contracts.Name, contracts.Version, contracts.Author, contracts.Email, contracts.Describe, address, 0)
+	//
+	//				if err != nil {
+	//					panic(err)
+	//				}
+	//			}else if strings.HasPrefix(v.Method, InvokeMethodPrefix) {
+	//				_, err = wasmer.Execute(ctx, address, invoker, params, 0)
+	//				if err != nil {
+	//					panic(err)
+	//				}
+	//			}else {
+	//				panic(errors.New(fmt.Sprintf("implement method %s", v.Method)))
+	//			}
+	//		}
+	//	}
+	//}
 
-					if err != nil {
-						panic(err)
-					}
-				}else if strings.HasPrefix(v.Method, InvokeMethodPrefix) {
-					_, err = wasmer.Execute(ctx, address, invoker, params)
-					if err != nil {
-						panic(err)
-					}
-				}else {
-					panic(errors.New(fmt.Sprintf("implement method %s", v.Method)))
-				}
-			}
-		}
-	}
 }
 
 func EvmInitGenesis(ctx sdk.Context, k moduletypes.KeeperI, data evmtypes.GenesisState) {
