@@ -1,11 +1,11 @@
 package rest
 
 import (
-	"encoding/json"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/transfer"
+	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/ci123chain/ci123chain/pkg/vm/moduletypes"
 	"github.com/ci123chain/ci123chain/pkg/vm/moduletypes/utils"
 	"github.com/ci123chain/ci123chain/pkg/vm/wasmtypes"
@@ -145,20 +145,19 @@ func queryContractStateAllHandlerFn(cliCtx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		contractAddr := r.FormValue("contract_address")
 		contractAddress := sdk.HexToAddress(contractAddr)
+		msg := r.FormValue("args")
 		height := r.FormValue("height")
 		prove := r.FormValue("prove")
-		var args utils.CallData
-		args_str := r.FormValue("calldata")
-		if args_str == "" {
-			rest.WriteErrorRes(w, types.ErrCheckParams(moduletypes.DefaultCodespace, "get callData failed"))
-			return
+		var argsStr utils.CallData
+		if msg == "" {
+			rest.WriteErrorRes(w, transfer.ErrQueryTx(types.DefaultCodespace, "query param parse failed"))
 		}else {
-			err := json.Unmarshal([]byte(args_str), &args)
-			if err != nil  {
-				rest.WriteErrorRes(w, types.ErrCheckParams(moduletypes.DefaultCodespace, "get callData failed"))
-				return
+			ok, err := util.CheckJsonArgs(msg, argsStr)
+			if err != nil || !ok {
+				rest.WriteErrorRes(w, transfer.ErrQueryTx(types.DefaultCodespace, "query param parse failed"))
 			}
 		}
+
 		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r, "")
 		if !ok {
 			rest.WriteErrorRes(w, err)
@@ -167,7 +166,7 @@ func queryContractStateAllHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		if !rest.CheckHeightAndProve(w, height, prove, types.DefaultCodespace) {
 			return
 		}
-		params := types.NewContractStateParam(contractAddress, sdk.AccAddress{}, args)
+		params := types.NewContractStateParam(contractAddress, sdk.AccAddress{}, argsStr)
 		bz, Er := cliCtx.Cdc.MarshalJSON(params)
 		if Er != nil {
 			rest.WriteErrorRes(w, sdk.ErrInternal("marshal failed"))
