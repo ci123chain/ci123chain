@@ -6,3 +6,18 @@ data_dir
 
 bootstrap-docker/node*
 bootstrap-docker/gateway
+/reset_2peer.sh
+/reset_hy.sh
+/reset_hy1.sh
+/reset_hyy.sh
+/reset_hyy1.sh
+.tendermint-lite
+sdk/init/testInit1
+sdk/init/testInit2
+sdk/init/testInit3
+sdk/init/testInit4
+testInit1
+testInit2
+testInit4
+testInit3
+testdocker
