@@ -60,6 +60,21 @@ func (ak AccountKeeper) GetAccount(ctx types.Context, addr types.AccAddress) exp
 	return acc
 }
 
+// GetAllAccounts returns all accounts in the accountKeeper.
+func (ak AccountKeeper) GetAllAccounts(ctx types.Context) (accounts []exported.Account) {
+	ak.IterateAccounts(ctx,
+		func(acc exported.Account) (stop bool) {
+			accounts = append(accounts, acc)
+			return false
+		})
+	return accounts
+}
+
+func (ak AccountKeeper) RemoveAccount(ctx types.Context, acc exported.Account) {
+	addr := acc.GetAddress()
+	store := ctx.KVStore(ak.key)
+	store.Delete(acc_types.AddressStoreKey(addr))
+}
 
 func (ak AccountKeeper) decodeAccount(bz []byte) (acc exported.Account) {
 	err := ak.cdc.UnmarshalBinaryLengthPrefixed(bz, &acc)
@@ -68,7 +83,6 @@ func (ak AccountKeeper) decodeAccount(bz []byte) (acc exported.Account) {
 	}
 	return
 }
-
 
 func (ak AccountKeeper) GetNextAccountNumber(ctx types.Context) uint64 {
 	var accNumber uint64
@@ -85,4 +99,19 @@ func (ak AccountKeeper) GetNextAccountNumber(ctx types.Context) uint64 {
 	bz = ak.cdc.MustMarshalBinaryLengthPrefixed(accNumber + 1)
 	store.Set(acc_types.GlobalAccountNumberKey, bz)
 	return accNumber
+}
+
+// IterateAccounts iterates over all the stored accounts and performs a callback function
+func (ak AccountKeeper) IterateAccounts(ctx types.Context, cb func(account exported.Account) (stop bool)) {
+	store := ctx.KVStore(ak.key)
+	iterator := types.KVStorePrefixIterator(store, acc_types.AddressStoreKeyPrefix)
+
+	defer iterator.Close()
+	for ; iterator.Valid(); iterator.Next() {
+		account := ak.decodeAccount(iterator.Value())
+
+		if cb(account) {
+			break
+		}
+	}
 }

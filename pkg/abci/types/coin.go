@@ -64,6 +64,10 @@ func (c Coin) IsEqual(other Coin) bool {
 }
 
 func (c Coin) AmountOf(denom string) Int {
+	if c.Denom == "" {
+		return ZeroInt()
+	}
+
 	if c.Denom != denom {
 		panic(fmt.Errorf("denom does not match"))
 	}
@@ -71,6 +75,9 @@ func (c Coin) AmountOf(denom string) Int {
 }
 
 func (c Coin) Add(coinB Coin) Coin {
+	if c.Denom == "" {
+		return coinB
+	}
 	if c.Denom != coinB.Denom {
 		panic(fmt.Sprintf("invalid coin denominations; %s, %s", c.Denom, coinB.Denom))
 	}

@@ -46,7 +46,6 @@ func NewGoCouchDB(name, address string, auth Auth) (*GoCouchDB, error) {
 	}, nil
 }
 
-// Implements DB.
 func (cdb *GoCouchDB) Get(key []byte) []byte {
 	retry := 0
 	for {
@@ -410,7 +409,7 @@ func (cdb *GoCouchDB) GetRev(key []byte) string {
 			switch t := err.(type) {
 			case *Error:
 				if t.ErrorCode == "not_found" {
-					cdb.lg.Info(fmt.Sprintf("GetRev not_found, key: %s, id: %s", string(key), hex.EncodeToString(key)))
+					//cdb.lg.Info(fmt.Sprintf("GetRev not_found, key: %s, id: %s", string(key), hex.EncodeToString(key)))
 					return ""
 				}
 			default:

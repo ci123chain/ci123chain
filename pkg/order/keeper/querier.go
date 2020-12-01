@@ -13,7 +13,7 @@ func NewQuerier(orderKeeper *OrderKeeper) sdk.Querier {
 		case types.QueryState:
 			return queryState(ctx, orderKeeper)
 		default:
-			return nil, sdk.ErrUnknownRequest("unknown nameservice query endpoint")
+			return nil, sdk.ErrUnknownRequest("unknown query endpoint")
 		}
 	}
 }

@@ -22,6 +22,8 @@ type Account interface {
 	GetCoin() types.Coin
 	SetCoin(types.Coin) error
 
+	SetContractType(contractType string) error
+	GetContractType() string
 
 	// Calculates the amount of coins that can be sent to other accounts given
 	// the current time.
