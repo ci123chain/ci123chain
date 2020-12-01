@@ -29,7 +29,7 @@ func init()  {
 	rootCmd.PersistentFlags().StringP(helper.FlagPassword, "p", "", "password for signing tx")
 	rootCmd.PersistentFlags().Int64(helper.FlagHeight, 0, "Use a special height to query state at (this can error if node is pruning state)")
 	viper.SetEnvPrefix("CI")
-	viper.BindPFlags(rootCmd.Flags())
-	viper.BindPFlags(rootCmd.PersistentFlags())
+	_ = viper.BindPFlags(rootCmd.Flags())
+	_ = viper.BindPFlags(rootCmd.PersistentFlags())
 	viper.AutomaticEnv()
 }
