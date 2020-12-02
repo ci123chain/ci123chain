@@ -6,7 +6,7 @@ const (
 
 	AttributeAllBonded = "all_bonded"
 
-	AttributeKeyBondedRatio      = "bonded_ratio"
-	AttributeKeyInflation        = "inflation"
-	AttributeKeyAnnualProvisions = "annual_provisions"
+	//AttributeKeyBondedRatio      = "bonded_ratio"
+	//AttributeKeyInflation        = "inflation"
+	//AttributeKeyAnnualProvisions = "annual_provisions"
 )

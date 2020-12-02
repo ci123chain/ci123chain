@@ -11,7 +11,6 @@ require (
 	github.com/cespare/cp v1.1.1 // indirect
 	github.com/ci123chain/wasm-util v1.0.1
 	github.com/deckarep/golang-set v1.7.1 // indirect
-	github.com/elastic/gosigar v0.10.5 // indirect
 	github.com/ethereum/go-ethereum v1.9.21
 	github.com/gogo/protobuf v1.3.0
 	github.com/golang/protobuf v1.4.2

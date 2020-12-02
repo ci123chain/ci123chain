@@ -64,3 +64,25 @@ func NewQueryRedelegationParams(delegatorAddr sdk.AccAddress,
 		DstValidatorAddr: dstValidatorAddr,
 	}
 }
+
+type QueryOperatorAddressesParams struct {
+	ConsAddresses   []sdk.AccAddr     `json:"cons_addresses"`
+}
+
+func NewQueryOperatorAddressParams(operatorAddress... sdk.AccAddr) QueryOperatorAddressesParams{
+	var addresses = make([]sdk.AccAddr, 0)
+	for _, v := range operatorAddress{
+		addresses = append(addresses, v)
+	}
+	return QueryOperatorAddressesParams{ConsAddresses:addresses}
+}
+
+type ValidatorOperatorAddressResponse struct {
+	ConsAddress        string    `json:"cons_address"`
+	OperatorAddress    string    `json:"operator_address"`
+	Found              bool     `json:"found"`
+}
+
+func NewValidatorOperatorAddressResponse(consAddr, addr string, found bool) ValidatorOperatorAddressResponse {
+	return ValidatorOperatorAddressResponse{ConsAddress: consAddr, OperatorAddress:addr, Found: found}
+}

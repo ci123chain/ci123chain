@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"encoding/hex"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
@@ -8,6 +9,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/transfer"
 	"github.com/gorilla/mux"
 	"net/http"
+	"strings"
 )
 
 func RegisterQueryRoutes(cliCtx context.Context, r *mux.Router) {
@@ -29,6 +31,8 @@ func RegisterQueryRoutes(cliCtx context.Context, r *mux.Router) {
 	r.HandleFunc("/staking/delegator/delegations", delegatorDelegationsHandlerFn(cliCtx), ).Methods("POST")
 	// Query redelegations (filters in query params)
 	r.HandleFunc("/staking/redelegations", redelegationsHandlerFn(cliCtx), ).Methods("POST")
+
+	r.HandleFunc("/staking/operator", operatorAddressSetQueryHandleFn(cliCtx), ).Methods("POST")
 
 }
 
@@ -412,6 +416,56 @@ func redelegationsHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		var redelegations types.RedelegationResponses
 		cliCtx.Cdc.MustUnmarshalJSON(res, &redelegations)
 		value := redelegations
+		resp := rest.BuildQueryRes(height, isProve, value, proof)
+		rest.PostProcessResponseBare(w, cliCtx, resp)
+	}
+}
+
+func operatorAddressSetQueryHandleFn(cliCtx context.Context) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		//
+		var params types.QueryOperatorAddressesParams
+		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r, "")
+		if !ok || err != nil {
+			rest.WriteErrorRes(w, err)
+			return
+		}
+		params.ConsAddresses = make([]sdk.AccAddr, 0)
+		height := r.FormValue("height")
+		prove := r.FormValue("prove")
+		setsStr := r.FormValue("address_sets")
+		sets := strings.Split(setsStr, ",")
+		for _, v := range sets {
+			b, err := hex.DecodeString(v)
+			if err != nil {
+				panic(err)
+			}
+			params.ConsAddresses = append(params.ConsAddresses, sdk.AccAddr(b))
+		}
+		bz, Err := cliCtx.Cdc.MarshalJSON(params)
+		if Err != nil {
+			rest.WriteErrorRes(w, sdk.ErrInternal("marshal failed"))
+			return
+		}
+		if !rest.CheckHeightAndProve(w, height, prove, types.DefaultCodespace) {
+			return
+		}
+		isProve := false
+		if prove == "true" {
+			isProve = true
+		}
+		res, _, proof, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryOperatorAddressSet, bz, isProve)
+		if err != nil {
+			rest.WriteErrorRes(w, err)
+			return
+		}
+		if len(res) < 1 {
+			rest.WriteErrorRes(w, transfer.ErrQueryTx(types.DefaultCodespace, "query response length less than 1"))
+			return
+		}
+		var result []types.ValidatorOperatorAddressResponse
+		cliCtx.Cdc.MustUnmarshalJSON(res, &result)
+		value := result
 		resp := rest.BuildQueryRes(height, isProve, value, proof)
 		rest.PostProcessResponseBare(w, cliCtx, resp)
 	}

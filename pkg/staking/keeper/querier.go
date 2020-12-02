@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"encoding/hex"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/staking/types"
 	s "github.com/ci123chain/ci123chain/pkg/staking/types"
@@ -27,6 +28,8 @@ func NewQuerier(k StakingKeeper) sdk.Querier {
 			return queryRedelegations(ctx, req, k)
 		case s.QueryDelegatorDelegations:
 			return queryDelegatorDelegations(ctx, req, k)
+		case s.QueryOperatorAddressSet:
+			return queryOperatorAddressByConsAddresses(ctx, req, k)
 
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown query endpoint")
@@ -318,4 +321,27 @@ func queryDelegatorDelegations(ctx sdk.Context, req abci.RequestQuery, k Staking
 	res := types.StakingCodec.MustMarshalJSON(delegationResps)
 
 	return res, nil
+}
+
+func queryOperatorAddressByConsAddresses(ctx sdk.Context, req abci.RequestQuery, k StakingKeeper) ([]byte, sdk.Error) {
+
+	var addressSet types.QueryOperatorAddressesParams
+	err := types.StakingCodec.UnmarshalJSON(req.Data, &addressSet)
+	if err != nil {
+		return nil, sdk.ErrInternal("unmarshal failed")
+	}
+
+	var responseSet = make([]types.ValidatorOperatorAddressResponse, 0)
+	for _, v := range addressSet.ConsAddresses {
+		validator, found := k.GetValidatorByConsAddr(ctx, sdk.ToAccAddress(v))
+		if !found {
+			addr := types.NewValidatorOperatorAddressResponse(hex.EncodeToString(v), validator.OperatorAddress.String(), false)
+			responseSet = append(responseSet, addr)
+		}else {
+			addr := types.NewValidatorOperatorAddressResponse(hex.EncodeToString(v), validator.OperatorAddress.String(), true)
+			responseSet = append(responseSet, addr)
+		}
+	}
+	result  := types.StakingCodec.MustMarshalJSON(responseSet)
+	return result, nil
 }

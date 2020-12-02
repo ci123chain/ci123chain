@@ -9,7 +9,6 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/gateway/logger"
 	"github.com/gorilla/websocket"
 	"github.com/tendermint/go-amino"
-	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/pubsub/query"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
 	"strings"
@@ -537,21 +536,21 @@ func rpcAddress(host string) string {
 	return res
 }
 
-type GotTxResponse struct {
-	Height int64                  `json:"height"`
-	Index  uint32                 `json:"index"`
-	Tx     string                     `json:"tx"`
-	Result abci.ResponseDeliverTx `json:"result"`
-}
-
-func NewGotTxResponse(height int64, index uint32, tx string, result abci.ResponseDeliverTx) GotTxResponse {
-	return GotTxResponse{
-		Height: height,
-		Index:  index,
-		Tx:     tx,
-		Result: result,
-	}
-}
+//type GotTxResponse struct {
+//	Height int64                  `json:"height"`
+//	Index  uint32                 `json:"index"`
+//	Tx     string                     `json:"tx"`
+//	Result abci.ResponseDeliverTx `json:"result"`
+//}
+//
+//func NewGotTxResponse(height int64, index uint32, tx string, result abci.ResponseDeliverTx) GotTxResponse {
+//	return GotTxResponse{
+//		Height: height,
+//		Index:  index,
+//		Tx:     tx,
+//		Result: result,
+//	}
+//}
 
 //type GotTxData struct {
 //	TxType    string   `json:"tx_type"`
