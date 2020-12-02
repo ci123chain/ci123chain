@@ -1,6 +1,7 @@
 package baseapp
 
 import (
+	"encoding/hex"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/store"
 	"io"
@@ -324,6 +325,21 @@ func handleQueryApp(app *BaseApp, path []string, req abci.RequestQuery) (res abc
 			} else {
 				result = app.Simulate(tx)
 			}
+			simulationResp := sdk.QureyAppResponse{
+				Code:       uint32(result.Code),
+				FormatData: string(result.Data),
+				Data:       strings.ToUpper(hex.EncodeToString(result.Data)),
+				Log:        result.Log,
+				GasWanted:  result.GasWanted,
+				GasUsed:    result.GasUsed,
+				Codespace:  string(result.Codespace),
+			}
+			value := codec.Cdc.MustMarshalBinaryBare(simulationResp)
+			return abci.ResponseQuery{
+				Code:      uint32(sdk.CodeOK),
+				Codespace: string(sdk.CodespaceRoot),
+				Value:     value,
+			}
 		case "version":
 			return abci.ResponseQuery{
 				Code:      uint32(sdk.CodeOK),
@@ -596,23 +612,24 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 	ctx = ctx.WithGasLimit(gasWanted)
 	ctx = ctx.WithNonce(tx.GetNonce())
 	defer func() {
-
-		if r := recover(); r != nil {
-			switch rType := r.(type) {
-			case sdk.ErrorOutOfGas:
-				app.deferHandler(ctx, tx, true)
-				log := fmt.Sprintf("out of gas in location: %v", rType.Descriptor)
-				result = sdk.ErrOutOfGas(log).Result()
-				result.GasUsed = gasWanted
-			default:
+		if mode != runTxModeSimulate {
+			if r := recover(); r != nil {
+				switch rType := r.(type) {
+				case sdk.ErrorOutOfGas:
+					app.deferHandler(ctx, tx, true)
+					log := fmt.Sprintf("out of gas in location: %v", rType.Descriptor)
+					result = sdk.ErrOutOfGas(log).Result()
+					result.GasUsed = gasWanted
+				default:
+					res := app.deferHandler(ctx, tx, false)
+					log := fmt.Sprintf("recovered: %v\nstack:%v\n", r, string(debug.Stack()))
+					result = sdk.ErrInternal(log).Result()
+					result.GasUsed = res.GasUsed
+				}
+			} else {
 				res := app.deferHandler(ctx, tx, false)
-				log := fmt.Sprintf("recovered: %v\nstack:%v\n", r, string(debug.Stack()))
-				result = sdk.ErrInternal(log).Result()
 				result.GasUsed = res.GasUsed
 			}
-		} else {
-			res := app.deferHandler(ctx, tx, false)
-			result.GasUsed = res.GasUsed
 		}
 		result.GasWanted = gasWanted
 		//result.GasUsed = gasUsed
@@ -623,8 +640,10 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 	if err != nil {
 		return err.Result()
 	}
-	if err := tx.ValidateBasic(); err != nil {
-		return err.Result()
+	if mode != runTxModeSimulate {
+		if err := tx.ValidateBasic(); err != nil {
+			return err.Result()
+		}
 	}
 
 	// Execute the ante handler if one is defined.

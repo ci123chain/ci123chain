@@ -363,7 +363,6 @@ func newContract(context unsafe.Pointer, newContractPtr, codeHashPtr, codeHashSi
 		panic(err)
 	}
 
-
 	contractAddress := Address{}
 	copy(contractAddress[:], newContractAddress.Bytes())
 	copy(memory[newContractPtr:newContractPtr+AddressSize], contractAddress[:])
@@ -522,4 +521,21 @@ func totalPower(context unsafe.Pointer, valuePtr int32) {
 	copy(memory[valuePtr:valuePtr+16], u128.Bytes())
 	//根据链上信息返回总权益
 	//return 123456789
+}
+
+func getBalance(context unsafe.Pointer, addrPtr, balancePtr int32) {
+	instanceContext := wasm.IntoInstanceContext(context)
+	data := instanceContext.Data()
+	runtimeCfg, ok := data.(*runtimeConfig)
+	if !ok {
+		panic(fmt.Sprintf("%#v", data))
+	}
+	var memory = instanceContext.Memory().Data()
+
+	var addr Address
+	copy(addr[:], memory[addrPtr:addrPtr+AddressSize])
+
+	balance := runtimeCfg.Keeper.AccountKeeper.GetBalance(*runtimeCfg.Context, sdk.HexToAddress(addr.ToString()))
+	u128 := wasmtypes.NewRustU128(balance.Amount.BigInt())
+	copy(memory[balancePtr:balancePtr+16], u128.Bytes())
 }

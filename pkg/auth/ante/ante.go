@@ -18,11 +18,13 @@ const Price uint64 = 1
 func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, sk supply.Keeper) sdk.AnteHandler {
 	return func(ctx sdk.Context, tx sdk.Tx, simulate bool) (newCtx sdk.Context, res sdk.Result, abort bool) {
 
-		// check sign
-		eth := cryptosuit.NewETHSignIdentity()
-		valid, err := eth.Verifier(tx.GetSignBytes(), tx.GetSignature(), nil, tx.GetFromAddress().Bytes())
-		if !valid || err != nil {
-			return newCtx, transaction.ErrInvalidTx(types.DefaultCodespace, "tx signature invalid").Result(), true
+		if !simulate {
+			//check sign
+			eth := cryptosuit.NewETHSignIdentity()
+			valid, err := eth.Verifier(tx.GetSignBytes(), tx.GetSignature(), nil, tx.GetFromAddress().Bytes())
+			if !valid || err != nil {
+				return newCtx, transaction.ErrInvalidTx(types.DefaultCodespace, "tx signature invalid").Result(), true
+			}
 		}
 
 		address := tx.GetFromAddress()
@@ -81,9 +83,6 @@ func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, sk su
 				}
 			}
 		}()*/
-		if err := tx.ValidateBasic(); err != nil {
-			return newCtx, types.ErrTxValidateBasic(types.DefaultCodespace, err).Result(), true
-		}
 		//计算fee
 		gasPrice := Price
 		newCtx.GasMeter().ConsumeGas(params.TxSizeCostPerByte*sdk.Gas(len(newCtx.TxBytes())), "txSize")
@@ -93,7 +92,7 @@ func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, sk su
 		//存储奖励金到feeCollector Module账户
 		feeCollectorModuleAccount := sk.GetModuleAccount(ctx, auth.FeeCollectorName)
 		newFee := feeCollectorModuleAccount.GetCoin().Add(getFee)
-		err = feeCollectorModuleAccount.SetCoin(newFee)
+		err := feeCollectorModuleAccount.SetCoin(newFee)
 
 		if err != nil {
 			fmt.Println("fee_collector module account set coin failed")
