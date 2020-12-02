@@ -51,7 +51,7 @@ func uploadContractHandler(cliCtx context.Context, w http.ResponseWriter, r *htt
 			return
 		}
 		codeHash := keeper.MakeCodeHash(wasmCode)
-		params := wasmtypes.NewQueryCodeInfoParams(string(codeHash))
+		params := wasmtypes.NewQueryCodeInfoParams(strings.ToUpper(hex.EncodeToString(codeHash)))
 		bz, Er := cliCtx.Cdc.MarshalJSON(params)
 		if Er != nil {
 			rest.WriteErrorRes(w, sdk.ErrInternal("marshal failed"))
@@ -63,7 +63,7 @@ func uploadContractHandler(cliCtx context.Context, w http.ResponseWriter, r *htt
 			return
 		}
 		if len(res) > 0 { //already exists
-			rest.PostProcessResponseBare(w, cliCtx, string(codeHash))
+			rest.PostProcessResponseBare(w, cliCtx, sdk.TxResponse{Code: 0, Data: strings.ToUpper(hex.EncodeToString(codeHash))})
 			return
 		}
 		msg = wasmtypes.NewMsgUploadContract(code, from)
