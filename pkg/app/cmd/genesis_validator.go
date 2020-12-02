@@ -64,8 +64,9 @@ func AddGenesisValidatorCmd(ctx *app.Context, cdc *codec.Codec) *cobra.Command {
 				Tokens:            types.NewInt(coin),
 				DelegatorShares:   types.NewDec(coin),
 				Description:       staking.Description{},
-				UnbondingHeight:   0,
+				UnbondingHeight:   int64(-1),
 				UnbondingTime:     time.Time{},
+				BondingHeight:     int64(0),
 				Commission:        commission,
 				MinSelfDelegation: types.NewInt(coin),
 			}

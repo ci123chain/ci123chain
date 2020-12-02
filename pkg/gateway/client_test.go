@@ -22,14 +22,6 @@ func TestQuery(t *testing.T) {
 	fmt.Println(q)
 }
 
-//type Description struct {
-//	MessageType  string   	   `json:"message_type"`
-//	Key          string   	   `json:"key"`
-//	Connect      string   	   `json:"connect"`
-//	Value        string        `json:"value"`
-//	ValueType    string        `json:"value_type"`
-//}
-
 type MessageContent struct {
 	Method    string   	`json:"method"`
 	Args      []types.Description  `json:"args"`

@@ -7,15 +7,9 @@ import (
 	"errors"
 	"fmt"
 	apptypes "github.com/ci123chain/ci123chain/pkg/app/types"
-	distypes "github.com/ci123chain/ci123chain/pkg/distribution/types"
 	"github.com/ci123chain/ci123chain/pkg/gateway/logger"
-	ibctypes "github.com/ci123chain/ci123chain/pkg/ibc/types"
-	iftypes "github.com/ci123chain/ci123chain/pkg/infrastructure/types"
-	ordertypes "github.com/ci123chain/ci123chain/pkg/order/types"
-	staktypes "github.com/ci123chain/ci123chain/pkg/staking/types"
-	"github.com/ci123chain/ci123chain/pkg/transfer"
-	wasmtypes "github.com/ci123chain/ci123chain/pkg/vm/wasmtypes"
 	"github.com/gorilla/websocket"
+	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/libs/pubsub/query"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
 	"github.com/tendermint/tendermint/types"
@@ -45,7 +39,12 @@ const (
 
 var (
 	DefaultPort = "26657"
+	cdc = amino.NewCodec()
 )
+
+func init() {
+	cdc.RegisterConcrete(&apptypes.CommonTx{}, "commontx", nil)
+}
 
 func SetDefaultPort(port string) {
 	DefaultPort = port
@@ -247,65 +246,8 @@ func (r *PubSubRoom) Subscribe(topic string) {
 						var sender string
 						var operation string
 						if len(tx.Result.Events) == 0{
-							v = e.Data
-							var comTx apptypes.CommonTx
-							err = json.Unmarshal(tx.Tx, &comTx)
-							if err != nil {
-								logger.Error(fmt.Sprintf("got invalid tx %x", tx))
-								continue
-							}
-							switch vt := comTx.Msgs[0].(type) {
-							case *transfer.MsgTransfer:
-								operation = "transfer"
-							case *distypes.MsgSetWithdrawAddress:
-								operation = "set_withdraw_address"
-							case *distypes.MsgFundCommunityPool:
-								operation = "fund_community_pool"
-							case *distypes.MsgWithdrawDelegatorReward:
-								operation = "withdraw_delegator_reward"
-							case *distypes.MsgWithdrawValidatorCommission:
-								operation = "withdraw_validator_commission"
-							case *staktypes.MsgEditValidator:
-								operation = "edit_validator"
-							case *staktypes.MsgCreateValidator:
-								operation = "create_validator"
-							case *staktypes.MsgDelegate:
-								operation = "delegate"
-							case *staktypes.MsgRedelegate:
-								operation = "redelegate"
-							case *staktypes.MsgUndelegate:
-								operation = "undelegate"
-							case *wasmtypes.MsgExecuteContract:
-								operation = "invoke_contract"
-							case *wasmtypes.MsgInstantiateContract:
-								operation = "init_contract"
-							case *wasmtypes.MsgMigrateContract:
-								operation = "migrate_contract"
-							case *wasmtypes.MsgUploadContract:
-								operation = "upload_contract"
-							case *ordertypes.MsgUpgrade:
-								operation = "upgrade"
-							case *ibctypes.MsgApplyIBC:
-								operation = "apply_ibc"
-							case *iftypes.MsgStoreContent:
-								operation = "store_content"
-							default:
-								logger.Error(fmt.Sprintf("got invalid tx type %x", vt))
-								continue
-							}
-							var success bool
-							sender := comTx.From.String()
-							hash := hex.EncodeToString(tx.Tx.Hash())
-							height := tx.Height
-							gasUsed := tx.Result.GasUsed
-							gasWanted := tx.Result.GasWanted
-							if tx.TxResult.Result.Code == 0 {
-								success = true
-							}else {
-								success = false
-							}
-							a := NewGotTxData(operation, sender , hash ,height, gasUsed, gasWanted, success, "")
-							v = a
+							logger.Error(fmt.Sprintf("got unexpected tx: %x", tx))
+							continue
 						}else {
 							var success bool
 							var amount string
@@ -391,65 +333,8 @@ func (r *PubSubRoom) AddShard() {
 								var sender string
 								var operation string
 								if len(tx.Result.Events) == 0{
-									v = e.Data
-									var comTx apptypes.CommonTx
-									err = json.Unmarshal(tx.Tx, &comTx)
-									if err != nil {
-										logger.Error(fmt.Sprintf("got invalid tx %x", tx))
-										continue
-									}
-									switch vt := comTx.Msgs[0].(type) {
-									case *transfer.MsgTransfer:
-										operation = "transfer"
-									case *distypes.MsgSetWithdrawAddress:
-										operation = "set_withdraw_address"
-									case *distypes.MsgFundCommunityPool:
-										operation = "fund_community_pool"
-									case *distypes.MsgWithdrawDelegatorReward:
-										operation = "withdraw_delegator_reward"
-									case *distypes.MsgWithdrawValidatorCommission:
-										operation = "withdraw_validator_commission"
-									case *staktypes.MsgEditValidator:
-										operation = "edit_validator"
-									case *staktypes.MsgCreateValidator:
-										operation = "create_validator"
-									case *staktypes.MsgDelegate:
-										operation = "delegate"
-									case *staktypes.MsgRedelegate:
-										operation = "redelegate"
-									case *staktypes.MsgUndelegate:
-										operation = "undelegate"
-									case *wasmtypes.MsgExecuteContract:
-										operation = "invoke_contract"
-									case *wasmtypes.MsgInstantiateContract:
-										operation = "init_contract"
-									case *wasmtypes.MsgMigrateContract:
-										operation = "migrate_contract"
-									case *wasmtypes.MsgUploadContract:
-										operation = "upload_contract"
-									case *ordertypes.MsgUpgrade:
-										operation = "upgrade"
-									case *ibctypes.MsgApplyIBC:
-										operation = "apply_ibc"
-									case *iftypes.MsgStoreContent:
-										operation = "store_content"
-									default:
-										logger.Error(fmt.Sprintf("got invalid tx type %x", vt))
-										continue
-									}
-									var success bool
-									sender := comTx.From.String()
-									hash := hex.EncodeToString(tx.Tx.Hash())
-									height := tx.Height
-									gasUsed := tx.Result.GasUsed
-									gasWanted := tx.Result.GasWanted
-									if tx.TxResult.Result.Code == 0 {
-										success = true
-									}else {
-										success = false
-									}
-									a := NewGotTxData(operation, sender , hash ,height, gasUsed, gasWanted, success, "")
-									v = a
+									logger.Error(fmt.Sprintf("got unexpected tx: %x", tx))
+									continue
 								}else {
 									var success bool
 									var amount string
@@ -640,18 +525,6 @@ func (msg MessageContent) GetTopic() string {
 	}
 	return topic
 }
-
-//
-//func (msg MessageContent) String() string {
-//	var str string
-//	for _, v := range msg.Args {
-//		str += v
-//		if len(msg.Args) > 1 {
-//			str += " "
-//		}
-//	}
-//	return fmt.Sprintf("Method: %s, Args: %s", msg.Method, str)
-//}
 
 func (msg MessageContent) CommandType() string {
 	switch msg.Method {

@@ -25,4 +25,6 @@ var (
 	NewQuerier = keeper.NewQuerier
 
 	NewStoreContentMsg = types.NewMsgStoreContent
+
+	AttributeValueStoreContent       = types.EventStoreContent
 )

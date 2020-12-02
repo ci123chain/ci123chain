@@ -133,8 +133,8 @@ func toBytes(i interface{}) []byte {
 // Common event types and attribute keys
 var (
 	EventTypeMessage = "message"
+	EventTypeInvalidTx = "invalid_tx"
 
-	//AttributeKeyAction = "action"
 	AttributeKeyMethod = "operation"
 	AttributeKeyModule = "module"
 	AttributeKeySender = "sender"

@@ -38,6 +38,8 @@ func BeginBlocker(ctx sdk.Context, k keeper.MinterKeeper) {
 		panic(err)
 	}
 
+	k.SetLatestMintedCoin(ctx, mintedCoin)
+
 	//ctx.EventManager().EmitEvent(
 	//	sdk.NewEvent(
 	//		types.EventTypeMint,
@@ -50,11 +52,16 @@ func BeginBlocker(ctx sdk.Context, k keeper.MinterKeeper) {
 }
 
 func EndBlocker(ctx sdk.Context, k keeper.MinterKeeper) []abci.Event {
+
+	latestMintedCoin := k.GetLatestMintedCoin(ctx)
 	events := make([]abci.Event, 0)
 	totalStakingSupply := k.StakingTokenSupply(ctx)
+	allbonded := k.AllBonded(ctx)
 	event := abci.Event(sdk.NewEvent(
 		types.EventTypeMint,
 		sdk.NewAttribute(sdk.AttributeKeyTotalSupply, totalStakingSupply.String()),
+		sdk.NewAttribute(types.AttributeKeyLatestMinted, latestMintedCoin.Amount.String()),
+		sdk.NewAttribute(types.AttributeAllBonded, allbonded.Amount.String()),
 	))
 	events = append(events, event)
 	return events

@@ -311,8 +311,9 @@ func genesisStakingModule(appState map[string]json.RawMessage, stakingInfo []Sta
 			Tokens:            tokens,
 			DelegatorShares:   shares,
 			Description:       v.Description,
-			UnbondingHeight:   0,
+			UnbondingHeight:   -1,
 			UnbondingTime:     time.Time{},
+			BondingHeight:     0,
 			Commission:        stypes.Commission{
 				CommissionRates: stypes.CommissionRates{
 					Rate:          types.NewDecWithPrec(v.CommissionInfo.Rate, 2),

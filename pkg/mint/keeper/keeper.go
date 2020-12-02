@@ -81,6 +81,10 @@ func (k MinterKeeper) BondedRatio(ctx sdk.Context) sdk.Dec {
 	return k.sk.BondedRatio(ctx)
 }
 
+func (k MinterKeeper) AllBonded(ctx sdk.Context) sdk.Coin {
+	return k.sk.GetBondedPool(ctx).GetCoin()
+}
+
 // MintCoins implements an alias call to the underlying supply keeper's
 // MintCoins to be used in BeginBlocker.
 func (k MinterKeeper) MintCoins(ctx sdk.Context, newCoins sdk.Coin) error {
@@ -96,4 +100,18 @@ func (k MinterKeeper) MintCoins(ctx sdk.Context, newCoins sdk.Coin) error {
 // AddCollectedFees to be used in BeginBlocker.
 func (k MinterKeeper) AddCollectedFees(ctx sdk.Context, fees sdk.Coin) error {
 	return k.supplyKeeper.SendCoinsFromModuleToModule(ctx, types.ModuleName, k.feeCollectorName, fees)
+}
+
+func (k MinterKeeper) SetLatestMintedCoin(ctx sdk.Context, fees sdk.Coin) {
+	store := ctx.KVStore(k.storeKey)
+	b := k.cdc.MustMarshalBinaryLengthPrefixed(fees)
+	store.Set(types.LatestMintedKey, b)
+}
+
+func (k MinterKeeper) GetLatestMintedCoin(ctx sdk.Context) sdk.Coin {
+	store := ctx.KVStore(k.storeKey)
+	b := store.Get(types.LatestMintedKey)
+	var fees sdk.Coin
+	k.cdc.MustUnmarshalBinaryLengthPrefixed(b, &fees)
+	return fees
 }

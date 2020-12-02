@@ -5,6 +5,7 @@ import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/infrastructure/keeper"
 	infrastructure "github.com/ci123chain/ci123chain/pkg/infrastructure/types"
+	"github.com/ci123chain/ci123chain/pkg/transfer"
 )
 
 func NewHandler(k keeper.InfrastructureKeeper) sdk.Handler {
@@ -22,7 +23,15 @@ func NewHandler(k keeper.InfrastructureKeeper) sdk.Handler {
 
 
 func HandleMsgStoreContent(ctx sdk.Context, k keeper.InfrastructureKeeper, msg infrastructure.MsgStoreContent) sdk.Result {
+	em := ctx.EventManager()
+	em.EmitEvents(sdk.Events{
+		sdk.NewEvent(transfer.EventType,
+			sdk.NewAttribute(sdk.AttributeKeyMethod, infrastructure.EventStoreContent),
+			sdk.NewAttribute(sdk.AttributeKeyModule, infrastructure.AttributeValueModule),
+			sdk.NewAttribute(sdk.AttributeKeySender, msg.FromAddress.String()),
+		),
+	})
 
 	k.SetContent(ctx, []byte(msg.Key), msg.Content)
-	return sdk.Result{}
+	return sdk.Result{ Events: em.Events(), }
 }

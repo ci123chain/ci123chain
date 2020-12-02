@@ -3,6 +3,7 @@ package baseapp
 import (
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/store"
+	"github.com/ci123chain/ci123chain/pkg/transfer"
 	"io"
 	"runtime/debug"
 	"strings"
@@ -17,6 +18,12 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/abci/version"
+	distypes "github.com/ci123chain/ci123chain/pkg/distribution/types"
+	ibctypes "github.com/ci123chain/ci123chain/pkg/ibc/types"
+	iftypes "github.com/ci123chain/ci123chain/pkg/infrastructure/types"
+	ordertypes "github.com/ci123chain/ci123chain/pkg/order/types"
+	staktypes "github.com/ci123chain/ci123chain/pkg/staking/types"
+	wasmtypes "github.com/ci123chain/ci123chain/pkg/vm/wasmtypes"
 )
 
 // Key to store the header in the DB itself.
@@ -595,6 +602,10 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 	gasWanted = tx.GetGas()
 	ctx = ctx.WithGasLimit(gasWanted)
 	ctx = ctx.WithNonce(tx.GetNonce())
+
+	var operation string
+	var sender string
+	var events sdk.Events
 	defer func() {
 
 		if r := recover(); r != nil {
@@ -604,11 +615,13 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 				log := fmt.Sprintf("out of gas in location: %v", rType.Descriptor)
 				result = sdk.ErrOutOfGas(log).Result()
 				result.GasUsed = gasWanted
+				result.Events = events
 			default:
 				res := app.deferHandler(ctx, tx, false)
 				log := fmt.Sprintf("recovered: %v\nstack:%v\n", r, string(debug.Stack()))
 				result = sdk.ErrInternal(log).Result()
 				result.GasUsed = res.GasUsed
+				result.Events = events
 			}
 		} else {
 			res := app.deferHandler(ctx, tx, false)
@@ -663,6 +676,49 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 
 	// Create a new context based off of the existing context with a cache wrapped
 	// multi-store in case message processing fails.
+	switch msgs[0].(type) {
+	case *transfer.MsgTransfer:
+		operation = "transfer"
+	case *distypes.MsgSetWithdrawAddress:
+		operation = "set_withdraw_address"
+	case *distypes.MsgFundCommunityPool:
+		operation = "fund_community_pool"
+	case *distypes.MsgWithdrawDelegatorReward:
+		operation = "withdraw_delegator_reward"
+	case *distypes.MsgWithdrawValidatorCommission:
+		operation = "withdraw_validator_commission"
+	case *staktypes.MsgEditValidator:
+		operation = "edit_validator"
+	case *staktypes.MsgCreateValidator:
+		operation = "create_validator"
+	case *staktypes.MsgDelegate:
+		operation = "delegate"
+	case *staktypes.MsgRedelegate:
+		operation = "redelegate"
+	case *staktypes.MsgUndelegate:
+		operation = "undelegate"
+	case *wasmtypes.MsgExecuteContract:
+		operation = "invoke_contract"
+	case *wasmtypes.MsgInstantiateContract:
+		operation = "init_contract"
+	case *wasmtypes.MsgMigrateContract:
+		operation = "migrate_contract"
+	case *wasmtypes.MsgUploadContract:
+		operation = "upload_contract"
+	case *ordertypes.MsgUpgrade:
+		operation = "upgrade"
+	case *ibctypes.MsgApplyIBC:
+		operation = "apply_ibc"
+	case *iftypes.MsgStoreContent:
+		operation = "store_content"
+	}
+	sender = msgs[0].GetFromAddress().String()
+	txEvents := sdk.Events{
+		sdk.NewEvent(sdk.EventTypeInvalidTx,
+			sdk.NewAttribute(sdk.AttributeKeyMethod, operation),
+			sdk.NewAttribute(sdk.AttributeKeySender, sender),
+		)}
+	events = append(events, txEvents...)
 
 	runMsgCtx, msCache := app.cacheTxContext(ctx, txBytes)
 	result = app.runMsgs(runMsgCtx, msgs, mode)

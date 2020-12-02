@@ -23,6 +23,7 @@ type Validator struct {
 	Description        Description      `json:"description"`
 	UnbondingHeight    int64      		`json:"unbonding_height"`
 	UnbondingTime      time.Time        `json:"unbonding_time"`
+	BondingHeight      int64            `json:"bonding_height"`
 	Commission         Commission       `json:"commission"`
 	MinSelfDelegation   sdk.Int  		`json:"min_self_delegation"`
 }
@@ -40,6 +41,7 @@ func NewValidator(operator sdk.AccAddress, pubKey string, description Descriptio
 		Description:      description,
 		UnbondingHeight:  int64(0),
 		UnbondingTime:    time.Unix(0,0).UTC(),
+		BondingHeight:    int64(-1),
 		Commission:        NewCommission(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
 		MinSelfDelegation:  sdk.OneInt(),
 	}, nil

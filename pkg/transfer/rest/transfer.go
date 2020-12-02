@@ -62,6 +62,13 @@ func SendRequestHandlerFn(cliCtx context.Context, writer http.ResponseWriter, re
 		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
 		return
 	}
+	fmt.Println("got txbyte:")
+	fmt.Println(txByte)
+	var a types2.CommonTx
+	err = cdc.UnmarshalBinaryBare(txByte, &a)
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	res, err := cliCtx.BroadcastSignedTx(txByte)
 	if err != nil {
