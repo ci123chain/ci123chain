@@ -1,4 +1,4 @@
-From harbor.oneitfarm.com/library/golang:1.12
+From harbor.oneitfarm.com/library/golang:1.13
 
 WORKDIR /opt/ci123chain
 
