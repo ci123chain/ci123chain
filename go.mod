@@ -1,5 +1,5 @@
 module chain_proxy
 
-go 1.12
+go 1.13
 
-require github.com/ci123chain/ci123chain v1.2.0
+require github.com/ci123chain/ci123chain v1.2.1
