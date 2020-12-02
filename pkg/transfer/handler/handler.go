@@ -30,6 +30,7 @@ func handlerMsgTransfer(ctx sdk.Context, am keeper.AccountKeeper, msg *transfer.
 			sdk.NewAttribute(sdk.AttributeKeyMethod, transfer.AttributeValueTransfer),
 			sdk.NewAttribute(sdk.AttributeKeyModule, transfer.AttributeValueCategory),
 			sdk.NewAttribute(sdk.AttributeKeySender, msg.FromAddress.String()),
+			sdk.NewAttribute(sdk.AttributeKeyReceiver, msg.To.String()),
 			sdk.NewAttribute(sdk.AttributeKeyAmount, msg.Amount.Amount.String()),
 		),
 	})

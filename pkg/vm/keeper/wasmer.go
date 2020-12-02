@@ -23,8 +23,9 @@ package keeper
 // extern void panic_contract(void*, int, int);
 // extern void get_validator_power(void*, int, int, int);
 // extern void total_power(void*, int);
-//
+// extern void get_balance(void*, int, int);
 // extern void addgas(void*, int);
+//
 // extern void debug_print(void*, int, int);
 import "C"
 import (
@@ -203,6 +204,10 @@ func total_power(context unsafe.Pointer, valuePtr int32) {
 	totalPower(context, valuePtr)
 }
 
+//export get_balance
+func get_balance(context unsafe.Pointer, addrPtr, balancePtr int32) {
+	getBalance(context, addrPtr, balancePtr)
+}
 
 type VMRes struct {
 	err []byte // error  response tip
@@ -358,6 +363,8 @@ func getInstance(code []byte, cfg *runtimeConfig) (*wasmer.Instance, error) {
 	_, _ = imports.Append("debug_print", debug_print, C.debug_print)
 	_, _ = imports.Append("get_validator_power", get_validator_power, C.get_validator_power)
 	_, _ = imports.Append("total_power", total_power, C.total_power)
+	_, _ = imports.Append("get_balance", get_balance, C.get_balance)
+
 	module, err := wasmer.Compile(code)
 	if err != nil {
 		panic(err)

@@ -2,7 +2,6 @@ package types
 
 import (
 	"context"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,10 +9,9 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/gateway/logger"
 	"github.com/gorilla/websocket"
 	"github.com/tendermint/go-amino"
+	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/pubsub/query"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
-	"github.com/tendermint/tendermint/types"
-	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -235,59 +233,26 @@ func (r *PubSubRoom) Subscribe(topic string) {
 			}
 			go func() {
 				for e := range responses {
-					var v interface{}
-					switch value := e.Data.(type) {
-					case types.EventDataTx:
-						ok, _ := regexp.MatchString("tm.event = 'Tx'", topic)
-						if !ok {
-							continue
-						}
-						tx := e.Data.(types.EventDataTx)
-						var sender string
-						var operation string
-						if len(tx.Result.Events) == 0{
-							logger.Error(fmt.Sprintf("got unexpected tx: %x", tx))
-							continue
-						}else {
-							var success bool
-							var amount string
-							var isTransfer bool
-							for _, kv := range tx.Result.Events[0].Attributes {
-								if string(kv.Key) == "sender" {
-									sender = string(kv.Value)
-								}
-								if string(kv.Key) == "operation" {
-									operation = string(kv.Value)
-									if operation == "transfer" {
-										isTransfer = true
-									}
-								}
-							}
-							if isTransfer {
-								for _, kv := range tx.Result.Events[0].Attributes {
-									if string(kv.Key) == "amount" {
-										amount = string(kv.Value)
-									}
-								}
-							}
-							if tx.TxResult.Result.Code == 0 {
-								success = true
-							}else {
-								success = false
-							}
-							height := tx.Height
-							gasUsed := tx.Result.GasUsed
-							gasWanted := tx.Result.GasWanted
-							hash := hex.EncodeToString(value.Tx.Hash())
-							a := NewGotTxData(operation, sender , hash ,height, gasUsed, gasWanted, success, amount)
-							v = a
-						}
-					default:
-						v = e.Data
-					}
+					//var v interface{}
+					//switch e.Data.(type) {
+					//case types.EventDataTx:
+					//	ok, _ := regexp.MatchString("tm.event = 'Tx'", topic)
+					//	if !ok {
+					//		continue
+					//	}
+					//	tx := e.Data.(types.EventDataTx)
+					//	hash := hex.EncodeToString(tx.Tx.Hash())
+					//	v = NewGotTxResponse(tx.Height, tx.Index, hash, tx.Result)
+					//default:
+					//	v = e.Data
+					//}
+					//response := SendMessage{
+					//	Time:   time.Now().Format(time.RFC3339),
+					//	Content: v,
+					//}
 					response := SendMessage{
 						Time:   time.Now().Format(time.RFC3339),
-						Content: v,
+						Content: e.Data,
 					}
 					Notify(r, topic, response)
 				}
@@ -322,59 +287,65 @@ func (r *PubSubRoom) AddShard() {
 
 					go func() {
 						for e := range responses {
-							var v interface{}
-							switch value := e.Data.(type) {
-							case types.EventDataTx:
-								ok, _ := regexp.MatchString("tm.event = 'Tx'", topic)
-								if !ok {
-									continue
-								}
-								tx := e.Data.(types.EventDataTx)
-								var sender string
-								var operation string
-								if len(tx.Result.Events) == 0{
-									logger.Error(fmt.Sprintf("got unexpected tx: %x", tx))
-									continue
-								}else {
-									var success bool
-									var amount string
-									var isTransfer bool
-									for _, kv := range tx.Result.Events[0].Attributes {
-										if string(kv.Key) == "sender" {
-											sender = string(kv.Value)
-										}
-										if string(kv.Key) == "operation" {
-											operation = string(kv.Value)
-											if operation == "transfer" {
-												isTransfer = true
-											}
-										}
-									}
-									if isTransfer {
-										for _, kv := range tx.Result.Events[0].Attributes {
-											if string(kv.Key) == "amount" {
-												amount = string(kv.Value)
-											}
-										}
-									}
-									if tx.TxResult.Result.Code == 0 {
-										success = true
-									}else {
-										success = false
-									}
-									height := tx.Height
-									gasUsed := tx.Result.GasUsed
-									gasWanted := tx.Result.GasWanted
-									hash := hex.EncodeToString(value.Tx.Hash())
-									a := NewGotTxData(operation, sender , hash ,height, gasUsed, gasWanted, success, amount)
-									v = a
-								}
-							default:
-								v = e.Data
-							}
+							//var v interface{}
+							//switch e.Data.(type) {
+							//case types.EventDataTx:
+							//	ok, _ := regexp.MatchString("tm.event = 'Tx'", topic)
+							//	if !ok {
+							//		continue
+							//	}
+							//	tx := e.Data.(types.EventDataTx)
+							//	hash := hex.EncodeToString(tx.Tx.Hash())
+							//	v = NewGotTxResponse(tx.Height, tx.Index, hash, tx.Result)
+							//	//var sender string
+							//	//var operation string
+							//	//if len(tx.Result.Events) == 0{
+							//	//	logger.Error(fmt.Sprintf("got unexpected tx: %x", tx))
+							//	//	continue
+							//	//}else {
+							//	//	//var success bool
+							//	//	//var amount string
+							//	//	//var isTransfer bool
+							//	//	//for _, kv := range tx.Result.Events[0].Attributes {
+							//	//	//	if string(kv.Key) == "sender" {
+							//	//	//		sender = string(kv.Value)
+							//	//	//	}
+							//	//	//	if string(kv.Key) == "operation" {
+							//	//	//		operation = string(kv.Value)
+							//	//	//		if operation == "transfer" {
+							//	//	//			isTransfer = true
+							//	//	//		}
+							//	//	//	}
+							//	//	//}
+							//	//	//if isTransfer {
+							//	//	//	for _, kv := range tx.Result.Events[0].Attributes {
+							//	//	//		if string(kv.Key) == "amount" {
+							//	//	//			amount = string(kv.Value)
+							//	//	//		}
+							//	//	//	}
+							//	//	//}
+							//	//	//if tx.TxResult.Result.Code == 0 {
+							//	//	//	success = true
+							//	//	//}else {
+							//	//	//	success = false
+							//	//	//}
+							//	//	//height := tx.Height
+							//	//	//gasUsed := tx.Result.GasUsed
+							//	//	//gasWanted := tx.Result.GasWanted
+							//	//	//hash := hex.EncodeToString(value.Tx.Hash())
+							//	//	//a := NewGotTxData(operation, sender , hash ,height, gasUsed, gasWanted, success, amount)
+							//	//	//v = a
+							//	//}
+							//default:
+							//	v = e.Data
+							//}
+							//response := SendMessage{
+							//	Time:   time.Now().Format(time.RFC3339),
+							//	Content: v,
+							//}
 							response := SendMessage{
 								Time:   time.Now().Format(time.RFC3339),
-								Content: v,
+								Content: e.Data,
 							}
 							Notify(r, topic, response)
 						}
@@ -566,31 +537,47 @@ func rpcAddress(host string) string {
 	return res
 }
 
-type GotTxData struct {
-	TxType    string   `json:"tx_type"`
-	TxSender  string   `json:"tx_sender"`
-	TxHeight  int64   `json:"tx_height"`
-	TxHash    string   `json:"tx_hash"`
-	TxGasUsed  int64   `json:"tx_gas_used"`
-	TxGasWanted int64    `json:"tx_gas_wanted"`
-	TxSuccess  bool    `json:"tx_success"`
-	TxAmount   string   `json:"tx_amount"`
+type GotTxResponse struct {
+	Height int64                  `json:"height"`
+	Index  uint32                 `json:"index"`
+	Tx     string                     `json:"tx"`
+	Result abci.ResponseDeliverTx `json:"result"`
 }
 
-type Attribute struct {
-	Key   string   `json:"key"`
-	Value string   `json:"value"`
-}
-
-func NewGotTxData(ty, sender, hash string, height, gasUsed, gasWanted int64, success bool, amount string) GotTxData {
-	return GotTxData{
-		TxType:      ty,
-		TxSender:    sender,
-		TxHeight:    height,
-		TxHash:      hash,
-		TxGasUsed:   gasUsed,
-		TxGasWanted: gasWanted,
-		TxSuccess:   success,
-		TxAmount:    amount,
+func NewGotTxResponse(height int64, index uint32, tx string, result abci.ResponseDeliverTx) GotTxResponse {
+	return GotTxResponse{
+		Height: height,
+		Index:  index,
+		Tx:     tx,
+		Result: result,
 	}
 }
+
+//type GotTxData struct {
+//	TxType    string   `json:"tx_type"`
+//	TxSender  string   `json:"tx_sender"`
+//	TxHeight  int64   `json:"tx_height"`
+//	TxHash    string   `json:"tx_hash"`
+//	TxGasUsed  int64   `json:"tx_gas_used"`
+//	TxGasWanted int64    `json:"tx_gas_wanted"`
+//	TxSuccess  bool    `json:"tx_success"`
+//	TxAmount   string   `json:"tx_amount"`
+//}
+//
+//type Attribute struct {
+//	Key   string   `json:"key"`
+//	Value string   `json:"value"`
+//}
+//
+//func NewGotTxData(ty, sender, hash string, height, gasUsed, gasWanted int64, success bool, amount string) GotTxData {
+//	return GotTxData{
+//		TxType:      ty,
+//		TxSender:    sender,
+//		TxHeight:    height,
+//		TxHash:      hash,
+//		TxGasUsed:   gasUsed,
+//		TxGasWanted: gasWanted,
+//		TxSuccess:   success,
+//		TxAmount:    amount,
+//	}
+//}

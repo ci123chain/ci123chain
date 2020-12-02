@@ -138,6 +138,7 @@ var (
 	AttributeKeyMethod = "operation"
 	AttributeKeyModule = "module"
 	AttributeKeySender = "sender"
+	AttributeKeyReceiver = "receiver"
 	AttributeKeyAmount = "amount"
 	AttributeKeyTotalSupply = "total_supply"
 )

@@ -36,6 +36,16 @@ type Result struct {
 	Events Events
 }
 
+type QureyAppResponse struct {
+	Code      uint32          `json:"code"`
+	FormatData string		  `json:"format_data,omitempty"`
+	Data      string          `json:"data,omitempty"`
+	Log       string		  `json:"log,omitempty"`
+	GasWanted uint64          `json:"gas_wanted,omitempty"`
+	GasUsed   uint64          `json:"gas_used,omitempty"`
+	Codespace string          `json:"codespace,omitempty"`
+}
+
 // TODO: In the future, more codes may be OK.
 func (res Result) IsOK() bool {
 	return res.Code.IsOK()

@@ -125,6 +125,20 @@ func PostProcessResponseBare(w http.ResponseWriter, ctx context.Context, body in
 				Message: b.Log,
 			}
 		}
+	case sdk.QureyAppResponse:
+		b := body.(sdk.QureyAppResponse)
+		if b.Code == 0 {
+			res = Response{
+				Ret:     1,
+				Data:    dataJson,
+			}
+		} else {
+			res = Response{
+				Ret:     -1,
+				Data:    dataJson,
+				Message: b.Log,
+			}
+		}
 	default:
 		res = Response{
 			Ret:     1,
