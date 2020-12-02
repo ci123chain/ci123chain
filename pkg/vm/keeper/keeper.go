@@ -94,19 +94,11 @@ func (k *Keeper) Upload(ctx sdk.Context, wasmCode []byte, creator sdk.AccAddress
 			LastFileID:  wasmer.LastFileID,
 		}
 	}
-	codeHash, isExist, err := k.create(ctx, creator, wasmCode)
+	codeHash, err = k.create(ctx, creator, wasmCode)
 	if err != nil {
 		return nil, err
 	}
-	//store code in local
-	if !isExist {
-		err = ioutil.WriteFile(k.homeDir + WASMDIR + k.wasmer.FilePathMap[fmt.Sprintf("%x", codeHash)], wasmCode, types.ModePerm)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		//todo somebody else has already uploaded it
-	}
+
 	return codeHash, nil
 }
 
@@ -449,23 +441,23 @@ func (k Keeper) GetCreator(ctx sdk.Context, contractAddress sdk.AccAddress) sdk.
 	return contract.CodeInfo.Creator
 }
 
-func (k *Keeper) create(ctx sdk.Context, invokerAddr sdk.AccAddress, wasmCode []byte) (codeHash []byte, isExist bool, err error) {
+func (k *Keeper) create(ctx sdk.Context, invokerAddr sdk.AccAddress, wasmCode []byte) (codeHash []byte, err error) {
 	wasmCode, err = UnCompress(wasmCode)
 	if err != nil {
-		return nil, false, err
+		return nil, err
 	}
 	//checks if the file contents are of wasm binary
 	ok := IsValidaWasmFile(wasmCode)
 	if ok != nil {
-		return nil, false, ok
+		return nil, ok
 	}
 	ccstore := ctx.KVStore(k.storeKey)
 	codeHash = MakeCodeHash(wasmCode)
 
 	// addgas
-	wasmCode, err = tryAddgas(wasmCode)
+	gasedCode, err := tryAddgas(wasmCode)
 	if err != nil {
-		return nil, false, err
+		return nil, err
 	}
 	//check if it has been saved in couchDB.
 
@@ -477,43 +469,48 @@ func (k *Keeper) create(ctx sdk.Context, invokerAddr sdk.AccAddress, wasmCode []
 			//the file content needs to be one
 			localCode, err := ioutil.ReadFile(filePath)
 			if err != nil {
-				return nil, false, err
+				return nil, err
 			}
 			localFileHash := MakeCodeHash(localCode)
 			//the content if different, delete local file and save remote file.
 			if !bytes.Equal(localFileHash, codeHash) {
 				err = os.Remove(filePath)
 				if err != nil {
-					return nil, false, err
+					return nil, err
+				}
+				err = ioutil.WriteFile(filePath, gasedCode, types.ModePerm)
+				if err != nil {
+					return nil, err
 				}
 			}
-			err = ioutil.WriteFile(filePath, wasmCode, types.ModePerm)
-			if err != nil {
-				return nil, false, err
-			}
-			return codeHash, true,nil
+			return codeHash, nil
 		}else {
-			err = ioutil.WriteFile(filePath, wasmCode, types.ModePerm)
+			err = ioutil.WriteFile(filePath, gasedCode, types.ModePerm)
 			if err != nil {
-				return nil, false, err
+				return nil, err
 			}
-			return codeHash, true,nil
+			return codeHash, nil
 		}
 	}
 	newWasmer, err := k.wasmer.Create(k.homeDir, fmt.Sprintf("%x", codeHash))
 	if err != nil {
-		return nil, false, err
+		return nil, err
 	}
 	bz := k.cdc.MustMarshalJSON(newWasmer)
 	if bz == nil {
-		return nil, false, sdk.ErrInternal("marshal json failed")
+		return nil, sdk.ErrInternal("marshal json failed")
 	}
 	ccstore.Set(types.GetWasmerKey(), bz)
 	ccstore.Set(codeHash, wasmCode)
 	codeInfo := types.NewCodeInfo(strings.ToUpper(hex.EncodeToString(codeHash)), invokerAddr)
 	ccstore.Set(types.GetCodeKey(codeHash), k.cdc.MustMarshalBinaryBare(codeInfo))
-
-	return codeHash, false, nil
+	hash := fmt.Sprintf("%x", codeHash)
+	filePath := path.Join(k.homeDir, WASMDIR, k.wasmer.FilePathMap[hash])
+	err = ioutil.WriteFile(filePath, gasedCode, types.ModePerm)
+	if err != nil {
+		return nil, err
+	}
+	return codeHash, nil
 }
 
 func (k Keeper) generateContractAddress(codeHash []byte, creatorAddr sdk.AccAddress, payload utils.CallData, nonce uint64) sdk.AccAddress {
