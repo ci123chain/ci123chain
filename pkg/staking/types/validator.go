@@ -16,14 +16,15 @@ import (
 type Validator struct {
 	OperatorAddress    sdk.AccAddress	`json:"operator_address"`
 	ConsensusKey       string           `json:"pub_key"`
+	ConsensusAddress   string           `json:"consensus_address"`
 	Jailed             bool             `json:"jailed"`
-	Status             sdk.BondStatus   `json:"status"`
 	Tokens             sdk.Int          `json:"tokens"`
+	Status             sdk.BondStatus   `json:"status"`
 	DelegatorShares    sdk.Dec          `json:"delegator_shares"`
 	Description        Description      `json:"description"`
 	UnbondingHeight    int64      		`json:"unbonding_height"`
 	UnbondingTime      time.Time        `json:"unbonding_time"`
-	BondingHeight      int64            `json:"bonding_height"`
+	BondedHeight      int64            `json:"bonded_height"`
 	Commission         Commission       `json:"commission"`
 	MinSelfDelegation   sdk.Int  		`json:"min_self_delegation"`
 }
@@ -31,7 +32,7 @@ type Validator struct {
 //crypto pubKey
 func NewValidator(operator sdk.AccAddress, pubKey string, description Description)( Validator, error) {
 
-	return Validator{
+	v := Validator{
 		OperatorAddress: operator,
 		ConsensusKey: pubKey,
 		Jailed:          false,
@@ -41,10 +42,12 @@ func NewValidator(operator sdk.AccAddress, pubKey string, description Descriptio
 		Description:      description,
 		UnbondingHeight:  int64(0),
 		UnbondingTime:    time.Unix(0,0).UTC(),
-		BondingHeight:    int64(-1),
+		BondedHeight:    int64(-1),
 		Commission:        NewCommission(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
 		MinSelfDelegation:  sdk.OneInt(),
-	}, nil
+	}
+	v.ConsensusAddress = v.GetConsPubKey().Address().String()
+	return v, nil
 }
 
 func (v Validator) SetInitialCommission(commission Commission) (Validator, error) {

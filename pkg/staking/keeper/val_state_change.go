@@ -199,7 +199,7 @@ func (k StakingKeeper) bondValidator(ctx sdk.Context, validator types.Validator)
 
 	validator = validator.UpdateStatus(sdk.Bonded)
 
-	validator.BondingHeight = ctx.BlockHeight()
+	validator.BondedHeight = ctx.BlockHeight()
 
 	// save the now bonded validator record to the two referenced stores
 	err := k.SetValidator(ctx, validator)

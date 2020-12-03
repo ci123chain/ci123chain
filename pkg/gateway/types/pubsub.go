@@ -2,15 +2,17 @@ package types
 
 import (
 	"context"
+	//"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	apptypes "github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/gateway/logger"
 	"github.com/gorilla/websocket"
-	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/libs/pubsub/query"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
+	"github.com/tendermint/tendermint/types"
 	"strings"
 	"sync"
 	"time"
@@ -36,13 +38,8 @@ const (
 
 var (
 	DefaultPort = "26657"
-	cdc = amino.NewCodec()
+	cdc = apptypes.MakeCodec()
 )
-
-func init() {
-	cdc.RegisterConcrete(&apptypes.CommonTx{}, "commontx", nil)
-}
-
 func SetDefaultPort(port string) {
 	DefaultPort = port
 }
@@ -232,26 +229,37 @@ func (r *PubSubRoom) Subscribe(topic string) {
 			}
 			go func() {
 				for e := range responses {
-					//var v interface{}
-					//switch e.Data.(type) {
-					//case types.EventDataTx:
-					//	ok, _ := regexp.MatchString("tm.event = 'Tx'", topic)
-					//	if !ok {
-					//		continue
-					//	}
-					//	tx := e.Data.(types.EventDataTx)
-					//	hash := hex.EncodeToString(tx.Tx.Hash())
-					//	v = NewGotTxResponse(tx.Height, tx.Index, hash, tx.Result)
-					//default:
-					//	v = e.Data
-					//}
+					var v interface{}
+					switch e.Data.(type) {
+					case types.EventDataTx:
+						//ok, _ := regexp.MatchString("tm.event = 'Tx'", topic)
+						//if !ok {
+						//	continue
+						//}
+						tx := e.Data.(types.EventDataTx)
+						var aa sdk.Tx
+						err = cdc.UnmarshalBinaryBare(tx.Tx, &aa)
+						if err != nil {
+							logger.Error(fmt.Sprintf("got error tx %x", tx))
+						}
+						res, err := json.Marshal(aa)
+						if err != nil {
+							logger.Error(fmt.Sprintf("marshal error: %s", err.Error()))
+						}
+						tx.Tx = res
+						//hash := hex.EncodeToString(tx.Tx.Hash())
+						//v = NewGotTxResponse(tx.Height, tx.Index, hash, tx.Result)
+						v = tx
+					default:
+						v = e.Data
+					}
 					//response := SendMessage{
 					//	Time:   time.Now().Format(time.RFC3339),
 					//	Content: v,
 					//}
 					response := SendMessage{
 						Time:   time.Now().Format(time.RFC3339),
-						Content: e.Data,
+						Content: v,//e.Data,
 					}
 					Notify(r, topic, response)
 				}
@@ -342,9 +350,41 @@ func (r *PubSubRoom) AddShard() {
 							//	Time:   time.Now().Format(time.RFC3339),
 							//	Content: v,
 							//}
+							//response := SendMessage{
+							//	Time:   time.Now().Format(time.RFC3339),
+							//	Content: e.Data,
+							//}
+							var v interface{}
+							switch e.Data.(type) {
+							case types.EventDataTx:
+								//ok, _ := regexp.MatchString("tm.event = 'Tx'", topic)
+								//if !ok {
+								//	continue
+								//}
+								tx := e.Data.(types.EventDataTx)
+								var aa sdk.Tx
+								err = cdc.UnmarshalBinaryBare(tx.Tx, &aa)
+								if err != nil {
+									logger.Error(fmt.Sprintf("got error tx %x", tx))
+								}
+								res, err := json.Marshal(aa)
+								if err != nil {
+									logger.Error(fmt.Sprintf("marshal error: %s", err.Error()))
+								}
+								tx.Tx = res
+								//hash := hex.EncodeToString(tx.Tx.Hash())
+								//v = NewGotTxResponse(tx.Height, tx.Index, hash, tx.Result)
+								v = tx
+							default:
+								v = e.Data
+							}
+							//response := SendMessage{
+							//	Time:   time.Now().Format(time.RFC3339),
+							//	Content: v,
+							//}
 							response := SendMessage{
 								Time:   time.Now().Format(time.RFC3339),
-								Content: e.Data,
+								Content: v,//e.Data,
 							}
 							Notify(r, topic, response)
 						}

@@ -335,10 +335,10 @@ func queryOperatorAddressByConsAddresses(ctx sdk.Context, req abci.RequestQuery,
 	for _, v := range addressSet.ConsAddresses {
 		validator, found := k.GetValidatorByConsAddr(ctx, sdk.ToAccAddress(v))
 		if !found {
-			addr := types.NewValidatorOperatorAddressResponse(hex.EncodeToString(v), validator.OperatorAddress.String(), false)
+			addr := types.NewValidatorOperatorAddressResponse(strings.ToUpper(hex.EncodeToString(v)), validator.OperatorAddress.String(), false)
 			responseSet = append(responseSet, addr)
 		}else {
-			addr := types.NewValidatorOperatorAddressResponse(hex.EncodeToString(v), validator.OperatorAddress.String(), true)
+			addr := types.NewValidatorOperatorAddressResponse(strings.ToUpper(hex.EncodeToString(v)), validator.OperatorAddress.String(), true)
 			responseSet = append(responseSet, addr)
 		}
 	}

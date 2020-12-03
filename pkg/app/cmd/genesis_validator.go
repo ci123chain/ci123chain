@@ -66,10 +66,11 @@ func AddGenesisValidatorCmd(ctx *app.Context, cdc *codec.Codec) *cobra.Command {
 				Description:       staking.Description{},
 				UnbondingHeight:   int64(-1),
 				UnbondingTime:     time.Time{},
-				BondingHeight:     int64(0),
+				BondedHeight:     int64(0),
 				Commission:        commission,
 				MinSelfDelegation: types.NewInt(coin),
 			}
+			genesisValidator.ConsensusAddress = genesisValidator.GetConsPubKey().Address().String()
 
 			delegation := staking.NewDelegation(addr, addr, types.NewDec(coin))
 
