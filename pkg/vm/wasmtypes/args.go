@@ -130,3 +130,20 @@ func ArgsToInput(args utils.CallData) (res []byte, err error){
 	input := sink.Bytes()
 	return input, nil
 }
+
+func CallData2Input(data utils.CallData) (utils.WasmInput, error) {
+	input, err := ArgsToInput(data)
+	if err != nil {
+		return utils.WasmInput{}, err
+	}
+	sig, err := utils.ParseSignature(data.Method)
+	if err != nil {
+		return utils.WasmInput{}, err
+	}
+
+	args := utils.WasmInput{
+		Method: sig.Method,
+		Sink:   input,
+	}
+	return args, nil
+}

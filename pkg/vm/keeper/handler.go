@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"encoding/json"
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	evm "github.com/ci123chain/ci123chain/pkg/vm/evmtypes"
@@ -44,13 +43,12 @@ func handleMsgUploadContract(ctx sdk.Context, k Keeper, msg wasm.MsgUploadContra
 	return
 }
 
-
 func handleMsgInstantiateContract(ctx sdk.Context, k Keeper, msg wasm.MsgInstantiateContract) (res sdk.Result) {
 	gasLimit := ctx.GasLimit()
 	gasWanted := gasLimit - ctx.GasMeter().GasConsumed()
 
-	contractAddr, err := k.Instantiate(ctx, msg.CodeHash, msg.FromAddress, msg.Args, msg.Name, msg.Version, msg.Author, msg.Email, msg.Describe, wasm.EmptyAddress, gasWanted)
-
+	args, err := wasm.CallData2Input(msg.Args)
+	contractAddr, err := k.Instantiate(ctx, msg.CodeHash, msg.FromAddress, args, msg.Name, msg.Version, msg.Author, msg.Email, msg.Describe, wasm.EmptyAddress, gasWanted)
 	if err != nil {
 		return wasm.ErrInstantiateFailed(wasm.DefaultCodespace, err).Result()
 	}
@@ -65,7 +63,8 @@ func handleMsgExecuteContract(ctx sdk.Context, k Keeper, msg wasm.MsgExecuteCont
 	gasLimit := ctx.GasLimit()
 	gasWanted := gasLimit - ctx.GasMeter().GasConsumed()
 
-	res, err := k.Execute(ctx, msg.Contract, msg.FromAddress, msg.Args, gasWanted)
+	args, err := wasm.CallData2Input(msg.Args)
+	res, err = k.Execute(ctx, msg.Contract, msg.FromAddress, args, gasWanted)
 	if err != nil {
 		return wasm.ErrExecuteFailed(wasm.DefaultCodespace, err).Result()
 	}
@@ -77,7 +76,8 @@ func handleMsgMigrateContract(ctx sdk.Context, k Keeper, msg wasm.MsgMigrateCont
 	gasLimit := ctx.GasLimit()
 	gasWanted := gasLimit - ctx.GasMeter().GasConsumed()
 
-	contractAddr, err := k.Migrate(ctx, msg.CodeHash, msg.FromAddress, msg.Contract, msg.Args, msg.Name, msg.Version, msg.Author, msg.Email, msg.Describe, gasWanted)
+	args, err := wasm.CallData2Input(msg.Args)
+	contractAddr, err := k.Migrate(ctx, msg.CodeHash, msg.FromAddress, msg.Contract, args, msg.Name, msg.Version, msg.Author, msg.Email, msg.Describe, gasWanted)
 	if err != nil {
 		return wasm.ErrInstantiateFailed(wasm.DefaultCodespace, err).Result()
 	}
@@ -170,10 +170,10 @@ func handleMsgEvmTx(ctx sdk.Context, k Keeper, msg evm.MsgEvmTx) sdk.Result {
 	}
 
 	data, _  := evm.DecodeResultData(executionResult.Result.Data)
-	a, _ := json.Marshal(data)
 	
 	// set the events to the result
 	executionResult.Result.Events = ctx.EventManager().Events()
-	executionResult.Result.Data = a
+	executionResult.Result.Data = data.Ret
 	return *executionResult.Result
 }
+

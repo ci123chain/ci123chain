@@ -1,14 +1,14 @@
 package utils
 
 import (
+	"encoding/json"
+	"errors"
 	"github.com/ethereum/go-ethereum/crypto"
 	"math/big"
 	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
-	"encoding/json"
-	"errors"
 )
 
 type CallData struct {
@@ -20,6 +20,11 @@ type Signature struct {
 	Method 	string
 	Args 	[]string
 	Retargs []string
+}
+
+type WasmInput struct {
+	Method 	string
+	Sink 	[]byte
 }
 
 //someMethod(bytes,uint)
@@ -459,3 +464,4 @@ func setLength(msg []byte, length int, right bool) []byte {
 		}
 	}
 }
+

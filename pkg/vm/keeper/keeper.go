@@ -102,7 +102,7 @@ func (k *Keeper) Upload(ctx sdk.Context, wasmCode []byte, creator sdk.AccAddress
 	return codeHash, nil
 }
 
-func (k *Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAddress, args utils.CallData, name, version, author, email, describe string, genesisContractAddress sdk.AccAddress, gasWanted uint64) (sdk.AccAddress, error) {
+func (k *Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAddress, args utils.WasmInput, name, version, author, email, describe string, genesisContractAddress sdk.AccAddress, gasWanted uint64) (sdk.AccAddress, error) {
 	// 如果是官方合约，不限制gas数量
 	runtimeCfg := &runtimeConfig{
 		GasUsed: 0,
@@ -180,16 +180,8 @@ func (k *Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAd
 	prefixStore := NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
 	runtimeCfg.SetStore(prefixStore)
 
-	input, err := types.ArgsToInput(args)
-	if err != nil {
-		return sdk.AccAddress{}, err
-	}
-	sig, err := utils.ParseSignature(args.Method)
-	if err != nil {
-		return sdk.AccAddress{}, err
-	}
 	wasmRuntime := new(wasmRuntime)
-	_, err = wasmRuntime.Call(code, input, sig.Method, runtimeCfg)
+	_, err = wasmRuntime.Call(code, args.Sink, args.Method, runtimeCfg)
 	if err != nil {
 		return sdk.AccAddress{}, err
 	}
@@ -225,7 +217,7 @@ func (k *Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAd
 }
 
 //
-func (k *Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, invoker sdk.AccAddress, args utils.CallData, gasWanted uint64) (sdk.Result, error) {
+func (k *Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, invoker sdk.AccAddress, args utils.WasmInput, gasWanted uint64) (sdk.Result, error) {
 	runtimeCfg := &runtimeConfig{
 		GasUsed:     0,
 		GasWanted: 	 gasWanted,
@@ -263,16 +255,8 @@ func (k *Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, invoke
 	prefixStoreKey := types.GetContractStorePrefixKey(contractAddress)
 	prefixStore := NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
 	runtimeCfg.SetStore(prefixStore)
-	input, err := types.ArgsToInput(args)
-	if err != nil {
-		return sdk.Result{}, err
-	}
-	sig, err := utils.ParseSignature(args.Method)
-	if err != nil {
-		return sdk.Result{}, err
-	}
 	wasmRuntime := new(wasmRuntime)
-	res, err := wasmRuntime.Call(code, input, sig.Method, runtimeCfg)
+	res, err := wasmRuntime.Call(code, args.Sink, args.Method, runtimeCfg)
 	if err != nil {
 		return sdk.Result{}, err
 	}
@@ -282,7 +266,7 @@ func (k *Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, invoke
 	}, nil
 }
 
-func (k *Keeper) Migrate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAddress, oldContract sdk.AccAddress, args utils.CallData, name, version, author, email, describe string, gasWanted uint64) (sdk.AccAddress, error) {
+func (k *Keeper) Migrate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAddress, oldContract sdk.AccAddress, args utils.WasmInput, name, version, author, email, describe string, gasWanted uint64) (sdk.AccAddress, error) {
 	newContract, err := k.Instantiate(ctx, codeHash, invoker, args, name, version, author, email, describe, types.EmptyAddress, gasWanted)
 
 	if err != nil {
@@ -513,7 +497,7 @@ func (k *Keeper) create(ctx sdk.Context, invokerAddr sdk.AccAddress, wasmCode []
 	return codeHash, nil
 }
 
-func (k Keeper) generateContractAddress(codeHash []byte, creatorAddr sdk.AccAddress, payload utils.CallData, nonce uint64) sdk.AccAddress {
+func (k Keeper) generateContractAddress(codeHash []byte, creatorAddr sdk.AccAddress, payload utils.WasmInput, nonce uint64) sdk.AccAddress {
 	contract, _ := rlp.EncodeToBytes([]interface{}{codeHash, creatorAddr, payload, nonce})
 	return sdk.ToAccAddress(crypto.Keccak256Hash(contract).Bytes()[12:])
 }

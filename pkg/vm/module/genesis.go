@@ -29,18 +29,22 @@ func WasmInitGenesis(ctx sdk.Context, wasmer moduletypes.KeeperI) {
 	//			var params utils.CallData
 	//			params.Args = v.Params
 	//			params.Method = v.Method
+	//			input, err := types.CallData2Input(params)
+	//			if err != nil {
+	//				panic(err)
+	//			}
 	//			if strings.HasPrefix(v.Method, InitMethodPrefix) {
 	//				codeHash, err := wasmer.Upload(ctx, code, invoker)
 	//				if err != nil {
 	//					panic(err)
 	//				}
-	//				_, err = wasmer.Instantiate(ctx, codeHash, invoker, params, contracts.Name, contracts.Version, contracts.Author, contracts.Email, contracts.Describe, address, 0)
+	//				_, err = wasmer.Instantiate(ctx, codeHash, invoker, input, contracts.Name, contracts.Version, contracts.Author, contracts.Email, contracts.Describe, address, 0)
 	//
 	//				if err != nil {
 	//					panic(err)
 	//				}
 	//			}else if strings.HasPrefix(v.Method, InvokeMethodPrefix) {
-	//				_, err = wasmer.Execute(ctx, address, invoker, params, 0)
+	//				_, err = wasmer.Execute(ctx, address, invoker, input, 0)
 	//				if err != nil {
 	//					panic(err)
 	//				}
@@ -50,7 +54,6 @@ func WasmInitGenesis(ctx sdk.Context, wasmer moduletypes.KeeperI) {
 	//		}
 	//	}
 	//}
-
 }
 
 func EvmInitGenesis(ctx sdk.Context, k moduletypes.KeeperI, data evmtypes.GenesisState) {

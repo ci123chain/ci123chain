@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
@@ -352,13 +351,17 @@ func newContract(context unsafe.Pointer, newContractPtr, codeHashPtr, codeHashSi
 		panic(err)
 	}
 
-	var calldata utils.CallData
-	err = json.Unmarshal(args, &calldata)
+	sink := NewSink(args)
+	method, err := sink.ReadString()
 	if err != nil {
 		panic(err)
 	}
 
-	newContractAddress, err := runtimeCfg.Keeper.Instantiate(*runtimeCfg.Context, hash, runtimeCfg.Invoker, calldata, "", "", "", "", "", wasmtypes.EmptyAddress, runtimeCfg.GasWanted)
+	input := utils.WasmInput{
+		Method: method,
+		Sink:   sink.Bytes(),
+	}
+	newContractAddress, err := runtimeCfg.Keeper.Instantiate(*runtimeCfg.Context, hash, runtimeCfg.Invoker, input, "", "", "", "", "", wasmtypes.EmptyAddress, runtimeCfg.GasWanted)
 	if err != nil {
 		panic(err)
 	}
