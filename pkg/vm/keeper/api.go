@@ -336,7 +336,7 @@ func callContract(context unsafe.Pointer, addrPtr, inputPtr, inputSize int32) in
 	return token
 }
 
-func newContract(context unsafe.Pointer, newContractPtr, codeHashPtr, codeHashSize, argsPtr, argsSize int32) {
+func newContract(context unsafe.Pointer, codeHashPtr, codeHashSize, argsPtr, argsSize, newContractPtr int32) {
 	instanceContext := wasm.IntoInstanceContext(context)
 	data := instanceContext.Data()
 	runtimeCfg, ok := data.(*runtimeConfig)
