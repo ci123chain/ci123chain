@@ -177,8 +177,8 @@ func call_contract(context unsafe.Pointer, addrPtr, paramPtr, paramSize int32) i
 }
 
 //export new_contract
-func new_contract(context unsafe.Pointer, newContractPtr, codeHashPtr, codeHashSize, argsPtr, argsSize int32) {
-	newContract(context, newContractPtr, codeHashPtr, codeHashSize, argsPtr, argsSize)
+func new_contract(context unsafe.Pointer, codeHashPtr, codeHashSize, argsPtr, argsSize, newContractPtr int32) {
+	newContract(context, codeHashPtr, codeHashSize, argsPtr, argsSize, newContractPtr)
 }
 
 //export destroy_contract
