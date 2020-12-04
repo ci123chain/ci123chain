@@ -35,6 +35,8 @@ import (
 const UINT_MAX uint64 = ^uint64(0)
 const INIT string = "init"
 const INVOKE string = "invoke"
+const CAN_MIGRATE string = "canMigrate"
+const CAN_MIGRATE_RESULT string = "true"
 type Keeper struct {
 	storeKey    		sdk.StoreKey
 	cdc         		*codec.Codec
@@ -267,6 +269,16 @@ func (k *Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, invoke
 }
 
 func (k *Keeper) Migrate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAddress, oldContract sdk.AccAddress, args utils.WasmInput, name, version, author, email, describe string, gasWanted uint64) (sdk.AccAddress, error) {
+	canMigrate := utils.WasmInput{
+		Method: CAN_MIGRATE,
+		Sink:   nil,
+	}
+	newCtx := ctx
+	res, err := k.Query(newCtx, oldContract, invoker, canMigrate)
+	if err != nil || res.Result != CAN_MIGRATE_RESULT {
+		return sdk.AccAddress{}, errors.New("Cannot migrate")
+	}
+
 	newContract, err := k.Instantiate(ctx, codeHash, invoker, args, name, version, author, email, describe, types.EmptyAddress, gasWanted)
 
 	if err != nil {
@@ -297,7 +309,7 @@ func (k *Keeper) Migrate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAddres
 }
 
 // queryContract
-func (k Keeper) Query(ctx sdk.Context, contractAddress, invoker sdk.AccAddress, args utils.CallData) (types.ContractState, error) {
+func (k Keeper) Query(ctx sdk.Context, contractAddress, invoker sdk.AccAddress, args utils.WasmInput) (types.ContractState, error) {
 	runtimeCfg := &runtimeConfig{
 		GasUsed:     0,
 		GasWanted:   UINT_MAX,
@@ -332,16 +344,8 @@ func (k Keeper) Query(ctx sdk.Context, contractAddress, invoker sdk.AccAddress, 
 	prefixStoreKey := types.GetContractStorePrefixKey(contractAddress)
 	prefixStore := NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
 	runtimeCfg.SetStore(prefixStore)
-	input, err := types.ArgsToInput(args)
-	if err != nil {
-		return types.ContractState{}, err
-	}
-	sig, err := utils.ParseSignature(args.Method)
-	if err != nil {
-		return types.ContractState{}, err
-	}
 	wasmRuntime := new(wasmRuntime)
-	res, err := wasmRuntime.Call(code, input, sig.Method, runtimeCfg)
+	res, err := wasmRuntime.Call(code, args.Sink, args.Method, runtimeCfg)
 	if err != nil {
 		return types.ContractState{}, err
 	}
