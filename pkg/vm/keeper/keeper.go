@@ -115,6 +115,10 @@ func (k *Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAd
 		Keeper:      k,
 		Context:     &ctx,
 	}
+	
+	if args.Method != InstantiateFuncName {
+		return sdk.AccAddress{}, errors.New("Instantiate function must be `init`")
+	}
 
 	isGenesis, ok := ctx.Value(types.SystemContract).(bool)
 	if ok && isGenesis {

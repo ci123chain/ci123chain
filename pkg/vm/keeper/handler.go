@@ -10,6 +10,7 @@ import (
 	"math/big"
 )
 
+const InstantiateFuncName = "init"
 func NewHandler(k Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
@@ -48,6 +49,9 @@ func handleMsgInstantiateContract(ctx sdk.Context, k Keeper, msg wasm.MsgInstant
 	gasWanted := gasLimit - ctx.GasMeter().GasConsumed()
 
 	args, err := wasm.CallData2Input(msg.Args)
+	if err != nil {
+		return wasm.ErrInstantiateFailed(wasm.DefaultCodespace, err).Result()
+	}
 	contractAddr, err := k.Instantiate(ctx, msg.CodeHash, msg.FromAddress, args, msg.Name, msg.Version, msg.Author, msg.Email, msg.Describe, wasm.EmptyAddress, gasWanted)
 	if err != nil {
 		return wasm.ErrInstantiateFailed(wasm.DefaultCodespace, err).Result()
@@ -64,6 +68,9 @@ func handleMsgExecuteContract(ctx sdk.Context, k Keeper, msg wasm.MsgExecuteCont
 	gasWanted := gasLimit - ctx.GasMeter().GasConsumed()
 
 	args, err := wasm.CallData2Input(msg.Args)
+	if err != nil {
+		return wasm.ErrExecuteFailed(wasm.DefaultCodespace, err).Result()
+	}
 	res, err = k.Execute(ctx, msg.Contract, msg.FromAddress, args, gasWanted)
 	if err != nil {
 		return wasm.ErrExecuteFailed(wasm.DefaultCodespace, err).Result()
@@ -77,9 +84,12 @@ func handleMsgMigrateContract(ctx sdk.Context, k Keeper, msg wasm.MsgMigrateCont
 	gasWanted := gasLimit - ctx.GasMeter().GasConsumed()
 
 	args, err := wasm.CallData2Input(msg.Args)
+	if err != nil {
+		return wasm.ErrMigrateFailed(wasm.DefaultCodespace, err).Result()
+	}
 	contractAddr, err := k.Migrate(ctx, msg.CodeHash, msg.FromAddress, msg.Contract, args, msg.Name, msg.Version, msg.Author, msg.Email, msg.Describe, gasWanted)
 	if err != nil {
-		return wasm.ErrInstantiateFailed(wasm.DefaultCodespace, err).Result()
+		return wasm.ErrMigrateFailed(wasm.DefaultCodespace, err).Result()
 	}
 	res = sdk.Result{
 		Data:  []byte(fmt.Sprintf("%s", contractAddr.String())),
