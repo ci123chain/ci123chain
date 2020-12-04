@@ -7,7 +7,6 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/account/exported"
 	"github.com/ci123chain/ci123chain/pkg/auth"
 	"github.com/ci123chain/ci123chain/pkg/auth/types"
-
 	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
 
 	"github.com/ci123chain/ci123chain/pkg/supply"
@@ -17,16 +16,15 @@ const Price uint64 = 1
 //const unit = 1000
 func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, sk supply.Keeper) sdk.AnteHandler {
 	return func(ctx sdk.Context, tx sdk.Tx, simulate bool) (newCtx sdk.Context, res sdk.Result, abort bool) {
-
-		if !simulate {
-			//check sign
-			eth := cryptosuit.NewETHSignIdentity()
-			valid, err := eth.Verifier(tx.GetSignBytes(), tx.GetSignature(), nil, tx.GetFromAddress().Bytes())
-			if !valid || err != nil {
-				return newCtx, transaction.ErrInvalidTx(types.DefaultCodespace, "tx signature invalid").Result(), true
-			}
+		if simulate {
+			return
 		}
-
+		//check sign
+		eth := cryptosuit.NewETHSignIdentity()
+		valid, err := eth.Verifier(tx.GetSignBytes(), tx.GetSignature(), nil, tx.GetFromAddress().Bytes())
+		if !valid || err != nil {
+			return newCtx, transaction.ErrInvalidTx(types.DefaultCodespace, "tx signature invalid").Result(), true
+		}
 		address := tx.GetFromAddress()
 		acc := ak.GetAccount(ctx, address)
 		if acc == nil {
@@ -92,7 +90,7 @@ func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, sk su
 		//存储奖励金到feeCollector Module账户
 		feeCollectorModuleAccount := sk.GetModuleAccount(ctx, auth.FeeCollectorName)
 		newFee := feeCollectorModuleAccount.GetCoin().Add(getFee)
-		err := feeCollectorModuleAccount.SetCoin(newFee)
+		err = feeCollectorModuleAccount.SetCoin(newFee)
 
 		if err != nil {
 			fmt.Println("fee_collector module account set coin failed")
