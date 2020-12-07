@@ -71,7 +71,7 @@ func ParseURL(r *http.Request) (types.Proxy, error, map[string]string){
 				value := v[0]
 				data[key] = value
 			}
-			file, _, err := r.FormFile("wasm_code")
+			file, _, err := r.FormFile("code_file")
 			if err != nil {
 				codeStr = ""
 			} else {
@@ -82,7 +82,7 @@ func ParseURL(r *http.Request) (types.Proxy, error, map[string]string){
 					codeStr = hex.EncodeToString(wasmcode)
 				}
 			}
-			data["wasm_code_str"] = codeStr
+			data["code_str"] = codeStr
 		}
 	}
 	params := r.FormValue("proxy")
