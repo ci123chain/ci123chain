@@ -151,12 +151,12 @@ func handleMsgEvmTx(ctx sdk.Context, k Keeper, msg evm.MsgEvmTx) sdk.Result {
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			evm.EventTypeEvmTx,
-			sdk.NewAttribute(sdk.AttributeKeyAmount, msg.Data.Amount.String()),
+			sdk.NewAttribute([]byte(sdk.AttributeKeyAmount), []byte(msg.Data.Amount.String())),
 		),
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, evm.AttributeValueCategory),
-			sdk.NewAttribute(sdk.AttributeKeySender, sender.String()),
+			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(evm.AttributeValueCategory)),
+			sdk.NewAttribute([]byte(sdk.AttributeKeySender), []byte(sender.String())),
 		),
 	})
 
@@ -164,7 +164,7 @@ func handleMsgEvmTx(ctx sdk.Context, k Keeper, msg evm.MsgEvmTx) sdk.Result {
 		ctx.EventManager().EmitEvent(
 			sdk.NewEvent(
 				evm.EventTypeEvmTx,
-				sdk.NewAttribute(evm.AttributeKeyRecipient, msg.Data.Recipient.String()),
+				sdk.NewAttribute([]byte(evm.AttributeKeyRecipient), []byte(msg.Data.Recipient.String())),
 			),
 		)
 	}

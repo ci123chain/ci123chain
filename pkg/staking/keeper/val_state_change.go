@@ -39,9 +39,9 @@ func (k StakingKeeper) BlockValidatorUpdates(ctx sdk.Context) []abcitypes.Valida
 		em.EmitEvent(
 			sdk.NewEvent(
 				types.EventTypeCompleteUnbonding,
-				sdk.NewAttribute(sdk.AttributeKeyAmount, balances.String()),
-				sdk.NewAttribute(types.AttributeKeyDstValidator, dvPair.ValidatorAddress.String()),
-				sdk.NewAttribute(types.AttributeKeyDelegator, dvPair.DelegatorAddress.String()),
+				sdk.NewAttribute([]byte(sdk.AttributeKeyAmount), []byte(balances.String())),
+				sdk.NewAttribute([]byte(types.AttributeKeyDstValidator), []byte(dvPair.ValidatorAddress.String())),
+				sdk.NewAttribute([]byte(types.AttributeKeyDelegator), []byte(dvPair.DelegatorAddress.String())),
 				),
 			)
 	}
@@ -62,10 +62,10 @@ func (k StakingKeeper) BlockValidatorUpdates(ctx sdk.Context) []abcitypes.Valida
 		em.EmitEvent(
 			sdk.NewEvent(
 				types.EventTypeCompleteRedelegation,
-				sdk.NewAttribute(sdk.AttributeKeyAmount, balances.String()),
-				sdk.NewAttribute(types.AttributeKeyDelegator, dvvTriplet.DelegatorAddress.String()),
-				sdk.NewAttribute(types.AttributeKeySrcValidator, dvvTriplet.ValidatorSrcAddress.String()),
-				sdk.NewAttribute(types.AttributeKeyDstValidator, dvvTriplet.ValidatorDstAddress.String()),
+				sdk.NewAttribute([]byte(sdk.AttributeKeyAmount), []byte(balances.String())),
+				sdk.NewAttribute([]byte(types.AttributeKeyDelegator), []byte(dvvTriplet.DelegatorAddress.String())),
+				sdk.NewAttribute([]byte(types.AttributeKeySrcValidator), []byte(dvvTriplet.ValidatorSrcAddress.String())),
+				sdk.NewAttribute([]byte(types.AttributeKeyDstValidator), []byte(dvvTriplet.ValidatorDstAddress.String())),
 			),
 			)
 	}

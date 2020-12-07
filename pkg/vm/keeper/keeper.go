@@ -131,7 +131,11 @@ func (k *Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAd
 	}
 	var contractAddress sdk.AccAddress
 	if isGenesis {
-		contractAddress = genesisContractAddress
+		if genesisContractAddress == types.EmptyAddress {
+			contractAddress = k.generateContractAddress(codeHash, invoker, args, 1)
+		}else {
+			contractAddress = genesisContractAddress
+		}
 	}else {
 		nonce := k.AccountKeeper.GetAccount(ctx, invoker).GetSequence()
 		contractAddress = k.generateContractAddress(codeHash, invoker, args, nonce)
@@ -146,7 +150,7 @@ func (k *Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAd
 
 	var contractAccount exported.Account
 	contractAccount = k.AccountKeeper.NewAccountWithAddress(ctx, contractAddress)
-	contractAccount.SetContractType(types2.WasmContractType)
+	_ = contractAccount.SetContractType(types2.WasmContractType)
 	k.AccountKeeper.SetAccount(ctx, contractAccount)
 
 	wasmerBz := ccstore.Get(types.GetWasmerKey())
@@ -192,6 +196,7 @@ func (k *Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAd
 	contractInfo := types.NewContractInfo(codeInfo, initArgs, name, version, author, email, describe, createdAt)
 	ccstore.Set(types.GetContractAddressKey(contractAddress), k.cdc.MustMarshalBinaryBare(contractInfo))
 
+	isGenesis, _ = ctx.Value(types.SystemContract).(bool)
 	//save contractAddress into account
 	if !isGenesis {
 		contractAddrStr := contractAddress.String()

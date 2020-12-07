@@ -292,16 +292,14 @@ func (w wasmRuntime) Call(code []byte, input []byte, method string, cfg *runtime
 		return nil, err
 	}
 	defer instance.Close()
-
 	method = "x" + hex.EncodeToString([]byte(method))
 	call, exist := instance.Exports[method]
 	if !exist {
-		fmt.Println(exist)
 		return nil, errors.New("no expected function")
 	}
 
 	inputData[InputDataTypeParam] = input
-	defer func() {
+	defer func() {/**/
 		if r := recover(); r != nil{
 			switch x := r.(type) {
 			case string:

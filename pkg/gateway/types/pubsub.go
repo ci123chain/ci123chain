@@ -175,6 +175,7 @@ func (r *PubSubRoom) HandleUnsubscribe(topic string, c *websocket.Conn) {
 	if len(r.ConnMap[topic]) == 0 {
 		//do nothing
 	}else {
+		logger.Info("connection address: %s, unsubscribe topic:%s", c.RemoteAddr().String(), topic)
 		r.ConnMap[topic] = DeleteSlice(r.ConnMap[topic], c)
 		if len(r.ConnMap[topic]) == 0 {
 			r.Unsubscribe(topic)
@@ -185,6 +186,7 @@ func (r *PubSubRoom) HandleUnsubscribe(topic string, c *websocket.Conn) {
 
 func (r *PubSubRoom) HandleUnsubscribeAll(c *websocket.Conn) {
 	r.Mutex.Lock()
+	logger.Info("connection address: %s, unsubscribe all topic", c.RemoteAddr().String())
 	for k, v := range r.ConnMap {
 		if r.ConnMap[k] != nil {
 			r.ConnMap[k] = DeleteSlice(v, c)
@@ -223,6 +225,7 @@ func (r *PubSubRoom) Subscribe(topic string) {
 		for k, conn := range r.Connections {
 			responses, err := conn.Subscribe(ctx, subscribeClient, topic)
 			if err != nil {
+				logger.Error(fmt.Sprintf("subscribe topic: %s failed", topic))
 				delete(r.Connections, k)
 				_ = conn.Stop()
 				continue
@@ -276,6 +279,7 @@ func (r *PubSubRoom) AddShard() {
 		if r.Connections[addr] == nil {
 			conn, ok := GetConnection(addr)
 			if !ok {
+				logger.Error(fmt.Sprintf("connect remote addr: %s, failed", addr))
 				continue
 			}
 			r.Mutex.Lock()
@@ -286,6 +290,7 @@ func (r *PubSubRoom) AddShard() {
 					responses, err := conn.Subscribe(ctx, subscribeClient, topic)
 					if err != nil {
 						r.Mutex.Lock()
+						logger.Error(fmt.Sprintf("subscribe topic: %s, failed", topic))
 						delete(r.Connections, addr)
 						r.Mutex.Unlock()
 						_ = conn.Stop()
@@ -403,6 +408,7 @@ func (r *PubSubRoom) Unsubscribe(topic string) {
 	//if err != nil {
 	//	panic(err)
 	//}
+	logger.Info("unsubscribe topic %s", topic)
 	for k, conn := range r.Connections {
 		err := conn.Unsubscribe(ctx, subscribeClient, topic)
 		if err != nil {
@@ -415,6 +421,8 @@ func (r *PubSubRoom) Unsubscribe(topic string) {
 }
 
 func Notify(r *PubSubRoom, topic string, m SendMessage) {
+	by, _ := json.Marshal(m)
+	logger.Debug("publish message: %s, on topic : %s", string(by), topic)
 	for i := 0; i < len(r.ConnMap[topic]); i++ {
 		conn := r.ConnMap[topic][i]
 		if err := conn.WriteJSON(m); err != nil {
