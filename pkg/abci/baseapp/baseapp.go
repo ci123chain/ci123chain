@@ -658,12 +658,12 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 		result.GasWanted = gasWanted
 	}()
 	msgs := tx.GetMsgs()
-	signer := tx.GetFromAddress()
-	err := validateBasicTxMsgs(msgs, signer)
-	if err != nil {
-		return err.Result()
-	}
 	if mode != runTxModeSimulate {
+		signer := tx.GetFromAddress()
+		err := validateBasicTxMsgs(msgs, signer)
+		if err != nil {
+			return err.Result()
+		}
 		if err := tx.ValidateBasic(); err != nil {
 			return err.Result()
 		}

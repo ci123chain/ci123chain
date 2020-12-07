@@ -38,6 +38,10 @@ func ErrUninstallFailed(codespce sdk.CodespaceType, err error) sdk.Error {
 	return sdk.NewError(codespce, CodeHandleMsgFailedError, "uncompress code failed", err)
 }*/
 
+func ErrMigrateFailed(codespce sdk.CodespaceType, err error) sdk.Error {
+	return sdk.NewError(codespce, CodeHandleMsgFailedError, "migrate failed: %s", err.Error())
+}
+
 func ErrInstantiateFailed(codespce sdk.CodespaceType, err error) sdk.Error {
 	return sdk.NewError(codespce, CodeHandleMsgFailedError, "instantiate failed: %s", err.Error())
 }

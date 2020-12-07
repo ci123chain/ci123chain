@@ -158,17 +158,22 @@ func queryContractStateAllHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			rest.WriteErrorRes(w, types.ErrCheckParams(vm.DefaultCodespace, err.Error()))
 			return
 		}
-		from := r.FormValue("from")
-		fromAddr := sdk.HexToAddress(from)
 		ctx, err2 := client.NewClientContextFromViper(cdc)
 		if err2 != nil {
 			rest.WriteErrorRes(w, types.ErrCheckParams(vm.DefaultCodespace, err2.Error()))
 			return
 		}
-		nonce, _, err := ctx.GetNonceByAddress(fromAddr, false)
-		if err != nil {
-			return
+		var fromAddr sdk.AccAddress
+		var nonce uint64
+		from := r.FormValue("from")
+		if from != "" {
+			fromAddr = sdk.HexToAddress(from)
+			nonce, _, err = ctx.GetNonceByAddress(fromAddr, false)
+			if err != nil {
+				return
+			}
 		}
+
 		var gas uint64
 		gasStr := r.FormValue("gas")
 		if gasStr != "" {

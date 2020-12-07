@@ -1,6 +1,7 @@
 package types
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -17,8 +18,9 @@ const typeInt128 = "int128"
 const typeUint128 = "uint128"
 const typeString = "string"
 const typeBool = "bool"
+const typeBytes = "[u8]"
 const space = " "
-const validtypesTip = "; valid types: " + typeInt32 + space + typeUint32 + space + typeInt64 + space + typeUint64 + space  + typeInt128 + space  + typeUint128 + space  + typeString + space  + typeBool
+const validtypesTip = "; valid types: " + typeInt32 + space + typeUint32 + space + typeInt64 + space + typeUint64 + space  + typeInt128 + space  + typeUint128 + space  + typeString + space  + typeBool + space + typeBytes
 
 var WasmIdent = []byte("\x00\x61\x73\x6D")
 
@@ -40,6 +42,7 @@ func validKey(typeName string) error {
 		typeName == typeInt128 ||
 		typeName == typeString ||
 		typeName == typeBool ||
+		typeName == typeBytes ||
 		typeName == "" {
 		return nil
 	} else {
@@ -123,6 +126,18 @@ func ArgsToInput(args utils.CallData) (res []byte, err error){
 				return nil, errors.New(fmt.Sprintf("parse %d arg to bool failed", i+1))
 			}
 			sink.WriteBool(b)
+			continue
+		case typeBytes:
+			var s string
+			err := json.Unmarshal(args.Args[i], &s)
+			if err != nil{
+				return nil, errors.New(fmt.Sprintf("parse %d arg to bytes failed", i+1))
+			}
+			by, err := base64.StdEncoding.DecodeString(s)
+			if err != nil{
+				return nil, errors.New(fmt.Sprintf("parse %d arg to bytes failed", i+1))
+			}
+			sink.WriteBytes(by)
 			continue
 		}
 	}
