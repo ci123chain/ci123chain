@@ -31,13 +31,14 @@ const (
 	timeOut = time.Second * 10
 
 	DefaultTCP = "tcp://"
-	DefaultRPCPort = "26657"
+	DefaultRPCPort = "80"
 
+	DefaultPrefix = "tm."
 	DefaultWSEndpoint = "/websocket"
 )
 
 var (
-	DefaultPort = "26657"
+	DefaultPort = "80"
 	cdc = apptypes.MakeCodec()
 )
 func SetDefaultPort(port string) {
@@ -560,7 +561,7 @@ func (msg MessageContent) IsUnsubscribeAll() bool {
 }
 
 func GetConnection(addr string) (*rpcclient.HTTP, bool){
-	client := rpcclient.NewHTTP(addr, DefaultWSEndpoint)
+	client := rpcclient.NewHTTP(DefaultPrefix + addr, DefaultWSEndpoint)
 	err := client.Start()
 	if err != nil {
 		logger.Error("connect error: %s", err)
