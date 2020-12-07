@@ -744,8 +744,8 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 	sender = msgs[0].GetFromAddress().String()
 	txEvents := sdk.Events{
 		sdk.NewEvent(sdk.EventTypeInvalidTx,
-			sdk.NewAttribute(sdk.AttributeKeyMethod, operation),
-			sdk.NewAttribute(sdk.AttributeKeySender, sender),
+			sdk.NewAttribute([]byte(sdk.AttributeKeyMethod), []byte(operation)),
+			sdk.NewAttribute([]byte(sdk.AttributeKeySender), []byte(sender)),
 		)}
 	events = append(events, txEvents...)
 

@@ -51,8 +51,8 @@ type (
 	// Attribute defines an attribute wrapper where the types and value are
 	// strings instead of raw bytes.
 	Attribute struct {
-		Key   string `json:"types"`
-		Value string `json:"value,omitempty"`
+		Key   []byte `json:"key"`
+		Value []byte `json:"value"`
 	}
 
 	// Events defines a slice of Event objects
@@ -72,7 +72,7 @@ func NewEvent(ty string, attrs ...Attribute) Event {
 }
 
 // NewAttribute returns a new types/value Attribute object.
-func NewAttribute(k, v string) Attribute {
+func NewAttribute(k, v []byte) Attribute {
 	return Attribute{k, v}
 }
 
@@ -202,7 +202,7 @@ func StringifyEvent(e abci.Event) StringEvent {
 	for _, attr := range e.Attributes {
 		res.Attributes = append(
 			res.Attributes,
-			Attribute{string(attr.Key), string(attr.Value)},
+			Attribute{attr.Key, attr.Value},
 		)
 	}
 

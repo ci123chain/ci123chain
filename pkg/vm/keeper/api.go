@@ -231,7 +231,7 @@ func notifyContract(context unsafe.Pointer, ptr, size int32) {
 
 	attrs := []sdk.Attribute{}
 	for key, value := range event.Attr {
-		attrs = append(attrs, sdk.NewAttribute(key, toString(value)))
+		attrs = append(attrs, sdk.NewAttribute([]byte(key), []byte(toString(value))))
 	}
 	if runtimeCfg.Context != nil {
 		runtimeCfg.Context.EventManager().EmitEvent(

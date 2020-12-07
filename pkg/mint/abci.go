@@ -59,9 +59,9 @@ func EndBlocker(ctx sdk.Context, k keeper.MinterKeeper) []abci.Event {
 	allbonded := k.AllBonded(ctx)
 	event := abci.Event(sdk.NewEvent(
 		types.EventTypeMint,
-		sdk.NewAttribute(sdk.AttributeKeyTotalSupply, totalStakingSupply.String()),
-		sdk.NewAttribute(types.AttributeKeyLatestMinted, latestMintedCoin.Amount.String()),
-		sdk.NewAttribute(types.AttributeAllBonded, allbonded.Amount.String()),
+		sdk.NewAttribute([]byte(sdk.AttributeKeyTotalSupply), []byte(totalStakingSupply.String())),
+		sdk.NewAttribute([]byte(types.AttributeKeyLatestMinted), []byte(latestMintedCoin.Amount.String())),
+		sdk.NewAttribute([]byte(types.AttributeAllBonded), []byte(allbonded.Amount.String())),
 	))
 	events = append(events, event)
 	return events

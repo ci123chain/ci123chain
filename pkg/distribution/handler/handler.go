@@ -50,9 +50,9 @@ func handleMsgModifyWithdrawAddress(ctx sdk.Context, msg types.MsgSetWithdrawAdd
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeModifyWithdrawAddress,
-			sdk.NewAttribute(sdk.AttributeKeyMethod, types.EventTypeModifyWithdrawAddress),
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(sdk.AttributeKeySender, msg.FromAddress.String()),
+			sdk.NewAttribute([]byte(sdk.AttributeKeyMethod), []byte(types.EventTypeModifyWithdrawAddress)),
+			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(types.AttributeValueCategory)),
+			sdk.NewAttribute([]byte(sdk.AttributeKeySender), []byte(msg.FromAddress.String())),
 		),
 	)
 
@@ -74,10 +74,10 @@ func handleMsgWithdrawDelegatorReward(ctx sdk.Context, msg types.MsgWithdrawDele
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeWithdrawRewards,
-			sdk.NewAttribute(sdk.AttributeKeyMethod, types.EventTypeWithdrawRewards),
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(types.AttributeKeyWithdrawAddress, msg.FromAddress.String()),
-			sdk.NewAttribute(sdk.AttributeKeySender, msg.FromAddress.String()),
+			sdk.NewAttribute([]byte(sdk.AttributeKeyMethod), []byte(types.EventTypeWithdrawRewards)),
+			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(types.AttributeValueCategory)),
+			sdk.NewAttribute([]byte(types.AttributeKeyWithdrawAddress), []byte(msg.FromAddress.String())),
+			sdk.NewAttribute([]byte(sdk.AttributeKeySender), []byte(msg.FromAddress.String())),
 		),
 	)
 
@@ -103,10 +103,10 @@ func handleMsgWithdrawValidatorCommission(ctx sdk.Context, msg types.MsgWithdraw
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeWithdrawCommission,
-			sdk.NewAttribute(sdk.AttributeKeyMethod, types.EventTypeWithdrawCommission),
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(types.AttributeKeyWithdrawAddress, msg.FromAddress.String()),
-			sdk.NewAttribute(sdk.AttributeKeySender, msg.FromAddress.String()),
+			sdk.NewAttribute([]byte(sdk.AttributeKeyMethod), []byte(types.EventTypeWithdrawCommission)),
+			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(types.AttributeValueCategory)),
+			sdk.NewAttribute([]byte(types.AttributeKeyWithdrawAddress), []byte(msg.FromAddress.String())),
+			sdk.NewAttribute([]byte(sdk.AttributeKeySender), []byte(msg.FromAddress.String())),
 		),
 	)
 
@@ -122,9 +122,9 @@ func handleMsgFundCommunityPool(ctx sdk.Context, msg types.MsgFundCommunityPool,
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeFundCommunityPool,
-			sdk.NewAttribute(sdk.AttributeKeyMethod, types.EventTypeFundCommunityPool),
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(sdk.AttributeKeySender, msg.FromAddress.String()),
+			sdk.NewAttribute([]byte(sdk.AttributeKeyMethod), []byte(types.EventTypeFundCommunityPool)),
+			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(types.AttributeValueCategory)),
+			sdk.NewAttribute([]byte(sdk.AttributeKeySender), []byte(msg.FromAddress.String())),
 		),
 	)
 

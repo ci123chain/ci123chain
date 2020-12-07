@@ -26,9 +26,9 @@ func HandleMsgStoreContent(ctx sdk.Context, k keeper.InfrastructureKeeper, msg i
 	em := ctx.EventManager()
 	em.EmitEvents(sdk.Events{
 		sdk.NewEvent(transfer.EventType,
-			sdk.NewAttribute(sdk.AttributeKeyMethod, infrastructure.EventStoreContent),
-			sdk.NewAttribute(sdk.AttributeKeyModule, infrastructure.AttributeValueModule),
-			sdk.NewAttribute(sdk.AttributeKeySender, msg.FromAddress.String()),
+			sdk.NewAttribute([]byte(sdk.AttributeKeyMethod), []byte(infrastructure.EventStoreContent)),
+			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(infrastructure.AttributeValueModule)),
+			sdk.NewAttribute([]byte(sdk.AttributeKeySender), []byte(msg.FromAddress.String())),
 		),
 	})
 
