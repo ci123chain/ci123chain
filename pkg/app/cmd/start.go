@@ -30,7 +30,7 @@ const (
 	flagNodeKey        = "nodeKey" //node_key.json
 	flagPvs            = "pvs" //priv_validator_state.json
 	flagPvk            = "pvk" //priv_validator_key.json
-	version 		   = "CiChain v1.2.0"
+	version 		   = "CiChain testTM5"
 )
 
 func startCmd(ctx *app.Context, appCreator app.AppCreator) *cobra.Command {
