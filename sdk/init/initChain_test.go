@@ -36,6 +36,7 @@ func TestNewInitChainFiles(t *testing.T) {
 		{
 			Address:           sdk.HexToAddress(acc1.Address),
 			PubKey:            vpubKey1,
+			ConsensusAddress:  address1,
 			Tokens:            "10000000",
 			CommissionInfo:    CommissionInfo{
 				Rate:          1,
@@ -55,6 +56,7 @@ func TestNewInitChainFiles(t *testing.T) {
 		{
 			Address:           sdk.HexToAddress(acc2.Address),
 			PubKey:            vpubKey2,
+			ConsensusAddress:  address2,
 			Tokens:            "10000000",
 			CommissionInfo:    CommissionInfo{
 				Rate:          1,
