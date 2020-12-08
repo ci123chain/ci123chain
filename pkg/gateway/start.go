@@ -34,7 +34,7 @@ func Start() {
 	flag.String("statedb", "couchdb://couchdb_service:5984/ci123", "server resource")
 	flag.StringVar(&urlreg, "urlreg", "http://***:80", "reg for url connection to node")
 	flag.IntVar(&port, "port", 3030, "Port to serve")
-	flag.String("rpcport", "26657", "rpc address for websocket")
+	flag.String("rpcport", "80", "rpc address for websocket")
 	//flag.Parse()
 
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
