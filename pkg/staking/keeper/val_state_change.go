@@ -35,7 +35,7 @@ func (k StakingKeeper) BlockValidatorUpdates(ctx sdk.Context) []abcitypes.Valida
 		if err != nil {
 			continue
 		}
-		em := sdk.NewEventManager()
+		em := ctx.EventManager()
 		em.EmitEvent(
 			sdk.NewEvent(
 				types.EventTypeCompleteUnbonding,
@@ -58,7 +58,7 @@ func (k StakingKeeper) BlockValidatorUpdates(ctx sdk.Context) []abcitypes.Valida
 			continue
 		}
 
-		em := sdk.NewEventManager()
+		em := ctx.EventManager()
 		em.EmitEvent(
 			sdk.NewEvent(
 				types.EventTypeCompleteRedelegation,

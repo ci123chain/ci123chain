@@ -4,7 +4,6 @@ import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/mint/keeper"
 	"github.com/ci123chain/ci123chain/pkg/mint/types"
-	abci "github.com/tendermint/tendermint/abci/types"
 )
 
 func BeginBlocker(ctx sdk.Context, k keeper.MinterKeeper) {
@@ -51,18 +50,25 @@ func BeginBlocker(ctx sdk.Context, k keeper.MinterKeeper) {
 	//)
 }
 
-func EndBlocker(ctx sdk.Context, k keeper.MinterKeeper) []abci.Event {
+func EndBlocker(ctx sdk.Context, k keeper.MinterKeeper) {
 
 	latestMintedCoin := k.GetLatestMintedCoin(ctx)
-	events := make([]abci.Event, 0)
+	//events := make([]abci.Event, 0)
 	totalStakingSupply := k.StakingTokenSupply(ctx)
 	allbonded := k.AllBonded(ctx)
-	event := abci.Event(sdk.NewEvent(
-		types.EventTypeMint,
-		sdk.NewAttribute([]byte(sdk.AttributeKeyTotalSupply), []byte(totalStakingSupply.String())),
-		sdk.NewAttribute([]byte(types.AttributeKeyLatestMinted), []byte(latestMintedCoin.Amount.String())),
-		sdk.NewAttribute([]byte(types.AttributeAllBonded), []byte(allbonded.Amount.String())),
-	))
-	events = append(events, event)
-	return events
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeMint,
+			sdk.NewAttribute([]byte(sdk.AttributeKeyTotalSupply), []byte(totalStakingSupply.String())),
+			sdk.NewAttribute([]byte(types.AttributeKeyLatestMinted), []byte(latestMintedCoin.Amount.String())),
+			sdk.NewAttribute([]byte(types.AttributeAllBonded), []byte(allbonded.Amount.String())),
+		))
+	//event := abci.Event(sdk.NewEvent(
+	//	types.EventTypeMint,
+	//	sdk.NewAttribute([]byte(sdk.AttributeKeyTotalSupply), []byte(totalStakingSupply.String())),
+	//	sdk.NewAttribute([]byte(types.AttributeKeyLatestMinted), []byte(latestMintedCoin.Amount.String())),
+	//	sdk.NewAttribute([]byte(types.AttributeAllBonded), []byte(allbonded.Amount.String())),
+	//))
+	//events = append(events, event)
+	//return events
 }

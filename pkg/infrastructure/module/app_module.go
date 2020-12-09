@@ -29,7 +29,7 @@ func (am AppModule) BeginBlocker(ctx sdk.Context, _ abci.RequestBeginBlock) {
 	//do nothing
 }
 
-func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) ([]abci.ValidatorUpdate, []abci.Event) {
+func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
 	//do nothing
-	return nil, nil
+	return nil
 }

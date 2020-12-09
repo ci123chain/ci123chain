@@ -36,12 +36,12 @@ func handlerMsgUpgrade(ctx types.Context,k *keeper.OrderKeeper, msg *order.MsgUp
 	k.UpdateOrderBook(ctx, orderbook, &action)
 
 	em := ctx.EventManager()
-	em.EmitEvents(types.Events{
-		types.NewEvent(order.EventType,
-			types.NewAttribute([]byte(types.AttributeKeyMethod), []byte(order.AttributeValueAddShard)),
-			types.NewAttribute([]byte(types.AttributeKeyModule), []byte(order.AttributeValueCategory)),
-			types.NewAttribute([]byte(types.AttributeKeySender), []byte(msg.FromAddress.String())),
-		),
-	})
+	//em.EmitEvents(types.Events{
+	//	types.NewEvent(order.EventType,
+	//		types.NewAttribute([]byte(types.AttributeKeyMethod), []byte(order.AttributeValueAddShard)),
+	//		types.NewAttribute([]byte(types.AttributeKeyModule), []byte(order.AttributeValueCategory)),
+	//		types.NewAttribute([]byte(types.AttributeKeySender), []byte(msg.FromAddress.String())),
+	//	),
+	//})
 	return types.Result{Events: em.Events(),}
 }

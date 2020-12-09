@@ -25,14 +25,14 @@ func handlerMsgTransfer(ctx sdk.Context, am keeper.AccountKeeper, msg *transfer.
 		return err.Result()
 	}
 	em := ctx.EventManager()
-	em.EmitEvents(sdk.Events{
-		sdk.NewEvent(transfer.EventType,
-			sdk.NewAttribute([]byte(sdk.AttributeKeyMethod), []byte(transfer.AttributeValueTransfer)),
-			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(transfer.AttributeValueCategory)),
-			sdk.NewAttribute([]byte(sdk.AttributeKeySender), []byte(msg.FromAddress.String())),
-			sdk.NewAttribute([]byte(sdk.AttributeKeyReceiver), []byte(msg.To.String())),
-			sdk.NewAttribute([]byte(sdk.AttributeKeyAmount), []byte(msg.Amount.Amount.String())),
-		),
-	})
+	//em.EmitEvents(sdk.Events{
+	//	sdk.NewEvent(transfer.EventType,
+	//		sdk.NewAttribute([]byte(sdk.AttributeKeyMethod), []byte(transfer.AttributeValueTransfer)),
+	//		sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(transfer.AttributeValueCategory)),
+	//		sdk.NewAttribute([]byte(sdk.AttributeKeySender), []byte(msg.FromAddress.String())),
+	//		sdk.NewAttribute([]byte(sdk.AttributeKeyReceiver), []byte(msg.To.String())),
+	//		sdk.NewAttribute([]byte(sdk.AttributeKeyAmount), []byte(msg.Amount.Amount.String())),
+	//	),
+	//})
 	return sdk.Result{ Events: em.Events(), }
 }

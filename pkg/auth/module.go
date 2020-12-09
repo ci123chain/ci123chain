@@ -43,9 +43,9 @@ type AppModule struct {
 	AuthKeeper AuthKeeper
 }
 
-func (am AppModule) EndBlock(ctx abci_types.Context, req abci.RequestEndBlock) ([]abci.ValidatorUpdate, []abci.Event) {
+func (am AppModule) EndBlock(ctx abci_types.Context, req abci.RequestEndBlock) []abci.ValidatorUpdate {
 	//panic("implement me")
-	return []abci.ValidatorUpdate{}, nil
+	return nil
 }
 
 func (am AppModule) BeginBlocker(ctx abci_types.Context, req abci.RequestBeginBlock) {
