@@ -623,37 +623,25 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 	var sender string
 	var events sdk.Events
 	defer func() {
-
 		if r := recover(); r != nil {
 			switch rType := r.(type) {
 			case sdk.ErrorOutOfGas:
-				app.deferHandler(ctx, tx, true)
+				app.deferHandler(ctx, tx, true, mode == runTxModeSimulate)
 				log := fmt.Sprintf("out of gas in location: %v", rType.Descriptor)
 				result = sdk.ErrOutOfGas(log).Result()
 				result.GasUsed = gasWanted
 				result.Events = events
 			default:
-				if mode != runTxModeSimulate {
-					if r := recover(); r != nil {
-						switch rType := r.(type) {
-						case sdk.ErrorOutOfGas:
-							app.deferHandler(ctx, tx, true)
-							log := fmt.Sprintf("out of gas in location: %v", rType.Descriptor)
-							result = sdk.ErrOutOfGas(log).Result()
-							result.GasUsed = gasWanted
-						default:
-							res := app.deferHandler(ctx, tx, false)
-							log := fmt.Sprintf("recovered: %v\nstack:%v\n", r, string(debug.Stack()))
-							result = sdk.ErrInternal(log).Result()
-							result.GasUsed = res.GasUsed
-						}
-					} else {
-						res := app.deferHandler(ctx, tx, false)
-						result.GasUsed = res.GasUsed
-						result.Events = events
-					}
-				}
+				res := app.deferHandler(ctx, tx, false, mode == runTxModeSimulate)
+				log := fmt.Sprintf("recovered: %v\nstack:%v\n", r, string(debug.Stack()))
+				result = sdk.ErrInternal(log).Result()
+				result.GasUsed = res.GasUsed
+				result.Events = events
 			}
+		} else {
+			res := app.deferHandler(ctx, tx, false, mode == runTxModeSimulate)
+			result.GasUsed = res.GasUsed
+			result.Events = events
 		}
 		result.GasWanted = gasWanted
 	}()
@@ -831,3 +819,10 @@ func validateBasicTxMsgs(msgs []sdk.Msg, signer sdk.AccAddress) sdk.Error {
 
 	return nil
 }
+
+//func MsgEvents(msgs []sdk.Msg) {
+//	var attributes []sdk.Attribute
+//	for _, v := range msgs {
+//		//
+//	}
+//}

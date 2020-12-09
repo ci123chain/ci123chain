@@ -496,12 +496,6 @@ func getValidatorPower(context unsafe.Pointer, dataPtr, dataSize, valuePtr int32
 		i++
 	}
 
-	//根据链上信息返回验证者的 delegate shares
-	/*value := make([]uint64, len(validators))
-	for i := range value {
-		value[i] = uint64(i)
-	}*/
-
 	sink := wasmtypes.NewSink([]byte{})
 	for i := range value {
 		sink.WriteU128(value[i])

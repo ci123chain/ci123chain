@@ -38,7 +38,10 @@ func handleMsgCreateValidator(ctx sdk.Context, k keeper.StakingKeeper, msg staki
 	if _, found := k.GetValidator(ctx, msg.ValidatorAddress); found {
 		return types.ErrValidatorExisted(types.DefaultCodespace, errors.New(fmt.Sprintf("validator %s has existed", msg.ValidatorAddress.String()))).Result()
 	}
-	pk, _ := util.ParsePubKey(msg.PublicKey)
+	pk, err := util.ParsePubKey(msg.PublicKey)
+	if err != nil {
+		return types.ErrCheckParams(types.DefaultCodespace, "public_key").Result()
+	}
 
 	if _, found := k.GetValidatorByConsAddr(ctx, sdk.GetConsAddress(pk)); found {
 		return types.ErrValidatorExisted(types.DefaultCodespace, errors.New(fmt.Sprintf("the pubKey has been bonded"))).Result()

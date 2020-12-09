@@ -49,12 +49,13 @@ type ChainInfo struct {
 
 type ValidatorInfo struct {
 	PubKey		string 		`json:"pub_key"`
-	Name		string 				`json:"name"`
+	Name		string 		`json:"name"`
 }
 
 type StakingInfo struct {
 	Address 			types.AccAddress	`json:"address"`
-	PubKey				string		`json:"pub_key"`
+	PubKey				string				`json:"pub_key"`
+	ConsensusAddress    string      		`json:"consensus_address"`
 	Tokens				string				`json:"tokens"`
 	CommissionInfo  	CommissionInfo 		`json:"commission_info"`
 	UpdateTime 			time.Time 			`json:"update_time"`
@@ -306,6 +307,7 @@ func genesisStakingModule(appState map[string]json.RawMessage, stakingInfo []Sta
 		genesisValidators = append(genesisValidators, stypes.Validator{
 			OperatorAddress:   v.Address,
 			ConsensusKey:      v.PubKey,
+			ConsensusAddress:  v.ConsensusAddress,
 			Jailed:            false,
 			Status:            1,
 			Tokens:            tokens,
