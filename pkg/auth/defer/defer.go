@@ -10,8 +10,8 @@ import (
 const Price uint64 = 1
 //const unit = 1000
 func NewDeferHandler( ak account.AccountKeeper) sdk.DeferHandler {
-	return func(ctx sdk.Context, tx sdk.Tx, out bool) (res sdk.Result) {
-		if out {
+	return func(ctx sdk.Context, tx sdk.Tx, out bool, simulate bool) (res sdk.Result) {
+		if out || simulate{
 			return
 		}
 
