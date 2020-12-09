@@ -831,3 +831,10 @@ func validateBasicTxMsgs(msgs []sdk.Msg, signer sdk.AccAddress) sdk.Error {
 
 	return nil
 }
+
+//func MsgEvents(msgs []sdk.Msg) {
+//	var attributes []sdk.Attribute
+//	for _, v := range msgs {
+//		//
+//	}
+//}

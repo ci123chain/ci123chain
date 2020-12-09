@@ -133,7 +133,7 @@ func deleteDB(context unsafe.Pointer, keyPtr, keySize int32) {
 
 	realKey := memory[keyPtr: keyPtr + keySize]
 
-	fmt.Printf("delete key [%s]\n", string(realKey))
+	//fmt.Printf("delete key [%s]\n", string(realKey))
 
 	runtimeCfg.Store.Delete(realKey)
 }
