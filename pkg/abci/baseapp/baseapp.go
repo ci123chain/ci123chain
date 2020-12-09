@@ -812,7 +812,7 @@ func allMsgAttributes(msgs []sdk.Msg) [][]sdk.Attribute {
 			amount = vt.Amount.Amount.String()
 			module = distypes.AttributeValueCategory
 		case *distypes.MsgWithdrawDelegatorReward:
-			operation = "withdraw_reward"
+			operation = "withdraw_rewards"
 			module = distypes.AttributeValueCategory
 		case *distypes.MsgWithdrawValidatorCommission:
 			operation = "withdraw_commission"
@@ -851,7 +851,7 @@ func allMsgAttributes(msgs []sdk.Msg) [][]sdk.Attribute {
 			operation = "upload_contract"
 			module = staktypes.AttributeValueCategory
 		case *ordertypes.MsgUpgrade:
-			operation = "upgrade"
+			operation = "add_shard"
 			module = ordertypes.AttributeValueCategory
 		//case *ibctypes.MsgApplyIBC:
 		//	operation = "apply_ibc"
