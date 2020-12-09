@@ -47,14 +47,14 @@ func handleMsgModifyWithdrawAddress(ctx sdk.Context, msg types.MsgSetWithdrawAdd
 		return types.ErrHandleTxFailed(types.DefaultCodespace, err).Result()
 	}
 
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			types.EventTypeModifyWithdrawAddress,
-			sdk.NewAttribute([]byte(sdk.AttributeKeyMethod), []byte(types.EventTypeModifyWithdrawAddress)),
-			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(types.AttributeValueCategory)),
-			sdk.NewAttribute([]byte(sdk.AttributeKeySender), []byte(msg.FromAddress.String())),
-		),
-	)
+	//ctx.EventManager().EmitEvent(
+	//	sdk.NewEvent(
+	//		types.EventTypeModifyWithdrawAddress,
+	//		sdk.NewAttribute([]byte(sdk.AttributeKeyMethod), []byte(types.EventTypeModifyWithdrawAddress)),
+	//		sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(types.AttributeValueCategory)),
+	//		sdk.NewAttribute([]byte(sdk.AttributeKeySender), []byte(msg.FromAddress.String())),
+	//	),
+	//)
 
 	return sdk.Result{Events: ctx.EventManager().Events()}
 }
@@ -71,15 +71,15 @@ func handleMsgWithdrawDelegatorReward(ctx sdk.Context, msg types.MsgWithdrawDele
 		return types.ErrHandleTxFailed(types.DefaultCodespace, err).Result()
 	}
 
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			types.EventTypeWithdrawRewards,
-			sdk.NewAttribute([]byte(sdk.AttributeKeyMethod), []byte(types.EventTypeWithdrawRewards)),
-			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(types.AttributeValueCategory)),
-			sdk.NewAttribute([]byte(types.AttributeKeyWithdrawAddress), []byte(msg.FromAddress.String())),
-			sdk.NewAttribute([]byte(sdk.AttributeKeySender), []byte(msg.FromAddress.String())),
-		),
-	)
+	//ctx.EventManager().EmitEvent(
+	//	sdk.NewEvent(
+	//		types.EventTypeWithdrawRewards,
+	//		sdk.NewAttribute([]byte(sdk.AttributeKeyMethod), []byte(types.EventTypeWithdrawRewards)),
+	//		sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(types.AttributeValueCategory)),
+	//		sdk.NewAttribute([]byte(types.AttributeKeyWithdrawAddress), []byte(msg.FromAddress.String())),
+	//		sdk.NewAttribute([]byte(sdk.AttributeKeySender), []byte(msg.FromAddress.String())),
+	//	),
+	//)
 
 	return sdk.Result{Events: ctx.EventManager().Events()}
 }
@@ -100,15 +100,15 @@ func handleMsgWithdrawValidatorCommission(ctx sdk.Context, msg types.MsgWithdraw
 		return types.ErrHandleTxFailed(types.DefaultCodespace, err).Result()
 	}
 
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			types.EventTypeWithdrawCommission,
-			sdk.NewAttribute([]byte(sdk.AttributeKeyMethod), []byte(types.EventTypeWithdrawCommission)),
-			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(types.AttributeValueCategory)),
-			sdk.NewAttribute([]byte(types.AttributeKeyWithdrawAddress), []byte(msg.FromAddress.String())),
-			sdk.NewAttribute([]byte(sdk.AttributeKeySender), []byte(msg.FromAddress.String())),
-		),
-	)
+	//ctx.EventManager().EmitEvent(
+	//	sdk.NewEvent(
+	//		types.EventTypeWithdrawCommission,
+	//		sdk.NewAttribute([]byte(sdk.AttributeKeyMethod), []byte(types.EventTypeWithdrawCommission)),
+	//		sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(types.AttributeValueCategory)),
+	//		sdk.NewAttribute([]byte(types.AttributeKeyWithdrawAddress), []byte(msg.FromAddress.String())),
+	//		sdk.NewAttribute([]byte(sdk.AttributeKeySender), []byte(msg.FromAddress.String())),
+	//	),
+	//)
 
 	return sdk.Result{Events: ctx.EventManager().Events()}
 }
@@ -119,14 +119,14 @@ func handleMsgFundCommunityPool(ctx sdk.Context, msg types.MsgFundCommunityPool,
 		return types.ErrHandleTxFailed(types.DefaultCodespace, err).Result()
 	}
 
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			types.EventTypeFundCommunityPool,
-			sdk.NewAttribute([]byte(sdk.AttributeKeyMethod), []byte(types.EventTypeFundCommunityPool)),
-			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(types.AttributeValueCategory)),
-			sdk.NewAttribute([]byte(sdk.AttributeKeySender), []byte(msg.FromAddress.String())),
-		),
-	)
+	//ctx.EventManager().EmitEvent(
+	//	sdk.NewEvent(
+	//		types.EventTypeFundCommunityPool,
+	//		sdk.NewAttribute([]byte(sdk.AttributeKeyMethod), []byte(types.EventTypeFundCommunityPool)),
+	//		sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(types.AttributeValueCategory)),
+	//		sdk.NewAttribute([]byte(sdk.AttributeKeySender), []byte(msg.FromAddress.String())),
+	//	),
+	//)
 
 	return sdk.Result{Events: ctx.EventManager().Events()}
 }

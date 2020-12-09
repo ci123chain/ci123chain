@@ -29,7 +29,7 @@ func (am AppModule) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) {
 }
 
 // EndBlock function for module at end of block
-func (am AppModule) EndBlock(ctx sdk.Context, req abci.RequestEndBlock) ([]abci.ValidatorUpdate, []abci.Event) {
+func (am AppModule) EndBlock(ctx sdk.Context, req abci.RequestEndBlock) []abci.ValidatorUpdate {
 	return am.Keeper.EndBlock(ctx, req)
 }
 

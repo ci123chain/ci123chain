@@ -76,6 +76,13 @@ func NewAttribute(k, v []byte) Attribute {
 	return Attribute{k, v}
 }
 
+func NewAttributes(attributes []Attribute,attrs ...Attribute) []Attribute{
+	for _, attr := range attrs {
+		attributes = append(attributes, attr)
+	}
+	return attributes
+}
+
 // EmptyEvents returns an empty slice of events.
 func EmptyEvents() Events {
 	return make(Events, 0)
@@ -133,8 +140,14 @@ func toBytes(i interface{}) []byte {
 // Common event types and attribute keys
 var (
 	EventTypeMessage = "message"
-	EventTypeInvalidTx = "invalid_tx"
+	EventTypeType = "type"
+	//EventTypeInvalidTx = "invalid_tx"
+	//EventTypeValidTx = "valid_tx"
+	EventTypeMultiMsg = "multi_msg"
 
+	AttributeKeyTx = "tx"
+	AttributeKeyInvalidTx = "invalid_tx"
+	AttributeKeyValidTx = "valid_tx"
 	AttributeKeyMethod = "operation"
 	AttributeKeyModule = "module"
 	AttributeKeySender = "sender"

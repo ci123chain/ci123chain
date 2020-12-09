@@ -31,7 +31,7 @@ func (k *Keeper) BeginBlock(ctx sdk.Context, req abci.RequestBeginBlock) {
 // deleting the empty ones. It also sets the bloom filers for the request block to
 // the store. The EVM end block loginc doesn't update the validator set, thus it returns
 // an empty slice.
-func (k *Keeper) EndBlock(ctx sdk.Context, req abci.RequestEndBlock) ([]abci.ValidatorUpdate, []abci.Event) {
+func (k *Keeper) EndBlock(ctx sdk.Context, req abci.RequestEndBlock) []abci.ValidatorUpdate {
 	// Gas costs are handled within msg handler so costs should be ignored
 	ctx = ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
 
@@ -51,5 +51,5 @@ func (k *Keeper) EndBlock(ctx sdk.Context, req abci.RequestEndBlock) ([]abci.Val
 	bloom := ethtypes.BytesToBloom(k.Bloom.Bytes())
 	k.SetBlockBloom(ctx, req.Height, bloom)
 
-	return []abci.ValidatorUpdate{}, []abci.Event{}
+	return nil
 }

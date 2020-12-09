@@ -27,6 +27,6 @@ func (am AppModule) InitGenesis(ctx types.Context, data json.RawMessage) []abci.
 
 func (am AppModule) BeginBlocker(ctx types.Context, _ abci.RequestBeginBlock) {}
 
-func (am AppModule) EndBlock(_ types.Context, _ abci.RequestEndBlock) ([]abci.ValidatorUpdate, []abci.Event) {
-	return nil, nil
+func (am AppModule) EndBlock(_ types.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
+	return nil
 }

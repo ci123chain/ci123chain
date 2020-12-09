@@ -15,9 +15,9 @@ type AppModule struct {
 	OrderKeeper	*keeper.OrderKeeper
 }
 
-func (am AppModule) EndBlock(ctx sdk.Context, req abci.RequestEndBlock) ([]abci.ValidatorUpdate, []abci.Event) {
+func (am AppModule) EndBlock(ctx sdk.Context, req abci.RequestEndBlock) []abci.ValidatorUpdate {
 
-	return nil, nil
+	return nil
 }
 
 func (am AppModule) BeginBlocker(ctx  sdk.Context, req abci.RequestBeginBlock) {

@@ -20,7 +20,6 @@ import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/abci/version"
 	distypes "github.com/ci123chain/ci123chain/pkg/distribution/types"
-	ibctypes "github.com/ci123chain/ci123chain/pkg/ibc/types"
 	iftypes "github.com/ci123chain/ci123chain/pkg/infrastructure/types"
 	ordertypes "github.com/ci123chain/ci123chain/pkg/order/types"
 	staktypes "github.com/ci123chain/ci123chain/pkg/staking/types"
@@ -619,29 +618,34 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 	ctx = ctx.WithGasLimit(gasWanted)
 	ctx = ctx.WithNonce(tx.GetNonce())
 
-	var operation string
-	var sender string
-	var events sdk.Events
+	var all_attributes = make([][]sdk.Attribute, 0)
 	defer func() {
 		if r := recover(); r != nil {
 			switch rType := r.(type) {
 			case sdk.ErrorOutOfGas:
 				app.deferHandler(ctx, tx, true, mode == runTxModeSimulate)
-				log := fmt.Sprintf("out of gas in location: %v", rType.Descriptor)
-				result = sdk.ErrOutOfGas(log).Result()
+				newLog := fmt.Sprintf("out of gas in location: %v", rType.Descriptor)
+				result = sdk.ErrOutOfGas(newLog).Result()
 				result.GasUsed = gasWanted
-				result.Events = events
 			default:
 				res := app.deferHandler(ctx, tx, false, mode == runTxModeSimulate)
-				log := fmt.Sprintf("recovered: %v\nstack:%v\n", r, string(debug.Stack()))
-				result = sdk.ErrInternal(log).Result()
+				newLog := fmt.Sprintf("recovered: %v\nstack:%v\n", r, string(debug.Stack()))
+				result = sdk.ErrInternal(newLog).Result()
 				result.GasUsed = res.GasUsed
-				result.Events = events
+			}
+			for _, v := range all_attributes {
+				v = append(v, sdk.NewAttribute([]byte(sdk.EventTypeType), []byte(sdk.AttributeKeyInvalidTx)))
+				event := sdk.NewEvent(sdk.AttributeKeyTx, v...)
+				result.Events = append(result.Events, event)
 			}
 		} else {
 			res := app.deferHandler(ctx, tx, false, mode == runTxModeSimulate)
 			result.GasUsed = res.GasUsed
-			result.Events = events
+			for _, v := range all_attributes {
+				v = append(v, sdk.NewAttribute([]byte(sdk.EventTypeType), []byte(sdk.AttributeKeyValidTx)))
+				event := sdk.NewEvent(sdk.AttributeKeyTx, v...)
+				result.Events = append(result.Events, event)
+			}
 		}
 		result.GasWanted = gasWanted
 	}()
@@ -693,49 +697,8 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 
 	// Create a new context based off of the existing context with a cache wrapped
 	// multi-store in case message processing fails.
-	switch msgs[0].(type) {
-	case *transfer.MsgTransfer:
-		operation = "transfer"
-	case *distypes.MsgSetWithdrawAddress:
-		operation = "set_withdraw_address"
-	case *distypes.MsgFundCommunityPool:
-		operation = "fund_community_pool"
-	case *distypes.MsgWithdrawDelegatorReward:
-		operation = "withdraw_delegator_reward"
-	case *distypes.MsgWithdrawValidatorCommission:
-		operation = "withdraw_validator_commission"
-	case *staktypes.MsgEditValidator:
-		operation = "edit_validator"
-	case *staktypes.MsgCreateValidator:
-		operation = "create_validator"
-	case *staktypes.MsgDelegate:
-		operation = "delegate"
-	case *staktypes.MsgRedelegate:
-		operation = "redelegate"
-	case *staktypes.MsgUndelegate:
-		operation = "undelegate"
-	case *wasmtypes.MsgExecuteContract:
-		operation = "invoke_contract"
-	case *wasmtypes.MsgInstantiateContract:
-		operation = "init_contract"
-	case *wasmtypes.MsgMigrateContract:
-		operation = "migrate_contract"
-	case *wasmtypes.MsgUploadContract:
-		operation = "upload_contract"
-	case *ordertypes.MsgUpgrade:
-		operation = "upgrade"
-	case *ibctypes.MsgApplyIBC:
-		operation = "apply_ibc"
-	case *iftypes.MsgStoreContent:
-		operation = "store_content"
-	}
-	sender = msgs[0].GetFromAddress().String()
-	txEvents := sdk.Events{
-		sdk.NewEvent(sdk.EventTypeInvalidTx,
-			sdk.NewAttribute([]byte(sdk.AttributeKeyMethod), []byte(operation)),
-			sdk.NewAttribute([]byte(sdk.AttributeKeySender), []byte(sender)),
-		)}
-	events = append(events, txEvents...)
+
+	all_attributes = allMsgAttributes(msgs)
 
 	runMsgCtx, msCache := app.cacheTxContext(ctx, txBytes)
 	result = app.runMsgs(runMsgCtx, msgs, mode)
@@ -820,9 +783,94 @@ func validateBasicTxMsgs(msgs []sdk.Msg, signer sdk.AccAddress) sdk.Error {
 	return nil
 }
 
-//func MsgEvents(msgs []sdk.Msg) {
-//	var attributes []sdk.Attribute
-//	for _, v := range msgs {
-//		//
-//	}
-//}
+func allMsgAttributes(msgs []sdk.Msg) [][]sdk.Attribute {
+	var attributes = make([][]sdk.Attribute, 0)
+	var multiMsg string
+	if len(msgs) == 1{
+		multiMsg = "false"
+	}else {
+		multiMsg = "true"
+	}
+	for _, v := range msgs {
+		var operation = ""
+		var amount = ""
+		var receiver = "0x0000000000000000000000000000000000000000"
+		var module = ""
+		var attrs = make([]sdk.Attribute, 0)
+
+		switch vt := v.(type) {
+		case *transfer.MsgTransfer:
+			operation = "transfer"
+			amount = vt.Amount.Amount.String()
+			receiver = vt.To.String()
+			module = transfer.AttributeValueCategory
+		case *distypes.MsgSetWithdrawAddress:
+			operation = "modify_withdraw_address"
+			module = distypes.AttributeValueCategory
+		case *distypes.MsgFundCommunityPool:
+			operation = "fund_community_pool"
+			amount = vt.Amount.Amount.String()
+			module = distypes.AttributeValueCategory
+		case *distypes.MsgWithdrawDelegatorReward:
+			operation = "withdraw_rewards"
+			module = distypes.AttributeValueCategory
+		case *distypes.MsgWithdrawValidatorCommission:
+			operation = "withdraw_commission"
+			module = distypes.AttributeValueCategory
+		case *staktypes.MsgEditValidator:
+			operation = "edit_validator"
+			module = staktypes.AttributeValueCategory
+		case *staktypes.MsgCreateValidator:
+			operation = "create_validator"
+			amount = vt.Value.Amount.String()
+			module = staktypes.AttributeValueCategory
+		case *staktypes.MsgDelegate:
+			operation = "delegate"
+			amount = vt.Amount.Amount.String()
+			module = staktypes.AttributeValueCategory
+		case *staktypes.MsgRedelegate:
+			operation = "redelegate"
+			amount = vt.Amount.Amount.String()
+			module = staktypes.AttributeValueCategory
+		case *staktypes.MsgUndelegate:
+			operation = "undelegate"
+			amount = vt.Amount.Amount.String()
+			module = staktypes.AttributeValueCategory
+		case *wasmtypes.MsgExecuteContract:
+			operation = "invoke_contract"
+			receiver = vt.Contract.String()
+			module = staktypes.AttributeValueCategory
+		case *wasmtypes.MsgInstantiateContract:
+			operation = "init_contract"
+			module = staktypes.AttributeValueCategory
+		case *wasmtypes.MsgMigrateContract:
+			operation = "migrate_contract"
+			receiver = vt.Contract.String()
+			module = staktypes.AttributeValueCategory
+		case *wasmtypes.MsgUploadContract:
+			operation = "upload_contract"
+			module = staktypes.AttributeValueCategory
+		case *ordertypes.MsgUpgrade:
+			operation = "add_shard"
+			module = ordertypes.AttributeValueCategory
+		//case *ibctypes.MsgApplyIBC:
+		//	operation = "apply_ibc"
+		//	module = ibctypes.ModuleName
+		case *iftypes.MsgStoreContent:
+			operation = "store_content"
+			module = iftypes.ModuleName
+		}
+
+		attrs = sdk.NewAttributes(attrs,
+			sdk.NewAttribute([]byte(sdk.AttributeKeySender), []byte(v.GetFromAddress().String())),
+			sdk.NewAttribute([]byte(sdk.AttributeKeyReceiver), []byte(receiver)),
+			sdk.NewAttribute([]byte(sdk.AttributeKeyMethod),[]byte(operation)),
+			sdk.NewAttribute([]byte(sdk.AttributeKeyAmount), []byte(amount)),
+			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(module)),
+			sdk.NewAttribute([]byte(sdk.EventTypeMultiMsg), []byte(multiMsg)),
+		)
+
+		attributes = append(attributes, attrs)
+	}
+	return attributes
+}

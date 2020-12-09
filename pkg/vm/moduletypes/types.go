@@ -21,7 +21,7 @@ const (
 type KeeperI interface {
 	BeginBlock(ctx sdk.Context, req abci.RequestBeginBlock)
 
-	EndBlock(ctx sdk.Context, req abci.RequestEndBlock) ([]abci.ValidatorUpdate, []abci.Event)
+	EndBlock(ctx sdk.Context, req abci.RequestEndBlock) []abci.ValidatorUpdate
 
 	Upload(ctx sdk.Context, wasmCode []byte, creator sdk.AccAddress) (codeHash []byte, err error)
 

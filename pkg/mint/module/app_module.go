@@ -41,7 +41,7 @@ func (am AppModule) BeginBlocker(ctx sdk.Context, _ abci.RequestBeginBlock) {
 	mint.BeginBlocker(ctx, am.Keeper)
 }
 
-func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) ([]abci.ValidatorUpdate, []abci.Event) {
-	events := mint.EndBlocker(ctx, am.Keeper)
-	return nil, events
+func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
+	mint.EndBlocker(ctx, am.Keeper)
+	return nil
 }
