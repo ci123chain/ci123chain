@@ -20,7 +20,6 @@ import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/abci/version"
 	distypes "github.com/ci123chain/ci123chain/pkg/distribution/types"
-	ibctypes "github.com/ci123chain/ci123chain/pkg/ibc/types"
 	iftypes "github.com/ci123chain/ci123chain/pkg/infrastructure/types"
 	ordertypes "github.com/ci123chain/ci123chain/pkg/order/types"
 	staktypes "github.com/ci123chain/ci123chain/pkg/staking/types"
@@ -806,17 +805,17 @@ func allMsgAttributes(msgs []sdk.Msg) [][]sdk.Attribute {
 			receiver = vt.To.String()
 			module = transfer.AttributeValueCategory
 		case *distypes.MsgSetWithdrawAddress:
-			operation = "set_withdraw_address"
+			operation = "modify_withdraw_address"
 			module = distypes.AttributeValueCategory
 		case *distypes.MsgFundCommunityPool:
 			operation = "fund_community_pool"
 			amount = vt.Amount.Amount.String()
 			module = distypes.AttributeValueCategory
 		case *distypes.MsgWithdrawDelegatorReward:
-			operation = "withdraw_delegator_reward"
+			operation = "withdraw_reward"
 			module = distypes.AttributeValueCategory
 		case *distypes.MsgWithdrawValidatorCommission:
-			operation = "withdraw_validator_commission"
+			operation = "withdraw_commission"
 			module = distypes.AttributeValueCategory
 		case *staktypes.MsgEditValidator:
 			operation = "edit_validator"
@@ -854,9 +853,9 @@ func allMsgAttributes(msgs []sdk.Msg) [][]sdk.Attribute {
 		case *ordertypes.MsgUpgrade:
 			operation = "upgrade"
 			module = ordertypes.AttributeValueCategory
-		case *ibctypes.MsgApplyIBC:
-			operation = "apply_ibc"
-			module = ibctypes.ModuleName
+		//case *ibctypes.MsgApplyIBC:
+		//	operation = "apply_ibc"
+		//	module = ibctypes.ModuleName
 		case *iftypes.MsgStoreContent:
 			operation = "store_content"
 			module = iftypes.ModuleName
