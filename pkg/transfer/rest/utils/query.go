@@ -2,6 +2,8 @@ package utils
 
 import (
 	"encoding/hex"
+	"errors"
+	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/transfer/types"
@@ -39,6 +41,25 @@ func QueryTx(cliCtx context.Context, hashHexStr string) (sdk.TxResponse, sdk.Err
 	return out, nil
 }
 
+func QueryTxsWithHeight(cliCtx context.Context, heights []int64) ([]sdk.TxsResult, sdk.Error) {
+	var results = make([]sdk.TxsResult, 0)
+	for _, v := range heights {
+		var result sdk.TxsResult
+		res, getErr := getTxsHash(cliCtx, v)
+		if getErr != nil {
+			result.Hashes = nil
+			result.Height = v
+			result.Error = getErr.Error()
+		}else {
+			result.Error = ""
+			result.Height = v
+			result.Hashes = res
+		}
+		results = append(results, result)
+	}
+	return results, nil
+}
+
 
 func getBlocksForTxResults(cliCtx context.Context, resTxs []*ctypes.ResultTx) (map[int64]*ctypes.ResultBlock, error) {
 	node, err := cliCtx.GetNode()
@@ -59,6 +80,25 @@ func getBlocksForTxResults(cliCtx context.Context, resTxs []*ctypes.ResultTx) (m
 	}
 
 	return resBlocks, nil
+}
+
+func getTxsHash(cliCtx context.Context, height int64) ([]string, error) {
+	node, err := cliCtx.GetNode()
+	if err != nil {
+		return nil, err
+	}
+	hashes := make([]string, 0)
+	block, err := node.Block(&height)
+	if err != nil {
+		return nil, err
+	}
+	if block == nil {
+		return nil, errors.New(fmt.Sprintf("the height %d, has no block", height))
+	}
+	for _, v := range block.Block.Data.Txs{
+		hashes = append(hashes, hex.EncodeToString(v.Hash()))
+	}
+	return hashes, nil
 }
 
 
