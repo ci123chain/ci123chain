@@ -45,15 +45,15 @@ func QueryTxsWithHeight(cliCtx context.Context, heights []int64) ([]sdk.TxsResul
 	var results = make([]sdk.TxsResult, 0)
 	for _, v := range heights {
 		var result sdk.TxsResult
-		res, getErr := getTxsHash(cliCtx, v)
+		res, getErr := getTxsInfo(cliCtx, v)
 		if getErr != nil {
-			result.Hashes = nil
+			result.Txs = nil
 			result.Height = v
 			result.Error = getErr.Error()
 		}else {
 			result.Error = ""
 			result.Height = v
-			result.Hashes = res
+			result.Txs = res
 		}
 		results = append(results, result)
 	}
@@ -82,12 +82,12 @@ func getBlocksForTxResults(cliCtx context.Context, resTxs []*ctypes.ResultTx) (m
 	return resBlocks, nil
 }
 
-func getTxsHash(cliCtx context.Context, height int64) ([]string, error) {
+func getTxsInfo(cliCtx context.Context, height int64) ([]sdk.TxInfo, error) {
 	node, err := cliCtx.GetNode()
 	if err != nil {
 		return nil, err
 	}
-	hashes := make([]string, 0)
+	infoes := make([]sdk.TxInfo, 0)
 	block, err := node.Block(&height)
 	if err != nil {
 		return nil, err
@@ -96,9 +96,16 @@ func getTxsHash(cliCtx context.Context, height int64) ([]string, error) {
 		return nil, errors.New(fmt.Sprintf("the height %d, has no block", height))
 	}
 	for _, v := range block.Block.Data.Txs{
-		hashes = append(hashes, hex.EncodeToString(v.Hash()))
+		///hashes = append(hashes, hex.EncodeToString(v.Hash()))
+		resTx, _ := node.Tx(v.Hash(), true)
+		index := resTx.Index
+		info := sdk.TxInfo{
+			Hash:  hex.EncodeToString(v.Hash()),
+			Index: index,
+		}
+		infoes = append(infoes, info)
 	}
-	return hashes, nil
+	return infoes, nil
 }
 
 

@@ -76,6 +76,7 @@ func (logs ABCIMessageLogs) String() (str string) {
 type TxResponse struct {
 	Height    int64           `json:"height,omitempty"`
 	TxHash    string          `json:"txhash"`
+	Index     uint32          `json:"index"`
 	Code      uint32          `json:"code"`
 	FormatData string		  `json:"format_data,omitempty"`
 	Data      string          `json:"data,omitempty"`
@@ -107,6 +108,7 @@ func NewResponseResultTx(res *ctypes.ResultTx, tx Tx, timestamp string) TxRespon
 		TxHash:    res.Hash.String(),
 		Height:    res.Height,
 		Code:      res.TxResult.Code,
+		Index:     res.Index,
 		FormatData: string(res.TxResult.Data),
 		Data:      strings.ToUpper(hex.EncodeToString(res.TxResult.Data)),
 		//FormatData: string(res.TxResult.Data),

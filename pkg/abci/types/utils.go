@@ -109,8 +109,13 @@ func Paginate(numObjs, page, limit, defLimit int) (start, end int) {
 //}
 type Heights []int64
 
+type TxInfo struct {
+	Hash    string   `json:"hash"`
+	Index   uint32   `json:"index"`
+}
+
 type TxsResult struct {
 	Height int64   `json:"height"`
-	Hashes []string `json:"hashes"`
+	Txs []TxInfo `json:"hashes"`
 	Error  string    `json:"error"`
 }
