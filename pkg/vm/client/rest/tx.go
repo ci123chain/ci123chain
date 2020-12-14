@@ -112,12 +112,12 @@ func instantiateContractHandler(cliCtx context.Context,w http.ResponseWriter, r 
 		return
 	}
 	var args utils.CallData
-	args_str := r.FormValue("calldata")
-	if args_str == "" {
+	argsStr := r.FormValue("calldata")
+	if argsStr == "" {
 		rest.WriteErrorRes(w, wasmtypes.ErrCheckParams(vmmodule.DefaultCodespace, "get callData failed"))
 		return
 	}else {
-		err := json.Unmarshal([]byte(args_str), &args)
+		err := json.Unmarshal([]byte(argsStr), &args)
 		if err != nil  {
 			rest.WriteErrorRes(w, wasmtypes.ErrCheckParams(vmmodule.DefaultCodespace, "get callData failed"))
 			return

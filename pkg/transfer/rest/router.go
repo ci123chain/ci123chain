@@ -14,4 +14,5 @@ func RegisterTxRoutes(cliCtx context.Context, r *mux.Router)  {
 	r.HandleFunc("/tx/transfers", rest.MiddleHandler(cliCtx, SendRequestHandlerFn, types.DefaultCodespace)).Methods("POST")
 	r.HandleFunc("/tx/broadcast", BroadcastTxRequest(cliCtx)).Methods("POST")
 	r.HandleFunc("/tx/broadcast_async", BroadcastTxRequestAsync(cliCtx)).Methods("POST")
+	r.HandleFunc("/tx/query/block_txs", QueryTxsWithHeight(cliCtx)).Methods("POST")
 }
