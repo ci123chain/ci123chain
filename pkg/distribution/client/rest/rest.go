@@ -29,7 +29,7 @@ func checkDelegatorAddressVar(w http.ResponseWriter, r *http.Request) (string, b
 }
 
 func checkValidatorAddressVar(w http.ResponseWriter, r *http.Request) (string, bool) {
-	address := r.FormValue("account_address")
+	address := r.FormValue("validator_address")
 	checkErr := util.CheckStringLength(42, 100, address)
 	if checkErr != nil {
 		rest.WriteErrorRes(w,types.ErrBadAddress(types.DefaultCodespace, checkErr))
