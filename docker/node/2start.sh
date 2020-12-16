@@ -41,6 +41,6 @@ if [ ! -d $CI_LOGDIR ]; then
 fi
 
 # start
-nohup ./cid-linux start >> $CI_LOGDIR/cid-output.log 2>&1 &
-./cli-linux rest-server --laddr=tcp://0.0.0.0:80 >> $CI_LOGDIR/rest-output.log 2>&1
+nohup ./cli-linux rest-server --laddr=tcp://0.0.0.0:80 >> $CI_LOGDIR/rest-output.log 2>&1 &
+./cid-linux start --home=$CI_HOME >> $CI_LOGDIR/cid-output.log 2>&1
 
