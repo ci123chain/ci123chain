@@ -38,6 +38,16 @@ func checkValidatorAddressVar(w http.ResponseWriter, r *http.Request) (string, b
 	return address, true
 }
 
+func checkAccountAddressVar(w http.ResponseWriter, r *http.Request) (string, bool) {
+	address := r.FormValue("account_address")
+	checkErr := util.CheckStringLength(42, 100, address)
+	if checkErr != nil {
+		rest.WriteErrorRes(w,types.ErrBadAddress(types.DefaultCodespace, checkErr))
+		return "", false
+	}
+	return address, true
+}
+
 /*
 func checkWithdrawAddressVar(w http.ResponseWriter, r *http.Request) (string, error) {
 	address := r.FormValue("withdraw_address")

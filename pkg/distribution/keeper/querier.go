@@ -148,26 +148,30 @@ func queryDelegatorAccountInfo(ctx sdk.Context, req abci.RequestQuery, k DistrKe
 
 	balance := k.AccountKeeper.GetBalance(ctx, params.AccountAddress)
 
-	validator, found := k.StakingKeeper.GetValidator(ctx, params.AccountAddress)
+	//validator, found := k.StakingKeeper.GetValidator(ctx, params.AccountAddress)
+	//if !found {
+	//	zero := sdk.NewEmptyCoin()
+	//	result := types.NewDelegatorAccountInfo(balance, zero, zero, zero, zero)
+	//	res := types.DistributionCdc.MustMarshalJSON(result)
+	//	return res, nil
+	//}
+	_, found := k.StakingKeeper.GetValidator(ctx, params.AccountAddress)
+	var commission sdk.Coin
 	if !found {
-		zero := sdk.NewEmptyCoin()
-		result := types.NewDelegatorAccountInfo(balance, zero, zero, zero, zero)
-		res := types.DistributionCdc.MustMarshalJSON(result)
-		return res, nil
+		commission = sdk.NewEmptyCoin()
+	}else {
+		cs := k.GetValidatorAccumulatedCommission(ctx, params.AccountAddress).Commission
+		commission = sdk.NewCoin(cs.Amount.RoundInt())
 	}
 
-	cs := k.GetValidatorAccumulatedCommission(ctx, params.AccountAddress).Commission
-	commission := sdk.NewCoin(cs.Amount.RoundInt())
+	//del := k.StakingKeeper.Delegation(ctx, params.AccountAddress, params.AccountAddress)
+	//if del == nil {
+	//	return nil, types.ErrNoDelegationExist(types.DefaultCodespace, params.AccountAddress.String(), params.AccountAddress.String())
+	//}
 
-	del := k.StakingKeeper.Delegation(ctx, params.AccountAddress, params.AccountAddress)
-	if del == nil {
-		return nil, types.ErrNoDelegationExist(types.DefaultCodespace, params.AccountAddress.String(), params.AccountAddress.String())
-	}
-
-	endingPeriod := k.incrementValidatorPeriod(ctx, validator)
-	rw := k.calculateDelegationRewards(ctx, validator, del, endingPeriod)
-	rewards := sdk.NewCoin(rw.Amount.RoundInt())
-
+	//endingPeriod := k.incrementValidatorPeriod(ctx, validator)
+	//rw := k.calculateDelegationRewards(ctx, validator, del, endingPeriod)
+	rewards := sdk.NewEmptyCoin() //sdk.NewCoin(rw.Amount.RoundInt())
 	ctxTime := ctx.BlockHeader().Time
 	matureUnbonds := k.StakingKeeper.DequeueAllMatureUBDQueue(ctx, ctxTime)
 	unbondings := sdk.NewEmptyCoin()//all unboding balance
@@ -193,6 +197,10 @@ func queryDelegatorAccountInfo(ctx sdk.Context, req abci.RequestQuery, k DistrKe
 
 	delegations := k.StakingKeeper.GetAllDelegatorDelegations(ctx, params.AccountAddress)
 	for _, v := range delegations {
+		validator, _ := k.StakingKeeper.GetValidator(ctx, params.AccountAddress)
+		endingPeriod := k.incrementValidatorPeriod(ctx, validator)
+		rw := k.calculateDelegationRewards(ctx, validator, v, endingPeriod)
+		rewards = rewards.Add(sdk.NewCoin(rw.Amount.RoundInt()))
 		amt := sdk.NewCoin(v.GetShares().RoundInt())
 		delegated = delegated.Add(amt)
 	}

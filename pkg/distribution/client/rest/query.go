@@ -208,11 +208,11 @@ func queryDelegatorRewardsHandleFn(cliCtx context.Context) http.HandlerFunc {
 
 func QueryDelegatorAccountInfoHandleFn(cliCtx context.Context) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
-		deledatorAddress, ok := checkValidatorAddressVar(writer, request)
+		accountAddress, ok := checkAccountAddressVar(writer, request)
 		if !ok {
 			return
 		}
-		b := cliCtx.Cdc.MustMarshalJSON(types.NewQueryDelegatorBalanceParams(sdk.HexToAddress(deledatorAddress)))
+		b := cliCtx.Cdc.MustMarshalJSON(types.NewQueryDelegatorBalanceParams(sdk.HexToAddress(accountAddress)))
 
 		res, _, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryAccountInfo, b, false)
 

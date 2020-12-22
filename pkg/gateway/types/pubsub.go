@@ -420,6 +420,18 @@ func (r *PubSubRoom) Unsubscribe(topic string) {
 	}
 }
 
+func (r *PubSubRoom) RemoveAllTMConnections() {
+	for k, v := range r.ConnMap {
+		r.HasCreatedConn[k] = false
+		for _, val := range v {
+			if val != nil {
+				_ = val.Close()
+			}
+		}
+		delete(r.ConnMap, k)
+	}
+}
+
 func Notify(r *PubSubRoom, topic string, m SendMessage) {
 	by, _ := json.Marshal(m)
 	logger.Debug("publish message: %s, on topic : %s", string(by), topic)

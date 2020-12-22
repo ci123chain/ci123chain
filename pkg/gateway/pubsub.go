@@ -42,18 +42,38 @@ func checkBackend() {
 	for {
 		select {
 		case <-t.C:
+			logger.Info("Start backend check...")
+			var connectErr bool
+			for k, v := range pubsubRoom.Connections {
+				_, err := v.Health()
+				if err != nil {
+					logger.Error("lost connect on:", k)
+					logger.Error("health check error: ", err.Error())
+					connectErr = true
+					break
+				}
+			}
+			if connectErr {
+				logger.Error("Lost connect, remove all subscribe")
+				pubsubRoom.Mutex.Lock()
+				pubsubRoom.RemoveAllTMConnections()
+				pubsubRoom.Mutex.Unlock()
+			}
 			spByte, _ := json.Marshal(serverPool.backends)
 			spHash := makeHash(spByte)
 			prByte, _ := json.Marshal(pubsubRoom.GetBackends())
 			prHash := makeHash(prByte)
 			if !bytes.Equal(spHash, prHash) {
 				pubsubRoom.Mutex.Lock()
+				logger.Info("set backends")
 				pubsubRoom.SetBackends(serverPool.backends)
 				pubsubRoom.Mutex.Unlock()
 				if pubsubRoom.HasClientConnect() {
+					logger.Info("add shard subscribe")
 					pubsubRoom.AddShard()
 				}
 			}
+			logger.Info("Backend check completed")
 		}
 	}
 }
