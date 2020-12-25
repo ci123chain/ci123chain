@@ -25,8 +25,15 @@ func NewLBProxy(pt types.ProxyType) *LBProxy {
 }
 
 func (lbp *LBProxy) Handle(r *http.Request, backends []types.Instance, RequestParams map[string]string) []byte {
-
-	url := lbp.Policy.NextPeer(backends).URL()
+	u := lbp.Policy.NextPeer(backends)
+	for u == nil {
+		u = lbp.Policy.NextPeer(backends)
+		if u != nil {
+			break
+		}
+	}
+	url := u.URL()
+	//url := lbp.Policy.NextPeer(backends).URL()
 	b, _, err := SendRequest(url, r, RequestParams)
 	if err != nil {
 		res, _ := json.Marshal(types.ErrorResponse{

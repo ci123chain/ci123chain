@@ -17,7 +17,9 @@ type Response struct {
 
 func SendRequest(requestUrl *url.URL,r *http.Request, RequestParams map[string]string) ([]byte, *http.Response, error) {
 
-	cli := &http.Client{}
+	cli := &http.Client{
+		Transport:&http.Transport{DisableKeepAlives:true},
+	}
 	reqUrl := "http://" + requestUrl.Host + r.URL.Path
 	data := url.Values{}
 	for k, v := range RequestParams {
@@ -25,10 +27,12 @@ func SendRequest(requestUrl *url.URL,r *http.Request, RequestParams map[string]s
 	}
 
 	req2, err := http.NewRequest(r.Method, reqUrl, strings.NewReader(data.Encode()))
+
 	if err != nil {
 		return nil, nil, err
 	}
 	req2.Body = ioutil.NopCloser(strings.NewReader(data.Encode()))
+	defer req2.Body.Close()
 	//not use one connection
 	req2.Close = true
 

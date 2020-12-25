@@ -1,8 +1,12 @@
 #!/bin/bash
-if [ $GATEWAY ]; then
-    ./cproxy-linux
-    exit 0
-fi
+
+
+#export CI_HOME="/Users/tanhui/Documents/work/golang/ci123chain/docker/node/test3"
+export CI_VALIDATOR_KEY="BpiPMqeXTNJLBg6hRoWJjsjOLSHIQRIrkQlykLQ/0AE="
+export CI_PUBKEY="Ap0lbWGAnzfqpc0D0GL081WCnWatdk2d5B21orPl30AS"
+export CI_CHAIN_ID="testchain123"
+export CI_STATEDB="couchdb://admin:123rewQAQtre56@193.112.144.129:5984/test1230"
+
 
 if [ -z $CI_HOME ];
 then
@@ -42,5 +46,4 @@ fi
 
 # start
 nohup ./cli-linux rest-server --laddr=tcp://0.0.0.0:80 >> $CI_LOGDIR/rest-output.log 2>&1 &
-./cid-linux start --home=$CI_HOME >> $CI_LOGDIR/cid-output.log 2>&1
-
+./cid-linux start >> $CI_LOGDIR/cid-output.log 2>&1

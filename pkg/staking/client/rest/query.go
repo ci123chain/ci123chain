@@ -438,7 +438,8 @@ func operatorAddressSetQueryHandleFn(cliCtx context.Context) http.HandlerFunc {
 		for _, v := range sets {
 			b, err := hex.DecodeString(v)
 			if err != nil {
-				panic(err)
+				rest.WriteErrorRes(w, transfer.ErrQueryTx(types.DefaultCodespace, err.Error()))
+				return
 			}
 			params.ConsAddresses = append(params.ConsAddresses, sdk.AccAddr(b))
 		}
