@@ -19,10 +19,11 @@ type PrivateAccountAPI struct {
 }
 
 // NewAPI creates an instance of the public Personal Eth API.
-func NewAPI(ethAPI *eth.PublicEthereumAPI) *PrivateAccountAPI {
+func NewAPI(ethAPI *eth.PublicEthereumAPI, keys map[common.Address]string) *PrivateAccountAPI {
 	api := &PrivateAccountAPI{
 		ethAPI: ethAPI,
 		logger: log.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", "json-rpc", "namespace", "personal"),
+		keys: keys,
 	}
 
 	return api
@@ -39,15 +40,7 @@ func (api *PrivateAccountAPI) ImportRawKey(privkey string) (common.Address, erro
 		return common.Address{}, err
 	}
 	address := common.HexToAddress(crypto.PubkeyToAddress(key.PublicKey).Hex())
-	keys := api.ethAPI.GetKeys()
-	if keys == nil {
-		keys := make(map[common.Address]string)
-		keys[address] = privkey
-		api.ethAPI.SetKeys(keys)
-	} else {
-		keys[address] = privkey
-		api.ethAPI.SetKeys(keys)
-	}
+	api.keys[address] = privkey
 
 	return address, nil
 }
@@ -62,7 +55,6 @@ func (api *PrivateAccountAPI) LockAccount(address common.Address) bool {
 		delete(keys, address)
 		return true
 	}
-
 	return false
 }
 

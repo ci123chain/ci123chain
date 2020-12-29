@@ -32,7 +32,7 @@ func GetAPIs(clientCtx clientcontext.Context, keys map[common.Address]string) []
 		{
 			Namespace: PersonalNamespace,
 			Version:   apiVersion,
-			Service:   personal.NewAPI(ethAPI),
+			Service:   personal.NewAPI(ethAPI, keys),
 			Public:    false,
 		},
 	}

@@ -4,6 +4,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/vm/wasmtypes"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/gorilla/mux"
 
 	"github.com/ethereum/go-ethereum/rpc"
@@ -34,7 +35,7 @@ func registerQueryRoutes(cliCtx context.Context, r *mux.Router) {
 func registerApiRoutes(cliCtx context.Context, r *mux.Router) {
 	server := rpc.NewServer()
 
-	apis := GetAPIs(cliCtx, nil)
+	apis := GetAPIs(cliCtx, make(map[common.Address]string))
 
 	// Register all the APIs exposed by the namespace services
 	// TODO: handle allowlist and private APIs
