@@ -5,11 +5,14 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/vm/wasmtypes"
 	"github.com/gorilla/mux"
+
+	"github.com/ethereum/go-ethereum/rpc"
 )
 
 func RegisterRoutes(cliCtx context.Context, r *mux.Router) {
 	registerTxRoutes(cliCtx, r)
 	registerQueryRoutes(cliCtx, r)
+	registerApiRoutes(cliCtx, r)
 }
 
 func registerTxRoutes(cliCtx context.Context, r *mux.Router)  {
@@ -26,4 +29,21 @@ func registerQueryRoutes(cliCtx context.Context, r *mux.Router) {
 	r.HandleFunc("/vm/contract/list", listContractsByCodeHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/vm/contract/info", queryContractHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/vm/contract/query", queryContractStateAllHandlerFn(cliCtx)).Methods("POST")
+}
+
+func registerApiRoutes(cliCtx context.Context, r *mux.Router) {
+	server := rpc.NewServer()
+
+	apis := GetAPIs(cliCtx, nil)
+
+	// Register all the APIs exposed by the namespace services
+	// TODO: handle allowlist and private APIs
+	for _, api := range apis {
+		if err := server.RegisterName(api.Namespace, api.Service); err != nil {
+			panic(err)
+		}
+	}
+
+	// Web3 RPC API route
+	r.HandleFunc("/", server.ServeHTTP).Methods("POST", "OPTIONS")
 }
