@@ -9,6 +9,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	"github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
+	"github.com/ethereum/go-ethereum/rlp"
 	"math/big"
 	"os"
 	"sync"
@@ -225,24 +226,23 @@ func (api *PublicEthereumAPI) SendTransaction(args SendTxArgs) (common.Hash, err
 // SendRawTransaction send a raw Ethereum transaction.
 func (api *PublicEthereumAPI) SendRawTransaction(data hexutil.Bytes) (common.Hash, error) {
 	api.logger.Debug("eth_sendRawTransaction", "data", data)
-	//tx := new(evmtypes.MsgEthereumTx)
-	//
-	//// RLP decode raw transaction bytes
-	//if err := rlp.DecodeBytes(data, tx); err != nil {
-	//	// Return nil is for when gasLimit overflows uint64
-	//	return common.Hash{}, nil
-	//}
-	//
+	tx := new(types.MsgEthereumTx)
+
+	// RLP decode raw transaction bytes
+	if err := rlp.DecodeBytes(data, tx); err != nil {
+		// Return nil is for when gasLimit overflows uint64
+		return common.Hash{}, nil
+	}
+
 	//// TODO: Possibly log the contract creation address (if recipient address is nil) or tx data
 	//// If error is encountered on the node, the broadcast will not return an error
-	//res, err := api.clientCtx.BroadcastSignedTx(txBytes)
-	//if err != nil {
-	//	return common.Hash{}, err
-	//}
-	//
-	//// Return transaction hash
-	//return common.HexToHash(res.TxHash), nil
-	return common.Hash{}, nil
+	res, err := api.clientCtx.BroadcastSignedTx(tx.Bytes())
+	if err != nil {
+		return common.Hash{}, err
+	}
+
+	// Return transaction hash
+	return common.HexToHash(res.TxHash), nil
 }
 
 // Call performs a raw contract call.

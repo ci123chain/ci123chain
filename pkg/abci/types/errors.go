@@ -52,6 +52,7 @@ const (
 	CodeBadSharesAmount  CodeType = 30
 
 	CodeValidateBlock CodeType = 40
+	CodeValidateEtherTx CodeType = 41
 
 	// CodespaceRoot is a codespace for error codes in this file only.
 	// Notice that 0 is an "unset" codespace, which can be overridden with
@@ -180,6 +181,10 @@ func ErrBadSharesAmount(msg string) Error {
 
 func ErrValidateBlock(msg string) Error {
 	return newErrorWithRootCodespace(CodeValidateBlock, msg)
+}
+
+func ErrValidateEtherTx(msg string) Error {
+	return newErrorWithRootCodespace(CodeValidateEtherTx, msg)
 }
 
 //----------------------------------------
