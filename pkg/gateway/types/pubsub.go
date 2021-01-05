@@ -89,7 +89,12 @@ func (r *PubSubRoom)SetTMConnections() {
 		if r.Connections[addr] == nil {
 			conn, ok := GetConnection(addr)
 			if !ok {
-				continue
+				//continue
+				logger.Error(fmt.Sprintf("connect remote addr: %s, failed", addr))
+				r.Mutex.Lock()
+				r.RemoveAllTMConnections()
+				r.Mutex.Unlock()
+				break
 			}
 			r.Connections[addr] = conn
 		}
@@ -223,13 +228,34 @@ func (r *PubSubRoom) Subscribe(topic string) {
 				logger.Info("info: %s", err)
 			}
 		}()
-		for k, conn := range r.Connections {
+		for _, conn := range r.Connections {
 			responses, err := conn.Subscribe(ctx, subscribeClient, topic)
 			if err != nil {
 				logger.Error(fmt.Sprintf("subscribe topic: %s failed", topic))
-				delete(r.Connections, k)
-				_ = conn.Stop()
-				continue
+				////connection health check
+				if _, err := conn.Health(); err != nil {
+					////connection failed
+					//Err := fmt.Sprintf("sorry, remote connection disconnect, subscribe will stop later...")
+					//ErrRes := SendMessage{
+					//	Time:   time.Now().Format(time.RFC3339),
+					//	Content: Err,
+					//}
+					//NotifyAll(r, ErrRes)
+					r.Mutex.Lock()
+					r.RemoveAllTMConnections()
+					r.Mutex.Unlock()
+					break
+				}else {
+					//delete(r.Connections, k)
+					//_ = conn.Stop()
+					Err := fmt.Sprintf("subscribe topic: %s failed, maybe you should check your topic", topic)
+					ErrRes := SendMessage{
+						Time:   time.Now().Format(time.RFC3339),
+						Content: Err,
+					}
+					Notify(r, topic, ErrRes)
+					continue
+				}
 			}
 			go func() {
 				for e := range responses {
@@ -281,7 +307,16 @@ func (r *PubSubRoom) AddShard() {
 			conn, ok := GetConnection(addr)
 			if !ok {
 				logger.Error(fmt.Sprintf("connect remote addr: %s, failed", addr))
-				continue
+				//Err := fmt.Sprintf("sorry, remote connection disconnect, subscribe will stop later...")
+				//ErrRes := SendMessage{
+				//	Time:   time.Now().Format(time.RFC3339),
+				//	Content: Err,
+				//}
+				//NotifyAll(r, ErrRes)
+				r.Mutex.Lock()
+				r.RemoveAllTMConnections()
+				r.Mutex.Unlock()
+				break
 			}
 			r.Mutex.Lock()
 			r.Connections[addr] = conn
@@ -289,13 +324,40 @@ func (r *PubSubRoom) AddShard() {
 			if r.ConnMap != nil {
 				for topic := range r.ConnMap {
 					responses, err := conn.Subscribe(ctx, subscribeClient, topic)
+					//if err != nil {
+					//	r.Mutex.Lock()
+					//	logger.Error(fmt.Sprintf("subscribe topic: %s, failed", topic))
+					//	delete(r.Connections, addr)
+					//	r.Mutex.Unlock()
+					//	_ = conn.Stop()
+					//	continue
+					//}
 					if err != nil {
-						r.Mutex.Lock()
-						logger.Error(fmt.Sprintf("subscribe topic: %s, failed", topic))
-						delete(r.Connections, addr)
-						r.Mutex.Unlock()
-						_ = conn.Stop()
-						continue
+						logger.Error(fmt.Sprintf("subscribe topic: %s failed", topic))
+						////connection health check
+						if _, err := conn.Health(); err != nil {
+							////connection failed
+							//Err := fmt.Sprintf("sorry, remote connection disconnect, subscribe will stop later...")
+							//ErrRes := SendMessage{
+							//	Time:   time.Now().Format(time.RFC3339),
+							//	Content: Err,
+							//}
+							//NotifyAll(r, ErrRes)
+							r.Mutex.Lock()
+							r.RemoveAllTMConnections()
+							r.Mutex.Unlock()
+							break
+						}else {
+							//delete(r.Connections, k)
+							//_ = conn.Stop()
+							Err := fmt.Sprintf("subscribe topic: %s failed, maybe you should check your topic", topic)
+							ErrRes := SendMessage{
+								Time:   time.Now().Format(time.RFC3339),
+								Content: Err,
+							}
+							Notify(r, topic, ErrRes)
+							continue
+						}
 					}
 
 					go func() {
@@ -422,15 +484,22 @@ func (r *PubSubRoom) Unsubscribe(topic string) {
 }
 
 func (r *PubSubRoom) RemoveAllTMConnections() {
-	for k, v := range r.ConnMap {
-		r.HasCreatedConn[k] = false
+	for _, v := range r.ConnMap {
+		//r.HasCreatedConn[k] = false
 		for _, val := range v {
 			if val != nil {
 				_ = val.Close()
 			}
 		}
-		delete(r.ConnMap, k)
+		//delete(r.ConnMap, k)
 	}
+	for _, v := range r.Connections {
+		_ = v.Stop()
+	}
+	//r.Clients = make([]*websocket.Conn, 0)
+	r.ConnMap = make(map[string][]*websocket.Conn)
+	r.HasCreatedConn = make(map[string]bool)
+	r.Connections = make(map[string]*rpcclient.HTTP)
 }
 
 func Notify(r *PubSubRoom, topic string, m SendMessage) {
