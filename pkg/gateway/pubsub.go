@@ -38,7 +38,7 @@ func PubSubHandle(w http.ResponseWriter, r *http.Request) {
 }
 
 func checkBackend() {
-	t := time.NewTicker(time.Second * 17)
+	t := time.NewTicker(time.Second * 7)
 	for {
 		select {
 		case <-t.C:
