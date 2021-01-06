@@ -62,6 +62,24 @@ type PublicEthereumAPI struct {
 	cdc 		 *codec.Codec
 }
 
+// Transaction represents a transaction returned to RPC clients.
+type Transaction struct {
+	BlockHash        *common.Hash    `json:"blockHash"`
+	BlockNumber      *hexutil.Big    `json:"blockNumber"`
+	From             common.Address  `json:"from"`
+	Gas              hexutil.Uint64  `json:"gas"`
+	GasPrice         *hexutil.Big    `json:"gasPrice"`
+	Hash             common.Hash     `json:"hash"`
+	Input            hexutil.Bytes   `json:"input"`
+	Nonce            hexutil.Uint64  `json:"nonce"`
+	To               *common.Address `json:"to"`
+	TransactionIndex *hexutil.Uint64 `json:"transactionIndex"`
+	Value            *hexutil.Big    `json:"value"`
+	V                *hexutil.Big    `json:"v"`
+	R                *hexutil.Big    `json:"r"`
+	S                *hexutil.Big    `json:"s"`
+}
+
 // NewAPI creates an instance of the public ETH Web3 API.
 func NewAPI(
 	clientCtx clientcontext.Context, keys map[common.Address]string,
@@ -153,7 +171,7 @@ func (api *PublicEthereumAPI) Hashrate() hexutil.Uint64 {
 	return 0
 }
 
-// GasPrice returns the current gas price based on Ethermint's gas price oracle.
+// GasPrice returns the current gas price based on Eth's gas price oracle.
 func (api *PublicEthereumAPI) GasPrice() *hexutil.Big {
 	api.logger.Debug("eth_gasPrice")
 	out := big.NewInt(0)
@@ -207,79 +225,79 @@ func (api *PublicEthereumAPI) Accounts() ([]common.Address, error) {
 	return addresses, nil
 }
 
-//// GetTransactionReceipt returns the transaction receipt identified by hash.
-//func (api *PublicEthereumAPI) GetTransactionReceipt(hash common.Hash) (map[string]interface{}, error) {
-//	api.logger.Debug("eth_getTransactionReceipt", "hash", hash)
-//	tx, err := api.clientCtx.Client.Tx(hash.Bytes(), false)
-//	if err != nil {
-//		// Return nil for transaction when not found
-//		return nil, nil
-//	}
-//
-//	// Query block for consensus hash
-//	block, err := api.clientCtx.Client.Block(&tx.Height)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	blockHash := common.BytesToHash(block.Block.Header.Hash())
-//
-//	//// Convert tx bytes to eth transaction
-//	//ethTx, err := rpctypes.RawTxToEthTx(api.clientCtx, tx.Tx)
-//	//if err != nil {
-//	//	return nil, err
-//	//}
-//	//
-//	//from, err := ethTx.VerifySig(ethTx.ChainID())
-//	//if err != nil {
-//	//	return nil, err
-//	//}
-//
-//	// Set status codes based on tx result
-//	var status hexutil.Uint
-//	if tx.TxResult.IsOK() {
-//		status = hexutil.Uint(1)
-//	} else {
-//		status = hexutil.Uint(0)
-//	}
-//
-//	txData := tx.TxResult.GetData()
-//
-//	data, err := evmtypes.DecodeResultData(txData)
-//	if err != nil {
-//		status = 0 // transaction failed
-//	}
-//
-//	if len(data.Logs) == 0 {
-//		data.Logs = []*ethtypes.Log{}
-//	}
-//
-//	receipt := map[string]interface{}{
-//		// Consensus fields: These fields are defined by the Yellow Paper
-//		"status":            status,
-//		"cumulativeGasUsed": nil, // ignore until needed
-//		"logsBloom":         data.Bloom,
-//		"logs":              data.Logs,
-//
-//		// Implementation fields: These fields are added by geth when processing a transaction.
-//		// They are stored in the chain database.
-//		"transactionHash": hash,
-//		"contractAddress": data.ContractAddress,
-//		"gasUsed":         hexutil.Uint64(tx.TxResult.GasUsed),
-//
-//		// Inclusion information: These fields provide information about the inclusion of the
-//		// transaction corresponding to this receipt.
-//		"blockHash":        blockHash,
-//		"blockNumber":      hexutil.Uint64(tx.Height),
-//		"transactionIndex": hexutil.Uint64(tx.Index),
-//
-//		// sender and receiver (contract or EOA) addreses
-//		"from": common.HexToAddress("0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c"),
-//		"to":   common.Address{},
-//	}
-//
-//	return receipt, nil
-//}
+// GetTransactionReceipt returns the transaction receipt identified by hash.
+func (api *PublicEthereumAPI) GetTransactionReceipt(hash common.Hash) (map[string]interface{}, error) {
+	api.logger.Debug("eth_getTransactionReceipt", "hash", hash)
+	tx, err := api.clientCtx.Client.Tx(hash.Bytes(), false)
+	if err != nil {
+		// Return nil for transaction when not found
+		return nil, nil
+	}
+
+	// Query block for consensus hash
+	block, err := api.clientCtx.Client.Block(&tx.Height)
+	if err != nil {
+		return nil, err
+	}
+
+	blockHash := common.BytesToHash(block.Block.Header.Hash())
+
+	//// Convert tx bytes to eth transaction
+	//ethTx, err := rpctypes.RawTxToEthTx(api.clientCtx, tx.Tx)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//
+	//from, err := ethTx.VerifySig(ethTx.ChainID())
+	//if err != nil {
+	//	return nil, err
+	//}
+
+	// Set status codes based on tx result
+	var status hexutil.Uint
+	if tx.TxResult.IsOK() {
+		status = hexutil.Uint(1)
+	} else {
+		status = hexutil.Uint(0)
+	}
+
+	txData := tx.TxResult.GetData()
+
+	data, err := evmtypes.DecodeResultData(txData)
+	if err != nil {
+		status = 0 // transaction failed
+	}
+
+	if len(data.Logs) == 0 {
+		data.Logs = []*ethtypes.Log{}
+	}
+
+	receipt := map[string]interface{}{
+		// Consensus fields: These fields are defined by the Yellow Paper
+		"status":            status,
+		"cumulativeGasUsed": nil, // ignore until needed
+		"logsBloom":         data.Bloom,
+		"logs":              data.Logs,
+
+		// Implementation fields: These fields are added by geth when processing a transaction.
+		// They are stored in the chain database.
+		"transactionHash": hash,
+		"contractAddress": data.ContractAddress,
+		"gasUsed":         hexutil.Uint64(tx.TxResult.GasUsed),
+
+		// Inclusion information: These fields provide information about the inclusion of the
+		// transaction corresponding to this receipt.
+		"blockHash":        blockHash,
+		"blockNumber":      hexutil.Uint64(tx.Height),
+		"transactionIndex": hexutil.Uint64(tx.Index),
+
+		// sender and receiver (contract or EOA) addreses
+		"from": common.HexToAddress("0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c"),
+		"to":   common.Address{},
+	}
+
+	return receipt, nil
+}
 
 // Sign signs the provided data using the private key of address via Geth's signature standard.
 func (api *PublicEthereumAPI) Sign(address common.Address, data hexutil.Bytes) (hexutil.Bytes, error) {

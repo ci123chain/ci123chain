@@ -3,6 +3,8 @@ package eth
 import (
 "fmt"
 	"github.com/ethereum/go-ethereum/common"
+	ethtypes "github.com/ethereum/go-ethereum/core/types"
+	tmtypes "github.com/tendermint/tendermint/types"
 	"math"
 "math/big"
 "strings"
@@ -91,4 +93,23 @@ type Account struct {
 	Balance   **hexutil.Big                `json:"balance"`
 	State     *map[common.Hash]common.Hash `json:"state"`
 	StateDiff *map[common.Hash]common.Hash `json:"stateDiff"`
+}
+
+// EthHeaderFromTendermint is an util function that returns an Ethereum Header
+// from a tendermint Header.
+func EthHeaderFromTendermint(header tmtypes.Header) *ethtypes.Header {
+	return &ethtypes.Header{
+		ParentHash:  common.BytesToHash(header.LastBlockID.Hash.Bytes()),
+		UncleHash:   common.Hash{},
+		Coinbase:    common.Address{},
+		Root:        common.BytesToHash(header.AppHash),
+		TxHash:      common.BytesToHash(header.DataHash),
+		ReceiptHash: common.Hash{},
+		Difficulty:  nil,
+		Number:      big.NewInt(header.Height),
+		Time:        uint64(header.Time.Unix()),
+		Extra:       nil,
+		MixDigest:   common.Hash{},
+		Nonce:       ethtypes.BlockNonce{},
+	}
 }

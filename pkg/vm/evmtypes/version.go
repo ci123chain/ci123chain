@@ -10,7 +10,7 @@ const AppName = "ci123chain"
 
 // Version contains the application semantic version.
 //
-// TODO: How do we want to version this being that an initial Ethermint has
+// TODO: How do we want to version this being that an initial Eth has
 // been developed?
 const Version = "0.0.0"
 
