@@ -46,7 +46,7 @@ func SetDefaultPort(port string) {
 
 type PubSubRoom struct {
 	ConnMap    map[string][]*websocket.Conn
-	HasCreatedConn map[string]bool
+	//HasCreatedConn map[string]bool
 
 	backends 		[]Instance
 	Connections    map[string]*rpcclient.HTTP
@@ -62,9 +62,9 @@ func (r PubSubRoom) GetBackends() []Instance {
 }
 
 func (r *PubSubRoom)GetPubSubRoom() {
-	r.ConnMap = make(map[string][]*websocket.Conn)
-	r.HasCreatedConn = make(map[string]bool)
-	r.Connections = make(map[string]*rpcclient.HTTP)
+	r.ConnMap = make(map[string][]*websocket.Conn, 0)
+	//r.HasCreatedConn = make(map[string]bool)
+	r.Connections = make(map[string]*rpcclient.HTTP, 0)
 	r.backends = make([]Instance, 0)
 }
 
@@ -73,6 +73,7 @@ func (r *PubSubRoom) HasClientConnect() bool {
 	for _, v := range r.ConnMap {
 		if len(v) != 0 {
 			has = true
+			continue
 		}
 	}
 	return has
@@ -82,22 +83,21 @@ func (r *PubSubRoom)HasTMConnections() bool {
 	return len(r.Connections) != 0
 }
 
-func (r *PubSubRoom)SetTMConnections() {
+func (r *PubSubRoom)SetTMConnections() (err error) {
 	for _, v := range r.backends {
 		addr := rpcAddress(v.URL().Host)
 		if r.Connections[addr] == nil {
 			conn, ok := GetConnection(addr)
 			if !ok {
-				logger.Error(fmt.Sprintf("connect remote addr: %s, failed", addr))
-				r.Mutex.Lock()
+				err = errors.New(fmt.Sprintf("connect remote addr: %s, failed", addr))
+				logger.Error(err.Error())
 				r.RemoveAllTMConnections()
-				r.Mutex.Unlock()
 				break
-
 			}
 			r.Connections[addr] = conn
 		}
 	}
+	return err
 }
 
 
@@ -108,9 +108,10 @@ func (r *PubSubRoom)Receive(c *websocket.Conn) {
 		err := recover()
 		switch rt := err.(type) {
 		case ClientError:
+			logger.Error("recover client error: %s", rt.Error)
 			r.HandleUnsubscribeAll(rt.Connect)
 		default:
-			logger.Info("info: %s", rt)
+			logger.Error("recover unexpected error: %s", rt)
 		}
 	}()
 	for {
@@ -118,7 +119,7 @@ func (r *PubSubRoom)Receive(c *websocket.Conn) {
 		if err != nil {
 			panic(NewServerError(err, c))
 		}
-		logger.Info("receive: %s", string(data))
+		logger.Info("receive client message: %s", string(data))
 		var m ReceiveMessage
 		ok := IsValidMessage(data)
 		if !ok {
@@ -132,8 +133,17 @@ func (r *PubSubRoom)Receive(c *websocket.Conn) {
 		}
 		if len(r.backends) != 0 && !r.HasTMConnections() {
 			r.Mutex.Lock()
-			r.SetTMConnections()
+			err := r.SetTMConnections()
 			r.Mutex.Unlock()
+			if err != nil {
+				res := SendMessage{
+					Time:    time.Now().Format(time.RFC3339),
+					Content: fmt.Sprintf("connect to tendermint failed, err: %s", err.Error()),
+				}
+				_ = c.WriteJSON(res)
+				_ = c.Close()
+				continue
+			}
 		}
 		_ = json.Unmarshal(data, &m)
 		topic := m.Content.GetTopic()
@@ -163,11 +173,9 @@ func (r *PubSubRoom)Receive(c *websocket.Conn) {
 func (r *PubSubRoom) HandleSubscribe(topic string, c *websocket.Conn) {
 	r.Mutex.Lock()
 	if len(r.ConnMap[topic]) == 0 {
+		r.Subscribe(topic)
 		r.ConnMap[topic] = make([]*websocket.Conn, 0)
 		r.ConnMap[topic] = append(r.ConnMap[topic], c)
-		if !r.HasCreatedConn[topic] {
-			r.Subscribe(topic)
-		}
 
 	}else {
 		r.ConnMap[topic] = append(r.ConnMap[topic], c)
@@ -205,21 +213,6 @@ func (r *PubSubRoom) HandleUnsubscribeAll(c *websocket.Conn) {
 
 func (r *PubSubRoom) Subscribe(topic string) {
 	ctx, _ := context.WithTimeout(context.Background(), timeOut)
-	//responses, err := r.TMConnection.Subscribe(ctx, subscribeClient, query)
-	//if err != nil {
-	//	panic(err)
-	//}
-	//
-	//go func() {
-	//	for e := range responses {
-	//		res, _ := json.Marshal(e.Data)
-	//		response := SendMessage{
-	//			Time:   time.Now().Format(time.RFC3339),
-	//			Content: string(res),
-	//		}
-	//		Notify(r, topic, response)
-	//	}
-	//}()
 	go func() {
 		defer func() {
 			err := recover()
@@ -233,19 +226,9 @@ func (r *PubSubRoom) Subscribe(topic string) {
 				logger.Error(fmt.Sprintf("subscribe topic: %s failed", topic))
 				if _, err := conn.Health(); err != nil {
 					////connection failed
-					//Err := fmt.Sprintf("sorry, remote connection disconnect, subscribe will stop later...")
-					//ErrRes := SendMessage{
-					//	Time:   time.Now().Format(time.RFC3339),
-					//	Content: Err,
-					//}
-					//NotifyAll(r, ErrRes)
-					r.Mutex.Lock()
 					r.RemoveAllTMConnections()
-					r.Mutex.Unlock()
 					break
 				}else {
-					//delete(r.Connections, k)
-					//_ = conn.Stop()
 					Err := fmt.Sprintf("subscribe topic: %s failed, maybe you should check your topic", topic)
 					ErrRes := SendMessage{
 						Time:   time.Now().Format(time.RFC3339),
@@ -257,6 +240,7 @@ func (r *PubSubRoom) Subscribe(topic string) {
 			}
 			go func() {
 				for e := range responses {
+					logger.Info("receive tendermint response: %v", e.Data)
 					var v interface{}
 					switch e.Data.(type) {
 					case types.EventDataTx:
@@ -482,9 +466,10 @@ func (r *PubSubRoom) RemoveAllTMConnections() {
 		_ = v.Stop()
 	}
 	//r.Clients = make([]*websocket.Conn, 0)
-	r.ConnMap = make(map[string][]*websocket.Conn)
-	r.HasCreatedConn = make(map[string]bool)
-	r.Connections = make(map[string]*rpcclient.HTTP)
+	r.backends = make([]Instance, 0)
+	r.ConnMap = make(map[string][]*websocket.Conn, 0)
+	//r.HasCreatedConn = make(map[string]bool)
+	r.Connections = make(map[string]*rpcclient.HTTP, 0)
 
 }
 
@@ -494,6 +479,7 @@ func Notify(r *PubSubRoom, topic string, m SendMessage) {
 	for i := 0; i < len(r.ConnMap[topic]); i++ {
 		conn := r.ConnMap[topic][i]
 		if err := conn.WriteJSON(m); err != nil {
+			logger.Error("notify message error: %s", err.Error())
 			r.HandleUnsubscribeAll(conn)
 			_ = conn.Close()
 			i--
