@@ -3,6 +3,7 @@ package rest
 import (
 	clientcontext "github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/vm/client/rest/api/eth"
+	"github.com/ci123chain/ci123chain/pkg/vm/client/rest/api/net"
 	"github.com/ci123chain/ci123chain/pkg/vm/client/rest/api/personal"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/rpc"
@@ -34,6 +35,12 @@ func GetAPIs(clientCtx clientcontext.Context, keys map[common.Address]string) []
 			Version:   apiVersion,
 			Service:   personal.NewAPI(ethAPI, keys),
 			Public:    false,
+		},
+		{
+			Namespace: NetNamespace,
+			Version:   apiVersion,
+			Service:   net.NewAPI(clientCtx),
+			Public:    true,
 		},
 	}
 }

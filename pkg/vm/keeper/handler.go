@@ -181,12 +181,9 @@ func handleMsgEvmTx(ctx sdk.Context, k Keeper, msg evm.MsgEvmTx) sdk.Result {
 			),
 		)
 	}
-
-	data, _  := evm.DecodeResultData(executionResult.Result.Data)
 	
 	// set the events to the result
 	executionResult.Result.Events = ctx.EventManager().Events()
-	executionResult.Result.Data = data.Ret
 	return *executionResult.Result
 }
 

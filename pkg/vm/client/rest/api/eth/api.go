@@ -9,7 +9,10 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	"github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
+	vmmodule "github.com/ci123chain/ci123chain/pkg/vm/moduletypes"
+	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/rlp"
+	tmtypes "github.com/tendermint/tendermint/types"
 	"math/big"
 	"os"
 	"sync"
@@ -29,6 +32,7 @@ type SendTxArgs struct {
 	From     common.Address  `json:"from"`
 	To       *common.Address `json:"to"`
 	Gas      *hexutil.Uint64 `json:"gas"`
+	GasPrice *hexutil.Big    `json:"gasPrice"`
 	Value    *hexutil.Big    `json:"value"`
 	Nonce    *hexutil.Uint64 `json:"nonce"`
 	// We accept "data" and "input" for backwards-compatibility reasons. "input" is the
@@ -156,6 +160,127 @@ func (api *PublicEthereumAPI) GasPrice() *hexutil.Big {
 	return (*hexutil.Big)(out)
 }
 
+func (api *PublicEthereumAPI) BlockNumber() (hexutil.Uint64, error) {
+	api.logger.Debug("eth_blockNumber")
+	info, err := api.clientCtx.Client.BlockchainInfo(0, 0)
+	if err != nil {
+		return 0, err
+	}
+	api.logger.Debug(fmt.Sprintf("%d", info.LastHeight))
+	return hexutil.Uint64(info.LastHeight), nil
+}
+
+func (api *PublicEthereumAPI) GetBlockByNumber(blockNum BlockNumber, fullTx bool) (map[string]interface{}, error) {
+	api.logger.Debug("eth_getBlockByNumber", "number", blockNum, "full", fullTx)
+	height := blockNum.Int64()
+	if height <= 0 {
+		// get latest block height
+		num, err := api.BlockNumber()
+		if err != nil {
+			return nil, err
+		}
+		height = int64(num)
+	}
+
+	resBlock, err := api.clientCtx.Client.Block(&height)
+	if err != nil {
+		return nil, err
+	}
+
+	var transactions []common.Hash
+	for _, tx := range resBlock.Block.Txs {
+		transactions = append(transactions, common.BytesToHash(tx.Hash()))
+	}
+
+	return EthBlockFromTendermint(api.clientCtx, resBlock.Block, transactions)
+}
+
+// Accounts returns the list of accounts available to this node.
+func (api *PublicEthereumAPI) Accounts() ([]common.Address, error) {
+	api.logger.Debug("eth_accounts")
+	addresses := make([]common.Address, 0) // return [] instead of nil if empty
+
+	for k := range api.keys {
+		addresses = append(addresses, k)
+	}
+
+	return addresses, nil
+}
+
+//// GetTransactionReceipt returns the transaction receipt identified by hash.
+//func (api *PublicEthereumAPI) GetTransactionReceipt(hash common.Hash) (map[string]interface{}, error) {
+//	api.logger.Debug("eth_getTransactionReceipt", "hash", hash)
+//	tx, err := api.clientCtx.Client.Tx(hash.Bytes(), false)
+//	if err != nil {
+//		// Return nil for transaction when not found
+//		return nil, nil
+//	}
+//
+//	// Query block for consensus hash
+//	block, err := api.clientCtx.Client.Block(&tx.Height)
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	blockHash := common.BytesToHash(block.Block.Header.Hash())
+//
+//	//// Convert tx bytes to eth transaction
+//	//ethTx, err := rpctypes.RawTxToEthTx(api.clientCtx, tx.Tx)
+//	//if err != nil {
+//	//	return nil, err
+//	//}
+//	//
+//	//from, err := ethTx.VerifySig(ethTx.ChainID())
+//	//if err != nil {
+//	//	return nil, err
+//	//}
+//
+//	// Set status codes based on tx result
+//	var status hexutil.Uint
+//	if tx.TxResult.IsOK() {
+//		status = hexutil.Uint(1)
+//	} else {
+//		status = hexutil.Uint(0)
+//	}
+//
+//	txData := tx.TxResult.GetData()
+//
+//	data, err := evmtypes.DecodeResultData(txData)
+//	if err != nil {
+//		status = 0 // transaction failed
+//	}
+//
+//	if len(data.Logs) == 0 {
+//		data.Logs = []*ethtypes.Log{}
+//	}
+//
+//	receipt := map[string]interface{}{
+//		// Consensus fields: These fields are defined by the Yellow Paper
+//		"status":            status,
+//		"cumulativeGasUsed": nil, // ignore until needed
+//		"logsBloom":         data.Bloom,
+//		"logs":              data.Logs,
+//
+//		// Implementation fields: These fields are added by geth when processing a transaction.
+//		// They are stored in the chain database.
+//		"transactionHash": hash,
+//		"contractAddress": data.ContractAddress,
+//		"gasUsed":         hexutil.Uint64(tx.TxResult.GasUsed),
+//
+//		// Inclusion information: These fields provide information about the inclusion of the
+//		// transaction corresponding to this receipt.
+//		"blockHash":        blockHash,
+//		"blockNumber":      hexutil.Uint64(tx.Height),
+//		"transactionIndex": hexutil.Uint64(tx.Index),
+//
+//		// sender and receiver (contract or EOA) addreses
+//		"from": common.HexToAddress("0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c"),
+//		"to":   common.Address{},
+//	}
+//
+//	return receipt, nil
+//}
+
 // Sign signs the provided data using the private key of address via Geth's signature standard.
 func (api *PublicEthereumAPI) Sign(address common.Address, data hexutil.Bytes) (hexutil.Bytes, error) {
 	api.logger.Debug("eth_sign", "address", address, "data", data)
@@ -182,7 +307,7 @@ func (api *PublicEthereumAPI) Sign(address common.Address, data hexutil.Bytes) (
 
 // SendTransaction sends an Ethereum transaction.
 func (api *PublicEthereumAPI) SendTransaction(args SendTxArgs) (common.Hash, error) {
-	api.logger.Debug("eth_sendTransaction", "args", args)
+	api.logger.Debug("eth_sendTransaction", "args")
 	// TODO: Change this functionality to find an unlocked account by address
 
 	key, exist := api.keys[args.From]
@@ -246,7 +371,7 @@ func (api *PublicEthereumAPI) SendRawTransaction(data hexutil.Bytes) (common.Has
 }
 
 // Call performs a raw contract call.
-func (api *PublicEthereumAPI) Call(args CallArgs) (hexutil.Bytes, error) {
+func (api *PublicEthereumAPI) Call(args CallArgs, _ BlockNumber, _ *map[common.Address]Account) (hexutil.Bytes, error) {
 	api.logger.Debug("eth_call", "args", args)
 	simRes, err := api.doCall(args, big.NewInt(DefaultRPCGasLimit))
 	if err != nil {
@@ -368,4 +493,54 @@ func (api *PublicEthereumAPI) generateFromArgs(args SendTxArgs) (*evmtypes.MsgEv
 
 	msg := evmtypes.NewMsgEvmTx(sdk.AccAddress{args.From}, nonce, args.To, amount, gasLimit, gasPrice, input)
 	return &msg, nil
+}
+
+// EthBlockFromTendermint returns a JSON-RPC compatible Ethereum blockfrom a given Tendermint block.
+func EthBlockFromTendermint(clientCtx clientcontext.Context, block *tmtypes.Block, transactions []common.Hash) (map[string]interface{}, error) {
+	gasLimit := DefaultRPCGasLimit
+	gasUsed := big.NewInt(0)
+
+	res, _, _, err := clientCtx.Query(fmt.Sprintf("custom/%s/%s/%d", vmmodule.ModuleName, evmtypes.QueryBloom, block.Height), nil, false)
+	if err != nil {
+		return nil, err
+	}
+
+	var bloomRes evmtypes.QueryBloomFilter
+	types.MakeCodec().MustUnmarshalJSON(res, &bloomRes)
+
+	bloom := bloomRes.Bloom
+
+	return formatBlock(block.Header, block.Size(), int64(gasLimit), gasUsed, transactions, bloom), nil
+}
+
+func formatBlock(
+	header tmtypes.Header, size int, gasLimit int64,
+	gasUsed *big.Int, transactions interface{}, bloom ethtypes.Bloom,
+) map[string]interface{} {
+	if len(header.DataHash) == 0 {
+		header.DataHash = common.Hash{}.Bytes()
+	}
+
+	return map[string]interface{}{
+		"number":           hexutil.Uint64(header.Height),
+		"hash":             hexutil.Bytes(header.Hash()),
+		"parentHash":       hexutil.Bytes(header.LastBlockID.Hash),
+		"nonce":            hexutil.Uint64(0), // PoW specific
+		"sha3Uncles":       common.Hash{},     // No uncles in Tendermint
+		"logsBloom":        bloom,
+		"transactionsRoot": hexutil.Bytes(header.DataHash),
+		"stateRoot":        hexutil.Bytes(header.AppHash),
+		"miner":            common.Address{},
+		"mixHash":          common.Hash{},
+		"difficulty":       0,
+		"totalDifficulty":  0,
+		"extraData":        hexutil.Uint64(0),
+		"size":             hexutil.Uint64(size),
+		"gasLimit":         hexutil.Uint64(gasLimit), // Static gas limit
+		"gasUsed":          (*hexutil.Big)(gasUsed),
+		"timestamp":        hexutil.Uint64(header.Time.Unix()),
+		"transactions":     transactions.([]common.Hash),
+		"uncles":           []string{},
+		"receiptsRoot":     common.Hash{},
+	}
 }

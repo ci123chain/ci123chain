@@ -10,7 +10,8 @@ const (
 	QueryCodeInfo      = "queryCodeInfo"
 	QueryContractState = "queryContractState"
 	QueryContractList  = "queryContractList"
-	QueryContractExist  = "queryContractExist"
+	QueryContractExist = "queryContractExist"
+	QueryBloom 		   = "bloom"
 
 	SystemContract = "system_contract"
 
