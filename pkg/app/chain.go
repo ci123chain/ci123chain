@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/ci123chain/ci123chain/pkg/abci/baseapp"
+	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	"github.com/ci123chain/ci123chain/pkg/abci/store"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	app_module "github.com/ci123chain/ci123chain/pkg/app/module"
@@ -11,6 +12,7 @@ import (
 	infrastructure_module "github.com/ci123chain/ci123chain/pkg/infrastructure/module"
 	mint_module "github.com/ci123chain/ci123chain/pkg/mint/module"
 	order_module "github.com/ci123chain/ci123chain/pkg/order/module"
+	ordertypes "github.com/ci123chain/ci123chain/pkg/order/types"
 	staking_module "github.com/ci123chain/ci123chain/pkg/staking/module"
 	supply_module "github.com/ci123chain/ci123chain/pkg/supply/module"
 	vm_module "github.com/ci123chain/ci123chain/pkg/vm/module"
@@ -62,6 +64,8 @@ const (
 	flagName       = "name"
 	flagClientHome = "home-client"
 	flagShardIndex = "shardIndex"
+	cacheName      = "cache"
+	heightKey      = "s/k:order/OrderBook"
 )
 
 var (
@@ -121,28 +125,20 @@ type Chain struct {
 
 func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer) *Chain {
 	cdc := app_types.MakeCodec()
-	cacheDir := os.ExpandEnv(filepath.Join(viper.GetString(cli.HomeFlag) , "cache"))
+	cacheDir := os.ExpandEnv(filepath.Join(viper.GetString(cli.HomeFlag) , cacheName))
 	if _, err := os.Stat(cacheDir); os.IsNotExist(err) {
 		os.MkdirAll(cacheDir, os.ModePerm)
 		os.Chmod(cacheDir, os.ModePerm)
 	}
-	cacheName := filepath.Join(cacheDir, "cache")
-	if _, err := os.Stat(cacheName); !os.IsNotExist(err) {
-		//commit
-		var cacheMap []store.CacheMap
-		cache, _ := ioutil.ReadFile(cacheName)
-		json.Unmarshal(cache, &cacheMap)
-		batch := cdb.NewBatch()
-		defer batch.Close()
-		for _, v := range cacheMap {
-			batch.Set(v.Key, v.Value)
-		}
-		batch.Write()
-		//remove cache
-		os.Remove(cacheName)
-	}
-
 	app := baseapp.NewBaseApp("ci123", logger, ldb, cdb, cacheDir, app_types.DefaultTxDecoder(cdc))
+	cache := filepath.Join(cacheDir, cacheName)
+	if _, err := os.Stat(cache); !os.IsNotExist(err) {
+		//cache exist, check latest version
+		err := handleCache(cdb, cache, cdc, app)
+		if err != nil {
+			common.Exit(err.Error())
+		}
+	}
 
 	c := &Chain{
 		BaseApp: 			app,
@@ -366,4 +362,35 @@ func CreateAppGenTxNF(cdc *amino.Codec, pk crypto.PubKey, addr string, gentTxCon
 		Name:   gentTxConfig.Name,
 	}
 	return
+}
+
+func handleCache(cdb tmdb.DB, cache string, cdc *codec.Codec, app *baseapp.BaseApp) error{
+	var cacheMap []store.CacheMap
+	cacheFile, _ := ioutil.ReadFile(cache)
+	err := json.Unmarshal(cacheFile, &cacheMap)
+	if err != nil {
+		return errors.New("cache file unmarshal to cacheMap failed")
+	}
+	batch := cdb.NewBatch()
+	defer batch.Close()
+
+	var orderBook ordertypes.OrderBook
+	for _, v := range cacheMap {
+		if string(v.Key) == heightKey {
+			cdc.UnmarshalJSON(v.Value, &orderBook)
+			break
+		}
+	}
+
+	if orderBook.Lists[orderBook.Current.Index].Height == app.GetLatestVersion() + 1 {
+		os.Remove(cache)
+	} else {
+		for _, v := range cacheMap {
+			batch.Set(v.Key, v.Value)
+		}
+		batch.Write()
+		//remove cache
+		os.Remove(cache)
+	}
+	return nil
 }

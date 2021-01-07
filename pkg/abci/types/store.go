@@ -104,6 +104,9 @@ type CommitMultiStore interface {
 	// Panics on a nil types.
 	GetCommitKVStore(key StoreKey) CommitKVStore
 
+	// Get latest version
+	GetLatestVersion() int64
+
 	// Load the latest persisted version.  Called once after all
 	// calls to Mount*Store() are complete.
 	LoadLatestVersion() error

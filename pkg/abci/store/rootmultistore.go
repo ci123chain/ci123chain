@@ -99,6 +99,10 @@ func (rs *rootMultiStore) GetCommitKVStore(key StoreKey) CommitKVStore {
 	return rs.stores[key].(CommitKVStore)
 }
 
+func (rs *rootMultiStore) GetLatestVersion() int64 {
+	return getLatestVersion(dbStoreAdapter{rs.ldb})
+}
+
 // Implements CommitMultiStore.
 func (rs *rootMultiStore) LoadLatestVersion() error {
 	ver := getLatestVersion(dbStoreAdapter{rs.ldb})
