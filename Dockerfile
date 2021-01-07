@@ -1,4 +1,4 @@
-From harbor.oneitfarm.com/library/golang:1.13
+FROM harbor.oneitfarm.com/zhirenyun/baseimage:bionic-1.0.0
 
 COPY ./build/cproxy-linux /opt
 
