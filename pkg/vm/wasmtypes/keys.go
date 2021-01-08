@@ -11,7 +11,6 @@ const (
 	QueryContractState = "queryContractState"
 	QueryContractList  = "queryContractList"
 	QueryContractExist = "queryContractExist"
-	QueryBloom 		   = "bloom"
 
 	SystemContract = "system_contract"
 

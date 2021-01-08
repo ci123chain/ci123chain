@@ -7,6 +7,7 @@ import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/vm/evmtypes"
 	"github.com/ci123chain/ci123chain/pkg/vm/wasmtypes"
+	ethcmn "github.com/ethereum/go-ethereum/common"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"strconv"
 )
@@ -25,8 +26,10 @@ func NewQuerier(k Keeper) sdk.Querier {
 			return queryAccountContractList(ctx, req, k)
 		case types.QueryContractExist:
 			return queryContractExist(ctx, req, k)
-		case types.QueryBloom:
+		case evmtypes.QueryBloom:
 			return queryBlockBloom(ctx, path, k)
+		case evmtypes.QueryCode:
+			return queryCode(ctx, path, k)
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown query endpoint")
 		}
@@ -142,6 +145,18 @@ func queryBlockBloom(ctx sdk.Context, path []string, k Keeper) ([]byte, sdk.Erro
 
 	res := evmtypes.QueryBloomFilter{Bloom: bloom}
 	bz, err := codec.MarshalJSONIndent(k.cdc, res)
+	if err != nil {
+		return nil, sdk.ErrInternal(err.Error())
+	}
+
+	return bz, nil
+}
+
+func queryCode(ctx sdk.Context, path []string, keeper Keeper) ([]byte, sdk.Error) {
+	addr := ethcmn.HexToAddress(path[1])
+	code := keeper.GetCode(ctx, addr)
+	res := evmtypes.QueryResCode{Code: code}
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, res)
 	if err != nil {
 		return nil, sdk.ErrInternal(err.Error())
 	}

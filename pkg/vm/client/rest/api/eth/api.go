@@ -7,11 +7,16 @@ import (
 	"errors"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
+	"github.com/ci123chain/ci123chain/pkg/account"
+	accounttypes "github.com/ci123chain/ci123chain/pkg/account/types"
+	"github.com/ci123chain/ci123chain/pkg/account/exported"
+	"github.com/ci123chain/ci123chain/pkg/account/keeper"
 	"github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
 	vmmodule "github.com/ci123chain/ci123chain/pkg/vm/moduletypes"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/rlp"
+	"github.com/ethereum/go-ethereum/rpc"
 	tmtypes "github.com/tendermint/tendermint/types"
 	"math/big"
 	"os"
@@ -27,6 +32,8 @@ import (
 )
 
 const DefaultRPCGasLimit = 10000000
+
+var cdc = types.MakeCodec()
 
 type SendTxArgs struct {
 	From     common.Address  `json:"from"`
@@ -78,6 +85,31 @@ type Transaction struct {
 	V                *hexutil.Big    `json:"v"`
 	R                *hexutil.Big    `json:"r"`
 	S                *hexutil.Big    `json:"s"`
+}
+
+func NewTransaction(tx *evmtypes.MsgEvmTx, txHash, blockHash common.Hash, blockNumber, index uint64) (*Transaction, error) {
+
+	rpcTx := &Transaction{
+		From:     tx.From.Address,
+		Gas:      hexutil.Uint64(tx.Data.GasLimit),
+		GasPrice: (*hexutil.Big)(tx.Data.Price),
+		Hash:     txHash,
+		Input:    hexutil.Bytes(tx.Data.Payload),
+		Nonce:    hexutil.Uint64(tx.Data.AccountNonce),
+		To:       tx.To(),
+		Value:    (*hexutil.Big)(tx.Data.Amount),
+		V:        (*hexutil.Big)(tx.Data.V),
+		R:        (*hexutil.Big)(tx.Data.R),
+		S:        (*hexutil.Big)(tx.Data.S),
+	}
+
+	if blockHash != (common.Hash{}) {
+		rpcTx.BlockHash = &blockHash
+		rpcTx.BlockNumber = (*hexutil.Big)(new(big.Int).SetUint64(blockNumber))
+		rpcTx.TransactionIndex = (*hexutil.Uint64)(&index)
+	}
+
+	return rpcTx, nil
 }
 
 // NewAPI creates an instance of the public ETH Web3 API.
@@ -223,6 +255,51 @@ func (api *PublicEthereumAPI) Accounts() ([]common.Address, error) {
 	}
 
 	return addresses, nil
+}
+
+// GetTransactionCount returns the number of transactions at the given address up to the given block number.
+func (api *PublicEthereumAPI) GetTransactionCount(address common.Address, blockNum rpc.BlockNumber) (*hexutil.Uint64, error) {
+	api.logger.Debug("eth_getTransactionCount", "address", address, "block number", blockNum)
+	clientCtx := api.clientCtx.WithHeight(blockNum.Int64())
+
+	// Get nonce (sequence) from account
+	from := sdk.AccAddress{address}
+
+	qparams := keeper.NewQueryAccountParams(from)
+	bz, err := cdc.MarshalJSON(qparams)
+	if err != nil {
+		return nil, err
+	}
+	res, _, _, err := clientCtx.Query("/custom/" + account.ModuleName + "/" + accounttypes.QueryAccount, bz, false)
+	if res == nil {
+		return nil, errors.New("The account does not exist")
+	}
+	if err != nil {
+		return nil, err
+	}
+	var acc exported.Account
+	err2 := cdc.UnmarshalBinaryLengthPrefixed(res, &acc)
+	if err2 != nil {
+		return nil, err2
+	}
+
+	nonce := acc.GetSequence()
+	n := hexutil.Uint64(nonce)
+	return &n, nil
+}
+
+// GetStorageAt returns the contract storage at the given address, block number, and key.
+func (api *PublicEthereumAPI) GetStorageAt(address common.Address, key string, blockNum BlockNumber) (hexutil.Bytes, error) {
+	api.logger.Debug("eth_getStorageAt", "address", address, "key", key, "block number", blockNum)
+	clientCtx := api.clientCtx.WithHeight(blockNum.Int64())
+	res, _, _, err := clientCtx.Query(fmt.Sprintf("custom/%s/storage/%s/%s", evmtypes.ModuleName, address.Hex(), key), nil, false)
+	if err != nil {
+		return nil, err
+	}
+
+	var out evmtypes.QueryResStorage
+	cdc.MustUnmarshalJSON(res, &out)
+	return out.Value, nil
 }
 
 // GetTransactionReceipt returns the transaction receipt identified by hash.
@@ -386,6 +463,73 @@ func (api *PublicEthereumAPI) SendRawTransaction(data hexutil.Bytes) (common.Has
 
 	// Return transaction hash
 	return common.HexToHash(res.TxHash), nil
+}
+
+// GetCode returns the contract code at the given address and block number.
+func (api *PublicEthereumAPI) GetCode(address common.Address, blockNumber BlockNumber) (hexutil.Bytes, error) {
+	api.logger.Debug("eth_getCode", "address", address, "block number", blockNumber)
+	clientCtx := api.clientCtx.WithHeight(blockNumber.Int64())
+	res, _, _, err := clientCtx.Query(fmt.Sprintf("custom/%s/%s/%s", vmmodule.ModuleName, evmtypes.QueryCode, address.Hex()), nil, false)
+	if err != nil {
+		return nil, err
+	}
+
+	var out evmtypes.QueryResCode
+	cdc.MustUnmarshalJSON(res, &out)
+	return out.Code, nil
+}
+
+func (api *PublicEthereumAPI) GetTransactionByHash(hash common.Hash) (*Transaction, error) {
+	api.logger.Debug("eth_getTransactionByHash", "hash", hash)
+	tx, err := api.clientCtx.Client.Tx(hash.Bytes(), false)
+	if err != nil {
+		// Return nil for transaction when not found
+		return nil, nil
+	}
+
+	// Can either cache or just leave this out if not necessary
+	block, err := api.clientCtx.Client.Block(&tx.Height)
+	if err != nil {
+		return nil, err
+	}
+
+	blockHash := common.BytesToHash(block.Block.Header.Hash())
+
+	rawtx, err2 := types.DefaultTxDecoder(cdc)(tx.Tx)
+	if err2 != nil {
+		return nil, err2
+	}
+
+	height := uint64(tx.Height)
+	return NewTransaction(rawtx.GetMsgs()[0].(*evmtypes.MsgEvmTx), common.BytesToHash(tx.Tx.Hash()), blockHash, height, uint64(tx.Index))
+}
+
+// GetBalance returns the provided account's balance up to the provided block number.
+func (api *PublicEthereumAPI) GetBalance(address common.Address, blockNum BlockNumber) (*hexutil.Big, error) {
+	api.logger.Debug("eth_getBalance", "address", address, "block number", blockNum)
+	clientCtx := api.clientCtx.WithHeight(blockNum.Int64())
+
+	qparams := keeper.NewQueryAccountParams(sdk.AccAddress{address})
+	bz, err := cdc.MarshalJSON(qparams)
+	if err != nil {
+		return nil, err
+	}
+	res, _, _, err := clientCtx.Query("/custom/" + account.ModuleName + "/" + accounttypes.QueryAccount, bz, false)
+	if res == nil {
+		return nil, errors.New("The account does not exist")
+	}
+	if err != nil {
+		return nil, err
+	}
+	var acc exported.Account
+	err2 := cdc.UnmarshalBinaryLengthPrefixed(res, &acc)
+	if err2 != nil {
+		return nil, err2
+	}
+
+	val := acc.GetCoin().Amount.BigInt()
+
+	return (*hexutil.Big)(val), nil
 }
 
 // Call performs a raw contract call.
