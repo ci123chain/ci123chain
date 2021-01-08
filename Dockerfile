@@ -18,8 +18,7 @@ COPY --from=0 /go/pkg/mod/github.com/wasmerio /go/pkg/mod/github.com/wasmerio
 
 ENV GOPATH /go
 
-COPY ./docker/node/2start.sh /opt
+COPY ./docker/node/2start.sh /etc/service/start.sh
 
 WORKDIR /opt
-RUN chmod +x 2start.sh
-ENTRYPOINT ./2start.sh
+RUN chmod +x /etc/service/start.sh
