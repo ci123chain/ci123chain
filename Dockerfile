@@ -18,7 +18,7 @@ COPY --from=0 /go/pkg/mod/github.com/wasmerio /go/pkg/mod/github.com/wasmerio
 
 ENV GOPATH /go
 
-COPY ./docker/node/2start.sh /etc/service/start.sh
+COPY ./docker/node/2start.sh /etc/service/ci123chain/run
 
 WORKDIR /opt
-RUN chmod +x /etc/service/start.sh
+RUN chmod +x /etc/service/ci123chain/run
