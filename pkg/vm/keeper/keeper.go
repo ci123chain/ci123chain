@@ -553,6 +553,7 @@ func (k *Keeper) SetBlockHash(ctx sdk.Context, hash []byte, height int64) {
 // GetBlockBloom gets bloombits from block height
 func (k *Keeper) GetBlockBloom(ctx sdk.Context, height int64) (ethtypes.Bloom, bool) {
 	store := NewStore(ctx.KVStore(k.storeKey), evmtypes.KeyPrefixBloom)
+
 	has := store.Has(evmtypes.BloomKey(height))
 	if !has {
 		return ethtypes.Bloom{}, false

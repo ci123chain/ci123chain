@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/app/types"
+	vmmodule "github.com/ci123chain/ci123chain/pkg/vm/moduletypes"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/tendermint/tendermint/libs/log"
 	"os"
@@ -597,7 +598,7 @@ func (b *EthBackend) HeaderByNumber(blockNum rpctypes.BlockNumber) (*ethtypes.He
 		return nil, err
 	}
 
-	res, _, _, err := b.clientCtx.Query(fmt.Sprintf("custom/%s/%s/%d", evmtypes.ModuleName, evmtypes.QueryBloom, resBlock.Block.Height), nil, false)
+	res, _, _, err := b.clientCtx.Query(fmt.Sprintf("custom/%s/%s/%d", vmmodule.ModuleName, evmtypes.QueryBloom, resBlock.Block.Height), nil, false)
 	if err != nil {
 		return nil, err
 	}
@@ -627,7 +628,7 @@ func (b *EthBackend) HeaderByHash(blockHash common.Hash) (*ethtypes.Header, erro
 		return nil, err2
 	}
 
-	res, _, _, err = b.clientCtx.Query(fmt.Sprintf("custom/%s/%s/%d", evmtypes.ModuleName, evmtypes.QueryBloom, resBlock.Block.Height), nil, false)
+	res, _, _, err = b.clientCtx.Query(fmt.Sprintf("custom/%s/%s/%d", vmmodule.ModuleName, evmtypes.QueryBloom, resBlock.Block.Height), nil, false)
 	if err != nil {
 		return nil, err
 	}

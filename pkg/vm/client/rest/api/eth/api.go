@@ -212,12 +212,12 @@ func (api *PublicEthereumAPI) GasPrice() *hexutil.Big {
 
 func (api *PublicEthereumAPI) BlockNumber() (hexutil.Uint64, error) {
 	api.logger.Debug("eth_blockNumber")
-	info, err := api.clientCtx.Client.BlockchainInfo(0, 0)
+	info, err := api.clientCtx.Client.ABCIInfo()
 	if err != nil {
 		return 0, err
 	}
-	api.logger.Debug(fmt.Sprintf("%d", info.LastHeight))
-	return hexutil.Uint64(info.LastHeight), nil
+	api.logger.Debug(fmt.Sprintf("%d", info.Response.LastBlockHeight))
+	return hexutil.Uint64(info.Response.LastBlockHeight), nil
 }
 
 func (api *PublicEthereumAPI) GetBlockByNumber(blockNum BlockNumber, fullTx bool) (map[string]interface{}, error) {
@@ -534,13 +534,13 @@ func (api *PublicEthereumAPI) GetBalance(address common.Address, blockNum BlockN
 
 // Call performs a raw contract call.
 func (api *PublicEthereumAPI) Call(args CallArgs, _ BlockNumber, _ *map[common.Address]Account) (hexutil.Bytes, error) {
-	api.logger.Debug("eth_call", "args", args)
+	api.logger.Debug("eth_call", "args")
 	simRes, err := api.doCall(args, big.NewInt(DefaultRPCGasLimit))
 	if err != nil {
 		return []byte{}, err
 	}
 
-	data, err := evmtypes.DecodeResultData([]byte(simRes.Data))
+	data, err := evmtypes.DecodeResultData([]byte(simRes.FormatData))
 	if err != nil {
 		return []byte{}, err
 	}
