@@ -72,8 +72,7 @@ func (ks *latestStore) parentGet(key []byte) (value []byte) {
 		if reflect.TypeOf(p) != reflect.TypeOf(dbStoreAdapter{}) {
 			p = p.Parent()
 			if reflect.TypeOf(p) == reflect.TypeOf(prefixStore{}) {
-				pre := p.(prefixStore).prefix
-				key = append([]byte("s/k:" + string(pre) + "/"), key...)
+				key = p.(prefixStore).key(key)
 			}
 		} else {
 			break
@@ -141,6 +140,23 @@ func (ks *latestStore) CacheWrap() CacheWrap {
 // CacheWrapWithTrace implements the CacheWrapper interface.
 func (ks *latestStore) CacheWrapWithTrace(w io.Writer, tc TraceContext) CacheWrap {
 	return nil
+}
+
+// Implements KVStore.
+func (ks *latestStore) RemoteIterator(start, end []byte) Iterator {
+	p := ks.Parent()
+	for {
+		if reflect.TypeOf(p) != reflect.TypeOf(dbStoreAdapter{}) {
+			p = p.Parent()
+			if reflect.TypeOf(p) == reflect.TypeOf(prefixStore{}) {
+				start = p.(prefixStore).key(start)
+				end = p.(prefixStore).key(end)
+			}
+		} else {
+			break
+		}
+	}
+	return p.RemoteIterator(start, end)
 }
 
 // Implements KVStore.

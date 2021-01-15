@@ -49,6 +49,10 @@ func (dsa dbStoreAdapter) Parent() KVStore {
 // dbm.DB implements KVStore so we can CacheKVStore it.
 var _ KVStore = dbStoreAdapter{}
 
+func (dsa dbStoreAdapter) RemoteIterator(start, end []byte) Iterator {
+	return dsa.DB.Iterator(start, end)
+}
+
 //func ParentGetDbStoreAdapter(p KVStore, oriKey []byte) (db KVStore, key []byte){
 //	for {
 //		if reflect.TypeOf(p) != reflect.TypeOf(dbStoreAdapter{}) {

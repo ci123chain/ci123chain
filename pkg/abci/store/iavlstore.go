@@ -2,17 +2,17 @@ package store
 
 import (
 	"fmt"
-	logger2 "github.com/ci123chain/ci123chain/pkg/logger"
 	"io"
 	"sync"
-
+	"reflect"
 	"github.com/pkg/errors"
 	"github.com/tendermint/iavl"
+
+	"github.com/ci123chain/ci123chain/pkg/logger"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/merkle"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	dbm "github.com/tendermint/tm-db"
-
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 )
 
@@ -60,13 +60,13 @@ type iavlStore struct {
 	parent CommitStore
 
 	key   sdk.StoreKey
-	lg logger2.Logger
+	lg logger.Logger
 }
 
 // CONTRACT: tree should be fully loaded.
 // nolint: unparam
 func newIAVLStore(db dbm.DB, tree *iavl.MutableTree, numRecent int64, storeEvery int64, key sdk.StoreKey) *iavlStore {
-	logger := logger2.GetLogger()
+	logger := logger.GetLogger()
 	st := &iavlStore{
 		tree:       tree,
 		numRecent:  numRecent,
@@ -189,6 +189,23 @@ func (st *iavlStore) Latest(keys []string) KVStore {
 // Implements KVStore
 func (st *iavlStore) Parent() KVStore {
 	return st.parent.(KVStore)
+}
+
+// Implements KVStore.
+func (st *iavlStore) RemoteIterator(start, end []byte) Iterator {
+	p := st.Parent()
+	for {
+		if reflect.TypeOf(p) != reflect.TypeOf(dbStoreAdapter{}) {
+			p = p.Parent()
+			if reflect.TypeOf(p) == reflect.TypeOf(prefixStore{}) {
+				start = p.(prefixStore).key(start)
+				end = p.(prefixStore).key(end)
+			}
+		} else {
+			break
+		}
+	}
+	return p.RemoteIterator(start, end)
 }
 
 // Implements KVStore.

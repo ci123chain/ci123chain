@@ -4,6 +4,7 @@ import (
 	"bytes"
 	db "github.com/tendermint/tm-db"
 	"io"
+	"reflect"
 
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 )
@@ -118,6 +119,25 @@ func (s prefixStore) GetCache() map[string][]byte{
 // Implements KVStore
 func (s prefixStore) Gas(meter GasMeter, config GasConfig) KVStore {
 	return NewGasKVStore(meter, config, s)
+}
+
+// Implements KVStore.
+func (s prefixStore) RemoteIterator(start, end []byte) Iterator {
+	start = s.key(start)
+	end = s.key(end)
+	p := s.Parent()
+	for {
+		if reflect.TypeOf(p) != reflect.TypeOf(dbStoreAdapter{}) {
+			p = p.Parent()
+			if reflect.TypeOf(p) == reflect.TypeOf(prefixStore{}) {
+				start = p.(prefixStore).key(start)
+				end = p.(prefixStore).key(end)
+			}
+		} else {
+			break
+		}
+	}
+	return p.RemoteIterator(start, end)
 }
 
 // Implements KVStore

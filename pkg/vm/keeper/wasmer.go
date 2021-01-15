@@ -5,6 +5,10 @@ package keeper
 // extern int read_db(void*, int, int, int, int, int);
 // extern void write_db(void*, int, int, int, int);
 // extern void delete_db(void*, int, int);
+// extern int new_db_iter(void*, int, int);
+// extern int db_iter_next(void*, int);
+// extern int db_iter_key(void*, int);
+// extern int db_iter_value(void*, int);
 //
 // extern int send(void*, int, long long);
 // extern void get_pre_caller(void*, int);
@@ -119,6 +123,26 @@ func write_db(context unsafe.Pointer, keyPtr, keySize, valuePtr, valueSize int32
 //export delete_db
 func delete_db(context unsafe.Pointer, keyPtr, keySize int32) {
 	deleteDB(context, keyPtr, keySize)
+}
+
+//export new_db_iter
+func new_db_iter(context unsafe.Pointer, prefixPtr, prefixSize int32) int32 {
+	return newDBIter(context, prefixPtr, prefixSize)
+}
+
+//export db_iter_next
+func db_iter_next(context unsafe.Pointer, token int32) int32 {
+	return dbIterNext(context, token)
+}
+
+//export db_iter_key
+func db_iter_key(context unsafe.Pointer, token int32) int32 {
+	return dbIterKey(context, token)
+}
+
+//export db_iter_value
+func db_iter_value(context unsafe.Pointer, token int32) int32 {
+	return dbIterValue(context, token)
 }
 
 //export send
@@ -341,6 +365,10 @@ func getInstance(code []byte, cfg *runtimeConfig) (*wasmer.Instance, error) {
 	_, _ = imports.Append("read_db", read_db, C.read_db)
 	_, _ = imports.Append("write_db", write_db, C.write_db)
 	_, _ = imports.Append("delete_db", delete_db, C.delete_db)
+	_, _ = imports.Append("new_db_iter", new_db_iter, C.new_db_iter)
+	_, _ = imports.Append("db_iter_next", db_iter_next, C.db_iter_next)
+	_, _ = imports.Append("db_iter_key", db_iter_key, C.db_iter_key)
+	_, _ = imports.Append("db_iter_value", db_iter_value, C.db_iter_value)
 
 	_, _ = imports.Append("get_pre_caller", get_pre_caller, C.get_pre_caller)
 	_, _ = imports.Append("self_address", selfAddress, C.self_address)

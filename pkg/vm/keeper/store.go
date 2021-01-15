@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/types"
 	wasm "github.com/wasmerio/go-ext-wasm/wasmer"
+	"strings"
 	"unsafe"
 )
 
@@ -19,7 +20,7 @@ func NewStore(parent types.KVStore, prefix []byte) Store {
 	}
 }
 
-// ImplemenmiddleIns.fun["allocate"] = allocatets KVStore
+// Implements KVStore
 func (s Store) Set(key, value []byte) {
 	AssertValidKey(key)
 	AssertValidValue(value)
@@ -52,7 +53,6 @@ func (s Store) key(key []byte) (res []byte) {
 	return
 }
 
-
 func cloneAppend(bz []byte, tail []byte) (res []byte) {
 	res = make([]byte, len(bz)+len(tail))
 	copy(res, bz)
@@ -60,7 +60,6 @@ func cloneAppend(bz []byte, tail []byte) (res []byte) {
 	return
 }
 
-//export read_db
 func readDB(context unsafe.Pointer, keyPtr, keySize, valuePtr, valueSize, offset int32) int32 {
 	instanceContext := wasm.IntoInstanceContext(context)
 	data := instanceContext.Data()
@@ -100,7 +99,6 @@ func readDB(context unsafe.Pointer, keyPtr, keySize, valuePtr, valueSize, offset
 	return int32(size)
 }
 
-//export write_db
 func writeDB(context unsafe.Pointer, keyPtr, keySize, valuePtr, valueSize int32) {
 	instanceContext := wasm.IntoInstanceContext(context)
 	data := instanceContext.Data()
@@ -121,7 +119,6 @@ func writeDB(context unsafe.Pointer, keyPtr, keySize, valuePtr, valueSize int32)
 	runtimeCfg.Store.Set(realKey, Value)
 }
 
-//export delete_db
 func deleteDB(context unsafe.Pointer, keyPtr, keySize int32) {
 	instanceContext := wasm.IntoInstanceContext(context)
 	data := instanceContext.Data()
@@ -136,4 +133,86 @@ func deleteDB(context unsafe.Pointer, keyPtr, keySize int32) {
 	//fmt.Printf("delete key [%s]\n", string(realKey))
 
 	runtimeCfg.Store.Delete(realKey)
+}
+
+func newDBIter(context unsafe.Pointer, prefixPtr, prefixSize int32) int32 {
+	var instanceContext = wasm.IntoInstanceContext(context)
+	data := instanceContext.Data()
+	runtimeCfg, ok := data.(*runtimeConfig)
+	if !ok {
+		panic(fmt.Sprintf("%#v", data))
+	}
+
+	var memory = instanceContext.Memory().Data()
+	realPrefix := string(memory[prefixPtr : prefixPtr+prefixSize])
+
+	fmt.Printf("new iter prefix: [%s]\n", realPrefix)
+
+	iter := runtimeCfg.Store.parent.RemoteIterator([]byte(realPrefix), types.PrefixEndBytes([]byte(realPrefix)))
+
+	mockKV := [][2]string{}
+	for iter.Valid() {
+		key := string(iter.Key())
+		realKey := strings.Split(key, realPrefix)
+		value := iter.Value()
+		mockKV = append(mockKV, [2]string{realKey[1], string(value)})
+		iter.Next()
+	}
+
+	token := int32(len(iterToken))
+
+	// get store iterator
+	iterToken[token] = &DatabaseIter{
+		Prefix: realPrefix,
+		Index:  -1,
+		MockKV: mockKV,
+	}
+
+	return token
+}
+
+func dbIterNext(context unsafe.Pointer, token int32) int32 {
+	iter := iterToken[token]
+
+	if iter.Index+1 >= len(iter.MockKV) {
+		// next不存在
+		return -1
+	}
+
+	kvToken := int32(len(inputData))
+
+	iter.Index++
+	inputData[kvToken] = []byte(iter.MockKV[iter.Index][1])
+
+	return kvToken
+}
+
+func dbIterKey(context unsafe.Pointer, token int32) int32 {
+	iter := iterToken[token]
+
+	if iter.Index < 0 || iter.Index >= len(iter.MockKV) {
+		// 不存在
+		return -1
+	}
+
+	kvToken := int32(len(inputData))
+
+	inputData[kvToken] = []byte(iter.MockKV[iter.Index][0])
+
+	return kvToken
+}
+
+func dbIterValue(context unsafe.Pointer, token int32) int32 {
+	iter := iterToken[token]
+
+	if iter.Index < 0 || iter.Index >= len(iter.MockKV) {
+		// 不存在
+		return -1
+	}
+
+	kvToken := int32(len(inputData))
+
+	inputData[kvToken] = []byte(iter.MockKV[iter.Index][1])
+
+	return kvToken
 }

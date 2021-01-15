@@ -21,6 +21,14 @@ const (
 	WASMDIR = "/wasm/"
 )
 
+var iterToken = map[int32]*DatabaseIter{}
+
+type DatabaseIter struct {
+	Prefix string
+	MockKV [][2]string
+	Index  int
+}
+
 type Address [AddressSize]byte
 
 func NewAddress(raw []byte) (addr Address) {

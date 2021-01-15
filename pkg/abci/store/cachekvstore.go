@@ -3,6 +3,7 @@ package store
 import (
 	"bytes"
 	"io"
+	"reflect"
 	"sort"
 	"sync"
 
@@ -139,6 +140,23 @@ func (ci *cacheKVStore) CacheWrapWithTrace(w io.Writer, tc TraceContext) CacheWr
 
 //----------------------------------------
 // Iteration
+
+// Implements KVStore.
+func (ci *cacheKVStore) RemoteIterator(start, end []byte) Iterator {
+	p := ci.Parent()
+	for {
+		if reflect.TypeOf(p) != reflect.TypeOf(dbStoreAdapter{}) {
+			p = p.Parent()
+			if reflect.TypeOf(p) == reflect.TypeOf(prefixStore{}) {
+				start = p.(prefixStore).key(start)
+				end = p.(prefixStore).key(end)
+			}
+		} else {
+			break
+		}
+	}
+	return p.RemoteIterator(start, end)
+}
 
 // Implements KVStore.
 func (ci *cacheKVStore) Iterator(start, end []byte) Iterator {

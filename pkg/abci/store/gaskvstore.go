@@ -2,6 +2,7 @@ package store
 
 import (
 	"io"
+	"reflect"
 
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 )
@@ -88,6 +89,23 @@ func (gs *gasKVStore) Latest(keys []string) KVStore {
 // Implements KVStore
 func (gs *gasKVStore) Parent() KVStore {
 	return gs.parent
+}
+
+// Implements KVStore.
+func (ks *gasKVStore) RemoteIterator(start, end []byte) Iterator {
+	p := ks.Parent()
+	for {
+		if reflect.TypeOf(p) != reflect.TypeOf(dbStoreAdapter{}) {
+			p = p.Parent()
+			if reflect.TypeOf(p) == reflect.TypeOf(prefixStore{}) {
+				start = p.(prefixStore).key(start)
+				end = p.(prefixStore).key(end)
+			}
+		} else {
+			break
+		}
+	}
+	return p.RemoteIterator(start, end)
 }
 
 // Iterator implements the KVStore interface. It returns an iterator which

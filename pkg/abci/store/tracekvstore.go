@@ -95,6 +95,10 @@ func (tkv *TraceKVStore) Parent() KVStore {
 	return tkv.parent
 }
 
+func (tkv *TraceKVStore) RemoteIterator(start, end []byte) sdk.Iterator {
+	return tkv.iterator(start, end, true)
+}
+
 // Iterator implements the KVStore interface. It delegates the Iterator call
 // the to the parent KVStore.
 func (tkv *TraceKVStore) Iterator(start, end []byte) sdk.Iterator {

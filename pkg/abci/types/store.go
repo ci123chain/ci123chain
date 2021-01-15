@@ -150,6 +150,9 @@ type KVStore interface {
 	// CONTRACT: No writes may happen within a domain while an iterator exists over it.
 	ReverseIterator(start, end []byte) Iterator
 
+	// RemoteIterator are used to get iterators in the shared database.
+	RemoteIterator(start, end []byte) Iterator
+
 	// TODO Not yet implemented.
 	// CreateSubKVStore(types *storeKey) (KVStore, error)
 
