@@ -85,7 +85,7 @@ func NewRestServer() *RestServer {
 
 
 	r.NotFoundHandler = Handle404()
-	r.HandleFunc("/healthcheck", HealthCheckHandler(cliCtx)).Methods("POST")
+	r.HandleFunc("/healthcheck", HealthCheckHandler(cliCtx)).Methods("GET")
 
 	rpc.RegisterRoutes(cliCtx, r)
 	accountRpc.RegisterRoutes(cliCtx, r)
