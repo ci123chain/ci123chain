@@ -41,7 +41,7 @@ fi
 
 CI_LOGDIR=$CI_HOME/logs
 if [ ! -d $CI_LOGDIR ]; then
-    mkdir $CI_LOGDIR
+    mkdir -p $CI_LOGDIR
 fi
 
 # start
