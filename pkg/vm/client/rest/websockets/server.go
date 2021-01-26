@@ -63,7 +63,6 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	wsConn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		s.logger.Error("websocket upgrade failed; error:", err)
 		return
 	}
 
@@ -90,7 +89,7 @@ func (s *Server) readLoop(wsConn *websocket.Conn) {
 		_, mb, err := wsConn.ReadMessage()
 		if err != nil {
 			_ = wsConn.Close()
-			s.logger.Error("failed to read message; error", err)
+			s.logger.Error("failed to read message;","error", err.Error())
 			return
 		}
 

@@ -528,7 +528,7 @@ func (api *PublicEthereumAPI) GetBalance(address common.Address, blockNum BlockN
 	}
 
 	val := acc.GetCoin().Amount.BigInt()
-
+	api.logger.Debug("eth_getBalance", "balance", val)
 	return (*hexutil.Big)(val), nil
 }
 
@@ -560,7 +560,10 @@ func (api *PublicEthereumAPI) doCall(
 	var addr common.Address
 
 	if args.From == nil {
-		return nil, errors.New("from cannot be empty")
+		addrs, err := api.Accounts()
+		if err == nil && len(addrs) > 0 {
+			addr = addrs[0]
+		}
 	} else {
 		addr = *args.From
 	}

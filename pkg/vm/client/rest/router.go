@@ -3,10 +3,16 @@ package rest
 import (
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
+	"github.com/ci123chain/ci123chain/pkg/vm/client/rest/websockets"
 	"github.com/ci123chain/ci123chain/pkg/vm/wasmtypes"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/gorilla/mux"
+	"github.com/spf13/viper"
+)
+
+const (
+	flagWebSocket = "wsport"
 )
 
 func RegisterRoutes(cliCtx context.Context, r *mux.Router) {
@@ -47,8 +53,7 @@ func registerApiRoutes(cliCtx context.Context, r *mux.Router) {
 	// Web3 RPC API route
 	r.HandleFunc("/", server.ServeHTTP).Methods("POST", "OPTIONS")
 
-	//websocketAddr := viper.GetString(flagWebsocket)
-	//websocketAddr := "1317"
-	//ws := websockets.NewServer(cliCtx, websocketAddr)
-	//ws.Start()
+	websocketAddr := viper.GetString(flagWebSocket)
+	ws := websockets.NewServer(cliCtx, websocketAddr)
+	ws.Start()
 }

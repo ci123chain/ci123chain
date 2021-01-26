@@ -14,8 +14,8 @@ require (
 	github.com/ethereum/go-ethereum v1.9.21
 	github.com/gogo/protobuf v1.3.0
 	github.com/golang/protobuf v1.4.2
-	github.com/gorilla/mux v1.7.3
-	github.com/gorilla/websocket v1.4.1-0.20190629185528-ae1634f6a989
+	github.com/gorilla/mux v1.8.0
+	github.com/gorilla/websocket v1.4.2
 	github.com/mattn/go-isatty v0.0.10
 	github.com/pborman/uuid v1.2.0 // indirect
 	github.com/pkg/errors v0.9.1
