@@ -199,63 +199,91 @@ func Handle404() http.Handler {
 				Message: err.Error(),
 			}
 		}else {
-			resStr := string(tmResponse.Result)
-			var result interface{}
-			switch newPath {
-			case "/block":
-				var a ctypes.ResultBlock
-				err = cdc.UnmarshalJSON([]byte(resStr), &a)
-				if err != nil {
+			if tmResponse.Result == nil {
+				if tmResponse.Error == nil {
 					resultResponse = client.Response{
-						Ret:     -1,
+						Ret:     1,
 						Data:    nil,
-						Message: err.Error(),
+						Message: "response is empty",
 					}
 				}else {
-					result = a
-				}
-			case "/status":
-				var a ctypes.ResultStatus
-				err = cdc.UnmarshalJSON([]byte(resStr), &a)
-				if err != nil {
 					resultResponse = client.Response{
-						Ret:     -1,
+						Ret:     1,
 						Data:    nil,
-						Message: err.Error(),
+						Message: tmResponse.Error.Error(),
 					}
-				}else {
-					result = a
 				}
-			case "/tx":
-				var a ctypes.ResultTx
-				err = cdc.UnmarshalJSON([]byte(resStr), &a)
-				if err != nil {
-					resultResponse = client.Response{
-						Ret:     -1,
-						Data:    nil,
-						Message: err.Error(),
+			}else {
+				resStr := string(tmResponse.Result)
+				var result interface{}
+				switch newPath {
+				case "/block":
+					var a ctypes.ResultBlock
+					err = cdc.UnmarshalJSON([]byte(resStr), &a)
+					if err != nil {
+						resultResponse = client.Response{
+							Ret:     -1,
+							Data:    nil,
+							Message: err.Error(),
+						}
+					}else {
+						result = a
 					}
-				}else {
-					result = a
-				}
-			case "/health":
-				var a ctypes.ResultHealth
-				err = cdc.UnmarshalJSON([]byte(resStr), &a)
-				if err != nil {
-					resultResponse = client.Response{
-						Ret:     -1,
-						Data:    nil,
-						Message: err.Error(),
+				case "/status":
+					var a ctypes.ResultStatus
+					err = cdc.UnmarshalJSON([]byte(resStr), &a)
+					if err != nil {
+						resultResponse = client.Response{
+							Ret:     -1,
+							Data:    nil,
+							Message: err.Error(),
+						}
+					}else {
+						result = a
 					}
-				}else {
-					result = a
+				case "/tx":
+					var a ctypes.ResultTx
+					err = cdc.UnmarshalJSON([]byte(resStr), &a)
+					if err != nil {
+						resultResponse = client.Response{
+							Ret:     -1,
+							Data:    nil,
+							Message: err.Error(),
+						}
+					}else {
+						result = a
+					}
+				case "/health":
+					var a ctypes.ResultHealth
+					err = cdc.UnmarshalJSON([]byte(resStr), &a)
+					if err != nil {
+						resultResponse = client.Response{
+							Ret:     -1,
+							Data:    nil,
+							Message: err.Error(),
+						}
+					}else {
+						result = a
+					}
+				case "/add_peers":
+					var a ctypes.ResultAddPeers
+					err = cdc.UnmarshalJSON([]byte(resStr), &a)
+					if err != nil {
+						resultResponse = client.Response{
+							Ret:     -1,
+							Data:    nil,
+							Message: err.Error(),
+						}
+					}else {
+						result = a
+					}
 				}
-			}
 
-			resultResponse = client.Response{
-				Ret:     1,
-				Data:    result,
-				Message: "",
+				resultResponse = client.Response{
+					Ret:     1,
+					Data:    result,
+					Message: "",
+				}
 			}
 		}
 
