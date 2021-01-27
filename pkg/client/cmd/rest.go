@@ -265,18 +265,6 @@ func Handle404() http.Handler {
 					}else {
 						result = a
 					}
-				case "/add_peers":
-					var a ctypes.ResultAddPeers
-					err = cdc.UnmarshalJSON([]byte(resStr), &a)
-					if err != nil {
-						resultResponse = client.Response{
-							Ret:     -1,
-							Data:    nil,
-							Message: err.Error(),
-						}
-					}else {
-						result = a
-					}
 				}
 
 				resultResponse = client.Response{
