@@ -96,12 +96,12 @@ func TestNewInitChainFiles(t *testing.T) {
 	}
 
 	//生成的nodeKey是privKey1的
-	initFiles1, err := NewInitFiles(privKey1, persistentPeers)
+	initFiles1, err := NewInitFiles(privKey1, persistentPeers, true)
 	if err != nil{
 		fmt.Println(err)
 	}
 	//生成的nodeKey是privKey2的
-	initFiles2, err := NewInitFiles(privKey2, persistentPeers)
+	initFiles2, err := NewInitFiles(privKey2, persistentPeers, true)
 	if err != nil{
 		fmt.Println(err)
 	}

@@ -128,12 +128,13 @@ func NewGenesisFiles(chainInfo ChainInfo,
 	return genesisFiles, nil
 }
 
-func NewInitFiles(privKey string, persistentPeers string) (*InitFiles, error){
+func NewInitFiles(privKey, persistentPeers string, tlsOption bool) (*InitFiles, error){
 	//config.toml
 	config, err := createConfig(persistentPeers)
 	if err != nil {
 		return nil, err
 	}
+	config.P2P.TLSOption = tlsOption
 	var configTemplate *template.Template
 	var buffer bytes.Buffer
 	if configTemplate, err = template.New("configFileTemplate").Parse(defaultConfigTemplate); err != nil {
