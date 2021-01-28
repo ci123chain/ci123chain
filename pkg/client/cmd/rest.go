@@ -21,6 +21,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -83,7 +84,6 @@ func NewRestServer() *RestServer {
 	if err != nil {
 		return nil
 	}
-
 
 	r.NotFoundHandler = Handle404()
 	r.HandleFunc("/healthcheck", HealthCheckHandler(cliCtx)).Methods("GET")
@@ -382,12 +382,16 @@ func HealthCheckHandler(ctx context.Context) http.HandlerFunc  {
 
 func ExportLogHandler(ctx context.Context) http.HandlerFunc  {
 	return func(w http.ResponseWriter, req *http.Request) {
+		viper.SetEnvPrefix("CI")
+		viper.BindEnv("HOME")
+		root := viper.GetString("HOME")
 		logPath := req.FormValue("path")
-		log, err := ioutil.ReadFile(logPath)
+		log, err := ioutil.ReadFile(filepath.Join(root, "logs", logPath))
 		if err != nil {
 			_, _ = w.Write([]byte(err.Error()))
 			return
 		}
+
 		resp := base64.StdEncoding.EncodeToString(log)
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(resp))
