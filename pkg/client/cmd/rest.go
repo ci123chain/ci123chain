@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	accountRpc "github.com/ci123chain/ci123chain/pkg/account/rest"
@@ -86,7 +87,7 @@ func NewRestServer() *RestServer {
 
 	r.NotFoundHandler = Handle404()
 	r.HandleFunc("/healthcheck", HealthCheckHandler(cliCtx)).Methods("GET")
-
+	r.HandleFunc("/exportLog", ExportLogHandler(cliCtx)).Methods("GET")
 	rpc.RegisterRoutes(cliCtx, r)
 	accountRpc.RegisterRoutes(cliCtx, r)
 	txRpc.RegisterTxRoutes(cliCtx, r)
@@ -378,3 +379,18 @@ func HealthCheckHandler(ctx context.Context) http.HandlerFunc  {
 		w.Write(resultByte)
 	}
 }
+
+func ExportLogHandler(ctx context.Context) http.HandlerFunc  {
+	return func(w http.ResponseWriter, req *http.Request) {
+		logPath := req.FormValue("path")
+		log, err := ioutil.ReadFile(logPath)
+		if err != nil {
+			_, _ = w.Write([]byte(err.Error()))
+			return
+		}
+		resp := base64.StdEncoding.EncodeToString(log)
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(resp))
+	}
+}
+
