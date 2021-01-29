@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/tendermint/tendermint/libs/pubsub/query"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
+	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	"github.com/tendermint/tendermint/types"
 	"strings"
 	"sync"
@@ -239,8 +240,12 @@ func (r *PubSubRoom) Subscribe(topic string) {
 					continue
 				}
 			}
-			go func() {
-				for e := range responses {
+			tmRes := TMResponse{
+				response: responses,
+				topic:    topic,
+			}
+			go func(res TMResponse) {
+				for e := range res.response {
 					logger.Info("receive tendermint response: %v", e.Data)
 					var v interface{}
 					switch e.Data.(type) {
@@ -274,9 +279,9 @@ func (r *PubSubRoom) Subscribe(topic string) {
 						Time:   time.Now().Format(time.RFC3339),
 						Content: v,//e.Data,
 					}
-					Notify(r, topic, response)
+					Notify(r, res.topic, response)
 				}
-			}()
+			}(tmRes)
 		}
 	}()
 }
@@ -329,9 +334,13 @@ func (r *PubSubRoom) AddShard() {
 						}
 
 					}
+					tmRes := TMResponse{
+						response: responses,
+						topic:    topic,
+					}
 
-					go func() {
-						for e := range responses {
+					go func(res TMResponse) {
+						for e := range res.response {
 							//var v interface{}
 							//switch e.Data.(type) {
 							//case types.EventDataTx:
@@ -424,9 +433,9 @@ func (r *PubSubRoom) AddShard() {
 								Time:   time.Now().Format(time.RFC3339),
 								Content: v,//e.Data,
 							}
-							Notify(r, topic, response)
+							Notify(r, res.topic, response)
 						}
-					}()
+					}(tmRes)
 				}
 			}
 		}
@@ -683,3 +692,8 @@ func rpcAddress(host string) string {
 //		TxAmount:    amount,
 //	}
 //}
+
+type TMResponse struct {
+	response <- chan ctypes.ResultEvent
+	topic  string
+}
