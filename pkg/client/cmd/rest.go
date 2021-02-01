@@ -390,6 +390,7 @@ func ExportLogHandler(ctx context.Context) http.HandlerFunc  {
 			_, _ = w.Write([]byte(err.Error()))
 			return
 		}
+		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", logPath))
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write(log)
 	}
