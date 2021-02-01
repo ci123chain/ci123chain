@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	accountRpc "github.com/ci123chain/ci123chain/pkg/account/rest"
@@ -385,16 +384,14 @@ func ExportLogHandler(ctx context.Context) http.HandlerFunc  {
 		viper.SetEnvPrefix("CI")
 		viper.BindEnv("HOME")
 		root := viper.GetString("HOME")
-		logPath := req.FormValue("path")
+		logPath := req.URL.Query().Get("path")
 		log, err := ioutil.ReadFile(filepath.Join(root, "logs", logPath))
 		if err != nil {
 			_, _ = w.Write([]byte(err.Error()))
 			return
 		}
-
-		resp := base64.StdEncoding.EncodeToString(log)
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(resp))
+		_, _ = w.Write(log)
 	}
 }
 
