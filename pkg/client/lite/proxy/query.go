@@ -5,12 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/pkg/errors"
-
 	"github.com/tendermint/tendermint/crypto/merkle"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/lite"
-	lerr "github.com/tendermint/tendermint/lite/errors"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	"github.com/tendermint/tendermint/types"
@@ -59,45 +56,47 @@ func GetWithProofOptions(prt *merkle.ProofRuntime, path string, key []byte, opts
 		return nil, err
 	}
 
-	if len(resp.Key) == 0 || resp.Proof == nil {
-		return nil, lerr.ErrEmptyTree()
-	}
-	if resp.Height == 0 {
-		return nil, cmn.NewError("Height returned is zero")
-	}
+	return &ctypes.ResultABCIQuery{Response: resp}, nil
 
-	// AppHash for height H is in header H+1
-	signedHeader, err := GetCertifiedCommit(resp.Height+1, node, cert)
-	if err != nil {
-		return nil, err
-	}
-
-	// Validate the proof against the certified header to ensure data integrity.
-	if resp.Value != nil {
-		// Value exists
-		// XXX How do we encode the key into a string...
-		storeName, err := parseQueryStorePath(path)
-		if err != nil {
-			return nil, err
-		}
-		kp := merkle.KeyPath{}
-		kp = kp.AppendKey([]byte(storeName), merkle.KeyEncodingURL)
-		kp = kp.AppendKey(resp.Key, merkle.KeyEncodingURL)
-		err = prt.VerifyValue(resp.Proof, signedHeader.AppHash, kp.String(), resp.Value)
-		if err != nil {
-			return nil, errors.Wrap(err, "Couldn't verify value proof")
-		}
-		return &ctypes.ResultABCIQuery{Response: resp}, nil
-	} else {
-		// Value absent
-		// Validate the proof against the certified header to ensure data integrity.
-		// XXX How do we encode the key into a string...
-		err = prt.VerifyAbsence(resp.Proof, signedHeader.AppHash, string(resp.Key))
-		if err != nil {
-			return nil, errors.Wrap(err, "Couldn't verify absence proof")
-		}
-		return &ctypes.ResultABCIQuery{Response: resp}, nil
-	}
+	//if len(resp.Key) == 0 || resp.Proof == nil {
+	//	return nil, lerr.ErrEmptyTree()
+	//}
+	//if resp.Height == 0 {
+	//	return nil, cmn.NewError("Height returned is zero")
+	//}
+	//
+	//// AppHash for height H is in header H+1
+	//signedHeader, err := GetCertifiedCommit(resp.Height+1, node, cert)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//
+	//// Validate the proof against the certified header to ensure data integrity.
+	//if resp.Value != nil {
+	//	// Value exists
+	//	// XXX How do we encode the key into a string...
+	//	storeName, err := parseQueryStorePath(path)
+	//	if err != nil {
+	//		return nil, err
+	//	}
+	//	kp := merkle.KeyPath{}
+	//	kp = kp.AppendKey([]byte(storeName), merkle.KeyEncodingURL)
+	//	kp = kp.AppendKey(resp.Key, merkle.KeyEncodingURL)
+	//	err = prt.VerifyValue(resp.Proof, signedHeader.AppHash, kp.String(), resp.Value)
+	//	if err != nil {
+	//		return nil, errors.Wrap(err, "Couldn't verify value proof")
+	//	}
+	//	return &ctypes.ResultABCIQuery{Response: resp}, nil
+	//} else {
+	//	// Value absent
+	//	// Validate the proof against the certified header to ensure data integrity.
+	//	// XXX How do we encode the key into a string...
+	//	err = prt.VerifyAbsence(resp.Proof, signedHeader.AppHash, string(resp.Key))
+	//	if err != nil {
+	//		return nil, errors.Wrap(err, "Couldn't verify absence proof")
+	//	}
+	//	return &ctypes.ResultABCIQuery{Response: resp}, nil
+	//}
 }
 
 func parseQueryStorePath(path string) (storeName string, err error) {
