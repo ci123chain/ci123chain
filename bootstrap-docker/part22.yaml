@@ -7,7 +7,7 @@ services:
     environment:
       CI_CHAIN_ID: ci0
       CI_STATEDB: couchdb://admin:password@couchdb_service:5984/test
-      CI_HOME: /root/cid
+      CI_HOME: /root/cid/aaa/bbb
       CI_CLIHOME: /root/cli
       CI_VALIDATOR_KEY: BpiPMqeXTNJLBg6hRoWJjsjOLSHIQRIrkQlykLQ/0AE=
       CI_PUBKEY: Ap0lbWGAnzfqpc0D0GL081WCnWatdk2d5B21orPl30AS
@@ -30,7 +30,7 @@ services:
     environment:
       CI_CHAIN_ID: ci1
       CI_STATEDB: couchdb://admin:password@couchdb_service:5984/test
-      CI_HOME: /root/cid
+      CI_HOME: /root/cid/aaa/bbb
       CI_CLIHOME: /root/cli
       CI_VALIDATOR_KEY: BpiPMqeXTNJLBg6hRoWJjsjOLSHIQRIrkQlykLQ/0AE=
       CI_PUBKEY: Ap0lbWGAnzfqpc0D0GL081WCnWatdk2d5B21orPl30AS
@@ -51,7 +51,7 @@ services:
     environment:
       CI_CHAIN_ID: ci2
       CI_STATEDB: couchdb://admin:password@couchdb_service:5984/test
-      CI_HOME: /root/cid
+      CI_HOME: /root/cid/aaa/bbb
       CI_CLIHOME: /root/cli
       CI_VALIDATOR_KEY: BpiPMqeXTNJLBg6hRoWJjsjOLSHIQRIrkQlykLQ/0AE=
       CI_PUBKEY: Ap0lbWGAnzfqpc0D0GL081WCnWatdk2d5B21orPl30AS

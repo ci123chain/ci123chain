@@ -1,0 +1,14 @@
+version: "3"
+services:
+  ci0:
+    image: cichain:v0.0.1
+    container_name: ci0
+    hostname: ci0
+    environment:
+      LITECLIENT: 1
+      CONNECT_NODE_ADDRESS: tcp://192.168.1.103:26657
+      CONNECT_CHAIN_ID: ci0
+    ports:
+      - 1310:80
+
+

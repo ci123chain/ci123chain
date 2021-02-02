@@ -9,6 +9,22 @@ then
    CI_HOME="/root/cid"
 fi
 
+CI_LOGDIR=$CI_HOME/logs
+if [ ! -d $CI_LOGDIR ]; then
+    mkdir -p $CI_LOGDIR
+fi
+
+
+if [ $LITECLIENT ]; then
+    if [ -z $CONNECT_NODE_ADDRESS ] || [ -z $CONNECT_CHAIN_ID ]; then
+        echo "---Please Special FULL_NODE_ADDRESS and CONNECT_CHAIN_ID----"
+        exit 1
+    fi
+    nohup /opt/cid-linux tendermint lite --node=$CONNECT_NODE_ADDRESS --chain-id=$CONNECT_CHAIN_ID --home-dir=$CI_HOME >> $CI_LOGDIR/liteclient-output.log 2>&1 &
+    /opt/cli-linux rest-server --laddr=tcp://0.0.0.0:80 --node=tcp://0.0.0.0:8888 >> $CI_LOGDIR/cid-output.log 2>&1
+    exit 0
+fi
+
 # genesis file
 if [ ! -f $CI_HOME/config/genesis.json ]; then
     if [ $CI_CONFIG ]; then
@@ -39,10 +55,6 @@ else
     echo "----------"
 fi
 
-CI_LOGDIR=$CI_HOME/logs
-if [ ! -d $CI_LOGDIR ]; then
-    mkdir -p $CI_LOGDIR
-fi
 
 # start
 nohup /opt/cli-linux rest-server --laddr=tcp://0.0.0.0:80 >> $CI_LOGDIR/rest-output.log 2>&1 &
