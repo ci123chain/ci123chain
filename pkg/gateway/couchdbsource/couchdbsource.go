@@ -62,18 +62,23 @@ func (s *CouchDBSourceImp) FetchSource() (hostArr []string) {
 	}
 
 	//gateway.nodekey.suffix
+	var host string
 	for _, value := range lists {
 		item, ok := value.(map[string]interface{})
 		if !ok {
 			continue
 		}
-		name := item["name"].(string)
-		selfDomain := viper.GetString(Domain)
-		if len(selfDomain) > 0 {
-			name = domain.GetShardDomain(selfDomain, name)
+		shardDomain := item["domain"].(string)
+		if shardDomain != "" {
+			host = s.getAdjustHost(HostPattern, shardDomain)
+		} else {
+			name := item["name"].(string)
+			selfDomain := viper.GetString(Domain)
+			if len(selfDomain) > 0 {
+				name = domain.GetShardDomain(selfDomain, name)
+			}
+			host = s.getAdjustHost(HostPattern, name)
 		}
-		host := s.getAdjustHost(HostPattern, name)
-
 		//if !strings.HasPrefix(name, "http") {
 		//	name = "http://" + name + ":80"
 		//}

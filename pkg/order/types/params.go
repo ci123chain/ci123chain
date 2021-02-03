@@ -1,6 +1,7 @@
 package types
 
 import (
+	"os"
 	"time"
 )
 
@@ -28,6 +29,7 @@ type OrderBook struct {
 type Lists struct {
 	Name 	string 	`json:"name"`
 	Height	int64	`json:"height"`
+	Domain  string  `json:"domain"`
 }
 
 type Current struct {
@@ -46,11 +48,19 @@ type Params struct {
 }
 
 func DefaultParams() Params {
+	var domain string
+	podname := os.Getenv("PODNAME")
+	if len(podname) > 16 {
+		domain = podname[:16] + ".gw002.oneitfarm.com"
+	}
+
+
 	var lists []Lists
 
 	p1 := &Lists{
 		Name:   "",
 		Height: 0,
+		Domain: domain,
 	}
 	//p2 := &keeper.Lists{
 	//	Name:   "Shard2",
