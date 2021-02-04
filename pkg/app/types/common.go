@@ -127,7 +127,12 @@ func DefaultTxDecoder(cdc *codec.Codec) types2.TxDecoder {
 		var transfer *CommonTx
 		err := cdc.UnmarshalBinaryBare(txBytes, &transfer)
 		if err != nil {
-			return nil, types2.ErrTxDecode("decode msg failed").TraceSDK(err.Error())
+			var ethTx *MsgEthereumTx
+			err := cdc.UnmarshalBinaryBare(txBytes, &ethTx)
+			if err != nil {
+				return nil, types2.ErrTxDecode("decode msg failed").TraceSDK(err.Error())
+			}
+			return ethTx, nil
 		}
 		return transfer, nil
 	}

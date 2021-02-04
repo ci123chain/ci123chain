@@ -42,6 +42,7 @@ const (
 	FlagMaxOpenConnections = "max-open"
 	FlagRPCReadTimeout     = "read-timeout"
 	FlagRPCWriteTimeout    = "write-timeout"
+	FlagWebsocket		   = "wsport"
 )
 
 
@@ -51,6 +52,7 @@ func init() {
 	rpcCmd.Flags().Uint(FlagMaxOpenConnections, 1000, "The number of maximum open connections")
 	rpcCmd.Flags().Uint(FlagRPCReadTimeout, 10, "The RPC read timeout")
 	rpcCmd.Flags().Uint(FlagRPCWriteTimeout, 10, "The RPC write timeout")
+	rpcCmd.Flags().String(FlagWebsocket, "8546", "websocket port to listen to")
 	viper.BindPFlags(rpcCmd.Flags())
 }
 

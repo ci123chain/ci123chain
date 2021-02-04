@@ -2,9 +2,14 @@ package keeper
 
 import (
 	"encoding/json"
+	"fmt"
+	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/vm/evmtypes"
 	"github.com/ci123chain/ci123chain/pkg/vm/wasmtypes"
+	ethcmn "github.com/ethereum/go-ethereum/common"
 	abci "github.com/tendermint/tendermint/abci/types"
+	"strconv"
 )
 
 
@@ -21,6 +26,10 @@ func NewQuerier(k Keeper) sdk.Querier {
 			return queryAccountContractList(ctx, req, k)
 		case types.QueryContractExist:
 			return queryContractExist(ctx, req, k)
+		case evmtypes.QueryBloom:
+			return queryBlockBloom(ctx, path, k)
+		case evmtypes.QueryCode:
+			return queryCode(ctx, path, k)
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown query endpoint")
 		}
@@ -121,4 +130,36 @@ func queryContractExist(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byt
 		return []byte("The contract already exists"), nil
 	}
 	return nil, nil
+}
+
+func queryBlockBloom(ctx sdk.Context, path []string, k Keeper) ([]byte, sdk.Error) {
+	num, err := strconv.ParseInt(path[1], 10, 64)
+	if err != nil {
+		return nil, sdk.ErrInternal(fmt.Sprintf("could not unmarshal block height: %w", err))
+	}
+
+	bloom, found := k.GetBlockBloom(ctx.WithBlockHeight(num), num)
+	if !found {
+		return nil, sdk.ErrInternal(fmt.Sprintf("block bloom not found for height %d", num))
+	}
+
+	res := evmtypes.QueryBloomFilter{Bloom: bloom}
+	bz, err := codec.MarshalJSONIndent(k.cdc, res)
+	if err != nil {
+		return nil, sdk.ErrInternal(err.Error())
+	}
+
+	return bz, nil
+}
+
+func queryCode(ctx sdk.Context, path []string, keeper Keeper) ([]byte, sdk.Error) {
+	addr := ethcmn.HexToAddress(path[1])
+	code := keeper.GetCode(ctx, addr)
+	res := evmtypes.QueryResCode{Code: code}
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, res)
+	if err != nil {
+		return nil, sdk.ErrInternal(err.Error())
+	}
+
+	return bz, nil
 }

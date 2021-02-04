@@ -36,6 +36,7 @@ func MakeCodec() *codec.Codec {
 	//cdc.RegisterInterface((*crypto.PubKey)(nil), nil)
 	//cdc.RegisterInterface((*crypto.PrivKey)(nil), nil)
 	cdc.RegisterConcrete(&CommonTx{}, "transfer/commontx", nil)
+	cdc.RegisterConcrete(&MsgEthereumTx{}, "eth/msgEthereumTx", nil)
 	sdk.RegisterCodec(cdc)
 	transaction.RegisterCodec(cdc)
 	transfer.RegisterCodec(cdc)
