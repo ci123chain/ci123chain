@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	"github.com/ci123chain/ci123chain/pkg/abci/types"
@@ -10,7 +11,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/libs/cli"
-	"strconv"
+	"math/big"
 )
 
 func AddGenesisAccountCmd(ctx *app.Context, cdc *codec.Codec) *cobra.Command {
@@ -65,8 +66,12 @@ func AddGenesisAccountCmd(ctx *app.Context, cdc *codec.Codec) *cobra.Command {
 }
 
 func ParseCoin(coin string) (types.Coin, error) {
-	coin64, err := strconv.ParseUint(coin, 10, 64)
-	return types.NewUInt64Coin(coin64), err
+	x := new(big.Int)
+	x, ok := x.SetString(coin, 10)
+	if !ok {
+		return types.Coin{}, errors.New("parse coin failed")
+	}
+	return types.NewCoin(types.NewIntFromBigInt(x)), nil
 }
 
 func ParseAccAddress(addr string) types.AccAddress {

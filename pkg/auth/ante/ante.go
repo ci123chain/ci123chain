@@ -8,6 +8,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/auth"
 	"github.com/ci123chain/ci123chain/pkg/auth/types"
 	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
+	"math/big"
 
 	"github.com/ci123chain/ci123chain/pkg/supply"
 	"github.com/ci123chain/ci123chain/pkg/transaction"
@@ -50,7 +51,7 @@ func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, sk su
 		}
 		gas := tx.GetGas()//用户期望的gas值 g.limit
 		//检查是否足够支付gas limit, 并预先扣除
-		if acc.GetCoin().Amount.Uint64() < gas {
+		if acc.GetCoin().Amount.LT(sdk.NewIntFromBigInt(big.NewInt(int64(gas)))) {
 			return newCtx, sdk.ErrInsufficientCoins("Can't pay enough gasLimit").Result(),true
 		}
 		DeductFees(acc,sdk.NewUInt64Coin(gas),ak,ctx)
