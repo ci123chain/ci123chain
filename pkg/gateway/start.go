@@ -18,13 +18,14 @@ import (
 	"time"
 )
 
-const DefaultLogDir  = "$HOME/.gateway"
+const DefaultLogDir = "$HOME/.gateway"
+
 var serverPool *ServerPool
 
 var pubsubRoom *types.PubSubRoom
 
 func Start() {
-	var logDir, logLevel, serverList string
+	var logLevel, serverList string
 	var statedb, urlreg string
 	var port int
 	flag.String("logdir", DefaultLogDir, "log dir")
@@ -45,7 +46,7 @@ func Start() {
 	//viper.BindEnv("statedb")
 	//viper.BindEnv("logdir")
 	statedb = viper.GetString("statedb")
-	logDir = viper.GetString("logdir")
+	//logDir = viper.GetString("logdir")
 	port = viper.GetInt("port")
 	urlreg = viper.GetString("urlreg")
 	rpcAddress := viper.GetString("rpcport")
@@ -53,11 +54,11 @@ func Start() {
 		rpcAddress = types.DefaultRPCPort
 	}
 
-	if ok, err :=  regexp.MatchString("[*]+", urlreg); !ok {
+	if ok, err := regexp.MatchString("[*]+", urlreg); !ok {
 		panic(err)
 	}
 	// 初始化logger
-	_ = logger.Init(logDir, "gateway", "", logLevel)
+	logger.Init()
 	//dynamic.Init()
 	//init PubSubRoom
 	pubsubRoom = &types.PubSubRoom{}
@@ -98,29 +99,29 @@ func AllHandle(w http.ResponseWriter, r *http.Request) {
 	job := NewSpecificJob(r, serverPool.backends)
 	if job != nil {
 		serverPool.JobQueue <- job
-	}else {
+	} else {
 		err := errors.New("arguments error")
 		res, _ := json.Marshal(types.ErrorResponse{
-			Ret: 0,
-			Message:  err.Error(),
+			Ret:     0,
+			Message: err.Error(),
 		})
 		_, _ = w.Write(res)
 		return
 	}
 	select {
-	 case resp := <- *job.ResponseChan:
+	case resp := <-*job.ResponseChan:
 		_, _ = w.Write(resp)
 	}
 }
 
 func healthCheckHandlerFn(w http.ResponseWriter, _ *http.Request) {
 	deadList := serverPool.getDeadList()
-	if len(deadList) != 0{
-		w.Header().Set("Content-Type","application/json")
+	if len(deadList) != 0 {
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(500)
 		resultResponse := client.HealthcheckResponse{
-			State:   500,
-			Data:    deadList,
+			State: 500,
+			Data:  deadList,
 		}
 
 		resultByte, _ := json.Marshal(resultResponse)
@@ -128,10 +129,10 @@ func healthCheckHandlerFn(w http.ResponseWriter, _ *http.Request) {
 		return
 	}
 	resultResponse := client.HealthcheckResponse{
-		State:   200,
-		Data:    "all backends health or no backends now",
+		State: 200,
+		Data:  "all backends health or no backends now",
 	}
 	resultByte, _ := json.Marshal(resultResponse)
-	w.Header().Set("Content-Type","application/json")
+	w.Header().Set("Content-Type", "application/json")
 	_, _ = w.Write(resultByte)
 }

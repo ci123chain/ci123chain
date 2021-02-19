@@ -33,6 +33,7 @@ require (
 	github.com/tendermint/tm-db v0.2.0
 	github.com/tyler-smith/go-bip39 v1.0.2
 	github.com/wasmerio/go-ext-wasm v0.3.1
+	gitlab.oneitfarm.com/bifrost/cilog v0.1.5
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	gopkg.in/yaml.v2 v2.3.0
 	gotest.tools v2.2.0+incompatible
