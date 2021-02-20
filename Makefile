@@ -26,4 +26,5 @@ clean-cproxy:
 	docker images | grep "$(Tag)service" | awk '{print $$3}' | xargs docker rmi
 
 .PHONY:release, build all
-release: build-cproxy-linux
+release:
+	GOPROXY=$(PROXY) GOSUMDB=off $(GO_BUILD_CMD) -o ./build/cproxy-linux ./cmd
