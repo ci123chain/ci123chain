@@ -4,9 +4,9 @@ WORKDIR /opt/ci123chain
 
 COPY . /opt/ci123chain/
 
-RUN GOPROXY=https://goproxy.cn,direct GOSUMDB=off go build -o /opt/cid-linux ./cmd/cid
-RUN GOPROXY=https://goproxy.cn,direct GOSUMDB=off go build -o /opt/cli-linux ./cmd/cicli
-RUN GOPROXY=https://goproxy.cn,direct GOSUMDB=off go build -o /opt/cproxy-linux ./cmd/gateway
+RUN go build -o /opt/cid-linux ./cmd/cid
+RUN go build -o /opt/cli-linux ./cmd/cicli
+RUN go build -o /opt/cproxy-linux ./cmd/gateway
 
 FROM harbor.oneitfarm.com/zhirenyun/baseimage:bionic-1.0.0
 
