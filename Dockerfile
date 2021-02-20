@@ -4,6 +4,8 @@ WORKDIR /opt/ci123chain
 
 COPY . /opt/ci123chain/
 
+RUN GOSUMDB=off go mod download
+
 RUN go build -o /opt/cid-linux ./cmd/cid
 RUN go build -o /opt/cli-linux ./cmd/cicli
 RUN go build -o /opt/cproxy-linux ./cmd/gateway
