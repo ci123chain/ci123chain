@@ -2,12 +2,10 @@ FROM harbor.oneitfarm.com/zhirenyun/baseimage:bionic-1.0.0
 
 WORKDIR /opt/ci123chain
 
-COPY . /opt/ci123chain/
+COPY ./docker/node/build/cid-linux /opt/cid-linux
+COPY ./docker/node/build/cli-linux /opt/cli-linux
 
-COPY --from=0 ./docker/node/build/cid-linux /opt/cid-linux
-COPY --from=0 ./docker/node/build/cli-linux /opt/cli-linux
-
-COPY --from=0 /go/pkg/mod/github.com/wasmerio /go/pkg/mod/github.com/wasmerio
+COPY /go/pkg/mod/github.com/wasmerio /go/pkg/mod/github.com/wasmerio
 
 ENV GOPATH /go
 
