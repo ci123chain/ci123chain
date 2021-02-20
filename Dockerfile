@@ -1,4 +1,4 @@
-FROM harbor.oneitfarm.com/zhirenyun/baseimage:bionic-1.0.0
+FROM harbor.oneitfarm.com/zhirenyun/go:1.15.6
 
 WORKDIR /opt/ci123chain
 
@@ -7,6 +7,8 @@ COPY . /opt/ci123chain/
 RUN GOSUMDB=off go build -o /opt/cid-linux ./cmd/cid
 RUN GOSUMDB=off go build -o /opt/cli-linux ./cmd/cicli
 RUN GOSUMDB=off go build -o /opt/cproxy-linux ./cmd/gateway
+
+FROM harbor.oneitfarm.com/zhirenyun/baseimage:bionic-1.0.0
 
 COPY --from=0 /opt/cid-linux /opt/cid-linux
 COPY --from=0 /opt/cli-linux /opt/cli-linux
