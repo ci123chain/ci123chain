@@ -28,9 +28,9 @@ cli:
 .PHONY: build-linux
 build-linux: server-linux client-linux
 server-linux:
-	GOPROXY=$(PROXY) CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GO_BUILD_CMD) GOSUMDB=off -o ./docker/node/build/cid-linux ./cmd/cid
+	GOPROXY=$(PROXY) CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GOSUMDB=off $(GO_BUILD_CMD) -o ./docker/node/build/cid-linux ./cmd/cid
 client-linux: 
-	GOPROXY=$(PROXY) CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GO_BUILD_CMD) GOSUMDB=off -o ./docker/node/build/cli-linux ./cmd/cicli
+	GOPROXY=$(PROXY) CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GOSUMDB=off $(GO_BUILD_CMD) -o ./docker/node/build/cli-linux ./cmd/cicli
 
 build-image:
 	docker rmi cichain:$(Tag)
