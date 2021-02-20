@@ -65,8 +65,8 @@ clean-cproxy:
 	docker ps -a | grep "ci123-$(Tag)-" | awk '{print $$1}' | xargs docker rm -f
 	docker images | grep "$(Tag)service" | awk '{print $$3}' | xargs docker rmi
 
-.PHONY:release, build all
-release:
+#.PHONY:release, build all
+release: build-linux
 
 release-build:
 	docker build -t cichain:$(Tag) .
