@@ -8,7 +8,7 @@ LB?=$(BUILD_DIR)/lb
 
 GO_BUILD_CMD=$(GO_BIN) build
 
-PROXY=https://goproxy.io
+PROXY=https://goproxy.io,direct
 
 .PHONY: build-cproxy
 build-cproxy:
