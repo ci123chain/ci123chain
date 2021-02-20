@@ -13,7 +13,7 @@ LB?=$(BUILD_DIR)/cproxy
 GO_BUILD_CMD=$(GO_BIN) build
 
 
-PROXY=https://goproxy.cn
+PROXY=https://goproxy.cn,direct
 
 .PHONY: build
 build: server cli
