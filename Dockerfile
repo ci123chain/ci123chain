@@ -4,11 +4,9 @@ WORKDIR /opt/ci123chain
 
 COPY . /opt/ci123chain/
 
-RUN GOSUMDB=off go mod download
-
-RUN go build -o /opt/cid-linux ./cmd/cid
-RUN go build -o /opt/cli-linux ./cmd/cicli
-RUN go build -o /opt/cproxy-linux ./cmd/gateway
+RUN GOSUMDB=off go build -o /opt/cid-linux ./cmd/cid
+RUN GOSUMDB=off go build -o /opt/cli-linux ./cmd/cicli
+RUN GOSUMDB=off go build -o /opt/cproxy-linux ./cmd/gateway
 
 FROM harbor.oneitfarm.com/zhirenyun/baseimage:bionic-1.0.0
 
