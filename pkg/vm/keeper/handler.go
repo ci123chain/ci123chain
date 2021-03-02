@@ -26,8 +26,8 @@ func NewHandler(k Keeper) sdk.Handler {
 			return handleMsgMigrateContract(ctx, k, *tx)
 		case *evm.MsgEvmTx:
 			return handleMsgEvmTx(ctx, k, *tx)
-		case *types.MsgEthereumTx:
-			return handleMsgEthereumTx(ctx, k, *tx)
+		case types.MsgEthereumTx:
+			return handleMsgEthereumTx(ctx, k, tx)
 		default:
 			errMsg := fmt.Sprintf("unrecognized supply message type: %T", tx)
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -193,7 +193,10 @@ func handleMsgEthereumTx(ctx sdk.Context, k Keeper, msg types.MsgEthereumTx) sdk
 	chainIDEpoch := big.NewInt(123)
 
 	// Verify signature and retrieve sender address
-	sender := common.BytesToAddress(msg.GetFromAddress().Bytes())
+	sender, err := msg.VerifySig(chainIDEpoch)
+	if err != nil {
+		return evm.ErrInvalidMsg(evm.DefaultCodespace, err).Result()
+	}
 
 	txHash := tmtypes.Tx(ctx.TxBytes()).Hash()
 	ethHash := common.BytesToHash(txHash)
