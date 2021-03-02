@@ -118,7 +118,7 @@ func NewAPI(
 	) *PublicEthereumAPI {
 
 	cdc := types.MakeCodec()
-	epoch := big.NewInt(123)
+	epoch := big.NewInt(999)
 	api := &PublicEthereumAPI{
 		ctx:          context.Background(),
 		clientCtx:    clientCtx.WithBlocked(false),
