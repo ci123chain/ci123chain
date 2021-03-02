@@ -6,6 +6,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/vm/client/rest/api/eth/filters"
 	"github.com/ci123chain/ci123chain/pkg/vm/client/rest/api/net"
 	"github.com/ci123chain/ci123chain/pkg/vm/client/rest/api/personal"
+	"github.com/ci123chain/ci123chain/pkg/vm/client/rest/api/web3"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/rpc"
 )
@@ -25,6 +26,12 @@ func GetAPIs(clientCtx clientcontext.Context, keys map[common.Address]string) []
 	ethAPI := eth.NewAPI(clientCtx, keys)
 	backend := filters.New(clientCtx)
 	return []rpc.API{
+		{
+			Namespace: Web3Namespace,
+			Version:   apiVersion,
+			Service:   web3.NewAPI(),
+			Public:    true,
+		},
 		{
 			Namespace: EthNamespace,
 			Version:   apiVersion,

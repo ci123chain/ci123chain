@@ -13,7 +13,7 @@ type PublicNetAPI struct {
 // NewAPI creates an instance of the public Net Web3 API.
 func NewAPI(clientCtx clientcontext.Context) *PublicNetAPI {
 	return &PublicNetAPI{
-		networkVersion: 123,
+		networkVersion: 999,
 	}
 }
 
