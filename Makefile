@@ -32,9 +32,9 @@ server-linux:
 client-linux: 
 	GOPROXY=$(PROXY) CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GO_BUILD_CMD) -o ./docker/node/build/cli-linux ./cmd/cicli
 
-build-image:
+build-local-image:
 	docker rmi cichain:$(Tag)
-	docker build -t cichain:$(Tag) ./docker/node
+	docker build -f Dockerfile_local -t cichain:$(Tag) .
 
 
 .PHONY: docker-clean
@@ -72,5 +72,5 @@ release:
 	mv /go/pkg/mod/github.com/wasmerio ./wasmerio
 
 release-build:
-	docker build -t cichain:$(Tag) .
+	docker build -f Dockerfile_local -t cichain:$(Tag) .
 

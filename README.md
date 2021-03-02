@@ -20,6 +20,9 @@
 `./build/cid add-genesis-account 0x5D0506ac0411b7E32b2526e2014794Ac418518AB 100000000000 --home ~/.ci123`
 
 ### 4. 启动状态数据库 couchdb
+编译本地镜像
+`make release-build`  
+启动单个节点
 `docker-compose -f testdocker/couchdb-single.yaml up -d`
 
 ### 5. 启动节点
