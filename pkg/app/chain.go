@@ -13,6 +13,7 @@ import (
 	mint_module "github.com/ci123chain/ci123chain/pkg/mint/module"
 	order_module "github.com/ci123chain/ci123chain/pkg/order/module"
 	ordertypes "github.com/ci123chain/ci123chain/pkg/order/types"
+	"github.com/ci123chain/ci123chain/pkg/redis"
 	staking_module "github.com/ci123chain/ci123chain/pkg/staking/module"
 	supply_module "github.com/ci123chain/ci123chain/pkg/supply/module"
 	vm_module "github.com/ci123chain/ci123chain/pkg/vm/module"
@@ -29,7 +30,6 @@ import (
 	_defer "github.com/ci123chain/ci123chain/pkg/auth/defer"
 	auth_types "github.com/ci123chain/ci123chain/pkg/auth/types"
 	"github.com/ci123chain/ci123chain/pkg/config"
-	"github.com/ci123chain/ci123chain/pkg/couchdb"
 	distr "github.com/ci123chain/ci123chain/pkg/distribution"
 	k "github.com/ci123chain/ci123chain/pkg/distribution/keeper"
 	"github.com/ci123chain/ci123chain/pkg/ibc"
@@ -174,7 +174,8 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 	infrastructureKeeper := infrastructure.NewKeeper(cdc, infrastructureStoreKey)
 
 
-	odb := cdb.(*couchdb.GoCouchDB)
+	//odb := cdb.(*couchdb.GoCouchDB)
+	odb := cdb.(*redis.RedisDB)
 	orderKeeper := order.NewKeeper(odb, OrderStoreKey, accKeeper)
 
 

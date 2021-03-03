@@ -12,6 +12,7 @@ require (
 	github.com/ci123chain/wasm-util v1.0.1
 	github.com/deckarep/golang-set v1.7.1 // indirect
 	github.com/ethereum/go-ethereum v1.9.21
+	github.com/go-redis/redis/v8 v8.6.0
 	github.com/gogo/protobuf v1.3.0
 	github.com/golang/protobuf v1.4.2
 	github.com/gorilla/mux v1.8.0
@@ -24,7 +25,7 @@ require (
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/pflag v1.0.3
 	github.com/spf13/viper v1.4.0
-	github.com/stretchr/testify v1.4.0
+	github.com/stretchr/testify v1.7.0
 	github.com/stumble/gorocksdb v0.0.3 // indirect
 	github.com/tanhuiya/fabric-crypto v0.0.0-20191114090500-ee2b23759e39
 	github.com/tendermint/go-amino v0.15.0

@@ -6,7 +6,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/account"
-	"github.com/ci123chain/ci123chain/pkg/couchdb"
+	//"github.com/ci123chain/ci123chain/pkg/couchdb"
 	"github.com/ci123chain/ci123chain/pkg/distribution/types"
 	"github.com/ci123chain/ci123chain/pkg/params"
 	staking "github.com/ci123chain/ci123chain/pkg/staking/keeper"
@@ -345,10 +345,6 @@ func (k DistrKeeper) DeleteValidatorHistoricalRewards(ctx sdk.Context, val sdk.A
 	defer iterator.Close()
 	for ; iterator.Valid(); iterator.Next() {
 		realKey := iterator.Key()
-		_, ok := iterator.(*couchdb.CouchIterator)
-		if ok {
-			realKey = sdk.GetRealKey(iterator.Key())
-		}
 		store.Delete(realKey)
 	}
 }
@@ -418,10 +414,10 @@ func (k DistrKeeper) DeleteValidatorSlashEvents(ctx sdk.Context, val sdk.AccAddr
 	defer iterator.Close()
 	for ; iterator.Valid(); iterator.Next() {
 		realKey := iterator.Key()
-		_, ok := iterator.(*couchdb.CouchIterator)
-		if ok {
-			realKey = sdk.GetRealKey(iterator.Key())
-		}
+		//_, ok := iterator.(*couchdb.CouchIterator)
+		//if ok {
+		//	realKey = sdk.GetRealKey(iterator.Key())
+		//}
 		store.Delete(realKey)
 	}
 }

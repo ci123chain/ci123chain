@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	"github.com/ci123chain/ci123chain/pkg/couchdb"
 	"github.com/ci123chain/ci123chain/pkg/staking/types"
 	"time"
 )
@@ -510,10 +509,6 @@ func (k StakingKeeper) DequeueAllMatureRedelegationQueue(ctx sdk.Context, currTi
 		matureRedelegations = append(matureRedelegations, timeslice.Triplets...)
 
 		realKey := iterator.Key()
-		_, ok := iterator.(*couchdb.CouchIterator)
-		if ok {
-			realKey = sdk.GetRealKey(iterator.Key())
-		}
 		store.Delete(realKey)
 	}
 
@@ -644,10 +639,10 @@ func (k StakingKeeper) DequeueAllMatureUBDQueue(ctx sdk.Context, currTime time.T
 		matureUnbonds = append(matureUnbonds, timeslice.Pairs...)
 
 		realKey := iterator.Key()
-		_, ok := iterator.(*couchdb.CouchIterator)
-		if ok {
-			realKey = sdk.GetRealKey(iterator.Key())
-		}
+		//_, ok := iterator.(*couchdb.CouchIterator)
+		//if ok {
+		//	realKey = sdk.GetRealKey(iterator.Key())
+		//}
 		store.Delete(realKey)
 	}
 
@@ -678,10 +673,10 @@ func (k StakingKeeper) GetRedelegationsFromSrcValidator(ctx sdk.Context, valAddr
 
 	for ; iterator.Valid(); iterator.Next() {
 		realKey := iterator.Key()
-		_, ok := iterator.(*couchdb.CouchIterator)
-		if ok {
-			realKey = sdk.GetRealKey(iterator.Key())
-		}
+		//_, ok := iterator.(*couchdb.CouchIterator)
+		//if ok {
+		//	realKey = sdk.GetRealKey(iterator.Key())
+		//}
 		key := types.GetREDKeyFromValSrcIndexKey(realKey)
 		value := store.Get(key)
 		types.StakingCodec.MustUnmarshalBinaryLengthPrefixed(value, &red)

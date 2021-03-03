@@ -1,12 +1,13 @@
-package couchdbsource
+package redissource
 
 import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/ci123chain/ci123chain/pkg/couchdb"
 	"github.com/ci123chain/ci123chain/pkg/gateway/logger"
+	r "github.com/ci123chain/ci123chain/pkg/redis"
 	"github.com/ci123chain/ci123chain/sdk/domain"
+	"github.com/go-redis/redis/v8"
 	"github.com/spf13/viper"
 	"regexp"
 	"strings"
@@ -15,9 +16,8 @@ import (
 const Domain = "DOMAIN"
 const SharedKey  = "s/k:order/OrderBook"
 const HostPattern  = "[*]+"
-const DefaultDBName = "ci123"
-func NewCouchSource(host, urlreg string) *CouchDBSourceImp {
-	imp := &CouchDBSourceImp{
+func NewRedisSource(host, urlreg string) *RedisDBSourceImp {
+	imp := &RedisDBSourceImp{
 		hostStr: 	host,
 		urlreg:  	urlreg,
 	}
@@ -29,27 +29,28 @@ func NewCouchSource(host, urlreg string) *CouchDBSourceImp {
 	return imp
 }
 
-type CouchDBSourceImp struct {
+type RedisDBSourceImp struct {
 	hostStr string
 	urlreg  string
-	conn    *couchdb.GoCouchDB
+	conn    *r.RedisDB
 }
 
-func (s *CouchDBSourceImp) FetchSource() (hostArr []string) {
-	logger.Debug("Start fetch from couchdb")
-	if s.conn == nil {
-		conn, err := s.GetDBConnection()
+func (s *RedisDBSourceImp) FetchSource() (hostArr []string) {
+	logger.Debug("Start fetch from redisDB")
+	if s.conn.DB.Client == nil {
+		opt, err := getOption(s.hostStr)
 		if err != nil {
 			logger.Error("Connection Error: ", err)
 		}
-		s.conn =conn
+		conn := r.NewRedisDB(opt)
+		s.conn = conn
 	}
 
 	bz := s.conn.Get([]byte(SharedKey))
 	var shared map[string]interface{}
 	err := json.Unmarshal(bz, &shared)
 	if err != nil {
-		logger.Error("fetch data from couchdb error: ", err)
+		logger.Error("fetch data from redisDB error: ", err)
 	}
 
 	orderDict, ok := shared["value"].(map[string]interface{})
@@ -86,61 +87,60 @@ func (s *CouchDBSourceImp) FetchSource() (hostArr []string) {
 			hostArr = append(hostArr, host)
 		}
 	}
-	logger.Debug("End fetch from couchdb")
+	logger.Debug("End fetch from redis")
 	return
 }
 
-func (svr *CouchDBSourceImp) GetDBConnection() (db *couchdb.GoCouchDB, err error) {
-	var dbname string
-	s := strings.Split(svr.hostStr, "://")
-	if len(s) < 2 {
-		return nil, errors.New("statedb format error")
+func (s *RedisDBSourceImp) GetDBConnection() (db *r.RedisDB, err error) {
+	opt, err := getOption(s.hostStr)
+	if err != nil {
+		return nil, err
 	}
-	if s[0] != "couchdb" {
-		return nil, errors.New("statedb format error")
+	db = r.NewRedisDB(opt)
+	err = r.DBIsValid(db)
+	return
+}
+
+func getOption(statedb string) (*redis.Options, error) {
+	// redisdb://admin:password@192.168.2.89:5984
+	// redisdb://192.168.2.89:5984
+	s := strings.Split(statedb, "://")
+	if len(s) < 2 {
+		return nil, errors.New("redisdb format error")
+	}
+	if s[0] != "redisdb" {
+		return nil, errors.New("redisdb format error")
 	}
 	auths := strings.Split(s[1], "@")
 
-	if len(auths) < 2 {
-		info := auths[0]
-		split := strings.Split(info, "/")
-		if len(split) < 2 {
-			dbname = DefaultDBName
-		} else {
-			dbname = split[1]
+	if len(auths) < 2 { // 192.168.2.89:5984 无用户名 密码
+		opt := &redis.Options{
+			Addr: auths[0],
+			DB:   0,
 		}
-		db, err = couchdb.NewGoCouchDB(dbname, split[0],nil)
-	} else {
+		return opt, nil
+	} else { // admin:password@192.168.2.89:5984
 		info := auths[0] // admin:password
 		userandpass := strings.Split(info, ":")
 		if len(userandpass) < 2 {
-			hostandpath := auths[1]
-			split := strings.Split(hostandpath, "/")
-			if len(split) < 2 {
-				dbname = DefaultDBName
-			} else {
-				dbname = split[1]
+			opt := &redis.Options{
+				Addr: auths[1],
+				DB:   0,
 			}
-			db, err = couchdb.NewGoCouchDB(dbname, split[0],nil)
+			return opt, nil
 		} else {
-			auth := &couchdb.BasicAuth{Username: userandpass[0], Password: userandpass[1]}
-			hostandpath := auths[1]
-			split := strings.Split(hostandpath, "/")
-			if len(split) < 2 {
-				dbname = DefaultDBName
-			} else {
-				dbname = split[1]
+			opt := &redis.Options{
+				Addr:               auths[1],
+				Username:           userandpass[0],
+				Password:           userandpass[1],
+				DB:                 0,
 			}
-			db, err = couchdb.NewGoCouchDB(dbname, split[0], auth)
+			return opt, nil
 		}
 	}
-	//if err != nil {
-	//	err = errors.New(fmt.Sprintf("cannot connect to couchdb, expect couchdb://xxxxx:5984 or couchdb://user:pass@xxxxx:5984, got %s", svr.hostStr))
-	//}
-	return
 }
 
-func (s *CouchDBSourceImp) getAdjustHost(pattern, name string) string {
+func (s *RedisDBSourceImp) getAdjustHost(pattern, name string) string {
 	reg, err := regexp.Compile(pattern)
 	if err != nil {
 		return ""
