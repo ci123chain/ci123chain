@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/gorilla/mux"
 	"github.com/spf13/viper"
+	"net/http"
 )
 
 const (
@@ -51,9 +52,53 @@ func registerApiRoutes(cliCtx context.Context, r *mux.Router) {
 	}
 
 	// Web3 RPC API route
-	r.HandleFunc("/", server.ServeHTTP).Methods("POST", "OPTIONS")
+	r.HandleFunc("/", Handler(server)).Methods("POST", "OPTIONS")
+
+	//r.NotFoundHandler = NewHandler(nil)
 
 	websocketAddr := viper.GetString(flagWebSocket)
 	ws := websockets.NewServer(cliCtx, websocketAddr)
 	ws.Start()
 }
+
+
+func Handler(s *rpc.Server) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		//var R http.Request
+		//R.Body = r.Body
+		//println("receive request:")
+		//by, err := ioutil.ReadAll(R.Body)
+		//if err != nil {
+		//	println("err:", err.Error())
+		//}else {
+		//	println("got body")
+		//	println(string(by))
+		//}
+		//println ("end")
+		//w.Header().Set("Access-Control-Allow-Origin","*")
+		w.Header().Set("Access-Control-Allow-Origin", "*")  // 允许访问所有域，可以换成具体url，注意仅具体url才能带cookie信息
+		w.Header().Add("Access-Control-Allow-Headers", "Content-Type,AccessToken,X-CSRF-Token, Authorization, Token") //header的类型
+		w.Header().Add("Access-Control-Allow-Credentials", "true") //设置为true，允许ajax异步请求带cookie信息
+		w.Header().Add("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE") //允许请求方法
+		w.Header().Set("content-type", "application/json;charset=UTF-8")             //返回数据格式是json
+		s.ServeHTTP(w, r)
+	}
+}
+
+//type Handler struct {
+//	sr *http.Server
+//}
+
+//func NewHandler(sr *http.Server) Handler {
+//	return Handler{sr:sr}
+//}
+//
+//func (h Handler)ServeHTTP(w http.ResponseWriter, r *http.Request) {
+//	println("receive not found handle request")
+//	by, err := ioutil.ReadAll(r.Body)
+//	if err != nil {
+//		println("err:", err.Error())
+//	}else {
+//		println(string(by))
+//	}
+//}

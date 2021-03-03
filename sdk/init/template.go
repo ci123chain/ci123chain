@@ -278,13 +278,13 @@ version = "{{ .FastSync.Version }}"
 
 wal_file = "{{ js .Consensus.WalPath }}"
 
-timeout_propose = "{{ .Consensus.TimeoutPropose }}"
-timeout_propose_delta = "{{ .Consensus.TimeoutProposeDelta }}"
-timeout_prevote = "{{ .Consensus.TimeoutPrevote }}"
-timeout_prevote_delta = "{{ .Consensus.TimeoutPrevoteDelta }}"
-timeout_precommit = "{{ .Consensus.TimeoutPrecommit }}"
-timeout_precommit_delta = "{{ .Consensus.TimeoutPrecommitDelta }}"
-timeout_commit = "{{ .Consensus.TimeoutCommit }}"
+timeout_propose = "1s"
+timeout_propose_delta = "500ms"
+timeout_prevote = "1s"
+timeout_prevote_delta = "500ms"
+timeout_precommit = "1s"
+timeout_precommit_delta = "500ms"
+timeout_commit = "1s"
 
 # Make progress as soon as we have all the precommits (as if TimeoutCommit = 0)
 skip_timeout_commit = {{ .Consensus.SkipTimeoutCommit }}
