@@ -270,11 +270,8 @@ func handleMsgEthereumTx(ctx sdk.Context, k Keeper, msg types.MsgEthereumTx) sdk
 		)
 	}
 
-	data, _  := evm.DecodeResultData(executionResult.Result.Data)
-
 	// set the events to the result
 	executionResult.Result.Events = ctx.EventManager().Events()
-	executionResult.Result.Data = data.Ret
 	return *executionResult.Result
 }
 

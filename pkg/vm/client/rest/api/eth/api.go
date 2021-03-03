@@ -311,6 +311,22 @@ func (api *PublicEthereumAPI) GetTransactionReceipt(hash common.Hash) (map[strin
 		return nil, nil
 	}
 
+	var sdkTx sdk.Tx
+	err = cdc.UnmarshalBinaryBare(tx.Tx, &sdkTx)
+	if err != nil {
+		return nil, err
+	}
+
+	ethTx, ok := sdkTx.(*types.MsgEthereumTx)
+	if !ok {
+		return nil, errors.New("not msg ethereumTx")
+	}
+
+	from, err := ethTx.VerifySig(ethTx.ChainID())
+	if err != nil {
+		return nil, err
+	}
+
 	// Query block for consensus hash
 	block, err := api.clientCtx.Client.Block(&tx.Height)
 	if err != nil {
@@ -318,17 +334,6 @@ func (api *PublicEthereumAPI) GetTransactionReceipt(hash common.Hash) (map[strin
 	}
 
 	blockHash := common.BytesToHash(block.Block.Header.Hash())
-
-	//// Convert tx bytes to eth transaction
-	//ethTx, err := rpctypes.RawTxToEthTx(api.clientCtx, tx.Tx)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//
-	//from, err := ethTx.VerifySig(ethTx.ChainID())
-	//if err != nil {
-	//	return nil, err
-	//}
 
 	// Set status codes based on tx result
 	var status hexutil.Uint
@@ -369,8 +374,8 @@ func (api *PublicEthereumAPI) GetTransactionReceipt(hash common.Hash) (map[strin
 		"transactionIndex": hexutil.Uint64(tx.Index),
 
 		// sender and receiver (contract or EOA) addreses
-		"from": common.HexToAddress("0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c"),
-		"to":   common.Address{},
+		"from": from,
+		"to":   ethTx.To(),
 	}
 
 	return receipt, nil
@@ -458,6 +463,7 @@ func (api *PublicEthereumAPI) SendRawTransaction(data hexutil.Bytes) (common.Has
 	//// If error is encountered on the node, the broadcast will not return an error
 	res, err := api.clientCtx.BroadcastSignedTx(tx.Bytes())
 	if err != nil {
+		api.logger.Debug("eth_sendRawTransaction", "err", err)
 		return common.Hash{}, err
 	}
 
