@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/client"
 	"github.com/ci123chain/ci123chain/pkg/gateway/backend"
-	"github.com/ci123chain/ci123chain/pkg/gateway/couchdbsource"
 	"github.com/ci123chain/ci123chain/pkg/gateway/logger"
+	"github.com/ci123chain/ci123chain/pkg/gateway/redissource"
 	"github.com/ci123chain/ci123chain/pkg/gateway/types"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -32,7 +32,7 @@ func Start() {
 	flag.StringVar(&logLevel, "loglevel", "DEBUG", "level for log")
 
 	flag.StringVar(&serverList, "backends", "http://localhost:1317", "Load balanced backends, use commas to separate")
-	flag.String("statedb", "couchdb://couchdb_service:5984/ci123", "server resource")
+	flag.String("statedb", "redisdb://locahost:11001", "server resource")
 	flag.StringVar(&urlreg, "urlreg", "http://***:80", "reg for url connection to node")
 	flag.IntVar(&port, "port", 3030, "Port to serve")
 	flag.String("rpcport", "80", "rpc address for websocket")
@@ -65,7 +65,7 @@ func Start() {
 	types.SetDefaultPort(rpcAddress)
 	pubsubRoom.GetPubSubRoom()
 
-	svr := couchdbsource.NewCouchSource(statedb, urlreg)
+	svr := redissource.NewRedisSource(statedb, urlreg)
 
 	serverPool = NewServerPool(backend.NewBackEnd, svr, 10)
 

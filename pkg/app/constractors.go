@@ -3,14 +3,13 @@ package app
 import (
 	"encoding/json"
 	"errors"
-	"github.com/spf13/viper"
 	"github.com/ci123chain/ci123chain/pkg/abci"
 	"github.com/ci123chain/ci123chain/pkg/app/types"
-	"github.com/ci123chain/ci123chain/pkg/couchdb"
+	r "github.com/ci123chain/ci123chain/pkg/redis"
+	"github.com/go-redis/redis/v8"
 	sdk "github.com/tendermint/tendermint/abci/types"
 	"strings"
 
-	//"github.com/ci123chain/ci123chain/pkg/couchdb"
 	"github.com/tendermint/tendermint/libs/log"
 	tmtypes "github.com/tendermint/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
@@ -18,12 +17,6 @@ import (
 	"os"
 	"path/filepath"
 )
-
-const DefaultDBName = "ci123"
-const DBAuthUser = "DBAuthUser"
-const DBAuthPwd = "DBAuthPwd"
-const DBAuth = "DBAuth"
-const DBName = "DBName"
 type (
 	AppCreator func(home string, logger log.Logger, statedb, traceStore string) (sdk.Application, error)
 
@@ -42,7 +35,8 @@ func ConstructAppCreator(appFn AppCreatorInit, name string) AppCreator {
 		if err != nil {
 			return nil, err
 		}
-		cdb, err := GetCDB(statedb)
+		//cdb, err := GetCDB(statedb)
+		rdb, err := GetRDB(statedb)
 		if err != nil {
 			return nil, types.ErrNewDB(types.DefaultCodespace, err)
 		}
@@ -57,7 +51,7 @@ func ConstructAppCreator(appFn AppCreatorInit, name string) AppCreator {
 				return nil, abci.ErrInternal("Open file failed")
 			}
 		}
-		app := appFn(logger, ldb, cdb, traceStoreWriter)
+		app := appFn(logger, ldb, rdb, traceStoreWriter)
 		return app, nil
 	}
 }
@@ -70,9 +64,14 @@ func ConstructAppExporter(appFn AppExporterInit, name string) AppExporter {
 		if err != nil {
 			return nil, nil, types.ErrNewDB(types.DefaultCodespace, err)
 		}
-		cdb, err := GetCDB(statedb)
+		//cdb, err := GetCDB(statedb)
+		//if err != nil {
+		//	return nil, nil, abci.ErrInternal("GetCDB failed")
+		//}
+		//RedisDB
+		rdb, err := GetRDB(statedb)
 		if err != nil {
-			return nil, nil, abci.ErrInternal("GetCDB failed")
+			return nil, nil, abci.ErrInternal("GetRDB failed")
 		}
 		var traceStoreWriter io.Writer
 		if traceStore != "" {
@@ -85,59 +84,61 @@ func ConstructAppExporter(appFn AppExporterInit, name string) AppExporter {
 				return nil, nil, abci.ErrInternal("Open file failed")
 			}
 		}
-		return appFn(logger, ldb, cdb, traceStoreWriter)
+		return appFn(logger, ldb, rdb, traceStoreWriter)
+		//return appFn(logger, ldb, cdb, traceStoreWriter)
 	}
 }
 
-func GetCDB(statedb string) (db dbm.DB, err error) {
-	// couchdb://admin:password@192.168.2.89:5984/dbname
-	// couchdb://192.168.2.89:5984/dbname
-	var dbname string
+func GetRDB(stateDB string) (db dbm.DB, err error) {
+	//opt := &redis.Options{
+	//	Addr: "localhost:11001",
+	//	Password: "",
+	//	DB:   0,
+	//}
+	opt, err := getOption(stateDB)
+	if err != nil {
+		return nil, err
+	}
+	db = r.NewRedisDB(opt)
+	err = r.DBIsValid(db.(*r.RedisDB))
+	return
+}
+
+func getOption(statedb string) (*redis.Options, error) {
+	// redisdb://admin:password@192.168.2.89:11001
+	// redisdb://192.168.2.89:11001
 	s := strings.Split(statedb, "://")
 	if len(s) < 2 {
-			return nil, errors.New("statedb format error")
-		}
-	if s[0] != "couchdb" {
-			return nil, errors.New("statedb format error")
-		}
+		return nil, errors.New("redisdb format error")
+	}
+	if s[0] != "redisdb" {
+		return nil, errors.New("redisdb format error")
+	}
 	auths := strings.Split(s[1], "@")
 
-	if len(auths) < 2 { // 192.168.2.89:5984/dbname 无用户名 密码
-		info := auths[0]
-		split := strings.Split(info, "/")
-		if len(split) < 2 {
-			dbname = DefaultDBName
-		} else {
-			dbname = split[1]
+	if len(auths) < 2 { // 192.168.2.89:5984 无用户名 密码
+		opt := &redis.Options{
+			Addr: auths[0],
+			DB:   0,
 		}
-		db, err = couchdb.NewGoCouchDB(dbname, split[0],nil)
-		viper.Set(DBName, dbname)
-	} else { // admin:password@192.168.2.89:5984/dbname
+		return opt, nil
+	} else { // admin:password@192.168.2.89:5984
 		info := auths[0] // admin:password
 		userandpass := strings.Split(info, ":")
 		if len(userandpass) < 2 {
-			hostandpath := auths[1]
-			split := strings.Split(hostandpath, "/")
-			if len(split) < 2 {
-				dbname = DefaultDBName
-			} else {
-				dbname = split[1]
+			opt := &redis.Options{
+				Addr: auths[1],
+				DB:   0,
 			}
-			db, err = couchdb.NewGoCouchDB(dbname, split[0],nil)
+			return opt, nil
 		} else {
-			auth := &couchdb.BasicAuth{Username: userandpass[0], Password: userandpass[1]}
-			hostandpath := auths[1]
-			split := strings.Split(hostandpath, "/")
-			if len(split) < 2 {
-				dbname = DefaultDBName
-			} else {
-				dbname = split[1]
+			opt := &redis.Options{
+				Addr:               auths[1],
+				Username:           userandpass[0],
+				Password:           userandpass[1],
+				DB:                 0,
 			}
-			db, err = couchdb.NewGoCouchDB(dbname, split[0], auth)
-			viper.Set(DBAuthUser, userandpass[0])
-			viper.Set(DBAuthPwd, userandpass[1])
-			viper.Set(DBName, dbname)
+			return opt, nil
 		}
 	}
-	return
 }

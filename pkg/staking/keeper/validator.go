@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	"github.com/ci123chain/ci123chain/pkg/couchdb"
 	"github.com/ci123chain/ci123chain/pkg/staking/types"
 	gogotypes "github.com/gogo/protobuf/types"
 	"time"
@@ -271,10 +270,6 @@ func (k StakingKeeper) UnbondAllMatureValidatorQueue(ctx sdk.Context) {
 		}
 
 		realKey := iterator.Key()
-		_, ok := iterator.(*couchdb.CouchIterator)
-		if ok {
-			realKey = sdk.GetRealKey(iterator.Key())
-		}
 		store.Delete(realKey)
 	}
 }
@@ -300,10 +295,10 @@ func (k StakingKeeper) GetLastValidators(ctx sdk.Context) (validators []types.Va
 
 		// sanity check
 		realKey := iterator.Key()
-		_, ok := iterator.(*couchdb.CouchIterator)
-		if ok {
-			realKey = sdk.GetRealKey(iterator.Key())
-		}
+		//_, ok := iterator.(*couchdb.CouchIterator)
+		//if ok {
+		//	realKey = sdk.GetRealKey(iterator.Key())
+		//}
 		if i >= int(maxValidators) {
 			panic("more validators than maxValidators found")
 		}
