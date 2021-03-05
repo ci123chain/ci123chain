@@ -11,7 +11,10 @@ import (
 	"math/big"
 )
 
-const InstantiateFuncName = "init"
+const (
+	InstantiateFuncName = "init"
+	ChainID = 999
+)
 func NewHandler(k Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
@@ -190,7 +193,7 @@ func handleMsgEvmTx(ctx sdk.Context, k Keeper, msg evm.MsgEvmTx) sdk.Result {
 func handleMsgEthereumTx(ctx sdk.Context, k Keeper, msg types.MsgEthereumTx) sdk.Result {
 	// parse the chainID from a string to a base-10 integer
 	//todo
-	chainIDEpoch := big.NewInt(123)
+	chainIDEpoch := big.NewInt(ChainID)
 
 	// Verify signature and retrieve sender address
 	sender, err := msg.VerifySig(chainIDEpoch)

@@ -14,7 +14,11 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/supply"
 	"github.com/ci123chain/ci123chain/pkg/transaction"
 )
-const Price uint64 = 1
+const (
+	Price uint64 = 1
+	ChainID = 999
+)
+
 //const unit = 1000
 func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, sk supply.Keeper) sdk.AnteHandler {
 	return func(ctx sdk.Context, tx sdk.Tx, simulate bool) (newCtx sdk.Context, res sdk.Result, abort bool) {
@@ -24,7 +28,7 @@ func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, sk su
 		//check sign
 		eth := cryptosuit.NewETHSignIdentity()
 		if etx, ok := tx.(*types2.MsgEthereumTx); ok {
-			_, err := etx.VerifySig(big.NewInt(123))
+			_, err := etx.VerifySig(big.NewInt(ChainID))
 			if err != nil {
 				return newCtx, transaction.ErrInvalidTx(types.DefaultCodespace, "tx signature invalid").Result(), true
 			}
