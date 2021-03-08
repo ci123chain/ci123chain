@@ -464,6 +464,7 @@ func (api *PublicEthereumAPI) SendRawTransaction(data hexutil.Bytes) (common.Has
 		api.logger.Debug("eth_sendRawTransaction", "err", err)
 		return common.Hash{}, err
 	}
+	api.logger.Debug("sendRawTransaction response log", "log", res.Log)
 
 	// Return transaction hash
 	return common.HexToHash(res.TxHash), nil

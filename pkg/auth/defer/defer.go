@@ -3,8 +3,10 @@ package _defer
 import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/account"
+	types2 "github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/auth/ante"
 	"github.com/ci123chain/ci123chain/pkg/transaction"
+	"math/big"
 )
 
 const Price uint64 = 1
@@ -17,8 +19,8 @@ func NewDeferHandler( ak account.AccountKeeper) sdk.DeferHandler {
 
 		//返还剩余gas
 		var gasused uint64
-		stdTx, _ := tx.(transaction.Transaction)
-		address := stdTx.GetFromAddress()
+		var signer sdk.AccAddress
+		stdTx := tx.(transaction.Transaction)
 		gaswanted := stdTx.GetGas()
 
 		defer func() {
@@ -28,7 +30,17 @@ func NewDeferHandler( ak account.AccountKeeper) sdk.DeferHandler {
 			}
 		}()
 
-		acc := ak.GetAccount(ctx, address)
+		if etx, ok := tx.(*types2.MsgEthereumTx); ok {
+			from, err := etx.VerifySig(big.NewInt(ante.ChainID))
+			if err != nil {
+				panic(err)
+			}
+			signer = sdk.AccAddress{from}
+		} else {
+			signer = tx.GetFromAddress()
+		}
+
+		acc := ak.GetAccount(ctx, signer)
 
 		gasused = ctx.GasMeter().GasConsumed()
 
