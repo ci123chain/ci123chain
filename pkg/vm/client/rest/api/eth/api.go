@@ -3,35 +3,35 @@ package eth
 import (
 	"bytes"
 	"context"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/account"
-	accounttypes "github.com/ci123chain/ci123chain/pkg/account/types"
 	"github.com/ci123chain/ci123chain/pkg/account/exported"
 	"github.com/ci123chain/ci123chain/pkg/account/keeper"
+	accounttypes "github.com/ci123chain/ci123chain/pkg/account/types"
 	"github.com/ci123chain/ci123chain/pkg/app/types"
-	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
-	vmmodule "github.com/ci123chain/ci123chain/pkg/vm/moduletypes"
-	ethtypes "github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/rlp"
-	"github.com/ethereum/go-ethereum/rpc"
-	tmtypes "github.com/tendermint/tendermint/types"
-	"math/big"
-	"os"
-	"sync"
-
-	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	clientcontext "github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/vm/evmtypes"
+	vmmodule "github.com/ci123chain/ci123chain/pkg/vm/moduletypes"
+	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	ethtypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/rlp"
+	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/tendermint/tendermint/libs/log"
+	tmtypes "github.com/tendermint/tendermint/types"
+	"math/big"
+	"os"
 )
 
-const DefaultRPCGasLimit = 10000000
+const (
+	DefaultRPCGasLimit = 10000000
+	ChainID = 999
+)
 
 var cdc = types.MakeCodec()
 
@@ -53,6 +53,7 @@ type CallArgs struct {
 	From     *common.Address `json:"from"`
 	To       *common.Address `json:"to"`
 	Gas      *hexutil.Uint64 `json:"gas"`
+	GasPrice *hexutil.Uint64 `json:"gas_price"`
 	Nonce    *hexutil.Uint64 `json:"nonce"`
 	Value    *hexutil.Big    `json:"value"`
 	Data     *hexutil.Bytes  `json:"data"`
@@ -64,9 +65,8 @@ type PublicEthereumAPI struct {
 	clientCtx    clientcontext.Context
 	chainIDEpoch *big.Int
 	logger       log.Logger
-	keys         map[common.Address]string // unlocked keys
-	keyringLock  sync.Mutex
 	cdc 		 *codec.Codec
+	ks             *keystore.KeyStore
 }
 
 // Transaction represents a transaction returned to RPC clients.
@@ -113,18 +113,16 @@ func NewTransaction(tx *evmtypes.MsgEvmTx, txHash, blockHash common.Hash, blockN
 }
 
 // NewAPI creates an instance of the public ETH Web3 API.
-func NewAPI(
-	clientCtx clientcontext.Context, keys map[common.Address]string,
-	) *PublicEthereumAPI {
+func NewAPI(clientCtx clientcontext.Context, ks *keystore.KeyStore) *PublicEthereumAPI {
 
 	cdc := types.MakeCodec()
-	epoch := big.NewInt(999)
+	epoch := big.NewInt(ChainID)
 	api := &PublicEthereumAPI{
 		ctx:          context.Background(),
 		clientCtx:    clientCtx.WithBlocked(false),
 		chainIDEpoch: epoch,
 		logger:       log.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", "json-rpc", "namespace", "eth"),
-		keys:         keys,
+		ks:         ks,
 		cdc: 		  cdc,
 	}
 	return api
@@ -133,16 +131,6 @@ func NewAPI(
 // ClientCtx returns the Cosmos SDK client context.
 func (api *PublicEthereumAPI) ClientCtx() clientcontext.Context {
 	return api.clientCtx
-}
-
-// GetKeys returns the Cosmos SDK client context.
-func (api *PublicEthereumAPI) GetKeys() map[common.Address]string {
-	return api.keys
-}
-
-// SetKeys sets the given key slice to the set of private keys
-func (api *PublicEthereumAPI) SetKeys(keys map[common.Address]string) {
-	api.keys = keys
 }
 
 // ChainId returns the chain's identifier in hex format
@@ -250,8 +238,9 @@ func (api *PublicEthereumAPI) Accounts() ([]common.Address, error) {
 	api.logger.Debug("eth_accounts")
 	addresses := make([]common.Address, 0) // return [] instead of nil if empty
 
-	for k := range api.keys {
-		addresses = append(addresses, k)
+	accs := api.ks.Accounts()
+	for i := range accs {
+		addresses = append(addresses, accs[i].Address)
 	}
 
 	return addresses, nil
@@ -386,17 +375,11 @@ func (api *PublicEthereumAPI) Sign(address common.Address, data hexutil.Bytes) (
 	api.logger.Debug("eth_sign", "address", address, "data", data)
 	// TODO: Change this functionality to find an unlocked account by address
 
-	key, exist := api.keys[address]
-	if !exist {
-		return nil, keystore.ErrLocked
-	}
-	privKey, err := hex.DecodeString(key)
-	if err != nil {
-		return nil, err
+	acc := accounts.Account{
+		Address: address,
 	}
 	// Sign the requested hash with the wallet
-	eth := cryptosuit.NewETHSignIdentity()
-	signature, err := eth.Sign(data, privKey)
+	signature, err := api.ks.SignHash(acc, data)
 	if err != nil {
 		return nil, err
 	}
@@ -410,12 +393,6 @@ func (api *PublicEthereumAPI) SendTransaction(args SendTxArgs) (common.Hash, err
 	api.logger.Debug("eth_sendTransaction", "args")
 	// TODO: Change this functionality to find an unlocked account by address
 
-	key, exist := api.keys[args.From]
-	if !exist {
-		api.logger.Debug("failed to find key in keyring", "key", args.From)
-		return common.Hash{}, keystore.ErrLocked
-	}
-
 	if args.Nonce == nil {
 		nonce, _, err := api.clientCtx.GetNonceByAddress(sdk.AccAddress{args.From}, false)
 		if err != nil {
@@ -425,21 +402,43 @@ func (api *PublicEthereumAPI) SendTransaction(args SendTxArgs) (common.Hash, err
 		args.Nonce = &x
 	}
 	// Assemble transaction from fields
-	msg, err := api.generateFromArgs(args)
+	tx, err := api.generateFromArgs(args)
 	if err != nil {
 		api.logger.Debug("failed to generate tx", "error", err)
 		return common.Hash{}, err
 	}
 
 	// Sign transaction
-	txBytes, err := types.SignCommonTx(msg.From, uint64(*args.Nonce), uint64(*args.Gas), []sdk.Msg{msg}, key, api.cdc)
+	chainID := big.NewInt(ChainID)
+	hash := tx.RLPSignBytes(chainID)
+	sig, err := api.ks.SignHash(accounts.Account{Address: args.From}, hash.Bytes())
 	if err != nil {
 		return common.Hash{}, err
 	}
 
+	r := new(big.Int).SetBytes(sig[:32])
+	s := new(big.Int).SetBytes(sig[32:64])
+	var v *big.Int
+
+	if chainID.Sign() == 0 {
+		v = new(big.Int).SetBytes([]byte{sig[64] + 27})
+	}else {
+		v = big.NewInt(int64(sig[64] + 35))
+		chainIDMul := new(big.Int).Mul(chainID, big.NewInt(2))
+
+		v.Add(v, chainIDMul)
+	}
+
+	if len(sig) != 65 {
+		return common.Hash{}, fmt.Errorf("wrong size for signature: got %d, want 65", len(sig))
+	}
+	tx.Data.V = v
+	tx.Data.R = r
+	tx.Data.S = s
+
 	// Broadcast transaction in async mode (default)
 	// NOTE: If error is encountered on the node, the broadcast will not return an error
-	res, err := api.clientCtx.BroadcastSignedTx(txBytes)
+	res, err := api.clientCtx.BroadcastSignedTx(tx.Bytes())
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -465,6 +464,9 @@ func (api *PublicEthereumAPI) SendRawTransaction(data hexutil.Bytes) (common.Has
 	if err != nil {
 		api.logger.Debug("eth_sendRawTransaction", "err", err)
 		return common.Hash{}, err
+	}
+	if res.Log != "" {
+		api.logger.Debug("err log", res.Log)
 	}
 
 	// Return transaction hash
@@ -633,7 +635,7 @@ func (api *PublicEthereumAPI) doCall(
 }
 
 // generateFromArgs populates tx message with args (used in RPC API)
-func (api *PublicEthereumAPI) generateFromArgs(args SendTxArgs) (*evmtypes.MsgEvmTx, error) {
+func (api *PublicEthereumAPI) generateFromArgs(args SendTxArgs) (*types.MsgEthereumTx, error) {
 	amount := (*big.Int)(args.Value)
 	gasPrice := big.NewInt(1)
 	nonce := uint64(*args.Nonce)
@@ -662,7 +664,7 @@ func (api *PublicEthereumAPI) generateFromArgs(args SendTxArgs) (*evmtypes.MsgEv
 		return nil, fmt.Errorf("contract creation without any data provided")
 	}
 
-	msg := evmtypes.NewMsgEvmTx(sdk.AccAddress{args.From}, nonce, args.To, amount, gasLimit, gasPrice, input)
+	msg := types.NewMsgEthereumTx(nonce, args.To, amount, gasLimit, gasPrice, input)
 	return &msg, nil
 }
 

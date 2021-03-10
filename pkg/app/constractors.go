@@ -1,6 +1,7 @@
 package app
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"github.com/ci123chain/ci123chain/pkg/abci"
@@ -121,6 +122,7 @@ func getOption(statedb string) (*redis.Options, error) {
 			Addr: auths[0],
 			DB:   0,
 		}
+		opt.TLSConfig = &tls.Config{ServerName: auths[0], InsecureSkipVerify: true}
 		return opt, nil
 	} else { // admin:password@192.168.2.89:5984
 		info := auths[0] // admin:password
@@ -130,6 +132,7 @@ func getOption(statedb string) (*redis.Options, error) {
 				Addr: auths[1],
 				DB:   0,
 			}
+			opt.TLSConfig = &tls.Config{ServerName: auths[1], InsecureSkipVerify: true}
 			return opt, nil
 		} else {
 			opt := &redis.Options{
@@ -138,6 +141,7 @@ func getOption(statedb string) (*redis.Options, error) {
 				Password:           userandpass[1],
 				DB:                 0,
 			}
+			opt.TLSConfig = &tls.Config{ServerName: auths[1], InsecureSkipVerify: true}
 			return opt, nil
 		}
 	}

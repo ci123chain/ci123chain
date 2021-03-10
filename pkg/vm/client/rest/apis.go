@@ -2,13 +2,15 @@ package rest
 
 import (
 	clientcontext "github.com/ci123chain/ci123chain/pkg/client/context"
+	"github.com/ci123chain/ci123chain/pkg/client/helper"
 	"github.com/ci123chain/ci123chain/pkg/vm/client/rest/api/eth"
 	"github.com/ci123chain/ci123chain/pkg/vm/client/rest/api/eth/filters"
 	"github.com/ci123chain/ci123chain/pkg/vm/client/rest/api/net"
 	"github.com/ci123chain/ci123chain/pkg/vm/client/rest/api/personal"
 	"github.com/ci123chain/ci123chain/pkg/vm/client/rest/api/web3"
-	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/spf13/viper"
 )
 
 // RPC namespaces and API version
@@ -22,8 +24,9 @@ const (
 )
 
 // GetAPIs returns the list of all APIs from the Ethereum namespaces
-func GetAPIs(clientCtx clientcontext.Context, keys map[common.Address]string) []rpc.API {
-	ethAPI := eth.NewAPI(clientCtx, keys)
+func GetAPIs(clientCtx clientcontext.Context) []rpc.API {
+	ks := getDefaultKeystore()
+	ethAPI := eth.NewAPI(clientCtx, ks)
 	backend := filters.New(clientCtx)
 	return []rpc.API{
 		{
@@ -47,7 +50,7 @@ func GetAPIs(clientCtx clientcontext.Context, keys map[common.Address]string) []
 		{
 			Namespace: PersonalNamespace,
 			Version:   apiVersion,
-			Service:   personal.NewAPI(ethAPI, keys),
+			Service:   personal.NewAPI(ethAPI, ks),
 			Public:    false,
 		},
 		{
@@ -57,4 +60,10 @@ func GetAPIs(clientCtx clientcontext.Context, keys map[common.Address]string) []
 			Public:    true,
 		},
 	}
+}
+
+func getDefaultKeystore() *keystore.KeyStore {
+	dir := viper.GetString(helper.FlagHomeDir)
+	ks := keystore.NewKeyStore(dir, keystore.StandardScryptN, keystore.StandardScryptP)
+	return ks
 }
