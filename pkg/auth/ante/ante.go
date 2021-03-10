@@ -25,22 +25,24 @@ func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, sk su
 		if simulate {
 			return
 		}
+		var signer sdk.AccAddress
 		//check sign
-		eth := cryptosuit.NewETHSignIdentity()
 		if etx, ok := tx.(*types2.MsgEthereumTx); ok {
-			_, err := etx.VerifySig(big.NewInt(ChainID))
+			from, err := etx.VerifySig(big.NewInt(ChainID))
 			if err != nil {
 				return newCtx, transaction.ErrInvalidTx(types.DefaultCodespace, "tx signature invalid").Result(), true
 			}
+			signer = sdk.AccAddress{from}
 		} else {
+			eth := cryptosuit.NewETHSignIdentity()
 			valid, err := eth.Verifier(tx.GetSignBytes(), tx.GetSignature(), nil, tx.GetFromAddress().Bytes())
 			if !valid || err != nil {
 				return newCtx, transaction.ErrInvalidTx(types.DefaultCodespace, "tx signature invalid").Result(), true
 			}
+			signer = tx.GetFromAddress()
 		}
 
-		address := tx.GetFromAddress()
-		acc := ak.GetAccount(ctx, address)
+		acc := ak.GetAccount(ctx, signer)
 		if acc == nil {
 			newCtx := ctx.WithGasMeter(sdk.NewGasMeter(0))
 			return newCtx, transaction.ErrInvalidTx(types.DefaultCodespace, "Invalid account").Result(), true
