@@ -28,6 +28,7 @@ func GetAPIs(clientCtx clientcontext.Context) []rpc.API {
 	ks := getDefaultKeystore()
 	ethAPI := eth.NewAPI(clientCtx, ks)
 	backend := filters.New(clientCtx)
+
 	return []rpc.API{
 		{
 			Namespace: Web3Namespace,

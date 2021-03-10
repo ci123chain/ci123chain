@@ -30,7 +30,6 @@ func NewAPI(ethAPI *eth.PublicEthereumAPI, ks *keystore.KeyStore) *PrivateAccoun
 		logger: log.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", "json-rpc", "namespace", "personal"),
 		ks: ks,
 	}
-
 	return api
 }
 
@@ -55,7 +54,6 @@ func (api *PrivateAccountAPI) ImportRawKey(privkey string, password string) (com
 // It removes the key corresponding to the given address from the API's local keys.
 func (api *PrivateAccountAPI) LockAccount(address common.Address) bool {
 	api.logger.Debug("personal_lockAccount", "address", address.String())
-
 	return api.ks.Lock(address) == nil
 }
 
@@ -66,19 +64,20 @@ func (api *PrivateAccountAPI) LockAccount(address common.Address) bool {
 func (api *PrivateAccountAPI) UnlockAccount(addr common.Address, password string, duration *uint64) (bool, error) { // nolint: interfacer
 	api.logger.Debug("personal_unlockAccount", "address", addr.String())
 	// TODO: use duration
-
 	const max = uint64(time.Duration(math.MaxInt64) / time.Second)
 	var d time.Duration
 	if duration == nil {
 		d = 300 * time.Second
-	}else if *duration > max {
+
+	} else if *duration > max {
 		return false, errors.New("unlock duration too large")
-	}else {
+	} else {
 		d = time.Duration(*duration) * time.Second
 	}
-	err := api.ks.TimedUnlock(accounts.Account{Address:addr}, password, d)
+	err := api.ks.TimedUnlock(accounts.Account{Address: addr}, password, d)
 	if err != nil {
 		return false, err
 	}
+
 	return true, nil
 }

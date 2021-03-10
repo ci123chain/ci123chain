@@ -122,8 +122,8 @@ func NewAPI(clientCtx clientcontext.Context, ks *keystore.KeyStore) *PublicEther
 		clientCtx:    clientCtx.WithBlocked(false),
 		chainIDEpoch: epoch,
 		logger:       log.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", "json-rpc", "namespace", "eth"),
-		ks:         ks,
 		cdc: 		  cdc,
+		ks: 		  ks,
 	}
 	return api
 }
@@ -408,7 +408,6 @@ func (api *PublicEthereumAPI) SendTransaction(args SendTxArgs) (common.Hash, err
 		return common.Hash{}, err
 	}
 
-	// Sign transaction
 	chainID := big.NewInt(ChainID)
 	hash := tx.RLPSignBytes(chainID)
 	sig, err := api.ks.SignHash(accounts.Account{Address: args.From}, hash.Bytes())
@@ -416,13 +415,19 @@ func (api *PublicEthereumAPI) SendTransaction(args SendTxArgs) (common.Hash, err
 		return common.Hash{}, err
 	}
 
+	if len(sig) != 65 {
+		return common.Hash{}, fmt.Errorf("wrong size for signature: got %d, want 65", len(sig))
+	}
+
 	r := new(big.Int).SetBytes(sig[:32])
 	s := new(big.Int).SetBytes(sig[32:64])
+
 	var v *big.Int
 
 	if chainID.Sign() == 0 {
 		v = new(big.Int).SetBytes([]byte{sig[64] + 27})
-	}else {
+
+	} else {
 		v = big.NewInt(int64(sig[64] + 35))
 		chainIDMul := new(big.Int).Mul(chainID, big.NewInt(2))
 
@@ -633,8 +638,41 @@ func (api *PublicEthereumAPI) doCall(
 
 	return &simResponse, nil
 }
+//// generateFromArgs populates tx message with args (used in RPC API)
+//func (api *PublicEthereumAPI) generateFromArgs(args SendTxArgs) (*evmtypes.MsgEvmTx, error) {
+//	amount := (*big.Int)(args.Value)
+//	gasPrice := big.NewInt(1)
+//	nonce := uint64(*args.Nonce)
+//
+//	var gasLimit uint64
+//	if args.Gas == nil {
+//		gasLimit = uint64(DefaultRPCGasLimit)
+//	} else {
+//		gasLimit = (uint64)(*args.Gas)
+//	}
+//
+//	if args.Data != nil && args.Input != nil && !bytes.Equal(*args.Data, *args.Input) {
+//		return nil, errors.New(`both "data" and "input" are set and not equal. Please use "input" to pass transaction call data`)
+//	}
+//
+//	// Sets input to either Input or Data, if both are set and not equal error above returns
+//	var input []byte
+//	if args.Input != nil {
+//		input = *args.Input
+//	} else if args.Data != nil {
+//		input = *args.Data
+//	}
+//
+//	if args.To == nil && len(input) == 0 {
+//		// Contract creation
+//		return nil, fmt.Errorf("contract creation without any data provided")
+//	}
+//
+//	msg := evmtypes.NewMsgEvmTx(sdk.AccAddress{args.From}, nonce, args.To, amount, gasLimit, gasPrice, input)
+//	return &msg, nil
+//}
 
-// generateFromArgs populates tx message with args (used in RPC API)
+
 func (api *PublicEthereumAPI) generateFromArgs(args SendTxArgs) (*types.MsgEthereumTx, error) {
 	amount := (*big.Int)(args.Value)
 	gasPrice := big.NewInt(1)
@@ -645,8 +683,8 @@ func (api *PublicEthereumAPI) generateFromArgs(args SendTxArgs) (*types.MsgEther
 		gasLimit = uint64(DefaultRPCGasLimit)
 	} else {
 		gasLimit = (uint64)(*args.Gas)
-	}
 
+	}
 	if args.Data != nil && args.Input != nil && !bytes.Equal(*args.Data, *args.Input) {
 		return nil, errors.New(`both "data" and "input" are set and not equal. Please use "input" to pass transaction call data`)
 	}
