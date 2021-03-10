@@ -16,7 +16,7 @@ import (
 )
 const (
 	Price uint64 = 1
-	ChainID = 999
+	ChainID int64 = 999
 )
 
 //const unit = 1000

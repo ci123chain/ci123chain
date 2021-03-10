@@ -65,8 +65,8 @@ type PublicEthereumAPI struct {
 	clientCtx    clientcontext.Context
 	chainIDEpoch *big.Int
 	logger       log.Logger
-	ks			 *keystore.KeyStore
 	cdc 		 *codec.Codec
+	ks             *keystore.KeyStore
 }
 
 // Transaction represents a transaction returned to RPC clients.
@@ -374,9 +374,11 @@ func (api *PublicEthereumAPI) GetTransactionReceipt(hash common.Hash) (map[strin
 func (api *PublicEthereumAPI) Sign(address common.Address, data hexutil.Bytes) (hexutil.Bytes, error) {
 	api.logger.Debug("eth_sign", "address", address, "data", data)
 	// TODO: Change this functionality to find an unlocked account by address
+
 	acc := accounts.Account{
 		Address: address,
 	}
+	// Sign the requested hash with the wallet
 	signature, err := api.ks.SignHash(acc, data)
 	if err != nil {
 		return nil, err
@@ -424,6 +426,7 @@ func (api *PublicEthereumAPI) SendTransaction(args SendTxArgs) (common.Hash, err
 
 	if chainID.Sign() == 0 {
 		v = new(big.Int).SetBytes([]byte{sig[64] + 27})
+
 	} else {
 		v = big.NewInt(int64(sig[64] + 35))
 		chainIDMul := new(big.Int).Mul(chainID, big.NewInt(2))
@@ -431,6 +434,9 @@ func (api *PublicEthereumAPI) SendTransaction(args SendTxArgs) (common.Hash, err
 		v.Add(v, chainIDMul)
 	}
 
+	if len(sig) != 65 {
+		return common.Hash{}, fmt.Errorf("wrong size for signature: got %d, want 65", len(sig))
+	}
 	tx.Data.V = v
 	tx.Data.R = r
 	tx.Data.S = s
@@ -630,7 +636,6 @@ func (api *PublicEthereumAPI) doCall(
 
 	return &simResponse, nil
 }
-
 //// generateFromArgs populates tx message with args (used in RPC API)
 //func (api *PublicEthereumAPI) generateFromArgs(args SendTxArgs) (*evmtypes.MsgEvmTx, error) {
 //	amount := (*big.Int)(args.Value)
@@ -665,6 +670,7 @@ func (api *PublicEthereumAPI) doCall(
 //	return &msg, nil
 //}
 
+
 func (api *PublicEthereumAPI) generateFromArgs(args SendTxArgs) (*types.MsgEthereumTx, error) {
 	amount := (*big.Int)(args.Value)
 	gasPrice := big.NewInt(1)
@@ -695,7 +701,6 @@ func (api *PublicEthereumAPI) generateFromArgs(args SendTxArgs) (*types.MsgEther
 	}
 
 	msg := types.NewMsgEthereumTx(nonce, args.To, amount, gasLimit, gasPrice, input)
-
 	return &msg, nil
 }
 

@@ -68,6 +68,7 @@ func (api *PrivateAccountAPI) UnlockAccount(addr common.Address, password string
 	var d time.Duration
 	if duration == nil {
 		d = 300 * time.Second
+
 	} else if *duration > max {
 		return false, errors.New("unlock duration too large")
 	} else {
