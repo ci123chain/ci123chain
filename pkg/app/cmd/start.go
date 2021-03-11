@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"encoding/base64"
+	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/app"
 	hnode "github.com/ci123chain/ci123chain/pkg/node"
 	"github.com/pkg/errors"
@@ -24,7 +25,10 @@ const (
 	flagTraceStore     = "trace-store"
 	flagPruning        = "pruning"
 	//flagLogLevel       = "log-level"
-	flagStateDB 	   = "statedb" // couchdb://admin:password@192.168.2.89:5984
+	flagStateDB 	   = "statedb"
+	flagCiStateDBType  = "statedb_type"
+	flagCiStateDBHost  = "statedb_host"
+	flagCiStateDBTls   = "statedb_tls"
 	flagShardIndex     = "shardIndex"
 	flagGenesis        = "genesis" //genesis.json
 	flagNodeKey        = "nodeKey" //node_key.json
@@ -57,7 +61,9 @@ func startCmd(ctx *app.Context, appCreator app.AppCreator) *cobra.Command {
 	cmd.Flags().String(flagAddress, "tcp://0.0.0.0:26658", "Listen address")
 	cmd.Flags().String(flagTraceStore, "", "Enable KVStore tracing to an output file")
 	cmd.Flags().String(flagPruning, "syncable", "Pruning strategy: syncable, nothing, everything")
-	cmd.Flags().String(flagStateDB, "leveldb", "db of abci persistent")
+	cmd.Flags().String(flagCiStateDBType, "redis", "database type")
+	cmd.Flags().String(flagCiStateDBHost, "", "db host")
+	cmd.Flags().Bool(flagCiStateDBTls, true, "use tls")
 	cmd.Flags().String(flagShardIndex, "", "index of shard")
 
 	//cmd.Flags().String(flagLogLevel, "debug", "Run abci app with different log level")
@@ -99,7 +105,27 @@ func StartInProcess(ctx *app.Context, appCreator app.AppCreator) (*node.Node, er
 	cfg := ctx.Config
 	home := cfg.RootDir
 	traceStore := viper.GetString(flagTraceStore)
-	stateDB := viper.GetString(flagStateDB)
+	stateDB := ""
+
+	dbType := viper.GetString(flagCiStateDBType)
+	if dbType == "" {
+		dbType = "redis"
+	}
+	dbHost := viper.GetString(flagCiStateDBHost)
+	if dbHost == "" {
+		return nil, errors.New(fmt.Sprintf("%s can not be empty", flagCiStateDBHost))
+	}
+	dbTls := viper.GetBool(flagCiStateDBTls)
+
+	switch dbType {
+	case "redis":
+		stateDB = "redisdb://" + dbHost
+		if dbTls {
+			stateDB += "#tls"
+		}
+	default:
+		return nil, errors.New(fmt.Sprintf("type of db: %s, which is not reids not implement yet", dbType))
+	}
 
 	gendoc, err := types.GenesisDocFromFile(cfg.GenesisFile())
 	if err != nil {
