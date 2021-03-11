@@ -103,8 +103,8 @@ func (s *RedisDBSourceImp) GetDBConnection() (db *r.RedisDB, err error) {
 }
 
 func getOption(statedb string) (*redis.Options, error) {
-	// redisdb://admin:password@192.168.2.89:5984
-	// redisdb://192.168.2.89:5984
+	// redisdb://admin:password@192.168.2.89:11001@tls
+	// redisdb://192.168.2.89:11001@tls
 	s := strings.Split(statedb, "://")
 	if len(s) < 2 {
 		return nil, errors.New("redisdb format error")
@@ -114,32 +114,51 @@ func getOption(statedb string) (*redis.Options, error) {
 	}
 	auths := strings.Split(s[1], "@")
 
-	if len(auths) < 2 { // 192.168.2.89:5984 无用户名 密码
+	if len(auths) < 2 { // 192.168.2.89:11001#tls 无用户名 密码
+		pd := strings.Split(auths[0], "#")
 		opt := &redis.Options{
-			Addr: auths[0],
+			Addr: pd[0],
 			DB:   0,
 		}
-		opt.TLSConfig = &tls.Config{InsecureSkipVerify: true}
-		return opt, nil
-	} else { // admin:password@192.168.2.89:5984
+		if len(pd) == 1 {
+			return opt, nil
+		}
+		if len(pd) == 2 {
+			if pd[1] == "tls" {
+				opt.TLSConfig = &tls.Config{InsecureSkipVerify: true}
+				return opt, nil
+			}else {
+				return nil, errors.New(fmt.Sprintf("unexpected tls setting: %s", statedb))
+			}
+		}else {
+			return nil, errors.New(fmt.Sprintf("unexpected setting of db tls: %v", statedb))
+		}
+	} else { // admin:password@192.168.2.89:5984#tls
 		info := auths[0] // admin:password
 		userandpass := strings.Split(info, ":")
 		if len(userandpass) < 2 {
-			opt := &redis.Options{
-				Addr: auths[1],
-				DB:   0,
-			}
-			opt.TLSConfig = &tls.Config{InsecureSkipVerify: true}
-			return opt, nil
+			return nil, errors.New(fmt.Sprintf("unexpected setting of username and password %s", statedb))
 		} else {
+			pd := strings.Split(auths[1], "#")
 			opt := &redis.Options{
-				Addr:               auths[1],
+				Addr:               pd[0],
 				Username:           userandpass[0],
 				Password:           userandpass[1],
 				DB:                 0,
 			}
-			opt.TLSConfig = &tls.Config{InsecureSkipVerify: true}
-			return opt, nil
+			if len(pd) == 1 {
+				return opt, nil
+			}
+			if len(pd) == 2 {
+				if pd[1] == "tls" {
+					opt.TLSConfig = &tls.Config{InsecureSkipVerify: true}
+					return opt, nil
+				}else {
+					return nil, errors.New(fmt.Sprintf("unexpected tls setting: %s", statedb))
+				}
+			}else {
+				return nil, errors.New(fmt.Sprintf("unexpected setting of db tls: %v", statedb))
+			}
 		}
 	}
 }

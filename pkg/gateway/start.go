@@ -18,7 +18,12 @@ import (
 	"time"
 )
 
-const DefaultLogDir = "$HOME/.gateway"
+const (
+	DefaultLogDir = "$HOME/.gateway"
+	flagCiStateDBType  = "statedb_type"
+	flagCiStateDBHost  = "statedb_host"
+	flagCiStateDBTls   = "statedb_tls"
+)
 
 var serverPool *ServerPool
 
@@ -32,11 +37,15 @@ func Start() {
 	flag.StringVar(&logLevel, "loglevel", "DEBUG", "level for log")
 
 	flag.StringVar(&serverList, "backends", "http://localhost:1317", "Load balanced backends, use commas to separate")
-	flag.String("statedb", "redisdb://locahost:11001", "server resource")
+	//flag.String("statedb", "redisdb://locahost:11001", "server resource")
 	flag.StringVar(&urlreg, "urlreg", "http://***:80", "reg for url connection to node")
 	flag.IntVar(&port, "port", 3030, "Port to serve")
 	flag.String("rpcport", "80", "rpc address for websocket")
 	//flag.Parse()
+
+	flag.String(flagCiStateDBType, "redis", "database type")
+	flag.String(flagCiStateDBHost, "", "db host")
+	flag.Bool(flagCiStateDBTls, true, "use tls")
 
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 	pflag.Parse()
@@ -45,7 +54,26 @@ func Start() {
 	viper.AutomaticEnv()
 	//viper.BindEnv("statedb")
 	//viper.BindEnv("logdir")
-	statedb = viper.GetString("statedb")
+
+	dbType := viper.GetString(flagCiStateDBType)
+	if dbType == "" {
+		dbType = "redis"
+	}
+	dbHost := viper.GetString(flagCiStateDBHost)
+	if dbHost == "" {
+		panic(errors.New(fmt.Sprintf("%s can not be empty", "ci-statedb-host")))
+	}
+	dbTls := viper.GetBool(flagCiStateDBTls)
+
+	switch dbType {
+	case "redis":
+		statedb = "redisdb://" + dbHost
+		if dbTls {
+			statedb += "#tls"
+		}
+	default:
+		panic(errors.New(fmt.Sprintf("type of db which is not reids not implement yet")))
+	}
 	//logDir = viper.GetString("logdir")
 	port = viper.GetInt("port")
 	urlreg = viper.GetString("urlreg")
