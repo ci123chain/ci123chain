@@ -3,7 +3,6 @@ package rest
 import (
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
 	"github.com/ci123chain/ci123chain/pkg/account/exported"
@@ -213,8 +212,6 @@ func executeContractHandler(cliCtx context.Context,w http.ResponseWriter, r *htt
 		}
 
 		payload, err := evm.EVMEncode(args)
-		s := hex.EncodeToString(payload)
-		fmt.Println(s)
 		if err != nil {
 			rest.WriteErrorRes(w, wasmtypes.ErrCheckParams(vmmodule.DefaultCodespace, "encode evm callData failed"))
 			return
