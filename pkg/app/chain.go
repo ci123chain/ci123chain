@@ -70,8 +70,6 @@ const (
 
 var (
 	// default home directories for expected binaries
-	DefaultCLIHome  = os.ExpandEnv("$HOME/.cicli")
-	DefaultNodeHome = os.ExpandEnv("$HOME/.ci123d")
 
 	MainStoreKey     = sdk.NewKVStoreKey("main")
 	ContractStoreKey = sdk.NewKVStoreKey("contract")
