@@ -107,10 +107,10 @@ func getOption(statedb string) (*redis.Options, error) {
 	// redisdb://192.168.2.89:11001@tls
 	s := strings.Split(statedb, "://")
 	if len(s) < 2 {
-		return nil, errors.New("redisdb format error")
+		return nil, errors.New(fmt.Sprintf("redisdb format error: %s", statedb))
 	}
 	if s[0] != "redisdb" {
-		return nil, errors.New("redisdb format error")
+		return nil, errors.New(fmt.Sprintf("redisdb format error: %s", statedb))
 	}
 	auths := strings.Split(s[1], "@")
 
