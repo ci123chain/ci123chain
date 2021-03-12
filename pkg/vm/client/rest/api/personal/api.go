@@ -44,12 +44,14 @@ func (api *PrivateAccountAPI) ImportRawKey(privkey string, password string) (com
 		api.logger.Info(err.Error())
 		return common.Address{}, err
 	}
-	api.logger.Debug("personal_importRawKey_3")
+	api.logger.Debug("personal_importRawKey_2")
 	acc, err := api.ks.ImportECDSA(key, password)
+	api.logger.Debug("personal_importRawKey_3")
 	if err != nil {
 		api.logger.Info(err.Error())
 		return common.Address{}, err
 	}
+	api.logger.Debug("personal_importRawKey_4")
 	return acc.Address, nil
 }
 
