@@ -2,8 +2,8 @@ package personal
 
 import (
 	"errors"
+	"github.com/ci123chain/ci123chain/pkg/keystore"
 	"github.com/ethereum/go-ethereum/accounts"
-	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"math"
 	"os"
 	"time"
