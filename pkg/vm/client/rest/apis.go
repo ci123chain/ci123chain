@@ -8,7 +8,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/vm/client/rest/api/net"
 	"github.com/ci123chain/ci123chain/pkg/vm/client/rest/api/personal"
 	"github.com/ci123chain/ci123chain/pkg/vm/client/rest/api/web3"
-	"github.com/ethereum/go-ethereum/accounts/keystore"
+	"github.com/ci123chain/ci123chain/pkg/vm/client/rest/keystore"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/spf13/viper"
 )
