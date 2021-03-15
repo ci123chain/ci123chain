@@ -106,6 +106,7 @@ func StoreKey(dir, auth string, scryptN, scryptP int) (accounts.Account, error) 
 func (ks keyStorePassphrase) StoreKey(filename string, key *Key, auth string) error {
 	logger.Info("Begin EncryptKey")
 	keyjson, err := EncryptKey(key, auth, ks.scryptN, ks.scryptP)
+	logger.Info("End EncryptKey", err)
 	if err != nil {
 		return err
 	}
@@ -144,12 +145,16 @@ func (ks keyStorePassphrase) JoinPath(filename string) string {
 
 // Encryptdata encrypts the data given as 'data' with the password 'auth'.
 func EncryptDataV3(data, auth []byte, scryptN, scryptP int) (CryptoJSON, error) {
-
+	logger.Info("Begin EncryptDataV3", data, string(auth))
 	salt := make([]byte, 32)
 	if _, err := io.ReadFull(rand.Reader, salt); err != nil {
+		logger.Info("Maybe Panic", err)
 		panic("reading from crypto/rand failed: " + err.Error())
 	}
+	logger.Info("Begin scrypt.Key", data, string(auth))
 	derivedKey, err := scrypt.Key(auth, salt, scryptN, scryptR, scryptP, scryptDKLen)
+	logger.Info("End scrypt.Key", err)
+
 	if err != nil {
 		return CryptoJSON{}, err
 	}
@@ -157,13 +162,18 @@ func EncryptDataV3(data, auth []byte, scryptN, scryptP int) (CryptoJSON, error) 
 
 	iv := make([]byte, aes.BlockSize) // 16
 	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
+		logger.Info("Maybe Panicw", err)
 		panic("reading from crypto/rand failed: " + err.Error())
 	}
+	logger.Info("Begin aesCTRXOR", encryptKey)
 	cipherText, err := aesCTRXOR(encryptKey, data, iv)
+	logger.Info("End aesCTRXOR", cipherText, err)
 	if err != nil {
 		return CryptoJSON{}, err
 	}
+	logger.Info("Begin crypto.Keccak256", encryptKey)
 	mac := crypto.Keccak256(derivedKey[16:32], cipherText)
+	logger.Info("End crypto.Keccak256", mac)
 
 	scryptParamsJSON := make(map[string]interface{}, 5)
 	scryptParamsJSON["n"] = scryptN
@@ -190,16 +200,20 @@ func EncryptDataV3(data, auth []byte, scryptN, scryptP int) (CryptoJSON, error) 
 // blob that can be decrypted later on.
 func EncryptKey(key *Key, auth string, scryptN, scryptP int) ([]byte, error) {
 	keyBytes := math.PaddedBigBytes(key.PrivateKey.D, 32)
+	logger.Info("Begin EncryptDataV3")
 	cryptoStruct, err := EncryptDataV3(keyBytes, []byte(auth), scryptN, scryptP)
+	logger.Info("End EncryptDataV3", err)
 	if err != nil {
 		return nil, err
 	}
+	logger.Info("Begin encryptedKeyJSONV3")
 	encryptedKeyJSONV3 := encryptedKeyJSONV3{
 		hex.EncodeToString(key.Address[:]),
 		cryptoStruct,
 		key.Id.String(),
 		version,
 	}
+	logger.Info("End encryptedKeyJSONV3")
 	return json.Marshal(encryptedKeyJSONV3)
 }
 
