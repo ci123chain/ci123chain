@@ -10,7 +10,7 @@ require (
 	github.com/btcsuite/btcutil v1.0.2
 	github.com/cespare/cp v1.1.1 // indirect
 	github.com/ci123chain/wasm-util v1.0.1
-	github.com/deckarep/golang-set v1.7.1
+	github.com/deckarep/golang-set v1.7.1 // indirect
 	github.com/ethereum/go-ethereum v1.9.21
 	github.com/go-redis/redis/v8 v8.6.0
 	github.com/gogo/protobuf v1.3.0
@@ -18,10 +18,10 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/websocket v1.4.2
 	github.com/mattn/go-isatty v0.0.10
-	github.com/pborman/uuid v1.2.0
+	github.com/pborman/uuid v1.2.0 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/pretty66/gosdk v1.0.3
-	github.com/rjeczalik/notify v0.9.2
+	github.com/rjeczalik/notify v0.9.2 // indirect
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/pflag v1.0.3
 	github.com/spf13/viper v1.4.0
