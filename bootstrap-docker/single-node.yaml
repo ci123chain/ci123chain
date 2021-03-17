@@ -19,7 +19,9 @@ services:
       - raftleveldb
     environment:
       CI_CHAIN_ID: ci0
-      CI_STATEDB_HOST: raftleveldb_dev:80
+      CI_NODE_DOMAIN: localhost
+      CI_STATEDB_HOST: raftleveldb_dev
+      CI_STATEDB_PORT: 80
       CI_STATEDB_TLS: "false"
       CI_HOME: /root/cid
 #      IDG_APPID: abcdefg
