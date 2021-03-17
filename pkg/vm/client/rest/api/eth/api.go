@@ -87,10 +87,10 @@ type Transaction struct {
 	S                *hexutil.Big    `json:"s"`
 }
 
-func NewTransaction(tx *evmtypes.MsgEvmTx, txHash, blockHash common.Hash, blockNumber, index uint64) (*Transaction, error) {
-
+func NewTransaction(tx *types.MsgEthereumTx, txHash, blockHash common.Hash, blockNumber, index uint64) (*Transaction, error) {
+	from, _ := tx.VerifySig(big.NewInt(ChainID))
 	rpcTx := &Transaction{
-		From:     tx.From.Address,
+		From:     from,
 		Gas:      hexutil.Uint64(tx.Data.GasLimit),
 		GasPrice: (*hexutil.Big)(tx.Data.Price),
 		Hash:     txHash,
@@ -512,7 +512,8 @@ func (api *PublicEthereumAPI) GetTransactionByHash(hash common.Hash) (*Transacti
 	}
 
 	height := uint64(tx.Height)
-	return NewTransaction(rawtx.GetMsgs()[0].(*evmtypes.MsgEvmTx), common.BytesToHash(tx.Tx.Hash()), blockHash, height, uint64(tx.Index))
+	s, err :=  NewTransaction(rawtx.(*types.MsgEthereumTx), common.BytesToHash(tx.Tx.Hash()), blockHash, height, uint64(tx.Index))
+	return s, err
 }
 
 // GetBalance returns the provided account's balance up to the provided block number.

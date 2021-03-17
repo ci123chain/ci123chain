@@ -22,7 +22,7 @@ func (rdb *RedisDB) ReverseIterator(start, end []byte) db.Iterator {
 }
 
 func NewRedisDB(opt *redis.Options) *RedisDB {
-	return &RedisDB{DB:NewRaftRedisClient(opt)}
+	return &RedisDB{DB:NewRaftRedisClient(opt), lg: logger.GetLogger()}
 }
 
 //check DB is connected

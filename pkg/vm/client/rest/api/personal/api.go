@@ -41,10 +41,12 @@ func (api *PrivateAccountAPI) ImportRawKey(privkey string, password string) (com
 	api.logger.Debug("personal_importRawKey")
 	key, err := crypto.HexToECDSA(privkey)
 	if err != nil {
+		api.logger.Info(err.Error())
 		return common.Address{}, err
 	}
 	acc, err := api.ks.ImportECDSA(key, password)
 	if err != nil {
+		api.logger.Info(err.Error())
 		return common.Address{}, err
 	}
 	return acc.Address, nil
