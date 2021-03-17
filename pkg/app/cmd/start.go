@@ -17,6 +17,8 @@ import (
 	"github.com/tendermint/tendermint/types"
 	"io/ioutil"
 	"os"
+	"strconv"
+	"strings"
 )
 
 const (
@@ -29,6 +31,8 @@ const (
 	flagCiStateDBType  = "statedb_type"
 	flagCiStateDBHost  = "statedb_host"
 	flagCiStateDBTls   = "statedb_tls"
+	flagCiStateDBPort  = "statedb_port"
+	flagCiNodeDomain   = "node_domain"
 	flagShardIndex     = "shardIndex"
 	flagGenesis        = "genesis" //genesis.json
 	flagNodeKey        = "nodeKey" //node_key.json
@@ -63,7 +67,9 @@ func startCmd(ctx *app.Context, appCreator app.AppCreator) *cobra.Command {
 	cmd.Flags().String(flagPruning, "syncable", "Pruning strategy: syncable, nothing, everything")
 	cmd.Flags().String(flagCiStateDBType, "redis", "database type")
 	cmd.Flags().String(flagCiStateDBHost, "", "db host")
+	cmd.Flags().Uint(flagCiStateDBPort, 7443, "db port")
 	cmd.Flags().Bool(flagCiStateDBTls, true, "use tls")
+	cmd.Flags().String(flagCiNodeDomain, "", "node domain")
 	cmd.Flags().String(flagShardIndex, "", "index of shard")
 
 	//cmd.Flags().String(flagLogLevel, "debug", "Run abci app with different log level")
@@ -116,15 +122,23 @@ func StartInProcess(ctx *app.Context, appCreator app.AppCreator) (*node.Node, er
 		return nil, errors.New(fmt.Sprintf("%s can not be empty", flagCiStateDBHost))
 	}
 	dbTls := viper.GetBool(flagCiStateDBTls)
+	dbPort := viper.GetUint(flagCiStateDBPort)
+	p := strconv.FormatUint(uint64(dbPort), 10)
 
 	switch dbType {
 	case "redis":
-		stateDB = "redisdb://" + dbHost
+		stateDB = "redisdb://" + dbHost + ":" + p
 		if dbTls {
 			stateDB += "#tls"
 		}
 	default:
 		return nil, errors.New(fmt.Sprintf("type of db: %s, which is not reids not implement yet", dbType))
+	}
+
+	nodeDomain := viper.GetString(flagCiNodeDomain)
+
+	if nodeDomain == "" {
+		return nil, errors.New("node domain can not be empty")
 	}
 
 	gendoc, err := types.GenesisDocFromFile(cfg.GenesisFile())
@@ -143,6 +157,14 @@ func StartInProcess(ctx *app.Context, appCreator app.AppCreator) (*node.Node, er
 		return nil, err
 	}
 	pv := pvm.LoadFilePV(cfg.PrivValidatorKeyFile(), cfg.PrivValidatorStateFile())
+
+	///tcp://0.0.0.0:26656
+	info := strings.Split(cfg.P2P.ListenAddress, ":")
+	if len(info) == 3 {
+		cfg.P2P.ListenAddress = "tcp://" + nodeDomain + ":" + info[2]
+	}else {
+		return nil, errors.New(fmt.Sprintf("unexpected p2p listen address: %v", cfg.P2P.ListenAddress))
+	}
 
 	tmNode, err := node.NewNode(
 		cfg,
