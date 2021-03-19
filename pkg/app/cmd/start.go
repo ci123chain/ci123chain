@@ -33,6 +33,7 @@ const (
 	flagCiStateDBTls   = "statedb_tls"
 	flagCiStateDBPort  = "statedb_port"
 	flagCiNodeDomain   = "node_domain"
+	flagMasterDomain   = "master_domain"
 	flagShardIndex     = "shardIndex"
 	flagGenesis        = "genesis" //genesis.json
 	flagNodeKey        = "nodeKey" //node_key.json
@@ -52,7 +53,9 @@ func startCmd(ctx *app.Context, appCreator app.AppCreator) *cobra.Command {
 			}
 			ctx.Logger.Info(version)
 			ctx.Logger.Info("Starting ABCI with Tendermint")
-			preSetConfig(ctx)
+			if len(viper.GetString(flagMasterDomain)) == 0 && len(viper.GetString(flagGenesis)) != 0 {
+				preSetConfig(ctx)
+			}
 			_, err := StartInProcess(ctx, appCreator)
 			if err != nil {
 				return err
@@ -71,6 +74,7 @@ func startCmd(ctx *app.Context, appCreator app.AppCreator) *cobra.Command {
 	cmd.Flags().Bool(flagCiStateDBTls, true, "use tls")
 	cmd.Flags().String(flagCiNodeDomain, "", "node domain")
 	cmd.Flags().String(flagShardIndex, "", "index of shard")
+	cmd.Flags().String(flagMasterDomain, "", "master node")
 
 	//cmd.Flags().String(flagLogLevel, "debug", "Run abci app with different log level")
 	tcmd.AddNodeFlags(cmd)
@@ -200,14 +204,12 @@ func preSetConfig(ctx *app.Context) {
 	nodeKey := viper.GetString(flagNodeKey)
 	pvs := viper.GetString(flagPvs)
 	pvk := viper.GetString(flagPvk)
-	if len(genesis) != 0 {
-		genesisBytes, _ := base64.StdEncoding.DecodeString(genesis)
-		ioutil.WriteFile(cfg.GenesisFile(), genesisBytes, os.ModePerm)
-		nodeKeyBytes, _ := base64.StdEncoding.DecodeString(nodeKey)
-		ioutil.WriteFile(cfg.NodeKeyFile(), nodeKeyBytes, os.ModePerm)
-		pvsBytes, _ := base64.StdEncoding.DecodeString(pvs)
-		ioutil.WriteFile(cfg.PrivValidatorStateFile(), pvsBytes, os.ModePerm)
-		pvkBytes, _ := base64.StdEncoding.DecodeString(pvk)
-		ioutil.WriteFile(cfg.PrivValidatorKeyFile(), pvkBytes, os.ModePerm)
-	}
+	genesisBytes, _ := base64.StdEncoding.DecodeString(genesis)
+	ioutil.WriteFile(cfg.GenesisFile(), genesisBytes, os.ModePerm)
+	nodeKeyBytes, _ := base64.StdEncoding.DecodeString(nodeKey)
+	ioutil.WriteFile(cfg.NodeKeyFile(), nodeKeyBytes, os.ModePerm)
+	pvsBytes, _ := base64.StdEncoding.DecodeString(pvs)
+	ioutil.WriteFile(cfg.PrivValidatorStateFile(), pvsBytes, os.ModePerm)
+	pvkBytes, _ := base64.StdEncoding.DecodeString(pvk)
+	ioutil.WriteFile(cfg.PrivValidatorKeyFile(), pvkBytes, os.ModePerm)
 }
