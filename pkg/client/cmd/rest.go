@@ -14,6 +14,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/libs/log"
+	"github.com/tendermint/tendermint/privval"
 	"github.com/tendermint/tendermint/rpc/lib/server"
 	"io/ioutil"
 	"net"
@@ -43,8 +44,14 @@ const (
 	FlagRPCReadTimeout     = "read-timeout"
 	FlagRPCWriteTimeout    = "write-timeout"
 	FlagWebsocket		   = "wsport"
+	GenesisFile			   = "genesis.json"
+	PrivValidatorKey	   = "priv_validator_key.json"
 )
 
+type ConfigFiles struct {
+	GenesisFile []byte `json:"genesis_file"`
+	NodeID 		string `json:"node_id"`
+}
 
 func init() {
 	rootCmd.AddCommand(rpcCmd)
@@ -71,7 +78,6 @@ var rpcCmd = &cobra.Command{
 	},
 }
 
-
 // RestServer represents the Light Client Rest server
 type RestServer struct {
 	Mux     *mux.Router
@@ -89,6 +95,7 @@ func NewRestServer() *RestServer {
 	r.NotFoundHandler = Handle404()
 	r.HandleFunc("/healthcheck", HealthCheckHandler(cliCtx)).Methods("GET")
 	r.HandleFunc("/exportLog", ExportLogHandler(cliCtx)).Methods("GET")
+	r.HandleFunc("/exportConfig", ExportConfigHandler(cliCtx)).Methods("GET")
 	rpc.RegisterRoutes(cliCtx, r)
 	accountRpc.RegisterRoutes(cliCtx, r)
 	txRpc.RegisterTxRoutes(cliCtx, r)
@@ -395,6 +402,41 @@ func ExportLogHandler(ctx context.Context) http.HandlerFunc  {
 		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", logPath))
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write(log)
+	}
+}
+
+func ExportConfigHandler(ctx context.Context) http.HandlerFunc  {
+	return func(w http.ResponseWriter, req *http.Request) {
+		viper.SetEnvPrefix("CI")
+		viper.BindEnv("HOME")
+		root := viper.GetString("HOME")
+		gen, err := ioutil.ReadFile(filepath.Join(root, "config", GenesisFile))
+		if err != nil {
+			_, _ = w.Write([]byte(err.Error()))
+			return
+		}
+		pv, err := ioutil.ReadFile(filepath.Join(root, "config", PrivValidatorKey))
+		if err != nil {
+			_, _ = w.Write([]byte(err.Error()))
+			return
+		}
+		var key *privval.FilePVKey
+		err = cdc.UnmarshalJSON(pv, &key)
+		if err != nil {
+			_, _ = w.Write([]byte(err.Error()))
+			return
+		}
+		nodeID := strings.ToLower(key.Address.String())
+		configFile := &ConfigFiles{
+			GenesisFile: gen,
+			NodeID:      nodeID,
+		}
+		configBytes, err := json.Marshal(configFile)
+		if err != nil {
+			_, _ = w.Write([]byte(err.Error()))
+			return
+		}
+		_, _ = w.Write(configBytes)
 	}
 }
 
