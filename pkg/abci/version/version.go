@@ -10,7 +10,7 @@ var (
 	Name = "ci123chain"
 	// server binary name
 	ServerName = "<cid>"
-	// client binary name
+	// clients binary name
 	ClientName = "<cicli>"
 	// application's version string
 	Version = "1.0.0-beta"

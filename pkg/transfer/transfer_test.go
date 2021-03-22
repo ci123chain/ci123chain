@@ -1,7 +1,7 @@
 package transfer
 //
 //import (
-//	"github.com/ci123chain/ci123chain/pkg/client/helper"
+//	"github.com/ci123chain/ci123chain/pkg/clients/helper"
 //	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
 //	"fmt"
 //	"github.com/magiconair/properties/assert"

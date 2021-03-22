@@ -384,7 +384,7 @@ func getDescription(req *http.Request) (string, string, string, string, string) 
 	nonce := r.FormValue("nonce")
 	var Nonce uint64
 	if nonce == "" {
-		ctx, err := client.NewClientContextFromViper(cdc)
+		ctx, err := clients.NewClientContextFromViper(cdc)
 		if err != nil {
 			return 0, false
 		}

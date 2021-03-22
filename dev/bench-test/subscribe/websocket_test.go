@@ -22,7 +22,7 @@ func TestSubscribe(t *testing.T)  {
 	//query := "tm.event = 'Tx' AND tx.height = 3"
 	query := "write_db.msg = 'address1'"
 
-	txs, err := client.Subscribe(ctx, "test-client", query)
+	txs, err := client.Subscribe(ctx, "test-clients", query)
 	if err != nil {
 		panic(err)
 	}

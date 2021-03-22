@@ -6,7 +6,7 @@ import (
 
 type CodeType = sdk.CodeType
 const (
-	DefaultCodespace 				sdk.CodespaceType = "client"
+	DefaultCodespace 				sdk.CodespaceType = "clients"
 	CodeNewClientCtxError       	CodeType = 601
 	CodeGetInputAddrError       	CodeType = 602
 	CodeParseAddrError       		CodeType = 603
@@ -24,7 +24,7 @@ const (
 )
 
 func ErrNewClientCtx(codespace sdk.CodespaceType, err error) sdk.Error {
-	return sdk.NewError(codespace, CodeNewClientCtxError,"New client context Error: %s", err.Error())
+	return sdk.NewError(codespace, CodeNewClientCtxError,"New clients context Error: %s", err.Error())
 }
 
 func ErrGetInputAddrCtx(codespace sdk.CodespaceType, err error) sdk.Error {

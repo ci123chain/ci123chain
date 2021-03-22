@@ -64,7 +64,7 @@ type PublicFilterAPI struct {
 
 // NewAPI returns a new PublicFilterAPI instance.
 func NewAPI(clientCtx clientcontext.Context, backend Backend) *PublicFilterAPI {
-	// start the client to subscribe to Tendermint events
+	// start the clients to subscribe to Tendermint events
 	err := clientCtx.Client.Start()
 	if err != nil {
 		panic(err)
@@ -332,7 +332,7 @@ func (api *PublicFilterAPI) Logs(ctx context.Context, crit filters.FilterCriteri
 						return
 					}
 				}
-			case <-rpcSub.Err(): // client send an unsubscribe request
+			case <-rpcSub.Err(): // clients send an unsubscribe request
 				logsSub.Unsubscribe(api.events)
 				return
 			case <-notifier.Closed(): // connection dropped

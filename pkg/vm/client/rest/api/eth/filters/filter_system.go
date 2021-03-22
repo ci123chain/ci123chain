@@ -28,12 +28,12 @@ var (
 )
 
 // EventSystem creates subscriptions, processes events and broadcasts them to the
-// subscription which match the subscription criteria using the Tendermint's RPC client.
+// subscription which match the subscription criteria using the Tendermint's RPC clients.
 type EventSystem struct {
 	ctx    context.Context
 	client rpcclient.Client
 
-	// light client mode
+	// light clients mode
 	lightMode bool
 
 	index filterIndex
@@ -281,7 +281,7 @@ func (es *EventSystem) handleChainEvent(ev coretypes.ResultEvent) {
 	for _, f := range es.index[filters.BlocksSubscription] {
 		f.headers <- rpctypes.EthHeaderFromTendermint(data.Header)
 	}
-	// TODO: light client
+	// TODO: light clients
 }
 
 // eventLoop (un)installs filters and processes mux events.

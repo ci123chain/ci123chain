@@ -76,6 +76,12 @@ func NewAttribute(k, v []byte) Attribute {
 	return Attribute{k, v}
 }
 
+// NewAttribute returns a new types/value Attribute object.
+func NewAttributeString(k, v string) Attribute {
+	return Attribute{[]byte(k), []byte(v)}
+}
+
+
 func NewAttributes(attributes []Attribute,attrs ...Attribute) []Attribute{
 	for _, attr := range attrs {
 		attributes = append(attributes, attr)

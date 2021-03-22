@@ -24,7 +24,7 @@ const (
 //	Short: "mortgage coin from account to module",
 //	RunE: func(cmd *cobra.Command, args []string) error {
 //		viper.BindPFlags(cmd.Flags())
-//		ctx, err := client.NewClientContextFromViper(types.MortgageCdc)
+//		ctx, err := clients.NewClientContextFromViper(types.MortgageCdc)
 //		if err != nil {
 //			return err
 //		}

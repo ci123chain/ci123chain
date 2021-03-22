@@ -160,7 +160,7 @@ func (s *Server) readLoop(wsConn *websocket.Conn) {
 }
 
 // tcpGetAndSendResponse connects to the rest-server over tcp, posts a JSON-RPC request, and sends the response
-// to the client over websockets
+// to the clients over websockets
 func (s *Server) tcpGetAndSendResponse(conn *websocket.Conn, mb []byte) error {
 	addr := strings.Split(s.rpcAddr, "tcp://")
 	if len(addr) != 2 {

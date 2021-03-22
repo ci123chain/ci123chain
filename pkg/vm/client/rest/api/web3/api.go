@@ -8,7 +8,7 @@ func NewAPI() *PublicWeb3API {
 	return &PublicWeb3API{}
 }
 
-// ClientVersion returns the client version in the Web3 user agent format.
+// ClientVersion returns the clients version in the Web3 user agent format.
 func (PublicWeb3API) ClientVersion() string {
 	return ClientVersion()
 }

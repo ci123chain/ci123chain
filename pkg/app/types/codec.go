@@ -7,7 +7,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/app/module"
-	"github.com/ci123chain/ci123chain/pkg/ibc"
+	ibc "github.com/ci123chain/ci123chain/pkg/ibc/core/types"
 	i_types "github.com/ci123chain/ci123chain/pkg/infrastructure/types"
 	"github.com/ci123chain/ci123chain/pkg/mortgage"
 	"github.com/ci123chain/ci123chain/pkg/transaction"

@@ -14,15 +14,15 @@ const METHOD = "POST"
 const API = "Channel/assignChannel"
 const ALIAS = "deployment"
 
-//var client gosdk.Client
+//var clients gosdk.Client
 //func Init() {
 //	var err error
 //	h := http.Header{}
-//	client, err = gosdk.GetClientInstance(h)
+//	clients, err = gosdk.GetClientInstance(h)
 //	if err != nil {
 //		logger.Error("init dynamic error: %v", err)
 //	}
-//	err = client.SetAppInfo(cienv.GetEnv("IDG_APPID"), cienv.GetEnv("IDG_APPKEY"), cienv.GetEnv("IDG_CHANNEL"), cienv.GetEnv("IDG_VERSION"))
+//	err = clients.SetAppInfo(cienv.GetEnv("IDG_APPID"), cienv.GetEnv("IDG_APPKEY"), cienv.GetEnv("IDG_CHANNEL"), cienv.GetEnv("IDG_VERSION"))
 //	if err != nil {
 //		logger.Error("init dynamic error: %v", err)
 //	}

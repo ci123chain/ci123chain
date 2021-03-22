@@ -26,7 +26,7 @@ const (
 	DefaultUnsubscribeAllMethod = "unsubscribe_all"
 
 	//subscribe clinet
-	subscribeClient = "abci-client"
+	subscribeClient = "abci-clients"
 
 	//time out
 	timeOut = time.Second * 10
@@ -110,7 +110,7 @@ func (r *PubSubRoom)Receive(c *websocket.Conn) {
 		err := recover()
 		switch rt := err.(type) {
 		case ClientError:
-			logger.Error("recover client error: %s", rt.Error)
+			logger.Error("recover clients error: %s", rt.Error)
 			r.HandleUnsubscribeAll(rt.Connect)
 		default:
 			logger.Error("recover unexpected error: %s", rt)
@@ -121,11 +121,11 @@ func (r *PubSubRoom)Receive(c *websocket.Conn) {
 		if err != nil {
 			panic(NewServerError(err, c))
 		}
-		logger.Info("receive client message: %s", string(data))
+		logger.Info("receive clients message: %s", string(data))
 		var m ReceiveMessage
 		ok := IsValidMessage(data)
 		if !ok {
-			logger.Info("received invalid message from client")
+			logger.Info("received invalid message from clients")
 			res := SendMessage{
 				Time:    time.Now().Format(time.RFC3339),
 				Content: fmt.Sprintf("invalid message: %s, you have sent to server", string(data)),
@@ -152,7 +152,7 @@ func (r *PubSubRoom)Receive(c *websocket.Conn) {
 		//query check
 		q, err := query.New(topic)
 		if err != nil {
-			logger.Info("invalid topic from client")
+			logger.Info("invalid topic from clients")
 			res := SendMessage{
 				Time:    time.Now().Format(time.RFC3339),
 				Content: fmt.Sprintf("invalid topic: %s, you have sent to server", q.String()),

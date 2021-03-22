@@ -20,8 +20,8 @@ const (
 	wsEndpoint = "/websocket"
 )
 
-// StartProxy will start the websocket manager on the client,
-// set up the rpc routes to proxy via the given client,
+// StartProxy will start the websocket manager on the clients,
+// set up the rpc routes to proxy via the given clients,
 // and start up an http/rpc server on the location given by bind (eg. :1234)
 // NOTE: This function blocks - you may want to call it in a go-routine.
 func StartProxy(c rpcclient.Client, listenAddr string, logger log.Logger, maxOpenConnections int) error {
@@ -57,10 +57,10 @@ func StartProxy(c rpcclient.Client, listenAddr string, logger log.Logger, maxOpe
 	return rpcserver.StartHTTPServer(l, mux, logger, config)
 }
 
-// RPCRoutes just routes everything to the given client, as if it were
+// RPCRoutes just routes everything to the given clients, as if it were
 // a tendermint fullnode.
 //
-// if we want security, the client must implement it as a secure client
+// if we want security, the clients must implement it as a secure clients
 func RPCRoutes(c rpcclient.Client) map[string]*rpcserver.RPCFunc {
 	return map[string]*rpcserver.RPCFunc{
 		// Subscribe/unsubscribe are reserved for websocket events.

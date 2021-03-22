@@ -41,7 +41,7 @@ type DynamicVerifier struct {
 // obtain missing data (e.g. FullCommits).
 //
 // The trusted provider should be a DBProvider.
-// The source provider should be a client.HTTPProvider.
+// The source provider should be a clients.HTTPProvider.
 func NewDynamicVerifier(chainID string, trusted PersistentProvider, source Provider) *DynamicVerifier {
 	return &DynamicVerifier{
 		logger:               log.NewNopLogger(),

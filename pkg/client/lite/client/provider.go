@@ -1,7 +1,7 @@
 /*
-Package client defines a provider that uses a rpcclient
+Package clients defines a provider that uses a rpcclient
 to get information, which is used to get new headers
-and validators directly from a Tendermint client.
+and validators directly from a Tendermint clients.
 */
 package client
 
@@ -45,11 +45,11 @@ func NewHTTPProvider(chainID, remote string) lite.Provider {
 
 // Implements Provider.
 func (p *provider) SetLogger(logger log.Logger) {
-	logger = logger.With("module", "lite/client")
+	logger = logger.With("module", "lite/clients")
 	p.logger = logger
 }
 
-// StatusClient returns the internal client as a StatusClient
+// StatusClient returns the internal clients as a StatusClient
 func (p *provider) StatusClient() rpcclient.StatusClient {
 	return p.client
 }
@@ -73,7 +73,7 @@ func (p *provider) LatestFullCommit(chainID string, minHeight, maxHeight int64) 
 	return
 }
 
-// fetchLatestCommit fetches the latest commit from the client.
+// fetchLatestCommit fetches the latest commit from the clients.
 func (p *provider) fetchLatestCommit(minHeight int64, maxHeight int64) (*ctypes.ResultCommit, error) {
 	status, err := p.client.Status()
 	if err != nil {

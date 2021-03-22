@@ -37,7 +37,7 @@ func NewAPI(clientCtx context.Context) *PubSubAPI {
 		clientCtx: clientCtx,
 		events:    rpcfilters.NewEventSystem(clientCtx.Client),
 		filters:   make(map[rpc.ID]*wsSubscription),
-		logger:    log.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", "websocket-client"),
+		logger:    log.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", "websocket-clients"),
 	}
 }
 

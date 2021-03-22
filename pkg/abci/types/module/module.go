@@ -39,7 +39,7 @@ func NewBasicManager(modules ...AppModuleBasic) BasicManager {
 	return moduleMap
 }
 
-func (bm BasicManager)RegisterCodec(cdc *codec.Codec)  {
+func (bm BasicManager) RegisterCodec(cdc *codec.Codec)  {
 	for _, b := range bm {
 		b.RegisterCodec(cdc)
 	}

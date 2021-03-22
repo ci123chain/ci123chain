@@ -89,7 +89,7 @@ func (d Redelegations) String() (out string) {
 }
 
 // RedelegationEntryResponse is equivalent to a RedelegationEntry except that it
-// contains a balance in addition to shares which is more suitable for client
+// contains a balance in addition to shares which is more suitable for clients
 // responses.
 type RedelegationEntryResponse struct {
 	RedelegationEntry
@@ -106,7 +106,7 @@ func NewRedelegationEntryResponse(
 }
 
 // RedelegationResponse is equivalent to a Redelegation except that its entries
-// contain a balance in addition to shares which is more suitable for client
+// contain a balance in addition to shares which is more suitable for clients
 // responses.
 type RedelegationResponse struct {
 	Redelegation

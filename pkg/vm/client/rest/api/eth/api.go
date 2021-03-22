@@ -128,7 +128,7 @@ func NewAPI(clientCtx clientcontext.Context, ks *keystore.KeyStore) *PublicEther
 	return api
 }
 
-// ClientCtx returns the Cosmos SDK client context.
+// ClientCtx returns the Cosmos SDK clients context.
 func (api *PublicEthereumAPI) ClientCtx() clientcontext.Context {
 	return api.clientCtx
 }

@@ -30,7 +30,7 @@ import (
 
 var (
 	FlagName = "name"
-	FlagClientHome = "home-client"
+	FlagClientHome = "home-clients"
 	FlagOWK = "owk"
 )
 

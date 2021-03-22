@@ -81,10 +81,10 @@ laddr = "{{ .RPC.ListenAddress }}"
 # Use '["*"]' to allow any origin
 cors_allowed_origins = [{{ range .RPC.CORSAllowedOrigins }}{{ printf "%q, " . }}{{end}}]
 
-# A list of methods the client is allowed to use with cross-domain requests
+# A list of methods the clients is allowed to use with cross-domain requests
 cors_allowed_methods = [{{ range .RPC.CORSAllowedMethods }}{{ printf "%q, " . }}{{end}}]
 
-# A list of non simple headers the client is allowed to use with cross-domain requests
+# A list of non simple headers the clients is allowed to use with cross-domain requests
 cors_allowed_headers = [{{ range .RPC.CORSAllowedHeaders }}{{ printf "%q, " . }}{{end}}]
 
 # TCP or UNIX socket address for the gRPC server to listen on
@@ -117,8 +117,8 @@ max_open_connections = {{ .RPC.MaxOpenConnections }}
 # of broadcast_tx_commit calls per block.
 max_subscription_clients = {{ .RPC.MaxSubscriptionClients }}
 
-# Maximum number of unique queries a given client can /subscribe to
-# If you're using GRPC (or Local RPC client) and /broadcast_tx_commit, set to
+# Maximum number of unique queries a given clients can /subscribe to
+# If you're using GRPC (or Local RPC clients) and /broadcast_tx_commit, set to
 # the estimated # maximum number of broadcast_tx_commit calls per block.
 max_subscriptions_per_client = {{ .RPC.MaxSubscriptionsPerClient }}
 

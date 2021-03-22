@@ -62,7 +62,7 @@ import (
 const (
 	flagAddress    = "address"
 	flagName       = "name"
-	flagClientHome = "home-client"
+	flagClientHome = "home-clients"
 	flagShardIndex = "shardIndex"
 	cacheName      = "cache"
 	heightKey      = "s/k:order/OrderBook"
@@ -300,7 +300,7 @@ func NewAppInit() AppInit {
 	//fsAppGenTx := pflag.NewFlagSet("", pflag.ContinueOnError)
 	//fsAppGenTx.String(flagAddress, "", "address, required")
 	//fsAppGenTx.String(flagClientHome, DefaultCLIHome,
-	//	"home directory for the client, used for types generation")
+	//	"home directory for the clients, used for types generation")
 
 	return AppInit{
 		//FlagsAppGenState: fsAppGenState,

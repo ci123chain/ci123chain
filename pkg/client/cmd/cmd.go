@@ -8,7 +8,7 @@ import (
 	"os"
 )
 
-var homeDir = os.ExpandEnv("$HOME/.ci123_client")
+var homeDir = os.ExpandEnv("$HOME/.cli")
 var cdc = types.MakeCodec()
 
 var rootCmd = &cobra.Command{

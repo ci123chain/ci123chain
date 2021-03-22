@@ -5,8 +5,8 @@ import (
 	"github.com/tendermint/tendermint/types"
 )
 
-// Provider provides information for the lite client to sync validators.
-// Examples: MemProvider, files.Provider, client.Provider, CacheProvider.
+// Provider provides information for the lite clients to sync validators.
+// Examples: MemProvider, files.Provider, clients.Provider, CacheProvider.
 type Provider interface {
 
 	// LatestFullCommit returns the latest commit with minHeight <= height <=

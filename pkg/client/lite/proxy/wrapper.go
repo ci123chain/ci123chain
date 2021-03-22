@@ -24,14 +24,14 @@ type Wrapper struct {
 }
 
 // SecureClient uses a given Verifier to wrap an connection to an untrusted
-// host and return a cryptographically secure rpc client.
+// host and return a cryptographically secure rpc clients.
 //
 // If it is wrapping an HTTP rpcclient, it will also wrap the websocket interface
 func SecureClient(c rpcclient.Client, cert *lite.DynamicVerifier) Wrapper {
 	prt := store.DefaultProofRuntime()
 	wrap := Wrapper{c, cert, prt}
 	// TODO: no longer possible as no more such interface exposed....
-	// if we wrap http client, then we can swap out the event switch to filter
+	// if we wrap http clients, then we can swap out the event switch to filter
 	// if hc, ok := c.(*rpcclient.HTTP); ok {
 	// 	evt := hc.WSEvents.EventSwitch
 	// 	hc.WSEvents.EventSwitch = WrappedSwitch{evt, wrap}
@@ -182,7 +182,7 @@ func (w Wrapper) SubscribeWS(ctx *rpctypes.Context, query string) (*ctypes.Resul
 	return &ctypes.ResultSubscribe{}, nil
 }
 
-// UnsubscribeWS calls original client's Unsubscribe using remote address as a
+// UnsubscribeWS calls original clients's Unsubscribe using remote address as a
 // subscriber.
 func (w Wrapper) UnsubscribeWS(ctx *rpctypes.Context, query string) (*ctypes.ResultUnsubscribe, error) {
 	err := w.Client.Unsubscribe(context.Background(), ctx.RemoteAddr(), query)
@@ -192,7 +192,7 @@ func (w Wrapper) UnsubscribeWS(ctx *rpctypes.Context, query string) (*ctypes.Res
 	return &ctypes.ResultUnsubscribe{}, nil
 }
 
-// UnsubscribeAllWS calls original client's UnsubscribeAll using remote address
+// UnsubscribeAllWS calls original clients's UnsubscribeAll using remote address
 // as a subscriber.
 func (w Wrapper) UnsubscribeAllWS(ctx *rpctypes.Context) (*ctypes.ResultUnsubscribe, error) {
 	err := w.Client.UnsubscribeAll(context.Background(), ctx.RemoteAddr())
@@ -209,7 +209,7 @@ func (w Wrapper) UnsubscribeAllWS(ctx *rpctypes.Context) (*ctypes.ResultUnsubscr
 // // relatively low-throughput situations that can tolerate a bit extra latency
 // type WrappedSwitch struct {
 // 	types.EventSwitch
-// 	client rpcclient.Client
+// 	clients rpcclient.Client
 // }
 
 // // FireEvent verifies any block or header returned from the eventswitch
@@ -223,13 +223,13 @@ func (w Wrapper) UnsubscribeAllWS(ctx *rpctypes.Context) (*ctypes.ResultUnsubscr
 // 	// check to validate it if possible, and drop if not valid
 // 	switch t := tm.(type) {
 // 	case types.EventDataNewBlockHeader:
-// 		err := verifyHeader(s.client, t.Header)
+// 		err := verifyHeader(s.clients, t.Header)
 // 		if err != nil {
 // 			fmt.Printf("Invalid header: %#v\n", err)
 // 			return
 // 		}
 // 	case types.EventDataNewBlock:
-// 		err := verifyBlock(s.client, t.Block)
+// 		err := verifyBlock(s.clients, t.Block)
 // 		if err != nil {
 // 			fmt.Printf("Invalid block: %#v\n", err)
 // 			return

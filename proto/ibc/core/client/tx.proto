@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+import "gogoproto/gogo.proto";
+import "google/protobuf/any.proto";
+
+service Msg {
+  rpc CreateClient(MsgCreateClient) returns (MsgCreateClientResponse);
+
+  rpc UpdateClient(MsgUpdateClient) returns (MsgUpdateClientResponse);
+
+}
+
+// MsgCreateClient defines a message to create an IBC client
+message MsgCreateClient {
+  option (gogoproto.equal)            = false;
+  option (gogoproto.goproto_getters)  = false;
+  // client_state
+  google.protobuf.Any client_state = 1 [(gogoproto.moretags) = "yaml:\"client_state\""];
+  // consensus_state
+  google.protobuf.Any consensus_state = 2 [(gogoproto.moretags) = "yaml:\"consensus_state\""];
+  // singer address
+  string signer = 3;
+}
+
+message MsgCreateClientResponse {}
+
+message MsgUpdateClient {
+  option (gogoproto.equal)            = false;
+  option (gogoproto.goproto_getters)  = false;
+
+  string client_id = 1 [(gogoproto.moretags) = "yaml:\"client_id\""];
+  // client_state
+  google.protobuf.Any client_state = 2 [(gogoproto.moretags) = "yaml:\"client_state\""];
+  // consensus_state
+  google.protobuf.Any consensus_state = 3 [(gogoproto.moretags) = "yaml:\"consensus_state\""];
+
+  bytes proof_upgrade_client = 4 [(gogoproto.moretags) = "yaml:\"proof_upgrade_client\""];
+
+  bytes proof_upgrade_consensus_state = 5 [(gogoproto.moretags) = "yaml:\"proof_upgrade_consensus_state\""];
+
+  string signer = 6;
+}
+
+message MsgUpdateClientResponse {}

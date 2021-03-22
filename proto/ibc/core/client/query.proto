@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package core.client;
+
+option go_package = "github.com/ci123chain/ci123chain/pkg/ibc/core/client/types";
+
+import "core/client/client.proto";
+import "gogoproto/gogo.proto";
+
+service Query {
+  rpc ClientState(QueryClientStateRequest) returns (QueryClientStateResponse) {
+    option (google.api.http).get = "/ibc/core/client/v1beta1/client_states/{client_id}";
+  }
+
+  rpc ClientStates(QueryClientStatesRequest) returns (QueryClientStatesResponse) {
+    option (google.api.http).get = "/ibc/core/client/v1beta1/client_states";
+  }
+
+//  rpc ConsensusState(QueryConsensusStateRequest) returns (QueryConsensusStateResponse) {
+//    option (google.api.http).get = "/ibc/core/client/v1beta1/consensus_states/{client_id}/revision/{revision_number}/height/{revision_height}";
+//  }
+//
+//  rpc ConsensusStates(QueryConsensusStatesRequest) returns (QueryConsensusStatesResponse) {
+//    option (google.api.http).get = "/ibc/core/client/v1beta1/consensus_states/{client_id}";
+//  }
+//
+//  rpc ClientParams(QueryClientParamsRequest) returns (QueryClientParamsResponse) {
+//    option (google.api.http).get = "/ibc/client/v1beta1/params";
+//  }
+}
+
+
+message QueryClientStateRequest {
+  string client_id = 1;
+}
+
+message QueryClientStateResponse {
+  google.protobuf.Any client_state = 1;
+  bytes proof = 2;
+  core.Height proof_height = 3 [(gogoproto.nullable) = false];
+}
+
+
