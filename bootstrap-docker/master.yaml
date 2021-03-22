@@ -27,7 +27,7 @@ services:
       - raftleveldb
     environment:
       CI_CHAIN_ID: ci0
-      CI_NODE_DOMAIN: localhost
+      CI_NODE_DOMAIN: 172.24.0.4
       CI_STATEDB_HOST: raftleveldb_dev
       CI_STATEDB_PORT: 80
       CI_STATEDB_TLS: "false"

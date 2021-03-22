@@ -115,8 +115,8 @@ func configFollowMaster(master, root string) (*cfg.Config, error){
 		return nil, err
 	}
 
-	c.P2P.PersistentPeers = configFiles.NodeID + "@" + master + ":26656"
-	//c.P2P.PersistentPeers = configFiles.NodeID + "@" + master + ":26656@tls"
+	//c.P2P.PersistentPeers = configFiles.NodeID + "@" + master + ":26656"
+	c.P2P.PersistentPeers = configFiles.NodeID + "@" + master + ":26656@tls"
 
 	config.SaveConfig(c)
 
