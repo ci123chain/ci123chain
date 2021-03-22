@@ -163,9 +163,9 @@ func StartInProcess(ctx *app.Context, appCreator app.AppCreator) (*node.Node, er
 	pv := pvm.LoadFilePV(cfg.PrivValidatorKeyFile(), cfg.PrivValidatorStateFile())
 
 	///tcp://0.0.0.0:26656
-	info := strings.Split(cfg.P2P.ListenAddress, ":")
-	if len(info) == 3 {
-		cfg.P2P.ListenAddress = "tcp://" + nodeDomain + ":" + info[2]
+	info := strings.Split(cfg.P2P.ListenAddress, "://")
+	if len(info) == 2 {
+		cfg.P2P.ListenAddress = info[0] + "://" + nodeDomain + "#" + info[1]
 	}else {
 		return nil, errors.New(fmt.Sprintf("unexpected p2p listen address: %v", cfg.P2P.ListenAddress))
 	}
