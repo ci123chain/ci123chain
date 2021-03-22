@@ -1,5 +1,0 @@
-Host gitlab.oneitfarm.com
-        User git
-        HostName gitlab.oneitfarm.com
-        Port 29622
-        IdentityFile ~/.ssh/id_rsa
