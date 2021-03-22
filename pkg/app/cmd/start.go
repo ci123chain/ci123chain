@@ -70,7 +70,7 @@ func startCmd(ctx *app.Context, appCreator app.AppCreator) *cobra.Command {
 	cmd.Flags().String(flagPruning, "syncable", "Pruning strategy: syncable, nothing, everything")
 	cmd.Flags().String(flagCiStateDBType, "redis", "database type")
 	cmd.Flags().String(flagCiStateDBHost, "", "db host")
-	cmd.Flags().Uint(flagCiStateDBPort, 7443, "db port")
+	cmd.Flags().Uint64(flagCiStateDBPort, 7443, "db port")
 	cmd.Flags().Bool(flagCiStateDBTls, true, "use tls")
 	cmd.Flags().String(flagCiNodeDomain, "", "node domain")
 	cmd.Flags().String(flagShardIndex, "", "index of shard")
@@ -126,8 +126,8 @@ func StartInProcess(ctx *app.Context, appCreator app.AppCreator) (*node.Node, er
 		return nil, errors.New(fmt.Sprintf("%s can not be empty", flagCiStateDBHost))
 	}
 	dbTls := viper.GetBool(flagCiStateDBTls)
-	dbPort := viper.GetUint(flagCiStateDBPort)
-	p := strconv.FormatUint(uint64(dbPort), 10)
+	dbPort := viper.GetUint64(flagCiStateDBPort)
+	p := strconv.FormatUint(dbPort, 10)
 
 	switch dbType {
 	case "redis":

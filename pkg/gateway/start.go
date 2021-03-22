@@ -14,6 +14,7 @@ import (
 	"github.com/spf13/viper"
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -22,6 +23,7 @@ const (
 	DefaultLogDir = "$HOME/.gateway"
 	flagCiStateDBType  = "statedb_type"
 	flagCiStateDBHost  = "statedb_host"
+	flagCiStateDBPort  = "statedb_port"
 	flagCiStateDBTls   = "statedb_tls"
 )
 
@@ -36,15 +38,14 @@ func Start() {
 	flag.String("logdir", DefaultLogDir, "log dir")
 	flag.StringVar(&logLevel, "loglevel", "DEBUG", "level for log")
 
-	flag.StringVar(&serverList, "backends", "http://localhost:1317", "Load balanced backends, use commas to separate")
-	//flag.String("statedb", "redisdb://locahost:11001", "server resource")
+	flag.StringVar(&serverList, "backends", "", "Load balanced backends, use commas to separate")
 	flag.StringVar(&urlreg, "urlreg", "http://***:80", "reg for url connection to node")
 	flag.IntVar(&port, "port", 3030, "Port to serve")
 	flag.String("rpcport", "80", "rpc address for websocket")
-	//flag.Parse()
 
 	flag.String(flagCiStateDBType, "redis", "database type")
 	flag.String(flagCiStateDBHost, "", "db host")
+	flag.Uint64(flagCiStateDBPort, 7443, "db port")
 	flag.Bool(flagCiStateDBTls, true, "use tls")
 
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
@@ -64,10 +65,12 @@ func Start() {
 		panic(errors.New(fmt.Sprintf("%s can not be empty", "ci-statedb-host")))
 	}
 	dbTls := viper.GetBool(flagCiStateDBTls)
+	dbPort := viper.GetUint64(flagCiStateDBPort)
+	p := strconv.FormatUint(dbPort, 10)
 
 	switch dbType {
 	case "redis":
-		statedb = "redisdb://" + dbHost
+		statedb = "redisdb://" + dbHost + ":" + p
 		if dbTls {
 			statedb += "#tls"
 		}
