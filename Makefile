@@ -27,4 +27,4 @@ clean-cproxy:
 
 # .PHONY:release, build all
 release:
-    go build -o ./build/cproxy-linux ./cmd
+	$(GO_BUILD_CMD) -o ./build/cproxy-linux ./cmd
