@@ -3,6 +3,7 @@ package app
 import (
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/client/cmd"
 	"github.com/ci123chain/ci123chain/pkg/node"
@@ -56,6 +57,9 @@ func SetupContext(ctx *Context, level string) error {
 	if err == config.ErrConfigNotFound {
 		master := viper.GetString(flagMasterDomain)
 		if len(master) != 0 {
+			if os.Getenv("IDG_APPID") != "" {
+				return errors.New("Can't use master domain in normal environment")
+			}
 			c, err = configFollowMaster(master, root)
 			if err != nil {
 				return err
@@ -115,8 +119,7 @@ func configFollowMaster(master, root string) (*cfg.Config, error){
 		return nil, err
 	}
 
-	//c.P2P.PersistentPeers = configFiles.NodeID + "@" + master + ":26656"
-	c.P2P.PersistentPeers = configFiles.NodeID + "@" + master + ":26656@tls"
+	c.P2P.PersistentPeers = configFiles.NodeID + "@" + master + ":7443@tls"
 
 	config.SaveConfig(c)
 
