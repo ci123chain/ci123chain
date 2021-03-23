@@ -25,6 +25,6 @@ clean-cproxy:
 	docker ps -a | grep "ci123-$(Tag)-" | awk '{print $$1}' | xargs docker rm -f
 	docker images | grep "$(Tag)service" | awk '{print $$3}' | xargs docker rmi
 
-.PHONY:release, build all
+# .PHONY:release, build all
 release:
     $(GO_BUILD_CMD) -o ./build/cproxy-linux ./cmd
