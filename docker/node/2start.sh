@@ -41,7 +41,12 @@ if [ ! -f $CI_HOME/config/genesis.json ]; then
         /opt/cid-linux add-genesis-account 0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c 10000000000000000000000000000 --home=$CI_HOME
         # 2b452434ac4f7cf9c5d61d62f23834f34e851fb6efdb8d4a8c6e214a8bc93d70
 
-        /opt/cid-linux add-genesis-validator 0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c 800000000 $CI_PUBKEY 1 40 5 --home=$CI_HOME
+        if [ $CI_VALIDATOR_ADDRESS ]; then
+          /opt/cid-linux add-genesis-account $CI_VALIDATOR_ADDRESS 10000000000000000000000000000 --home=$CI_HOME
+          /opt/cid-linux add-genesis-validator $CI_VALIDATOR_ADDRESS 800000000 $CI_PUBKEY 1 40 5 --home=$CI_HOME
+        else
+          /opt/cid-linux add-genesis-validator 0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c 800000000 $CI_PUBKEY 1 40 5 --home=$CI_HOME
+        fi
 
         if [ $GENESIS_SHARED ]; then
             /opt/cid-linux add-genesis-shard "$GENESIS_SHARED"
