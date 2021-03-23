@@ -57,7 +57,7 @@ func SetupContext(ctx *Context, level string) error {
 	if err == config.ErrConfigNotFound {
 		master := viper.GetString(flagMasterDomain)
 		if len(master) != 0 {
-			if os.Getenv("IDG_APPID") != "" {
+			if os.Getenv("IDG_APPID") == "" {
 				return errors.New("Can't use master domain in normal environment")
 			}
 			c, err = configFollowMaster(master, root)
