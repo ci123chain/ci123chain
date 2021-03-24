@@ -134,7 +134,7 @@ func NewInitFiles(privKey, persistentPeers string, tlsOption bool) (*InitFiles, 
 	if err != nil {
 		return nil, err
 	}
-	config.P2P.TLSOption = tlsOption
+	//config.P2P.TLSOption = tlsOption
 	var configTemplate *template.Template
 	var buffer bytes.Buffer
 	if configTemplate, err = template.New("configFileTemplate").Parse(defaultConfigTemplate); err != nil {
