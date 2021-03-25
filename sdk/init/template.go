@@ -212,25 +212,7 @@ allow_duplicate_ip = {{ .P2P.AllowDuplicateIP }}
 handshake_timeout = "{{ .P2P.HandshakeTimeout }}"
 dial_timeout = "{{ .P2P.DialTimeout }}"
 
-# TLS option
-tls_option = {{ .P2P.TLSOption }}
-
 [tls_config]
-#BindAddressIP
-bind_address_ip = "{{ .TLSConfig.BindAddressIP }}"
-
-#BindAddressPort
-bind_address_port = {{ .TLSConfig.BindAddressPort }}
-
-#RemoteAddressHOST
-remote_address_host = "{{ .TLSConfig.RemoteAddressHOST }}"
-
-#RemoteAddressPort
-remote_address_port = {{ .TLSConfig.RemoteAddressPort }}
-
-#RemoteServerName
-remote_server_name = "{{ .TLSConfig.RemoteServerName }}"
-
 #RemoteTLSCertURI
 remote_tls_cert_uri = "{{ .TLSConfig.RemoteTLSCertURI }}"
 

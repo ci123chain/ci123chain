@@ -63,9 +63,11 @@ const (
 	flagAddress    = "address"
 	flagName       = "name"
 	flagClientHome = "home-client"
+	flagNodeDomain = "node_domain"
 	flagShardIndex = "shardIndex"
 	cacheName      = "cache"
 	heightKey      = "s/k:order/OrderBook"
+	FlagNodeList   = "node-list"
 )
 
 var (
@@ -173,9 +175,20 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 
 
 	//odb := cdb.(*couchdb.GoCouchDB)
+	var nodeList []string
 	odb := cdb.(*redis.RedisDB)
-	orderKeeper := order.NewKeeper(odb, OrderStoreKey, accKeeper)
+	nodeListBytes := odb.Get([]byte(FlagNodeList))
+	if nodeListBytes != nil {
+		err := json.Unmarshal(nodeListBytes, &nodeList)
+		if err != nil {
+			common.Exit(err.Error())
+		}
+	}
+	nodeList = append(nodeList, viper.GetString(flagNodeDomain))
+	nodeListBytes, _ = json.Marshal(nodeList)
+	odb.Set([]byte(FlagNodeList), nodeListBytes)
 
+	orderKeeper := order.NewKeeper(odb, OrderStoreKey, accKeeper)
 
 	homeDir := viper.GetString(cli.HomeFlag)
 	var wasmconfig wasm_types.WasmConfig
