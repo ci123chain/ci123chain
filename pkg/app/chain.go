@@ -9,6 +9,7 @@ import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	app_module "github.com/ci123chain/ci123chain/pkg/app/module"
 	dist_module "github.com/ci123chain/ci123chain/pkg/distribution/module"
+	"github.com/ci123chain/ci123chain/pkg/gateway/redissource"
 	infrastructure_module "github.com/ci123chain/ci123chain/pkg/infrastructure/module"
 	mint_module "github.com/ci123chain/ci123chain/pkg/mint/module"
 	order_module "github.com/ci123chain/ci123chain/pkg/order/module"
@@ -67,7 +68,6 @@ const (
 	flagShardIndex = "shardIndex"
 	cacheName      = "cache"
 	heightKey      = "s/k:order/OrderBook"
-	FlagNodeList   = "node-list"
 )
 
 var (
@@ -177,7 +177,7 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 	//odb := cdb.(*couchdb.GoCouchDB)
 	var nodeList []string
 	odb := cdb.(*redis.RedisDB)
-	nodeListBytes := odb.Get([]byte(FlagNodeList))
+	nodeListBytes := odb.Get([]byte(redissource.FlagNodeList))
 	if nodeListBytes != nil {
 		err := json.Unmarshal(nodeListBytes, &nodeList)
 		if err != nil {
@@ -186,7 +186,7 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 	}
 	nodeList = append(nodeList, viper.GetString(flagNodeDomain))
 	nodeListBytes, _ = json.Marshal(nodeList)
-	odb.Set([]byte(FlagNodeList), nodeListBytes)
+	odb.Set([]byte(redissource.FlagNodeList), nodeListBytes)
 
 	orderKeeper := order.NewKeeper(odb, OrderStoreKey, accKeeper)
 
