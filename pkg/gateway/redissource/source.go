@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/ci123chain/ci123chain/pkg/app"
 	"github.com/ci123chain/ci123chain/pkg/gateway/logger"
 	r "github.com/ci123chain/ci123chain/pkg/redis"
 	"github.com/go-redis/redis/v8"
@@ -13,9 +12,13 @@ import (
 	"strings"
 )
 
-const Domain = "DOMAIN"
-const SharedKey  = "s/k:order/OrderBook"
-const HostPattern  = "[*]+"
+const (
+	Domain = "DOMAIN"
+	SharedKey  = "s/k:order/OrderBook"
+	HostPattern  = "[*]+"
+	FlagNodeList   = "node-list"
+)
+
 func NewRedisSource(host, urlreg string) *RedisDBSourceImp {
 	imp := &RedisDBSourceImp{
 		hostStr: 	host,
@@ -46,7 +49,7 @@ func (s *RedisDBSourceImp) FetchSource() (hostArr []string) {
 		s.conn = conn
 	}
 
-	bz := s.conn.Get([]byte(app.FlagNodeList))
+	bz := s.conn.Get([]byte(FlagNodeList))
 	var node_list []string
 	err := json.Unmarshal(bz, &node_list)
 	if err != nil {
