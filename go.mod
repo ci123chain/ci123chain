@@ -39,5 +39,3 @@ require (
 )
 
 replace github.com/tendermint/tendermint => github.com/ci123chain/tendermint v0.32.7-rc29
-
-replace github.com/cosmos/iavl => github.com/tendermint/iavl v0.15.0
