@@ -44,11 +44,6 @@ func MakeCodec() *codec.Codec {
 	module.ModuleBasics.RegisterCodec(cdc)
 	ibc.RegisterCodec(cdc)
 	i_types.RegisterCodec(cdc)
-	//acc_types.RegisterCodec(cdc)
-	//cdc.RegisterConcrete(secp256k1.PubKeySecp256k1{},
-	//	secp256k1.PubKeyAminoName, nil)
-	//cdc.RegisterConcrete(secp256k1.PrivKeySecp256k1{},
-	//	secp256k1.PrivKeyAminoName, nil)
 	cryptoAmino.RegisterAmino(cdc)
 	return cdc
 }

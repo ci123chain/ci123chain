@@ -17,8 +17,8 @@ type RedisDB struct {
 	lg    logger.Logger
 }
 
-func (rdb *RedisDB) ReverseIterator(start, end []byte) db.Iterator {
-	return rdb.NewRedisIterator(start, true)
+func (rdb *RedisDB) ReverseIterator(start, end []byte) (db.Iterator, error) {
+	return rdb.NewRedisIterator(start, true), nil
 }
 
 func NewRedisDB(opt *redis.Options) *RedisDB {
@@ -32,17 +32,17 @@ func DBIsValid(rdb *RedisDB) error {
 
 
 ///implement DB
-func (rdb *RedisDB) Get(key []byte) []byte {
+func (rdb *RedisDB) Get(key []byte) ([]byte, error) {
 
 	retry := 0
 	for {
 		if key == nil {
-			return nil
+			return nil, nil
 		}else {
 			value, err := rdb.DB.Get(ctx, hex.EncodeToString(key)).Result()
 			if err != nil {
 				if IsKeyNotExist(err) {
-					return nil
+					return nil, nil
 				}else {
 					rdb.lg.Info("***************Retry******************")
 					rdb.lg.Info(fmt.Sprintf("Retry: %d", retry))
@@ -53,16 +53,20 @@ func (rdb *RedisDB) Get(key []byte) []byte {
 				}
 			}
 			res, _ := hex.DecodeString(value)
-			return res
+			return res, nil
 		}
 	}
 }
 
-func (rdb *RedisDB) Has(key []byte) bool {
-	return rdb.Get(key) != nil
+func (rdb *RedisDB) Has(key []byte) (bool, error) {
+	v, err := rdb.Get(key)
+	if err != nil {
+		return false, err
+	}
+	return v != nil, nil
 }
 
-func (rdb *RedisDB) Set(key, value []byte) {
+func (rdb *RedisDB) Set(key, value []byte) error {
 	retry := 0
 
 	for {
@@ -83,22 +87,26 @@ func (rdb *RedisDB) Set(key, value []byte) {
 			retry ++
 			continue
 		}else {
-			return
+			return nil
 		}
 	}
 }
 
 
-func (rdb *RedisDB) SetSync(key, value []byte) {
-	rdb.Set(key, value)
+func (rdb *RedisDB) SetSync(key, value []byte) error {
+	return rdb.Set(key, value)
 }
 
 
-func (rdb *RedisDB) Delete(key []byte){
+func (rdb *RedisDB) Delete(key []byte) error{
 	retry := 0
 	for {
-		if !rdb.Has(key) {
-			return
+		v, err := rdb.Has(key)
+		if err != nil {
+			return err
+		}
+		if !v {
+			return nil
 		}else {
 			n, err := rdb.DB.Del(ctx, hex.EncodeToString(key)).Result()
 			if err != nil {
@@ -113,21 +121,23 @@ func (rdb *RedisDB) Delete(key []byte){
 				rdb.lg.Info("***************Retry******************")
 				rdb.lg.Info(fmt.Sprintf("Retry: %d", retry))
 				rdb.lg.Info(fmt.Sprintf("Method: Delete, key: %s, id: %s", string(key), hex.EncodeToString(key)))
-				rdb.lg.Error(fmt.Sprintf("Error: %s", err.Error()))
 				retry++
 			}else {
-				return
+				return nil
 			}
 		}
 	}
 }
 
-func (rdb *RedisDB) DeleteSync(key []byte){
-	rdb.Delete(key)
+func (rdb *RedisDB) DeleteSync(key []byte) error {
+	return rdb.Delete(key)
 }
 
 
-func (rdb *RedisDB) Close() {}
+func (rdb *RedisDB) Close() error {
+	rdb = nil
+	return nil
+}
 
 
 func (rdb *RedisDB) NewBatch() db.Batch {
@@ -135,15 +145,18 @@ func (rdb *RedisDB) NewBatch() db.Batch {
 	return &redisBatch{rdb, batch}
 }
 
-func (rdb *RedisDB) Print() {}
+func (rdb *RedisDB) Print() error {
+	return nil
+}
 
 func (rdb *RedisDB) Stats() map[string]string {
 	return nil
 }
 
-func (rdb *RedisDB) Iterator(start, end []byte) db.Iterator {
-	return rdb.NewRedisIterator(start, false)
+func (rdb *RedisDB) Iterator(start, end []byte) (db.Iterator, error) {
+	return rdb.NewRedisIterator(start, false), nil
 }
+
 
 type RedisIterator struct {
 	rdb   *RedisDB
@@ -153,6 +166,10 @@ type RedisIterator struct {
 	end			[]byte
 	isReverse	bool
 	valid       bool
+}
+
+func (ri *RedisIterator) Error() error {
+	return nil
 }
 
 func (rdb *RedisDB) NewRedisIterator(start []byte, isReserve bool) db.Iterator {
@@ -242,8 +259,9 @@ func (ri *RedisIterator) Value() (value []byte) {
 	return value
 }
 
-func (ri *RedisIterator) Close() {
+func (ri *RedisIterator) Close() error {
 	ri = nil
+	return nil
 }
 
 func (ri *RedisIterator) assertValid() {

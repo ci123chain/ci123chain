@@ -24,7 +24,7 @@ func QueryTx(cliCtx context.Context, hashHexStr string) (sdk.TxResponse, sdk.Err
 		return sdk.TxResponse{}, types.ErrQueryTx(types.DefaultCodespace, err.Error())
 	}
 
-	resTx, err := node.Tx(hash, true)
+	resTx, err := node.Tx(cliCtx.Context(), hash, true)
 	if err != nil {
 		return sdk.TxResponse{}, types.ErrQueryTx(types.DefaultCodespace, err.Error())
 	}
@@ -71,7 +71,7 @@ func getBlocksForTxResults(cliCtx context.Context, resTxs []*ctypes.ResultTx) (m
 
 	for _, resTx := range resTxs {
 		if _, ok := resBlocks[resTx.Height]; !ok {
-			resBlock, err := node.Block(&resTx.Height)
+			resBlock, err := node.Block(cliCtx.Context(), &resTx.Height)
 			if err != nil {
 				return nil, err
 			}
@@ -88,7 +88,7 @@ func getTxsInfo(cliCtx context.Context, height int64) ([]sdk.TxInfo, error) {
 		return nil, err
 	}
 	infoes := make([]sdk.TxInfo, 0)
-	block, err := node.Block(&height)
+	block, err := node.Block(cliCtx.Context(), &height)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +97,7 @@ func getTxsInfo(cliCtx context.Context, height int64) ([]sdk.TxInfo, error) {
 	}
 	for _, v := range block.Block.Data.Txs{
 		///hashes = append(hashes, hex.EncodeToString(v.Hash()))
-		resTx, _ := node.Tx(v.Hash(), true)
+		resTx, _ := node.Tx(cliCtx.Context(), v.Hash(), true)
 		index := resTx.Index
 		info := sdk.TxInfo{
 			Hash:  hex.EncodeToString(v.Hash()),

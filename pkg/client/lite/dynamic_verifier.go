@@ -191,8 +191,8 @@ func (dv *DynamicVerifier) verifyAndSave(trustedFC, sourceFC FullCommit) error {
 	if trustedFC.Height() >= sourceFC.Height() {
 		panic("should not happen")
 	}
-	err := trustedFC.NextValidators.VerifyFutureCommit(
-		sourceFC.Validators,
+	err := trustedFC.NextValidators.VerifyCommit(
+		//sourceFC.Validators,
 		dv.chainID, sourceFC.SignedHeader.Commit.BlockID,
 		sourceFC.SignedHeader.Height, sourceFC.SignedHeader.Commit,
 	)
@@ -248,7 +248,7 @@ FOR_LOOP:
 		}
 
 		// Handle special case when err is ErrTooMuchChange.
-		if types.IsErrTooMuchChange(err) {
+		if lerr.IsErrTooMuchChange(err) {
 			// Divide and conquer.
 			start, end := trustedFC.Height(), sourceFC.Height()
 			if !(start < end) {

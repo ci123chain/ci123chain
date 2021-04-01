@@ -205,7 +205,7 @@ func (k StakingKeeper) SetLastValidatorPower(ctx sdk.Context, operator sdk.AccAd
 func (k StakingKeeper) ValidatorsPowerStoreIterator(ctx sdk.Context) sdk.Iterator {
 	prefix := types.ValidatorsByPowerIndexKey
 	key := sdk.NewPrefixedKey([]byte(k.storeKey.Name()), prefix)
-	iterator := k.cdb.ReverseIterator(key, sdk.PrefixEndBytes(key))
+	iterator, _ := k.cdb.ReverseIterator(key, sdk.PrefixEndBytes(key))
 	if iterator.Valid() {
 		return iterator
 	} else {
@@ -219,7 +219,7 @@ func (k StakingKeeper) ValidatorsPowerStoreIterator(ctx sdk.Context) sdk.Iterato
 func (k StakingKeeper) LastValidatorsIterator(ctx sdk.Context) (iterator sdk.Iterator) {
 	prefix := types.LastValidatorPowerKey
 	key := sdk.NewPrefixedKey([]byte(k.storeKey.Name()), prefix)
-	iterator = k.cdb.Iterator(key, sdk.PrefixEndBytes(key))
+	iterator, _ = k.cdb.Iterator(key, sdk.PrefixEndBytes(key))
 	if iterator.Valid() {
 		return iterator
 	} else {
@@ -233,7 +233,7 @@ func (k StakingKeeper) LastValidatorsIterator(ctx sdk.Context) (iterator sdk.Ite
 func (k StakingKeeper) ValidatorQueueIterator(ctx sdk.Context, endTime time.Time) sdk.Iterator {
 	prefix := types.GetValidatorQueueTimeKey(endTime)
 	key := sdk.NewPrefixedKey([]byte(k.storeKey.Name()), prefix)
-	iterator := k.cdb.Iterator(key, sdk.PrefixEndBytes(key))
+	iterator, _ := k.cdb.Iterator(key, sdk.PrefixEndBytes(key))
 	if iterator.Valid() {
 		return iterator
 	} else {
@@ -281,7 +281,7 @@ func (k StakingKeeper) GetLastValidators(ctx sdk.Context) (validators []types.Va
 
 	prefix := types.LastValidatorPowerKey
 	key := sdk.NewPrefixedKey([]byte(k.storeKey.Name()), prefix)
-	iterator := k.cdb.Iterator(key, sdk.PrefixEndBytes(key))
+	iterator, _ := k.cdb.Iterator(key, sdk.PrefixEndBytes(key))
 	if !iterator.Valid() {
 		iterator.Close()
 		store := ctx.KVStore(k.storeKey)
@@ -315,7 +315,7 @@ func (k StakingKeeper) GetLastValidators(ctx sdk.Context) (validators []types.Va
 func (k StakingKeeper) GetAllValidators(ctx sdk.Context) (validators []types.Validator) {
 	prefix := types.ValidatorsKey
 	key := sdk.NewPrefixedKey([]byte(k.storeKey.Name()), prefix)
-	iterator := k.cdb.Iterator(key, sdk.PrefixEndBytes(key))
+	iterator, _ := k.cdb.Iterator(key, sdk.PrefixEndBytes(key))
 	if !iterator.Valid() {
 		iterator.Close()
 		store := ctx.KVStore(k.storeKey)

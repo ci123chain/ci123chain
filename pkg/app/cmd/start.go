@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/viper"
 	abcis "github.com/tendermint/tendermint/abci/server"
 	tcmd "github.com/tendermint/tendermint/cmd/tendermint/commands"
-	cmn "github.com/tendermint/tendermint/libs/common"
+	tos "github.com/tendermint/tendermint/libs/os"
 	"github.com/tendermint/tendermint/node"
 	pvm "github.com/tendermint/tendermint/privval"
 	"github.com/tendermint/tendermint/proxy"
@@ -99,13 +99,13 @@ func startStandAlone(ctx *app.Context, appCreator app.AppCreator) error {
 
 	err = svr.Start()
 	if err != nil {
-		cmn.Exit(err.Error())
+		tos.Exit(err.Error())
 	}
 
-	cmn.TrapSignal(ctx.Logger, func() {
+	tos.TrapSignal(ctx.Logger, func() {
 		err = svr.Stop()
 		if err != nil {
-			cmn.Exit(err.Error())
+			tos.Exit(err.Error())
 		}
 	})
 	return nil
@@ -191,7 +191,7 @@ func StartInProcess(ctx *app.Context, appCreator app.AppCreator) (*node.Node, er
 	ctx.Logger.Info("Starting Node Server Success")
 
 	// Sleep forever and then...
-	cmn.TrapSignal(ctx.Logger, func() {
+	tos.TrapSignal(ctx.Logger, func() {
 		tmNode.Stop()
 	})
 

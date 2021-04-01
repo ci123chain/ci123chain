@@ -15,7 +15,7 @@ import (
 	val "github.com/ci123chain/ci123chain/pkg/validator"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	"github.com/tendermint/tendermint/libs/cli"
-	"github.com/tendermint/tendermint/libs/common"
+	"github.com/tendermint/tendermint/libs/rand"
 	"github.com/tendermint/tendermint/libs/log"
 	"io/ioutil"
 	"net/http"
@@ -77,7 +77,7 @@ func SetupContext(ctx *Context, level string) error {
 					return config.ErrGetConfig
 				}
 			} else {
-				c, err = config.CreateConfig(common.RandStr(8), root)
+				c, err = config.CreateConfig(rand.Str(8), root)
 				if err != nil {
 					return config.ErrGetConfig
 				}
@@ -109,7 +109,7 @@ func configFollowMaster(master, root string) (*cfg.Config, error){
 	if err != nil {
 		return nil, err
 	}
-	c, err := config.CreateConfig(common.RandStr(8), root)
+	c, err := config.CreateConfig(rand.Str(8), root)
 	if err != nil {
 		return nil, err
 	}
@@ -125,7 +125,7 @@ func configFollowMaster(master, root string) (*cfg.Config, error){
 
 	ioutil.WriteFile(c.GenesisFile(), configFiles.GenesisFile, os.ModePerm)
 
-	var valKey secp256k1.PrivKeySecp256k1
+	var valKey secp256k1.PrivKey
 	validator := secp256k1.GenPrivKey()
 	cdc := amino.NewCodec()
 	keyByte, err := cdc.MarshalJSON(validator)
@@ -133,7 +133,7 @@ func configFollowMaster(master, root string) (*cfg.Config, error){
 		return nil, err
 	}
 	validatorKey := string(keyByte[1:len(keyByte)-1])
-	privStr := fmt.Sprintf(`{"type":"%s","value":"%s"}`, secp256k1.PrivKeyAminoName, validatorKey)
+	privStr := fmt.Sprintf(`{"type":"%s","value":"%s"}`, secp256k1.PrivKeyName, validatorKey)
 	cdc = types.MakeCodec()
 	err = cdc.UnmarshalJSON([]byte(privStr), &valKey)
 	if err != nil {

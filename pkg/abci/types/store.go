@@ -6,7 +6,6 @@ import (
 	"io"
 
 	abci "github.com/tendermint/tendermint/abci/types"
-	cmn "github.com/tendermint/tendermint/libs/common"
 	dbm "github.com/tendermint/tm-db"
 )
 
@@ -193,7 +192,7 @@ func KVStoreReversePrefixIterator(kvs KVStore, prefix []byte) Iterator {
 // Compare two KVstores, return either the first types/value pair
 // at which they differ and whether or not they are equal, skipping
 // value comparison for a set of provided prefixes
-func DiffKVStores(a KVStore, b KVStore, prefixesToSkip [][]byte) (kvA cmn.KVPair, kvB cmn.KVPair, count int64, equal bool) {
+func DiffKVStores(a KVStore, b KVStore, prefixesToSkip [][]byte) (kvA abci.EventAttribute, kvB abci.EventAttribute, count int64, equal bool) {
 	iterA := a.Iterator(nil, nil)
 	iterB := b.Iterator(nil, nil)
 	count = int64(0)
@@ -201,13 +200,13 @@ func DiffKVStores(a KVStore, b KVStore, prefixesToSkip [][]byte) (kvA cmn.KVPair
 		if !iterA.Valid() && !iterB.Valid() {
 			break
 		}
-		var kvA, kvB cmn.KVPair
+		var kvA, kvB abci.EventAttribute
 		if iterA.Valid() {
-			kvA = cmn.KVPair{Key: iterA.Key(), Value: iterA.Value()}
+			kvA = abci.EventAttribute{Key: iterA.Key(), Value: iterA.Value()}
 			iterA.Next()
 		}
 		if iterB.Valid() {
-			kvB = cmn.KVPair{Key: iterB.Key(), Value: iterB.Value()}
+			kvB = abci.EventAttribute{Key: iterB.Key(), Value: iterB.Value()}
 			iterB.Next()
 		}
 		if !bytes.Equal(kvA.Key, kvB.Key) {
@@ -225,7 +224,7 @@ func DiffKVStores(a KVStore, b KVStore, prefixesToSkip [][]byte) (kvA cmn.KVPair
 		}
 		count++
 	}
-	return cmn.KVPair{}, cmn.KVPair{}, count, true
+	return abci.EventAttribute{}, abci.EventAttribute{}, count, true
 }
 
 // CacheKVStore cache-wraps a KVStore.  After calling .Write() on
@@ -391,7 +390,7 @@ func (key *TransientStoreKey) String() string {
 //----------------------------------------
 
 // types-value result for iterator queries
-type KVPair cmn.KVPair
+type KVPair abci.EventAttribute
 
 //----------------------------------------
 

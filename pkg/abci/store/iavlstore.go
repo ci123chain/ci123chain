@@ -2,18 +2,18 @@ package store
 
 import (
 	"fmt"
-	"io"
-	"sync"
-	"reflect"
+	"github.com/cosmos/iavl"
 	"github.com/pkg/errors"
-	"github.com/tendermint/iavl"
+	"io"
+	"reflect"
+	"sync"
 
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/logger"
 	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/crypto/merkle"
-	cmn "github.com/tendermint/tendermint/libs/common"
+	//"github.com/tendermint/tendermint/crypto/merkle"
+	cmn "github.com/ci123chain/ci123chain/pkg/libs/common"
 	dbm "github.com/tendermint/tm-db"
-	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 )
 
 const (
@@ -22,8 +22,11 @@ const (
 
 // load the iavl store
 func LoadIAVLStore(ldb, cdb dbm.DB, id CommitID, pruning sdk.PruningStrategy, key sdk.StoreKey) (CommitStore, error) {
-	tree := iavl.NewMutableTree(ldb, defaultIAVLCacheSize)
-	_, err := tree.LoadVersion(id.Version)
+	tree, err := iavl.NewMutableTree(ldb, defaultIAVLCacheSize)
+	if err != nil {
+		return nil, err
+	}
+	_, err = tree.LoadVersion(id.Version)
 	if err != nil {
 		return nil, err
 	}
@@ -276,11 +279,13 @@ func (st *iavlStore) Query(req abci.RequestQuery) (res abci.ResponseQuery) {
 			if value != nil {
 				// value was found
 				res.Value = value
-				res.Proof = &merkle.Proof{Ops: []merkle.ProofOp{iavl.NewIAVLValueOp(key, proof).ProofOp()}}
+				//***TODO
+				//res.Proof = &merkle.Proof{Ops: []merkle.ProofOp{iavl.NewIAVLValueOp(key, proof).ProofOp()}}
 			} else {
 				// value wasn't found
 				res.Value = nil
-				res.Proof = &merkle.Proof{Ops: []merkle.ProofOp{iavl.NewIAVLAbsenceOp(key, proof).ProofOp()}}
+				///****TODO
+				//res.Proof = &merkle.Proof{Ops: []merkle.ProofOp{iavl.NewIAVLAbsenceOp(key, proof).ProofOp()}}
 			}
 		} else {
 			_, res.Value = tree.GetVersioned(key, res.Height)
@@ -322,7 +327,7 @@ type iavlIterator struct {
 	ascending bool
 
 	// Channel to push iteration values.
-	iterCh chan cmn.KVPair
+	iterCh chan abci.EventAttribute
 
 	// Close this to release goroutine.
 	quitCh chan struct{}
@@ -339,6 +344,10 @@ type iavlIterator struct {
 	value   []byte // The current value
 }
 
+func (iter *iavlIterator) Error() error {
+	return nil
+}
+
 var _ Iterator = (*iavlIterator)(nil)
 
 // newIAVLIterator will create a new iavlIterator.
@@ -350,7 +359,7 @@ func newIAVLIterator(tree *iavl.ImmutableTree, start, end []byte, ascending bool
 		start:     cp(start),
 		end:       cp(end),
 		ascending: ascending,
-		iterCh:    make(chan cmn.KVPair, 0), // Set capacity > 0?
+		iterCh:    make(chan abci.EventAttribute, 0), // Set capacity > 0?
 		quitCh:    make(chan struct{}),
 		initCh:    make(chan struct{}),
 	}
@@ -367,7 +376,7 @@ func (iter *iavlIterator) iterateRoutine() {
 			select {
 			case <-iter.quitCh:
 				return true // done with iteration.
-			case iter.iterCh <- cmn.KVPair{Key: key, Value: value}:
+			case iter.iterCh <- abci.EventAttribute{Key: key, Value: value}:
 				return false // yay.
 			}
 		},
@@ -429,8 +438,9 @@ func (iter *iavlIterator) Value() []byte {
 }
 
 // Implements Iterator.
-func (iter *iavlIterator) Close() {
+func (iter *iavlIterator) Close() error {
 	close(iter.quitCh)
+	return nil
 }
 
 //----------------------------------------

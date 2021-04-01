@@ -15,7 +15,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/privval"
-	"github.com/tendermint/tendermint/rpc/lib/server"
+	rpcserver "github.com/tendermint/tendermint/rpc/jsonrpc/server"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -35,7 +35,7 @@ import (
 	"github.com/gorilla/mux"
 
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
-	ltypes "github.com/tendermint/tendermint/rpc/lib/types"
+	ltypes "github.com/tendermint/tendermint/rpc/jsonrpc/types"
 )
 
 const (
@@ -60,7 +60,7 @@ func init() {
 	rpcCmd.Flags().Uint(FlagRPCReadTimeout, 10, "The RPC read timeout")
 	rpcCmd.Flags().Uint(FlagRPCWriteTimeout, 10, "The RPC write timeout")
 	rpcCmd.Flags().String(FlagWebsocket, "8546", "websocket port to listen to")
-	viper.BindPFlags(rpcCmd.Flags())
+	_ = viper.BindPFlags(rpcCmd.Flags())
 }
 
 var rpcCmd = &cobra.Command{
@@ -154,7 +154,7 @@ func Handle404() http.Handler {
 		dest := viper.GetString(helper.FlagNode)
 		dest = strings.ReplaceAll(dest, "tcp", "http")
 
-		req.ParseForm()
+		_ = req.ParseForm()
 		var data = map[string]string{}
 
 		for k, v := range req.Form {
@@ -223,62 +223,9 @@ func Handle404() http.Handler {
 					}
 				}
 			}else {
-				resStr := string(tmResponse.Result)
-				var result interface{}
-				switch newPath {
-				case "/block":
-					var a ctypes.ResultBlock
-					err = cdc.UnmarshalJSON([]byte(resStr), &a)
-					if err != nil {
-						resultResponse = client.Response{
-							Ret:     -1,
-							Data:    nil,
-							Message: err.Error(),
-						}
-					}else {
-						result = a
-					}
-				case "/status":
-					var a ctypes.ResultStatus
-					err = cdc.UnmarshalJSON([]byte(resStr), &a)
-					if err != nil {
-						resultResponse = client.Response{
-							Ret:     -1,
-							Data:    nil,
-							Message: err.Error(),
-						}
-					}else {
-						result = a
-					}
-				case "/tx":
-					var a ctypes.ResultTx
-					err = cdc.UnmarshalJSON([]byte(resStr), &a)
-					if err != nil {
-						resultResponse = client.Response{
-							Ret:     -1,
-							Data:    nil,
-							Message: err.Error(),
-						}
-					}else {
-						result = a
-					}
-				case "/health":
-					var a ctypes.ResultHealth
-					err = cdc.UnmarshalJSON([]byte(resStr), &a)
-					if err != nil {
-						resultResponse = client.Response{
-							Ret:     -1,
-							Data:    nil,
-							Message: err.Error(),
-						}
-					}else {
-						result = a
-					}
-				}
-
 				resultResponse = client.Response{
 					Ret:     1,
-					Data:    result,
+					Data:    tmResponse.Result,
 					Message: "",
 				}
 			}
@@ -313,7 +260,7 @@ func (rs *RestServer) Start(listenAddr string, maxOpen int, readTimeout, writeTi
 	if err != nil {
 		return
 	}
-	return rpcserver.StartHTTPServer(rs.listener, rs.Mux, logger,cfg)
+	return rpcserver.Serve(rs.listener, rs.Mux, logger,cfg)
 }
 
 func HealthCheckHandler(ctx context.Context) http.HandlerFunc  {
@@ -323,7 +270,7 @@ func HealthCheckHandler(ctx context.Context) http.HandlerFunc  {
 		dest := viper.GetString(helper.FlagNode)
 		dest = strings.ReplaceAll(dest, "tcp", "http")
 
-		req.ParseForm()
+		_ = req.ParseForm()
 		var data = map[string]string{}
 
 		for k, v := range req.Form {
@@ -391,24 +338,24 @@ func HealthCheckHandler(ctx context.Context) http.HandlerFunc  {
 func ExportLogHandler(ctx context.Context) http.HandlerFunc  {
 	return func(w http.ResponseWriter, req *http.Request) {
 		viper.SetEnvPrefix("CI")
-		viper.BindEnv("HOME")
+		_ = viper.BindEnv("HOME")
 		root := viper.GetString("HOME")
 		logPath := req.URL.Query().Get("path")
-		log, err := ioutil.ReadFile(filepath.Join(root, "logs", logPath))
+		logger, err := ioutil.ReadFile(filepath.Join(root, "logs", logPath))
 		if err != nil {
 			_, _ = w.Write([]byte(err.Error()))
 			return
 		}
 		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", logPath))
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write(log)
+		_, _ = w.Write(logger)
 	}
 }
 
 func ExportConfigHandler(ctx context.Context) http.HandlerFunc  {
 	return func(w http.ResponseWriter, req *http.Request) {
 		viper.SetEnvPrefix("CI")
-		viper.BindEnv("HOME")
+		_ = viper.BindEnv("HOME")
 		root := viper.GetString("HOME")
 		gen, err := ioutil.ReadFile(filepath.Join(root, "config", GenesisFile))
 		if err != nil {

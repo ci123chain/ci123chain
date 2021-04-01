@@ -11,7 +11,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/gateway/logger"
 	"github.com/gorilla/websocket"
 	"github.com/tendermint/tendermint/libs/pubsub/query"
-	rpcclient "github.com/tendermint/tendermint/rpc/client"
+	rpcclient "github.com/tendermint/tendermint/rpc/client/http"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	"github.com/tendermint/tendermint/types"
 	"strings"
@@ -226,7 +226,7 @@ func (r *PubSubRoom) Subscribe(topic string) {
 			responses, err := conn.Subscribe(ctx, subscribeClient, topic)
 			if err != nil {
 				logger.Error(fmt.Sprintf("subscribe topic: %s failed", topic))
-				if _, err := conn.Health(); err != nil {
+				if _, err := conn.Health(ctx); err != nil {
 					////connection failed
 					r.RemoveAllTMConnections()
 					break
@@ -309,7 +309,7 @@ func (r *PubSubRoom) AddShard() {
 					if err != nil {
 						logger.Error(fmt.Sprintf("subscribe topic: %s failed", topic))
 						////connection health check
-						if _, err := conn.Health(); err != nil {
+						if _, err := conn.Health(ctx); err != nil {
 							////connection failed
 							//Err := fmt.Sprintf("sorry, remote connection disconnect, subscribe will stop later...")
 							//ErrRes := SendMessage{
@@ -632,8 +632,12 @@ func (msg MessageContent) IsUnsubscribeAll() bool {
 }
 
 func GetConnection(addr string) (*rpcclient.HTTP, bool){
-	client := rpcclient.NewHTTP(addr, DefaultWSEndpoint)
-	err := client.Start()
+	client, err := rpcclient.New(addr, DefaultWSEndpoint)
+	if err != nil {
+		logger.Error("new WSEvent client failed: %s", err)
+		return nil, false
+	}
+	err = client.Start()
 	if err != nil {
 		logger.Error("connect error: %s", err)
 		return nil, false

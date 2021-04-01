@@ -15,7 +15,11 @@ func NewVerifier(chainID, rootDir string, client lclient.SignStatusClient, logge
 	logger.Info("lite/proxy/NewVerifier()...", "chainID", chainID, "rootDir", rootDir, "client", client)
 
 	memProvider := lite.NewDBProvider("trusted.mem", dbm.NewMemDB()).SetLimit(cacheSize)
-	lvlProvider := lite.NewDBProvider("trusted.lvl", dbm.NewDB("trust-base", dbm.GoLevelDBBackend, rootDir))
+	db, err := dbm.NewDB("trust-base", dbm.GoLevelDBBackend, rootDir)
+	if err != nil {
+		return nil, errors.Wrap(err, "new db failed")
+	}
+	lvlProvider := lite.NewDBProvider("trusted.lvl", db)
 	trust := lite.NewMultiProvider(
 		memProvider,
 		lvlProvider,
@@ -25,7 +29,7 @@ func NewVerifier(chainID, rootDir string, client lclient.SignStatusClient, logge
 	cert.SetLogger(logger) // Sets logger recursively.
 
 	// TODO: Make this more secure, e.g. make it interactive in the console?
-	_, err := trust.LatestFullCommit(chainID, 1, 1<<63-1)
+	_, err = trust.LatestFullCommit(chainID, 1, 1<<63-1)
 	if err != nil {
 		logger.Info("lite/proxy/NewVerifier found no trusted full commit, initializing from source from height 1...")
 		fc, err := source.LatestFullCommit(chainID, 1, 1)

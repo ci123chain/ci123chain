@@ -7,16 +7,16 @@ import (
 	//"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"github.com/ci123chain/ci123chain/pkg/app"
 	"github.com/ci123chain/ci123chain/pkg/node"
 	otypes "github.com/ci123chain/ci123chain/pkg/order/types"
 	"github.com/ci123chain/ci123chain/pkg/validator"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"github.com/tendermint/go-amino"
 	cfg "github.com/tendermint/tendermint/config"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
-	cmn "github.com/tendermint/tendermint/libs/common"
+	cmn "github.com/tendermint/tendermint/libs/rand"
 	"github.com/tendermint/tendermint/types"
 	tmtime "github.com/tendermint/tendermint/types/time"
 	//"io"
@@ -112,11 +112,11 @@ func bootstrapGenWithConfig(c *cfg.Config, cdc *amino.Codec, appInit app.AppInit
 	nodes := viper.GetInt(nNodes)
 	var validators []types.GenesisValidator
 	var genFilePath string
-	var validatorKey secp256k1.PrivKeySecp256k1
+	var validatorKey secp256k1.PrivKey
 	var privStr string
 	privBz := viper.GetString(FlagWithValidator)
 	if len(privBz) > 0 {
-		privStr = fmt.Sprintf(`{"type":"%s","value":"%s"}`, secp256k1.PrivKeyAminoName, privBz)
+		privStr = fmt.Sprintf(`{"type":"%s","value":"%s"}`, secp256k1.PrivKeyName, privBz)
 		err := cdc.UnmarshalJSON([]byte(privStr), &validatorKey)
 		if err != nil {
 			panic(err)
@@ -126,7 +126,7 @@ func bootstrapGenWithConfig(c *cfg.Config, cdc *amino.Codec, appInit app.AppInit
 	}
 	//生成chainID和rootDir
 	if chainPrefix == "" {
-		chainPrefix = cmn.RandStr(6) + "-"
+		chainPrefix = cmn.Str(6) + "-"
 	}
 	rootDir := outDir
 

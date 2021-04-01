@@ -4,13 +4,13 @@ import (
 	"context"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/store"
-	cmn "github.com/tendermint/tendermint/libs/common"
 
 	"github.com/tendermint/tendermint/crypto/merkle"
+	"github.com/tendermint/tendermint/libs/bytes"
 	"github.com/tendermint/tendermint/lite"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
-	rpctypes "github.com/tendermint/tendermint/rpc/lib/types"
+	rpctypes "github.com/tendermint/tendermint/rpc/jsonrpc/types"
 )
 
 var _ rpcclient.Client = Wrapper{}
@@ -40,7 +40,7 @@ func SecureClient(c rpcclient.Client, cert *lite.DynamicVerifier) Wrapper {
 }
 
 // ABCIQueryWithOptions exposes all options for the ABCI query and verifies the returned proof
-func (w Wrapper) ABCIQueryWithOptions(path string, data cmn.HexBytes,
+func (w Wrapper) ABCIQueryWithOptions(ctx context.Context,path string, data bytes.HexBytes,
 	opts rpcclient.ABCIQueryOptions) (*ctypes.ResultABCIQuery, error) {
 
 	res, err := GetWithProofOptions(w.prt, path, data, opts, w.Client, w.cert)
@@ -48,13 +48,14 @@ func (w Wrapper) ABCIQueryWithOptions(path string, data cmn.HexBytes,
 }
 
 // ABCIQuery uses default options for the ABCI query and verifies the returned proof
-func (w Wrapper) ABCIQuery(path string, data cmn.HexBytes) (*ctypes.ResultABCIQuery, error) {
-	return w.ABCIQueryWithOptions(path, data, rpcclient.DefaultABCIQueryOptions)
+func (w Wrapper) ABCIQuery(ctx context.Context, path string, data bytes.HexBytes) (*ctypes.ResultABCIQuery, error) {
+	return w.ABCIQueryWithOptions(ctx, path, data, rpcclient.DefaultABCIQueryOptions)
 }
 
 // Tx queries for a given tx and verifies the proof if it was requested
-func (w Wrapper) Tx(hash []byte, prove bool) (*ctypes.ResultTx, error) {
-	res, err := w.Client.Tx(hash, prove)
+func (w Wrapper) Tx(ctx context.Context, hash []byte, prove bool) (*ctypes.ResultTx, error) {
+	//******TODO
+	res, err := w.Client.Tx(ctx, hash, prove)
 	if !prove || err != nil {
 		return res, err
 	}
@@ -71,8 +72,8 @@ func (w Wrapper) Tx(hash []byte, prove bool) (*ctypes.ResultTx, error) {
 // Rather expensive.
 //
 // TODO: optimize this if used for anything needing performance
-func (w Wrapper) BlockchainInfo(minHeight, maxHeight int64) (*ctypes.ResultBlockchainInfo, error) {
-	r, err := w.Client.BlockchainInfo(minHeight, maxHeight)
+func (w Wrapper) BlockchainInfo(ctx context.Context, minHeight, maxHeight int64) (*ctypes.ResultBlockchainInfo, error) {
+	r, err := w.Client.BlockchainInfo(ctx, minHeight, maxHeight)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +81,7 @@ func (w Wrapper) BlockchainInfo(minHeight, maxHeight int64) (*ctypes.ResultBlock
 	// go and verify every blockmeta in the result....
 	for _, meta := range r.BlockMetas {
 		// get a checkpoint to verify from
-		res, err := w.Commit(&meta.Header.Height)
+		res, err := w.Commit(ctx, &meta.Header.Height)
 		if err != nil {
 			return nil, err
 		}
@@ -95,20 +96,20 @@ func (w Wrapper) BlockchainInfo(minHeight, maxHeight int64) (*ctypes.ResultBlock
 }
 
 // Block returns an entire block and verifies all signatures
-func (w Wrapper) Block(height *int64) (*ctypes.ResultBlock, error) {
-	resBlock, err := w.Client.Block(height)
+func (w Wrapper) Block(ctx context.Context, height *int64) (*ctypes.ResultBlock, error) {
+	resBlock, err := w.Client.Block(ctx, height)
 	if err != nil {
 		return nil, err
 	}
 	// get a checkpoint to verify from
-	resCommit, err := w.Commit(height)
+	resCommit, err := w.Commit(ctx, height)
 	if err != nil {
 		return nil, err
 	}
 	sh := resCommit.SignedHeader
 
 	// now verify
-	err = ValidateBlockMeta(resBlock.BlockMeta, sh)
+	err = ValidateHeader(&resBlock.Block.Header, sh)
 	if err != nil {
 		return nil, err
 	}
@@ -122,9 +123,9 @@ func (w Wrapper) Block(height *int64) (*ctypes.ResultBlock, error) {
 // Commit downloads the Commit and certifies it with the lite.
 //
 // This is the foundation for all other verification in this module
-func (w Wrapper) Commit(height *int64) (*ctypes.ResultCommit, error) {
+func (w Wrapper) Commit(ctx context.Context, height *int64) (*ctypes.ResultCommit, error) {
 	if height == nil {
-		resStatus, err := w.Client.Status()
+		resStatus, err := w.Client.Status(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -140,7 +141,7 @@ func (w Wrapper) Commit(height *int64) (*ctypes.ResultCommit, error) {
 		*height = resStatus.SyncInfo.LatestBlockHeight
 	}
 	rpcclient.WaitForHeight(w.Client, *height, nil)
-	res, err := w.Client.Commit(height)
+	res, err := w.Client.Commit(ctx, height)
 	// if we got it, then verify it
 	if err == nil {
 		sh := res.SignedHeader
@@ -169,7 +170,6 @@ func (w Wrapper) SubscribeWS(ctx *rpctypes.Context, query string) (*ctypes.Resul
 				// depending on the event's type.
 				ctx.WSConn.TryWriteRPCResponse(
 					rpctypes.NewRPCSuccessResponse(
-						ctx.WSConn.Codec(),
 						rpctypes.JSONRPCStringID(fmt.Sprintf("%v#event", ctx.JSONReq.ID)),
 						resultEvent,
 					))

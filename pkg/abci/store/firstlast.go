@@ -3,26 +3,26 @@ package store
 import (
 	"bytes"
 
-	cmn "github.com/tendermint/tendermint/libs/common"
+	abci "github.com/tendermint/tendermint/abci/types"
 )
 
 // Gets the first item.
-func First(st KVStore, start, end []byte) (kv cmn.KVPair, ok bool) {
+func First(st KVStore, start, end []byte) (kv abci.EventAttribute, ok bool) {
 	iter := st.Iterator(start, end)
 	if !iter.Valid() {
 		return kv, false
 	}
 	defer iter.Close()
 
-	return cmn.KVPair{Key: iter.Key(), Value: iter.Value()}, true
+	return abci.EventAttribute{Key: iter.Key(), Value: iter.Value()}, true
 }
 
 // Gets the last item.  `end` is exclusive.
-func Last(st KVStore, start, end []byte) (kv cmn.KVPair, ok bool) {
+func Last(st KVStore, start, end []byte) (kv abci.EventAttribute, ok bool) {
 	iter := st.ReverseIterator(end, start)
 	if !iter.Valid() {
 		if v := st.Get(start); v != nil {
-			return cmn.KVPair{Key: cp(start), Value: cp(v)}, true
+			return abci.EventAttribute{Key: cp(start), Value: cp(v)}, true
 		}
 		return kv, false
 	}
@@ -36,5 +36,5 @@ func Last(st KVStore, start, end []byte) (kv cmn.KVPair, ok bool) {
 		}
 	}
 
-	return cmn.KVPair{Key: iter.Key(), Value: iter.Value()}, true
+	return abci.EventAttribute{Key: iter.Key(), Value: iter.Value()}, true
 }

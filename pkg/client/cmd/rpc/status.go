@@ -36,5 +36,5 @@ func getNodeStatus(ctx context.Context) (*ctypes.ResultStatus, error) {
 	if err != nil {
 		return &ctypes.ResultStatus{}, err
 	}
-	return node.Status()
+	return node.Status(ctx.Context())
 }

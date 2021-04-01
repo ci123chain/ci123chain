@@ -11,6 +11,40 @@ type dbStoreAdapter struct {
 	dbm.DB
 }
 
+func (dsa dbStoreAdapter) Get(key []byte) []byte {
+	v, err := dsa.DB.Get(key)
+	if err != nil {
+		return nil
+	}
+	return v
+}
+
+func (dsa dbStoreAdapter) Has(key []byte) bool {
+	ok, err := dsa.DB.Has(key)
+	if err != nil || !ok {
+		return false
+	}
+	return true
+}
+
+func (dsa dbStoreAdapter) Set(key, value []byte) {
+	_ = dsa.DB.Set(key, value)
+}
+
+func (dsa dbStoreAdapter) Delete(key []byte) {
+	_ = dsa.DB.Delete(key)
+}
+
+func (dsa dbStoreAdapter) Iterator(start, end []byte) sdk.Iterator {
+	I, _ := dsa.DB.Iterator(start,end)
+	return I
+}
+
+func (dsa dbStoreAdapter) ReverseIterator(start, end []byte) sdk.Iterator {
+	I, _ := dsa.DB.ReverseIterator(start, end)
+	return I
+}
+
 // Implements Store.
 func (dbStoreAdapter) GetStoreType() StoreType {
 	return sdk.StoreTypeDB
@@ -50,7 +84,8 @@ func (dsa dbStoreAdapter) Parent() KVStore {
 var _ KVStore = dbStoreAdapter{}
 
 func (dsa dbStoreAdapter) RemoteIterator(start, end []byte) Iterator {
-	return dsa.DB.Iterator(start, end)
+	i, _ := dsa.DB.Iterator(start, end)
+	return i
 }
 
 //func ParentGetDbStoreAdapter(p KVStore, oriKey []byte) (db KVStore, key []byte){

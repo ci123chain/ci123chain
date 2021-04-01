@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	cmn "github.com/tendermint/tendermint/libs/common"
+	cmn "github.com/ci123chain/ci123chain/pkg/libs/common"
 
 	abci "github.com/tendermint/tendermint/abci/types"
 )

@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"bytes"
+	"context"
 	"crypto/md5"
 	"encoding/json"
 	"fmt"
@@ -45,7 +46,7 @@ func checkBackend() {
 			logger.Info("Start backend check...")
 			var connectErr bool
 			for k, v := range pubsubRoom.Connections {
-				_, err := v.Health()
+				_, err := v.Health(context.Background())
 				if err != nil {
 					logger.Error("lost connect on:", k)
 					logger.Error("health check error: ", err.Error())

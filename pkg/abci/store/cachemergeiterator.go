@@ -2,6 +2,7 @@ package store
 
 import (
 	"bytes"
+	"errors"
 )
 
 // cacheMergeIterator merges a parent Iterator and a cache Iterator.
@@ -15,6 +16,10 @@ type cacheMergeIterator struct {
 	parent    Iterator
 	cache     Iterator
 	ascending bool
+}
+
+func (iter *cacheMergeIterator) Error() error {
+	return errors.New("cacheMergeIterator error")
 }
 
 var _ Iterator = (*cacheMergeIterator)(nil)
@@ -142,9 +147,16 @@ func (iter *cacheMergeIterator) Value() []byte {
 }
 
 // Close implements Iterator
-func (iter *cacheMergeIterator) Close() {
-	iter.parent.Close()
-	iter.cache.Close()
+func (iter *cacheMergeIterator) Close() error {
+	err := iter.parent.Close()
+	if err != nil {
+		return err
+	}
+	err = iter.cache.Close()
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // Like bytes.Compare but opposite if not ascending.

@@ -12,10 +12,10 @@ import (
 	"strings"
 
 	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/crypto/merkle"
 	"github.com/tendermint/tendermint/crypto/tmhash"
 	dbm "github.com/tendermint/tm-db"
 
+	"github.com/ci123chain/ci123chain/pkg/abci/store/internal/maps"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 )
 
@@ -252,7 +252,7 @@ func (rs *rootMultiStore) Commit() CommitID {
 	//done
 	var orderBook order.OrderBook
 	orderBookKey := sdk.NewPrefixedKey([]byte(order.StoreKey), []byte(order.OrderBookKey))
-	orderBytes := rs.cdb.Get(orderBookKey)
+	orderBytes, _ := rs.cdb.Get(orderBookKey)
 	order.ModuleCdc.UnmarshalJSON(orderBytes, &orderBook)
 	orderBook.Current.State = order.StateDone
 	orderBytes, _ = order.ModuleCdc.MarshalJSON(orderBook)
@@ -351,7 +351,7 @@ func (rs *rootMultiStore) Query(req abci.RequestQuery) abci.ResponseQuery {
 		return res
 	}
 
-	if res.Proof == nil || len(res.Proof.Ops) == 0 {
+	if res.ProofOps == nil || len(res.ProofOps.Ops) == 0 {
 		return sdk.ErrInternal("substore proof was nil/empty when it should never be").QueryResult()
 	}
 
@@ -361,7 +361,7 @@ func (rs *rootMultiStore) Query(req abci.RequestQuery) abci.ResponseQuery {
 	}
 
 	// Restore origin path and append proof op.
-	res.Proof.Ops = append(res.Proof.Ops, NewMultiStoreProofOp(
+	res.ProofOps.Ops = append(res.ProofOps.Ops, NewMultiStoreProofOp(
 		[]byte(storeName),
 		NewMultiStoreProof(commitInfo.StoreInfos),
 	).ProofOp())
@@ -464,8 +464,8 @@ func (ci commitInfo) Hash() []byte {
 	for _, storeInfo := range ci.StoreInfos {
 		m[storeInfo.Name] = storeInfo.Hash()
 	}
-
-	return merkle.SimpleHashFromMap(m)
+	rootHash, _, _ := maps.ProofsFromMap(m)
+	return rootHash
 }
 
 func (ci commitInfo) CommitID() CommitID {

@@ -17,9 +17,11 @@ import (
 	"github.com/tendermint/go-amino"
 	cfg "github.com/tendermint/tendermint/config"
 	"github.com/tendermint/tendermint/crypto"
+	"github.com/tendermint/tendermint/crypto/ed25519"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	tmcli "github.com/tendermint/tendermint/libs/cli"
-	cmn "github.com/tendermint/tendermint/libs/common"
+	cmn "github.com/tendermint/tendermint/libs/os"
+	tmpro "github.com/tendermint/tendermint/proto/tendermint/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 	"net"
 	"path/filepath"
@@ -125,8 +127,8 @@ func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Com
 			fmt.Println("home:", viper.GetString(tmcli.HomeFlag))
 			fmt.Println("chainid:", viper.GetString(FlagChainID))
 
-			config := ctx.Config
-			config.SetRoot(viper.GetString(tmcli.HomeFlag))
+			ctxConfig := ctx.Config
+			ctxConfig.SetRoot(viper.GetString(tmcli.HomeFlag))
 
 			initConfig := InitConfig{
 				ChainID: viper.GetString(FlagChainID),
@@ -138,7 +140,7 @@ func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Com
 			if initConfig.ChainID == "" {
 				panic(errors.New("chain id can not be empty"))
 			}
-			chainID, nodeID, appMessage, pubKey, err := InitWithConfig(cdc, appInit, config, initConfig)
+			chainID, nodeID, appMessage, pubKey, err := InitWithConfig(cdc, appInit, ctxConfig, initConfig)
 			if err != nil {
 				return types.ErrInitWithCfg(types.DefaultCodespace, err)
 			}
@@ -189,8 +191,12 @@ func gentxWithConfig(cdc *amino.Codec, appInit app.AppInit, config *cfg.Config, 
 		return
 	}
 	nodeID := string(nodeKey.ID())
+	pkey, err := pv.GetPubKey()
+	if err != nil {
+		return
+	}
 
-	appGenTx, cliPrint, val, err := appInit.AppGenTx(cdc, pv.GetPubKey(), genTxConfig)
+	appGenTx, cliPrint, val, err := appInit.AppGenTx(cdc, pkey, genTxConfig)
 	if err != nil {
 		return
 	}
@@ -339,17 +345,17 @@ func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initCo
 */
 func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initConfig InitConfig)(
 	chainID string, nodeID string, appMessage json.RawMessage, pubKey crypto.PubKey, err error) {
-	var validatorKey secp256k1.PrivKeySecp256k1
+	var validatorKey ed25519.PrivKey
 	var privStr string
 	nodeKey, err := node.LoadNodeKey(c.NodeKeyFile())
 	privBz := viper.GetString(FlagWithValidator)
 	if len(privBz) > 0 {
 		//1.match length
-		priByt := []byte(privBz)
-		length := len(priByt)
-		if length != 44 {
-			panic(errors.New(fmt.Sprintf("length of validator key does not match, expected %d, got %d",44 ,length)))
-		}
+		//priByt := []byte(privBz)
+		//length := len(priByt)
+		//if length != 44 {
+		//	panic(errors.New(fmt.Sprintf("length of validator key does not match, expected %d, got %d",44 ,length)))
+		//}
 
 		//2.regex match
 		rule := `=$`
@@ -364,7 +370,7 @@ func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initCo
 			panic(err)
 		}
 
-		privStr = fmt.Sprintf(`{"type":"%s","value":"%s"}`, secp256k1.PrivKeyAminoName, privBz)
+		privStr = fmt.Sprintf(`{"type":"%s","value":"%s"}`, ed25519.PrivKeyName, privBz)
 		err = cdc.UnmarshalJSON([]byte(privStr), &validatorKey)
 		if err != nil {
 			panic(err)
@@ -423,10 +429,10 @@ func writeGenesisFile(cdc *amino.Codec, genesisFile string, chainID string,
 		ChainID: 		chainID,
 		Validators: 	validators,
 		AppState:		appState,
-		ConsensusParams: &tmtypes.ConsensusParams{
+		ConsensusParams: &tmpro.ConsensusParams{
 			Block: tmtypes.DefaultBlockParams(),
 			Evidence: tmtypes.DefaultEvidenceParams(),
-			Validator: tmtypes.ValidatorParams{PubKeyTypes: []string{tmtypes.ABCIPubKeyTypeSecp256k1}},
+			Validator: tmpro.ValidatorParams{PubKeyTypes: []string{tmtypes.ABCIPubKeyTypeSecp256k1}},
 		},
 	}
 	if err := genDoc.ValidateAndComplete(); err != nil {

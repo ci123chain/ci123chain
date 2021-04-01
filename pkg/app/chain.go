@@ -51,8 +51,8 @@ import (
 	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/libs/cli"
-	"github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/libs/log"
+	cmn "github.com/tendermint/tendermint/libs/os"
 	"github.com/tendermint/tendermint/types"
 	tmdb "github.com/tendermint/tm-db"
 	"io"
@@ -136,7 +136,7 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 		//cache exist, check latest version
 		err := handleCache(cdb, cache, cdc, app)
 		if err != nil {
-			common.Exit(err.Error())
+			cmn.Exit(err.Error())
 		}
 	}
 
@@ -177,11 +177,14 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 	//odb := cdb.(*couchdb.GoCouchDB)
 	var nodeList []string
 	odb := cdb.(*redis.RedisDB)
-	nodeListBytes := odb.Get([]byte(FlagNodeList))
+	nodeListBytes, err := odb.Get([]byte(FlagNodeList))
+	if err != nil {
+		cmn.Exit(err.Error())
+	}
 	if nodeListBytes != nil {
 		err := json.Unmarshal(nodeListBytes, &nodeList)
 		if err != nil {
-			common.Exit(err.Error())
+			cmn.Exit(err.Error())
 		}
 	}
 	nodeList = append(nodeList, viper.GetString(flagNodeDomain))
@@ -242,9 +245,9 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 	sdk.CommitInfoKeyFmt = shardID + "s/%d"
 	sdk.LatestVersionKey = shardID + "s/latest"
 
-	err := c.mountStores()
+	err = c.mountStores()
 	if err != nil {
-		common.Exit(err.Error())
+		cmn.Exit(err.Error())
 	}
 
 	return c

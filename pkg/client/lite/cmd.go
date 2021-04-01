@@ -10,8 +10,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/ci123chain/ci123chain/pkg/client/lite/proxy"
-	cmn "github.com/tendermint/tendermint/libs/common"
-	rpcclient "github.com/tendermint/tendermint/rpc/client"
+	cmn "github.com/tendermint/tendermint/libs/os"
+	rpcclient "github.com/tendermint/tendermint/rpc/client/http"
 )
 
 var logger = log.NewTMLogger(log.NewSyncWriter(os.Stdout))
@@ -79,7 +79,10 @@ func runProxy(cmd *cobra.Command, args []string) error {
 
 	// First, connect a client
 	logger.Info("Connecting to source HTTP client...")
-	node := rpcclient.NewHTTP(nodeAddr, "/websocket")
+	node, err := rpcclient.New(nodeAddr, "/websocket")
+	if err != nil {
+		return err
+	}
 
 	logger.Info("Constructing Verifier...")
 	cert, err := proxy.NewVerifier(chainID, home, node, logger, cacheSize)

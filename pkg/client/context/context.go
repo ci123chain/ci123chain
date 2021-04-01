@@ -1,6 +1,7 @@
 package context
 
 import (
+	"context"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
@@ -24,6 +25,10 @@ type Context struct {
 	Height 		int64
 	Cdc 		*codec.Codec
 	Code 		int64
+}
+
+func (ctx *Context) Context() context.Context {
+	return context.Background()
 }
 
 func (ctx *Context) GetNode() (rpclient.Client, error) {
@@ -199,7 +204,7 @@ func (ctx *Context) broadcastTx(tx []byte) (sdk.TxResponse, error) {
 	if err != nil {
 		return sdk.TxResponse{}, err
 	}
-	res, err := node.BroadcastTxCommit(tx)
+	res, err := node.BroadcastTxCommit(ctx.Context(), tx)
 	if err != nil {
 		return sdk.NewResponseFormatBroadcastTxCommit(res), err
 	}
@@ -218,7 +223,7 @@ func (ctx *Context) broadcastTxSync(tx []byte) (sdk.TxResponse, error) {
 	if err != nil {
 		return sdk.TxResponse{}, err
 	}
-	res, err := node.BroadcastTxSync(tx)
+	res, err := node.BroadcastTxSync(ctx.Context(), tx)
 	if err != nil {
 		return sdk.NewResponseFormatBroadcastTx(res), err
 	}
