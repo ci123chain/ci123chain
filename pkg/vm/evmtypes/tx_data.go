@@ -170,6 +170,6 @@ func (td *TxData) UnmarshalAmino(data []byte) error {
 	return nil
 }
 
-// TODO: Implement JSON marshaling/ unmarshaling for this type
+// TODO: Implement JSON marshaling/ unmarshaling for this types
 
-// TODO: Implement YAML marshaling/ unmarshaling for this type
+// TODO: Implement YAML marshaling/ unmarshaling for this types

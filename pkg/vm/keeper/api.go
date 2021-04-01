@@ -45,7 +45,7 @@ func (addr *Address) ToString() string {
 }
 
 type Event struct {
-	Type string                 `json:"type"`
+	Type string                 `json:"types"`
 	Attr map[string]interface{} `json:"attr"`
 }
 
@@ -89,7 +89,7 @@ func NewEventFromSlice(raw []byte) (Event, error) {
 		case EventAttrValueTypeString:
 			value, err = sink.ReadString()
 		default:
-			return event, errors.New(fmt.Sprintf("unexpected event attr type: %b", typeOfValue))
+			return event, errors.New(fmt.Sprintf("unexpected event attr types: %b", typeOfValue))
 		}
 		if err != nil {
 			return event, err

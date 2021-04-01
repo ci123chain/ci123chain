@@ -93,7 +93,7 @@ func (msg MsgEthereumTx) String() string {
 // Route returns the route value of an MsgEthereumTx.
 func (msg MsgEthereumTx) Route() string { return RouterKey }
 
-// Type returns the type value of an MsgEthereumTx.
+// Type returns the types value of an MsgEthereumTx.
 func (msg MsgEthereumTx) MsgType() string { return TypeMsgEthereumTx }
 
 // ValidateBasic implements the sdk.Msg interface. It performs basic validation

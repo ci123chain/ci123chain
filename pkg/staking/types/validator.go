@@ -179,7 +179,7 @@ func (v Validator) UpdateStatus(newStatus sdk.BondStatus) Validator {
 	return v
 }
 
-// ABCIValidatorUpdateZero returns an abci.ValidatorUpdate from a staking validator type
+// ABCIValidatorUpdateZero returns an abci.ValidatorUpdate from a staking validator types
 // with zero power used for validator updates.
 func (v Validator) ABCIValidatorUpdateZero() abci.ValidatorUpdate {
 	return abci.ValidatorUpdate{
@@ -188,7 +188,7 @@ func (v Validator) ABCIValidatorUpdateZero() abci.ValidatorUpdate {
 	}
 }
 
-// ABCIValidatorUpdate returns an abci.ValidatorUpdate from a staking validator type
+// ABCIValidatorUpdate returns an abci.ValidatorUpdate from a staking validator types
 // with the full validator power
 func (v Validator) ABCIValidatorUpdate() abci.ValidatorUpdate {
 	return abci.ValidatorUpdate{

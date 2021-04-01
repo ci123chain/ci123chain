@@ -6,7 +6,7 @@ type attribute struct {
 	ty reflect.Type
 }
 
-// KeyTable subspaces appropriate type for each parameter types
+// KeyTable subspaces appropriate types for each parameter types
 type KeyTable struct {
 	m map[string]attribute
 }
@@ -39,7 +39,7 @@ func isAlphaNumeric(key []byte) bool {
 	return true
 }
 
-// Register single types-type pair
+// Register single types-types pair
 func (t KeyTable) RegisterType(key []byte, ty interface{}) KeyTable {
 	if len(key) == 0 {
 		panic("cannot register empty types")

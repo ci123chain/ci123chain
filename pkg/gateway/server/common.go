@@ -36,7 +36,7 @@ func SendRequest(requestUrl *url.URL,r *http.Request, RequestParams map[string]s
 	//not use one connection
 	req2.Close = true
 
-	// set request content type
+	// set request content types
 	req2.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	// request
 	rep2, err := cli.Do(req2)

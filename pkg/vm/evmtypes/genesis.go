@@ -22,7 +22,7 @@ type (
 
 	// GenesisAccount defines an account to be initialized in the genesis state.
 	// Its main difference between with Geth's GenesisAccount is that it uses a custom
-	// storage type and that it doesn't contain the private key field.
+	// storage types and that it doesn't contain the private key field.
 	GenesisAccount struct {
 		Address ethcmn.Address `json:"address"`
 		Balance *big.Int       `json:"balance"`

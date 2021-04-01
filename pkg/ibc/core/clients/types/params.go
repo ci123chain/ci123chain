@@ -22,7 +22,7 @@ type Params struct {
 	AllowedClients []string `json:"allowed_clients,omitempty" yaml:"allowed_clients"`
 }
 
-// ParamKeyTable type declaration for parameters
+// ParamKeyTable types declaration for parameters
 func ParamKeyTable() paramtypes.KeyTable {
 	return paramtypes.NewKeyTable().RegisterParamSet(&Params{})
 }
@@ -54,12 +54,12 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 func validateClients(i interface{}) error {
 	clients, ok := i.([]string)
 	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
+		return fmt.Errorf("invalid parameter types: %T", i)
 	}
 
 	for i, clientType := range clients {
 		if strings.TrimSpace(clientType) == "" {
-			return fmt.Errorf("client type %d cannot be blank", i)
+			return fmt.Errorf("client types %d cannot be blank", i)
 		}
 	}
 

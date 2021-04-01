@@ -13,7 +13,7 @@ const (
 	// Tendermint is used to indicate that the client uses the Tendermint Consensus Algorithm.
 	Tendermint string = "07-tendermint"
 
-	// Localhost is the client type for a localhost client. It is also used as the clientID
+	// Localhost is the client types for a localhost client. It is also used as the clientID
 	Localhost string = "09-localhost"
 )
 
@@ -59,6 +59,41 @@ type ClientState interface {
 		prefix Prefix,
 		proof []byte,
 		consensusState ConsensusState,
+	) error
+
+	VerifyConnectionState(
+		store sdk.KVStore,
+		cdc *codec.Codec,
+		height Height,
+		prefix Prefix,
+		proof []byte,
+		connectionID string,
+		connectionEnd ConnectionI,
+	) error
+
+	VerifyChannelState(
+		store sdk.KVStore,
+		cdc *codec.Codec,
+		height Height,
+		prefix Prefix,
+		proof []byte,
+		portID,
+		channelID string,
+		channel ChannelI,
+	) error
+
+	VerifyPacketAcknowledgement(
+		store sdk.KVStore,
+		cdc *codec.Codec,
+		height Height,
+		currentTimestamp uint64,
+		delayPeriod uint64,
+		prefix Prefix,
+		proof []byte,
+		portID,
+		channelID string,
+		sequence uint64,
+		acknowledgement []byte,
 	) error
 }
 

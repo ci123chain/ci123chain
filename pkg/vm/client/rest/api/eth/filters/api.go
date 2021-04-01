@@ -41,7 +41,7 @@ type Backend interface {
 // consider a filter inactive if it has not been polled for within deadline
 var deadline = 5 * time.Minute
 
-// filter is a helper struct that holds meta information over the filter type
+// filter is a helper struct that holds meta information over the filter types
 // and associated subscription in the event system.
 type filter struct {
 	typ      filters.Type
@@ -475,7 +475,7 @@ func (api *PublicFilterAPI) GetFilterLogs(ctx context.Context, id rpc.ID) ([]*et
 	}
 
 	if f.typ != filters.LogsSubscription {
-		return returnLogs(nil), fmt.Errorf("filter %s doesn't have a LogsSubscription type: got %d", id, f.typ)
+		return returnLogs(nil), fmt.Errorf("filter %s doesn't have a LogsSubscription types: got %d", id, f.typ)
 	}
 
 	var filter *Filter
@@ -537,7 +537,7 @@ func (api *PublicFilterAPI) GetFilterChanges(id rpc.ID) (interface{}, error) {
 		f.logs = []*ethtypes.Log{}
 		return returnLogs(logs), nil
 	default:
-		return nil, fmt.Errorf("invalid filter %s type %d", id, f.typ)
+		return nil, fmt.Errorf("invalid filter %s types %d", id, f.typ)
 	}
 }
 

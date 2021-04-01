@@ -32,10 +32,10 @@ func IsValidClientID(clientID string) bool {
 }
 
 
-// ParseClientIdentifier parses the client type and sequence from the client identifier.
+// ParseClientIdentifier parses the client types and sequence from the client identifier.
 func ParseClientIdentifier(clientID string) (string, uint64, error) {
 	if !IsClientIDFormat(clientID) {
-		return "", 0, errors.New(fmt.Sprintf("invalid client identifier %s is not in format: `{client-type}-{N}`", clientID))
+		return "", 0, errors.New(fmt.Sprintf("invalid client identifier %s is not in format: `{client-types}-{N}`", clientID))
 	}
 
 	splitStr := strings.Split(clientID, "-")
@@ -43,7 +43,7 @@ func ParseClientIdentifier(clientID string) (string, uint64, error) {
 
 	clientType := strings.Join(splitStr[:lastIndex], "-")
 	if strings.TrimSpace(clientType) == "" {
-		return "", 0, errors.New("client identifier must be in format: `{client-type}-{N}` and client type cannot be blank")
+		return "", 0, errors.New("client identifier must be in format: `{client-types}-{N}` and client types cannot be blank")
 	}
 
 	sequence, err := strconv.ParseUint(splitStr[lastIndex], 10, 64)
@@ -55,5 +55,5 @@ func ParseClientIdentifier(clientID string) (string, uint64, error) {
 }
 
 // IsClientIDFormat checks if a clientID is in the format required on the SDK for
-// parsing client identifiers. The client identifier must be in the form: `{client-type}-{N}
+// parsing client identifiers. The client identifier must be in the form: `{client-types}-{N}
 var IsClientIDFormat = regexp.MustCompile(`^.*[^-]-[0-9]{1,20}$`).MatchString

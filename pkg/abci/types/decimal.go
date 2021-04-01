@@ -691,7 +691,7 @@ func (d Dec) MarshalYAML() (interface{}, error) {
 	return d.String(), nil
 }
 
-// Marshal implements the gogo proto custom type interface.
+// Marshal implements the gogo proto custom types interface.
 func (d Dec) Marshal() ([]byte, error) {
 	if d.i == nil {
 		d.i = new(big.Int)
@@ -699,7 +699,7 @@ func (d Dec) Marshal() ([]byte, error) {
 	return d.i.MarshalText()
 }
 
-// MarshalTo implements the gogo proto custom type interface.
+// MarshalTo implements the gogo proto custom types interface.
 func (d *Dec) MarshalTo(data []byte) (n int, err error) {
 	if d.i == nil {
 		d.i = new(big.Int)
@@ -718,7 +718,7 @@ func (d *Dec) MarshalTo(data []byte) (n int, err error) {
 	return len(bz), nil
 }
 
-// Unmarshal implements the gogo proto custom type interface.
+// Unmarshal implements the gogo proto custom types interface.
 func (d *Dec) Unmarshal(data []byte) error {
 	if len(data) == 0 {
 		d = nil
@@ -740,7 +740,7 @@ func (d *Dec) Unmarshal(data []byte) error {
 	return nil
 }
 
-// Size implements the gogo proto custom type interface.
+// Size implements the gogo proto custom types interface.
 func (d *Dec) Size() int {
 	bz, _ := d.Marshal()
 	return len(bz)

@@ -29,7 +29,7 @@ type Response struct {
 }
 
 // ErrorResponse defines the attributes of a JSON error response.
-//type ErrorResponse struct {
+//types ErrorResponse struct {
 //	Code  int    `json:"code,omitempty"`
 //	Error string `json:"error"`
 //}

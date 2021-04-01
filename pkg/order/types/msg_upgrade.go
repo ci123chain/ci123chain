@@ -6,7 +6,7 @@ import (
 
 type MsgUpgrade struct {
 	FromAddress sdk.AccAddress	`json:"from_address"`
-	Type      	string   		`json:"type"`
+	Type      	string   		`json:"types"`
 	Height    	int64    		`json:"height"`
 	Name      	string   		`json:"name"`
 }
@@ -26,7 +26,7 @@ func (msg *MsgUpgrade) MsgType() string { return "upgrade"}
 
 func (msg *MsgUpgrade) ValidateBasic() sdk.Error{
 	if len(msg.Type) == 0 {
-		return ErrCheckParams(DefaultCodespace, "type is invalid")
+		return ErrCheckParams(DefaultCodespace, "types is invalid")
 	}
 	if msg.Height < 0 {
 		return ErrCheckParams(DefaultCodespace, "height is invalid")

@@ -55,7 +55,7 @@ type BaseApp struct {
 	cms         sdk.CommitMultiStore // Main (uncached) state
 	queryRouter QueryRouter          // router for redirecting query calls
 	//handler     sdk.Handler
-	router 		Router
+	router 		sdk.Router
 
 	txDecoder   sdk.TxDecoder // unmarshal []byte into sdk.Tx
 
@@ -100,7 +100,7 @@ func NewBaseApp(name string, logger log.Logger, ldb dbm.DB, cdb dbm.DB, cacheDir
 		cms:         store.NewCommitMultiStore(ldb, cdb, cacheDir),
 		//cms:         store.NewBaseMultiStore(db),
 		queryRouter: NewQueryRouter(),
-		router: 	 NewRouter(),
+		router:      sdk.NewRouter(),
 		txDecoder:   txDecoder,
 	}
 
@@ -486,8 +486,8 @@ func (app *BaseApp) CheckTx(req abci.RequestCheckTx) (res abci.ResponseCheckTx) 
 		Codespace: string(result.Codespace),
 		Data:      result.Data,
 		Log:       result.Log,
-		GasWanted: int64(result.GasWanted), // TODO: Should type accept unsigned ints?
-		GasUsed:   int64(result.GasUsed),   // TODO: Should type accept unsigned ints?
+		GasWanted: int64(result.GasWanted), // TODO: Should types accept unsigned ints?
+		GasUsed:   int64(result.GasUsed),   // TODO: Should types accept unsigned ints?
 		Events:    result.Events.ToABCIEvents(),
 	}
 }
@@ -508,8 +508,8 @@ func (app *BaseApp) DeliverTx(req abci.RequestDeliverTx) (res abci.ResponseDeliv
 		Codespace: string(result.Codespace),
 		Data:      result.Data,
 		Log:       result.Log,
-		GasWanted: int64(result.GasWanted), // TODO: Should type accept unsigned ints?
-		GasUsed:   int64(result.GasUsed),   // TODO: Should type accept unsigned ints?
+		GasWanted: int64(result.GasWanted), // TODO: Should types accept unsigned ints?
+		GasUsed:   int64(result.GasUsed),   // TODO: Should types accept unsigned ints?
 		Events:    result.Events.ToABCIEvents(),
 	}
 }
@@ -536,7 +536,7 @@ func (app *BaseApp) runMsgs(ctx sdk.Context, msgs []sdk.Msg, mode runTxMode) sdk
 		msgRoute := msg.Route()
 		handler := app.router.Route(msgRoute)
 		if handler == nil {
-			return sdk.ErrUnknownRequest("Unrecognized Msg type: " + msgRoute).Result()
+			return sdk.ErrUnknownRequest("Unrecognized Msg types: " + msgRoute).Result()
 		}
 
 		var msgResult sdk.Result

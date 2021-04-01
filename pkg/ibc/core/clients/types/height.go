@@ -24,7 +24,7 @@ type Height struct {
 }
 
 
-// NewHeight is a constructor for the IBC height type
+// NewHeight is a constructor for the IBC height types
 func NewHeight(revisionNumber, revisionHeight uint64) Height {
 	return Height{
 		RevisionNumber: revisionNumber,
@@ -53,7 +53,7 @@ func (h Height) GetRevisionHeight() uint64 {
 func (h Height) Compare(other exported.Height) int64 {
 	height, ok := other.(Height)
 	if !ok {
-		panic(fmt.Sprintf("cannot compare against invalid height type: %T. expected height type: %T", other, h))
+		panic(fmt.Sprintf("cannot compare against invalid height types: %T. expected height types: %T", other, h))
 	}
 	var a, b big.Int
 	if h.RevisionNumber != height.RevisionNumber {

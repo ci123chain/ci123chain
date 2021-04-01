@@ -82,7 +82,7 @@ func newStateObject(db *CommitStateDB, accProto accountexported.Account) *stateO
 	// func newStateObject(db *CommitStateDB, accProto accountexported.Account, balance sdk.Int) *stateObject {
 	ethermintAccount, ok := accProto.(*types.BaseAccount)
 	if !ok {
-		panic(fmt.Sprintf("invalid account type for state object: %T", accProto))
+		panic(fmt.Sprintf("invalid account types for state object: %T", accProto))
 	}
 
 	// set empty code hash
@@ -451,7 +451,7 @@ type stateEntry struct {
 	stateObject *stateObject
 }
 
-// Code is account Code type alias
+// Code is account Code types alias
 type Code []byte
 
 func (c Code) String() string {

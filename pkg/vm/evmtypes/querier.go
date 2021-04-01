@@ -22,7 +22,7 @@ const (
 	QueryExportAccount   = "exportAccount"
 )
 
-// QueryResProtocolVersion is response type for protocol version query
+// QueryResProtocolVersion is response types for protocol version query
 type QueryResProtocolVersion struct {
 	Version string `json:"version"`
 }
@@ -31,7 +31,7 @@ func (q QueryResProtocolVersion) String() string {
 	return q.Version
 }
 
-// QueryResBalance is response type for balance query
+// QueryResBalance is response types for balance query
 type QueryResBalance struct {
 	Balance string `json:"balance"`
 }
@@ -40,7 +40,7 @@ func (q QueryResBalance) String() string {
 	return q.Balance
 }
 
-// QueryResBlockNumber is response type for block number query
+// QueryResBlockNumber is response types for block number query
 type QueryResBlockNumber struct {
 	Number int64 `json:"blockNumber"`
 }
@@ -49,7 +49,7 @@ func (q QueryResBlockNumber) String() string {
 	return fmt.Sprint(q.Number)
 }
 
-// QueryResStorage is response type for storage query
+// QueryResStorage is response types for storage query
 type QueryResStorage struct {
 	Value []byte `json:"value"`
 }
@@ -58,7 +58,7 @@ func (q QueryResStorage) String() string {
 	return string(q.Value)
 }
 
-// QueryResCode is response type for code query
+// QueryResCode is response types for code query
 type QueryResCode struct {
 	Code []byte
 }
@@ -67,7 +67,7 @@ func (q QueryResCode) String() string {
 	return string(q.Code)
 }
 
-// QueryResNonce is response type for Nonce query
+// QueryResNonce is response types for Nonce query
 type QueryResNonce struct {
 	Nonce uint64 `json:"nonce"`
 }
@@ -76,7 +76,7 @@ func (q QueryResNonce) String() string {
 	return fmt.Sprint(q.Nonce)
 }
 
-// QueryETHLogs is response type for tx logs query
+// QueryETHLogs is response types for tx logs query
 type QueryETHLogs struct {
 	Logs []*ethtypes.Log `json:"logs"`
 }
@@ -85,7 +85,7 @@ func (q QueryETHLogs) String() string {
 	return fmt.Sprintf("%+v", q.Logs)
 }
 
-// QueryBloomFilter is response type for tx logs query
+// QueryBloomFilter is response types for tx logs query
 type QueryBloomFilter struct {
 	Bloom ethtypes.Bloom `json:"bloom"`
 }
@@ -94,7 +94,7 @@ func (q QueryBloomFilter) String() string {
 	return string(q.Bloom.Bytes())
 }
 
-// QueryAccount is response type for querying Ethereum state objects
+// QueryAccount is response types for querying Ethereum state objects
 type QueryResAccount struct {
 	Balance  string `json:"balance"`
 	CodeHash []byte `json:"codeHash"`

@@ -44,7 +44,7 @@ func httpTransfer(param string) {
 	}
 	req2.Body = ioutil.NopCloser(strings.NewReader(data.Encode()))
 
-	// set request content type
+	// set request content types
 	req2.Header.Set("Content-Type", "x-www-form-urlencoded")
 	// request
 	rep2, err := cli.Do(req2)
@@ -81,7 +81,7 @@ func httpSendTransferMSg(from, to, amount, gas, nonce, priv, proxy, reqUrl strin
 	}
 	req2.Body = ioutil.NopCloser(strings.NewReader(data.Encode()))
 
-	// set request content type
+	// set request content types
 	req2.Header.Set("Content-Type", "x-www-form-urlencoded")
 	// request
 	rep2, err := cli.Do(req2)

@@ -64,7 +64,7 @@ func (bn *BlockNumber) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// Int64 converts block number to primitive type
+// Int64 converts block number to primitive types
 func (bn BlockNumber) Int64() int64 {
 	return int64(bn)
 }

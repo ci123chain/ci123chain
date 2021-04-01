@@ -6,13 +6,15 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/clients/types"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/exported"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/host"
+	types2 "github.com/ci123chain/ci123chain/pkg/ibc/core/types"
+	"github.com/pkg/errors"
 )
 
 func (k Keeper)CreateClient(ctx sdk.Context, clientState exported.ClientState,
 	consensusState exported.ConsensusState ) (string, sdk.Error) {
 	params := k.GetParams(ctx)
 	if params.IsAllowedClient(clientState.ClientType()) {
-		return "", types.ErrInvalidClientType(types.DefaultCodespace, fmt.Errorf("client state type %s is not registered in the allowlist", clientState.ClientType()))
+		return "", types2.ErrInvalidClientType(types2.DefaultCodespace, fmt.Errorf("client state types %s is not registered in the allowlist", clientState.ClientType()))
 	}
 
 	clientID := k.GenerateClientIdentifier(ctx, clientState.ClientType())
@@ -20,7 +22,7 @@ func (k Keeper)CreateClient(ctx sdk.Context, clientState exported.ClientState,
 	k.Logger(ctx).Info("client created at height", "client-id", clientID, "height", clientState.GetLastHeight().String())
 
 	if err := clientState.Initialize(ctx, k.ClientStore(ctx, clientID), consensusState); err != nil {
-		return "", types.ErrInitClientState(types.DefaultCodespace, err)
+		return "", types2.ErrInitClientState(types2.DefaultCodespace, err)
 	}
 
 	if consensusState != nil {
@@ -32,6 +34,65 @@ func (k Keeper)CreateClient(ctx sdk.Context, clientState exported.ClientState,
 	// todo  for telemetry
 	return clientID, nil
 }
+
+
+// UpdateClient updates the consensus state and the state root from a provided header.
+func (k Keeper) UpdateClient(ctx sdk.Context, clientID string, header exported.Header) error {
+	clientState, found := k.GetClientState(ctx, clientID)
+	if !found {
+		return errors.Errorf("client not found, cannot update client with ID %s", clientID)
+	}
+
+	// prevent update if the client is frozen before or at header height
+	if clientState.IsFrozen() && clientState.GetFrozenHeight().LTE(header.GetHeight()) {
+		return errors.Errorf("frozen client, cannot update client with ID %s", clientID)
+	}
+
+	clientState, consensusState, err := clientState.CheckHeaderAndUpdateState(ctx, k.cdc, k.ClientStore(ctx, clientID), header)
+	if err != nil {
+		return errors.Wrapf(err, "cannot check and update client with ID %s", clientID)
+	}
+
+	k.SetClientState(ctx, clientID, clientState)
+
+	var consensusHeight exported.Height
+
+	// we don't set consensus state for localhost client
+	if header != nil && clientID != exported.Localhost {
+		k.SetClientConsensusState(ctx, clientID, header.GetHeight(), consensusState)
+		consensusHeight = header.GetHeight()
+	} else {
+		consensusHeight = types.GetSelfHeight(ctx)
+	}
+
+	k.Logger(ctx).Info("client state updated", "client-id", clientID, "height", consensusHeight.String())
+
+	//defer func() {
+	//	telemetry.IncrCounterWithLabels(
+	//		[]string{"ibc", "client", "update"},
+	//		1,
+	//		[]metrics.Label{
+	//			telemetry.NewLabel("client-type", clientState.ClientType()),
+	//			telemetry.NewLabel("client-id", clientID),
+	//			telemetry.NewLabel("update-type", "msg"),
+	//		},
+	//	)
+	//}()
+
+	// emitting events in the keeper emits for both begin block and handler client updates
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeUpdateClient,
+			sdk.NewAttributeString(types.AttributeKeyClientID, clientID),
+			sdk.NewAttributeString(types.AttributeKeyClientType, clientState.ClientType()),
+			sdk.NewAttributeString(types.AttributeKeyConsensusHeight, consensusHeight.String()),
+		),
+	)
+
+	return nil
+}
+
+
 
 // GenerateClientIdentifier returns the next client identifier.
 func (k Keeper) GenerateClientIdentifier(ctx sdk.Context, clientType string) string {

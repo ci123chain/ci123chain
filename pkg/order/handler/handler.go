@@ -13,7 +13,7 @@ func NewHandler(keeper *keeper.OrderKeeper) types.Handler {
 		case *order.MsgUpgrade:
 			return handlerMsgUpgrade(ctx, keeper, msg)
 		default:
-			errMsg := "Unrecognized msg type: " + reflect.TypeOf(msg).Name()
+			errMsg := "Unrecognized msg types: " + reflect.TypeOf(msg).Name()
 			return types.ErrUnknownRequest(errMsg).Result()
 		}
 	}

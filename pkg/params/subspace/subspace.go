@@ -99,7 +99,7 @@ func (s Subspace) Get(ctx types.Context, key []byte, ptr interface{}) {
 }
 
 
-// Set stores the parameter. It returns error if stored parameter has different type from input.
+// Set stores the parameter. It returns error if stored parameter has different types from input.
 // It also set to the transient store to record change.
 func (s Subspace) Set(ctx types.Context, key []byte, param interface{}) {
 	store := s.kvStore(ctx)

@@ -45,7 +45,7 @@ func HttpUndelegateTx(from, gas, nonce, amount, priv, validatorAddr, delegatorAd
 	}
 	req.Body = ioutil.NopCloser(strings.NewReader(data.Encode()))
 
-	// set request content type
+	// set request content types
 	req.Header.Set("Content-Type", "x-www-form-urlencoded")
 	// request
 	rep, err := cli.Do(req)

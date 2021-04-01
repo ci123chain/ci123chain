@@ -19,7 +19,6 @@ type ConsensusState struct {
 	NextValidatorsHash common.HexBytes 			`json:"next_validators_hash,omitempty" yaml:"next_validators_hash"`
 }
 
-
 // NewConsensusState creates a new ConsensusState instance.
 func NewConsensusState(
 	timestamp time.Time, root commitmenttypes.MerkleRoot, nextValsHash common.HexBytes,

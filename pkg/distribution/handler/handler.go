@@ -23,7 +23,7 @@ func NewHandler(k keeper.DistrKeeper) sdk.Handler {
 		case *types.MsgFundCommunityPool:
 			return handleMsgFundCommunityPool(ctx, *msg, k)
 		default:
-			errMsg := fmt.Sprintf("unrecognized supply message type: %T", msg)
+			errMsg := fmt.Sprintf("unrecognized supply message types: %T", msg)
 			return sdk.ErrUnknownRequest(errMsg).Result()
 		}
 	}

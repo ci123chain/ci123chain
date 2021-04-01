@@ -156,7 +156,7 @@ func (f *Filter) checkMatches(transactions []common.Hash) []*ethtypes.Log {
 	for _, tx := range transactions {
 		logs, err := f.backend.GetTransactionLogs(tx)
 		if err != nil {
-			// ignore error if transaction didn't set any logs (eg: when tx type is not
+			// ignore error if transaction didn't set any logs (eg: when tx types is not
 			// MsgEthereumTx or MsgEth)
 			continue
 		}

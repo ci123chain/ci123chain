@@ -9,7 +9,7 @@ import (
 )
 
 type PubKey struct {
-	Type string `json:"type"`
+	Type string `json:"types"`
 	Value string `json:"value"`
 }
 
@@ -22,7 +22,7 @@ func NewValidatorKey() (validatorKey, pubKeyStr, address string, err error) {
 		return "","", "", err
 	}
 	validatorKey = string(keyByte[1:len(keyByte)-1])
-	privStr := fmt.Sprintf(`{"type":"%s","value":"%s"}`, secp256k1.PrivKeyAminoName, validatorKey)
+	privStr := fmt.Sprintf(`{"types":"%s","value":"%s"}`, secp256k1.PrivKeyAminoName, validatorKey)
 	cdc = types.MakeCodec()
 	err = cdc.UnmarshalJSON([]byte(privStr), &valKey)
 	if err != nil {

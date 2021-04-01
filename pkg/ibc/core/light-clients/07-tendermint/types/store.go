@@ -12,7 +12,6 @@ import (
 var KeyProcessedTime = []byte("/processedTime")
 
 
-
 // ProcessedTimeKey returns the key under which the processed time will be stored in the client store.
 func ProcessedTimeKey(height exported.Height) []byte {
 	return append(host.ConsensusStateKey(height), KeyProcessedTime...)
@@ -39,7 +38,7 @@ func GetConsensusState(store sdk.KVStore, cdc *codec.Codec, height exported.Heig
 
 	if !ok {
 		return nil, errors.Errorf(
-			"invalid consensus type %T, expected %T", consensusState, &ConsensusState{},
+			"invalid consensus types %T, expected %T", consensusState, &ConsensusState{},
 		)
 	}
 

@@ -111,7 +111,7 @@ func (app *BaseApp) QueryRouter() QueryRouter {
 	return app.queryRouter
 }
 
-func (app *BaseApp) Router() Router {
+func (app *BaseApp) Router() sdk.Router {
 	return app.router
 }
 

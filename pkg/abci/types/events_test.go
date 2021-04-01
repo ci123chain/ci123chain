@@ -66,6 +66,6 @@ func TestStringifyEvents(t *testing.T) {
 	bz, err := json.Marshal(se)
 	require.NoError(t, err)
 
-	expectedJSONStr := "[{\"type\":\"message\",\"attributes\":[{\"types\":\"sender\",\"value\":\"foo\"},{\"types\":\"module\",\"value\":\"bank\"}]}]"
+	expectedJSONStr := "[{\"types\":\"message\",\"attributes\":[{\"types\":\"sender\",\"value\":\"foo\"},{\"types\":\"module\",\"value\":\"bank\"}]}]"
 	require.Equal(t, expectedJSONStr, string(bz))
 }

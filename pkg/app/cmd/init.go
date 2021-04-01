@@ -290,7 +290,7 @@ func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initCo
 			panic(err)
 		}
 
-		privStr = fmt.Sprintf(`{"type":"%s","value":"%s"}`, secp256k1.PrivKeyAminoName, privBz)
+		privStr = fmt.Sprintf(`{"types":"%s","value":"%s"}`, secp256k1.PrivKeyAminoName, privBz)
 		err = cdc.UnmarshalJSON([]byte(privStr), &validatorKey)
 		if err != nil {
 			panic(err)
@@ -364,7 +364,7 @@ func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initCo
 			panic(err)
 		}
 
-		privStr = fmt.Sprintf(`{"type":"%s","value":"%s"}`, secp256k1.PrivKeyAminoName, privBz)
+		privStr = fmt.Sprintf(`{"types":"%s","value":"%s"}`, secp256k1.PrivKeyAminoName, privBz)
 		err = cdc.UnmarshalJSON([]byte(privStr), &validatorKey)
 		if err != nil {
 			panic(err)

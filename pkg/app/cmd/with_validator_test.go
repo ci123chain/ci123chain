@@ -19,12 +19,12 @@ func init() {
 	cryptoAmino.RegisterAmino(cdc)
 }
 
-// {"type":"tendermint/PrivKeySecp256k1","value":"oQLmM5pM5wL78a6LJntQY8tPGQPpp050udIA5YZMkCc="}
+// {"types":"tendermint/PrivKeySecp256k1","value":"oQLmM5pM5wL78a6LJntQY8tPGQPpp050udIA5YZMkCc="}
 // 通过 json 文件里编码后的私钥解码
 func TestGenValidator(t *testing.T) {
 	// 私钥编码后的数据
 	privBz := "oQLmM5pM5wL78a6LJntQY8tPGQPpp050udIA5YZMkCc="
-	privStr := fmt.Sprintf(`{"type":"%s","value":"%s"}`, secp256k1.PrivKeyAminoName, privBz)
+	privStr := fmt.Sprintf(`{"types":"%s","value":"%s"}`, secp256k1.PrivKeyAminoName, privBz)
 	var privateKey secp256k1.PrivKeySecp256k1
 	// 生成的对象privateKey 直接使用
 	err := cdc.UnmarshalJSON([]byte(privStr), &privateKey)

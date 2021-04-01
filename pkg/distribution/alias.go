@@ -24,7 +24,7 @@ type (
 	GenesisState 	= types.GenesisState
 )
 
-/*type lastCommitValidatorsAddr struct {
+/*types lastCommitValidatorsAddr struct {
 	Address []string `json:"address"`
 }
 

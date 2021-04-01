@@ -19,7 +19,7 @@ func NewHandler(k MortgageKeeper) sdk.Handler {
 		case *types.MsgMortgageCancel:
 			return handleMsgMortgageCancel(ctx, k, *msg)
 		default:
-			errMsg := fmt.Sprintf("unrecognized supply message type: %T", msg)
+			errMsg := fmt.Sprintf("unrecognized supply message types: %T", msg)
 			return sdk.ErrUnknownRequest(errMsg).Result()
 		}
 	}

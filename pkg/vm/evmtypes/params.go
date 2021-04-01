@@ -65,7 +65,7 @@ func (p Params) Validate() error {
 func validateEVMDenom(i interface{}) error {
 	denom, ok := i.(string)
 	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
+		return fmt.Errorf("invalid parameter types: %T", i)
 	}
 
 	return sdk.ValidateDenom(denom)

@@ -4,7 +4,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/exported"
 )
 
-// QueryClientStateRequest is the request type for the Query/ClientState RPC
+// QueryClientStateRequest is the request types for the Query/ClientState RPC
 // method
 type QueryClientStateRequest struct {
 	// client state unique identifier

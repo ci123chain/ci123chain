@@ -65,12 +65,12 @@ func Handler(s *rpc.Server) http.HandlerFunc {
 		w.Header().Add("Access-Control-Allow-Headers", "Content-Type,AccessToken,X-CSRF-Token, Authorization, Token") //header的类型
 		w.Header().Add("Access-Control-Allow-Credentials", "true") //设置为true，允许ajax异步请求带cookie信息
 		w.Header().Add("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE") //允许请求方法
-		w.Header().Set("content-type", "application/json;charset=UTF-8")             //返回数据格式是json
+		w.Header().Set("content-types", "application/json;charset=UTF-8")             //返回数据格式是json
 		s.ServeHTTP(w, r)
 	}
 }
 
-//type Handler struct {
+//types Handler struct {
 //	sr *http.Server
 //}
 

@@ -192,7 +192,7 @@ func ErrValidateEtherTx(msg string) Error {
 
 type cmnError = cmn.Error
 
-// sdk Error type
+// sdk Error types
 type Error interface {
 	// Implements cmn.Error
 	// Error() string

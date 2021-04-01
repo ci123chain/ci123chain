@@ -21,3 +21,7 @@ func (k Keeper) MustMarshalClientState(clientState exported.ClientState) []byte 
 func (k Keeper) MustMarshalConsensusState(consensusState exported.ConsensusState) []byte {
 	return types.MustMarshalConsensusState(k.cdc, consensusState)
 }
+
+func (k Keeper) MustUnmarshalConsensusState(bz []byte) exported.ConsensusState {
+	return types.MustUnmarshalConsensusState(k.cdc, bz)
+}

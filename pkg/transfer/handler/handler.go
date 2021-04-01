@@ -14,7 +14,7 @@ func NewHandler(am keeper.AccountKeeper) sdk.Handler {
 		case *transfer.MsgTransfer:
 			return handlerMsgTransfer(ctx, am, msg)
 		default:
-			errMsg := "Unrecognized Tx type: " + reflect.TypeOf(msg).Name()
+			errMsg := "Unrecognized Tx types: " + reflect.TypeOf(msg).Name()
 			return sdk.ErrUnknownRequest(errMsg).Result()
 		}
 	}

@@ -8,7 +8,7 @@ package distribution
 //)
 //
 //// keeper of the staking store
-//type DistrKeeper struct {
+//types DistrKeeper struct {
 //	storeKey            types.StoreKey
 //	cdc                 *codec.Codec
 //	feeCollectionKeeper fc.FcKeeper

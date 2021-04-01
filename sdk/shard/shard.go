@@ -36,7 +36,7 @@ func HttpAddShardTx(from, gas, nonce, Type, name, height, priv, proxy, reqUrl st
 	data.Set("from", from)
 	data.Set("gas", gas)
 	data.Set("nonce", nonce)
-	data.Set("type", Type)
+	data.Set("types", Type)
 	data.Set("name", name)
 	data.Set("height", height)
 	data.Set("privateKey", priv)
@@ -49,7 +49,7 @@ func HttpAddShardTx(from, gas, nonce, Type, name, height, priv, proxy, reqUrl st
 	}
 	req.Body = ioutil.NopCloser(strings.NewReader(data.Encode()))
 
-	// set request content type
+	// set request content types
 	req.Header.Set("Content-Type", "x-www-form-urlencoded")
 	// request
 	rep, err := cli.Do(req)

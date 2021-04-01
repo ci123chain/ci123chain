@@ -141,7 +141,7 @@ func TestContextWithPrimitive(t *testing.T) {
 	require.Equal(t, uint64val, ctx.Value(uint64key))
 }
 
-// Testing saving/loading sdk type values to/from the context
+// Testing saving/loading sdk types values to/from the context
 func TestContextWithCustom(t *testing.T) {
 	var ctx types.Context
 	require.True(t, ctx.IsZero())

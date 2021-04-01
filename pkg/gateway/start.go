@@ -43,7 +43,7 @@ func Start() {
 	flag.String("rpcport", "80", "rpc address for websocket")
 	//flag.Parse()
 
-	flag.String(flagCiStateDBType, "redis", "database type")
+	flag.String(flagCiStateDBType, "redis", "database types")
 	flag.String(flagCiStateDBHost, "", "db host")
 	flag.Bool(flagCiStateDBTls, true, "use tls")
 
@@ -72,7 +72,7 @@ func Start() {
 			statedb += "#tls"
 		}
 	default:
-		panic(errors.New(fmt.Sprintf("type of db which is not reids not implement yet")))
+		panic(errors.New(fmt.Sprintf("types of db which is not reids not implement yet")))
 	}
 	//logDir = viper.GetString("logdir")
 	port = viper.GetInt("port")

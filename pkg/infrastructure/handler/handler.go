@@ -14,7 +14,7 @@ func NewHandler(k keeper.InfrastructureKeeper) sdk.Handler {
 		case *infrastructure.MsgStoreContent:
 			return HandleMsgStoreContent(ctx, k, *msg)
 		default:
-			errMsg := fmt.Sprintf("unrecognized supply message type: %T", msg)
+			errMsg := fmt.Sprintf("unrecognized supply message types: %T", msg)
 			return sdk.ErrUnknownRequest(errMsg).Result()
 		}
 	}

@@ -45,7 +45,7 @@ func (em EventManager) ABCIEvents() []abci.Event {
 // ----------------------------------------------------------------------------
 
 type (
-	// Event is a type alias for an ABCI Event
+	// Event is a types alias for an ABCI Event
 	Event abci.Event
 
 	// Attribute defines an attribute wrapper where the types and value are
@@ -59,7 +59,7 @@ type (
 	Events []Event
 )
 
-// NewEvent creates a new Event object with a given type and slice of one or more
+// NewEvent creates a new Event object with a given types and slice of one or more
 // attributes.
 func NewEvent(ty string, attrs ...Attribute) Event {
 	e := Event{Type: ty}
@@ -146,7 +146,7 @@ func toBytes(i interface{}) []byte {
 // Common event types and attribute keys
 var (
 	EventTypeMessage = "message"
-	EventTypeType = "type"
+	EventTypeType = "types"
 	//EventTypeInvalidTx = "invalid_tx"
 	//EventTypeValidTx = "valid_tx"
 	EventTypeMultiMsg = "multi_msg"
@@ -166,7 +166,7 @@ type (
 	// StringAttribute defines en Event object wrapper where all the attributes
 	// contain types/value pairs that are strings instead of raw bytes.
 	StringEvent struct {
-		Type       string      `json:"type,omitempty"`
+		Type       string      `json:"types,omitempty"`
 		Attributes []Attribute `json:"attributes,omitempty"`
 	}
 
@@ -189,7 +189,7 @@ func (se StringEvents) String() string {
 }
 
 // Flatten returns a flattened version of StringEvents by grouping all attributes
-// per unique event type.
+// per unique event types.
 func (se StringEvents) Flatten() StringEvents {
 	flatEvents := make(map[string][]Attribute)
 

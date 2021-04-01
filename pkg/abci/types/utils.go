@@ -118,7 +118,7 @@ func Paginate(numObjs, page, limit, defLimit int) (start, end int) {
 	return start, end
 }
 
-//type Heights struct {
+//types Heights struct {
 //	height  []int64   `json:"height"`
 //}
 type Heights []int64

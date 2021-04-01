@@ -67,7 +67,7 @@ func (coin DecCoin) IsZero() bool {
 	return coin.Amount.IsZero()
 }
 
-// IsGTE returns true if they are the same type and the receiver is
+// IsGTE returns true if they are the same types and the receiver is
 // an equal or greater value.
 func (coin DecCoin) IsGTE(other DecCoin) bool {
 	if coin.Denom != other.Denom {
@@ -77,7 +77,7 @@ func (coin DecCoin) IsGTE(other DecCoin) bool {
 	return !coin.Amount.LT(other.Amount)
 }
 
-// IsLT returns true if they are the same type and the receiver is
+// IsLT returns true if they are the same types and the receiver is
 // a smaller value.
 func (coin DecCoin) IsLT(other DecCoin) bool {
 	if coin.Denom != other.Denom {

@@ -23,26 +23,26 @@ func NewIdentifiedClientState(clientID string, clientState exported.ClientState)
 }
 
 
-// ValidateClientType validates the client type. It cannot be blank or empty. It must be a valid
+// ValidateClientType validates the client types. It cannot be blank or empty. It must be a valid
 // client identifier when used with '0' or the maximum uint64 as the sequence.
 func ValidateClientType(clientType string) error {
 	if strings.TrimSpace(clientType) == "" {
-		return errors.New("client type cannot be blank")
+		return errors.New("client types cannot be blank")
 	}
 
 	smallestPossibleClientID := FormatClientIdentifier(clientType, 0)
 	largestPossibleClientID := FormatClientIdentifier(clientType, uint64(math.MaxUint64))
 
-	// IsValidClientID will check client type format and if the sequence is a uint64
+	// IsValidClientID will check client types format and if the sequence is a uint64
 	if !IsValidClientID(smallestPossibleClientID) {
 		return errors.New(fmt.Sprintf("Invalid ClientID: %s", smallestPossibleClientID))
 	}
 
 	if err := host.ClientIdentifierValidator(smallestPossibleClientID); err != nil {
-		return errors.Wrap(err, "client type results in smallest client identifier being invalid")
+		return errors.Wrap(err, "client types results in smallest client identifier being invalid")
 	}
 	if err := host.ClientIdentifierValidator(largestPossibleClientID); err != nil {
-		return errors.Wrap(err, "client type results in largest client identifier being invalid")
+		return errors.Wrap(err, "client types results in largest client identifier being invalid")
 	}
 
 	return nil

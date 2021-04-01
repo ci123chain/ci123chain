@@ -45,3 +45,18 @@ func defaultIdentifierValidator(id string, min, max int) error { //nolint:unpara
 func ClientIdentifierValidator(id string) error {
 	return defaultIdentifierValidator(id, 9, DefaultMaxCharacterLength)
 }
+
+
+// ConnectionIdentifierValidator is the default validator function for Connection identifiers.
+// A valid Identifier must be between 10-64 characters and only contain alphanumeric and some allowed
+// special characters (see IsValidID).
+func ConnectionIdentifierValidator(id string) error {
+	return defaultIdentifierValidator(id, 10, DefaultMaxCharacterLength)
+}
+
+// PortIdentifierValidator is the default validator function for Port identifiers.
+// A valid Identifier must be between 2-64 characters and only contain alphanumeric and some allowed
+// special characters (see IsValidID).
+func PortIdentifierValidator(id string) error {
+	return defaultIdentifierValidator(id, 2, DefaultMaxCharacterLength)
+}

@@ -19,7 +19,7 @@ func httpBroadcastAsyncTx(tx, reqUrl string) {
 	}
 	req.Body = ioutil.NopCloser(strings.NewReader(data.Encode()))
 
-	// set request content type
+	// set request content types
 	req.Header.Set("Content-Type", "x-www-form-urlencoded")
 	// request
 	_, _ = cli.Do(req)

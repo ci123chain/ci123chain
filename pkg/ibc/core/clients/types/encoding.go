@@ -54,6 +54,16 @@ func MustMarshalConsensusState(cdc *codec.Codec, consensusState exported.Consens
 
 	return bz
 }
+// MustUnmarshalConsensusState attempts to decode and return an ConsensusState object from
+// raw encoded bytes. It panics on error.
+func MustUnmarshalConsensusState(cdc *codec.Codec, bz []byte) exported.ConsensusState {
+	consensusState, err := UnmarshalConsensusState(cdc, bz)
+	if err != nil {
+		panic(fmt.Errorf("failed to decode consensus state: %w", err))
+	}
+
+	return consensusState
+}
 
 // MarshalConsensusState protobuf serializes an ConsensusState interface
 func MarshalConsensusState(cdc *codec.Codec, cs exported.ConsensusState) ([]byte, error) {
@@ -61,7 +71,7 @@ func MarshalConsensusState(cdc *codec.Codec, cs exported.ConsensusState) ([]byte
 }
 
 // UnmarshalConsensusState returns an ConsensusState interface from raw encoded clientState
-// bytes of a Proto-based ConsensusState type. An error is returned upon decoding
+// bytes of a Proto-based ConsensusState types. An error is returned upon decoding
 // failure.
 func UnmarshalConsensusState(cdc *codec.Codec, bz []byte) (exported.ConsensusState, error) {
 	var consensusState exported.ConsensusState

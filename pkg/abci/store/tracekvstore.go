@@ -172,7 +172,7 @@ func (ti *traceIterator) Close() {
 }
 
 // GetStoreType implements the KVStore interface. It returns the underlying
-// KVStore type.
+// KVStore types.
 func (tkv *TraceKVStore) GetStoreType() sdk.StoreType {
 	return tkv.parent.GetStoreType()
 }

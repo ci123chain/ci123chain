@@ -422,7 +422,7 @@ func (rs *rootMultiStore) loadCommitStoreFromParams(key sdk.StoreKey, id CommitI
 		store = newTransientStore()
 		return
 	default:
-		panic(fmt.Sprintf("unrecognized store type %v", params.typ))
+		panic(fmt.Sprintf("unrecognized store types %v", params.typ))
 	}
 }
 

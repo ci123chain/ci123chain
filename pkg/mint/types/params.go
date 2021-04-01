@@ -20,7 +20,7 @@ var (
 )
 
 type Params struct {
-	MintDenom             string         `json:"mint_denom"`      //type of coin mint
+	MintDenom             string         `json:"mint_denom"`      //types of coin mint
 	InflationRateChange   sdk.Dec    `json:"inflation_rate_change"` //maximum annual change in inflation rate
 	InflationMax          sdk.Dec    `json:"inflation_max"`        // maximum inflation rate
 	InflationMin          sdk.Dec    `json:"inflation_min"`        // minimum inflation rate
@@ -117,7 +117,7 @@ func (p *Params) ParamSetPairs() params.ParamSetPairs {
 func validateMintDenom(i interface{}) error {
 	v, ok := i.(string)
 	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
+		return fmt.Errorf("invalid parameter types: %T", i)
 	}
 
 	if strings.TrimSpace(v) == "" {
@@ -133,7 +133,7 @@ func validateMintDenom(i interface{}) error {
 func validateInflationRateChange(i interface{}) error {
 	v, ok := i.(sdk.Dec)
 	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
+		return fmt.Errorf("invalid parameter types: %T", i)
 	}
 
 	if v.IsNegative() {
@@ -149,7 +149,7 @@ func validateInflationRateChange(i interface{}) error {
 func validateInflationMax(i interface{}) error {
 	v, ok := i.(sdk.Dec)
 	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
+		return fmt.Errorf("invalid parameter types: %T", i)
 	}
 
 	if v.IsNegative() {
@@ -165,7 +165,7 @@ func validateInflationMax(i interface{}) error {
 func validateInflationMin(i interface{}) error {
 	v, ok := i.(sdk.Dec)
 	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
+		return fmt.Errorf("invalid parameter types: %T", i)
 	}
 
 	if v.IsNegative() {
@@ -181,7 +181,7 @@ func validateInflationMin(i interface{}) error {
 func validateGoalBonded(i interface{}) error {
 	v, ok := i.(sdk.Dec)
 	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
+		return fmt.Errorf("invalid parameter types: %T", i)
 	}
 
 	if v.IsNegative() {
@@ -197,7 +197,7 @@ func validateGoalBonded(i interface{}) error {
 func validateBlocksPerYear(i interface{}) error {
 	v, ok := i.(uint64)
 	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
+		return fmt.Errorf("invalid parameter types: %T", i)
 	}
 
 	if v == 0 {

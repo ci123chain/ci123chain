@@ -61,7 +61,7 @@ type ABCIMessageLog struct {
 	Log      string `json:"log"`
 }
 
-// String implements the fmt.Stringer interface for the ABCIMessageLogs type.
+// String implements the fmt.Stringer interface for the ABCIMessageLogs types.
 func (logs ABCIMessageLogs) String() (str string) {
 	if logs != nil {
 		raw, err := json.Marshal(logs)
@@ -262,4 +262,32 @@ func (r TxResponse) String() string {
 func ParseABCILogs(logs string) (res ABCIMessageLogs, err error) {
 	err = json.Unmarshal([]byte(logs), &res)
 	return res, err
+}
+
+
+// WrapServiceResult wraps a result from a protobuf RPC service method call in
+// a Result object or error. This method takes care of marshaling the res param to
+// protobuf and attaching any events on the ctx.EventManager() to the Result.
+func WrapServiceResult(ctx Context, res interface{}, err error) (*Result, error) {
+	if err != nil {
+		return nil, err
+	}
+
+	var data []byte
+	if res != nil {
+		data, err = json.Marshal(res)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	var events Events
+	if evtMgr := ctx.EventManager(); evtMgr != nil {
+		events = evtMgr.Events()
+	}
+
+	return &Result{
+		Data:   data,
+		Events: events,
+	}, nil
 }

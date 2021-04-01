@@ -42,7 +42,7 @@ var (
 	//"validatorAddress": "0xB6727FCbC60A03A6689AEE6E5fBC83a7FDc9beBf"
 	//"address": "B6727FCBC60A03A6689AEE6E5FBC83A7FDC9BEBF"
 	//{
-	//"type": "tendermint/PubKeySecp256k1",
+	//"types": "tendermint/PubKeySecp256k1",
 	//"value": "A8HZwkdB0uDIqPYE6x509M0JeLVXZ+pa1r42ypnF01n6"
 	//}
 

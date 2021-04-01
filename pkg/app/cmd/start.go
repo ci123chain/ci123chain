@@ -65,7 +65,7 @@ func startCmd(ctx *app.Context, appCreator app.AppCreator) *cobra.Command {
 	cmd.Flags().String(flagAddress, "tcp://0.0.0.0:26658", "Listen address")
 	cmd.Flags().String(flagTraceStore, "", "Enable KVStore tracing to an output file")
 	cmd.Flags().String(flagPruning, "syncable", "Pruning strategy: syncable, nothing, everything")
-	cmd.Flags().String(flagCiStateDBType, "redis", "database type")
+	cmd.Flags().String(flagCiStateDBType, "redis", "database types")
 	cmd.Flags().String(flagCiStateDBHost, "", "db host")
 	cmd.Flags().Uint(flagCiStateDBPort, 7443, "db port")
 	cmd.Flags().Bool(flagCiStateDBTls, true, "use tls")
@@ -132,7 +132,7 @@ func StartInProcess(ctx *app.Context, appCreator app.AppCreator) (*node.Node, er
 			stateDB += "#tls"
 		}
 	default:
-		return nil, errors.New(fmt.Sprintf("type of db: %s, which is not reids not implement yet", dbType))
+		return nil, errors.New(fmt.Sprintf("types of db: %s, which is not reids not implement yet", dbType))
 	}
 
 	nodeDomain := viper.GetString(flagCiNodeDomain)

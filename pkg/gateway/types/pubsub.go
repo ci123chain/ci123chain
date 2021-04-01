@@ -342,7 +342,7 @@ func (r *PubSubRoom) AddShard() {
 					go func(res TMResponse) {
 						for e := range res.response {
 							//var v interface{}
-							//switch e.Data.(type) {
+							//switch e.Data.(types) {
 							//case types.EventDataTx:
 							//	ok, _ := regexp.MatchString("tm.event = 'Tx'", topic)
 							//	if !ok {
@@ -648,7 +648,7 @@ func rpcAddress(host string) string {
 	return res
 }
 
-//type GotTxResponse struct {
+//types GotTxResponse struct {
 //	Height int64                  `json:"height"`
 //	Index  uint32                 `json:"index"`
 //	Tx     string                     `json:"tx"`
@@ -664,7 +664,7 @@ func rpcAddress(host string) string {
 //	}
 //}
 
-//type GotTxData struct {
+//types GotTxData struct {
 //	TxType    string   `json:"tx_type"`
 //	TxSender  string   `json:"tx_sender"`
 //	TxHeight  int64   `json:"tx_height"`
@@ -675,7 +675,7 @@ func rpcAddress(host string) string {
 //	TxAmount   string   `json:"tx_amount"`
 //}
 //
-//type Attribute struct {
+//types Attribute struct {
 //	Key   string   `json:"key"`
 //	Value string   `json:"value"`
 //}

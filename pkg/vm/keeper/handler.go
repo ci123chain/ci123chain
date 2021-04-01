@@ -32,7 +32,7 @@ func NewHandler(k Keeper) sdk.Handler {
 		case types.MsgEthereumTx:
 			return handleMsgEthereumTx(ctx, k, tx)
 		default:
-			errMsg := fmt.Sprintf("unrecognized supply message type: %T", tx)
+			errMsg := fmt.Sprintf("unrecognized supply message types: %T", tx)
 			return sdk.ErrUnknownRequest(errMsg).Result()
 		}
 	}

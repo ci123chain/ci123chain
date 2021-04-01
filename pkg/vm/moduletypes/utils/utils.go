@@ -65,16 +65,16 @@ type evmABI struct {
 		Indexed bool 		`json:"indexed,omitempty"`
 		InternalType string `json:"internalType"`
 		Name string 		`json:"name"`
-		Type string 		`json:"type"`
+		Type string 		`json:"types"`
 	} 						`json:"input,omitempty"`
 	Output []struct{
 		Indexed bool 		`json:"indexed,omitempty"`
 		InternalType string `json:"internalType"`
 		Name string 		`json:"name"`
-		Type string 		`json:"type"`
+		Type string 		`json:"types"`
 	} 						`json:"output,omitempty"`
 	Name string 			`json:"name,omitempty"`
-	Type string 			`json:"type"`
+	Type string 			`json:"types"`
 	Constant bool 			`json:"constant,omitempty"`
 	Payable bool 			`json:"payable,omitempty"`
 	StateMutability string 	`json:"state_mutability,omitempty"`
@@ -223,7 +223,7 @@ func parseNumber(number interface{}) *big.Int {
 	case *big.Int:
 		return number.(*big.Int)
 	default:
-		panic("error parse number type")
+		panic("error parse number types")
 	}
 	return nil
 }
@@ -342,7 +342,7 @@ func encodeSingle(paramType string, args interface{}) []byte {
 				break;
 
 			default:
-				panic("error array args type")
+				panic("error array args types")
 			}
 
 			if size == "dynamic" {
@@ -416,7 +416,7 @@ func encodeSingle(paramType string, args interface{}) []byte {
 			base.Exp(base, big.NewInt(int64(size[1])), nil)
 			return encodeSingle("int256", num.Mul(num, base))
 		} else {
-			panic("type error")
+			panic("types error")
 		}
 	}
 }

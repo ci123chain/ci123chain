@@ -18,7 +18,7 @@ import (
 // NOTE 1: Since empty/uninitialized Ints (i.e with a nil big.Int value) are parsed to zero, we need to manually
 // specify that negative Int values will be considered as nil. See getBlockValue for reference.
 //
-// NOTE 2: This type is not a configurable Param since the SDK does not allow for validation against
+// NOTE 2: This types is not a configurable Param since the SDK does not allow for validation against
 // a previous stored parameter values or the current block height (retrieved from context). If you
 // want to update the config values, use an software upgrade procedure.
 type ChainConfig struct {

@@ -99,7 +99,7 @@ func (es *EventSystem) WithContext(ctx context.Context) {
 // The subscription creates a unidirectional receive event channel to receive the ResultEvent. By
 // default, the subscription timeouts (i.e is canceled) after 5 minutes. This function returns an
 // error if the subscription fails (eg: if the identifier is already subscribed) or if the filter
-// type is invalid.
+// types is invalid.
 func (es *EventSystem) subscribe(sub *Subscription) (*Subscription, context.CancelFunc, error) {
 	var (
 		err      error
@@ -119,7 +119,7 @@ func (es *EventSystem) subscribe(sub *Subscription) (*Subscription, context.Canc
 	case filters.BlocksSubscription:
 		eventCh, err = es.client.Subscribe(es.ctx, string(sub.id), sub.event)
 	default:
-		err = fmt.Errorf("invalid filter subscription type %d", sub.typ)
+		err = fmt.Errorf("invalid filter subscription types %d", sub.typ)
 	}
 
 	if err != nil {
@@ -345,7 +345,7 @@ func (es *EventSystem) eventLoop() {
 
 		case f := <-es.install:
 			if f.typ == filters.MinedAndPendingLogsSubscription {
-				// the type are logs and pending logs subscriptions
+				// the types are logs and pending logs subscriptions
 				es.index[filters.LogsSubscription][f.id] = f
 				es.index[filters.PendingLogsSubscription][f.id] = f
 			} else {
@@ -355,7 +355,7 @@ func (es *EventSystem) eventLoop() {
 
 		case f := <-es.uninstall:
 			if f.typ == filters.MinedAndPendingLogsSubscription {
-				// the type are logs and pending logs subscriptions
+				// the types are logs and pending logs subscriptions
 				delete(es.index[filters.LogsSubscription], f.id)
 				delete(es.index[filters.PendingLogsSubscription], f.id)
 			} else {

@@ -29,7 +29,7 @@ func AddShardTxRequest(cliCtx context.Context, writer http.ResponseWriter, reque
 		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
 		return
 	}
-	Type := request.FormValue("type")
+	Type := request.FormValue("types")
 	name := request.FormValue("name")
 	height := request.FormValue("height")
 	//isFabricMode := request.FormValue("isFabric")

@@ -79,7 +79,7 @@ type AccountInfo struct {
 }
 
 type PubKey struct {
-	Type  string `json:"type"`
+	Type  string `json:"types"`
 	Value string `json:"value"`
 }
 
@@ -174,7 +174,7 @@ func createGenesis(chainInfo ChainInfo, validatorInfo []ValidatorInfo,
 	var validators []tmtypes.GenesisValidator
 	for _, v := range validatorInfo {
 		var valKey crypto.PubKey
-		pubStr := fmt.Sprintf(`{"type":"%s","value":"%s"}`, secp256k1.PubKeyAminoName, v.PubKey)
+		pubStr := fmt.Sprintf(`{"types":"%s","value":"%s"}`, secp256k1.PubKeyAminoName, v.PubKey)
 		err = cdc.UnmarshalJSON([]byte(pubStr), &valKey)
 		if err != nil {
 			return nil, err
@@ -442,7 +442,7 @@ func privStrToPrivKey(privStr string) (*secp256k1.PrivKeySecp256k1, error) {
 	}
 
 	var realKey *secp256k1.PrivKeySecp256k1
-	privKey := fmt.Sprintf(`{"type":"%s","value":"%s"}`, secp256k1.PrivKeyAminoName, privStr)
+	privKey := fmt.Sprintf(`{"types":"%s","value":"%s"}`, secp256k1.PrivKeyAminoName, privStr)
 	cdc := app_types.MakeCodec()
 	err := cdc.UnmarshalJSON([]byte(privKey), &realKey)
 	if err != nil {

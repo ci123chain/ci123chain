@@ -2,6 +2,7 @@ package store
 
 import (
 	"fmt"
+	ics23 "github.com/confio/ics23/go"
 	"io"
 	"sync"
 	"reflect"
@@ -10,7 +11,7 @@ import (
 
 	"github.com/ci123chain/ci123chain/pkg/logger"
 	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/crypto/merkle"
+	tmtypes "github.com/tendermint/tendermint/crypto/merkle"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	dbm "github.com/tendermint/tm-db"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
@@ -261,30 +262,45 @@ func (st *iavlStore) Query(req abci.RequestQuery) (res abci.ResponseQuery) {
 			break
 		}
 
-		if  req.Prove {
-			value, proof, err := tree.GetVersionedWithProof(key, res.Height)
-			if err != nil {
-				res.Log = err.Error()
-				break
-			}
-			if proof == nil {
-				// Proof == nil implies that the store is empty.
-				if value != nil {
-					panic("unexpected value for an empty proof")
-				}
-			}
-			if value != nil {
-				// value was found
-				res.Value = value
-				res.Proof = &merkle.Proof{Ops: []merkle.ProofOp{iavl.NewIAVLValueOp(key, proof).ProofOp()}}
-			} else {
-				// value wasn't found
-				res.Value = nil
-				res.Proof = &merkle.Proof{Ops: []merkle.ProofOp{iavl.NewIAVLAbsenceOp(key, proof).ProofOp()}}
-			}
-		} else {
-			_, res.Value = tree.GetVersioned(key, res.Height)
+		_, res.Value = tree.GetVersioned(key, res.Height)
+		if !req.Prove {
+			break
 		}
+
+		iTree, err := tree.GetImmutable(res.Height)
+		if err != nil {
+			// sanity check: If value for given version was retrieved, immutable tree must also be retrievable
+			panic(fmt.Sprintf("version exists in store but could not retrieve corresponding versioned tree in store, %s", err.Error()))
+		}
+		mtree := &iavl.MutableTree{
+			ImmutableTree: iTree,
+		}
+
+		// get proof from tree and convert to merkle.Proof before adding to result
+		res.ProofOps = getProofFromTree(mtree, req.Data, res.Value != nil)
+
+
+		//value, proof, err := tree.GetVersionedWithProof(key, res.Height)
+		//if err != nil {
+		//	res.Log = err.Error()
+		//	break
+		//}
+		//if proof == nil {
+		//	// Proof == nil implies that the store is empty.
+		//	if value != nil {
+		//		panic("unexpected value for an empty proof")
+		//	}
+		//}
+		//if value != nil {
+		//	// value was found
+		//	res.Value = value
+		//	res.Proof = &merkle.Proof{Ops: []merkle.ProofOp{iavl.NewIAVLValueOp(key, proof).ProofOp()}}
+		//} else {
+		//	// value wasn't found
+		//	res.Value = nil
+		//	res.Proof = &merkle.Proof{Ops: []merkle.ProofOp{iavl.NewIAVLAbsenceOp(key, proof).ProofOp()}}
+		//}
+
 
 	case "/subspace":
 		var KVs []KVPair
@@ -307,6 +323,29 @@ func (st *iavlStore) Query(req abci.RequestQuery) (res abci.ResponseQuery) {
 
 	return
 }
+
+func getProofFromTree(tree *iavl.MutableTree, key []byte, exist bool) []*tmtypes.Proof {
+	var (
+		commitmentProof *ics23.CommitmentProof
+		err 			error
+	)
+	if exist {
+		commitmentProof, err = tree.GetMembershipProof(key)
+		if err != nil {
+			panic(fmt.Sprintf("unexpected value for empty proof: %s", err.Error()))
+		}
+	} else {
+		// value wasn't found
+		commitmentProof, err = tree.GetNonMembershipProof(key)
+		if err != nil {
+			// sanity check: If value wasn't found, nonmembership proof must be creatable
+			panic(fmt.Sprintf("unexpected error for nonexistence proof: %s", err.Error()))
+		}
+	}
+	op := NewIavlCommitmentOp(key, commitmentProof)
+	return []*tmtypes.ProofOp{}
+}
+
 
 //----------------------------------------
 

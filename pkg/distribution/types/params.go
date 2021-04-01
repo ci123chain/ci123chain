@@ -66,7 +66,7 @@ func (p *Params) ParamSetPairs() params.ParamSetPairs {
 func validateCommunityTax(i interface{}) error {
 	v, ok := i.(sdk.Dec)
 	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
+		return fmt.Errorf("invalid parameter types: %T", i)
 	}
 
 	if v.IsNil() {
@@ -85,7 +85,7 @@ func validateCommunityTax(i interface{}) error {
 func validateBaseProposerReward(i interface{}) error {
 	v, ok := i.(sdk.Dec)
 	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
+		return fmt.Errorf("invalid parameter types: %T", i)
 	}
 
 	if v.IsNil() {
@@ -104,7 +104,7 @@ func validateBaseProposerReward(i interface{}) error {
 func validateBonusProposerReward(i interface{}) error {
 	v, ok := i.(sdk.Dec)
 	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
+		return fmt.Errorf("invalid parameter types: %T", i)
 	}
 
 	if v.IsNil() {
@@ -123,7 +123,7 @@ func validateBonusProposerReward(i interface{}) error {
 func validateWithdrawAddrEnabled(i interface{}) error {
 	_, ok := i.(bool)
 	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
+		return fmt.Errorf("invalid parameter types: %T", i)
 	}
 
 	return nil

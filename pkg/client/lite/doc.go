@@ -58,7 +58,7 @@ Provider and PersistentProvider
 
 A Provider allows us to store and retrieve the FullCommits.
 
-    type Provider interface {
+    types Provider interface {
         // LatestFullCommit returns the latest commit with
         // minHeight <= height <= maxHeight.
         // If maxHeight is zero, returns the latest where
@@ -71,7 +71,7 @@ A Provider allows us to store and retrieve the FullCommits.
 A PersistentProvider is a Provider that also allows for saving state.  This is
 used by the DynamicVerifier for persistence.
 
-    type PersistentProvider interface {
+    types PersistentProvider interface {
         Provider
 
         // SaveFullCommit saves a FullCommit (without verification).

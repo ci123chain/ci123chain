@@ -94,7 +94,7 @@ type CommitMultiStore interface {
 	Committer
 	MultiStore
 
-	// Mount a store of type using the given db.
+	// Mount a store of types using the given db.
 	// If db == nil, the new store will use the CommitMultiStore db.
 	MountStoreWithDB(key StoreKey, typ StoreType, db dbm.DB)
 
@@ -299,6 +299,7 @@ const (
 	StoreTypeDB
 	StoreTypeIAVL
 	StoreTypeTransient
+	StoreTypeMemory
 )
 
 //----------------------------------------

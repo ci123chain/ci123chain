@@ -288,7 +288,7 @@ type cloner interface {
 
 // XXX add description
 type Op struct {
-	// type is always 'with'
+	// types is always 'with'
 	gen   int
 	key   interface{}
 	value interface{}

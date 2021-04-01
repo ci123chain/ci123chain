@@ -6,7 +6,7 @@ import (
 	"io"
 )
 
-// Wrapper type for dbm.Db with implementation of KVStore
+// Wrapper types for dbm.Db with implementation of KVStore
 type dbStoreAdapter struct {
 	dbm.DB
 }

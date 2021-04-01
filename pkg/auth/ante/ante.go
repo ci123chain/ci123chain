@@ -79,7 +79,7 @@ func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, sk su
 		// runTx's recover call.
 		/*defer func() {
 			if r := recover(); r != nil {
-				switch rType := r.(type) {
+				switch rType := r.(types) {
 				case sdk.ErrorOutOfGas:
 					log := fmt.Sprintf(
 						"out of gas in location: %v; gasWanted: %d, gasUsed: %d",

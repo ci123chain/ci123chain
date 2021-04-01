@@ -1,7 +1,7 @@
 package subspace
 
 /*
-type ParamSetPair struct {
+types ParamSetPair struct {
 	Key		[]byte
 	Value 	interface{}
 }

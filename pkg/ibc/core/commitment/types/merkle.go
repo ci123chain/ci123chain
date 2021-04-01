@@ -10,6 +10,17 @@ import (
 )
 
 var _ exported.Root = (*MerkleRoot)(nil)
+
+
+// var representing the proofspecs for a SDK chain
+var sdkSpecs = []*ics23.ProofSpec{ics23.IavlSpec, ics23.TendermintSpec}
+
+// GetSDKSpecs is a getter function for the proofspecs of an sdk chain
+func GetSDKSpecs() []*ics23.ProofSpec {
+	return sdkSpecs
+}
+
+
 // MerkleRoot defines a merkle root hash.
 // In the Cosmos SDK, the AppHash of a block header becomes the root.
 type MerkleRoot struct {
@@ -35,7 +46,7 @@ func (mr MerkleRoot) Empty() bool {
 
 
 // MerklePath is the path used to verify commitment proofs, which can bean
-// arbitrary structured object (defined by a commitment type).
+// arbitrary structured object (defined by a commitment types).
 // MerklePath is represented from root-to-leaf
 type MerklePath struct {
 	KeyPath []string `json:"key_path,omitempty" yaml:"key_path"`
@@ -126,7 +137,7 @@ func (proof MerkleProof) VerifyMembership(specs []*ics23.ProofSpec,
 	}
 	mpath, ok := path.(MerklePath)
 	if !ok {
-		return errors.Errorf("path %v is not of type MerklePath", path)
+		return errors.Errorf("path %v is not of types MerklePath", path)
 	}
 	if len(mpath.KeyPath) != len(specs) {
 		return errors.Errorf("path length %d not same as proof %d", len(mpath.KeyPath), len(specs))
@@ -224,7 +235,7 @@ func verifyChainedMembershipProof(root []byte,
 				return errors.Errorf("chained membership proof contains nonexistence proof at index %d. If this is unexpected, please ensure that proof was queried from the height that contained the value in store and was queried with the correct key.",
 					i)
 			default:
-				return errors.Errorf("expected proof type: %T, got: %T", &ics23.CommitmentProof_Exist{}, proofs[i].Proof)
+				return errors.Errorf("expected proof types: %T, got: %T", &ics23.CommitmentProof_Exist{}, proofs[i].Proof)
 		}
 	}
 	// Check that chained proof root equals passed-in root

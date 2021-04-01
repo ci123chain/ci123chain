@@ -83,7 +83,7 @@ func NewParams(unbondingTime time.Duration, maxValidators, maxEntries, historica
 func validateUnbondingTime(i interface{}) error {
 	v, ok := i.(time.Duration)
 	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
+		return fmt.Errorf("invalid parameter types: %T", i)
 	}
 
 	if v <= 0 {
@@ -96,7 +96,7 @@ func validateUnbondingTime(i interface{}) error {
 func validateMaxValidators(i interface{}) error {
 	v, ok := i.(uint32)
 	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
+		return fmt.Errorf("invalid parameter types: %T", i)
 	}
 
 	if v == 0 {
@@ -109,7 +109,7 @@ func validateMaxValidators(i interface{}) error {
 func validateMaxEntries(i interface{}) error {
 	v, ok := i.(uint32)
 	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
+		return fmt.Errorf("invalid parameter types: %T", i)
 	}
 
 	if v == 0 {
@@ -122,7 +122,7 @@ func validateMaxEntries(i interface{}) error {
 func validateHistoricalEntries(i interface{}) error {
 	_, ok := i.(uint32)
 	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
+		return fmt.Errorf("invalid parameter types: %T", i)
 	}
 
 	return nil
@@ -131,7 +131,7 @@ func validateHistoricalEntries(i interface{}) error {
 func validateBondDenom(i interface{}) error {
 	v, ok := i.(string)
 	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
+		return fmt.Errorf("invalid parameter types: %T", i)
 	}
 
 	if strings.TrimSpace(v) == "" {

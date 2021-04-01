@@ -116,7 +116,7 @@ func bootstrapGenWithConfig(c *cfg.Config, cdc *amino.Codec, appInit app.AppInit
 	var privStr string
 	privBz := viper.GetString(FlagWithValidator)
 	if len(privBz) > 0 {
-		privStr = fmt.Sprintf(`{"type":"%s","value":"%s"}`, secp256k1.PrivKeyAminoName, privBz)
+		privStr = fmt.Sprintf(`{"types":"%s","value":"%s"}`, secp256k1.PrivKeyAminoName, privBz)
 		err := cdc.UnmarshalJSON([]byte(privStr), &validatorKey)
 		if err != nil {
 			panic(err)

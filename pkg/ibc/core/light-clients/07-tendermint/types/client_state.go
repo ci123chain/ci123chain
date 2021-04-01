@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	channeltypes "github.com/ci123chain/ci123chain/pkg/ibc/core/channel/types"
 	clienttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/clients/types"
 	commitmenttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/commitment/types"
+	connectiontypes "github.com/ci123chain/ci123chain/pkg/ibc/core/connection/types"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/exported"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/host"
 	ics23 "github.com/confio/ics23/go"
@@ -48,9 +50,7 @@ type ClientState struct {
 	// whose chain has experienced a misbehaviour event
 	AllowUpdateAfterMisbehaviour bool `json:"allow_update_after_misbehaviour,omitempty" yaml:"allow_update_after_misbehaviour"`
 }
-
-
-// Fraction defines the protobuf message type for tmmath.Fraction that only supports positive values.
+// Fraction defines the protobuf message types for tmmath.Fraction that only supports positive values.
 type Fraction struct {
 	Numerator   uint64 `json:"numerator,omitempty"`
 	Denominator uint64 `json:"denominator,omitempty"`
@@ -115,7 +115,7 @@ func (cs ClientState) IsExpired(latestTimestamp, now time.Time) bool {
 }
 
 // GetProofSpecs returns the format the client expects for proof verification
-// as a string array specifying the proof type for each position in chained proof
+// as a string array specifying the proof types for each position in chained proof
 func (cs ClientState) GetProofSpecs() []*ics23.ProofSpec {
 	return cs.ProofSpecs
 }
@@ -177,7 +177,7 @@ func (cs ClientState) Validate() error {
 
 func (cs ClientState) Initialize(ctx sdk.Context, clientStore sdk.KVStore, consState exported.ConsensusState) error {
 	if _, ok := consState.(*ConsensusState); !ok {
-		return errors.Errorf("invalid initial consensus state. expected type: %T, got: %T", &ConsensusState{}, consState)
+		return errors.Errorf("invalid initial consensus state. expected types: %T, got: %T", &ConsensusState{}, consState)
 	}
 	SetProcessedTime(clientStore, cs.GetLatestHeight(), uint64(ctx.BlockHeader().Time.UnixNano()))
 	return nil
@@ -220,7 +220,7 @@ func (cs ClientState) VerifyClientState(
 	}
 	_, ok := clientState.(*ClientState)
 	if !ok {
-		return errors.Errorf("invalid client type %T, expected %T", clientState, &ClientState{})
+		return errors.Errorf("invalid client types %T, expected %T", clientState, &ClientState{})
 	}
 
 	bz, err := cdc.MarshalBinaryBare(clientState)
@@ -229,6 +229,47 @@ func (cs ClientState) VerifyClientState(
 	}
 	return merkleProof.VerifyMembership(cs.ProofSpecs, provingConsensusState.GetRoot(), path, bz)
 }
+
+
+// VerifyConnectionState verifies a proof of the connection state of the
+// specified connection end stored on the target machine.
+func (cs ClientState) VerifyConnectionState(
+	store sdk.KVStore,
+	cdc *codec.Codec,
+	height exported.Height,
+	prefix exported.Prefix,
+	proof []byte,
+	connectionID string,
+	connectionEnd exported.ConnectionI,
+) error {
+	merkleProof, consensusState, err := produceVerificationArgs(store, cdc, cs, height, prefix, proof)
+	if err != nil {
+		return err
+	}
+
+	connectionPath := commitmenttypes.NewMerklePath(host.ConnectionPath(connectionID))
+	path, err := commitmenttypes.ApplyPrefix(prefix, connectionPath)
+	if err != nil {
+		return err
+	}
+
+	connection, ok := connectionEnd.(connectiontypes.ConnectionEnd)
+	if !ok {
+		return errors.Errorf("invalid connection types %T", connectionEnd)
+	}
+
+	bz, err := cdc.MarshalBinaryBare(&connection)
+	if err != nil {
+		return err
+	}
+
+	if err := merkleProof.VerifyMembership(cs.ProofSpecs, consensusState.GetRoot(), path, bz); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 
 func (cs ClientState) VerifyClientConsensusState(
 	store sdk.KVStore,
@@ -254,7 +295,7 @@ func (cs ClientState) VerifyClientConsensusState(
 	}
 	_, ok := consensusState.(*ConsensusState)
 	if !ok {
-		return errors.Errorf("invalid consensus type %T, expected %T", consensusState, &ConsensusState{})
+		return errors.Errorf("invalid consensus types %T, expected %T", consensusState, &ConsensusState{})
 	}
 	bz, err := cdc.MarshalBinaryBare(consensusState)
 	if err != nil {
@@ -266,6 +307,37 @@ func (cs ClientState) VerifyClientConsensusState(
 	return nil
 }
 
+
+
+func (cs ClientState) VerifyChannelState(store sdk.KVStore,
+	cdc *codec.Codec, height exported.Height,
+	prefix exported.Prefix, proof []byte,
+	portID, channelID string, channel exported.ChannelI) error {
+	merkleProof, consensusState, err := produceVerificationArgs(store, cdc, cs, height, prefix, proof)
+	if err != nil {
+		return err
+	}
+	channelPath := commitmenttypes.NewMerklePath(host.ChannelPath(portID, channelID))
+	path, err := commitmenttypes.ApplyPrefix(prefix, channelPath)
+	if err != nil {
+		return err
+	}
+	channelEnd, ok := channel.(channeltypes.Channel)
+	if !ok {
+		return errors.Errorf("invalid channel type %T", channel)
+	}
+
+	bz, err := cdc.MarshalBinaryBare(&channelEnd)
+	if err != nil {
+		return err
+	}
+
+	if err := merkleProof.VerifyMembership(cs.ProofSpecs, consensusState.GetRoot(), path, bz); err != nil {
+		return err
+	}
+
+	return nil
+}
 
 
 // private methods implements
@@ -292,7 +364,7 @@ func produceVerificationArgs(
 	}
 	_, ok := prefix.(*commitmenttypes.MerklePrefix)
 	if !ok {
-		return commitmenttypes.MerkleProof{}, nil, errors.Errorf("invalid prefix type %T, expected *MerklePrefix", prefix)
+		return commitmenttypes.MerkleProof{}, nil, errors.Errorf("invalid prefix types %T, expected *MerklePrefix", prefix)
 	}
 
 	if err = cdc.UnmarshalBinaryBare(proof, &merkleProof); err != nil {

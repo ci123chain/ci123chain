@@ -166,7 +166,7 @@ func (w Wrapper) SubscribeWS(ctx *rpctypes.Context, query string) (*ctypes.Resul
 			select {
 			case resultEvent := <-out:
 				// XXX(melekes) We should have a switch here that performs a validation
-				// depending on the event's type.
+				// depending on the event's types.
 				ctx.WSConn.TryWriteRPCResponse(
 					rpctypes.NewRPCSuccessResponse(
 						ctx.WSConn.Codec(),
@@ -207,7 +207,7 @@ func (w Wrapper) UnsubscribeAllWS(ctx *rpctypes.Context) (*ctypes.ResultUnsubscr
 // //
 // // Since the verification takes 1-2 rpc calls, this is obviously only for
 // // relatively low-throughput situations that can tolerate a bit extra latency
-// type WrappedSwitch struct {
+// types WrappedSwitch struct {
 // 	types.EventSwitch
 // 	clients rpcclient.Client
 // }
@@ -216,12 +216,12 @@ func (w Wrapper) UnsubscribeAllWS(ctx *rpctypes.Context) (*ctypes.ResultUnsubscr
 // func (s WrappedSwitch) FireEvent(event string, data events.EventData) {
 // 	tm, ok := data.(types.TMEventData)
 // 	if !ok {
-// 		fmt.Printf("bad type %#v\n", data)
+// 		fmt.Printf("bad types %#v\n", data)
 // 		return
 // 	}
 
 // 	// check to validate it if possible, and drop if not valid
-// 	switch t := tm.(type) {
+// 	switch t := tm.(types) {
 // 	case types.EventDataNewBlockHeader:
 // 		err := verifyHeader(s.clients, t.Header)
 // 		if err != nil {
