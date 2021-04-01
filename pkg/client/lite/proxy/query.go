@@ -1,12 +1,14 @@
 package proxy
 
 import (
+	"context"
 	"encoding/hex"
 	"fmt"
 	"strings"
 
 	"github.com/tendermint/tendermint/crypto/merkle"
-	cmn "github.com/tendermint/tendermint/libs/common"
+	cmn "github.com/ci123chain/ci123chain/pkg/libs/common"
+	"github.com/tendermint/tendermint/libs/bytes"
 	"github.com/tendermint/tendermint/lite"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
@@ -19,7 +21,7 @@ import (
 // If there is any error in checking, returns an error.
 func GetWithProof(prt *merkle.ProofRuntime, key []byte, reqHeight int64, node rpcclient.Client,
 	cert lite.Verifier) (
-	val cmn.HexBytes, height int64, proof *merkle.Proof, err error) {
+	val bytes.HexBytes, height int64, proof *merkle.Proof, err error) {
 
 	if reqHeight < 0 {
 		err = cmn.NewError("Height cannot be negative")
@@ -44,7 +46,7 @@ func GetWithProofOptions(prt *merkle.ProofRuntime, path string, key []byte, opts
 	node rpcclient.Client, cert lite.Verifier) (
 	*ctypes.ResultABCIQuery, error) {
 	opts.Prove = true
-	res, err := node.ABCIQueryWithOptions(path, key, opts)
+	res, err := node.ABCIQueryWithOptions(context.Background(), path, key, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -125,7 +127,7 @@ func GetCertifiedCommit(h int64, client rpcclient.Client, cert lite.Verifier) (t
 	// Validators and will fail on querying tendermint for non-current height.
 	// When this is supported, we should use it instead...
 	rpcclient.WaitForHeight(client, h, nil)
-	cresp, err := client.Commit(&h)
+	cresp, err := client.Commit(context.Background(), &h)
 	a := hex.EncodeToString(cresp.AppHash)
 	fmt.Println(a)
 	if err != nil {

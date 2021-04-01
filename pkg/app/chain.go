@@ -9,6 +9,7 @@ import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	app_module "github.com/ci123chain/ci123chain/pkg/app/module"
 	dist_module "github.com/ci123chain/ci123chain/pkg/distribution/module"
+	"github.com/ci123chain/ci123chain/pkg/gateway/redissource"
 	infrastructure_module "github.com/ci123chain/ci123chain/pkg/infrastructure/module"
 	mint_module "github.com/ci123chain/ci123chain/pkg/mint/module"
 	order_module "github.com/ci123chain/ci123chain/pkg/order/module"
@@ -51,8 +52,8 @@ import (
 	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/libs/cli"
-	"github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/libs/log"
+	cmn "github.com/tendermint/tendermint/libs/os"
 	"github.com/tendermint/tendermint/types"
 	tmdb "github.com/tendermint/tm-db"
 	"io"
@@ -62,7 +63,8 @@ import (
 const (
 	flagAddress    = "address"
 	flagName       = "name"
-	flagClientHome = "home-clients"
+	flagClientHome = "home-client"
+	flagNodeDomain = "node_domain"
 	flagShardIndex = "shardIndex"
 	cacheName      = "cache"
 	heightKey      = "s/k:order/OrderBook"
@@ -134,7 +136,7 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 		//cache exist, check latest version
 		err := handleCache(cdb, cache, cdc, app)
 		if err != nil {
-			common.Exit(err.Error())
+			cmn.Exit(err.Error())
 		}
 	}
 
@@ -173,9 +175,24 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 
 
 	//odb := cdb.(*couchdb.GoCouchDB)
+	var nodeList []string
 	odb := cdb.(*redis.RedisDB)
-	orderKeeper := order.NewKeeper(odb, OrderStoreKey, accKeeper)
 
+	nodeListBytes, err := odb.Get([]byte(redissource.FlagNodeList))
+	if err != nil {
+		cmn.Exit(err.Error())
+	}
+	if nodeListBytes != nil {
+		err := json.Unmarshal(nodeListBytes, &nodeList)
+		if err != nil {
+			cmn.Exit(err.Error())
+		}
+	}
+	nodeList = append(nodeList, viper.GetString(flagNodeDomain))
+	nodeListBytes, _ = json.Marshal(nodeList)
+	odb.Set([]byte(redissource.FlagNodeList), nodeListBytes)
+
+	orderKeeper := order.NewKeeper(odb, OrderStoreKey, accKeeper)
 
 	homeDir := viper.GetString(cli.HomeFlag)
 	var wasmconfig wasm_types.WasmConfig
@@ -229,9 +246,9 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 	sdk.CommitInfoKeyFmt = shardID + "s/%d"
 	sdk.LatestVersionKey = shardID + "s/latest"
 
-	err := c.mountStores()
+	err = c.mountStores()
 	if err != nil {
-		common.Exit(err.Error())
+		cmn.Exit(err.Error())
 	}
 
 	return c
@@ -300,7 +317,7 @@ func NewAppInit() AppInit {
 	//fsAppGenTx := pflag.NewFlagSet("", pflag.ContinueOnError)
 	//fsAppGenTx.String(flagAddress, "", "address, required")
 	//fsAppGenTx.String(flagClientHome, DefaultCLIHome,
-	//	"home directory for the clients, used for types generation")
+	//	"home directory for the client, used for types generation")
 
 	return AppInit{
 		//FlagsAppGenState: fsAppGenState,

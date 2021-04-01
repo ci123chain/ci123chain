@@ -183,6 +183,11 @@ type prefixIterator struct {
 	valid      bool
 }
 
+func (iter *prefixIterator) Error() error {
+	return nil
+}
+
+
 func newPrefixIterator(prefix, start, end []byte, parent Iterator) *prefixIterator {
 	return &prefixIterator{
 		prefix: prefix,
@@ -233,8 +238,8 @@ func (iter *prefixIterator) Value() []byte {
 }
 
 // Implements Iterator
-func (iter *prefixIterator) Close() {
-	iter.iter.Close()
+func (iter *prefixIterator) Close() error {
+	return iter.iter.Close()
 }
 
 // copied from github.com/tendermint/tm-db/prefix_db.go

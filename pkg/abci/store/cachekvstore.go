@@ -7,7 +7,7 @@ import (
 	"sort"
 	"sync"
 
-	cmn "github.com/tendermint/tendermint/libs/common"
+	abci "github.com/tendermint/tendermint/abci/types"
 )
 
 // If value is nil but deleted is false, it means the parent doesn't have the
@@ -184,15 +184,15 @@ func (ci *cacheKVStore) iterator(start, end []byte, ascending bool) Iterator {
 }
 
 // Constructs a slice of dirty items, to use w/ memIterator.
-func (ci *cacheKVStore) dirtyItems(ascending bool) []cmn.KVPair {
-	items := make([]cmn.KVPair, 0, len(ci.cache))
+func (ci *cacheKVStore) dirtyItems(ascending bool) []abci.EventAttribute {
+	items := make([]abci.EventAttribute, 0, len(ci.cache))
 
 	for key, cacheValue := range ci.cache {
 		if !cacheValue.dirty {
 			continue
 		}
 
-		items = append(items, cmn.KVPair{Key: []byte(key), Value: cacheValue.value})
+		items = append(items, abci.EventAttribute{Key: []byte(key), Value: cacheValue.value})
 	}
 
 	sort.Slice(items, func(i, j int) bool {

@@ -7,8 +7,8 @@ import (
 	"github.com/tendermint/go-amino"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto"
+	cryptoEncod "github.com/tendermint/tendermint/crypto/encoding"
 	cryptoAmino "github.com/tendermint/tendermint/crypto/encoding/amino"
-	tmtypes "github.com/tendermint/tendermint/types"
 	"sort"
 	"time"
 )
@@ -182,8 +182,9 @@ func (v Validator) UpdateStatus(newStatus sdk.BondStatus) Validator {
 // ABCIValidatorUpdateZero returns an abci.ValidatorUpdate from a staking validator types
 // with zero power used for validator updates.
 func (v Validator) ABCIValidatorUpdateZero() abci.ValidatorUpdate {
+	key, _ := cryptoEncod.PubKeyToProto(v.GetConsPubKey())
 	return abci.ValidatorUpdate{
-		PubKey: tmtypes.TM2PB.PubKey(v.GetConsPubKey()),
+		PubKey: key,
 		Power:  0,
 	}
 }
@@ -191,8 +192,9 @@ func (v Validator) ABCIValidatorUpdateZero() abci.ValidatorUpdate {
 // ABCIValidatorUpdate returns an abci.ValidatorUpdate from a staking validator types
 // with the full validator power
 func (v Validator) ABCIValidatorUpdate() abci.ValidatorUpdate {
+	key, _ := cryptoEncod.PubKeyToProto(v.GetConsPubKey())
 	return abci.ValidatorUpdate{
-		PubKey: tmtypes.TM2PB.PubKey(v.GetConsPubKey()),
+		PubKey: key,
 		Power:  v.ConsensusPower(),
 	}
 }

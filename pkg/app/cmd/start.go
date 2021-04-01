@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/viper"
 	abcis "github.com/tendermint/tendermint/abci/server"
 	tcmd "github.com/tendermint/tendermint/cmd/tendermint/commands"
-	cmn "github.com/tendermint/tendermint/libs/common"
+	tos "github.com/tendermint/tendermint/libs/os"
 	"github.com/tendermint/tendermint/node"
 	pvm "github.com/tendermint/tendermint/privval"
 	"github.com/tendermint/tendermint/proxy"
@@ -33,6 +33,7 @@ const (
 	flagCiStateDBTls   = "statedb_tls"
 	flagCiStateDBPort  = "statedb_port"
 	flagCiNodeDomain   = "node_domain"
+	flagMasterDomain   = "master_domain"
 	flagShardIndex     = "shardIndex"
 	flagGenesis        = "genesis" //genesis.json
 	flagNodeKey        = "nodeKey" //node_key.json
@@ -52,7 +53,9 @@ func startCmd(ctx *app.Context, appCreator app.AppCreator) *cobra.Command {
 			}
 			ctx.Logger.Info(version)
 			ctx.Logger.Info("Starting ABCI with Tendermint")
-			preSetConfig(ctx)
+			if len(viper.GetString(flagMasterDomain)) == 0 && len(viper.GetString(flagGenesis)) != 0 {
+				preSetConfig(ctx)
+			}
 			_, err := StartInProcess(ctx, appCreator)
 			if err != nil {
 				return err
@@ -67,10 +70,11 @@ func startCmd(ctx *app.Context, appCreator app.AppCreator) *cobra.Command {
 	cmd.Flags().String(flagPruning, "syncable", "Pruning strategy: syncable, nothing, everything")
 	cmd.Flags().String(flagCiStateDBType, "redis", "database types")
 	cmd.Flags().String(flagCiStateDBHost, "", "db host")
-	cmd.Flags().Uint(flagCiStateDBPort, 7443, "db port")
+	cmd.Flags().Uint64(flagCiStateDBPort, 7443, "db port")
 	cmd.Flags().Bool(flagCiStateDBTls, true, "use tls")
 	cmd.Flags().String(flagCiNodeDomain, "", "node domain")
 	cmd.Flags().String(flagShardIndex, "", "index of shard")
+	cmd.Flags().String(flagMasterDomain, "", "master node")
 
 	//cmd.Flags().String(flagLogLevel, "debug", "Run abci app with different log level")
 	tcmd.AddNodeFlags(cmd)
@@ -95,13 +99,13 @@ func startStandAlone(ctx *app.Context, appCreator app.AppCreator) error {
 
 	err = svr.Start()
 	if err != nil {
-		cmn.Exit(err.Error())
+		tos.Exit(err.Error())
 	}
 
-	cmn.TrapSignal(ctx.Logger, func() {
+	tos.TrapSignal(ctx.Logger, func() {
 		err = svr.Stop()
 		if err != nil {
-			cmn.Exit(err.Error())
+			tos.Exit(err.Error())
 		}
 	})
 	return nil
@@ -122,8 +126,8 @@ func StartInProcess(ctx *app.Context, appCreator app.AppCreator) (*node.Node, er
 		return nil, errors.New(fmt.Sprintf("%s can not be empty", flagCiStateDBHost))
 	}
 	dbTls := viper.GetBool(flagCiStateDBTls)
-	dbPort := viper.GetUint(flagCiStateDBPort)
-	p := strconv.FormatUint(uint64(dbPort), 10)
+	dbPort := viper.GetUint64(flagCiStateDBPort)
+	p := strconv.FormatUint(dbPort, 10)
 
 	switch dbType {
 	case "redis":
@@ -159,9 +163,9 @@ func StartInProcess(ctx *app.Context, appCreator app.AppCreator) (*node.Node, er
 	pv := pvm.LoadFilePV(cfg.PrivValidatorKeyFile(), cfg.PrivValidatorStateFile())
 
 	///tcp://0.0.0.0:26656
-	info := strings.Split(cfg.P2P.ListenAddress, ":")
-	if len(info) == 3 {
-		cfg.P2P.ListenAddress = "tcp://" + nodeDomain + ":" + info[2]
+	info := strings.Split(cfg.P2P.ListenAddress, "://")
+	if len(info) == 2 {
+		cfg.P2P.ListenAddress = info[0] + "://" + nodeDomain + "#" + info[1]
 	}else {
 		return nil, errors.New(fmt.Sprintf("unexpected p2p listen address: %v", cfg.P2P.ListenAddress))
 	}
@@ -187,7 +191,7 @@ func StartInProcess(ctx *app.Context, appCreator app.AppCreator) (*node.Node, er
 	ctx.Logger.Info("Starting Node Server Success")
 
 	// Sleep forever and then...
-	cmn.TrapSignal(ctx.Logger, func() {
+	tos.TrapSignal(ctx.Logger, func() {
 		tmNode.Stop()
 	})
 
@@ -200,14 +204,12 @@ func preSetConfig(ctx *app.Context) {
 	nodeKey := viper.GetString(flagNodeKey)
 	pvs := viper.GetString(flagPvs)
 	pvk := viper.GetString(flagPvk)
-	if len(genesis) != 0 {
-		genesisBytes, _ := base64.StdEncoding.DecodeString(genesis)
-		ioutil.WriteFile(cfg.GenesisFile(), genesisBytes, os.ModePerm)
-		nodeKeyBytes, _ := base64.StdEncoding.DecodeString(nodeKey)
-		ioutil.WriteFile(cfg.NodeKeyFile(), nodeKeyBytes, os.ModePerm)
-		pvsBytes, _ := base64.StdEncoding.DecodeString(pvs)
-		ioutil.WriteFile(cfg.PrivValidatorStateFile(), pvsBytes, os.ModePerm)
-		pvkBytes, _ := base64.StdEncoding.DecodeString(pvk)
-		ioutil.WriteFile(cfg.PrivValidatorKeyFile(), pvkBytes, os.ModePerm)
-	}
+	genesisBytes, _ := base64.StdEncoding.DecodeString(genesis)
+	ioutil.WriteFile(cfg.GenesisFile(), genesisBytes, os.ModePerm)
+	nodeKeyBytes, _ := base64.StdEncoding.DecodeString(nodeKey)
+	ioutil.WriteFile(cfg.NodeKeyFile(), nodeKeyBytes, os.ModePerm)
+	pvsBytes, _ := base64.StdEncoding.DecodeString(pvs)
+	ioutil.WriteFile(cfg.PrivValidatorStateFile(), pvsBytes, os.ModePerm)
+	pvkBytes, _ := base64.StdEncoding.DecodeString(pvk)
+	ioutil.WriteFile(cfg.PrivValidatorKeyFile(), pvkBytes, os.ModePerm)
 }

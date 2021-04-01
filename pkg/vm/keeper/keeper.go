@@ -300,7 +300,7 @@ func (k *Keeper) Migrate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAddres
 	startKey := append([]byte(prefix), oldKey...)
 	endKey := EndKey(startKey)
 
-	iter := k.cdb.Iterator(startKey, endKey)
+	iter, _ := k.cdb.Iterator(startKey, endKey)
 	defer iter.Close()
 
 	prefixStoreKey := types.GetContractStorePrefixKey(newContract)

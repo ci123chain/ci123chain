@@ -29,8 +29,8 @@ local-stop:
 
 #.PHONY:release, build all
 release:
-	GOPROXY=$(PROXY) GOSUMDB=off $(GO_BUILD_CMD) -o ./docker/node/build/cid-linux ./cmd/cid
-	GOPROXY=$(PROXY) GOSUMDB=off $(GO_BUILD_CMD) -o ./docker/node/build/cli-linux ./cmd/cicli
+	$(GO_BUILD_CMD) -o ./docker/node/build/cid-linux ./cmd/cid
+	$(GO_BUILD_CMD) -o ./docker/node/build/cli-linux ./cmd/cicli
 	mv /go/pkg/mod/github.com/wasmerio ./wasmerio
 
 release-build:

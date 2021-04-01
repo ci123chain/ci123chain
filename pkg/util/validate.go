@@ -143,7 +143,7 @@ func CheckPrivateKey(r *http.Request) (string, bool) {
 
 func ParsePubKey(pub string) (crypto.PubKey, error) {
 
-	pubByte := fmt.Sprintf(`{"types":"tendermint/PubKeySecp256k1", "value":"%s"}`, pub)
+	pubByte := fmt.Sprintf(`{"type":"tendermint/PubKeyEd25519", "value":"%s"}`, pub)
 	var public crypto.PubKey
 	err := cdc.UnmarshalJSON([]byte(pubByte), &public)
 	if err != nil {

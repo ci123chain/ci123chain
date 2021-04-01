@@ -2,8 +2,9 @@ package store
 
 import (
 	"bytes"
+	"errors"
 
-	cmn "github.com/tendermint/tendermint/libs/common"
+	abci "github.com/tendermint/tendermint/abci/types"
 	dbm "github.com/tendermint/tm-db"
 )
 
@@ -12,11 +13,15 @@ import (
 // Implements Iterator.
 type memIterator struct {
 	start, end []byte
-	items      []cmn.KVPair
+	items      []abci.EventAttribute
 }
 
-func newMemIterator(start, end []byte, items []cmn.KVPair) *memIterator {
-	itemsInDomain := make([]cmn.KVPair, 0)
+func (mi *memIterator) Error() error {
+	return errors.New("memIterator error")
+}
+
+func newMemIterator(start, end []byte, items []abci.EventAttribute) *memIterator {
+	itemsInDomain := make([]abci.EventAttribute, 0)
 	for _, item := range items {
 		if dbm.IsKeyInDomain(item.Key, start, end) {
 			itemsInDomain = append(itemsInDomain, item)
@@ -58,10 +63,11 @@ func (mi *memIterator) Value() []byte {
 	return mi.items[0].Value
 }
 
-func (mi *memIterator) Close() {
+func (mi *memIterator) Close() error {
 	mi.start = nil
 	mi.end = nil
 	mi.items = nil
+	return nil
 }
 
 //----------------------------------------

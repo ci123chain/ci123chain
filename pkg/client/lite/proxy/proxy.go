@@ -6,13 +6,14 @@ import (
 
 	amino "github.com/tendermint/go-amino"
 
-	cmn "github.com/tendermint/tendermint/libs/common"
+	cryptoAmino "github.com/tendermint/tendermint/crypto/encoding/amino"
+	cmn "github.com/tendermint/tendermint/libs/bytes"
 	"github.com/tendermint/tendermint/libs/log"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
-	"github.com/tendermint/tendermint/rpc/core"
+	//"github.com/tendermint/tendermint/rpc/core"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
-	rpcserver "github.com/tendermint/tendermint/rpc/lib/server"
-	rpctypes "github.com/tendermint/tendermint/rpc/lib/types"
+	rpcserver "github.com/tendermint/tendermint/rpc/jsonrpc/server"
+	rpctypes "github.com/tendermint/tendermint/rpc/jsonrpc/types"
 	"github.com/tendermint/tendermint/types"
 )
 
@@ -31,21 +32,22 @@ func StartProxy(c rpcclient.Client, listenAddr string, logger log.Logger, maxOpe
 	}
 
 	cdc := amino.NewCodec()
-	ctypes.RegisterAmino(cdc)
+	cryptoAmino.RegisterAmino(cdc)
 	r := RPCRoutes(c)
 
 	// build the handler...
 	mux := http.NewServeMux()
-	rpcserver.RegisterRPCFuncs(mux, r, cdc, logger)
+	rpcserver.RegisterRPCFuncs(mux, r, logger)
 
 	unsubscribeFromAllEvents := func(remoteAddr string) {
 		if err := c.UnsubscribeAll(context.Background(), remoteAddr); err != nil {
 			logger.Error("Failed to unsubscribe from events", "err", err)
 		}
 	}
-	wm := rpcserver.NewWebsocketManager(r, cdc, rpcserver.OnDisconnect(unsubscribeFromAllEvents))
+	wm := rpcserver.NewWebsocketManager(r, rpcserver.OnDisconnect(unsubscribeFromAllEvents))
 	wm.SetLogger(logger)
-	core.SetLogger(logger)
+	///*****TODO
+	//core.SetLogger(logger)
 	mux.HandleFunc(wsEndpoint, wm.WebsocketHandler)
 
 	config := rpcserver.DefaultConfig()
@@ -54,7 +56,7 @@ func StartProxy(c rpcclient.Client, listenAddr string, logger log.Logger, maxOpe
 	if err != nil {
 		return err
 	}
-	return rpcserver.StartHTTPServer(l, mux, logger, config)
+	return rpcserver.Serve(l, mux, logger, config)
 }
 
 // RPCRoutes just routes everything to the given clients, as if it were
@@ -64,9 +66,10 @@ func StartProxy(c rpcclient.Client, listenAddr string, logger log.Logger, maxOpe
 func RPCRoutes(c rpcclient.Client) map[string]*rpcserver.RPCFunc {
 	return map[string]*rpcserver.RPCFunc{
 		// Subscribe/unsubscribe are reserved for websocket events.
-		"subscribe":       rpcserver.NewWSRPCFunc(c.(Wrapper).SubscribeWS, "query"),
-		"unsubscribe":     rpcserver.NewWSRPCFunc(c.(Wrapper).UnsubscribeWS, "query"),
-		"unsubscribe_all": rpcserver.NewWSRPCFunc(c.(Wrapper).UnsubscribeAllWS, ""),
+		////*****TODO
+		//"subscribe":       rpcserver.NewWSRPCFunc(c.(Wrapper).SubscribeWS, "query"),
+		//"unsubscribe":     rpcserver.NewWSRPCFunc(c.(Wrapper).UnsubscribeWS, "query"),
+		//"unsubscribe_all": rpcserver.NewWSRPCFunc(c.(Wrapper).UnsubscribeAllWS, ""),
 
 		// info API
 		"status":     rpcserver.NewRPCFunc(makeStatusFunc(c), ""),
@@ -90,72 +93,75 @@ func RPCRoutes(c rpcclient.Client) map[string]*rpcserver.RPCFunc {
 
 func makeStatusFunc(c rpcclient.Client) func(ctx *rpctypes.Context) (*ctypes.ResultStatus, error) {
 	return func(ctx *rpctypes.Context) (*ctypes.ResultStatus, error) {
-		return c.Status()
+		return c.Status(ctx.Context())
 	}
 }
 
 func makeBlockchainInfoFunc(c rpcclient.Client) func(ctx *rpctypes.Context, minHeight, maxHeight int64) (*ctypes.ResultBlockchainInfo, error) {
 	return func(ctx *rpctypes.Context, minHeight, maxHeight int64) (*ctypes.ResultBlockchainInfo, error) {
-		return c.BlockchainInfo(minHeight, maxHeight)
+		return c.BlockchainInfo(ctx.Context(), minHeight, maxHeight)
 	}
 }
 
 func makeGenesisFunc(c rpcclient.Client) func(ctx *rpctypes.Context) (*ctypes.ResultGenesis, error) {
 	return func(ctx *rpctypes.Context) (*ctypes.ResultGenesis, error) {
-		return c.Genesis()
+		return c.Genesis(ctx.Context())
 	}
 }
 
 func makeBlockFunc(c rpcclient.Client) func(ctx *rpctypes.Context, height *int64) (*ctypes.ResultBlock, error) {
 	return func(ctx *rpctypes.Context, height *int64) (*ctypes.ResultBlock, error) {
-		return c.Block(height)
+		return c.Block(ctx.Context(), height)
 	}
 }
 
 func makeCommitFunc(c rpcclient.Client) func(ctx *rpctypes.Context, height *int64) (*ctypes.ResultCommit, error) {
 	return func(ctx *rpctypes.Context, height *int64) (*ctypes.ResultCommit, error) {
-		return c.Commit(height)
+		return c.Commit(ctx.Context(), height)
 	}
 }
 
 func makeTxFunc(c rpcclient.Client) func(ctx *rpctypes.Context, hash []byte, prove bool) (*ctypes.ResultTx, error) {
 	return func(ctx *rpctypes.Context, hash []byte, prove bool) (*ctypes.ResultTx, error) {
-		return c.Tx(hash, prove)
+		return c.Tx(ctx.Context(), hash, prove)
 	}
 }
 
 func makeValidatorsFunc(c rpcclient.Client) func(ctx *rpctypes.Context, height *int64) (*ctypes.ResultValidators, error) {
 	return func(ctx *rpctypes.Context, height *int64) (*ctypes.ResultValidators, error) {
-		return c.Validators(height)
+		///****TODO
+		page := 10
+		perPage := 10
+		return c.Validators(ctx.Context(), height, &page, &perPage)
 	}
 }
 
 func makeBroadcastTxCommitFunc(c rpcclient.Client) func(ctx *rpctypes.Context, tx types.Tx) (*ctypes.ResultBroadcastTxCommit, error) {
 	return func(ctx *rpctypes.Context, tx types.Tx) (*ctypes.ResultBroadcastTxCommit, error) {
-		return c.BroadcastTxCommit(tx)
+		return c.BroadcastTxCommit(ctx.Context(),tx)
 	}
 }
 
 func makeBroadcastTxSyncFunc(c rpcclient.Client) func(ctx *rpctypes.Context, tx types.Tx) (*ctypes.ResultBroadcastTx, error) {
 	return func(ctx *rpctypes.Context, tx types.Tx) (*ctypes.ResultBroadcastTx, error) {
-		return c.BroadcastTxSync(tx)
+		return c.BroadcastTxSync(ctx.Context(), tx)
 	}
 }
 
 func makeBroadcastTxAsyncFunc(c rpcclient.Client) func(ctx *rpctypes.Context, tx types.Tx) (*ctypes.ResultBroadcastTx, error) {
 	return func(ctx *rpctypes.Context, tx types.Tx) (*ctypes.ResultBroadcastTx, error) {
-		return c.BroadcastTxAsync(tx)
+		return c.BroadcastTxAsync(ctx.Context(),tx)
 	}
 }
 
 func makeABCIQueryFunc(c rpcclient.Client) func(ctx *rpctypes.Context, path string, data cmn.HexBytes) (*ctypes.ResultABCIQuery, error) {
 	return func(ctx *rpctypes.Context, path string, data cmn.HexBytes) (*ctypes.ResultABCIQuery, error) {
-		return c.ABCIQuery(path, data)
+		return c.ABCIQuery(ctx.Context(), path, data)
 	}
 }
 
 func makeABCIInfoFunc(c rpcclient.Client) func(ctx *rpctypes.Context) (*ctypes.ResultABCIInfo, error) {
 	return func(ctx *rpctypes.Context) (*ctypes.ResultABCIInfo, error) {
-		return c.ABCIInfo()
+		return c.ABCIInfo(ctx.Context())
 	}
 }

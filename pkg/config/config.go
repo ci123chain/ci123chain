@@ -43,11 +43,11 @@ func CreateConfig(moniker, root string) (*cfg.Config, error) {
 	c := cfg.DefaultConfig()
 	c.SetRoot(root)
 	c.Moniker = moniker
-	c.ProfListenAddress = "localhost:6060"
+	//c.RPC.ListenAddress = "localhost:6060"
 	c.P2P.RecvRate = 5120000
 	c.P2P.SendRate = 5120000
 	c.Consensus.TimeoutCommit = 5000 * time.Millisecond
-	c.TxIndex.IndexTags = "contract.address,contract.event.data,contract.event.name"
+	c.TxIndex.Indexer = "kv"
 	return c, unmarshalWithViper(viper.GetViper(), c)
 }
 

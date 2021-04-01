@@ -129,7 +129,7 @@ func (api *PublicFilterAPI) NewPendingTransactionFilter() rpc.ID {
 			select {
 			case ev := <-txsCh:
 				data, _ := ev.Data.(tmtypes.EventDataTx)
-				txHash := common.BytesToHash(data.Tx.Hash())
+				txHash := common.BytesToHash(data.Tx)
 
 				api.filtersMu.Lock()
 				if f, found := api.filters[pendingTxSub.ID()]; found {
@@ -157,7 +157,7 @@ func (api *PublicFilterAPI) NewPendingTransactions(ctx context.Context) (*rpc.Su
 
 	rpcSub := notifier.CreateSubscription()
 
-	ctx, cancelFn := context.WithTimeout(context.Background(), deadline)
+	ctx, cancelFn := context.WithTimeout(ctx, deadline)
 	defer cancelFn()
 
 	api.events.WithContext(ctx)
@@ -174,7 +174,7 @@ func (api *PublicFilterAPI) NewPendingTransactions(ctx context.Context) (*rpc.Su
 			select {
 			case ev := <-txsCh:
 				data, _ := ev.Data.(tmtypes.EventDataTx)
-				txHash := common.BytesToHash(data.Tx.Hash())
+				txHash := common.BytesToHash(data.Tx)
 
 				// To keep the original behaviour, send a single tx hash in one notification.
 				// TODO(rjl493456442) Send a batch of tx hashes in one notification
@@ -562,7 +562,7 @@ func New(clientCtx clientcontext.Context) *EthBackend {
 // BlockNumber returns the current block number.
 func (b *EthBackend) BlockNumber() (hexutil.Uint64, error) {
 	// NOTE: using 0 as min and max height returns the blockchain info up to the latest block.
-	info, err := b.clientCtx.Client.BlockchainInfo(0, 0)
+	info, err := b.clientCtx.Client.BlockchainInfo(b.ctx, 0, 0)
 	if err != nil {
 		return hexutil.Uint64(0), err
 	}
@@ -593,7 +593,7 @@ func (b *EthBackend) HeaderByNumber(blockNum rpctypes.BlockNumber) (*ethtypes.He
 		height = int64(num)
 	}
 
-	resBlock, err := b.clientCtx.Client.Block(&height)
+	resBlock, err := b.clientCtx.Client.Block(b.ctx, &height)
 	if err != nil {
 		return nil, err
 	}
@@ -623,7 +623,7 @@ func (b *EthBackend) HeaderByHash(blockHash common.Hash) (*ethtypes.Header, erro
 		return nil, err
 	}
 
-	resBlock, err2 := b.clientCtx.Client.Block(&out.Number)
+	resBlock, err2 := b.clientCtx.Client.Block(b.ctx, &out.Number)
 	if err2 != nil {
 		return nil, err2
 	}
@@ -677,7 +677,7 @@ func (b *EthBackend) GetLogs(blockHash common.Hash) ([][]*ethtypes.Log, error) {
 		return nil, err
 	}
 
-	block, err2 := b.clientCtx.Client.Block(&out.Number)
+	block, err2 := b.clientCtx.Client.Block(b.ctx, &out.Number)
 	if err2 != nil {
 		return nil, err2
 	}

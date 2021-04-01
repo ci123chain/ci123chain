@@ -3,10 +3,11 @@ package store
 import (
 	"bytes"
 	"fmt"
-
-	"github.com/tendermint/iavl"
 	"github.com/tendermint/tendermint/crypto/merkle"
-	cmn "github.com/tendermint/tendermint/libs/common"
+
+	cmn "github.com/ci123chain/ci123chain/pkg/libs/common"
+	"github.com/cosmos/iavl"
+	"github.com/tendermint/tendermint/proto/tendermint/crypto"
 )
 
 // MultiStoreProof defines a collection of store proofs in a multi-store
@@ -65,7 +66,7 @@ func NewMultiStoreProofOp(key []byte, proof *MultiStoreProof) MultiStoreProofOp 
 
 // MultiStoreProofOpDecoder returns a multi-store merkle proof operator from a
 // given proof operation.
-func MultiStoreProofOpDecoder(pop merkle.ProofOp) (merkle.ProofOperator, error) {
+func MultiStoreProofOpDecoder(pop crypto.ProofOp) (merkle.ProofOperator, error) {
 	if pop.Type != ProofOpMultiStore {
 		return nil, cmn.NewError("unexpected ProofOp.Type; got %v, want %v", pop.Type, ProofOpMultiStore)
 	}
@@ -83,9 +84,9 @@ func MultiStoreProofOpDecoder(pop merkle.ProofOp) (merkle.ProofOperator, error) 
 
 // ProofOp return a merkle proof operation from a given multi-store proof
 // operation.
-func (op MultiStoreProofOp) ProofOp() merkle.ProofOp {
+func (op MultiStoreProofOp) ProofOp() crypto.ProofOp {
 	bz := cdc.MustMarshalBinaryLengthPrefixed(op)
-	return merkle.ProofOp{
+	return crypto.ProofOp{
 		Type: ProofOpMultiStore,
 		Key:  op.key,
 		Data: bz,
@@ -132,9 +133,9 @@ func (op MultiStoreProofOp) Run(args [][]byte) ([][]byte, error) {
 // more proof ops?
 func DefaultProofRuntime() (prt *merkle.ProofRuntime) {
 	prt = merkle.NewProofRuntime()
-	prt.RegisterOpDecoder(merkle.ProofOpSimpleValue, merkle.SimpleValueOpDecoder)
-	prt.RegisterOpDecoder(iavl.ProofOpIAVLValue, iavl.IAVLValueOpDecoder)
-	prt.RegisterOpDecoder(iavl.ProofOpIAVLAbsence, iavl.IAVLAbsenceOpDecoder)
+	prt.RegisterOpDecoder(merkle.ProofOpValue, merkle.ValueOpDecoder)
+	prt.RegisterOpDecoder(iavl.ProofOpIAVLValue, iavl.ValueOpDecoder)
+	prt.RegisterOpDecoder(iavl.ProofOpIAVLAbsence, iavl.AbsenceOpDecoder)
 	prt.RegisterOpDecoder(ProofOpMultiStore, MultiStoreProofOpDecoder)
 	return
 }

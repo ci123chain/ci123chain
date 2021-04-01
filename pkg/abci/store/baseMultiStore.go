@@ -116,7 +116,7 @@ func (bs *baseMultiStore) Commit() CommitID {
 	var CommitInfo commitInfo
 	version := bs.lastCommitID.Version + 1
 	cInfoKey := fmt.Sprintf(sdk.CommitInfoKeyFmt, version)
-	cInfoBytes := bs.db.Get([]byte(cInfoKey))
+	cInfoBytes, _ := bs.db.Get([]byte(cInfoKey))
 	if cInfoBytes == nil {
 		// Commit stores.
 		CommitInfo = commitBaseStores(version, bs.stores)

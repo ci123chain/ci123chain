@@ -10,15 +10,15 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/ci123chain/ci123chain/pkg/client/lite/proxy"
-	cmn "github.com/tendermint/tendermint/libs/common"
-	rpcclient "github.com/tendermint/tendermint/rpc/client"
+	cmn "github.com/tendermint/tendermint/libs/os"
+	rpcclient "github.com/tendermint/tendermint/rpc/client/http"
 )
 
 var logger = log.NewTMLogger(log.NewSyncWriter(os.Stdout))
 // LiteCmd represents the base command when called without any subcommands
 var LiteCmd = &cobra.Command{
 	Use:   "lite",
-	Short: "Run lite-clients proxy server, verifying tendermint rpc",
+	Short: "Run lite-client proxy server, verifying tendermint rpc",
 	Long: `This node will run a secure proxy to a tendermint rpc server.
 
 All calls that can be tracked back to a block header by a proof
@@ -77,9 +77,12 @@ func runProxy(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// First, connect a clients
-	logger.Info("Connecting to source HTTP clients...")
-	node := rpcclient.NewHTTP(nodeAddr, "/websocket")
+	// First, connect a client
+	logger.Info("Connecting to source HTTP client...")
+	node, err := rpcclient.New(nodeAddr, "/websocket")
+	if err != nil {
+		return err
+	}
 
 	logger.Info("Constructing Verifier...")
 	cert, err := proxy.NewVerifier(chainID, home, node, logger, cacheSize)

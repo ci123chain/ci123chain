@@ -155,6 +155,10 @@ type gasIterator struct {
 	parent    sdk.Iterator
 }
 
+func (gi *gasIterator) Error() error {
+	return nil
+}
+
 func newGasIterator(gasMeter sdk.GasMeter, gasConfig sdk.GasConfig, parent sdk.Iterator) sdk.Iterator {
 	return &gasIterator{
 		gasMeter:  gasMeter,
@@ -199,8 +203,8 @@ func (gi *gasIterator) Value() (value []byte) {
 }
 
 // Implements Iterator.
-func (gi *gasIterator) Close() {
-	gi.parent.Close()
+func (gi *gasIterator) Close() error {
+	return gi.parent.Close()
 }
 
 // consumeSeekGas consumes a flat gas cost for seeking and a variable gas cost

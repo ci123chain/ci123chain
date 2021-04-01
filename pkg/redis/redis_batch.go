@@ -10,18 +10,20 @@ type redisBatch struct {
 	batch *Batch
 }
 
-func (rb *redisBatch) Set(key, value []byte) {
+func (rb *redisBatch) Set(key, value []byte) error {
 	rb.batch.Set(hex.EncodeToString(key), hex.EncodeToString(value))
+	return nil
 }
 
 //TODO add batch delete.
-func (rb *redisBatch) Delete(key []byte) {
+func (rb *redisBatch) Delete(key []byte) error {
 	rb.batch.Delete(hex.EncodeToString(key))
+	return nil
 }
 
-func (rb *redisBatch) Write() {
+func (rb *redisBatch) Write() error {
 	if rb.batch.docs == nil {
-		return
+		return nil
 	}
 	retry := 0
 	for {
@@ -34,17 +36,18 @@ func (rb *redisBatch) Write() {
 			rb.rdb.lg.Error(fmt.Sprintf("Error: %s", err.Error()))
 			retry++
 		}else {
-			return
+			return nil
 		}
 	}
 }
 
 
-func (rb *redisBatch) WriteSync() {
-	rb.Write()
+func (rb *redisBatch) WriteSync() error {
+	return rb.Write()
 }
 
 
-func (rb *redisBatch) Close() {
+func (rb *redisBatch) Close() error {
 	rb = nil
+	return nil
 }

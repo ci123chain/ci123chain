@@ -144,7 +144,7 @@ func (api *PublicEthereumAPI) ChainId() (hexutil.Uint, error) { // nolint
 func (api *PublicEthereumAPI) Syncing() (interface{}, error) {
 	api.logger.Debug("eth_syncing")
 
-	status, err := api.clientCtx.Client.Status()
+	status, err := api.clientCtx.Client.Status(api.ctx)
 	if err != nil {
 		return false, err
 	}
@@ -171,7 +171,7 @@ func (api *PublicEthereumAPI) Coinbase() (common.Address, error) {
 		return common.Address{}, err
 	}
 
-	status, err := node.Status()
+	status, err := node.Status(api.ctx)
 	if err != nil {
 		return common.Address{}, err
 	}
@@ -200,7 +200,7 @@ func (api *PublicEthereumAPI) GasPrice() *hexutil.Big {
 
 func (api *PublicEthereumAPI) BlockNumber() (hexutil.Uint64, error) {
 	api.logger.Debug("eth_blockNumber")
-	info, err := api.clientCtx.Client.ABCIInfo()
+	info, err := api.clientCtx.Client.ABCIInfo(api.ctx)
 	if err != nil {
 		return 0, err
 	}
@@ -220,7 +220,7 @@ func (api *PublicEthereumAPI) GetBlockByNumber(blockNum BlockNumber, fullTx bool
 		height = int64(num)
 	}
 
-	resBlock, err := api.clientCtx.Client.Block(&height)
+	resBlock, err := api.clientCtx.Client.Block(api.ctx, &height)
 	if err != nil {
 		return nil, err
 	}
@@ -294,7 +294,7 @@ func (api *PublicEthereumAPI) GetStorageAt(address common.Address, key string, b
 // GetTransactionReceipt returns the transaction receipt identified by hash.
 func (api *PublicEthereumAPI) GetTransactionReceipt(hash common.Hash) (map[string]interface{}, error) {
 	api.logger.Debug("eth_getTransactionReceipt", "hash", hash)
-	tx, err := api.clientCtx.Client.Tx(hash.Bytes(), false)
+	tx, err := api.clientCtx.Client.Tx(api.ctx, hash.Bytes(), false)
 	if err != nil {
 		// Return nil for transaction when not found
 		return nil, nil
@@ -317,7 +317,7 @@ func (api *PublicEthereumAPI) GetTransactionReceipt(hash common.Hash) (map[strin
 	}
 
 	// Query block for consensus hash
-	block, err := api.clientCtx.Client.Block(&tx.Height)
+	block, err := api.clientCtx.Client.Block(api.ctx, &tx.Height)
 	if err != nil {
 		return nil, err
 	}
@@ -492,14 +492,14 @@ func (api *PublicEthereumAPI) GetCode(address common.Address, blockNumber BlockN
 
 func (api *PublicEthereumAPI) GetTransactionByHash(hash common.Hash) (*Transaction, error) {
 	api.logger.Debug("eth_getTransactionByHash", "hash", hash)
-	tx, err := api.clientCtx.Client.Tx(hash.Bytes(), false)
+	tx, err := api.clientCtx.Client.Tx(api.ctx, hash.Bytes(), false)
 	if err != nil {
 		// Return nil for transaction when not found
 		return nil, nil
 	}
 
 	// Can either cache or just leave this out if not necessary
-	block, err := api.clientCtx.Client.Block(&tx.Height)
+	block, err := api.clientCtx.Client.Block(api.ctx, &tx.Height)
 	if err != nil {
 		return nil, err
 	}

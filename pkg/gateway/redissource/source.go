@@ -7,16 +7,18 @@ import (
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/gateway/logger"
 	r "github.com/ci123chain/ci123chain/pkg/redis"
-	"github.com/ci123chain/ci123chain/sdk/domain"
 	"github.com/go-redis/redis/v8"
-	"github.com/spf13/viper"
 	"regexp"
 	"strings"
 )
 
-const Domain = "DOMAIN"
-const SharedKey  = "s/k:order/OrderBook"
-const HostPattern  = "[*]+"
+const (
+	Domain = "DOMAIN"
+	SharedKey  = "s/k:order/OrderBook"
+	HostPattern  = "[*]+"
+	FlagNodeList   = "node-list"
+)
+
 func NewRedisSource(host, urlreg string) *RedisDBSourceImp {
 	imp := &RedisDBSourceImp{
 		hostStr: 	host,
@@ -47,43 +49,16 @@ func (s *RedisDBSourceImp) FetchSource() (hostArr []string) {
 		s.conn = conn
 	}
 
-	bz := s.conn.Get([]byte(SharedKey))
-	var shared map[string]interface{}
-	err := json.Unmarshal(bz, &shared)
+	bz := s.conn.Get([]byte(FlagNodeList))
+	var node_list []string
+	err := json.Unmarshal(bz, &node_list)
 	if err != nil {
 		logger.Error("fetch data from redisDB error: ", err)
 	}
 
-	orderDict, ok := shared["value"].(map[string]interface{})
-	if !ok {
-		return
-	}
-	lists, ok := orderDict["lists"].([]interface{})
-	if !ok {
-		return
-	}
-
-	//gateway.nodekey.suffix
 	var host string
-	for _, value := range lists {
-		item, ok := value.(map[string]interface{})
-		if !ok {
-			continue
-		}
-		shardDomain := item["domain"].(string)
-		if shardDomain != "" {
-			host = s.getAdjustHost(HostPattern, shardDomain)
-		} else {
-			name := item["name"].(string)
-			selfDomain := viper.GetString(Domain)
-			if len(selfDomain) > 0 {
-				name = domain.GetShardDomain(selfDomain, name)
-			}
-			host = s.getAdjustHost(HostPattern, name)
-		}
-		//if !strings.HasPrefix(name, "http") {
-		//	name = "http://" + name + ":80"
-		//}
+	for _, value := range node_list {
+		host = s.getAdjustHost(HostPattern, value)
 		if len(host) > 0 {
 			hostArr = append(hostArr, host)
 		}

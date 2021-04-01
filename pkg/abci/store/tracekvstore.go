@@ -131,6 +131,10 @@ type traceIterator struct {
 	context TraceContext
 }
 
+func (ti *traceIterator) Error() error {
+	return nil
+}
+
 func newTraceIterator(w io.Writer, parent sdk.Iterator, tc TraceContext) sdk.Iterator {
 	return &traceIterator{writer: w, parent: parent, context: tc}
 }
@@ -167,8 +171,8 @@ func (ti *traceIterator) Value() []byte {
 }
 
 // Close implements the Iterator interface.
-func (ti *traceIterator) Close() {
-	ti.parent.Close()
+func (ti *traceIterator) Close() error {
+	return ti.parent.Close()
 }
 
 // GetStoreType implements the KVStore interface. It returns the underlying

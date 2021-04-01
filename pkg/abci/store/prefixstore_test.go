@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/tendermint/iavl"
+	"github.com/cosmos/iavl"
 	dbm "github.com/tendermint/tm-db"
 
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
@@ -75,7 +75,8 @@ func testPrefixStore(t *testing.T, baseStore KVStore, prefix []byte) {
 
 func TestIAVLStorePrefix(t *testing.T) {
 	db := dbm.NewMemDB()
-	tree := iavl.NewMutableTree(db, cacheSize)
+	tree, err := iavl.NewMutableTree(db, cacheSize)
+	require.NoError(t, err)
 	iavlStore := newIAVLStore(db, tree, numRecent, storeEvery, nil)
 
 	testPrefixStore(t, iavlStore, []byte("test"))

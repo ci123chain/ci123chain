@@ -5,6 +5,7 @@ import (
 	"github.com/tendermint/tendermint/crypto/ed25519"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 
+	ttypes "github.com/tendermint/tendermint/proto/tendermint/types"
 	"github.com/tendermint/tendermint/types"
 	tmtime "github.com/tendermint/tendermint/types/time"
 )
@@ -70,18 +71,20 @@ func (pkz privKeys) ToValidators(init, inc int64) *types.ValidatorSet {
 
 // signHeader properly signs the header with all keys from first to last exclusive.
 func (pkz privKeys) signHeader(header *types.Header, first, last int) *types.Commit {
-	commitSigs := make([]*types.CommitSig, len(pkz))
+	commitSigs := make([]types.CommitSig, len(pkz))
 
 	// We need this list to keep the ordering.
 	vset := pkz.ToValidators(1, 0)
 
 	// Fill in the votes we want.
+	var round int32
 	for i := first; i < last && i < len(pkz); i++ {
 		vote := makeVote(header, vset, pkz[i])
 		commitSigs[vote.ValidatorIndex] = vote.CommitSig()
+		round = vote.Round
 	}
 	blockID := types.BlockID{Hash: header.Hash()}
-	return types.NewCommit(blockID, commitSigs)
+	return types.NewCommit(header.Height, round, blockID, commitSigs)
 }
 
 func makeVote(header *types.Header, valset *types.ValidatorSet, key crypto.PrivKey) *types.Vote {
@@ -93,11 +96,11 @@ func makeVote(header *types.Header, valset *types.ValidatorSet, key crypto.PrivK
 		Height:           header.Height,
 		Round:            1,
 		Timestamp:        tmtime.Now(),
-		Type:             types.PrecommitType,
+		Type:             ttypes.PrecommitType,
 		BlockID:          types.BlockID{Hash: header.Hash()},
 	}
 	// Sign it
-	signBytes := vote.SignBytes(header.ChainID)
+	signBytes := types.VoteSignBytes(header.ChainID, vote.ToProto())
 	// TODO Consider reworking makeVote API to return an error
 	sig, err := key.Sign(signBytes)
 	if err != nil {
@@ -115,8 +118,8 @@ func genHeader(chainID string, height int64, txs types.Txs,
 		ChainID:  chainID,
 		Height:   height,
 		Time:     tmtime.Now(),
-		NumTxs:   int64(len(txs)),
-		TotalTxs: int64(len(txs)),
+		//NumTxs:   int64(len(txs)),
+		//TotalTxs: int64(len(txs)),
 		// LastBlockID
 		// LastCommitHash
 		ValidatorsHash:     valset.Hash(),

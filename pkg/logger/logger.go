@@ -1,8 +1,8 @@
 package logger
 
 import (
-	"github.com/spf13/viper"
 	"github.com/ci123chain/ci123chain/pkg/logger/spliter"
+	"github.com/spf13/viper"
 	cfg "github.com/tendermint/tendermint/config"
 	"github.com/tendermint/tendermint/libs/cli"
 	tmflags "github.com/tendermint/tendermint/libs/cli/flags"
@@ -32,7 +32,7 @@ func GetDefaultLogger(lv string) Logger {
 	}
 	logger = log.NewTMLogger(log.NewSyncWriter(io.MultiWriter(os.Stdout, file)))
 
-	logger, err = tmflags.ParseLogLevel(lv, logger, cfg.DefaultLogLevel())
+	logger, err = tmflags.ParseLogLevel(lv, logger, cfg.DefaultLogLevel)
 	if err != nil {
 		panic(err)
 	}

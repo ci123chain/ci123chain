@@ -22,8 +22,11 @@ import (
 	distypes "github.com/ci123chain/ci123chain/pkg/distribution/types"
 	iftypes "github.com/ci123chain/ci123chain/pkg/infrastructure/types"
 	ordertypes "github.com/ci123chain/ci123chain/pkg/order/types"
+	"github.com/ci123chain/ci123chain/pkg/snapshots"
+	snapshottypes "github.com/ci123chain/ci123chain/pkg/snapshots/types"
 	staktypes "github.com/ci123chain/ci123chain/pkg/staking/types"
 	wasmtypes "github.com/ci123chain/ci123chain/pkg/vm/wasmtypes"
+	"github.com/tendermint/tendermint/proto/tendermint/types"
 )
 
 // Key to store the header in the DB itself.
@@ -80,6 +83,131 @@ type BaseApp struct {
 
 	// flag for sealing
 	sealed bool
+
+	// manages snapshots, i.e. dumps of app state at certain intervals
+	snapshotManager    *snapshots.Manager
+	snapshotInterval   uint64 // block interval between state sync snapshots
+	snapshotKeepRecent uint32 // recent state sync snapshots to keep
+}
+
+func (app *BaseApp) ListSnapshots(req abci.RequestListSnapshots) abci.ResponseListSnapshots {
+	resp := abci.ResponseListSnapshots{Snapshots: []*abci.Snapshot{}}
+	if app.snapshotManager == nil {
+		return resp
+	}
+
+	snapshots, err := app.snapshotManager.List()
+	if err != nil {
+		app.Logger.Error("failed to list snapshots", "err", err)
+		return resp
+	}
+
+	for _, snapshot := range snapshots {
+		abciSnapshot, err := snapshot.ToABCI()
+		if err != nil {
+			app.Logger.Error("failed to list snapshots", "err", err)
+			return resp
+		}
+		resp.Snapshots = append(resp.Snapshots, &abciSnapshot)
+	}
+
+	return resp
+}
+
+func (app *BaseApp) OfferSnapshot(req abci.RequestOfferSnapshot) abci.ResponseOfferSnapshot {
+	if app.snapshotManager == nil {
+		app.Logger.Error("snapshot manager not configured")
+		return abci.ResponseOfferSnapshot{Result: abci.ResponseOfferSnapshot_ABORT}
+	}
+
+	if req.Snapshot == nil {
+		app.Logger.Error("received nil snapshot")
+		return abci.ResponseOfferSnapshot{Result: abci.ResponseOfferSnapshot_REJECT}
+	}
+
+	snapshot, err := snapshottypes.SnapshotFromABCI(req.Snapshot)
+	if err != nil {
+		app.Logger.Error("failed to decode snapshot metadata", "err", err)
+		return abci.ResponseOfferSnapshot{Result: abci.ResponseOfferSnapshot_REJECT}
+	}
+
+	err = app.snapshotManager.Restore(snapshot)
+	switch {
+	case err == nil:
+		return abci.ResponseOfferSnapshot{Result: abci.ResponseOfferSnapshot_ACCEPT}
+
+	case errors.Is(err, snapshottypes.ErrUnknownFormat):
+		return abci.ResponseOfferSnapshot{Result: abci.ResponseOfferSnapshot_REJECT_FORMAT}
+
+	case errors.Is(err, snapshottypes.ErrInvalidMetadata):
+		app.Logger.Error(
+			"rejecting invalid snapshot",
+			"height", req.Snapshot.Height,
+			"format", req.Snapshot.Format,
+			"err", err,
+		)
+		return abci.ResponseOfferSnapshot{Result: abci.ResponseOfferSnapshot_REJECT}
+
+	default:
+		app.Logger.Error(
+			"failed to restore snapshot",
+			"height", req.Snapshot.Height,
+			"format", req.Snapshot.Format,
+			"err", err,
+		)
+
+		// We currently don't support resetting the IAVL stores and retrying a different snapshot,
+		// so we ask Tendermint to abort all snapshot restoration.
+		return abci.ResponseOfferSnapshot{Result: abci.ResponseOfferSnapshot_ABORT}
+	}
+}
+
+func (app *BaseApp) LoadSnapshotChunk(req abci.RequestLoadSnapshotChunk) abci.ResponseLoadSnapshotChunk {
+	if app.snapshotManager == nil {
+		return abci.ResponseLoadSnapshotChunk{}
+	}
+	chunk, err := app.snapshotManager.LoadChunk(req.Height, req.Format, req.Chunk)
+	if err != nil {
+		app.Logger.Error(
+			"failed to load snapshot chunk",
+			"height", req.Height,
+			"format", req.Format,
+			"chunk", req.Chunk,
+			"err", err,
+		)
+		return abci.ResponseLoadSnapshotChunk{}
+	}
+	return abci.ResponseLoadSnapshotChunk{Chunk: chunk}
+}
+
+func (app *BaseApp) ApplySnapshotChunk(req abci.RequestApplySnapshotChunk) abci.ResponseApplySnapshotChunk {
+	if app.snapshotManager == nil {
+		app.Logger.Error("snapshot manager not configured")
+		return abci.ResponseApplySnapshotChunk{Result: abci.ResponseApplySnapshotChunk_ABORT}
+	}
+
+	_, err := app.snapshotManager.RestoreChunk(req.Chunk)
+	switch {
+	case err == nil:
+		return abci.ResponseApplySnapshotChunk{Result: abci.ResponseApplySnapshotChunk_ACCEPT}
+
+	case errors.Is(err, snapshottypes.ErrChunkHashMismatch):
+		app.Logger.Error(
+			"chunk checksum mismatch; rejecting sender and requesting refetch",
+			"chunk", req.Index,
+			"sender", req.Sender,
+			"err", err,
+		)
+		return abci.ResponseApplySnapshotChunk{
+			Result:        abci.ResponseApplySnapshotChunk_RETRY,
+			RefetchChunks: []uint32{req.Index},
+			RejectSenders: []string{req.Sender},
+		}
+
+	default:
+		app.Logger.Error("failed to restore snapshot", "err", err)
+		return abci.ResponseApplySnapshotChunk{Result: abci.ResponseApplySnapshotChunk_ABORT}
+	}
 }
 
 var _ abci.Application = (*BaseApp)(nil)
@@ -191,7 +319,7 @@ func (app *BaseApp) initFromStore(mainKey sdk.StoreKey) error {
 		return errors.New("baseapp expects MultiStore with 'main' KVStore")
 	}
 	// Needed for `gaiad export`, which inits from store but never calls initchain
-	app.setCheckState(abci.Header{})
+	app.setCheckState(types.Header{})
 
 	app.Seal()
 
@@ -199,7 +327,7 @@ func (app *BaseApp) initFromStore(mainKey sdk.StoreKey) error {
 }
 
 // NewContext returns a new Context with the correct store, the given header, and nil txBytes.
-func (app *BaseApp) NewContext(isCheckTx bool, header abci.Header) sdk.Context {
+func (app *BaseApp) NewContext(isCheckTx bool, header types.Header) sdk.Context {
 	if isCheckTx {
 		return sdk.NewContext(app.checkState.ms, header, true, app.Logger)
 	}
@@ -219,7 +347,7 @@ func (st *state) Context() sdk.Context {
 	return st.ctx
 }
 
-func (app *BaseApp) setCheckState(header abci.Header) {
+func (app *BaseApp) setCheckState(header types.Header) {
 	ms := app.cms.CacheMultiStore()
 	app.checkState = &state{
 		ms:  ms,
@@ -227,7 +355,7 @@ func (app *BaseApp) setCheckState(header abci.Header) {
 	}
 }
 
-func (app *BaseApp) setDeliverState(header abci.Header) {
+func (app *BaseApp) setDeliverState(header types.Header) {
 	ms := app.cms.CacheMultiStore()
 	app.deliverState = &state{
 		ms:  ms,
@@ -260,8 +388,8 @@ func (app *BaseApp) SetOption(req abci.RequestSetOption) (res abci.ResponseSetOp
 // InitChain runs the initialization logic directly on the CommitMultiStore and commits it.
 func (app *BaseApp) InitChain(req abci.RequestInitChain) (res abci.ResponseInitChain) {
 	// Initialize the deliver state and check state with ChainID and run initChain
-	app.setDeliverState(abci.Header{ChainID: req.ChainId})
-	app.setCheckState(abci.Header{ChainID: req.ChainId})
+	app.setDeliverState(types.Header{ChainID: req.ChainId})
+	app.setCheckState(types.Header{ChainID: req.ChainId})
 
 	if app.initChainer == nil {
 		return

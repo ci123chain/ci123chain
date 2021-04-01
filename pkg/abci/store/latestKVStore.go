@@ -6,7 +6,6 @@ import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/tmhash"
-	cmn "github.com/tendermint/tendermint/libs/common"
 	"io"
 	"reflect"
 	"sort"
@@ -185,15 +184,15 @@ func (ks *latestStore) iterator(start, end []byte, ascending bool) Iterator {
 }
 
 // Constructs a slice of dirty items, to use w/ memIterator.
-func (ks *latestStore) dirtyItems(ascending bool) []cmn.KVPair {
-	items := make([]cmn.KVPair, 0, len(ks.cache))
+func (ks *latestStore) dirtyItems(ascending bool) []abci.EventAttribute {
+	items := make([]abci.EventAttribute, 0, len(ks.cache))
 
 	for key, cacheValue := range ks.cache {
 		if !cacheValue.dirty {
 			continue
 		}
 
-		items = append(items, cmn.KVPair{Key: []byte(key), Value: cacheValue.value})
+		items = append(items, abci.EventAttribute{Key: []byte(key), Value: cacheValue.value})
 	}
 
 	sort.Slice(items, func(i, j int) bool {
