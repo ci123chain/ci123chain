@@ -376,7 +376,7 @@ func genesisAccountModule(appState map[string]json.RawMessage, accountInfo []Acc
 			return errors.New("account amount converts to bigInt failed")
 		}
 
-		genAcc := account.NewGenesisAccountRaw(v.Address, types.NewChainCoin(amount))
+		genAcc := account.NewGenesisAccountRaw(v.Address, types.NewCoins(types.NewChainCoin(amount)))
 		if err := genAcc.Validate(); err != nil {
 			return err
 		}

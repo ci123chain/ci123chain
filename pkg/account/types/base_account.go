@@ -23,7 +23,7 @@ func ProtoBaseAccount() exported.Account  {
 
 type BaseAccount struct {
 	Address       	types.AccAddress `json:"address" yaml:"address"`
-	Coin        	types.Coin       `json:"coin" yaml:"coin"`
+	Coins        	types.Coins     `json:"coins" yaml:"coins"`
 	Sequence      	uint64         `json:"sequence_number" yaml:"sequence_number"`
 	AccountNumber 	uint64         `json:"account_number" yaml:"account_number"`
 	PubKey 			crypto.PubKey  `json:"pub_key" yaml:"pub_key"`
@@ -33,12 +33,12 @@ type BaseAccount struct {
 }
 
 // NewBaseAccount creates a new BaseAccount object
-func NewBaseAccount(address types.AccAddress, coin types.Coin,
+func NewBaseAccount(address types.AccAddress, coin types.Coins,
 	pubKey crypto.PubKey, accountNumber uint64, sequence uint64) *BaseAccount {
 
 	return &BaseAccount{
 		Address:       address,
-		Coin:          coin,
+		Coins:          coin,
 		PubKey:        pubKey,
 		AccountNumber: accountNumber,
 		Sequence:      sequence,
@@ -93,13 +93,13 @@ func (acc *BaseAccount) SetPubKey(pubKey crypto.PubKey) error {
 }
 
 // GetCoins - Implements sdk.Account.
-func (acc *BaseAccount) GetCoin() types.Coin {
-	return acc.Coin
+func (acc *BaseAccount) GetCoins() types.Coins {
+	return acc.Coins
 }
 
 // SetCoins - Implements sdk.Account.
-func (acc *BaseAccount) SetCoin(coin types.Coin) error {
-	acc.Coin = coin
+func (acc *BaseAccount) SetCoins(coin types.Coins) error {
+	acc.Coins = coin
 	return nil
 }
 
@@ -127,18 +127,18 @@ func (acc *BaseAccount) SetSequence(seq uint64) error {
 
 // SpendableCoins returns the total set of spendable coins. For a base account,
 // this is simply the base coins.
-func (acc *BaseAccount) SpendableCoins(_ time.Time) types.Coin{
-	return acc.GetCoin()
+func (acc *BaseAccount) SpendableCoins(_ time.Time) types.Coins{
+	return acc.GetCoins()
 }
 
 func (acc *BaseAccount) String() string {
 	return fmt.Sprintf(`Vesting Account:
   Address:          %s
   Pubkey:           %s
-  Coins:            %s
+  Coins:            %v
   AccountNumber:    %d
   Sequence:         %d`,
-		acc.Address, acc.PubKey, acc.Coin, acc.AccountNumber, acc.Sequence,
+		acc.Address, acc.PubKey, acc.Coins, acc.AccountNumber, acc.Sequence,
 	)
 }
 
@@ -149,7 +149,7 @@ func (acc *BaseAccount) EthAddress() ethcmn.Address {
 
 // Balance returns the balance of an account.
 func (acc *BaseAccount) Balance(denom string) types.Int {
-	return acc.GetCoin().AmountOf(denom)
+	return acc.GetCoins().AmountOf(denom)
 }
 
 // SetBalance sets an account's balance of the given coin denomination.
@@ -157,7 +157,7 @@ func (acc *BaseAccount) Balance(denom string) types.Int {
 // CONTRACT: assumes the denomination is valid.
 func (acc *BaseAccount) SetBalance(denom string, amt types.Int) {
 	newCoin := types.NewChainCoin(amt)
-	if err := acc.SetCoin(newCoin); err != nil {
+	if err := acc.SetCoins(types.NewCoins(newCoin)); err != nil {
 		panic(fmt.Errorf("could not set %s coins for address %s: %w", denom, acc.EthAddress().String(), err))
 	}
 }

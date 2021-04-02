@@ -11,11 +11,11 @@ const RouteKey = "Transfer"
 type MsgTransfer struct {
 	FromAddress sdk.AccAddress  `json:"from"`
 	To     		sdk.AccAddress  `json:"to"`
-	Amount 		sdk.Coin        `json:"amount"`
+	Amount 		sdk.Coins        `json:"amount"`
 	FabricMode 	bool         	`json:"fabric_mode"`
 }
 
-func NewMsgTransfer(from, to sdk.AccAddress, amount sdk.Coin, isFabric bool ) *MsgTransfer {
+func NewMsgTransfer(from, to sdk.AccAddress, amount sdk.Coins, isFabric bool ) *MsgTransfer {
 	msg := &MsgTransfer{
 		FromAddress: 	from,
 		To: 			to,
@@ -26,9 +26,9 @@ func NewMsgTransfer(from, to sdk.AccAddress, amount sdk.Coin, isFabric bool ) *M
 }
 
 func (msg *MsgTransfer) ValidateBasic() sdk.Error {
-	if msg.Amount.IsEqual(sdk.NewChainCoin(sdk.NewInt(0)))  {
-		return types.ErrBadAmount(types.DefaultCodespace, errors.New("amount = 0"))
-	}
+	//if msg.Amount.IsEqual(sdk.NewChainCoin(sdk.NewInt(0)))  {
+	//	return types.ErrBadAmount(types.DefaultCodespace, errors.New("amount = 0"))
+	//}
 	if msg.To.Empty() {
 		return types.ErrBadReceiver(types.DefaultCodespace, errors.New("empty to address"))
 	}

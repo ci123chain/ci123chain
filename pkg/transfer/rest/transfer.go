@@ -33,13 +33,18 @@ func SendRequestHandlerFn(cliCtx context.Context, writer http.ResponseWriter, re
 	if err != nil {
 		isFabric = false
 	}
+	denom := request.FormValue("denom")
+	if denom == "" {
+		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, "the name of the coin which you want to transfer cant not be empty"))
+		return
+	}
 	to := sdk.HexToAddress(request.FormValue("to"))
 	amount, err := strconv.ParseUint(request.FormValue("amount"), 10, 64)
 	if err != nil {
 		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
 		return
 	}
-	isBalanceEnough, denom := CheckAccountAndBalanceFromParams(cliCtx, request, writer)
+	isBalanceEnough := CheckAccountAndBalanceFromParams(cliCtx, request, writer, denom)
 	if !isBalanceEnough {
 		rest.WriteErrorRes(writer, transaction.ErrAmount(types.DefaultCodespace, errors.New("The balance is not enough to pay the amount")) )
 		return
@@ -49,7 +54,7 @@ func SendRequestHandlerFn(cliCtx context.Context, writer http.ResponseWriter, re
 		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, "invalid amount"))
 		return
 	}
-	msg := transfer2.NewMsgTransfer(from, to, coin, isFabric)
+	msg := transfer2.NewMsgTransfer(from, to, sdk.NewCoins(coin), isFabric)
 	if !broadcast {
 		rest.PostProcessResponseBare(writer, cliCtx, hex.EncodeToString(msg.Bytes()))
 		return
@@ -76,7 +81,7 @@ func SendRequestHandlerFn(cliCtx context.Context, writer http.ResponseWriter, re
 
 // check balance from tranfer params
 
-func CheckAccountAndBalanceFromParams(ctx context.Context, r *http.Request, w http.ResponseWriter) (bool, string) {
+func CheckAccountAndBalanceFromParams(ctx context.Context, r *http.Request, w http.ResponseWriter, denom string) bool {
 	from := r.FormValue("from")
 	amount := r.FormValue("amount")
 
@@ -86,16 +91,16 @@ func CheckAccountAndBalanceFromParams(ctx context.Context, r *http.Request, w ht
 
 	if err != nil {
 		rest.WriteErrorRes(w, sdk.ErrInternal("get balances of from account failed"))
-		return false, ""
+		return false
 	}
 	amountI, ok := sdk.NewIntFromString(amount)
 	if !ok {
 		rest.WriteErrorRes(w, sdk.ErrInternal(fmt.Sprintf("invalid amount %s", amount)))
-		return false, ""
+		return false
 	}
-	if balance.Amount.LT(amountI) {
-		return false, ""
+	if balance.AmountOf(denom).LT(amountI) {
+		return false
 	}
-	return true, balance.Denom
+	return true
 
 }

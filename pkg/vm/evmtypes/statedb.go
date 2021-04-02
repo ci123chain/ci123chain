@@ -507,13 +507,13 @@ func (csdb *CommitStateDB) updateStateObject(so *stateObject) error {
 		return fmt.Errorf("invalid balance %s", newBalance)
 	}
 
-	coins := so.account.GetCoin()
+	coins := so.account.GetCoins()
 	balance := coins.AmountOf(newBalance.Denom)
 	if balance.IsZero() || !balance.Equal(newBalance.Amount) {
 		coins = coins.Add(newBalance)
 	}
 
-	if err := so.account.SetCoin(coins); err != nil {
+	if err := so.account.SetCoins(coins); err != nil {
 		return err
 	}
 
@@ -649,7 +649,7 @@ func (csdb *CommitStateDB) UpdateAccounts() {
 		evmDenom := csdb.GetParams().EvmDenom
 		balance := sdk.Coin{
 			Denom:  evmDenom,
-			Amount: emintAcc.GetCoin().AmountOf(evmDenom),
+			Amount: emintAcc.GetCoins().AmountOf(evmDenom),
 		}
 
 		if stateEntry.stateObject.Balance() != balance.Amount.BigInt() && balance.IsValid() ||

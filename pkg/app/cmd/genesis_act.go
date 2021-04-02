@@ -42,7 +42,7 @@ func AddGenesisAccountCmd(ctx *app.Context, cdc *codec.Codec) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			genAcc := account.NewGenesisAccountRaw(addr, coin)
+			genAcc := account.NewGenesisAccountRaw(addr, types.NewCoins(coin))
 			if err := genAcc.Validate(); err != nil {
 				return err
 			}
@@ -74,7 +74,7 @@ func AddGenesisAccountCmd(ctx *app.Context, cdc *codec.Codec) *cobra.Command {
 	return cmd
 }
 
-func ParseCoin(amount, denom string) (types.Coin, error) {
+func ParseCoin(denom, amount string) (types.Coin, error) {
 	x := new(big.Int)
 	x, ok := x.SetString(amount, 10)
 	if !ok {

@@ -92,7 +92,7 @@ func (k Keeper) SendCoinsFromAccountToModule(ctx sdk.Context, senderAddr sdk.Acc
 	if recipientAcc == nil {
 		panic(fmt.Sprintf("module account %s isn't able to be created", recipientModule))
 	}
-	return k.ak.Transfer(ctx, senderAddr, recipientAcc.GetAddress(), amt)
+	return k.ak.Transfer(ctx, senderAddr, recipientAcc.GetAddress(), sdk.NewCoins(amt))
 }
 
 // SendCoinsFromModuleToAccount transfers coins from a ModuleAccount to an AccAddress
@@ -105,7 +105,7 @@ func (k Keeper) SendCoinsFromModuleToAccount(ctx sdk.Context, senderModule strin
 	}
 
 
-	return k.ak.Transfer(ctx, senderAddr, recipientAddr, amt)
+	return k.ak.Transfer(ctx, senderAddr, recipientAddr, sdk.NewCoins(amt))
 }
 
 func (k Keeper) SendCoinsFromModuleToModule(ctx sdk.Context, senderModule, recipientModule string, amt sdk.Coin) error {
@@ -118,7 +118,7 @@ func (k Keeper) SendCoinsFromModuleToModule(ctx sdk.Context, senderModule, recip
 	if recipientAcc == nil {
 		return sdk.ErrUnknownAddress(fmt.Sprintf("module account %s isn't able to be created", recipientModule))
 	}
-	return k.ak.Transfer(ctx, senderAddr, recipientAcc.GetAddress(), amt)
+	return k.ak.Transfer(ctx, senderAddr, recipientAcc.GetAddress(), sdk.NewCoins(amt))
 }
 
 func (k Keeper) DelegateCoinsFromAccountToModule(ctx sdk.Context, senderAddr sdk.AccAddress, recipientModule string,
@@ -132,7 +132,7 @@ func (k Keeper) DelegateCoinsFromAccountToModule(ctx sdk.Context, senderAddr sdk
 	if !recipientAcc.HasPermission(types2.Staking) {
 		return sdk.ErrNoPermission(fmt.Sprintf("module account %s has no expected permission", recipientModule))
 	}
-	return k.ak.Transfer(ctx, senderAddr, recipientAcc.GetAddress(), amt)
+	return k.ak.Transfer(ctx, senderAddr, recipientAcc.GetAddress(), sdk.NewCoins(amt))
 }
 
 // UndelegateCoinsFromModuleToAccount undelegates the unbonding coins and transfers
@@ -151,7 +151,7 @@ func (k Keeper) UndelegateCoinsFromModuleToAccount(
 		return sdk.ErrNoPermission(fmt.Sprintf("module account %s has no expected permission", recipientAddr))
 	}
 
-	return k.ak.Transfer(ctx, acc.GetAddress(), recipientAddr, amt)
+	return k.ak.Transfer(ctx, acc.GetAddress(), recipientAddr, sdk.NewCoins(amt))
 }
 ///-------------
 
@@ -206,7 +206,7 @@ func (k Keeper) MintCoins(ctx sdk.Context, moduleName string, amt sdk.Coin) erro
 		panic(fmt.Errorf( "module account %s does not have permissions to mint tokens", moduleName))
 	}
 
-	_, err := k.ak.AddBalance(ctx, acc.GetAddress(), amt)
+	_, err := k.ak.AddBalance(ctx, acc.GetAddress(), sdk.NewCoins(amt))
 	if err != nil {
 		return err
 	}

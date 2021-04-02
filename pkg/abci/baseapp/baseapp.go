@@ -933,7 +933,7 @@ func allMsgAttributes(msgs []sdk.Msg) [][]sdk.Attribute {
 		switch vt := v.(type) {
 		case *transfer.MsgTransfer:
 			operation = "transfer"
-			amount = vt.Amount.Amount.String()
+			amount = vt.Amount.String()
 			receiver = vt.To.String()
 			module = transfer.AttributeValueCategory
 		case *distypes.MsgSetWithdrawAddress:
