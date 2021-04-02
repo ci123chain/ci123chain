@@ -1,6 +1,7 @@
 package types
 
 import (
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"sort"
@@ -46,7 +47,8 @@ func NewUInt64Coin(denom string, amount uint64) Coin {
 }
 
 func (c Coin) String() string {
-	return fmt.Sprintf("{denom: %v, amount: %v}", c.Denom,c.Amount)
+	by, _ := json.Marshal(c)
+	return string(by)
 }
 
 func (c Coin) IsZero() bool {
