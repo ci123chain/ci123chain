@@ -96,8 +96,8 @@ func (k IBCKeeper) ApplyIBCMsg(ctx sdk.Context, tx types.MsgApplyIBC) (*types.Ap
 	if ibcMsg.State == types.StateReady {
 		// 抵押 给 module
 		coinFrom := k.AccountKeeper.GetBalance(ctx, ibcMsg.FromAddress)
-		_, valid := coinFrom.SafeSub(ibcMsg.Amount)
-		if !valid {
+		_, hasNeg := coinFrom.SafeSub(sdk.NewCoins(ibcMsg.Amount))
+		if hasNeg {
 			ibcMsg.State = types.StateCancel
 			err = k.SetIBCMsg(ctx, *ibcMsg)
 
@@ -227,7 +227,7 @@ func (k IBCKeeper) SetIBCMsg(ctx sdk.Context,ibcMsg types.IBCInfo) error {
 // 银行 转账到个人账户
 func (k IBCKeeper) BankSend(ctx sdk.Context, ibcMsg types.IBCInfo) error {
 	Logger(ctx).Debug(ibcMsg.BankAddress.Hex())
-	err := k.AccountKeeper.Transfer(ctx, ibcMsg.BankAddress, ibcMsg.ToAddress, ibcMsg.Amount)
+	err := k.AccountKeeper.Transfer(ctx, ibcMsg.BankAddress, ibcMsg.ToAddress, sdk.NewCoins(ibcMsg.Amount))
 	if err != nil {
 		return err
 	}
@@ -270,8 +270,8 @@ func (k IBCKeeper) ReceiveReceipt(ctx sdk.Context, receipt types.BankReceipt) (e
 	}
 	// 抵押 给 module
 	coinFrom := k.AccountKeeper.GetBalance(ctx, macc.GetAddress())
-	_, valid := coinFrom.SafeSub(ibcMsg.Amount)
-	if !valid {
+	_, hasNeg := coinFrom.SafeSub(sdk.NewCoins(ibcMsg.Amount))
+	if hasNeg {
 		return errors.New("Infficient balance of module account: " + macc.GetAddress().Hex())
 	}
 	if err1 := k.SupplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, ibcMsg.BankAddress, ibcMsg.Amount); err1 != nil {

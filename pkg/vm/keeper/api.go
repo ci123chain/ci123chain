@@ -136,7 +136,7 @@ func performSend(context unsafe.Pointer, to int32, amount int64) int32 {
 		return 0
 	}
 	coin := sdk.NewUInt64Coin(sdk.ChainCoinDenom, coinUint)
-	err = runtimeCfg.Keeper.AccountKeeper.Transfer(*runtimeCfg.Context, fromAcc, toAcc, coin)
+	err = runtimeCfg.Keeper.AccountKeeper.Transfer(*runtimeCfg.Context, fromAcc, toAcc, sdk.NewCoins(coin))
 	if err != nil {
 		return 0
 	}
@@ -522,7 +522,7 @@ func totalPower(context unsafe.Pointer, valuePtr int32) {
 	}
 	var memory = instanceContext.Memory().Data()
 	bondedPool := runtimeCfg.Keeper.StakingKeeper.GetBondedPool(*runtimeCfg.Context)
-	u128 := wasmtypes.NewRustU128(bondedPool.GetCoin().Amount.BigInt())
+	u128 := wasmtypes.NewRustU128(bondedPool.GetCoins().AmountOf(sdk.ChainCoinDenom).BigInt())
 	copy(memory[valuePtr:valuePtr+16], u128.Bytes())
 	//根据链上信息返回总权益
 	//return 123456789
@@ -541,6 +541,6 @@ func getBalance(context unsafe.Pointer, addrPtr, balancePtr int32) {
 	copy(addr[:], memory[addrPtr:addrPtr+AddressSize])
 
 	balance := runtimeCfg.Keeper.AccountKeeper.GetBalance(*runtimeCfg.Context, sdk.HexToAddress(addr.ToString()))
-	u128 := wasmtypes.NewRustU128(balance.Amount.BigInt())
+	u128 := wasmtypes.NewRustU128(balance.AmountOf(sdk.ChainCoinDenom).BigInt())
 	copy(memory[balancePtr:balancePtr+16], u128.Bytes())
 }

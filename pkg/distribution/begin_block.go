@@ -22,7 +22,7 @@ func BeginBlock(ctx sdk.Context, req abci.RequestBeginBlock, distr k.DistrKeeper
 		//height := ctx.BlockHeight()
 
 		feeCollector := distr.SupplyKeeper.GetModuleAccount(ctx, distr.FeeCollectorName)
-		feeCollectedInt := distr.AccountKeeper.GetBalance(ctx, feeCollector.GetAddress())
+		feeCollectedInt := sdk.NewChainCoin(distr.AccountKeeper.GetBalance(ctx, feeCollector.GetAddress()).AmountOf(sdk.ChainCoinDenom))
 		feeCollected := sdk.NewDecCoinFromCoin(feeCollectedInt)
 
 		err := distr.SupplyKeeper.SendCoinsFromModuleToModule(ctx, distr.FeeCollectorName, ModuleName, feeCollectedInt)

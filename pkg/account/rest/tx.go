@@ -31,7 +31,7 @@ func RegisterRoutes(cliCtx context.Context, r *mux.Router) {
 }
 
 type BalanceData struct {
-	Balance string 	 `json:"balance"`
+	BalanceList string 	 `json:"balance_list"`
 }
 
 type NonceData struct {
@@ -113,7 +113,7 @@ func QueryBalancesRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			rest.WriteErrorRes(w, transfer.ErrQueryTx(types.DefaultCodespace, err2.Error()))
 			return
 		}
-		value := BalanceData{Balance:res.Amount.String()}
+		value := BalanceData{BalanceList:res.String()}
 		resp := rest.BuildQueryRes(height, isProve, value, proof)
 		rest.PostProcessResponseBare(w, cliCtx, resp)
 	}

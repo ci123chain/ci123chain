@@ -42,7 +42,7 @@ func (k StakingKeeper) GetNotBondedPool(ctx sdk.Context) (notBondedPool exported
 // TotalBondedTokens total staking tokens supply which is bonded
 func (k StakingKeeper) TotalBondedTokens(ctx sdk.Context) sdk.Int {
 	bondedPool := k.GetBondedPool(ctx)
-	return k.AccountKeeper.GetBalance(ctx, bondedPool.GetAddress()).Amount
+	return k.AccountKeeper.GetBalance(ctx, bondedPool.GetAddress()).AmountOf(sdk.ChainCoinDenom)
 }
 
 // StakingTokenSupply staking tokens from the total supply

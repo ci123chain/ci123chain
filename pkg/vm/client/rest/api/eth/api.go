@@ -539,7 +539,7 @@ func (api *PublicEthereumAPI) GetBalance(address common.Address, blockNum BlockN
 		return nil, err2
 	}
 
-	val := acc.GetCoin().Amount.BigInt()
+	val := acc.GetCoins().AmountOf(sdk.ChainCoinDenom).BigInt()
 	api.logger.Debug("eth_getBalance", "balance", val)
 	return (*hexutil.Big)(val), nil
 }

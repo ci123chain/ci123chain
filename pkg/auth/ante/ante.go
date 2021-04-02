@@ -66,7 +66,7 @@ func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, sk su
 		}
 		gas := tx.GetGas()//用户期望的gas值 g.limit
 		//检查是否足够支付gas limit, 并预先扣除
-		if acc.GetCoin().Amount.LT(sdk.NewIntFromBigInt(big.NewInt(int64(gas)))) {
+		if acc.GetCoins().AmountOf(sdk.ChainCoinDenom).LT(sdk.NewIntFromBigInt(big.NewInt(int64(gas)))) {
 			return newCtx, sdk.ErrInsufficientCoins("Can't pay enough gasLimit").Result(),true
 		}
 		DeductFees(acc,sdk.NewUInt64Coin(sdk.ChainCoinDenom, gas),ak,ctx)
@@ -105,8 +105,8 @@ func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, sk su
 
 		//存储奖励金到feeCollector Module账户
 		feeCollectorModuleAccount := sk.GetModuleAccount(ctx, auth.FeeCollectorName)
-		newFee := feeCollectorModuleAccount.GetCoin().Add(getFee)
-		err := feeCollectorModuleAccount.SetCoin(newFee)
+		newFee := feeCollectorModuleAccount.GetCoins().Add(getFee)
+		err := feeCollectorModuleAccount.SetCoins(newFee)
 
 		if err != nil {
 			fmt.Println("fee_collector module account set coin failed")
@@ -157,15 +157,15 @@ func EnsureSufficientMempoolFees() sdk.Result {
 
 
 func DeductFees(acc exported.Account, fee sdk.Coin, ak account.AccountKeeper, ctx sdk.Context) sdk.Result {
-	coin := acc.GetCoin()
-	newCoins, ok := coin.SafeSub(fee)
-	if !ok {
+	coin := acc.GetCoins()
+	newCoins, hasNeg := coin.SafeSub(sdk.NewCoins(fee))
+	if hasNeg {
 		return sdk.ErrInsufficientFunds(
 			fmt.Sprintf("insufficient funds to pay for fees; %s < %s", coin, fee),
 		).Result()
 	}
 
-	if err := acc.SetCoin(newCoins); err != nil {
+	if err := acc.SetCoins(newCoins); err != nil {
 		return account.ErrSetAccount(types.DefaultCodespace, err).Result()
 	}
 	ak.SetAccount(ctx, acc)
@@ -174,10 +174,10 @@ func DeductFees(acc exported.Account, fee sdk.Coin, ak account.AccountKeeper, ct
 }
 
 func ReturnFees(acc exported.Account, restFee sdk.Coin, ak account.AccountKeeper, ctx sdk.Context) sdk.Result {
-	coin := acc.GetCoin()
+	coin := acc.GetCoins()
 	newCoins:= coin.Add(restFee)
 
-	if err := acc.SetCoin(newCoins); err != nil {
+	if err := acc.SetCoins(newCoins); err != nil {
 		return account.ErrSetAccount(types.DefaultCodespace, err).Result()
 	}
 	ak.SetAccount(ctx, acc)

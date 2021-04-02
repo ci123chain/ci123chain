@@ -82,7 +82,7 @@ func (k MinterKeeper) BondedRatio(ctx sdk.Context) sdk.Dec {
 }
 
 func (k MinterKeeper) AllBonded(ctx sdk.Context) sdk.Coin {
-	return k.sk.GetBondedPool(ctx).GetCoin()
+	return sdk.NewChainCoin(k.sk.GetBondedPool(ctx).GetCoins().AmountOf(sdk.ChainCoinDenom))
 }
 
 // MintCoins implements an alias call to the underlying supply keeper's

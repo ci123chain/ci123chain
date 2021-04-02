@@ -129,7 +129,10 @@ func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Com
 			fmt.Println("home:", viper.GetString(tmcli.HomeFlag))
 			fmt.Println("chainid:", viper.GetString(FlagChainID))
 
-			abcitypes.SetCoinDenom(viper.GetString(FlagCoinName))
+			denom := viper.GetString(FlagCoinName)
+			if denom != "" {
+				abcitypes.SetCoinDenom(viper.GetString(FlagCoinName))
+			}
 
 			ctxConfig := ctx.Config
 			ctxConfig.SetRoot(viper.GetString(tmcli.HomeFlag))

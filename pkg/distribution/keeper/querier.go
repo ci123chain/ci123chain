@@ -205,7 +205,7 @@ func queryDelegatorAccountInfo(ctx sdk.Context, req abci.RequestQuery, k DistrKe
 		delegated = delegated.Add(amt)
 	}
 
-	result := types.NewDelegatorAccountInfo(balance, delegated, unbondings, rewards, commission)
+	result := types.NewDelegatorAccountInfo(sdk.NewChainCoin(balance.AmountOf(sdk.ChainCoinDenom)), delegated, unbondings, rewards, commission)
 	res := types.DistributionCdc.MustMarshalJSON(result)
 	return res, nil
 }

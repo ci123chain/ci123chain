@@ -46,7 +46,7 @@ func NewUInt64Coin(denom string, amount uint64) Coin {
 }
 
 func (c Coin) String() string {
-	return fmt.Sprintf("%v", c.Amount)
+	return fmt.Sprintf("{denom: %v, amount: %v}", c.Denom,c.Amount)
 }
 
 func (c Coin) IsZero() bool {
@@ -124,7 +124,10 @@ func (c Coin) IsValid() bool {
 	return !c.Amount.LT(NewInt(0))
 }
 
+//-----------------------------------------------------------------------------
+// Coins
 
+// Coins is a set of Coin, one per currency
 type Coins []Coin
 
 func (coins Coins) GetDenomByIndex(i int) string {
@@ -167,9 +170,11 @@ func (coins Coins) IsValid() bool {
 	}
 }
 
+// NewCoins constructs a new coin set. The provided coins will be sanitized by removing
+// zero coins and sorting the coin set. A panic will occur if the coin set is not valid.
 func NewCoins(coins ...Coin) Coins {
 	// remove zeroes
-	newCoins := removeZeroCoins(Coins(coins))
+	newCoins := removeZeroCoins(coins)
 	if len(newCoins) == 0 {
 		return Coins{}
 	}
@@ -209,11 +214,17 @@ func (coins Coins) String() string {
 		return ""
 	}
 
-	out := ""
-	for _, coin := range coins {
-		out += fmt.Sprintf("%v,", coin.String())
+
+	out := "["
+	for i, coin := range coins {
+		if i == len(coins) - 1 {
+			out += fmt.Sprintf("%v", coin.String())
+		}else {
+			out += fmt.Sprintf("%v,", coin.String())
+		}
 	}
-	return out[:len(out)-1]
+	out += "]"
+	return out[:]
 }
 
 func (coins Coins) Len() int           { return len(coins) }

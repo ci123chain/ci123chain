@@ -8,31 +8,32 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/transaction"
 )
 
-func (ak AccountKeeper) GetBalance(ctx sdk.Context, addr sdk.AccAddress) sdk.Coin {
+func (ak AccountKeeper) GetBalance(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins {
 	coin := ak.getBalance(ctx, addr)
 	if coin.IsZero() {
-		return sdk.NewEmptyCoin()
+		return sdk.NewCoins()
 	}
 	return coin
 }
 
-func (ak AccountKeeper) AddBalance(ctx sdk.Context, addr sdk.AccAddress, amount sdk.Coin) (sdk.Coin, sdk.Error) {
+func (ak AccountKeeper) AddBalance(ctx sdk.Context, addr sdk.AccAddress, amount sdk.Coins) (sdk.Coins, sdk.Error) {
 	if !amount.IsValid() {
-		return sdk.NewChainCoin(sdk.NewInt(0)), sdk.ErrInvalidCoins(amount.String())
+		return sdk.NewCoins(), sdk.ErrInvalidCoins(amount.String())
 	}
-	oldCoin := ak.GetBalance(ctx, addr)
-	newCoin := oldCoin.Add(amount)
-
-	if newCoin.IsNegative() {
-		return amount, sdk.ErrInsufficientCoins(
-			fmt.Sprintf("insufficient account funds: %s < %s", oldCoin, amount),
-		)
-	}
-	err := ak.SetCoin(ctx, addr, newCoin)
-	return newCoin, err
+	oldCoins := ak.GetBalance(ctx, addr)
+	//newCoin := oldCoin.Add(amount)
+	//
+	//if newCoin.IsNegative() {
+	//	return amount, sdk.ErrInsufficientCoins(
+	//		fmt.Sprintf("insufficient account funds: %s < %s", oldCoin, amount),
+	//	)
+	//}
+	newCoins := oldCoins.Add(amount...)
+	err := ak.SetCoin(ctx, addr, newCoins)
+	return newCoins, err
 }
 
-func (ak AccountKeeper) SetCoin(ctx sdk.Context, addr sdk.AccAddress, amt sdk.Coin) sdk.Error {
+func (ak AccountKeeper) SetCoin(ctx sdk.Context, addr sdk.AccAddress, amt sdk.Coins) sdk.Error {
 	if !amt.IsValid() {
 		return sdk.ErrInvalidCoins(amt.String())
 	}
@@ -42,7 +43,7 @@ func (ak AccountKeeper) SetCoin(ctx sdk.Context, addr sdk.AccAddress, amt sdk.Co
 		acc = ak.NewAccountWithAddress(ctx, addr)
 	}
 
-	err := acc.SetCoin(amt)
+	err := acc.SetCoins(amt)
 	if err != nil {
 		panic(err)
 	}
@@ -51,22 +52,22 @@ func (ak AccountKeeper) SetCoin(ctx sdk.Context, addr sdk.AccAddress, amt sdk.Co
 	return nil
 }
 
-func (ak AccountKeeper) SubBalance(ctx sdk.Context, addr sdk.AccAddress, amt sdk.Coin) (sdk.Coin, sdk.Error) {
+func (ak AccountKeeper) SubBalance(ctx sdk.Context, addr sdk.AccAddress, amt sdk.Coins) (sdk.Coins, sdk.Error) {
 	if !amt.IsValid() {
-		return sdk.NewChainCoin(sdk.NewInt(0)), sdk.ErrInvalidCoins(amt.String())
+		return sdk.NewCoins(), sdk.ErrInvalidCoins(amt.String())
 	}
 
-	oldCoins, spendableCoins := sdk.NewChainCoin(sdk.NewInt(0)), sdk.NewChainCoin(sdk.NewInt(0))
+	oldCoins, spendableCoins := sdk.NewCoins(), sdk.NewCoins()//sdk.NewChainCoin(sdk.NewInt(0)), sdk.NewChainCoin(sdk.NewInt(0))
 
 	acc := ak.GetAccount(ctx, addr)
 	if acc != nil {
-		oldCoins = acc.GetCoin()
+		oldCoins = acc.GetCoins()
 		spendableCoins = acc.SpendableCoins(ctx.BlockHeader().Time)
 	} else {
-		return sdk.NewChainCoin(sdk.NewInt(0)), transaction.ErrInvalidTx(types.DefaultCodespace, fmt.Sprintf("account not exist %s", addr.Hex()))
+		return sdk.NewCoins(), transaction.ErrInvalidTx(types.DefaultCodespace, fmt.Sprintf("account not exist %s", addr.Hex()))
 	}
-	_, valid := spendableCoins.SafeSub(amt)
-	if !valid {
+	_, hasNeg := spendableCoins.SafeSub(amt)
+	if hasNeg {
 		return amt, sdk.ErrInsufficientCoins(
 			fmt.Sprintf("insufficient accounts funds; %s < %s", spendableCoins, amt),
 		)
@@ -78,7 +79,7 @@ func (ak AccountKeeper) SubBalance(ctx sdk.Context, addr sdk.AccAddress, amt sdk
 }
 
 
-func (ak AccountKeeper) Transfer(ctx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, coin sdk.Coin) sdk.Error {
+func (ak AccountKeeper) Transfer(ctx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, coin sdk.Coins) sdk.Error {
 	_, err := ak.SubBalance(ctx, fromAddr, coin)
 	if err != nil {
 		return types.ErrSetAccount(types.DefaultCodespace, err)
@@ -97,24 +98,28 @@ func (ak AccountKeeper) getStore(ctx sdk.Context) sdk.KVStore {
 }
 
 
-func (k AccountKeeper) getBalance(ctx sdk.Context, addr sdk.AccAddress) sdk.Coin {
+func (k AccountKeeper) getBalance(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins {
 	acc := k.GetAccount(ctx, addr)
 	if acc == nil {
-		return sdk.NewChainCoin(sdk.NewInt(0))
+		return sdk.NewCoins(sdk.NewChainCoin(sdk.NewInt(0)))
 	}
-	return acc.GetCoin()
+	return acc.GetCoins()
 }
 
 func (k AccountKeeper) SetBalances(ctx sdk.Context, addr sdk.AccAddress, balances sdk.Coins) error {
 
 	k.ClearBalances(ctx, addr)
-
-	for _, balance := range balances {
-		err := k.SetCoin(ctx, addr, balance)
-		if err != nil {
-			return err
-		}
+	err := k.SetCoin(ctx, addr, balances)
+	if err != nil {
+		return err
 	}
+
+	//for _, balance := range balances {
+	//	err := k.SetCoin(ctx, addr, balance)
+	//	if err != nil {
+	//		return err
+	//	}
+	//}
 
 	return nil
 }

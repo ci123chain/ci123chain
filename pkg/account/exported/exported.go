@@ -19,15 +19,15 @@ type Account interface {
 	GetSequence() uint64
 	SetSequence(uint64) error
 
-	GetCoin() types.Coin
-	SetCoin(types.Coin) error
+	GetCoins() types.Coins
+	SetCoins(types.Coins) error
 
 	SetContractType(contractType string) error
 	GetContractType() string
 
 	// Calculates the amount of coins that can be sent to other accounts given
 	// the current time.
-	SpendableCoins(blockTime time.Time) types.Coin
+	SpendableCoins(blockTime time.Time) types.Coins
 	// Ensure that account implements stringer
 	String() string
 }

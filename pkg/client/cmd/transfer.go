@@ -68,7 +68,7 @@ var transferCmd = &cobra.Command{
 		isFabric := viper.GetBool(flagIsFabric)
 
 		coin := sdk.NewUInt64Coin(d, amount)
-		msg := transfer2.NewMsgTransfer(from, tos[0], coin, isFabric)
+		msg := transfer2.NewMsgTransfer(from, tos[0], sdk.NewCoins(coin), isFabric)
 		nonce, err := transfer2.GetNonceByAddress(from)
 		if err != nil {
 			return types.ErrParseParam(types.DefaultCodespace, err)
