@@ -52,7 +52,7 @@ func AddGenesisValidatorCmd(ctx *app.Context, cdc *codec.Codec) *cobra.Command {
 			var stakingGenesisState staking.GenesisState
 			var genesisValidator staking.Validator
 			if _, ok := appState[staking.ModuleName]; !ok{
-				stakingGenesisState = staking.GenesisState{}
+				return errors.New("unexpected genesisState of staking")
 			} else {
 				cdc.MustUnmarshalJSON(appState[staking.ModuleName], &stakingGenesisState)
 			}
@@ -83,18 +83,18 @@ func AddGenesisValidatorCmd(ctx *app.Context, cdc *codec.Codec) *cobra.Command {
 			//distribution
 			var distributionGenesisState distr.GenesisState
 			if _, ok := appState[distr.ModuleName]; !ok {
-				distributionGenesisState = distr.GenesisState{}
+				panic(errors.New("unexpected genesisState of staking"))
 			}else {
 				cdc.MustUnmarshalJSON(appState[distr.ModuleName], &distributionGenesisState)
 			}
 			outstanddingReward := distr.ValidatorOutstandingRewardsRecord{
 				ValidatorAddress:   addr,
-				OutstandingRewards: types.NewEmptyDecCoin(),
+				OutstandingRewards: types.NewDecCoin(stakingGenesisState.Params.BondDenom, types.NewInt(0)),
 			}
 			currentReward := distr.ValidatorCurrentRewardsRecord{
 				ValidatorAddress: addr,
 				Rewards:          distr.ValidatorCurrentRewards{
-					Rewards: types.NewEmptyDecCoin(),
+					Rewards: types.NewDecCoin(stakingGenesisState.Params.BondDenom, types.NewInt(0)),
 					Period:  0,
 				},
 			}

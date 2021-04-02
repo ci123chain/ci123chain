@@ -262,7 +262,7 @@ func delegationToDelegationResponse(ctx sdk.Context, k StakingKeeper, del types.
 		del.DelegatorAddress,
 		del.ValidatorAddress,
 		del.Shares,
-		sdk.NewCoin(val.TokensFromShares(del.Shares).TruncateInt()),
+		sdk.NewChainCoin(val.TokensFromShares(del.Shares).TruncateInt()),
 	), nil
 }
 

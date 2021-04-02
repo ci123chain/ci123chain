@@ -11,33 +11,38 @@ type Coin struct {
 	Denom  string `json:"denom"`
 	Amount Int `json:"amount"`
 }
-const (
-	DefaultCoinDenom = DefaultBondDenom
-)
 
-// NewCoin returns a new coin with a denomination and amount. It will panic if
-// the amount is negative.
-func NewCoin(amount Int) Coin {
-	if err := validate(DefaultCoinDenom, amount); err != nil {
+func NewChainCoin(amount Int) Coin {
+	if err := validate(ChainCoinDenom, amount); err != nil {
 		panic(err)
 	}
 
 	return Coin{
-		Denom:  DefaultCoinDenom,
+		Denom:  ChainCoinDenom,
+		Amount: amount,
+	}
+}
+
+// NewCoin returns a new coin with a denomination and amount. It will panic if
+// the amount is negative.
+func NewCoin(denom string, amount Int) Coin {
+
+	return Coin{
+		Denom:  denom,
 		Amount: amount,
 	}
 }
 
 func NewEmptyCoin() Coin {
 	res := Coin{
-		Denom:  DefaultCoinDenom,
+		Denom:  ChainCoinDenom,
 		Amount: NewInt(0),
 	}
 	return res
 }
 
-func NewUInt64Coin(amount uint64) Coin {
-	return NewCoin(NewInt(int64(amount)))
+func NewUInt64Coin(denom string, amount uint64) Coin {
+	return NewCoin(denom, NewInt(int64(amount)))
 }
 
 func (c Coin) String() string {

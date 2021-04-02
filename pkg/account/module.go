@@ -18,7 +18,6 @@ type AppModule struct {
 }
 
 func (am AppModule) EndBlock(ctx types.Context, req abci.RequestEndBlock) []abci.ValidatorUpdate {
-	//panic("implement me")
 	return nil
 }
 

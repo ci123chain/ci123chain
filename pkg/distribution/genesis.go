@@ -11,7 +11,7 @@ import (
 
 func InitGenesis(ctx sdk.Context, ak account.AccountKeeper, sk supply.Keeper, k keeper.DistrKeeper, data types.GenesisState) {
 	//
-	var moduleHoldings = sdk.NewDecCoin(sdk.DefaultCoinDenom, sdk.NewInt(0))
+	var moduleHoldings = sdk.NewDecCoin(sdk.ChainCoinDenom, sdk.NewInt(0))
 	k.SetFeePool(ctx, data.FeePool)
 	k.SetParams(ctx, data.Params)
 

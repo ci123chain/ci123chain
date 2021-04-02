@@ -9,12 +9,6 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/params"
 )
 
-const (
-	// DefaultParamspace for params keeper
-	DefaultParamspace = ModuleName
-	AttoCoin string = "stake"
-)
-
 // Parameter keys
 var (
 	ParamStoreKeyEVMDenom = []byte("EVMDenom")
@@ -40,7 +34,7 @@ func NewParams(evmDenom string) Params {
 // DefaultParams returns default evm parameters
 func DefaultParams() Params {
 	return Params{
-		EvmDenom: AttoCoin,
+		EvmDenom: sdk.ChainCoinDenom,
 	}
 }
 

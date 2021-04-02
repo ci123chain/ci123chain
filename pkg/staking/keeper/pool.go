@@ -9,7 +9,7 @@ import (
 func (k StakingKeeper) bondedTokensToNotBonded(ctx sdk.Context, tokens sdk.Int) error {
 
 	//coins := sdk.NewCoins(sdk.NewCoin(tokens))
-	coin := sdk.NewCoin(tokens)
+	coin := sdk.NewChainCoin(tokens)
 	err := k.SupplyKeeper.SendCoinsFromModuleToModule(ctx, types.BondedPoolName, types.NotBondedPoolName, coin)
 	if err != nil {
 		return err
@@ -20,7 +20,7 @@ func (k StakingKeeper) bondedTokensToNotBonded(ctx sdk.Context, tokens sdk.Int) 
 func (k StakingKeeper) notBondedTokensToBonded(ctx sdk.Context, tokens sdk.Int) error {
 
 	//coins:= sdk.NewCoins(sdk.NewCoin(tokens))
-	coin := sdk.NewCoin(tokens)
+	coin := sdk.NewChainCoin(tokens)
 	err := k.SupplyKeeper.SendCoinsFromModuleToModule(ctx, types.NotBondedPoolName, types.BondedPoolName, coin)
 	if err != nil {
 		return err

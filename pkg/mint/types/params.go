@@ -48,7 +48,7 @@ func NewParams(mintDenom string, inflationRateChange, inflationMax, inflationMin
 
 func DefaultParams() Params{
 	return Params{
-		MintDenom:           sdk.DefaultBondDenom,
+		MintDenom:           sdk.ChainCoinDenom,
 		InflationRateChange: sdk.NewDecWithPrec(13, 2),
 		InflationMax:        sdk.NewDecWithPrec(20, 2),
 		InflationMin:        sdk.NewDecWithPrec(7, 2),

@@ -161,7 +161,7 @@ func queryDelegatorAccountInfo(ctx sdk.Context, req abci.RequestQuery, k DistrKe
 		commission = sdk.NewEmptyCoin()
 	}else {
 		cs := k.GetValidatorAccumulatedCommission(ctx, params.AccountAddress).Commission
-		commission = sdk.NewCoin(cs.Amount.RoundInt())
+		commission = sdk.NewChainCoin(cs.Amount.RoundInt())
 	}
 
 	//del := k.StakingKeeper.Delegation(ctx, params.AccountAddress, params.AccountAddress)
@@ -186,7 +186,7 @@ func queryDelegatorAccountInfo(ctx sdk.Context, req abci.RequestQuery, k DistrKe
 				entry := ubd.Entries[i]
 				if entry.IsMature(ctxTime) {
 					if !entry.Balance.IsZero() {
-						amt := sdk.NewCoin(entry.Balance)
+						amt := sdk.NewChainCoin(entry.Balance)
 						unbondings = unbondings.Add(amt)
 					}
 				}
@@ -200,8 +200,8 @@ func queryDelegatorAccountInfo(ctx sdk.Context, req abci.RequestQuery, k DistrKe
 		validator, _ := k.StakingKeeper.GetValidator(ctx, params.AccountAddress)
 		endingPeriod := k.incrementValidatorPeriod(ctx, validator)
 		rw := k.calculateDelegationRewards(ctx, validator, v, endingPeriod)
-		rewards = rewards.Add(sdk.NewCoin(rw.Amount.RoundInt()))
-		amt := sdk.NewCoin(v.GetShares().RoundInt())
+		rewards = rewards.Add(sdk.NewChainCoin(rw.Amount.RoundInt()))
+		amt := sdk.NewChainCoin(v.GetShares().RoundInt())
 		delegated = delegated.Add(amt)
 	}
 

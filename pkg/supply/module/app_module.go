@@ -6,6 +6,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/supply"
 	"github.com/ci123chain/ci123chain/pkg/supply/module/basic"
 	abci "github.com/tendermint/tendermint/abci/types"
+	"os"
 )
 
 type AppModule struct {
@@ -19,7 +20,8 @@ func (am AppModule) InitGenesis(ctx types.Context, data json.RawMessage) []abci.
 	var genesisState supply.GenesisState
 	err := supply.ModuleCdc.UnmarshalJSON(data, &genesisState)
 	if err != nil {
-		panic(err)
+		ctx.Logger().Error("init genesis failed in supply module", "err", err.Error())
+		os.Exit(1)
 	}
 	supply.InitGenesis(ctx, am.Keeper, genesisState)
 	return []abci.ValidatorUpdate{}

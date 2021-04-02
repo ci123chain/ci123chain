@@ -46,7 +46,7 @@ func CheckBigInt(num string) (types.Coin, error) {
 	if !ok {
 		return types.NewEmptyCoin(), errors.New(fmt.Sprintf("invalid %s", num))
 	}
-	return types.NewCoin(n), nil
+	return types.NewChainCoin(n), nil
 }
 
 func CheckInt64(num string) (int64, error) {

@@ -56,7 +56,7 @@ func (k StakingKeeper) Delegate(ctx sdk.Context, delAddr sdk.AccAddress, bondAmt
 		}
 
 		//coins := sdk.NewCoins(sdk.NewCoin(bondAmt))
-		coin := sdk.NewCoin(bondAmt)
+		coin := sdk.NewChainCoin(bondAmt)
 		err := k.SupplyKeeper.DelegateCoinsFromAccountToModule(ctx, delegation.DelegatorAddress, sendName, coin)
 		if err != nil {
 			return sdk.Dec{}, err
@@ -552,7 +552,7 @@ func (k StakingKeeper) CompleteRedelegationWithAmount(
 			i--
 
 			if !entry.InitialBalance.IsZero() {
-				balances = balances.Add(sdk.NewCoin(entry.InitialBalance))
+				balances = balances.Add(sdk.NewChainCoin(entry.InitialBalance))
 			}
 		}
 	}
@@ -589,7 +589,7 @@ func (k StakingKeeper) CompleteUnbondingWithAmount(ctx sdk.Context, delAddr sdk.
 
 			// track undelegation only when remaining or truncated shares are non-zero
 			if !entry.Balance.IsZero() {
-				amt := sdk.NewCoin(entry.Balance)
+				amt := sdk.NewChainCoin(entry.Balance)
 				err := k.SupplyKeeper.UndelegateCoinsFromModuleToAccount(
 					ctx, types.NotBondedPoolName, ubd.DelegatorAddress, amt,//sdk.NewCoin(amt),
 				)

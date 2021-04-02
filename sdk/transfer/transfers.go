@@ -23,7 +23,7 @@ func SignMsgTransfer(from, to string, gas, nonce uint64, amt string, priv string
 	if a <= 0 {
 		return nil, errors.New(fmt.Sprintf("invalid amount:%s", amt))
 	}
-	amount := sdk.NewCoin(sdk.NewInt(a))
+	amount := sdk.NewChainCoin(sdk.NewInt(a))
 	if amount.IsNegative() || amount.IsZero() {
 		return nil, errors.New("invalid amount")
 	}

@@ -82,7 +82,7 @@ func (k *DistrKeeper) GetProposerCurrentRewards(ctx sdk.Context, val sdk.AccAddr
 	store := ctx.KVStore(k.storeKey)
 	b := store.Get(GetValidatorCurrentRewardsKey(key))
 	if b == nil {
-		return sdk.NewCoin(sdk.NewInt(0))
+		return sdk.NewChainCoin(sdk.NewInt(0))
 	}
 	k.cdc.MustUnmarshalBinaryLengthPrefixed(b, &rewards)
 	return
@@ -132,7 +132,7 @@ func (k *DistrKeeper) GetValCurrentRewards(ctx sdk.Context, val sdk.AccAddr) (re
 	store := ctx.KVStore(k.storeKey)
 	b := store.Get(GetValidatorCurrentRewardsKey(val))
 	if b == nil {
-		return sdk.NewCoin(sdk.NewInt(0)), errors.New("no such information")
+		return sdk.NewChainCoin(sdk.NewInt(0)), errors.New("no such information")
 	}
 	k.cdc.MustUnmarshalBinaryLengthPrefixed(b, &rewards)
 	return
@@ -252,7 +252,7 @@ func (k *DistrKeeper) GetValidatorAccumulatedCommission(ctx sdk.Context, val sdk
 	if b == nil {
 		return types.ValidatorAccumulatedCommission{
 			Commission: sdk.DecCoin{
-				Denom:  sdk.DefaultCoinDenom,
+				Denom:  sdk.ChainCoinDenom,
 				Amount: sdk.NewDec(0),
 			},
 		}

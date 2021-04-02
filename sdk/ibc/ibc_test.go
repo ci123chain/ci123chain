@@ -28,15 +28,16 @@ func TestIBCMsg(t *testing.T)  {
 	// 将pem 格式私钥转化为 十六机制 字符串
 
 	//获取nonce，地址， 端口
-	//nonce := httpQuery(ip, port, FromAddr)
+	nonce := httpQuery(ip, port, FromAddr)
 
 	priKey, err := cryptoutil.DecodePriv([]byte(testPrivKey))
 	assert.NoError(t, err)
 	privByte := cryptoutil.MarshalPrivateKey(priKey)
+	gas := uint64(8000000)
 
 
 	signdata, err := SignIBCTransferMsg("0x204bCC42559Faf6DFE1485208F7951aaD800B313",
-		"0xD1a14962627fAc768Fe885Eeb9FF072706B54c19", 6, privByte)
+		"0xD1a14962627fAc768Fe885Eeb9FF072706B54c19", 6, privByte, "stake", gas, nonce)
 	fmt.Println(hex.EncodeToString(signdata))
 
 	//assert.NoError(t, err)
@@ -114,6 +115,7 @@ type ciRes struct{
 func TestAll(t *testing.T)  {
 
 	nonce := httpQuery(ip, port, FromAddr)
+	gas := uint64(80000)
 	// 将pem 格式私钥转化为 十六机制 字符串
 	priKey, err := cryptoutil.DecodePriv([]byte(testPrivKey))
 	assert.NoError(t, err)
@@ -122,7 +124,7 @@ func TestAll(t *testing.T)  {
 	fmt.Println("---发送跨链消息")
 	nonce = httpQuery(ip, port, FromAddr)
 	signdata, err := SignIBCTransferMsg(FromAddr,
-		ToAddr, 20, privByte)
+		ToAddr, 20, privByte, "stake", gas, nonce)
 	registRet := httpPost(hex.EncodeToString(signdata))
 	fmt.Println(nonce)
 

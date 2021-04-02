@@ -3,8 +3,11 @@ package cmd
 import (
 	"encoding/base64"
 	"fmt"
+	"github.com/ci123chain/ci123chain/pkg/abci/codec"
+	"github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/app"
 	hnode "github.com/ci123chain/ci123chain/pkg/node"
+	staking "github.com/ci123chain/ci123chain/pkg/staking/types"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -14,7 +17,6 @@ import (
 	"github.com/tendermint/tendermint/node"
 	pvm "github.com/tendermint/tendermint/privval"
 	"github.com/tendermint/tendermint/proxy"
-	"github.com/tendermint/tendermint/types"
 	"io/ioutil"
 	"os"
 	"strconv"
@@ -42,7 +44,7 @@ const (
 	version 		   = "CiChain testTM6"
 )
 
-func startCmd(ctx *app.Context, appCreator app.AppCreator) *cobra.Command {
+func startCmd(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use: "start",
 		Short: "Run the full node",
@@ -56,7 +58,7 @@ func startCmd(ctx *app.Context, appCreator app.AppCreator) *cobra.Command {
 			if len(viper.GetString(flagMasterDomain)) == 0 && len(viper.GetString(flagGenesis)) != 0 {
 				preSetConfig(ctx)
 			}
-			_, err := StartInProcess(ctx, appCreator)
+			_, err := StartInProcess(ctx, appCreator, cdc)
 			if err != nil {
 				return err
 			}
@@ -111,7 +113,7 @@ func startStandAlone(ctx *app.Context, appCreator app.AppCreator) error {
 	return nil
 }
 
-func StartInProcess(ctx *app.Context, appCreator app.AppCreator) (*node.Node, error) {
+func StartInProcess(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Codec) (*node.Node, error) {
 	cfg := ctx.Config
 	home := cfg.RootDir
 	traceStore := viper.GetString(flagTraceStore)
@@ -145,10 +147,17 @@ func StartInProcess(ctx *app.Context, appCreator app.AppCreator) (*node.Node, er
 		return nil, errors.New("node domain can not be empty")
 	}
 
-	gendoc, err := types.GenesisDocFromFile(cfg.GenesisFile())
+	appState, gendoc, err := app.GenesisStateFromGenFile(cdc, cfg.GenesisFile())
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
+	var stakingGenesisState staking.GenesisState
+	if _, ok := appState[staking.ModuleName]; !ok{
+		return nil, errors.New("unexpected genesisState of staking")
+	} else {
+		cdc.MustUnmarshalJSON(appState[staking.ModuleName], &stakingGenesisState)
+	}
+	types.SetCoinDenom(stakingGenesisState.Params.BondDenom)
 	viper.Set("ShardID", gendoc.ChainID)
 
 	app, err := appCreator(home, ctx.Logger, stateDB, traceStore)
