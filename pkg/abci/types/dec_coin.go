@@ -141,7 +141,7 @@ func (coin DecCoin) Sub(coinB DecCoin) DecCoin {
 func (coin DecCoin) TruncateDecimal() (Coin, DecCoin) {
 	truncated := coin.Amount.TruncateInt()
 	change := coin.Amount.Sub(truncated.ToDec())
-	return NewCoin(truncated), NewDecCoinFromDec(coin.Denom, change)
+	return NewCoin(DefaultBondDenom ,truncated), NewDecCoinFromDec(coin.Denom, change)
 }
 
 // IsPositive returns true if coin amount is positive.

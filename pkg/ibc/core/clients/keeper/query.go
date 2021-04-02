@@ -4,8 +4,8 @@ import (
 	"fmt"
 	types2 "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/clients/types"
+	errors2 "github.com/ci123chain/ci123chain/pkg/ibc/core/errors"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/host"
-	types3 "github.com/ci123chain/ci123chain/pkg/ibc/core/types"
 	"github.com/pkg/errors"
 )
 
@@ -20,7 +20,7 @@ func (q Keeper)ClientState(ctx types2.Context, req *types.QueryClientStateReques
 
 	clientState, found := q.GetClientState(ctx, req.ClientId)
 	if !found {
-		return nil, types3.ErrorClientNotFound(types3.DefaultCodespace, errors.New("clientid: " + req.ClientId))
+		return nil, errors2.ErrorClientNotFound(errors2.DefaultCodespace, errors.New("clientid: " + req.ClientId))
 	}
 	proofHeight := types.GetSelfHeight(ctx)
 	return &types.QueryClientStateResponse{

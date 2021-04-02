@@ -81,7 +81,19 @@ type ClientState interface {
 		channelID string,
 		channel ChannelI,
 	) error
-
+	VerifyPacketCommitment(
+		store sdk.KVStore,
+		cdc *codec.Codec,
+		height Height,
+		currentTimestamp uint64,
+		delayPeriod uint64,
+		prefix Prefix,
+		proof []byte,
+		portID,
+		channelID string,
+		sequence uint64,
+		commitmentBytes []byte,
+	) error
 	VerifyPacketAcknowledgement(
 		store sdk.KVStore,
 		cdc *codec.Codec,
@@ -94,6 +106,31 @@ type ClientState interface {
 		channelID string,
 		sequence uint64,
 		acknowledgement []byte,
+	) error
+
+	VerifyPacketReceiptAbsence(
+		store sdk.KVStore,
+		cdc *codec.Codec,
+		height Height,
+		currentTimestamp uint64,
+		delayPeriod uint64,
+		prefix Prefix,
+		proof []byte,
+		portID,
+		channelID string,
+		sequence uint64,
+	) error
+	VerifyNextSequenceRecv(
+		store sdk.KVStore,
+		cdc *codec.Codec,
+		height Height,
+		currentTimestamp uint64,
+		delayPeriod uint64,
+		prefix Prefix,
+		proof []byte,
+		portID,
+		channelID string,
+		nextSequenceRecv uint64,
 	) error
 }
 

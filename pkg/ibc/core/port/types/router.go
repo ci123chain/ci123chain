@@ -4,7 +4,6 @@ import (
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 )
-import ""
 
 // The router is a map from module name to the IBCModule
 // which contains all the module-defined callbacks required by ICS-26

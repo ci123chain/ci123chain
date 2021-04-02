@@ -1,7 +1,6 @@
 package types
 
 import (
-	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	clienttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/clients/types"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/exported"
 )

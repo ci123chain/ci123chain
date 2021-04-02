@@ -8,8 +8,10 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/abci/store"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	app_module "github.com/ci123chain/ci123chain/pkg/app/module"
+	capabilitykeeper "github.com/ci123chain/ci123chain/pkg/capability/keeper"
 	dist_module "github.com/ci123chain/ci123chain/pkg/distribution/module"
 	"github.com/ci123chain/ci123chain/pkg/gateway/redissource"
+	"github.com/ci123chain/ci123chain/pkg/ibc"
 	infrastructure_module "github.com/ci123chain/ci123chain/pkg/infrastructure/module"
 	mint_module "github.com/ci123chain/ci123chain/pkg/mint/module"
 	order_module "github.com/ci123chain/ci123chain/pkg/order/module"
@@ -30,10 +32,16 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/auth/ante"
 	_defer "github.com/ci123chain/ci123chain/pkg/auth/defer"
 	auth_types "github.com/ci123chain/ci123chain/pkg/auth/types"
+	capabilitytypes "github.com/ci123chain/ci123chain/pkg/capability/types"
 	"github.com/ci123chain/ci123chain/pkg/config"
 	distr "github.com/ci123chain/ci123chain/pkg/distribution"
 	k "github.com/ci123chain/ci123chain/pkg/distribution/keeper"
-	"github.com/ci123chain/ci123chain/pkg/ibc"
+	ibctransfer "github.com/ci123chain/ci123chain/pkg/ibc/application/transfer"
+	ibctransferkeeper "github.com/ci123chain/ci123chain/pkg/ibc/application/transfer/keeper"
+	ibctransfertypes "github.com/ci123chain/ci123chain/pkg/ibc/application/transfer/types"
+	ibccore "github.com/ci123chain/ci123chain/pkg/ibc/core"
+	ibchost "github.com/ci123chain/ci123chain/pkg/ibc/core/host"
+	ibckeeper "github.com/ci123chain/ci123chain/pkg/ibc/core/keeper"
 	"github.com/ci123chain/ci123chain/pkg/infrastructure"
 	"github.com/ci123chain/ci123chain/pkg/mint"
 	"github.com/ci123chain/ci123chain/pkg/mortgage"
@@ -82,16 +90,19 @@ var (
 	AuthStoreKey 	 = sdk.NewKVStoreKey(auth.StoreKey)
 	SupplyStoreKey   = sdk.NewKVStoreKey(supply.StoreKey)
 	MortgageStoreKey = sdk.NewKVStoreKey(mortgage.StoreKey)
-	IBCStoreKey 	 = sdk.NewKVStoreKey(ibc.StoreKey)
 	OrderStoreKey	 = sdk.NewKVStoreKey(order.StoreKey)
-
+	IBCStoreKey 	 = sdk.NewKVStoreKey(ibchost.StoreKey)
 
 	disrtStoreKey    = sdk.NewKVStoreKey(k.DisrtKey)
 	stakingStoreKey  = sdk.NewKVStoreKey(staking.StoreKey)
 	wasmStoreKey     = sdk.NewKVStoreKey(vm.StoreKey)
 	mintStoreKey     = sdk.NewKVStoreKey(mint.StoreKey)
 	infrastructureStoreKey = sdk.NewKVStoreKey(infrastructure.StoreKey)
+	ibcTransferStoreKey = sdk.NewKVStoreKey(ibctransfertypes.StoreKey)
+	capabilityStoreKey  = sdk.NewKVStoreKey(capabilitytypes.StoreKey)
 
+
+	memKeys = sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
 
 
 	maccPerms = map[string][]string{
@@ -118,7 +129,7 @@ type Chain struct {
 	txIndexStore    *sdk.TransientStoreKey
 
 	authKeeper 		auth.AuthKeeper
-
+	ParamsKeepr 	params.Keeper
 	// the module manager
 	mm *module.AppManager
 }
@@ -149,104 +160,110 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 	}
 
 	// todo mainkey?
-	accKeeper := keeper.NewAccountKeeper(cdc, AccountStoreKey, acc_types.ProtoBaseAccount)
+	accountKeeper := keeper.NewAccountKeeper(cdc, AccountStoreKey, acc_types.ProtoBaseAccount)
 
-	paramsKeeper := params.NewKeeper(cdc, ParamStoreKey, ParamTransStoreKey, params.DefaultCodespace)
+	c.ParamsKeepr = params.NewKeeper(cdc, ParamStoreKey, ParamTransStoreKey, params.DefaultCodespace)
 
-	supplyKeeper := supply.NewKeeper(cdc, SupplyStoreKey, accKeeper, maccPerms)
+	supplyKeeper := supply.NewKeeper(cdc, SupplyStoreKey, accountKeeper, maccPerms)
 
 	//mortgageKeeper := mortgage.NewKeeper(MortgageStoreKey, supplyKeeper)
 
-	authSubspace := paramsKeeper.Subspace(auth.DefaultCodespace)
+	authSubspace := c.ParamsKeepr.Subspace(auth.DefaultCodespace)
 	c.authKeeper = auth.NewAuthKeeper(cdc, AuthStoreKey, authSubspace)
 
-	ibcKeeper := ibc.NewKeeper(IBCStoreKey, accKeeper, supplyKeeper)
 
 	//fcKeeper := fc.NewFcKeeper(cdc, fcStoreKey, accKeeper)
 
-	stakingKeeper := staking.NewKeeper(cdc, stakingStoreKey, accKeeper,supplyKeeper, paramsKeeper.Subspace(params.ModuleName), cdb)
+	stakingKeeper := staking.NewKeeper(cdc, stakingStoreKey, accountKeeper,supplyKeeper, c.ParamsKeepr.Subspace(params.ModuleName), cdb)
 
-	distrKeeper := k.NewKeeper(cdc, disrtStoreKey, supplyKeeper, accKeeper, auth.FeeCollectorName, paramsKeeper.Subspace(distr.DefaultCodespace), stakingKeeper, cdb)
+	distrKeeper := k.NewKeeper(cdc, disrtStoreKey, supplyKeeper, accountKeeper, auth.FeeCollectorName, c.ParamsKeepr.Subspace(distr.DefaultCodespace), stakingKeeper, cdb)
 
-	mintSubspace := paramsKeeper.Subspace(mint.DefaultCodeSpce)
+	mintSubspace := c.ParamsKeepr.Subspace(mint.DefaultCodeSpce)
 	mintKeeper := mint.NewKeeper(cdc, mintStoreKey, mintSubspace, stakingKeeper, supplyKeeper, auth.FeeCollectorName)
 
 	infrastructureKeeper := infrastructure.NewKeeper(cdc, infrastructureStoreKey)
 
+	capabilityKeeper := capabilitykeeper.NewKeeper(cdc, capabilityStoreKey, memKeys[capabilitytypes.MemStoreKey])
+	scopedIBCKeeper := capabilityKeeper.ScopeToModule(ibchost.ModuleName)
+	scopedTransferKeeper := capabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
+	// NOTE: the IBC mock keeper and application module is used only for testing core IBC. Do
+	// note replicate if you do not need to test core IBC or light clients.
+	//scopedIBCMockKeeper :=  capabilityKeeper.ScopeToModule(ibcmock.ModuleName)
 
-	//odb := cdb.(*couchdb.GoCouchDB)
-	var nodeList []string
-	odb := cdb.(*redis.RedisDB)
+	// Create IBC Keeper
+	IBCKeeper := ibckeeper.NewKeeper(
+		cdc, IBCStoreKey, c.GetSubspace(ibchost.ModuleName), stakingKeeper, scopedIBCKeeper,
+	)
 
-	nodeListBytes, err := odb.Get([]byte(redissource.FlagNodeList))
-	if err != nil {
-		cmn.Exit(err.Error())
-	}
-	if nodeListBytes != nil {
-		err := json.Unmarshal(nodeListBytes, &nodeList)
-		if err != nil {
-			cmn.Exit(err.Error())
-		}
-	}
-	nodeList = append(nodeList, viper.GetString(flagNodeDomain))
-	nodeListBytes, _ = json.Marshal(nodeList)
-	odb.Set([]byte(redissource.FlagNodeList), nodeListBytes)
 
-	orderKeeper := order.NewKeeper(odb, OrderStoreKey, accKeeper)
+	// Create Transfer Keepers
+	ibcTransferKeeper := ibctransferkeeper.NewKeeper(
+		cdc, ibcTransferStoreKey, c.GetSubspace(ibctransfertypes.ModuleName),
+		IBCKeeper.ChannelKeeper, &IBCKeeper.PortKeeper,
+		supplyKeeper, scopedTransferKeeper,
+	)
+	transferModule := ibctransfer.NewAppModule(ibcTransferKeeper)
+
+
+	odb := toRedisdb(cdb)
+	orderKeeper := order.NewKeeper(odb, OrderStoreKey, accountKeeper)
 
 	homeDir := viper.GetString(cli.HomeFlag)
 	var wasmconfig wasm_types.WasmConfig
-	vmSubspace := paramsKeeper.Subspace(vm.DefaultCodespace)
-	vmKeeper := vm.NewKeeper(cdc, wasmStoreKey, homeDir, wasmconfig, vmSubspace, accKeeper, stakingKeeper, cdb)
+	vmSubspace := c.ParamsKeepr.Subspace(vm.DefaultCodespace)
+	vmKeeper := vm.NewKeeper(cdc, wasmStoreKey, homeDir, wasmconfig, vmSubspace, accountKeeper, stakingKeeper, cdb)
 
 	stakingKeeper.SetHooks(staking.NewMultiStakingHooks(distrKeeper.Hooks()))
-	module_order := []string{auth_types.ModuleName, acc_types.ModuleName, supply_types.ModuleName, distr.ModuleName, order.ModuleName,stakingTypes.ModuleName, vm.ModuleName, mint.ModuleName, infrastructure.ModuleName}
+	module_order := []string{auth_types.ModuleName, acc_types.ModuleName,
+		supply_types.ModuleName, distr.ModuleName, order.ModuleName,stakingTypes.ModuleName,
+		vm.ModuleName, mint.ModuleName, infrastructure.ModuleName}
 	// 设置modules
 	c.mm = module.NewManager(
 		module_order,
 		auth.AppModule{AuthKeeper: c.authKeeper},
-		account.AppModule{AccountKeeper: accKeeper},
+		account.AppModule{AccountKeeper: accountKeeper},
 		supply_module.AppModule{Keeper: supplyKeeper},
-		dist_module.AppModule{DistributionKeeper: distrKeeper, AccountKeeper:accKeeper, SupplyKeeper:supplyKeeper},
+		dist_module.AppModule{DistributionKeeper: distrKeeper, AccountKeeper:accountKeeper, SupplyKeeper:supplyKeeper},
 		order_module.AppModule{OrderKeeper: &orderKeeper},
-		staking_module.AppModule{StakingKeeper: stakingKeeper, AccountKeeper:accKeeper, SupplyKeeper:supplyKeeper},
+		staking_module.AppModule{StakingKeeper: stakingKeeper, AccountKeeper:accountKeeper, SupplyKeeper:supplyKeeper},
 		vm_module.AppModule{Keeper: &vmKeeper},
 		mint_module.AppModule{Keeper: mintKeeper},
 		infrastructure_module.AppModule{Keeper: infrastructureKeeper},
+		transferModule,
 		)
 	// invoke router
-	c.Router().AddRoute(transfer.RouteKey, handler.NewHandler(accKeeper))
-	c.Router().AddRoute(ibc.RouterKey, ibc.NewHandler(ibcKeeper))
+	c.Router().AddRoute(transfer.RouteKey, handler.NewHandler(accountKeeper))
 	c.Router().AddRoute(order.RouteKey, orhandler.NewHandler(&orderKeeper))
 	c.Router().AddRoute(staking.RouteKey, staking.NewHandler(stakingKeeper))
 	c.Router().AddRoute(distr.RouteKey, distr.NewHandler(distrKeeper))
 	c.Router().AddRoute(vm.RouteKey, vm.NewHandler(vmKeeper))
 	c.Router().AddRoute(infrastructure.RouteKey, infrastructure.NewHandler(infrastructureKeeper))
+	c.Router().AddRoute(ibchost.RouterKey, ibccore.NewHandler(IBCKeeper))
+	c.Router().AddRoute(ibctransfertypes.RouterKey, ibctransfer.NewHandler(ibcTransferKeeper))
+
 	// query router
-	c.QueryRouter().AddRoute(ibc.RouterKey, ibc.NewQuerier(ibcKeeper))
-
+	//c.QueryRouter().AddRoute(ibchost.RouterKey, ibccore.NewQuerier(ibcKeeper))
 	c.QueryRouter().AddRoute(distr.RouteKey, distr.NewQuerier(distrKeeper))
-
 	c.QueryRouter().AddRoute(order.RouteKey, order.NewQuerier(&orderKeeper))
-
 	c.QueryRouter().AddRoute(staking.RouteKey, staking.NewQuerier(stakingKeeper))
-	c.QueryRouter().AddRoute(account.RouteKey, account.NewQuerier(accKeeper))
+	c.QueryRouter().AddRoute(account.RouteKey, account.NewQuerier(accountKeeper))
 	c.QueryRouter().AddRoute(vm.RouteKey, vm.NewQuerier(vmKeeper))
 	c.QueryRouter().AddRoute(mint.RouteKey, mint.NewQuerier(mintKeeper))
 	c.QueryRouter().AddRoute(infrastructure.RouteKey, infrastructure.NewQuerier(infrastructureKeeper))
 
 
-	c.SetAnteHandler(ante.NewAnteHandler(c.authKeeper, accKeeper, supplyKeeper))
-	c.SetDeferHandler(_defer.NewDeferHandler(accKeeper))
+	c.SetAnteHandler(ante.NewAnteHandler(c.authKeeper, accountKeeper, supplyKeeper))
+	c.SetDeferHandler(_defer.NewDeferHandler(accountKeeper))
 	c.SetBeginBlocker(c.BeginBlocker)
 	c.SetCommitter(c.Committer)
 	c.SetInitChainer(c.InitChainer)
 	c.SetEndBlocker(c.EndBlocker)
+
 	shardID := viper.GetString("ShardID")
 	sdk.CommitInfoKeyFmt = shardID + "s/%d"
 	sdk.LatestVersionKey = shardID + "s/latest"
 
-	err = c.mountStores()
+	err := c.mountStores()
 	if err != nil {
 		cmn.Exit(err.Error())
 	}
@@ -342,7 +359,27 @@ type AppGenTx struct {
 	Address string `json:"address"`
 }
 
+func toRedisdb(cdb tmdb.DB) *redis.RedisDB {
+	//odb := cdb.(*couchdb.GoCouchDB)
+	var nodeList []string
+	odb := cdb.(*redis.RedisDB)
 
+	nodeListBytes, err := odb.Get([]byte(redissource.FlagNodeList))
+	if err != nil {
+		cmn.Exit(err.Error())
+	}
+	if nodeListBytes != nil {
+		err := json.Unmarshal(nodeListBytes, &nodeList)
+		if err != nil {
+			cmn.Exit(err.Error())
+		}
+	}
+	nodeList = append(nodeList, viper.GetString(flagNodeDomain))
+	nodeListBytes, _ = json.Marshal(nodeList)
+	odb.Set([]byte(redissource.FlagNodeList), nodeListBytes)
+
+	return odb
+}
 
 // Generate a genesis transfer with flags
 // pk: publickey of validator
@@ -410,3 +447,10 @@ func handleCache(cdb tmdb.DB, cache string, cdc *codec.Codec, app *baseapp.BaseA
 	}
 	return nil
 }
+
+// NOTE: This is solely to be used for testing purposes.
+func (app *Chain) GetSubspace(moduleName string) params.Subspace {
+	subspace, _ := app.ParamsKeepr.GetSubspace(moduleName)
+	return subspace
+}
+

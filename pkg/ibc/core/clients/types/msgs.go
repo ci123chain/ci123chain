@@ -3,9 +3,9 @@ package types
 import (
 	"errors"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	errors2 "github.com/ci123chain/ci123chain/pkg/ibc/core/errors"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/exported"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/host"
-	"github.com/ci123chain/ci123chain/pkg/ibc/core/types"
 )
 
 const (
@@ -48,19 +48,19 @@ func (msg MsgCreateClient) MsgType() string {
 
 func (msg MsgCreateClient) ValidateBasic() sdk.Error {
 	if err := msg.ClientState.Validate(); err != nil {
-		return types.ErrorClientState(types.DefaultCodespace, err)
+		return errors2.ErrorClientState(errors2.DefaultCodespace, err)
 	}
 	if msg.ClientState.ClientType() == exported.Localhost {
-		return types.ErrorClientState(types.DefaultCodespace, errors.New("localhost client can only be created on chain initialization"))
+		return errors2.ErrorClientState(errors2.DefaultCodespace, errors.New("localhost client can only be created on chain initialization"))
 	}
 	if msg.ClientState.ClientType() != msg.ConsensusState.ClientType() {
-		return types.ErrorClientState(types.DefaultCodespace, errors.New("client types for client state and consensus state do not match"))
+		return errors2.ErrorClientState(errors2.DefaultCodespace, errors.New("client types for client state and consensus state do not match"))
 	}
 	if err := ValidateClientType(msg.ClientState.ClientType()); err != nil {
-		return types.ErrInvalidClientType(types.DefaultCodespace, err)
+		return errors2.ErrInvalidClientType(errors2.DefaultCodespace, err)
 	}
 	if err := msg.ConsensusState.ValidateBasic(); err != nil {
-		return types.ErrorConsensusState(types.DefaultCodespace, err)
+		return errors2.ErrorConsensusState(errors2.DefaultCodespace, err)
 	}
 	return nil
 }

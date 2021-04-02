@@ -31,16 +31,16 @@ type ConnectionKeeper interface {
 		channelID string,
 		channel exported.ChannelI,
 	) error
-	//VerifyPacketCommitment(
-	//	ctx sdk.Context,
-	//	connection exported.ConnectionI,
-	//	height exported.Height,
-	//	proof []byte,
-	//	portID,
-	//	channelID string,
-	//	sequence uint64,
-	//	commitmentBytes []byte,
-	//) error
+	VerifyPacketCommitment(
+		ctx sdk.Context,
+		connection exported.ConnectionI,
+		height exported.Height,
+		proof []byte,
+		portID,
+		channelID string,
+		sequence uint64,
+		commitmentBytes []byte,
+	) error
 	VerifyPacketAcknowledgement(
 		ctx sdk.Context,
 		connection exported.ConnectionI,
@@ -51,24 +51,24 @@ type ConnectionKeeper interface {
 		sequence uint64,
 		acknowledgement []byte,
 	) error
-	//VerifyPacketReceiptAbsence(
-	//	ctx sdk.Context,
-	//	connection exported.ConnectionI,
-	//	height exported.Height,
-	//	proof []byte,
-	//	portID,
-	//	channelID string,
-	//	sequence uint64,
-	//) error
-	//VerifyNextSequenceRecv(
-	//	ctx sdk.Context,
-	//	connection exported.ConnectionI,
-	//	height exported.Height,
-	//	proof []byte,
-	//	portID,
-	//	channelID string,
-	//	nextSequenceRecv uint64,
-	//) error
+	VerifyPacketReceiptAbsence(
+		ctx sdk.Context,
+		connection exported.ConnectionI,
+		height exported.Height,
+		proof []byte,
+		portID,
+		channelID string,
+		sequence uint64,
+	) error
+	VerifyNextSequenceRecv(
+		ctx sdk.Context,
+		connection exported.ConnectionI,
+		height exported.Height,
+		proof []byte,
+		portID,
+		channelID string,
+		nextSequenceRecv uint64,
+	) error
 }
 
 

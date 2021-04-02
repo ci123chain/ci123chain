@@ -82,3 +82,30 @@ type MsgAcknowledgement struct {
 // MsgAcknowledgementResponse defines the Msg/Acknowledgement response type.
 type MsgAcknowledgementResponse struct {
 }
+
+// MsgRecvPacket receives incoming IBC packet
+type MsgRecvPacket struct {
+	Packet          Packet       `protobuf:"bytes,1,opt,name=packet,proto3" json:"packet"`
+	ProofCommitment []byte       `protobuf:"bytes,2,opt,name=proof_commitment,json=proofCommitment,proto3" json:"proof_commitment,omitempty" yaml:"proof_commitment"`
+	ProofHeight     clienttypes.Height `protobuf:"bytes,3,opt,name=proof_height,json=proofHeight,proto3" json:"proof_height" yaml:"proof_height"`
+	Signer          string       `protobuf:"bytes,4,opt,name=signer,proto3" json:"signer,omitempty"`
+}
+
+// MsgRecvPacketResponse defines the Msg/RecvPacket response type.
+type MsgRecvPacketResponse struct {
+}
+
+
+// MsgTimeout receives timed-out packet
+type MsgTimeout struct {
+	Packet           Packet       `protobuf:"bytes,1,opt,name=packet,proto3" json:"packet"`
+	ProofUnreceived  []byte       `protobuf:"bytes,2,opt,name=proof_unreceived,json=proofUnreceived,proto3" json:"proof_unreceived,omitempty" yaml:"proof_unreceived"`
+	ProofHeight      clienttypes.Height `protobuf:"bytes,3,opt,name=proof_height,json=proofHeight,proto3" json:"proof_height" yaml:"proof_height"`
+	NextSequenceRecv uint64       `protobuf:"varint,4,opt,name=next_sequence_recv,json=nextSequenceRecv,proto3" json:"next_sequence_recv,omitempty" yaml:"next_sequence_recv"`
+	Signer           string       `protobuf:"bytes,5,opt,name=signer,proto3" json:"signer,omitempty"`
+}
+
+
+// MsgTimeoutResponse defines the Msg/Timeout response type.
+type MsgTimeoutResponse struct {
+}

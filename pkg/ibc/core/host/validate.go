@@ -60,3 +60,10 @@ func ConnectionIdentifierValidator(id string) error {
 func PortIdentifierValidator(id string) error {
 	return defaultIdentifierValidator(id, 2, DefaultMaxCharacterLength)
 }
+
+// ChannelIdentifierValidator is the default validator function for Channel identifiers.
+// A valid Identifier must be between 8-64 characters and only contain alphanumeric and some allowed
+// special characters (see IsValidID).
+func ChannelIdentifierValidator(id string) error {
+	return defaultIdentifierValidator(id, 8, DefaultMaxCharacterLength)
+}

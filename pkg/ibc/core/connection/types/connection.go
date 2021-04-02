@@ -2,9 +2,9 @@ package types
 
 import (
 	commitmenttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/commitment/types"
+	errors2 "github.com/ci123chain/ci123chain/pkg/ibc/core/errors"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/exported"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/host"
-	"github.com/ci123chain/ci123chain/pkg/ibc/core/types"
 	"github.com/pkg/errors"
 )
 
@@ -123,14 +123,14 @@ func (c Counterparty) GetPrefix() exported.Prefix {
 func (c Counterparty) ValidateBasic() error {
 	if c.ConnectionId != "" {
 		if err := host.ConnectionIdentifierValidator(c.ConnectionId); err != nil {
-			return types.ErrorCounterpartyConnectionID(types.DefaultCodespace, err)
+			return errors2.ErrorCounterpartyConnectionID(errors2.DefaultCodespace, err)
 		}
 	}
 	if err := host.ClientIdentifierValidator(c.ClientId); err != nil {
-		return types.ErrorCounterpartyConnectionID(types.DefaultCodespace, err)
+		return errors2.ErrorCounterpartyConnectionID(errors2.DefaultCodespace, err)
 	}
 	if c.Prefix.Empty() {
-		return types.ErrorCounterpartyPrefix(types.DefaultCodespace, errors.New("counterparty prefix cannot be empty"))
+		return errors2.ErrorCounterpartyPrefix(errors2.DefaultCodespace, errors.New("counterparty prefix cannot be empty"))
 	}
 	return nil
 }

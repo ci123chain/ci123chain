@@ -8,7 +8,6 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/client/cmd/rpc"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/client/helper"
-	"github.com/ci123chain/ci123chain/pkg/ibc"
 	txRpc "github.com/ci123chain/ci123chain/pkg/transfer/rest"
 	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/spf13/cobra"
@@ -99,7 +98,8 @@ func NewRestServer() *RestServer {
 	rpc.RegisterRoutes(cliCtx, r)
 	accountRpc.RegisterRoutes(cliCtx, r)
 	txRpc.RegisterTxRoutes(cliCtx, r)
-	ibc.RegisterRoutes(cliCtx, r)
+	// todo ibc
+	//ibc.RegisterRoutes(cliCtx, r)
 	dRest.RegisterRoutes(cliCtx, r)
 	order.RegisterTxRoutes(cliCtx, r)
 	orQuery.RegisterTxRoutes(cliCtx, r)

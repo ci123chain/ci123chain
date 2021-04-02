@@ -7,6 +7,7 @@ import (
 	clienttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/clients/types"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/host"
 	"github.com/ci123chain/ci123chain/pkg/ibc/application/transfer/types"
+	"github.com/pkg/errors"
 	"strings"
 )
 
@@ -59,7 +60,7 @@ func (k Keeper) SendTransfer(
 
 	sourceChannelEnd, found := k.channelKeeper.GetChannel(ctx, sourcePort, sourceChannel)
 	if !found {
-		return sdkerrors.Wrapf(channeltypes.ErrChannelNotFound, "port ID (%s) channel ID (%s)", sourcePort, sourceChannel)
+		return errors.Wrapf(channeltypes.ErrChannelNotFound, "port ID (%s) channel ID (%s)", sourcePort, sourceChannel)
 	}
 
 	destinationPort := sourceChannelEnd.GetCounterparty().GetPortID()
@@ -68,7 +69,7 @@ func (k Keeper) SendTransfer(
 	// get the next sequence
 	sequence, found := k.channelKeeper.GetNextSequenceSend(ctx, sourcePort, sourceChannel)
 	if !found {
-		return sdkerrors.Wrapf(
+		return errors.Wrapf(
 			channeltypes.ErrSequenceSendNotFound,
 			"source port: %s, source channel: %s", sourcePort, sourceChannel,
 		)
@@ -78,7 +79,7 @@ func (k Keeper) SendTransfer(
 	// See spec for this logic: https://github.com/cosmos/ics/tree/master/spec/ics-020-fungible-token-transfer#packet-relay
 	channelCap, ok := k.scopedKeeper.GetCapability(ctx, host.ChannelCapabilityPath(sourcePort, sourceChannel))
 	if !ok {
-		return sdkerrors.Wrap(channeltypes.ErrChannelCapabilityNotFound, "module does not own channel capability")
+		return errors.Wrap(channeltypes.ErrChannelCapabilityNotFound, "module does not own channel capability")
 	}
 
 	// NOTE: denomination and hex hash correctness checked during msg.ValidateBasic
@@ -111,8 +112,8 @@ func (k Keeper) SendTransfer(
 		escrowAddress := types.GetEscrowAddress(sourcePort, sourceChannel)
 
 		// escrow source tokens. It fails if balance insufficient.
-		if err := k.bankKeeper.SendCoins(
-			ctx, sender, escrowAddress, sdk.NewCoins(token),
+		if err := k.supplyKeepr.SendCoins(
+			ctx, sender, escrowAddress, token,
 		); err != nil {
 			return err
 		}
@@ -121,14 +122,14 @@ func (k Keeper) SendTransfer(
 		//labels = append(labels, telemetry.NewLabel("source", "false"))
 
 		// transfer the coins to the module account and burn them
-		if err := k.bankKeeper.SendCoinsFromAccountToModule(
-			ctx, sender, types.ModuleName, sdk.NewCoins(token),
+		if err := k.supplyKeepr.SendCoinsFromAccountToModule(
+			ctx, sender, types.ModuleName, token,
 		); err != nil {
 			return err
 		}
 
-		if err := k.bankKeeper.BurnCoins(
-			ctx, types.ModuleName, sdk.NewCoins(token),
+		if err := k.supplyKeepr.BurnCoins(
+			ctx, types.ModuleName, token,
 		); err != nil {
 			// NOTE: should not happen as the module account was
 			// retrieved on the step above and it has enough balace
@@ -226,12 +227,12 @@ func (k Keeper) OnRecvPacket(ctx sdk.Context, packet channeltypes.Packet, data t
 
 		// unescrow tokens
 		escrowAddress := types.GetEscrowAddress(packet.GetDestPort(), packet.GetDestChannel())
-		if err := k.bankKeeper.SendCoins(ctx, escrowAddress, receiver, sdk.NewCoins(token)); err != nil {
+		if err := k.supplyKeepr.SendCoins(ctx, escrowAddress, receiver, token); err != nil {
 			// NOTE: this error is only expected to occur given an unexpected bug or a malicious
 			// counterparty module. The bug may occur in bank or any part of the code that allows
 			// the escrow address to be drained. A malicious counterparty module could drain the
 			// escrow address by allowing more tokens to be sent back then were escrowed.
-			return sdkerrors.Wrap(err, "unable to unescrow tokens, this may be caused by a malicious counterparty module or a bug: please open an issue on counterparty module")
+			return errors.Wrap(err, "unable to unescrow tokens, this may be caused by a malicious counterparty module or a bug: please open an issue on counterparty module")
 		}
 
 		//defer func() {
@@ -280,15 +281,15 @@ func (k Keeper) OnRecvPacket(ctx sdk.Context, packet channeltypes.Packet, data t
 	voucher := sdk.NewCoin(voucherDenom, sdk.NewIntFromUint64(data.Amount))
 
 	// mint new tokens if the source of the transfer is the same chain
-	if err := k.bankKeeper.MintCoins(
-		ctx, types.ModuleName, sdk.NewCoins(voucher),
+	if err := k.supplyKeepr.MintCoins(
+		ctx, types.ModuleName, voucher,
 	); err != nil {
 		return err
 	}
 
 	// send to receiver
-	if err := k.bankKeeper.SendCoinsFromModuleToAccount(
-		ctx, types.ModuleName, receiver, sdk.NewCoins(voucher),
+	if err := k.supplyKeepr.SendCoinsFromModuleToAccount(
+		ctx, types.ModuleName, receiver, voucher,
 	); err != nil {
 		panic(fmt.Sprintf("unable to send coins from module to account despite previously minting coins to module account: %v", err))
 	}
@@ -353,25 +354,25 @@ func (k Keeper) refundPacketToken(ctx sdk.Context, packet channeltypes.Packet, d
 	if types.SenderChainIsSource(packet.GetSourcePort(), packet.GetSourceChannel(), data.Denom) {
 		// unescrow tokens back to sender
 		escrowAddress := types.GetEscrowAddress(packet.GetSourcePort(), packet.GetSourceChannel())
-		if err := k.bankKeeper.SendCoins(ctx, escrowAddress, sender, sdk.NewCoins(token)); err != nil {
+		if err := k.supplyKeepr.SendCoins(ctx, escrowAddress, sender, token); err != nil {
 			// NOTE: this error is only expected to occur given an unexpected bug or a malicious
 			// counterparty module. The bug may occur in bank or any part of the code that allows
 			// the escrow address to be drained. A malicious counterparty module could drain the
 			// escrow address by allowing more tokens to be sent back then were escrowed.
-			return sdkerrors.Wrap(err, "unable to unescrow tokens, this may be caused by a malicious counterparty module or a bug: please open an issue on counterparty module")
+			return errors.Wrap(err, "unable to unescrow tokens, this may be caused by a malicious counterparty module or a bug: please open an issue on counterparty module")
 		}
 
 		return nil
 	}
 
 	// mint vouchers back to sender
-	if err := k.bankKeeper.MintCoins(
-		ctx, types.ModuleName, sdk.NewCoins(token),
+	if err := k.supplyKeepr.MintCoins(
+		ctx, types.ModuleName, token,
 	); err != nil {
 		return err
 	}
 
-	if err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, sender, sdk.NewCoins(token)); err != nil {
+	if err := k.supplyKeepr.SendCoinsFromModuleToAccount(ctx, types.ModuleName, sender, token); err != nil {
 		panic(fmt.Sprintf("unable to send coins from module to account despite previously minting coins to module account: %v", err))
 	}
 
@@ -387,12 +388,12 @@ func (k Keeper) DenomPathFromHash(ctx sdk.Context, denom string) (string, error)
 
 	hash, err := types.ParseHexHash(hexHash)
 	if err != nil {
-		return "", sdkerrors.Wrap(types.ErrInvalidDenomForTransfer, err.Error())
+		return "", errors.Wrap(types.ErrInvalidDenomForTransfer, err.Error())
 	}
 
 	denomTrace, found := k.GetDenomTrace(ctx, hash)
 	if !found {
-		return "", sdkerrors.Wrap(types.ErrTraceNotFound, hexHash)
+		return "", errors.Wrap(types.ErrTraceNotFound, hexHash)
 	}
 
 	fullDenomPath := denomTrace.GetFullDenomPath()

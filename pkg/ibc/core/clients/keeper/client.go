@@ -4,9 +4,9 @@ import (
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/clients/types"
+	errors2 "github.com/ci123chain/ci123chain/pkg/ibc/core/errors"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/exported"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/host"
-	types2 "github.com/ci123chain/ci123chain/pkg/ibc/core/types"
 	"github.com/pkg/errors"
 )
 
@@ -14,22 +14,22 @@ func (k Keeper)CreateClient(ctx sdk.Context, clientState exported.ClientState,
 	consensusState exported.ConsensusState ) (string, sdk.Error) {
 	params := k.GetParams(ctx)
 	if params.IsAllowedClient(clientState.ClientType()) {
-		return "", types2.ErrInvalidClientType(types2.DefaultCodespace, fmt.Errorf("client state types %s is not registered in the allowlist", clientState.ClientType()))
+		return "", errors2.ErrInvalidClientType(errors2.DefaultCodespace, fmt.Errorf("client state types %s is not registered in the allowlist", clientState.ClientType()))
 	}
 
 	clientID := k.GenerateClientIdentifier(ctx, clientState.ClientType())
 	k.SetClientState(ctx, clientID, clientState)
-	k.Logger(ctx).Info("client created at height", "client-id", clientID, "height", clientState.GetLastHeight().String())
+	k.Logger(ctx).Info("client created at height", "client-id", clientID, "height", clientState.GetLatestHeight().String())
 
 	if err := clientState.Initialize(ctx, k.ClientStore(ctx, clientID), consensusState); err != nil {
-		return "", types2.ErrInitClientState(types2.DefaultCodespace, err)
+		return "", errors2.ErrInitClientState(errors2.DefaultCodespace, err)
 	}
 
 	if consensusState != nil {
 		k.SetClientConsensusState(ctx, clientID, clientState.GetLatestHeight(), consensusState)
 	}
 
-	k.Logger(ctx).Info("client created at height", "client-id", clientID, "height", clientState.GetLastHeight().String())
+	k.Logger(ctx).Info("client created at height", "client-id", clientID, "height", clientState.GetLatestHeight().String())
 
 	// todo  for telemetry
 	return clientID, nil

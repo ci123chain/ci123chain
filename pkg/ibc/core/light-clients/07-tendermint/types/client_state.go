@@ -50,6 +50,7 @@ type ClientState struct {
 	// whose chain has experienced a misbehaviour event
 	AllowUpdateAfterMisbehaviour bool `json:"allow_update_after_misbehaviour,omitempty" yaml:"allow_update_after_misbehaviour"`
 }
+
 // Fraction defines the protobuf message types for tmmath.Fraction that only supports positive values.
 type Fraction struct {
 	Numerator   uint64 `json:"numerator,omitempty"`
@@ -339,6 +340,10 @@ func (cs ClientState) VerifyChannelState(store sdk.KVStore,
 	return nil
 }
 
+// todo ibc
+func (cs ClientState) VerifyPacketAcknowledgement(store sdk.KVStore, cdc *codec.Codec, height exported.Height, currentTimestamp uint64, delayPeriod uint64, prefix exported.Prefix, proof []byte, portID, channelID string, sequence uint64, acknowledgement []byte) error {
+	panic("implement me")
+}
 
 // private methods implements
 
@@ -376,4 +381,108 @@ func produceVerificationArgs(
 	}
 
 	return merkleProof, consensusState, nil
+}
+
+
+func (cs ClientState) VerifyPacketCommitment(store sdk.KVStore, cdc *codec.Codec, height exported.Height, currentTimestamp uint64, delayPeriod uint64, prefix exported.Prefix, proof []byte, portID, channelID string, sequence uint64, commitmentBytes []byte) error {
+	merkleProof, consensusState, err := produceVerificationArgs(store, cdc, cs, height, prefix, proof)
+	if err != nil {
+		return err
+	}
+
+	// check delay period has passed
+	if err := verifyDelayPeriodPassed(store, height, currentTimestamp, delayPeriod); err != nil {
+		return err
+	}
+
+	commitmentPath := commitmenttypes.NewMerklePath(host.PacketCommitmentPath(portID, channelID, sequence))
+	path, err := commitmenttypes.ApplyPrefix(prefix, commitmentPath)
+	if err != nil {
+		return err
+	}
+
+	if err := merkleProof.VerifyMembership(cs.ProofSpecs, consensusState.GetRoot(), path, commitmentBytes); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (cs ClientState) VerifyPacketReceiptAbsence(store sdk.KVStore, cdc *codec.Codec, height exported.Height, currentTimestamp uint64, delayPeriod uint64, prefix exported.Prefix, proof []byte, portID, channelID string, sequence uint64) error {
+	merkleProof, consensusState, err := produceVerificationArgs(store, cdc, cs, height, prefix, proof)
+	if err != nil {
+		return err
+	}
+
+	// check delay period has passed
+	if err := verifyDelayPeriodPassed(store, height, currentTimestamp, delayPeriod); err != nil {
+		return err
+	}
+
+	receiptPath := commitmenttypes.NewMerklePath(host.PacketReceiptPath(portID, channelID, sequence))
+	path, err := commitmenttypes.ApplyPrefix(prefix, receiptPath)
+	if err != nil {
+		return err
+	}
+
+	if err := merkleProof.VerifyNonMembership(cs.ProofSpecs, consensusState.GetRoot(), path); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (cs ClientState) VerifyNextSequenceRecv(store sdk.KVStore, cdc *codec.Codec, height exported.Height, currentTimestamp uint64, delayPeriod uint64, prefix exported.Prefix, proof []byte, portID, channelID string, nextSequenceRecv uint64) error {
+	merkleProof, consensusState, err := produceVerificationArgs(store, cdc, cs, height, prefix, proof)
+	if err != nil {
+		return err
+	}
+
+	// check delay period has passed
+	if err := verifyDelayPeriodPassed(store, height, currentTimestamp, delayPeriod); err != nil {
+		return err
+	}
+
+	nextSequenceRecvPath := commitmenttypes.NewMerklePath(host.NextSequenceRecvPath(portID, channelID))
+	path, err := commitmenttypes.ApplyPrefix(prefix, nextSequenceRecvPath)
+	if err != nil {
+		return err
+	}
+
+	bz := sdk.Uint64ToBigEndian(nextSequenceRecv)
+
+	if err := merkleProof.VerifyMembership(cs.ProofSpecs, consensusState.GetRoot(), path, bz); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+
+// verifyDelayPeriodPassed will ensure that at least delayPeriod amount of time has passed since consensus state was submitted
+// before allowing verification to continue.
+func verifyDelayPeriodPassed(store sdk.KVStore, proofHeight exported.Height, currentTimestamp, delayPeriod uint64) error {
+	// check that executing chain's timestamp has passed consensusState's processed time + delay period
+	processedTime, ok := GetProcessedTime(store, proofHeight)
+	if !ok {
+		return errors.Wrapf(ErrProcessedTimeNotFound, "processed time not found for height: %s", proofHeight)
+	}
+	validTime := processedTime + delayPeriod
+	// NOTE: delay period is inclusive, so if currentTimestamp is validTime, then we return no error
+	if validTime > currentTimestamp {
+		return errors.Wrapf(ErrDelayPeriodNotPassed, "cannot verify packet until time: %d, current time: %d",
+			validTime, currentTimestamp)
+	}
+	return nil
+}
+
+// GetProcessedTime gets the time (in nanoseconds) at which this chain received and processed a tendermint header.
+// This is used to validate that a received packet has passed the delay period.
+func GetProcessedTime(clientStore sdk.KVStore, height exported.Height) (uint64, bool) {
+	key := ProcessedTimeKey(height)
+	bz := clientStore.Get(key)
+	if bz == nil {
+		return 0, false
+	}
+	return sdk.BigEndianToUint64(bz), true
 }

@@ -1,6 +1,9 @@
-package types
+package errors
 
-import sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+import (
+	"errors"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+)
 
 type CodeType = sdk.CodeType
 const (
@@ -12,10 +15,14 @@ const (
 	CodeInvalidClientType     CodeType          = 804
 	CodeErrInitClientState    CodeType          = 805
 
-	CodeInvalidConnectionID   CodeType          = 806
-	CodeInvalidConnectionVersion CodeType 		= 807
-	CodeInvalidCounterpartyPrefix CodeType 		= 808
-	CodeInvalidCounterparty	  CodeType 			= 809
+	CodeInvalidConnectionID       CodeType = 806
+	CodeInvalidConnectionVersion  CodeType = 807
+	CodeInvalidCounterpartyPrefix CodeType = 808
+	CodeInvalidCounterparty       CodeType = 809
+	CodeInvalidChannel			  CodeType = 810
+	CodeInvalidChannelState 	  CodeType = 811
+	CodeInvalidChannelOrder		  CodeType = 812
+	CodeInvalidCounterpartyChannel CodeType = 813
 )
 
 func ErrorClientState(cs sdk.CodespaceType, err error) sdk.Error {
@@ -81,3 +88,7 @@ func ErrInvalidCounterpartyChannel(cs sdk.CodespaceType, err error) sdk.Error {
 	return sdk.NewError(cs, CodeInvalidCounterpartyChannel , "invalid counter party channel: %s", err.Error())
 
 }
+
+var (
+	ErrInvalidPacket = errors.New("invalid packet")
+)

@@ -4,7 +4,7 @@ import (
 	commitmenttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/commitment/types"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/exported"
 	"github.com/pkg/errors"
-	"github.com/tendermint/tendermint/libs/common"
+	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 	tmtypes "github.com/tendermint/tendermint/types"
 	"time"
 )
@@ -16,12 +16,12 @@ type ConsensusState struct {
 	Timestamp time.Time 						`json:"timestamp"`
 	// commitment root (i.e app hash)
 	Root               commitmenttypes.MerkleRoot  	`json:"root"`
-	NextValidatorsHash common.HexBytes 			`json:"next_validators_hash,omitempty" yaml:"next_validators_hash"`
+	NextValidatorsHash tmbytes.HexBytes 			`json:"next_validators_hash,omitempty" yaml:"next_validators_hash"`
 }
 
 // NewConsensusState creates a new ConsensusState instance.
 func NewConsensusState(
-	timestamp time.Time, root commitmenttypes.MerkleRoot, nextValsHash common.HexBytes,
+	timestamp time.Time, root commitmenttypes.MerkleRoot, nextValsHash tmbytes.HexBytes,
 ) *ConsensusState {
 	return &ConsensusState{
 		Timestamp:          timestamp,

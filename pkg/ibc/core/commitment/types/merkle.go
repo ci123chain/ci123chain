@@ -248,6 +248,54 @@ func verifyChainedMembershipProof(root []byte,
 
 
 
+// VerifyNonMembership verifies the absence of a merkle proof against the given root and path.
+// VerifyNonMembership verifies a chained proof where the absence of a given path is proven
+// at the lowest subtree and then each subtree's inclusion is proved up to the final root.
+func (proof MerkleProof) VerifyNonMembership(specs []*ics23.ProofSpec, root exported.Root, path exported.Path) error {
+	if err := proof.validateVerificationArgs(specs, root); err != nil {
+		return err
+	}
+
+	// VerifyNonMembership specific argument validation
+	mpath, ok := path.(MerklePath)
+	if !ok {
+		return errors.Wrapf(ErrInvalidProof, "path %v is not of type MerkleProof", path)
+	}
+	if len(mpath.KeyPath) != len(specs) {
+		return errors.Wrapf(ErrInvalidProof, "path length %d not same as proof %d",
+			len(mpath.KeyPath), len(specs))
+	}
+
+	switch proof.Proofs[0].Proof.(type) {
+	case *ics23.CommitmentProof_Nonexist:
+		// VerifyNonMembership will verify the absence of key in lowest subtree, and then chain inclusion proofs
+		// of all subroots up to final root
+		subroot, err := proof.Proofs[0].Calculate()
+		if err != nil {
+			return errors.Wrapf(ErrInvalidProof, "could not calculate root for proof index 0, merkle tree is likely empty. %v", err)
+		}
+		key, err := mpath.GetKey(uint64(len(mpath.KeyPath) - 1))
+		if err != nil {
+			return errors.Wrapf(ErrInvalidProof, "could not retrieve key bytes for key: %s", mpath.KeyPath[len(mpath.KeyPath)-1])
+		}
+		if ok := ics23.VerifyNonMembership(specs[0], subroot, proof.Proofs[0], key); !ok {
+			return errors.Wrapf(ErrInvalidProof, "could not verify absence of key %s. Please ensure that the path is correct.", string(key))
+		}
+
+		// Verify chained membership proof starting from index 1 with value = subroot
+		if err := verifyChainedMembershipProof(root.GetHash(), specs, proof.Proofs, mpath, subroot, 1); err != nil {
+			return err
+		}
+	case *ics23.CommitmentProof_Exist:
+		return errors.Wrapf(ErrInvalidProof,
+			"got ExistenceProof in VerifyNonMembership. If this is unexpected, please ensure that proof was queried with the correct key.")
+	default:
+		return errors.Wrapf(ErrInvalidProof,
+			"expected proof type: %T, got: %T", &ics23.CommitmentProof_Exist{}, proof.Proofs[0].Proof)
+	}
+	return nil
+}
+
 
 
 

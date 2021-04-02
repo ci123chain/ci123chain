@@ -1,7 +1,7 @@
 package types
 
 import (
-	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/pkg/errors"
 	"strings"
 )
 
@@ -25,15 +25,16 @@ func NewFungibleTokenPacketData(
 // formats defined by their corresponding chains that are not known to IBC.
 func (ftpd FungibleTokenPacketData) ValidateBasic() error {
 	if ftpd.Amount == 0 {
-		return sdkerrors.Wrap(ErrInvalidAmount, "amount cannot be 0")
+		return errors.Wrap(ErrInvalidAmount, "amount cannot be 0")
 	}
 	if strings.TrimSpace(ftpd.Sender) == "" {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "sender address cannot be blank")
+		return errors.Wrap(ErrInvalidAddress, "sender address cannot be blank")
 	}
 	if strings.TrimSpace(ftpd.Receiver) == "" {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "receiver address cannot be blank")
+		return errors.Wrap(ErrInvalidAddress, "receiver address cannot be blank")
 	}
-	return ValidatePrefixedDenom(ftpd.Denom)
+	//return ValidatePrefixedDenom(ftpd.Denom)
+	return nil
 }
 
 // GetBytes is a helper for serialising

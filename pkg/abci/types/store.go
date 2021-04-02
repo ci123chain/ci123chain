@@ -388,6 +388,34 @@ func (key *TransientStoreKey) String() string {
 	return fmt.Sprintf("TransientStoreKey{%p, %s}", key, key.name)
 }
 
+// NewMemoryStoreKeys constructs a new map matching store key names to their
+// respective MemoryStoreKey references.
+func NewMemoryStoreKeys(names ...string) map[string]*MemoryStoreKey {
+	keys := make(map[string]*MemoryStoreKey)
+	for _, name := range names {
+		keys[name] = NewMemoryStoreKey(name)
+	}
+
+	return keys
+}
+
+
+func NewMemoryStoreKey(name string) *MemoryStoreKey {
+	return &MemoryStoreKey{name: name}
+}
+// MemoryStoreKey defines a typed key to be used with an in-memory KVStore.
+type MemoryStoreKey struct {
+	name string
+}
+
+func (key MemoryStoreKey) Name() string {
+	return key.name
+}
+
+func (key MemoryStoreKey) String() string {
+	return fmt.Sprintf("MemoryStoreKey{%p, %s}", key, key.name)
+}
+
 //----------------------------------------
 
 // types-value result for iterator queries

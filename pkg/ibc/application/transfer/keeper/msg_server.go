@@ -23,12 +23,12 @@ func (k Keeper) Transfer(ctx sdk.Context, msg *types.MsgTransfer) (*types.MsgTra
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventTypeTransfer,
-			sdk.NewAttribute(sdk.AttributeKeySender, msg.Sender),
-			sdk.NewAttribute(types.AttributeKeyReceiver, msg.Receiver),
+			sdk.NewAttributeString(sdk.AttributeKeySender, msg.Sender),
+			sdk.NewAttributeString(types.AttributeKeyReceiver, msg.Receiver),
 		),
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+			sdk.NewAttributeString(sdk.AttributeKeyModule, types.ModuleName),
 		),
 	})
 

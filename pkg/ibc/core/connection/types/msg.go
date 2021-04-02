@@ -4,9 +4,9 @@ import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	clienttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/clients/types"
 	commitmenttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/commitment/types"
+	errors2 "github.com/ci123chain/ci123chain/pkg/ibc/core/errors"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/exported"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/host"
-	"github.com/ci123chain/ci123chain/pkg/ibc/core/types"
 	"github.com/pkg/errors"
 )
 
@@ -61,21 +61,21 @@ func (msg MsgConnectionOpenInit) Type() string {
 // ValidateBasic implements sdk.Msg.
 func (msg MsgConnectionOpenInit) ValidateBasic() sdk.Error {
 	if err := host.ClientIdentifierValidator(msg.ClientId); err != nil {
-		return types.ErrorConnectionID(types.DefaultCodespace, err)
+		return errors2.ErrorConnectionID(errors2.DefaultCodespace, err)
 	}
 	if msg.Counterparty.ConnectionId != "" {
-		return types.ErrorCounterpartyConnectionID(types.DefaultCodespace, errors.New("counterparty connection identifier must be empty"))
+		return errors2.ErrorCounterpartyConnectionID(errors2.DefaultCodespace, errors.New("counterparty connection identifier must be empty"))
 	}
 
 	// NOTE: Version can be nil on MsgConnectionOpenInit
 	if msg.Version != nil {
 		if err := ValidateVersion(msg.Version); err != nil {
-			return types.ErrorInvalidConnectionVersion(types.DefaultCodespace, err)
+			return errors2.ErrorInvalidConnectionVersion(errors2.DefaultCodespace, err)
 		}
 	}
 	_ = sdk.HexToAddress(msg.Signer)
 	if err := msg.Counterparty.ValidateBasic(); err != nil {
-		return types.ErrorCounterparty(types.DefaultCodespace, err)
+		return errors2.ErrorCounterparty(errors2.DefaultCodespace, err)
 	}
 	return nil
 }

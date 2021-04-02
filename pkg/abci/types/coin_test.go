@@ -8,8 +8,8 @@ import (
 
 func TestNewCoin(t *testing.T) {
 	
-	c := NewCoin(NewInt(0))
-	require.Equal(t, Coin{Amount:NewInt(0)}, c)
+	c := NewCoin(DefaultBondDenom ,NewInt(0))
+	require.Equal(t, Coin{Denom: DefaultBondDenom ,Amount:NewInt(0)}, c)
 }
 
 func TestNewUInt64Coin(t *testing.T) {
@@ -20,7 +20,7 @@ func TestNewUInt64Coin(t *testing.T) {
 
 func TestCoin_String(t *testing.T) {
 
-	c := NewCoin(NewInt(0))
+	c := NewCoin(DefaultBondDenom ,NewInt(0))
 	require.Equal(t,"0", c.String())
 }
 

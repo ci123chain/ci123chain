@@ -8,6 +8,8 @@ import (
 const (
 	ModuleName = "ibc"
 
+	StoreKey = ModuleName
+
 	RouterKey string = ModuleName
 )
 
@@ -29,6 +31,9 @@ const (
 	KeyConsensusStatePrefix    = "consensusStates"
 	KeyPacketCommitmentPrefix  = "commitments"
 	KeySequencePrefix          = "sequences"
+	KeyPacketReceiptPrefix     = "receipts"
+	KeyPacketAckPrefix         = "acks"
+
 )
 // ClientStateKey returns a store key under which a particular client state is stored
 // in a client prefixed store
@@ -154,4 +159,35 @@ func PacketCommitmentKey(portID, channelID string, sequence uint64) []byte {
 // PacketCommitmentPrefixPath defines the prefix for commitments to packet data fields store path.
 func PacketCommitmentPrefixPath(portID, channelID string) string {
 	return fmt.Sprintf("%s/%s/%s", KeyPacketCommitmentPrefix, channelPath(portID, channelID), KeySequencePrefix)
+}
+
+// PacketReceiptPath defines the packet receipt store path
+func PacketReceiptPath(portID, channelID string, sequence uint64) string {
+	return fmt.Sprintf("%s/%s/%s", KeyPacketReceiptPrefix, channelPath(portID, channelID), sequencePath(sequence))
+}
+
+// PacketReceiptKey returns the store key of under which a packet
+// receipt is stored
+func PacketReceiptKey(portID, channelID string, sequence uint64) []byte {
+	return []byte(PacketReceiptPath(portID, channelID, sequence))
+}
+
+
+func sequencePath(sequence uint64) string {
+	return fmt.Sprintf("%s/%d", KeySequencePrefix, sequence)
+}
+
+// PacketAcknowledgementPath defines the packet acknowledgement store path
+func PacketAcknowledgementPath(portID, channelID string, sequence uint64) string {
+	return fmt.Sprintf("%s/%d", PacketAcknowledgementPrefixPath(portID, channelID), sequence)
+}
+
+// PacketAcknowledgementPrefixPath defines the prefix for commitments to packet data fields store path.
+func PacketAcknowledgementPrefixPath(portID, channelID string) string {
+	return fmt.Sprintf("%s/%s/%s", KeyPacketAckPrefix, channelPath(portID, channelID), KeySequencePrefix)
+}
+// PacketAcknowledgementKey returns the store key of under which a packet
+// acknowledgement is stored
+func PacketAcknowledgementKey(portID, channelID string, sequence uint64) []byte {
+	return []byte(PacketAcknowledgementPath(portID, channelID, sequence))
 }

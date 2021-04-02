@@ -5,8 +5,18 @@ import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 )
 
-var (
+const (
+	// ModuleName defines the module name
 	ModuleName = "capability"
+
+	// StoreKey defines the primary module store key
+	StoreKey = ModuleName
+
+	// MemStoreKey defines the in-memory store key
+	MemStoreKey = "mem_capability"
+)
+
+var (
 	// KeyIndex defines the key that stores the current globally unique capability
 	// index.
 	KeyIndex = []byte("index")

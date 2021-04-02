@@ -1,10 +1,11 @@
 package types
 
 import (
-	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	"github.com/ci123chain/ci123chain/pkg/ibc/application/transfer/types"
+	"encoding/json"
+	"errors"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/exported"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/host"
+	sdkerrors "github.com/pkg/errors"
 )
 
 // Channel defines pipeline for exactly-once packet delivery between specific
@@ -152,14 +153,13 @@ func (ch Channel) GetVersion() string {
 // ValidateBasic performs a basic validation of the channel fields
 func (ch Channel) ValidateBasic() error {
 	if ch.State == UNINITIALIZED {
-		return ErrInvalidChannelState
+		return errors.New("channel state invalid: state is UNINITIALIZED")
 	}
 	if !(ch.Ordering == ORDERED || ch.Ordering == UNORDERED) {
-		return sdkerrors.Wrap(ErrInvalidChannelOrdering, ch.Ordering.String())
+		return sdkerrors.Errorf("invalid channel ordering %s", ch.Ordering.String())
 	}
 	if len(ch.ConnectionHops) != 1 {
-		return sdkerrors.Wrap(
-			ErrTooManyConnectionHops,
+		return sdkerrors.New(
 			"current IBC version only supports one connection hop",
 		)
 	}
@@ -219,13 +219,16 @@ type Acknowledgement_Error struct {
 
 
 type Acknowledgement struct {
-
 	Response interface{}
 }
 
+func (ack Acknowledgement) String() string {
+	res, _ := json.Marshal(ack)
+	return string(res)
+}
 // GetBytes is a helper for serialising acknowledgements
 func (ack Acknowledgement) GetBytes() []byte {
-	return types.IBCTransferCdc.MustMarshalJSON(ack)
+	return channelCdc.MustMarshalJSON(ack)
 }
 
 // NewResultAcknowledgement returns a new instance of Acknowledgement using an Acknowledgement_Result

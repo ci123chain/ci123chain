@@ -2,6 +2,7 @@ package keeper
 
 import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	clienttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/clients/types"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/exported"
 	"github.com/pkg/errors"
 )
@@ -127,6 +128,94 @@ func (k Keeper) VerifyPacketAcknowledgement(
 		sequence, acknowledgement,
 	); err != nil {
 		return errors.Wrapf(err, "failed packet acknowledgement verification for client (%s)", connection.GetClientID())
+	}
+
+	return nil
+}
+
+
+// VerifyPacketCommitment verifies a proof of an outgoing packet commitment at
+// the specified port, specified channel, and specified sequence.
+func (k Keeper) VerifyPacketCommitment(
+	ctx sdk.Context,
+	connection exported.ConnectionI,
+	height exported.Height,
+	proof []byte,
+	portID,
+	channelID string,
+	sequence uint64,
+	commitmentBytes []byte,
+) error {
+	clientState, found := k.clientKeeper.GetClientState(ctx, connection.GetClientID())
+	if !found {
+		return errors.Wrap(clienttypes.ErrClientNotFound, connection.GetClientID())
+	}
+
+	if err := clientState.VerifyPacketCommitment(
+		k.clientKeeper.ClientStore(ctx, connection.GetClientID()), k.cdc, height,
+		uint64(ctx.BlockHeader().Time.UnixNano()), connection.GetDelayPeriod(),
+		connection.GetCounterparty().GetPrefix(), proof, portID, channelID,
+		sequence, commitmentBytes,
+	); err != nil {
+		return errors.Wrapf(err, "failed packet commitment verification for client (%s)", connection.GetClientID())
+	}
+
+	return nil
+}
+
+
+// VerifyPacketReceiptAbsence verifies a proof of the absence of an
+// incoming packet receipt at the specified port, specified channel, and
+// specified sequence.
+func (k Keeper) VerifyPacketReceiptAbsence(
+	ctx sdk.Context,
+	connection exported.ConnectionI,
+	height exported.Height,
+	proof []byte,
+	portID,
+	channelID string,
+	sequence uint64,
+) error {
+	clientState, found := k.clientKeeper.GetClientState(ctx, connection.GetClientID())
+	if !found {
+		return errors.Wrap(clienttypes.ErrClientNotFound, connection.GetClientID())
+	}
+
+	if err := clientState.VerifyPacketReceiptAbsence(
+		k.clientKeeper.ClientStore(ctx, connection.GetClientID()), k.cdc, height,
+		uint64(ctx.BlockHeader().Time.UnixNano()), connection.GetDelayPeriod(),
+		connection.GetCounterparty().GetPrefix(), proof, portID, channelID,
+		sequence,
+	); err != nil {
+		return errors.Wrapf(err, "failed packet receipt absence verification for client (%s)", connection.GetClientID())
+	}
+
+	return nil
+}
+
+// VerifyNextSequenceRecv verifies a proof of the next sequence number to be
+// received of the specified channel at the specified port.
+func (k Keeper) VerifyNextSequenceRecv(
+	ctx sdk.Context,
+	connection exported.ConnectionI,
+	height exported.Height,
+	proof []byte,
+	portID,
+	channelID string,
+	nextSequenceRecv uint64,
+) error {
+	clientState, found := k.clientKeeper.GetClientState(ctx, connection.GetClientID())
+	if !found {
+		return errors.Wrap(clienttypes.ErrClientNotFound, connection.GetClientID())
+	}
+
+	if err := clientState.VerifyNextSequenceRecv(
+		k.clientKeeper.ClientStore(ctx, connection.GetClientID()), k.cdc, height,
+		uint64(ctx.BlockHeader().Time.UnixNano()), connection.GetDelayPeriod(),
+		connection.GetCounterparty().GetPrefix(), proof, portID, channelID,
+		nextSequenceRecv,
+	); err != nil {
+		return errors.Wrapf(err, "failed next sequence receive verification for client (%s)", connection.GetClientID())
 	}
 
 	return nil

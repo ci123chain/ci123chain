@@ -5,11 +5,12 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/abci/store"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	capabilitykeeper "github.com/ci123chain/ci123chain/pkg/capability/keeper"
+	capabilitytypes "github.com/ci123chain/ci123chain/pkg/capability/types"
 	"github.com/ci123chain/ci123chain/pkg/ibc/application/transfer/types"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/host"
 	paramtypes "github.com/ci123chain/ci123chain/pkg/params/subspace"
 	supplytypes "github.com/ci123chain/ci123chain/pkg/supply/exported"
-	cmn "github.com/tendermint/tendermint/libs/common"
+	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 
 	"github.com/tendermint/tendermint/libs/log"
 )
@@ -22,8 +23,7 @@ type Keeper struct {
 
 	channelKeeper types.ChannelKeeper
 	portKeeper    types.PortKeeper
-	authKeeper    types.AccountKeeper
-	bankKeeper    types.BankKeeper
+	supplyKeepr    types.SupplyKeeper
 	scopedKeeper  capabilitykeeper.ScopedKeeper
 }
 
@@ -32,11 +32,11 @@ type Keeper struct {
 func NewKeeper(
 	cdc *codec.Codec, key sdk.StoreKey, paramSpace paramtypes.Subspace,
 	channelKeeper types.ChannelKeeper, portKeeper types.PortKeeper,
-	authKeeper types.AccountKeeper, bankKeeper types.BankKeeper, scopedKeeper capabilitykeeper.ScopedKeeper,
+	supplyKeeper types.SupplyKeeper, scopedKeeper capabilitykeeper.ScopedKeeper,
 ) Keeper {
 
 	// ensure ibc transfer module account is set
-	if addr := authKeeper.GetModuleAddress(types.ModuleName); addr.Empty() {
+	if addr := supplyKeeper.GetModuleAddress(types.ModuleName); addr.Empty() {
 		panic("the IBC transfer module account has not been set")
 	}
 
@@ -51,8 +51,7 @@ func NewKeeper(
 		paramSpace:    paramSpace,
 		channelKeeper: channelKeeper,
 		portKeeper:    portKeeper,
-		authKeeper:    authKeeper,
-		bankKeeper:    bankKeeper,
+		supplyKeepr:   supplyKeeper,
 		scopedKeeper:  scopedKeeper,
 	}
 }
@@ -65,11 +64,11 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 
 // GetTransferAccount returns the ICS20 - transfers ModuleAccount
 func (k Keeper) GetTransferAccount(ctx sdk.Context) supplytypes.ModuleAccountI {
-	return k.authKeeper.GetModuleAccount(ctx, types.ModuleName)
+	return k.supplyKeepr.GetModuleAccount(ctx, types.ModuleName)
 }
 
 // GetDenomTrace retreives the full identifiers trace and base denomination from the store.
-func (k Keeper) GetDenomTrace(ctx sdk.Context, denomTraceHash cmn.HexBytes) (types.DenomTrace, bool) {
+func (k Keeper) GetDenomTrace(ctx sdk.Context, denomTraceHash tmbytes.HexBytes) (types.DenomTrace, bool) {
 	prefiSstore := store.NewPrefixStore(ctx.KVStore(k.storeKey), types.DenomTraceKey)
 	bz := prefiSstore.Get(denomTraceHash)
 	if bz == nil {
@@ -92,4 +91,41 @@ func (k Keeper) SetDenomTrace(ctx sdk.Context, denomTrace types.DenomTrace) {
 	store := store.NewPrefixStore(ctx.KVStore(k.storeKey), types.DenomTraceKey)
 	bz := k.MustMarshalDenomTrace(denomTrace)
 	store.Set(denomTrace.Hash(), bz)
+}
+
+// ClaimCapability allows the transfer module that can claim a capability that IBC module
+// passes to it
+func (k Keeper) ClaimCapability(ctx sdk.Context, cap *capabilitytypes.Capability, name string) error {
+	return k.scopedKeeper.ClaimCapability(ctx, cap, name)
+}
+
+
+// AuthenticateCapability wraps the scopedKeeper's AuthenticateCapability function
+func (k Keeper) AuthenticateCapability(ctx sdk.Context, cap *capabilitytypes.Capability, name string) bool {
+	return k.scopedKeeper.AuthenticateCapability(ctx, cap, name)
+}
+
+// GetPort returns the portID for the transfer module. Used in ExportGenesis
+func (k Keeper) GetPort(ctx sdk.Context) string {
+	store := ctx.KVStore(k.storeKey)
+	return string(store.Get(types.PortKey))
+}
+
+// SetPort sets the portID for the transfer module. Used in InitGenesis
+func (k Keeper) SetPort(ctx sdk.Context, portID string) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(types.PortKey, []byte(portID))
+}
+
+// IsBound checks if the transfer module is already bound to the desired port
+func (k Keeper) IsBound(ctx sdk.Context, portID string) bool {
+	_, ok := k.scopedKeeper.GetCapability(ctx, host.PortPath(portID))
+	return ok
+}
+
+// BindPort defines a wrapper function for the ort Keeper's function in
+// order to expose it to module's InitGenesis function
+func (k Keeper) BindPort(ctx sdk.Context, portID string) error {
+	cap := k.portKeeper.BindPort(ctx, portID)
+	return k.ClaimCapability(ctx, cap, host.PortPath(portID))
 }

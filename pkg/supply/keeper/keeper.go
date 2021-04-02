@@ -17,6 +17,10 @@ type Keeper struct {
 	permAddrs 	map[string]types2.PermissionsForAddress
 }
 
+
+
+
+
 func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, ak account.AccountKeeper, maccPerms map[string][]string) Keeper {
 	permAddrs := make(map[string]types2.PermissionsForAddress)
 	for name, perms := range maccPerms {
@@ -217,4 +221,14 @@ func (k Keeper) MintCoins(ctx sdk.Context, moduleName string, amt sdk.Coin) erro
 	logger.Info(fmt.Sprintf("minted %s from %s module account", amt.String(), moduleName))*/
 
 	return nil
+}
+
+func (k Keeper) SendCoins(ctx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coin) error {
+	panic("implement me")
+}
+
+
+
+func (k Keeper) BurnCoins(ctx sdk.Context, moduleName string, amt sdk.Coin) error {
+	panic("implement me")
 }

@@ -57,21 +57,21 @@ type IBCModule interface {
 	//	channelID string,
 	//) error
 	//
-	//// OnRecvPacket must return the acknowledgement bytes
-	//// In the case of an asynchronous acknowledgement, nil should be returned.
-	//OnRecvPacket(
-	//	ctx sdk.Context,
-	//	packet channeltypes.Packet,
-	//) (*sdk.Result, []byte, error)
-	//
-	//OnAcknowledgementPacket(
-	//	ctx sdk.Context,
-	//	packet channeltypes.Packet,
-	//	acknowledgement []byte,
-	//) (*sdk.Result, error)
-	//
-	//OnTimeoutPacket(
-	//	ctx sdk.Context,
-	//	packet channeltypes.Packet,
-	//) (*sdk.Result, error)
+	// OnRecvPacket must return the acknowledgement bytes
+	// In the case of an asynchronous acknowledgement, nil should be returned.
+	OnRecvPacket(
+		ctx sdk.Context,
+		packet channeltypes.Packet,
+	) (*sdk.Result, []byte, error)
+
+	OnAcknowledgementPacket(
+		ctx sdk.Context,
+		packet channeltypes.Packet,
+		acknowledgement []byte,
+	) (*sdk.Result, error)
+
+	OnTimeoutPacket(
+		ctx sdk.Context,
+		packet channeltypes.Packet,
+	) (*sdk.Result, error)
 }

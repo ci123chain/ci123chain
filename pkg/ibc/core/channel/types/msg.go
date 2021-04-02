@@ -298,3 +298,90 @@ func (m MsgAcknowledgement) GetFromAddress() sdk.AccAddress {
 func (m MsgAcknowledgement) Bytes() []byte {
 	panic("IBC messages do not support amino")
 }
+
+
+var _ sdk.Msg = &MsgRecvPacket{}
+
+func (m MsgRecvPacket) Route() string {
+	return host.RouterKey
+}
+
+func (m MsgRecvPacket) MsgType() string {
+	panic("implement me")
+}
+
+func (m MsgRecvPacket) ValidateBasic() sdk.Error {
+	//if len(msg.ProofCommitment) == 0 {
+	//	return sdkerrors.Wrap(commitmenttypes.ErrInvalidProof, "cannot submit an empty proof")
+	//}
+	//if msg.ProofHeight.IsZero() {
+	//	return sdkerrors.Wrap(sdkerrors.ErrInvalidHeight, "proof height must be non-zero")
+	//}
+	//if err != nil {
+	//	return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "string could not be parsed as address: %v", err)
+	//}
+	//return msg.Packet.ValidateBasic()
+	return nil
+}
+
+func (m MsgRecvPacket) GetFromAddress() sdk.AccAddress {
+	return sdk.HexToAddress(m.Signer)
+}
+
+func (m MsgRecvPacket) Bytes() []byte {
+	panic("implement me")
+}
+
+
+
+var _ sdk.Msg = &MsgTimeout{}
+
+// NewMsgTimeout constructs new MsgTimeout
+// nolint:interfacer
+func NewMsgTimeout(
+	packet Packet, nextSequenceRecv uint64, proofUnreceived []byte,
+	proofHeight clienttypes.Height, signer sdk.AccAddress,
+) *MsgTimeout {
+	return &MsgTimeout{
+		Packet:           packet,
+		NextSequenceRecv: nextSequenceRecv,
+		ProofUnreceived:  proofUnreceived,
+		ProofHeight:      proofHeight,
+		Signer:           signer.String(),
+	}
+}
+
+
+func (m MsgTimeout) Route() string {
+	return host.RouterKey
+}
+
+func (m MsgTimeout) MsgType() string {
+	return "timeout_packet"
+}
+
+func (m MsgTimeout) ValidateBasic() sdk.Error {
+	//if len(msg.ProofUnreceived) == 0 {
+	//	return sdkerrors.Wrap(commitmenttypes.ErrInvalidProof, "cannot submit an empty unreceived proof")
+	//}
+	//if msg.ProofHeight.IsZero() {
+	//	return sdkerrors.Wrap(sdkerrors.ErrInvalidHeight, "proof height must be non-zero")
+	//}
+	//if msg.NextSequenceRecv == 0 {
+	//	return sdkerrors.Wrap(sdkerrors.ErrInvalidSequence, "next sequence receive cannot be 0")
+	//}
+	//_, err := sdk.AccAddressFromBech32(msg.Signer)
+	//if err != nil {
+	//	return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "string could not be parsed as address: %v", err)
+	//}
+	//return msg.Packet.ValidateBasic()
+	return nil
+}
+
+func (m MsgTimeout) GetFromAddress() sdk.AccAddress {
+	return sdk.HexToAddress(m.Signer)
+}
+
+func (m MsgTimeout) Bytes() []byte {
+	panic("implement me")
+}

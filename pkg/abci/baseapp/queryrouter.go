@@ -25,7 +25,7 @@ func NewQueryRouter() *queryrouter {
 
 // AddRoute - Adds an sdk.Querier to the route provided. Panics on duplicate
 func (rtr *queryrouter) AddRoute(r string, q sdk.Querier) QueryRouter {
-	if !sdk.isAlphaNumeric(r) {
+	if !sdk.IsAlphaNumeric(r) {
 		panic("route expressions can only contain alphanumeric characters")
 	}
 	if rtr.routes[r] != nil {

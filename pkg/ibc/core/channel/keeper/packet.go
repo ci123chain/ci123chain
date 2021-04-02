@@ -6,9 +6,11 @@ import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	capabilitytypes "github.com/ci123chain/ci123chain/pkg/capability/types"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/channel/types"
+	clienttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/clients/types"
 	connectiontypes "github.com/ci123chain/ci123chain/pkg/ibc/core/connection/types"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/exported"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/host"
+	"github.com/pkg/errors"
 	"time"
 )
 
@@ -21,34 +23,34 @@ func (k Keeper) SendPacket(
 	packet exported.PacketI,
 ) error {
 	if err := packet.ValidateBasic(); err != nil {
-		return sdkerrors.Wrap(err, "packet failed basic validation")
+		return errors.Wrap(err, "packet failed basic validation")
 	}
 
 	channel, found := k.GetChannel(ctx, packet.GetSourcePort(), packet.GetSourceChannel())
 	if !found {
-		return sdkerrors.Wrap(types.ErrChannelNotFound, packet.GetSourceChannel())
+		return errors.Wrap(types.ErrChannelNotFound, packet.GetSourceChannel())
 	}
 
 	if channel.State == types.CLOSED {
-		return sdkerrors.Wrapf(
+		return errors.Wrapf(
 			types.ErrInvalidChannelState,
 			"channel is CLOSED (got %s)", channel.State.String(),
 		)
 	}
 
 	if !k.scopedKeeper.AuthenticateCapability(ctx, channelCap, host.ChannelCapabilityPath(packet.GetSourcePort(), packet.GetSourceChannel())) {
-		return sdkerrors.Wrapf(types.ErrChannelCapabilityNotFound, "caller does not own capability for channel, port ID (%s) channel ID (%s)", packet.GetSourcePort(), packet.GetSourceChannel())
+		return errors.Wrapf(types.ErrChannelCapabilityNotFound, "caller does not own capability for channel, port ID (%s) channel ID (%s)", packet.GetSourcePort(), packet.GetSourceChannel())
 	}
 
 	if packet.GetDestPort() != channel.Counterparty.PortId {
-		return sdkerrors.Wrapf(
+		return errors.Wrapf(
 			types.ErrInvalidPacket,
 			"packet destination port doesn't match the counterparty's port (%s ≠ %s)", packet.GetDestPort(), channel.Counterparty.PortId,
 		)
 	}
 
 	if packet.GetDestChannel() != channel.Counterparty.ChannelId {
-		return sdkerrors.Wrapf(
+		return errors.Wrapf(
 			types.ErrInvalidPacket,
 			"packet destination channel doesn't match the counterparty's channel (%s ≠ %s)", packet.GetDestChannel(), channel.Counterparty.ChannelId,
 		)
@@ -56,7 +58,7 @@ func (k Keeper) SendPacket(
 
 	connectionEnd, found := k.connectionKeeper.GetConnection(ctx, channel.ConnectionHops[0])
 	if !found {
-		return sdkerrors.Wrap(connectiontypes.ErrConnectionNotFound, channel.ConnectionHops[0])
+		return errors.Wrap(connectiontypes.ErrConnectionNotFound, channel.ConnectionHops[0])
 	}
 
 	clientState, found := k.clientKeeper.GetClientState(ctx, connectionEnd.GetClientID())
@@ -66,14 +68,14 @@ func (k Keeper) SendPacket(
 
 	// prevent accidental sends with clients that cannot be updated
 	if clientState.IsFrozen() {
-		return sdkerrors.Wrapf(clienttypes.ErrClientFrozen, "cannot send packet on a frozen client with ID %s", connectionEnd.GetClientID())
+		return errors.Wrapf(clienttypes.ErrClientFrozen, "cannot send packet on a frozen client with ID %s", connectionEnd.GetClientID())
 	}
 
 	// check if packet timeouted on the receiving chain
 	latestHeight := clientState.GetLatestHeight()
 	timeoutHeight := packet.GetTimeoutHeight()
 	if !timeoutHeight.IsZero() && latestHeight.GTE(timeoutHeight) {
-		return sdkerrors.Wrapf(
+		return errors.Wrapf(
 			types.ErrPacketTimeout,
 			"receiving chain block height >= packet timeout height (%s >= %s)", latestHeight, timeoutHeight,
 		)
@@ -85,7 +87,7 @@ func (k Keeper) SendPacket(
 	}
 
 	if packet.GetTimeoutTimestamp() != 0 && latestTimestamp >= packet.GetTimeoutTimestamp() {
-		return sdkerrors.Wrapf(
+		return errors.Wrapf(
 			types.ErrPacketTimeout,
 			"receiving chain block timestamp >= packet timeout timestamp (%s >= %s)", time.Unix(0, int64(latestTimestamp)), time.Unix(0, int64(packet.GetTimeoutTimestamp())),
 		)
@@ -93,14 +95,14 @@ func (k Keeper) SendPacket(
 
 	nextSequenceSend, found := k.GetNextSequenceSend(ctx, packet.GetSourcePort(), packet.GetSourceChannel())
 	if !found {
-		return sdkerrors.Wrapf(
+		return errors.Wrapf(
 			types.ErrSequenceSendNotFound,
 			"source port: %s, source channel: %s", packet.GetSourcePort(), packet.GetSourceChannel(),
 		)
 	}
 
 	if packet.GetSequence() != nextSequenceSend {
-		return sdkerrors.Wrapf(
+		return errors.Wrapf(
 			types.ErrInvalidPacket,
 			"packet sequence ≠ next send sequence (%d ≠ %d)", packet.GetSequence(), nextSequenceSend,
 		)
@@ -158,14 +160,14 @@ func (k Keeper) AcknowledgePacket(
 ) error {
 	channel, found := k.GetChannel(ctx, packet.GetSourcePort(), packet.GetSourceChannel())
 	if !found {
-		return sdkerrors.Wrapf(
+		return errors.Wrapf(
 			types.ErrChannelNotFound,
 			"port ID (%s) channel ID (%s)", packet.GetSourcePort(), packet.GetSourceChannel(),
 		)
 	}
 
 	if channel.State != types.OPEN {
-		return sdkerrors.Wrapf(
+		return errors.Wrapf(
 			types.ErrInvalidChannelState,
 			"channel state is not OPEN (got %s)", channel.State.String(),
 		)
@@ -174,7 +176,7 @@ func (k Keeper) AcknowledgePacket(
 	// Authenticate capability to ensure caller has authority to receive packet on this channel
 	capName := host.ChannelCapabilityPath(packet.GetSourcePort(), packet.GetSourceChannel())
 	if !k.scopedKeeper.AuthenticateCapability(ctx, chanCap, capName) {
-		return sdkerrors.Wrapf(
+		return errors.Wrapf(
 			types.ErrInvalidChannelCapability,
 			"channel capability failed authentication for capability name %s", capName,
 		)
@@ -182,14 +184,14 @@ func (k Keeper) AcknowledgePacket(
 
 	// packet must have been sent to the channel's counterparty
 	if packet.GetDestPort() != channel.Counterparty.PortId {
-		return sdkerrors.Wrapf(
+		return errors.Wrapf(
 			types.ErrInvalidPacket,
 			"packet destination port doesn't match the counterparty's port (%s ≠ %s)", packet.GetDestPort(), channel.Counterparty.PortId,
 		)
 	}
 
 	if packet.GetDestChannel() != channel.Counterparty.ChannelId {
-		return sdkerrors.Wrapf(
+		return errors.Wrapf(
 			types.ErrInvalidPacket,
 			"packet destination channel doesn't match the counterparty's channel (%s ≠ %s)", packet.GetDestChannel(), channel.Counterparty.ChannelId,
 		)
@@ -197,11 +199,11 @@ func (k Keeper) AcknowledgePacket(
 
 	connectionEnd, found := k.connectionKeeper.GetConnection(ctx, channel.ConnectionHops[0])
 	if !found {
-		return sdkerrors.Wrap(connectiontypes.ErrConnectionNotFound, channel.ConnectionHops[0])
+		return errors.Wrap(connectiontypes.ErrConnectionNotFound, channel.ConnectionHops[0])
 	}
 
 	if connectionEnd.GetState() != int32(connectiontypes.OPEN) {
-		return sdkerrors.Wrapf(
+		return errors.Wrapf(
 			connectiontypes.ErrInvalidConnectionState,
 			"connection state is not OPEN (got %s)", connectiontypes.State(connectionEnd.GetState()).String(),
 		)
@@ -213,29 +215,29 @@ func (k Keeper) AcknowledgePacket(
 
 	// verify we sent the packet and haven't cleared it out yet
 	if !bytes.Equal(commitment, packetCommitment) {
-		return sdkerrors.Wrapf(types.ErrInvalidPacket, "commitment bytes are not equal: got (%v), expected (%v)", packetCommitment, commitment)
+		return errors.Wrapf(types.ErrInvalidPacket, "commitment bytes are not equal: got (%v), expected (%v)", packetCommitment, commitment)
 	}
 
 	if err := k.connectionKeeper.VerifyPacketAcknowledgement(
 		ctx, connectionEnd, proofHeight, proof, packet.GetDestPort(), packet.GetDestChannel(),
 		packet.GetSequence(), acknowledgement,
 	); err != nil {
-		return sdkerrors.Wrap(err, "packet acknowledgement verification failed")
+		return errors.Wrap(err, "packet acknowledgement verification failed")
 	}
 
 	// assert packets acknowledged in order
 	if channel.Ordering == types.ORDERED {
 		nextSequenceAck, found := k.GetNextSequenceAck(ctx, packet.GetSourcePort(), packet.GetSourceChannel())
 		if !found {
-			return sdkerrors.Wrapf(
+			return errors.Wrapf(
 				types.ErrSequenceAckNotFound,
 				"source port: %s, source channel: %s", packet.GetSourcePort(), packet.GetSourceChannel(),
 			)
 		}
 
 		if packet.GetSequence() != nextSequenceAck {
-			return sdkerrors.Wrapf(
-				sdkerrors.ErrInvalidSequence,
+			return errors.Wrapf(
+				types.ErrInvalidSequence,
 				"packet sequence ≠ next ack sequence (%d ≠ %d)", packet.GetSequence(), nextSequenceAck,
 			)
 		}
@@ -259,6 +261,254 @@ func (k Keeper) AcknowledgePacket(
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventTypeAcknowledgePacket,
+			sdk.NewAttributeString(types.AttributeKeyTimeoutHeight, packet.GetTimeoutHeight().String()),
+			sdk.NewAttributeString(types.AttributeKeyTimeoutTimestamp, fmt.Sprintf("%d", packet.GetTimeoutTimestamp())),
+			sdk.NewAttributeString(types.AttributeKeySequence, fmt.Sprintf("%d", packet.GetSequence())),
+			sdk.NewAttributeString(types.AttributeKeySrcPort, packet.GetSourcePort()),
+			sdk.NewAttributeString(types.AttributeKeySrcChannel, packet.GetSourceChannel()),
+			sdk.NewAttributeString(types.AttributeKeyDstPort, packet.GetDestPort()),
+			sdk.NewAttributeString(types.AttributeKeyDstChannel, packet.GetDestChannel()),
+			sdk.NewAttributeString(types.AttributeKeyChannelOrdering, channel.Ordering.String()),
+			// we only support 1-hop packets now, and that is the most important hop for a relayer
+			// (is it going to a chain I am connected to)
+			sdk.NewAttributeString(types.AttributeKeyConnection, channel.ConnectionHops[0]),
+		),
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttributeString(sdk.AttributeKeyModule, types.AttributeValueCategory),
+		),
+	})
+
+	return nil
+}
+
+
+// WriteAcknowledgement writes the packet execution acknowledgement to the state,
+// which will be verified by the counterparty chain using AcknowledgePacket.
+//
+// CONTRACT:
+//
+// 1) For synchronous execution, this function is be called in the IBC handler .
+// For async handling, it needs to be called directly by the module which originally
+// processed the packet.
+//
+// 2) Assumes that packet receipt has been written (unordered), or nextSeqRecv was incremented (ordered)
+// previously by RecvPacket.
+func (k Keeper) WriteAcknowledgement(
+	ctx sdk.Context,
+	chanCap *capabilitytypes.Capability,
+	packet exported.PacketI,
+	acknowledgement []byte,
+) error {
+	channel, found := k.GetChannel(ctx, packet.GetDestPort(), packet.GetDestChannel())
+	if !found {
+		return errors.Wrap(types.ErrChannelNotFound, packet.GetDestChannel())
+	}
+
+	if channel.State != types.OPEN {
+		return errors.Wrapf(
+			types.ErrInvalidChannelState,
+			"channel state is not OPEN (got %s)", channel.State.String(),
+		)
+	}
+
+	// Authenticate capability to ensure caller has authority to receive packet on this channel
+	capName := host.ChannelCapabilityPath(packet.GetDestPort(), packet.GetDestChannel())
+	if !k.scopedKeeper.AuthenticateCapability(ctx, chanCap, capName) {
+		return errors.Wrapf(
+			types.ErrInvalidChannelCapability,
+			"channel capability failed authentication for capability name %s", capName,
+		)
+	}
+
+	// NOTE: IBC app modules might have written the acknowledgement synchronously on
+	// the OnRecvPacket callback so we need to check if the acknowledgement is already
+	// set on the store and return an error if so.
+	if k.HasPacketAcknowledgement(ctx, packet.GetDestPort(), packet.GetDestChannel(), packet.GetSequence()) {
+		return types.ErrAcknowledgementExists
+	}
+
+	if len(acknowledgement) == 0 {
+		return errors.Wrap(types.ErrInvalidAcknowledgement, "acknowledgement cannot be empty")
+	}
+
+	// set the acknowledgement so that it can be verified on the other side
+	k.SetPacketAcknowledgement(
+		ctx, packet.GetDestPort(), packet.GetDestChannel(), packet.GetSequence(),
+		types.CommitAcknowledgement(acknowledgement),
+	)
+
+	// log that a packet acknowledgement has been written
+	k.Logger(ctx).Info("acknowledged written", "packet", fmt.Sprintf("%v", packet))
+
+	// emit an event that the relayer can query for
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeWriteAck,
+			sdk.NewAttributeString(types.AttributeKeyData, string(packet.GetData())),
+			sdk.NewAttributeString(types.AttributeKeyTimeoutHeight, packet.GetTimeoutHeight().String()),
+			sdk.NewAttributeString(types.AttributeKeyTimeoutTimestamp, fmt.Sprintf("%d", packet.GetTimeoutTimestamp())),
+			sdk.NewAttributeString(types.AttributeKeySequence, fmt.Sprintf("%d", packet.GetSequence())),
+			sdk.NewAttributeString(types.AttributeKeySrcPort, packet.GetSourcePort()),
+			sdk.NewAttributeString(types.AttributeKeySrcChannel, packet.GetSourceChannel()),
+			sdk.NewAttributeString(types.AttributeKeyDstPort, packet.GetDestPort()),
+			sdk.NewAttributeString(types.AttributeKeyDstChannel, packet.GetDestChannel()),
+			sdk.NewAttributeString(types.AttributeKeyAck, string(acknowledgement)),
+			// we only support 1-hop packets now, and that is the most important hop for a relayer
+			// (is it going to a chain I am connected to)
+			sdk.NewAttributeString(types.AttributeKeyConnection, channel.ConnectionHops[0]),
+		),
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttributeString(sdk.AttributeKeyModule, types.AttributeValueCategory),
+		),
+	})
+
+	return nil
+}
+
+
+// RecvPacket is called by a module in order to receive & process an IBC packet
+// sent on the corresponding channel end on the counterparty chain.
+func (k Keeper) RecvPacket(
+	ctx sdk.Context,
+	chanCap *capabilitytypes.Capability,
+	packet exported.PacketI,
+	proof []byte,
+	proofHeight exported.Height,
+) error {
+	channel, found := k.GetChannel(ctx, packet.GetDestPort(), packet.GetDestChannel())
+	if !found {
+		return errors.Wrap(types.ErrChannelNotFound, packet.GetDestChannel())
+	}
+
+	if channel.State != types.OPEN {
+		return errors.Wrapf(
+			types.ErrInvalidChannelState,
+			"channel state is not OPEN (got %s)", channel.State.String(),
+		)
+	}
+
+	// Authenticate capability to ensure caller has authority to receive packet on this channel
+	capName := host.ChannelCapabilityPath(packet.GetDestPort(), packet.GetDestChannel())
+	if !k.scopedKeeper.AuthenticateCapability(ctx, chanCap, capName) {
+		return errors.Wrapf(
+			types.ErrInvalidChannelCapability,
+			"channel capability failed authentication for capability name %s", capName,
+		)
+	}
+
+	// packet must come from the channel's counterparty
+	if packet.GetSourcePort() != channel.Counterparty.PortId {
+		return errors.Wrapf(
+			types.ErrInvalidPacket,
+			"packet source port doesn't match the counterparty's port (%s ≠ %s)", packet.GetSourcePort(), channel.Counterparty.PortId,
+		)
+	}
+
+	if packet.GetSourceChannel() != channel.Counterparty.ChannelId {
+		return errors.Wrapf(
+			types.ErrInvalidPacket,
+			"packet source channel doesn't match the counterparty's channel (%s ≠ %s)", packet.GetSourceChannel(), channel.Counterparty.ChannelId,
+		)
+	}
+
+	// Connection must be OPEN to receive a packet. It is possible for connection to not yet be open if packet was
+	// sent optimistically before connection and channel handshake completed. However, to receive a packet,
+	// connection and channel must both be open
+	connectionEnd, found := k.connectionKeeper.GetConnection(ctx, channel.ConnectionHops[0])
+	if !found {
+		return errors.Wrap(connectiontypes.ErrConnectionNotFound, channel.ConnectionHops[0])
+	}
+
+	if connectionEnd.GetState() != int32(connectiontypes.OPEN) {
+		return errors.Wrapf(
+			connectiontypes.ErrInvalidConnectionState,
+			"connection state is not OPEN (got %s)", connectiontypes.State(connectionEnd.GetState()).String(),
+		)
+	}
+
+	// check if packet timeouted by comparing it with the latest height of the chain
+	selfHeight := clienttypes.GetSelfHeight(ctx)
+	timeoutHeight := packet.GetTimeoutHeight()
+	if !timeoutHeight.IsZero() && selfHeight.GTE(timeoutHeight) {
+		return errors.Wrapf(
+			types.ErrPacketTimeout,
+			"block height >= packet timeout height (%s >= %s)", selfHeight, timeoutHeight,
+		)
+	}
+
+	// check if packet timeouted by comparing it with the latest timestamp of the chain
+	if packet.GetTimeoutTimestamp() != 0 && uint64(ctx.BlockHeader().Time.UnixNano()) >= packet.GetTimeoutTimestamp() {
+		return errors.Wrapf(
+			types.ErrPacketTimeout,
+			"block timestamp >= packet timeout timestamp (%s >= %s)", ctx.BlockHeader().Time, time.Unix(0, int64(packet.GetTimeoutTimestamp())),
+		)
+	}
+
+	commitment := types.CommitPacket(k.cdc, packet)
+
+	// verify that the counterparty did commit to sending this packet
+	if err := k.connectionKeeper.VerifyPacketCommitment(
+		ctx, connectionEnd, proofHeight, proof,
+		packet.GetSourcePort(), packet.GetSourceChannel(), packet.GetSequence(),
+		commitment,
+	); err != nil {
+		return errors.Wrap(err, "couldn't verify counterparty packet commitment")
+	}
+
+	switch channel.Ordering {
+	case types.UNORDERED:
+		// check if the packet receipt has been received already for unordered channels
+		_, found := k.GetPacketReceipt(ctx, packet.GetDestPort(), packet.GetDestChannel(), packet.GetSequence())
+		if found {
+			return errors.Wrapf(
+				types.ErrInvalidPacket,
+				"packet sequence (%d) already has been received", packet.GetSequence(),
+			)
+		}
+
+		// All verification complete, update state
+		// For unordered channels we must set the receipt so it can be verified on the other side.
+		// This receipt does not contain any data, since the packet has not yet been processed,
+		// it's just a single store key set to an empty string to indicate that the packet has been received
+		k.SetPacketReceipt(ctx, packet.GetDestPort(), packet.GetDestChannel(), packet.GetSequence())
+
+	case types.ORDERED:
+		// check if the packet is being received in order
+		nextSequenceRecv, found := k.GetNextSequenceRecv(ctx, packet.GetDestPort(), packet.GetDestChannel())
+		if !found {
+			return errors.Wrapf(
+				types.ErrSequenceReceiveNotFound,
+				"destination port: %s, destination channel: %s", packet.GetDestPort(), packet.GetDestChannel(),
+			)
+		}
+
+		if packet.GetSequence() != nextSequenceRecv {
+			return errors.Wrapf(
+				types.ErrInvalidPacket,
+				"packet sequence ≠ next receive sequence (%d ≠ %d)", packet.GetSequence(), nextSequenceRecv,
+			)
+		}
+
+		// All verification complete, update state
+		// In ordered case, we must increment nextSequenceRecv
+		nextSequenceRecv++
+
+		// incrementing nextSequenceRecv and storing under this chain's channelEnd identifiers
+		// Since this is the receiving chain, our channelEnd is packet's destination port and channel
+		k.SetNextSequenceRecv(ctx, packet.GetDestPort(), packet.GetDestChannel(), nextSequenceRecv)
+
+	}
+
+	// log that a packet has been received & executed
+	k.Logger(ctx).Info("packet received", "packet", fmt.Sprintf("%v", packet))
+
+	// emit an event that the relayer can query for
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeRecvPacket,
+			sdk.NewAttributeString(types.AttributeKeyData, string(packet.GetData())),
 			sdk.NewAttributeString(types.AttributeKeyTimeoutHeight, packet.GetTimeoutHeight().String()),
 			sdk.NewAttributeString(types.AttributeKeyTimeoutTimestamp, fmt.Sprintf("%d", packet.GetTimeoutTimestamp())),
 			sdk.NewAttributeString(types.AttributeKeySequence, fmt.Sprintf("%d", packet.GetSequence())),

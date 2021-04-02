@@ -27,14 +27,14 @@ type Keeper struct {
 }
 
 func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, paramSpace paramtypes.Subspace,
-	stakingKeeper clienttypes.StakingKeeper,scopedKeeper capabilitykeeper.ScopedKeeper,) *Keeper {
+	stakingKeeper clienttypes.StakingKeeper,scopedKeeper capabilitykeeper.ScopedKeeper,) Keeper {
 	clientKeeper := clientkeeper.NewKeeper(cdc, key, paramSpace, stakingKeeper)
 	connectionKeeper := connectionkeeper.NewKeeper(cdc, key, clientKeeper)
 
 	portKeeper := portkeeper.NewKeeper(scopedKeeper)
 	channelKeeper := channelkeeper.NewKeeper(cdc, key, clientKeeper, connectionKeeper, portKeeper, scopedKeeper)
 
-	return &Keeper{
+	return Keeper{
 		cdc:              cdc,
 		ClientKeeper:     clientKeeper,
 		ConnectionKeeper: connectionKeeper,
@@ -316,24 +316,24 @@ func (k Keeper) RecvPacket(ctx sdk.Context, msg *channeltypes.MsgRecvPacket) (*c
 	// Lookup module by channel capability
 	module, cap, err := k.ChannelKeeper.LookupModuleByChannel(ctx, msg.Packet.DestinationPort, msg.Packet.DestinationChannel)
 	if err != nil {
-		return nil, sdkerrors.Wrap(err, "could not retrieve module from port-id")
+		return nil, errors.Wrap(err, "could not retrieve module from port-id")
 	}
 
 	// Retrieve callbacks from router
 	cbs, ok := k.Router.GetRoute(module)
 	if !ok {
-		return nil, sdkerrors.Wrapf(porttypes.ErrInvalidRoute, "route not found to module: %s", module)
+		return nil, errors.Wrapf(porttypes.ErrInvalidRoute, "route not found to module: %s", module)
 	}
 
 	// Perform TAO verification
 	if err := k.ChannelKeeper.RecvPacket(ctx, cap, msg.Packet, msg.ProofCommitment, msg.ProofHeight); err != nil {
-		return nil, sdkerrors.Wrap(err, "receive packet verification failed")
+		return nil, errors.Wrap(err, "receive packet verification failed")
 	}
 
 	// Perform application logic callback
 	_, ack, err := cbs.OnRecvPacket(ctx, msg.Packet)
 	if err != nil {
-		return nil, sdkerrors.Wrap(err, "receive packet callback failed")
+		return nil, errors.Wrap(err, "receive packet callback failed")
 	}
 
 	// Set packet acknowledgement only if the acknowledgement is not nil.
@@ -345,23 +345,70 @@ func (k Keeper) RecvPacket(ctx sdk.Context, msg *channeltypes.MsgRecvPacket) (*c
 		}
 	}
 
-	defer func() {
-		telemetry.IncrCounterWithLabels(
-			[]string{"tx", "msg", "ibc", msg.Type()},
-			1,
-			[]metrics.Label{
-				telemetry.NewLabel("source-port", msg.Packet.SourcePort),
-				telemetry.NewLabel("source-channel", msg.Packet.SourceChannel),
-				telemetry.NewLabel("destination-port", msg.Packet.DestinationPort),
-				telemetry.NewLabel("destination-channel", msg.Packet.DestinationChannel),
-			},
-		)
-	}()
+	//defer func() {
+	//	telemetry.IncrCounterWithLabels(
+	//		[]string{"tx", "msg", "ibc", msg.Type()},
+	//		1,
+	//		[]metrics.Label{
+	//			telemetry.NewLabel("source-port", msg.Packet.SourcePort),
+	//			telemetry.NewLabel("source-channel", msg.Packet.SourceChannel),
+	//			telemetry.NewLabel("destination-port", msg.Packet.DestinationPort),
+	//			telemetry.NewLabel("destination-channel", msg.Packet.DestinationChannel),
+	//		},
+	//	)
+	//}()
 
 	return &channeltypes.MsgRecvPacketResponse{}, nil
 }
 
 
+
+// Timeout defines a rpc handler method for MsgTimeout.
+func (k Keeper) Timeout(ctx sdk.Context, msg *channeltypes.MsgTimeout) (*channeltypes.MsgTimeoutResponse, error) {
+	// Lookup module by channel capability
+	module, cap, err := k.ChannelKeeper.LookupModuleByChannel(ctx, msg.Packet.SourcePort, msg.Packet.SourceChannel)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not retrieve module from port-id")
+	}
+
+	// Retrieve callbacks from router
+	cbs, ok := k.Router.GetRoute(module)
+	if !ok {
+		return nil, errors.Wrapf(porttypes.ErrInvalidRoute, "route not found to module: %s", module)
+	}
+
+	// Perform TAO verification
+	if err := k.ChannelKeeper.TimeoutPacket(ctx, msg.Packet, msg.ProofUnreceived, msg.ProofHeight, msg.NextSequenceRecv); err != nil {
+		return nil, errors.Wrap(err, "timeout packet verification failed")
+	}
+
+	// Perform application logic callback
+	_, err = cbs.OnTimeoutPacket(ctx, msg.Packet)
+	if err != nil {
+		return nil, errors.Wrap(err, "timeout packet callback failed")
+	}
+
+	// Delete packet commitment
+	if err = k.ChannelKeeper.TimeoutExecuted(ctx, cap, msg.Packet); err != nil {
+		return nil, err
+	}
+
+	//defer func() {
+	//	telemetry.IncrCounterWithLabels(
+	//		[]string{"ibc", "timeout", "packet"},
+	//		1,
+	//		[]metrics.Label{
+	//			telemetry.NewLabel("source-port", msg.Packet.SourcePort),
+	//			telemetry.NewLabel("source-channel", msg.Packet.SourceChannel),
+	//			telemetry.NewLabel("destination-port", msg.Packet.DestinationPort),
+	//			telemetry.NewLabel("destination-channel", msg.Packet.DestinationChannel),
+	//			telemetry.NewLabel("timeout-type", "height"),
+	//		},
+	//	)
+	//}()
+
+	return &channeltypes.MsgTimeoutResponse{}, nil
+}
 
 
 
@@ -371,24 +418,24 @@ func (k Keeper) Acknowledgement(ctx sdk.Context, msg *channeltypes.MsgAcknowledg
 	// Lookup module by channel capability
 	module, cap, err := k.ChannelKeeper.LookupModuleByChannel(ctx, msg.Packet.SourcePort, msg.Packet.SourceChannel)
 	if err != nil {
-		return nil, sdkerrors.Wrap(err, "could not retrieve module from port-id")
+		return nil, errors.Wrap(err, "could not retrieve module from port-id")
 	}
 
 	// Retrieve callbacks from router
 	cbs, ok := k.Router.GetRoute(module)
 	if !ok {
-		return nil, sdkerrors.Wrapf(porttypes.ErrInvalidRoute, "route not found to module: %s", module)
+		return nil, errors.Wrapf(porttypes.ErrInvalidRoute, "route not found to module: %s", module)
 	}
 
 	// Perform TAO verification
 	if err := k.ChannelKeeper.AcknowledgePacket(ctx, cap, msg.Packet, msg.Acknowledgement, msg.ProofAcked, msg.ProofHeight); err != nil {
-		return nil, sdkerrors.Wrap(err, "acknowledge packet verification failed")
+		return nil, errors.Wrap(err, "acknowledge packet verification failed")
 	}
 
 	// Perform application logic callback
 	_, err = cbs.OnAcknowledgementPacket(ctx, msg.Packet, msg.Acknowledgement)
 	if err != nil {
-		return nil, sdkerrors.Wrap(err, "acknowledge packet callback failed")
+		return nil, errors.Wrap(err, "acknowledge packet callback failed")
 	}
 
 	//defer func() {
