@@ -6,12 +6,12 @@ import (
 )
 
 
-func SignIBC(from, to string, amount uint64, priv string) ([]byte, error) {
+func SignIBC(from, to string, amount uint64, priv string, denom string) ([]byte, error) {
 	privateKey, err := hex.DecodeString(priv)
 	if err != nil {
 		return nil, err
 	}
-	txByte, err := sdk.SignIBCTransferMsg(from, to, amount, privateKey)
+	txByte, err := sdk.SignIBCTransferMsg(from, to, amount, privateKey, denom)
 	if err != nil {
 		return nil, err
 	}

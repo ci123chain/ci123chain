@@ -18,7 +18,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"io/ioutil"
-	//ac "github.com/ci123chain/ci123chain/pkg/account/keeper"
 )
 
 
@@ -29,6 +28,7 @@ func init()  {
 	signCmd.Flags().Uint(flagGas, 0, "gas for tx")
 	signCmd.Flags().String(helper.FlagAddress, "", "Address to sign with")
 	signCmd.Flags().String(flagPassword, "", "passphrase")
+	signCmd.Flags().String(flagDenom, "", "coin denom")
 	util.CheckRequiredFlag(signCmd, flagAmount)
 	util.CheckRequiredFlag(signCmd, flagGas)
 }
@@ -52,13 +52,17 @@ var signCmd = &cobra.Command{
 		if len(tos) == 0 {
 			return types.ErrNoAddr(types.DefaultCodespace, err)
 		}
+		d := viper.GetString(flagDenom)
+		if d == "" {
+			return types.ErrParseParam(types.DefaultCodespace, errors.New("coin denom can't be emtpy"))
+		}
 
 		gas := uint64((viper.GetInt(flagGas)))
 		amount := uint64(viper.GetInt(flagAmount))
 		privKey := viper.GetString(flagKey)
 		isFabric := viper.GetBool(flagIsFabric)
 
-		coin := sdk.NewUInt64Coin(amount)
+		coin := sdk.NewUInt64Coin(d, amount)
 		msg := transfer2.NewMsgTransfer(from, tos[0], coin, isFabric)
 		nonce, err := transfer2.GetNonceByAddress(from)
 		if err != nil {

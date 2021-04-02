@@ -21,10 +21,11 @@ import (
 	"github.com/spf13/viper"
 	cfg "github.com/tendermint/tendermint/config"
 	"github.com/tendermint/tendermint/crypto"
-	"github.com/tendermint/tendermint/crypto/secp256k1"
-	"github.com/tendermint/tendermint/libs/common"
+	"github.com/tendermint/tendermint/crypto/ed25519"
+	"github.com/tendermint/tendermint/libs/rand"
 	"github.com/tendermint/tendermint/p2p"
 	pvm "github.com/tendermint/tendermint/privval"
+	tmpro "github.com/tendermint/tendermint/proto/tendermint/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 	"regexp"
 	"text/template"
@@ -79,7 +80,7 @@ type AccountInfo struct {
 }
 
 type PubKey struct {
-	Type  string `json:"types"`
+	Type  string `json:"type"`
 	Value string `json:"value"`
 }
 
@@ -174,7 +175,7 @@ func createGenesis(chainInfo ChainInfo, validatorInfo []ValidatorInfo,
 	var validators []tmtypes.GenesisValidator
 	for _, v := range validatorInfo {
 		var valKey crypto.PubKey
-		pubStr := fmt.Sprintf(`{"types":"%s","value":"%s"}`, secp256k1.PubKeyAminoName, v.PubKey)
+		pubStr := fmt.Sprintf(`{"type":"%s","value":"%s"}`, ed25519.PubKeyName, v.PubKey)
 		err = cdc.UnmarshalJSON([]byte(pubStr), &valKey)
 		if err != nil {
 			return nil, err
@@ -209,10 +210,10 @@ func createGenesis(chainInfo ChainInfo, validatorInfo []ValidatorInfo,
 		ChainID: 		chainInfo.ChainID,
 		Validators: 	validators,
 		AppState:		appStateRaw,
-		ConsensusParams: &tmtypes.ConsensusParams{
+		ConsensusParams: &tmpro.ConsensusParams{
 			Block: tmtypes.DefaultBlockParams(),
 			Evidence: tmtypes.DefaultEvidenceParams(),
-			Validator: tmtypes.ValidatorParams{PubKeyTypes: []string{tmtypes.ABCIPubKeyTypeSecp256k1}},
+			Validator: tmpro.ValidatorParams{PubKeyTypes: []string{tmtypes.ABCIPubKeyTypeEd25519}},
 		},
 	}
 
@@ -225,15 +226,15 @@ func createGenesis(chainInfo ChainInfo, validatorInfo []ValidatorInfo,
 
 func createConfig (persistentPeers string) (*cfg.Config, error) {
 	c := cfg.DefaultConfig()
-	c.Moniker = common.RandStr(8)
+	c.Moniker = rand.Str(8)
 	c.Instrumentation.Prometheus = true
 	c.Consensus.TimeoutPropose = 5 * time.Second
 	c.Consensus.TimeoutCommit = 8 * time.Second
 	c.RPC.ListenAddress = "tcp://0.0.0.0:26657"
-	c.ProfListenAddress = "localhost:6060"
+	//c.ProfListenAddress = "localhost:6060"
 	c.P2P.RecvRate = 5120000
 	c.P2P.SendRate = 5120000
-	c.TxIndex.IndexTags = "contract.address,contract.event.data,contract.event.name"
+	c.TxIndex.Indexer = "kv"
 	c.P2P.PersistentPeers = persistentPeers
 
 	err := unmarshalWithViper(viper.GetViper(), c)
@@ -352,7 +353,7 @@ func genesisSupplyModule(appState map[string]json.RawMessage, supplyInfo SupplyI
 		return errors.New("supply amount converts to bigInt failed")
 	}
 
-	supplyGenesisState.Supply = types.NewCoin(amount)
+	supplyGenesisState.Supply = types.NewChainCoin(amount)
 	genesisStateBz := cdc.MustMarshalJSON(supplyGenesisState)
 	appState[supply.ModuleName] = genesisStateBz
 	return nil
@@ -375,7 +376,7 @@ func genesisAccountModule(appState map[string]json.RawMessage, accountInfo []Acc
 			return errors.New("account amount converts to bigInt failed")
 		}
 
-		genAcc := account.NewGenesisAccountRaw(v.Address, types.NewCoin(amount))
+		genAcc := account.NewGenesisAccountRaw(v.Address, types.NewChainCoin(amount))
 		if err := genAcc.Validate(); err != nil {
 			return err
 		}
@@ -416,7 +417,7 @@ func genesisDistributionModule(appState map[string]json.RawMessage, stakingInfo 
 	appState[distr.ModuleName] = distrGenesisStateBz
 }
 
-func privStrToPrivKey(privStr string) (*secp256k1.PrivKeySecp256k1, error) {
+func privStrToPrivKey(privStr string) (*ed25519.PrivKey, error) {
 	if len(privStr) > 0 {
 		//1.match length
 		priByt := []byte(privStr)
@@ -441,8 +442,8 @@ func privStrToPrivKey(privStr string) (*secp256k1.PrivKeySecp256k1, error) {
 		return nil, errors.New("privStr cannot be empty")
 	}
 
-	var realKey *secp256k1.PrivKeySecp256k1
-	privKey := fmt.Sprintf(`{"types":"%s","value":"%s"}`, secp256k1.PrivKeyAminoName, privStr)
+	var realKey *ed25519.PrivKey
+	privKey := fmt.Sprintf(`{"type":"%s","value":"%s"}`, ed25519.PrivKeyName, privStr)
 	cdc := app_types.MakeCodec()
 	err := cdc.UnmarshalJSON([]byte(privKey), &realKey)
 	if err != nil {

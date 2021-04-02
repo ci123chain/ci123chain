@@ -25,7 +25,7 @@ func main() {
 	fmt.Println("---------------跨链转账离线签名交易----------------------")
 	fmt.Println("---发送跨链消息---")
 
-	txByte, err := SignIBC(from, to, amount, priv)
+	txByte, err := SignIBC(from, to, amount, priv, "stake")
 	if err != nil {
 		fmt.Println("---签名失败，参数错误---")
 		fmt.Println(err)

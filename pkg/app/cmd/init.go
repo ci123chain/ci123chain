@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci"
+	abcitypes "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/app"
 	"github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/config"
@@ -44,6 +45,7 @@ var (
 	FlagStateDB = "statedb"
 	//FlagDBName = "dbname"
 	FlagWithValidator = "validator_key"
+	FlagCoinName = "denom"
 )
 
 
@@ -127,6 +129,8 @@ func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Com
 			fmt.Println("home:", viper.GetString(tmcli.HomeFlag))
 			fmt.Println("chainid:", viper.GetString(FlagChainID))
 
+			abcitypes.SetCoinDenom(viper.GetString(FlagCoinName))
+
 			ctxConfig := ctx.Config
 			ctxConfig.SetRoot(viper.GetString(tmcli.HomeFlag))
 
@@ -174,6 +178,7 @@ func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Com
 	//cmd.AddCommand(GenTxCmd(ctx, cdc, appInit))
 	cmd.Flags().String(FlagStateDB, "couchdb://couchdb-service:5984/ci123", "fetch new shard from db")
 	cmd.Flags().String(FlagWithValidator, "", "the validator key")
+	cmd.Flags().String(FlagCoinName, "stake",  "coin name")
 	return cmd
 }
 
@@ -432,7 +437,7 @@ func writeGenesisFile(cdc *amino.Codec, genesisFile string, chainID string,
 		ConsensusParams: &tmpro.ConsensusParams{
 			Block: tmtypes.DefaultBlockParams(),
 			Evidence: tmtypes.DefaultEvidenceParams(),
-			Validator: tmpro.ValidatorParams{PubKeyTypes: []string{tmtypes.ABCIPubKeyTypeSecp256k1}},
+			Validator: tmpro.ValidatorParams{PubKeyTypes: []string{tmtypes.ABCIPubKeyTypeEd25519}},
 		},
 	}
 	if err := genDoc.ValidateAndComplete(); err != nil {

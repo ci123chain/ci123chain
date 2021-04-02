@@ -69,7 +69,7 @@ func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, sk su
 		if acc.GetCoin().Amount.LT(sdk.NewIntFromBigInt(big.NewInt(int64(gas)))) {
 			return newCtx, sdk.ErrInsufficientCoins("Can't pay enough gasLimit").Result(),true
 		}
-		DeductFees(acc,sdk.NewUInt64Coin(gas),ak,ctx)
+		DeductFees(acc,sdk.NewUInt64Coin(sdk.ChainCoinDenom, gas),ak,ctx)
 		newCtx = SetGasMeter(simulate, ctx, gas)//设置为GasMeter的gasLimit,成为用户可承受的gas上限.
 		//pms.TxSizeCostPerByte*sdk.Gas(len(newCtx.TxBytes()))
 		
@@ -101,7 +101,7 @@ func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, sk su
 		gasPrice := Price
 		newCtx.GasMeter().ConsumeGas(params.TxSizeCostPerByte*sdk.Gas(len(newCtx.TxBytes())), "txSize")
 		fee := newCtx.GasMeter().GasConsumed() * gasPrice
-		getFee := sdk.NewUInt64Coin(fee)
+		getFee := sdk.NewUInt64Coin(sdk.ChainCoinDenom, fee)
 
 		//存储奖励金到feeCollector Module账户
 		feeCollectorModuleAccount := sk.GetModuleAccount(ctx, auth.FeeCollectorName)

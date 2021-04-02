@@ -135,7 +135,7 @@ func performSend(context unsafe.Pointer, to int32, amount int64) int32 {
 	if err != nil {
 		return 0
 	}
-	coin := sdk.NewUInt64Coin(coinUint)
+	coin := sdk.NewUInt64Coin(sdk.ChainCoinDenom, coinUint)
 	err = runtimeCfg.Keeper.AccountKeeper.Transfer(*runtimeCfg.Context, fromAcc, toAcc, coin)
 	if err != nil {
 		return 0

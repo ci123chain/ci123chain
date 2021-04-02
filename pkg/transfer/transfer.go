@@ -26,7 +26,7 @@ func NewMsgTransfer(from, to sdk.AccAddress, amount sdk.Coin, isFabric bool ) *M
 }
 
 func (msg *MsgTransfer) ValidateBasic() sdk.Error {
-	if msg.Amount.IsEqual(sdk.NewCoin(sdk.NewInt(0)))  {
+	if msg.Amount.IsEqual(sdk.NewChainCoin(sdk.NewInt(0)))  {
 		return types.ErrBadAmount(types.DefaultCodespace, errors.New("amount = 0"))
 	}
 	if msg.To.Empty() {

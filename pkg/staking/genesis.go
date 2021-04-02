@@ -101,7 +101,7 @@ func InitGenesis(
 	// add coins if not provided on genesis
 	if ak.GetBalance(ctx, bondedPool.GetAddress()).IsZero() {
 		ModuleAcc := ak.GetAccount(ctx, bondedPool.GetAddress()).(exported.ModuleAccountI)
-		err := ModuleAcc.SetCoin(sdk.NewCoin(bondedTokens))
+		err := ModuleAcc.SetCoin(sdk.NewChainCoin(bondedTokens))
 		if err != nil {
 			panic(err)
 		}
@@ -116,7 +116,7 @@ func InitGenesis(
 
 	if ak.GetBalance(ctx, notBondedPool.GetAddress()).IsZero() {
 		ModuleAcc := ak.GetAccount(ctx, notBondedPool.GetAddress()).(exported.ModuleAccountI)
-		err := ModuleAcc.SetCoin(sdk.NewCoin(notBondedTokens))
+		err := ModuleAcc.SetCoin(sdk.NewChainCoin(notBondedTokens))
 		if err != nil {
 			panic(err)
 		}

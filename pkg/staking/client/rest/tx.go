@@ -59,7 +59,7 @@ func CreateValidatorRequest(cliCtx context.Context, writer http.ResponseWriter, 
 		return
 	}
 
-	coin := sdk.NewCoin(amount)
+	coin := sdk.NewChainCoin(amount)
 	if coin.IsNegative() || coin.IsZero() {
 		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, "invalid amount"))
 		return
@@ -103,7 +103,7 @@ func DelegateTX(cliCtx context.Context, writer http.ResponseWriter, request *htt
 		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, "invalid amount"))
 		return
 	}
-	coin := sdk.NewCoin(amount)
+	coin := sdk.NewChainCoin(amount)
 	if coin.IsNegative() || coin.IsZero() {
 		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, "invalid amount"))
 		return
@@ -160,7 +160,7 @@ func RedelegateTX(cliCtx context.Context, writer http.ResponseWriter, request *h
 		return
 	}
 
-	coin := sdk.NewCoin(amount)
+	coin := sdk.NewChainCoin(amount)
 	if coin.IsNegative() || coin.IsZero() {
 		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, "invalid amount"))
 		return
@@ -209,7 +209,7 @@ func UndelegateTX(cliCtx context.Context, writer http.ResponseWriter, request *h
 		return
 	}
 
-	coin := sdk.NewCoin(amount)
+	coin := sdk.NewChainCoin(amount)
 	if coin.IsNegative() || coin.IsZero() {
 		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, "invalid amount"))
 		return

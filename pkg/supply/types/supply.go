@@ -37,7 +37,7 @@ func NewSupply(total sdk.Coin) exported.SupplyI {
 
 // DefaultSupply creates an empty Supply
 func DefaultSupply() exported.SupplyI {
-	return NewSupply(sdk.NewCoin(sdk.NewInt(100000000000)))
+	return NewSupply(sdk.NewChainCoin(sdk.NewInt(100000000000)))
 }
 
 // Inflate adds coins to the total supply

@@ -30,6 +30,14 @@ const (
 	BondStatusAll = "all"
 )
 
+var (
+	ChainCoinDenom = DefaultBondDenom
+)
+
+func SetCoinDenom(denom string) {
+	ChainCoinDenom = denom
+}
+
 // Equal compares two BondStatus instances
 func (b BondStatus) Equal(b2 BondStatus) bool {
 	return byte(b) == byte(b2)

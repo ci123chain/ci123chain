@@ -4,20 +4,18 @@ import (
 	"encoding/hex"
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	types2 "github.com/ci123chain/ci123chain/pkg/app/types"
-	"github.com/ci123chain/ci123chain/pkg/client/helper"
-	transfer2 "github.com/ci123chain/ci123chain/pkg/transfer"
-	"github.com/ci123chain/ci123chain/pkg/util"
-	//"encoding/hex"
-	"github.com/pkg/errors"
-	"strconv"
-	///sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
+	types2 "github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/client"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
+	"github.com/ci123chain/ci123chain/pkg/client/helper"
 	"github.com/ci123chain/ci123chain/pkg/transaction"
+	transfer2 "github.com/ci123chain/ci123chain/pkg/transfer"
 	"github.com/ci123chain/ci123chain/pkg/transfer/types"
+	"github.com/ci123chain/ci123chain/pkg/util"
+	"github.com/pkg/errors"
 	"net/http"
+	"strconv"
 )
 
 func SendRequestHandlerFn(cliCtx context.Context, writer http.ResponseWriter, request *http.Request) {
@@ -41,12 +39,12 @@ func SendRequestHandlerFn(cliCtx context.Context, writer http.ResponseWriter, re
 		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
 		return
 	}
-	isBalanceEnough := CheckAccountAndBalanceFromParams(cliCtx, request, writer)
+	isBalanceEnough, denom := CheckAccountAndBalanceFromParams(cliCtx, request, writer)
 	if !isBalanceEnough {
 		rest.WriteErrorRes(writer, transaction.ErrAmount(types.DefaultCodespace, errors.New("The balance is not enough to pay the amount")) )
 		return
 	}
-	coin := sdk.NewUInt64Coin(amount)
+	coin := sdk.NewUInt64Coin(denom, amount)
 	if coin.IsNegative() || coin.IsZero() {
 		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, "invalid amount"))
 		return
@@ -78,7 +76,7 @@ func SendRequestHandlerFn(cliCtx context.Context, writer http.ResponseWriter, re
 
 // check balance from tranfer params
 
-func CheckAccountAndBalanceFromParams(ctx context.Context, r *http.Request, w http.ResponseWriter) bool {
+func CheckAccountAndBalanceFromParams(ctx context.Context, r *http.Request, w http.ResponseWriter) (bool, string) {
 	from := r.FormValue("from")
 	amount := r.FormValue("amount")
 
@@ -88,16 +86,16 @@ func CheckAccountAndBalanceFromParams(ctx context.Context, r *http.Request, w ht
 
 	if err != nil {
 		rest.WriteErrorRes(w, sdk.ErrInternal("get balances of from account failed"))
-		return false
+		return false, ""
 	}
 	amountI, ok := sdk.NewIntFromString(amount)
 	if !ok {
 		rest.WriteErrorRes(w, sdk.ErrInternal(fmt.Sprintf("invalid amount %s", amount)))
-		return false
+		return false, ""
 	}
 	if balance.Amount.LT(amountI) {
-		return false
+		return false, ""
 	}
-	return true
+	return true, balance.Denom
 
 }

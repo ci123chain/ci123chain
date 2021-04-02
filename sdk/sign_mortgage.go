@@ -11,8 +11,8 @@ import (
 )
 var cdc = types3.MakeCodec()
 // 生成 Mortgage 消息，抵押coin
-func SignMortgage(from, to string, amount, gas uint64, uniqueID string, priv []byte) ([]byte, error) {
-	tx, err := buildMortgageTx(from, to, amount, gas, uniqueID)
+func SignMortgage(from, to string, amount, gas uint64, denom, uniqueID string, priv []byte) ([]byte, error) {
+	tx, err := buildMortgageTx(from, to, amount, gas, denom , uniqueID)
 	if err != nil {
 		return nil, err
 	}
@@ -26,7 +26,7 @@ func SignMortgage(from, to string, amount, gas uint64, uniqueID string, priv []b
 	return tx.Bytes(), nil
 }
 
-func buildMortgageTx (from, to string, amount, gas uint64, uniqueID string) (*types2.MsgMortgage, error) {
+func buildMortgageTx (from, to string, amount, gas uint64, denom, uniqueID string) (*types2.MsgMortgage, error) {
 	fromAddr, err := helper.StrToAddress(from)
 	if err != nil {
 		return nil, err
@@ -35,7 +35,7 @@ func buildMortgageTx (from, to string, amount, gas uint64, uniqueID string) (*ty
 	if err != nil {
 		return nil, err
 	}
-	mort := mortgage.NewMortgageMsg(fromAddr, toAddr, types.NewUInt64Coin(amount), []byte(uniqueID))
+	mort := mortgage.NewMortgageMsg(fromAddr, toAddr, types.NewUInt64Coin(denom, amount), []byte(uniqueID))
 	return mort, nil
 }
 

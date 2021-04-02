@@ -156,7 +156,7 @@ func (acc *BaseAccount) Balance(denom string) types.Int {
 //
 // CONTRACT: assumes the denomination is valid.
 func (acc *BaseAccount) SetBalance(denom string, amt types.Int) {
-	newCoin := types.NewCoin(amt)
+	newCoin := types.NewChainCoin(amt)
 	if err := acc.SetCoin(newCoin); err != nil {
 		panic(fmt.Errorf("could not set %s coins for address %s: %w", denom, acc.EthAddress().String(), err))
 	}

@@ -49,9 +49,9 @@ func (s *RedisDBSourceImp) FetchSource() (hostArr []string) {
 		s.conn = conn
 	}
 
-	bz, err:= s.conn.Get([]byte(FlagNodeList))
+	bz, err := s.conn.Get([]byte(FlagNodeList))
 	if err != nil {
-		logger.Error("fetch raw data from redisDB error: ", err)
+		logger.Error("db connection get failed: ", err)
 	}
 	var node_list []string
 	err = json.Unmarshal(bz, &node_list)

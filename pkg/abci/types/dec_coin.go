@@ -27,7 +27,7 @@ func NewDecCoin(denom string, amount Int) DecCoin {
 }
 
 func NewEmptyDecCoin() DecCoin {
-	return NewDecCoin(DefaultCoinDenom, NewInt(0))
+	return NewDecCoin(ChainCoinDenom, NewInt(0))
 }
 
 // NewDecCoinFromDec creates a new DecCoin instance from a Dec.
@@ -67,7 +67,7 @@ func (coin DecCoin) IsZero() bool {
 	return coin.Amount.IsZero()
 }
 
-// IsGTE returns true if they are the same types and the receiver is
+// IsGTE returns true if they are the same type and the receiver is
 // an equal or greater value.
 func (coin DecCoin) IsGTE(other DecCoin) bool {
 	if coin.Denom != other.Denom {
@@ -77,7 +77,7 @@ func (coin DecCoin) IsGTE(other DecCoin) bool {
 	return !coin.Amount.LT(other.Amount)
 }
 
-// IsLT returns true if they are the same types and the receiver is
+// IsLT returns true if they are the same type and the receiver is
 // a smaller value.
 func (coin DecCoin) IsLT(other DecCoin) bool {
 	if coin.Denom != other.Denom {
@@ -141,7 +141,7 @@ func (coin DecCoin) Sub(coinB DecCoin) DecCoin {
 func (coin DecCoin) TruncateDecimal() (Coin, DecCoin) {
 	truncated := coin.Amount.TruncateInt()
 	change := coin.Amount.Sub(truncated.ToDec())
-	return NewCoin(DefaultBondDenom ,truncated), NewDecCoinFromDec(coin.Denom, change)
+	return NewChainCoin(truncated), NewDecCoinFromDec(coin.Denom, change)
 }
 
 // IsPositive returns true if coin amount is positive.
