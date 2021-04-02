@@ -53,7 +53,7 @@ func (m MsgChannelOpenInit) GetFromAddress() sdk.AccAddress {
 }
 
 func (m MsgChannelOpenInit) Bytes() []byte {
-	panic("IBC messages do not support amino")
+	return channelCdc.MustMarshalBinaryLengthPrefixed(m)
 }
 
 // -----------MsgChannelOpenTry
@@ -127,7 +127,7 @@ func (m MsgChannelOpenTry) GetFromAddress() sdk.AccAddress {
 }
 
 func (m MsgChannelOpenTry) Bytes() []byte {
-	panic("IBC messages do not support amino")
+	return channelCdc.MustMarshalBinaryLengthPrefixed(m)
 }
 
 // -----------MsgChannelOpenAck
@@ -186,7 +186,8 @@ func (m MsgChannelOpenAck) GetFromAddress() sdk.AccAddress {
 }
 
 func (m MsgChannelOpenAck) Bytes() []byte {
-	panic("IBC messages do not support amino")
+	return channelCdc.MustMarshalBinaryLengthPrefixed(m)
+
 }
 
 // -----------MsgChannelOpenConfirm
@@ -240,7 +241,7 @@ func (m MsgChannelOpenConfirm) GetFromAddress() sdk.AccAddress {
 }
 
 func (m MsgChannelOpenConfirm) Bytes() []byte {
-	panic("IBC messages do not support amino")
+	return channelCdc.MustMarshalBinaryLengthPrefixed(m)
 }
 
 
@@ -296,7 +297,7 @@ func (m MsgAcknowledgement) GetFromAddress() sdk.AccAddress {
 }
 
 func (m MsgAcknowledgement) Bytes() []byte {
-	panic("IBC messages do not support amino")
+	return channelCdc.MustMarshalBinaryLengthPrefixed(m)
 }
 
 
@@ -307,7 +308,7 @@ func (m MsgRecvPacket) Route() string {
 }
 
 func (m MsgRecvPacket) MsgType() string {
-	panic("implement me")
+	return "receive_packet"
 }
 
 func (m MsgRecvPacket) ValidateBasic() sdk.Error {
@@ -329,7 +330,7 @@ func (m MsgRecvPacket) GetFromAddress() sdk.AccAddress {
 }
 
 func (m MsgRecvPacket) Bytes() []byte {
-	panic("implement me")
+	return channelCdc.MustMarshalBinaryLengthPrefixed(m)
 }
 
 
@@ -383,5 +384,17 @@ func (m MsgTimeout) GetFromAddress() sdk.AccAddress {
 }
 
 func (m MsgTimeout) Bytes() []byte {
-	panic("implement me")
+	return channelCdc.MustMarshalBinaryLengthPrefixed(m)
+}
+
+
+// NewQueryPacketCommitmentResponse creates a new QueryPacketCommitmentResponse instance
+func NewQueryPacketCommitmentResponse(
+	commitment []byte, proof []byte, height clienttypes.Height,
+) *QueryPacketCommitmentResponse {
+	return &QueryPacketCommitmentResponse{
+		Commitment:  commitment,
+		Proof:       proof,
+		ProofHeight: height,
+	}
 }

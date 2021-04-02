@@ -10,7 +10,6 @@ import (
 	abcitypes "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/app"
 	"github.com/ci123chain/ci123chain/pkg/app/types"
-	"github.com/ci123chain/ci123chain/pkg/config"
 	"github.com/ci123chain/ci123chain/pkg/node"
 	"github.com/ci123chain/ci123chain/pkg/validator"
 	"github.com/spf13/cobra"
@@ -19,13 +18,11 @@ import (
 	cfg "github.com/tendermint/tendermint/config"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/ed25519"
-	"github.com/tendermint/tendermint/crypto/secp256k1"
 	tmcli "github.com/tendermint/tendermint/libs/cli"
 	cmn "github.com/tendermint/tendermint/libs/os"
 	tmpro "github.com/tendermint/tendermint/proto/tendermint/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 	"net"
-	"path/filepath"
 	"regexp"
 	"time"
 	//"regexp"
@@ -181,65 +178,65 @@ func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Com
 	cmd.Flags().String(FlagCoinName, "stake",  "coin name")
 	return cmd
 }
-
-func gentxWithConfig(cdc *amino.Codec, appInit app.AppInit, config *cfg.Config, genTxConfig config.GenTx) (
-	cliPrint json.RawMessage, genTxFile json.RawMessage, err error ) {
-
-	pv := validator.GenFilePV(
-		config.PrivValidatorKeyFile(),
-		config.PrivValidatorStateFile(),
-		secp256k1.GenPrivKey(),
-		)
-	nodeKey, err := node.GenNodeKeyByPrivKey(config.NodeKeyFile(), pv.Key.PrivKey)
-
-	if err != nil {
-		return
-	}
-	nodeID := string(nodeKey.ID())
-	pkey, err := pv.GetPubKey()
-	if err != nil {
-		return
-	}
-
-	appGenTx, cliPrint, val, err := appInit.AppGenTx(cdc, pkey, genTxConfig)
-	if err != nil {
-		return
-	}
-	tx := app.GenesisTx{
-		NodeID:    nodeID,
-		IP:        genTxConfig.IP,
-		Validator: val,
-		AppGenTx:  appGenTx,
-	}
-
-	bz, err := types.MarshalJSONIndent(cdc, tx)
-	if err != nil {
-		return
-	}
-
-	/*genTxFile = json.RawMessage(bz)
-	if err != nil {
-		return
-	}*/
-
-	genTxFile = json.RawMessage(bz)
-	name := fmt.Sprintf("gentx-%v.json", nodeID)
-	writePath := filepath.Join(config.RootDir, "config", "gentx")
-	file := filepath.Join(writePath, name)
-	err = cmn.EnsureDir(writePath, 0700)
-	if err != nil {
-		return
-	}
-	err = cmn.WriteFile(file, bz, 0644)
-	if err != nil {
-		return
-	}
-	// Write updated config with moniker
-	//config.Moniker = genTxConfig.Name
-	configFilePath := filepath.Join(config.RootDir, "config", "config.toml")
-	cfg.WriteConfigFile(configFilePath, config)
-	return
-}
+//
+//func gentxWithConfig(cdc *amino.Codec, appInit app.AppInit, config *cfg.Config, genTxConfig config.GenTx) (
+//	cliPrint json.RawMessage, genTxFile json.RawMessage, err error ) {
+//
+//	pv := validator.GenFilePV(
+//		config.PrivValidatorKeyFile(),
+//		config.PrivValidatorStateFile(),
+//		secp256k1.GenPrivKey(),
+//		)
+//	nodeKey, err := node.GenNodeKeyByPrivKey(config.NodeKeyFile(), pv.Key.PrivKey)
+//
+//	if err != nil {
+//		return
+//	}
+//	nodeID := string(nodeKey.ID())
+//	pkey, err := pv.GetPubKey()
+//	if err != nil {
+//		return
+//	}
+//
+//	appGenTx, cliPrint, val, err := appInit.AppGenTx(cdc, pkey, genTxConfig)
+//	if err != nil {
+//		return
+//	}
+//	tx := app.GenesisTx{
+//		NodeID:    nodeID,
+//		IP:        genTxConfig.IP,
+//		Validator: val,
+//		AppGenTx:  appGenTx,
+//	}
+//
+//	bz, err := types.MarshalJSONIndent(cdc, tx)
+//	if err != nil {
+//		return
+//	}
+//
+//	/*genTxFile = json.RawMessage(bz)
+//	if err != nil {
+//		return
+//	}*/
+//
+//	genTxFile = json.RawMessage(bz)
+//	name := fmt.Sprintf("gentx-%v.json", nodeID)
+//	writePath := filepath.Join(config.RootDir, "config", "gentx")
+//	file := filepath.Join(writePath, name)
+//	err = cmn.EnsureDir(writePath, 0700)
+//	if err != nil {
+//		return
+//	}
+//	err = cmn.WriteFile(file, bz, 0644)
+//	if err != nil {
+//		return
+//	}
+//	// Write updated config with moniker
+//	//config.Moniker = genTxConfig.Name
+//	configFilePath := filepath.Join(config.RootDir, "config", "config.toml")
+//	cfg.WriteConfigFile(configFilePath, config)
+//	return
+//}
 
 /*
 func GetChainID() (string, error){

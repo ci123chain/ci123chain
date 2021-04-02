@@ -184,3 +184,12 @@ func (k Keeper) SetClientConsensusState(ctx sdk.Context, clientID string, height
 	store := k.ClientStore(ctx, clientID)
 	store.Set(host.ConsensusStateKey(height), k.MustMarshalConsensusState(consensusState))
 }
+
+// GetLatestClientConsensusState gets the latest ConsensusState stored for a given client
+func (k Keeper) GetLatestClientConsensusState(ctx sdk.Context, clientID string) (exported.ConsensusState, bool) {
+	clientState, ok := k.GetClientState(ctx, clientID)
+	if !ok {
+		return nil, false
+	}
+	return k.GetClientConsensusState(ctx, clientID, clientState.GetLatestHeight())
+}

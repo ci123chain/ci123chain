@@ -1,7 +1,7 @@
 package types
 
 import (
-	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/abci/types/pagination"
 	clienttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/clients/types"
 )
 
@@ -109,3 +109,4 @@ type MsgTimeout struct {
 // MsgTimeoutResponse defines the Msg/Timeout response type.
 type MsgTimeoutResponse struct {
 }
+

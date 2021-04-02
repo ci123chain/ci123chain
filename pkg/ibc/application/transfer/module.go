@@ -18,6 +18,9 @@ import (
 	"math"
 )
 
+const ModuleName = types.ModuleName
+
+
 var _ module.AppModule = AppModule{}
 var _ porttypes.IBCModule   = AppModule{}
 var _ module.AppModuleBasic = AppModuleBasic{}

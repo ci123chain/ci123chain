@@ -15,13 +15,13 @@ func NewHandler(k types.MsgServer) sdk.Handler {
 		case *types.MsgTransfer:
 			res, err := k.Transfer(ctx, msg)
 			if err != nil {
-				return sdk.NewError("ibc", -1, err.Error()).Result()
+				return sdk.NewError("ibc", 500, err.Error()).Result()
 			}
 			res1, _ := json.Marshal(res)
 			return sdk.Result{Data: res1}
 
 		default:
-			return sdk.NewError("ibc", -1, "unrecognized ICS-20 transfer message type: %T").Result()
+			return sdk.NewError("ibc", 500, "unrecognized ICS-20 transfer message type: %T").Result()
 		}
 	}
 }

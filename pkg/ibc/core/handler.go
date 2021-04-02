@@ -52,7 +52,7 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 			err = errors.Errorf("unrecognized ICS-20 transfer message type: %T")
 		}
 		if err != nil {
-			return sdk.NewError("ibc", -1, err.Error()).Result()
+			return sdk.NewError("ibc", 501, err.Error()).Result()
 		}
 		res1, _ := json.Marshal(res)
 		return sdk.Result{Data: res1}
