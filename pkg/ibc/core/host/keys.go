@@ -35,6 +35,20 @@ const (
 	KeyPacketAckPrefix         = "acks"
 
 )
+
+
+
+// FullClientStateKey takes a client identifier and returns a Key under which to store a
+// particular client state.
+func FullClientStateKey(clientID string) []byte {
+	return FullClientKey(clientID, []byte(KeyClientState))
+}
+
+// FullClientKey returns the full path of specific client path in the format:
+// "clients/{clientID}/{path}" as a byte array.
+func FullClientKey(clientID string, path []byte) []byte {
+	return []byte(FullClientPath(clientID, string(path)))
+}
 // ClientStateKey returns a store key under which a particular client state is stored
 // in a client prefixed store
 func ClientStateKey() []byte {

@@ -62,7 +62,7 @@ type CommitStateDB struct {
 	hashToPreimageIndex map[ethcmn.Hash]int // map from hash to the index of the preimages slice
 
 	// DB error.
-	// State objects are used by the consensus core and VM which are
+	// State objects are used by the consensus collactor and VM which are
 	// unable to deal with database-level errors. Any error that occurs
 	// during a database read is memo-ized here and will eventually be returned
 	// by StateDB.Commit.

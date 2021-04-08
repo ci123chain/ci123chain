@@ -1,6 +1,6 @@
 package types
 
-// Handler defines the core of the state transition function of an application.
+// Handler defines the collactor of the state transition function of an application.
 type Handler func(ctx Context, msg Msg) Result
 
 // AnteHandler authenticates transactions, before their internal messages are handled.

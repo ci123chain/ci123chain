@@ -19,7 +19,7 @@ const (
 
 type (
 	// TraceKVStore implements the KVStore interface with tracing enabled.
-	// Operations are traced on each core KVStore call and written to the
+	// Operations are traced on each collactor KVStore call and written to the
 	// underlying io.writer.
 	//
 	// TODO: Should we use a buffered writer and implement Commit on

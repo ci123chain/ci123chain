@@ -114,7 +114,7 @@ func NewRestServer() *RestServer {
 	}
 }
 
-const CorePrefix = "/core"
+const CorePrefix = "/collactor"
 
 type HeightParams struct {
 	Height   string   `json:"height"`

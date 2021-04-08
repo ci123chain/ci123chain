@@ -18,6 +18,7 @@ import (
 type Context struct {
 	HomeDir 	string
 	NodeURI 	string
+	ChainID 	string
 	FromAddr 	sdk.AccAddress
 	Blocked     bool
 	Client 		rpclient.Client
@@ -45,6 +46,11 @@ func (ctx Context) WithCode (code int64) Context {
 
 func (ctx Context) WithCodec(cdc *codec.Codec) Context {
 	ctx.Cdc = cdc
+	return ctx
+}
+
+func (ctx Context) WithChainID(chainID string) Context {
+	ctx.ChainID = chainID
 	return ctx
 }
 

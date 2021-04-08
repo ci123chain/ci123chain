@@ -316,7 +316,7 @@ func (c *Chain) ExportAppStateJSON() (json.RawMessage, []types.GenesisValidator,
 
 // Core functionality passed from the application to the server init command
 type AppInit struct {
-	// AppGenState creates the core parameters initialization. It takes in a
+	// AppGenState creates the collactor parameters initialization. It takes in a
 	// pubkey meant to represent the pubkey of the validator of this machine.
 	AppGenState func(validators []types.GenesisValidator) (appState json.RawMessage, err error)
 

@@ -19,7 +19,7 @@ import (
 )
 const (
 	DefaultPage  = 1
-	DefaultLimit = 30 // should be consistent with tendermint/tendermint/rpc/core/pipe.go:19
+	DefaultLimit = 30 // should be consistent with tendermint/tendermint/rpc/collactor/pipe.go:19
 )
 
 type Response struct {

@@ -17,7 +17,7 @@ type ConnectionEnd struct {
 	// channels or packets utilising this connection.
 	Versions []*Version `protobuf:"bytes,2,rep,name=versions,proto3" json:"versions,omitempty"`
 	// current state of the connection end.
-	State State `protobuf:"varint,3,opt,name=state,proto3,enum=ibc.core.connection.v1.State" json:"state,omitempty"`
+	State State `protobuf:"varint,3,opt,name=state,proto3,enum=ibc.collactor.connection.v1.State" json:"state,omitempty"`
 	// counterparty chain associated with this connection.
 	Counterparty Counterparty `protobuf:"bytes,4,opt,name=counterparty,proto3" json:"counterparty"`
 	// delay period that must pass before a consensus state can be used for packet-verification

@@ -478,7 +478,7 @@ func (ci commitInfo) CommitID() CommitID {
 //----------------------------------------
 // storeInfo
 
-// storeInfo contains the name and core reference for an
+// storeInfo contains the name and collactor reference for an
 // underlying store.  It is the leaf of the rootMultiStores top
 // level simple merkle tree.
 type storeInfo struct {

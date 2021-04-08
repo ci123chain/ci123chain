@@ -13,9 +13,9 @@ import (
 // sending packets and one end capable of receiving packets.
 type Channel struct {
 	// current state of the channel end
-	State State `protobuf:"varint,1,opt,name=state,proto3,enum=ibc.core.channel.v1.State" json:"state,omitempty"`
+	State State `protobuf:"varint,1,opt,name=state,proto3,enum=ibc.collactor.channel.v1.State" json:"state,omitempty"`
 	// whether the channel is ordered or unordered
-	Ordering Order `protobuf:"varint,2,opt,name=ordering,proto3,enum=ibc.core.channel.v1.Order" json:"ordering,omitempty"`
+	Ordering Order `protobuf:"varint,2,opt,name=ordering,proto3,enum=ibc.collactor.channel.v1.Order" json:"ordering,omitempty"`
 	// counterparty channel end
 	Counterparty Counterparty `protobuf:"bytes,3,opt,name=counterparty,proto3" json:"counterparty"`
 	// list of connection identifiers, in order, along which packets sent on

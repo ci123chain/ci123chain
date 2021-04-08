@@ -5,6 +5,7 @@ go 1.13
 require (
 	github.com/allegro/bigcache v1.2.1 // indirect
 	github.com/aristanetworks/goarista v0.0.0-20200410125653-0a3087568c00 // indirect
+	github.com/avast/retry-go v3.0.0+incompatible // indirect
 	github.com/bgentry/speakeasy v0.1.0
 	github.com/btcsuite/btcd v0.21.0-beta
 	github.com/btcsuite/btcutil v1.0.2

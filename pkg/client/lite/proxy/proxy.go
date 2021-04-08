@@ -10,7 +10,7 @@ import (
 	cmn "github.com/tendermint/tendermint/libs/bytes"
 	"github.com/tendermint/tendermint/libs/log"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
-	//"github.com/tendermint/tendermint/rpc/core"
+	//"github.com/tendermint/tendermint/rpc/collactor"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	rpcserver "github.com/tendermint/tendermint/rpc/jsonrpc/server"
 	rpctypes "github.com/tendermint/tendermint/rpc/jsonrpc/types"
@@ -47,7 +47,7 @@ func StartProxy(c rpcclient.Client, listenAddr string, logger log.Logger, maxOpe
 	wm := rpcserver.NewWebsocketManager(r, rpcserver.OnDisconnect(unsubscribeFromAllEvents))
 	wm.SetLogger(logger)
 	///*****TODO
-	//core.SetLogger(logger)
+	//collactor.SetLogger(logger)
 	mux.HandleFunc(wsEndpoint, wm.WebsocketHandler)
 
 	config := rpcserver.DefaultConfig()

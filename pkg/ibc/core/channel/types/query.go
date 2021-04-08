@@ -87,3 +87,27 @@ type QueryUnreceivedPacketsResponse struct {
 	// query block height
 	Height clienttypes.Height `protobuf:"bytes,2,opt,name=height,proto3" json:"height"`
 }
+
+
+
+// QueryChannelResponse is the response type for the Query/Channel RPC method.
+// Besides the Channel end, it includes a proof and the height from which the
+// proof was retrieved.
+type QueryChannelResponse struct {
+	// channel associated with the request identifiers
+	Channel *Channel `protobuf:"bytes,1,opt,name=channel,proto3" json:"channel,omitempty"`
+	// merkle proof of existence
+	Proof []byte `protobuf:"bytes,2,opt,name=proof,proto3" json:"proof,omitempty"`
+	// height at which the proof was retrieved
+	ProofHeight clienttypes.Height `protobuf:"bytes,3,opt,name=proof_height,json=proofHeight,proto3" json:"proof_height"`
+}
+
+
+// NewQueryChannelResponse creates a new QueryChannelResponse instance
+func NewQueryChannelResponse(channel Channel, proof []byte, height clienttypes.Height) *QueryChannelResponse {
+	return &QueryChannelResponse{
+		Channel:     &channel,
+		Proof:       proof,
+		ProofHeight: height,
+	}
+}

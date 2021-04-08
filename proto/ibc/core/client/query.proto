@@ -2,18 +2,18 @@ syntax = "proto3";
 
 package core.client;
 
-option go_package = "github.com/ci123chain/ci123chain/pkg/ibc/core/client/types";
+option go_package = "github.com/ci123chain/ci123chain/pkg/ibc/collactor/client/types";
 
-import "core/client/client.proto";
+import "collactor/client/client.proto";
 import "gogoproto/gogo.proto";
 
 service Query {
   rpc ClientState(QueryClientStateRequest) returns (QueryClientStateResponse) {
-    option (google.api.http).get = "/ibc/core/client/v1beta1/client_states/{client_id}";
+    option (google.api.http).get = "/ibc/collactor/client/v1beta1/client_states/{client_id}";
   }
 
   rpc ClientStates(QueryClientStatesRequest) returns (QueryClientStatesResponse) {
-    option (google.api.http).get = "/ibc/core/client/v1beta1/client_states";
+    option (google.api.http).get = "/ibc/collactor/client/v1beta1/client_states";
   }
 
 //  rpc ConsensusState(QueryConsensusStateRequest) returns (QueryConsensusStateResponse) {
