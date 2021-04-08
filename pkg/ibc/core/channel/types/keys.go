@@ -55,3 +55,11 @@ func ParseChannelSequence(channelID string) (uint64, error) {
 }
 
 
+
+
+// IsValidChannelID checks if a channelID is valid and can be parsed to the channel
+// identifier format.
+func IsValidChannelID(channelID string) bool {
+	_, err := ParseChannelSequence(channelID)
+	return err == nil
+}

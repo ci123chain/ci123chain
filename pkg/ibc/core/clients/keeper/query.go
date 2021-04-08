@@ -1,10 +1,9 @@
 package keeper
 
 import (
-	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/clients/types"
-	errors2 "github.com/ci123chain/ci123chain/pkg/ibc/core/errors"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/exported"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/host"
 	"github.com/pkg/errors"
@@ -17,17 +16,19 @@ import (
 func (q Keeper)ClientState(ctx sdk.Context, req abci.RequestQuery) ([]byte, error) {
 	var reqClientState types.QueryClientStateRequest
 	if err := types.IBCClientCodec.UnmarshalJSON(req.Data, &reqClientState); err != nil {
-		return nil, err
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	if err := host.ClientIdentifierValidator(reqClientState.ClientId); err != nil {
-		return nil, errors.New(fmt.Sprintf("invalid clientID: %s", reqClientState.ClientId))
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	clientState, found := q.GetClientState(ctx, reqClientState.ClientId)
 	if !found {
-		return nil, errors2.ErrorClientNotFound(errors2.DefaultCodespace, errors.New("clientid: " + reqClientState.ClientId))
-	}
+		return nil, status.Error(
+			codes.NotFound,
+			sdkerrors.Wrap(types.ErrClientNotFound, reqClientState.ClientId).Error(),
+		)	}
 	proofHeight := types.GetSelfHeight(ctx)
 	resp := types.QueryClientStateResponse{
 		ClientState: clientState,
@@ -41,7 +42,7 @@ func (q Keeper)ClientState(ctx sdk.Context, req abci.RequestQuery) ([]byte, erro
 func (q Keeper) ConsensusState(ctx sdk.Context,  req abci.RequestQuery ) ([]byte, error) {
 	var reqConsensusState types.QueryConsensusStateRequest
 	if err := types.IBCClientCodec.UnmarshalJSON(req.Data, &reqConsensusState); err != nil {
-		return nil, err
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	if err := host.ClientIdentifierValidator(reqConsensusState.ClientId); err != nil {

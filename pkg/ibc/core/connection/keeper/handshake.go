@@ -3,6 +3,7 @@ package keeper
 import (
 	"bytes"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	clienttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/clients/types"
 	commitmenttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/commitment/types"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/connection/types"
@@ -25,7 +26,7 @@ func (k Keeper) ConnOpenInit(
 	versions := types.GetCompatibleVersions()
 	if version != nil {
 		if !types.IsSupportedVersion(version) {
-			return "", errors.New("version is not supported")
+			return "", sdkerrors.Wrap(types.ErrInvalidVersion, "version is not supported")
 		}
 
 		versions = []exported.Version{version}
@@ -82,7 +83,7 @@ func (k Keeper) ConnOpenTry(
 		// ensure that the previous connection exists
 		previousConnection, found = k.GetConnection(ctx, previousConnectionID)
 		if !found {
-			return "", errors.Errorf("previous connection does not exist for supplied previous connectionID %s", previousConnectionID)
+			return "", sdkerrors.Wrapf(types.ErrConnectionNotFound, "previous connection does not exist for supplied previous connectionID %s", previousConnectionID)
 		}
 
 		// ensure that the existing connection's
@@ -95,11 +96,11 @@ func (k Keeper) ConnOpenTry(
 			previousConnection.ClientId == clientID &&
 			previousConnection.Counterparty.ClientId == counterparty.ClientId &&
 			previousConnection.DelayPeriod == delayPeriod) {
-			return "", errors.New("connection fields mismatch previous connection fields")
+			return "", sdkerrors.Wrap(types.ErrInvalidConnection, "connection fields mismatch previous connection fields")
 		}
 
 		if !(previousConnection.State == types.INIT) {
-			return "", errors.Errorf("previous connection state is in state %s, expected INIT", previousConnection.State)
+			return "", sdkerrors.Wrapf(types.ErrInvalidConnectionState, "previous connection state is in state %s, expected INIT", previousConnection.State)
 		}
 
 		// continue with previous connection
@@ -112,7 +113,8 @@ func (k Keeper) ConnOpenTry(
 
 	selfHeight := clienttypes.GetSelfHeight(ctx)
 	if consensusHeight.GTE(selfHeight) {
-		return "", errors.Errorf(
+		return "", sdkerrors.Wrapf(
+			sdkerrors.ErrInvalidHeight,
 			"consensus height is greater than or equal to the current block height (%s >= %s)", consensusHeight, selfHeight,
 		)
 	}
@@ -124,7 +126,7 @@ func (k Keeper) ConnOpenTry(
 
 	expectedConsensusState, found := k.clientKeeper.GetSelfConsensusState(ctx, consensusHeight)
 	if !found {
-		return "", errors.Errorf("self consensus state not found: %s", consensusHeight.String())
+		return "", sdkerrors.Wrap(clienttypes.ErrSelfConsensusStateNotFound, consensusHeight.String())
 	}
 
 	// expectedConnection defines Chain A's ConnectionEnd
@@ -205,7 +207,8 @@ func (k Keeper) ConnOpenAck(
 	// Check that chainB client hasn't stored invalid height
 	selfHeight := clienttypes.GetSelfHeight(ctx)
 	if consensusHeight.GTE(selfHeight) {
-		return errors.Errorf(
+		return sdkerrors.Wrapf(
+			sdkerrors.ErrInvalidHeight,
 			"consensus height is greater than or equal to the current block height (%s >= %s)", consensusHeight, selfHeight,
 		)
 	}
@@ -213,20 +216,22 @@ func (k Keeper) ConnOpenAck(
 	// Retrieve connection
 	connection, found := k.GetConnection(ctx, connectionID)
 	if !found {
-		return errors.Errorf("connection not found for %s", connectionID)
+		return sdkerrors.Wrap(types.ErrConnectionNotFound, connectionID)
 	}
 
 	// Verify the provided version against the previously set connection state
 	switch {
 	// connection on ChainA must be in INIT or TRYOPEN
 	case connection.State != types.INIT && connection.State != types.TRYOPEN:
-		return errors.Errorf(
+		return sdkerrors.Wrapf(
+			types.ErrInvalidConnectionState,
 			"connection state is not INIT or TRYOPEN (got %s)", connection.State.String(),
 		)
 
 	// if the connection is INIT then the provided version must be supproted
 	case connection.State == types.INIT && !types.IsSupportedVersion(version):
-		return errors.Errorf(
+		return sdkerrors.Wrapf(
+			types.ErrInvalidConnectionState,
 			"connection state is in INIT but the provided version is not supported %s", version,
 		)
 
@@ -234,7 +239,8 @@ func (k Keeper) ConnOpenAck(
 	// retreived connection state.
 	case connection.State == types.TRYOPEN:
 	//case connection.State == types.TRYOPEN && (len(connection.Versions) != 1 || !proto.Equal(connection.Versions[0], version)):
-		return errors.Errorf(
+		return sdkerrors.Wrapf(
+			types.ErrInvalidConnectionState,
 			"connection state is in TRYOPEN but the provided version (%s) is not set in the previous connection versions %s", version, connection.Versions,
 		)
 	}
@@ -247,7 +253,7 @@ func (k Keeper) ConnOpenAck(
 	// Retrieve chainA's consensus state at consensusheight
 	expectedConsensusState, found := k.clientKeeper.GetSelfConsensusState(ctx, consensusHeight)
 	if !found {
-		return errors.New("self consensus state not found")
+		return clienttypes.ErrSelfConsensusStateNotFound
 	}
 
 	prefix := k.GetCommitmentPrefix()
@@ -303,12 +309,13 @@ func (k Keeper) ConnOpenConfirm(
 	// Retrieve connection
 	connection, found := k.GetConnection(ctx, connectionID)
 	if !found {
-		return errors.Errorf("connection not found for connection_id %s", connectionID)
+		return sdkerrors.Wrap(types.ErrConnectionNotFound, connectionID)
 	}
 
 	// Check that connection state on ChainB is on state: TRYOPEN
 	if connection.State != types.TRYOPEN {
-		return errors.Errorf(
+		return sdkerrors.Wrapf(
+			types.ErrInvalidConnectionState,
 			"connection state is not TRYOPEN (got %s)", connection.State.String(),
 		)
 	}

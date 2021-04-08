@@ -402,7 +402,7 @@ func handleCache(cdb tmdb.DB, cache string, cdc *codec.Codec, app *baseapp.BaseA
 
 // NOTE: This is solely to be used for testing purposes.
 func (app *Chain) GetSubspace(moduleName string) params.Subspace {
-	subspace, _ := app.ParamsKeepr.GetSubspace(moduleName)
+	subspace, _ := app.paramsKeepr.GetSubspace(moduleName)
 	return subspace
 }
 

@@ -2,7 +2,6 @@ package types
 
 import (
 	"encoding/json"
-	"errors"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/exported"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/host"
 	sdkerrors "github.com/pkg/errors"
@@ -153,13 +152,14 @@ func (ch Channel) GetVersion() string {
 // ValidateBasic performs a basic validation of the channel fields
 func (ch Channel) ValidateBasic() error {
 	if ch.State == UNINITIALIZED {
-		return errors.New("channel state invalid: state is UNINITIALIZED")
+		return ErrInvalidChannelState
 	}
 	if !(ch.Ordering == ORDERED || ch.Ordering == UNORDERED) {
-		return sdkerrors.Errorf("invalid channel ordering %s", ch.Ordering.String())
+		return sdkerrors.Wrap(ErrInvalidChannelOrdering, ch.Ordering.String())
 	}
 	if len(ch.ConnectionHops) != 1 {
-		return sdkerrors.New(
+		return sdkerrors.Wrap(
+			ErrTooManyConnectionHops,
 			"current IBC version only supports one connection hop",
 		)
 	}
@@ -228,7 +228,7 @@ func (ack Acknowledgement) String() string {
 }
 // GetBytes is a helper for serialising acknowledgements
 func (ack Acknowledgement) GetBytes() []byte {
-	return channelCdc.MustMarshalJSON(ack)
+	return ChannelCdc.MustMarshalJSON(ack)
 }
 
 // NewResultAcknowledgement returns a new instance of Acknowledgement using an Acknowledgement_Result

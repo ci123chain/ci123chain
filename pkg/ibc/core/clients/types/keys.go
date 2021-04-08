@@ -2,7 +2,8 @@ package types
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
+	"github.com/ci123chain/ci123chain/pkg/ibc/core/host"
 	"regexp"
 	"strconv"
 	"strings"
@@ -35,7 +36,7 @@ func IsValidClientID(clientID string) bool {
 // ParseClientIdentifier parses the client types and sequence from the client identifier.
 func ParseClientIdentifier(clientID string) (string, uint64, error) {
 	if !IsClientIDFormat(clientID) {
-		return "", 0, errors.New(fmt.Sprintf("invalid client identifier %s is not in format: `{client-types}-{N}`", clientID))
+		return "", 0, sdkerrors.Wrapf(host.ErrInvalidID, "invalid client identifier %s is not in format: `{client-type}-{N}`", clientID)
 	}
 
 	splitStr := strings.Split(clientID, "-")
@@ -43,12 +44,12 @@ func ParseClientIdentifier(clientID string) (string, uint64, error) {
 
 	clientType := strings.Join(splitStr[:lastIndex], "-")
 	if strings.TrimSpace(clientType) == "" {
-		return "", 0, errors.New("client identifier must be in format: `{client-types}-{N}` and client types cannot be blank")
+		return "", 0, sdkerrors.Wrap(host.ErrInvalidID, "client identifier must be in format: `{client-type}-{N}` and client type cannot be blank")
 	}
 
 	sequence, err := strconv.ParseUint(splitStr[lastIndex], 10, 64)
 	if err != nil {
-		return "", 0, errors.Wrap(err, "failed to parse client identifier sequence")
+		return "", 0, sdkerrors.Wrap(err, "failed to parse client identifier sequence")
 	}
 
 	return clientType, sequence, nil

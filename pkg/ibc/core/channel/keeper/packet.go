@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	capabilitytypes "github.com/ci123chain/ci123chain/pkg/capability/types"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/channel/types"
 	clienttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/clients/types"
@@ -237,7 +238,7 @@ func (k Keeper) AcknowledgePacket(
 
 		if packet.GetSequence() != nextSequenceAck {
 			return errors.Wrapf(
-				types.ErrInvalidSequence,
+				sdkerrors.ErrInvalidSequence,
 				"packet sequence ≠ next ack sequence (%d ≠ %d)", packet.GetSequence(), nextSequenceAck,
 			)
 		}

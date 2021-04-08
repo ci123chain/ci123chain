@@ -1,8 +1,13 @@
 package types
 
-import "github.com/pkg/errors"
+import (
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
+)
 
+// IBC port sentinel errors
 var (
-	ErrInvalidRoute = errors.New("port route invalid")
-	ErrInvalidPort = errors.New("port id invalid")
+	ErrPortExists   = sdkerrors.Register(SubModuleName, 2, "port is already binded")
+	ErrPortNotFound = sdkerrors.Register(SubModuleName, 3, "port not found")
+	ErrInvalidPort  = sdkerrors.Register(SubModuleName, 4, "invalid port")
+	ErrInvalidRoute = sdkerrors.Register(SubModuleName, 5, "route not found")
 )

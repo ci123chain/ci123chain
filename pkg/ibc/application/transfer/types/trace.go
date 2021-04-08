@@ -4,6 +4,8 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 	tmtypes "github.com/tendermint/tendermint/types"
 	"strings"
@@ -56,6 +58,33 @@ func (dt DenomTrace) IBCDenom() string {
 }
 
 
+// ValidateIBCDenom validates that the given denomination is either:
+//
+//  - A valid base denomination (eg: 'uatom')
+//  - A valid fungible token representation (i.e 'ibc/{hash}') per ADR 001 https://github.com/cosmos/cosmos-sdk/blob/master/docs/architecture/adr-001-coin-source-tracing.md
+func ValidateIBCDenom(denom string) error {
+	if err := sdk.ValidateDenom(denom); err != nil {
+		return err
+	}
+
+	denomSplit := strings.SplitN(denom, "/", 2)
+
+	switch {
+	case strings.TrimSpace(denom) == "",
+		len(denomSplit) == 1 && denomSplit[0] == DenomPrefix,
+		len(denomSplit) == 2 && (denomSplit[0] != DenomPrefix || strings.TrimSpace(denomSplit[1]) == ""):
+		return sdkerrors.Wrapf(ErrInvalidDenomForTransfer, "denomination should be prefixed with the format 'ibc/{hash(trace + \"/\" + %s)}'", denom)
+
+	case denomSplit[0] == denom && strings.TrimSpace(denom) != "":
+		return nil
+	}
+
+	if _, err := ParseHexHash(denomSplit[1]); err != nil {
+		return sdkerrors.Wrapf(err, "invalid denom trace hash %s", denomSplit[1])
+	}
+
+	return nil
+}
 
 // ParseDenomTrace parses a string with the ibc prefix (denom trace) and the base denomination
 // into a DenomTrace type.

@@ -5,13 +5,13 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	prefix "github.com/ci123chain/ci123chain/pkg/abci/store"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/clients/types"
 	commitmenttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/commitment/types"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/exported"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/host"
 	ibcclienttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/light-clients/07-tendermint/types"
 	paramtypes "github.com/ci123chain/ci123chain/pkg/params/subspace"
-	"github.com/pkg/errors"
 	"github.com/tendermint/tendermint/libs/log"
 	"reflect"
 	"strings"
@@ -100,16 +100,16 @@ func (k Keeper) GetSelfConsensusState(ctx sdk.Context, height exported.Height) (
 func (k Keeper) ValidateSelfClient(ctx sdk.Context, clientState exported.ClientState) error {
 	tmClient, ok := clientState.(*ibcclienttypes.ClientState)
 	if !ok {
-		return errors.Errorf("client must be a Tendermint client, expected: %T, got: %T",
+		return sdkerrors.Wrapf(types.ErrInvalidClient, "client must be a Tendermint client, expected: %T, got: %T",
 			&ibcclienttypes.ClientState{}, tmClient)
 	}
 
 	if clientState.IsFrozen() {
-		return errors.New("client_state frozen")
+		return types.ErrClientFrozen
 	}
 
 	if ctx.ChainID() != tmClient.ChainId {
-		return errors.Errorf("invalid chain-id. expected: %s, got: %s",
+		return sdkerrors.Wrapf(types.ErrInvalidClient, "invalid chain-id. expected: %s, got: %s",
 			ctx.ChainID(), tmClient.ChainId)
 	}
 
@@ -117,19 +117,19 @@ func (k Keeper) ValidateSelfClient(ctx sdk.Context, clientState exported.ClientS
 
 	// client must be in the same revision as executing chain
 	if tmClient.LatestHeight.RevisionNumber != revision {
-		return errors.Errorf("client is not in the same revision as the chain. expected revision: %d, got: %d",
+		return sdkerrors.Wrapf(types.ErrInvalidClient, "client is not in the same revision as the chain. expected revision: %d, got: %d",
 			tmClient.LatestHeight.RevisionNumber, revision)
 	}
 
 	selfHeight := types.NewHeight(revision, uint64(ctx.BlockHeight()))
 	if tmClient.LatestHeight.GTE(selfHeight) {
-		return errors.Errorf("client has LatestHeight %d greater than or equal to chain height %d",
+		return sdkerrors.Wrapf(types.ErrInvalidClient, "client has LatestHeight %d greater than or equal to chain height %d",
 			tmClient.LatestHeight, selfHeight)
 	}
 
 	expectedProofSpecs := commitmenttypes.GetSDKSpecs()
 	if !reflect.DeepEqual(expectedProofSpecs, tmClient.ProofSpecs) {
-		return errors.Errorf("client has invalid proof specs. expected: %v got: %v",
+		return sdkerrors.Wrapf(types.ErrInvalidClient, "client has invalid proof specs. expected: %v got: %v",
 			expectedProofSpecs, tmClient.ProofSpecs)
 	}
 
@@ -139,12 +139,12 @@ func (k Keeper) ValidateSelfClient(ctx sdk.Context, clientState exported.ClientS
 
 	expectedUbdPeriod := k.stakingKeeper.UnbondingTime(ctx)
 	if expectedUbdPeriod != tmClient.UnbondingPeriod {
-		return errors.Errorf("invalid unbonding period. expected: %s, got: %s",
+		return sdkerrors.Wrapf(types.ErrInvalidClient, "invalid unbonding period. expected: %s, got: %s",
 			expectedUbdPeriod, tmClient.UnbondingPeriod)
 	}
 
 	if tmClient.UnbondingPeriod < tmClient.TrustingPeriod {
-		return errors.Errorf("unbonding period must be greater than trusting period. unbonding period (%d) < trusting period (%d)",
+		return sdkerrors.Wrapf(types.ErrInvalidClient, "unbonding period must be greater than trusting period. unbonding period (%d) < trusting period (%d)",
 			tmClient.UnbondingPeriod, tmClient.TrustingPeriod)
 	}
 

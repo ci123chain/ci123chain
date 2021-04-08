@@ -1,9 +1,8 @@
 package types
 
 import (
-	"fmt"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/exported"
-	"github.com/pkg/errors"
 	"strings"
 )
 var (
@@ -57,14 +56,14 @@ func (version Version) GetFeatures() []string {
 // features. It unmarshals the version string into a Version object.
 func ValidateVersion(version *Version) error {
 	if version == nil {
-		return errors.New("version cannot be nil")
+		return sdkerrors.Wrap(ErrInvalidVersion, "version cannot be nil")
 	}
 	if strings.TrimSpace(version.Identifier) == "" {
-		return errors.New("version identifier cannot be blank")
+		return sdkerrors.Wrap(ErrInvalidVersion, "version identifier cannot be blank")
 	}
 	for i, feature := range version.Features {
 		if strings.TrimSpace(feature) == "" {
-			return fmt.Errorf("feature cannot be blank, index %d", i)
+			return sdkerrors.Wrapf(ErrInvalidVersion, "feature cannot be blank, index %d", i)
 		}
 	}
 
@@ -77,23 +76,23 @@ func ValidateVersion(version *Version) error {
 // identifier.
 func (version Version) VerifyProposedVersion(proposedVersion exported.Version) error {
 	if proposedVersion.GetIdentifier() != version.GetIdentifier() {
-		return errors.Wrapf(
-			nil,
+		return sdkerrors.Wrapf(
+			ErrVersionNegotiationFailed,
 			"proposed version identifier does not equal supported version identifier (%s != %s)", proposedVersion.GetIdentifier(), version.GetIdentifier(),
 		)
 	}
 
 	if len(proposedVersion.GetFeatures()) == 0 && !allowNilFeatureSet[proposedVersion.GetIdentifier()] {
-		return errors.Wrapf(
-			nil,
+		return sdkerrors.Wrapf(
+			ErrVersionNegotiationFailed,
 			"nil feature sets are not supported for version identifier (%s)", proposedVersion.GetIdentifier(),
 		)
 	}
 
 	for _, proposedFeature := range proposedVersion.GetFeatures() {
 		if !contains(proposedFeature, version.GetFeatures()) {
-			return errors.Wrapf(
-				nil,
+			return sdkerrors.Wrapf(
+				ErrVersionNegotiationFailed,
 				"proposed feature (%s) is not a supported feature set (%s)", proposedFeature, version.GetFeatures(),
 			)
 		}
@@ -198,7 +197,8 @@ func PickVersion(supportedVersions, counterpartyVersions []exported.Version) (*V
 		}
 	}
 
-	return nil, errors.Errorf(
+	return nil, sdkerrors.Wrapf(
+		ErrVersionNegotiationFailed,
 		"failed to find a matching counterparty version (%v) from the supported version list (%v)", counterpartyVersions, supportedVersions,
 	)
 }

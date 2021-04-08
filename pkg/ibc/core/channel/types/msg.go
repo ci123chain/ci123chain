@@ -2,7 +2,9 @@ package types
 
 import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	clienttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/clients/types"
+	commitmenttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/commitment/types"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/host"
 )
 
@@ -30,22 +32,24 @@ func (m MsgChannelOpenInit) MsgType() string {
 	return "channel_open_init"
 }
 
-func (msg MsgChannelOpenInit) ValidateBasic() sdk.Error {
-	//if err := host.PortIdentifierValidator(msg.PortId); err != nil {
-	//	return errors.Wrap(err, "invalid port ID")
-	//}
-	//if msg.Channel.State != INIT {
-	//	return errors.Errorf(
-	//		"channel state must be INIT in MsgChannelOpenInit. expected: %s, got: %s",
-	//		INIT, msg.Channel.State,
-	//	)
-	//}
-	//if msg.Channel.Counterparty.ChannelId != "" {
-	//	return errors.New("counterparty channel identifier must be empty")
-	//}
-	////_, err := sdk.AccAddressFromBech32(msg.Signer)
-	//return msg.Channel.ValidateBasic()
-	return nil
+func (msg MsgChannelOpenInit) ValidateBasic() error {
+	if err := host.PortIdentifierValidator(msg.PortId); err != nil {
+		return sdkerrors.Wrap(err, "invalid port ID")
+	}
+	if msg.Channel.State != INIT {
+		return sdkerrors.Wrapf(ErrInvalidChannelState,
+			"channel state must be INIT in MsgChannelOpenInit. expected: %s, got: %s",
+			INIT, msg.Channel.State,
+		)
+	}
+	if msg.Channel.Counterparty.ChannelId != "" {
+		return sdkerrors.Wrap(ErrInvalidCounterparty, "counterparty channel identifier must be empty")
+	}
+	_, err := sdk.AccAddressFromBech32(msg.Signer)
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "string could not be parsed as address: %v", err)
+	}
+	return msg.Channel.ValidateBasic()
 }
 
 func (m MsgChannelOpenInit) GetFromAddress() sdk.AccAddress {
@@ -53,7 +57,7 @@ func (m MsgChannelOpenInit) GetFromAddress() sdk.AccAddress {
 }
 
 func (m MsgChannelOpenInit) Bytes() []byte {
-	return channelCdc.MustMarshalBinaryLengthPrefixed(m)
+	return ChannelCdc.MustMarshalBinaryLengthPrefixed(m)
 }
 
 // -----------MsgChannelOpenTry
@@ -88,38 +92,37 @@ func (m MsgChannelOpenTry) MsgType() string {
 	return "channel_open_try"
 }
 
-func (m MsgChannelOpenTry) ValidateBasic() sdk.Error {
-	//if err := host.PortIdentifierValidator(msg.PortId); err != nil {
-	//	return sdkerrors.Wrap(err, "invalid port ID")
-	//}
-	//if msg.PreviousChannelId != "" {
-	//	if !IsValidChannelID(msg.PreviousChannelId) {
-	//		return sdkerrors.Wrap(ErrInvalidChannelIdentifier, "invalid previous channel ID")
-	//	}
-	//}
-	//if len(msg.ProofInit) == 0 {
-	//	return sdkerrors.Wrap(commitmenttypes.ErrInvalidProof, "cannot submit an empty proof init")
-	//}
-	//if msg.ProofHeight.IsZero() {
-	//	return sdkerrors.Wrap(sdkerrors.ErrInvalidHeight, "proof height must be non-zero")
-	//}
-	//if msg.Channel.State != TRYOPEN {
-	//	return sdkerrors.Wrapf(ErrInvalidChannelState,
-	//		"channel state must be TRYOPEN in MsgChannelOpenTry. expected: %s, got: %s",
-	//		TRYOPEN, msg.Channel.State,
-	//	)
-	//}
-	//// counterparty validate basic allows empty counterparty channel identifiers
-	//if err := host.ChannelIdentifierValidator(msg.Channel.Counterparty.ChannelId); err != nil {
-	//	return sdkerrors.Wrap(err, "invalid counterparty channel ID")
-	//}
-	//
-	//_, err := sdk.AccAddressFromBech32(msg.Signer)
-	//if err != nil {
-	//	return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "string could not be parsed as address: %v", err)
-	//}
-	//return msg.Channel.ValidateBasic()
-	return nil
+func (msg MsgChannelOpenTry) ValidateBasic() error {
+	if err := host.PortIdentifierValidator(msg.PortId); err != nil {
+		return sdkerrors.Wrap(err, "invalid port ID")
+	}
+	if msg.PreviousChannelId != "" {
+		if !IsValidChannelID(msg.PreviousChannelId) {
+			return sdkerrors.Wrap(ErrInvalidChannelIdentifier, "invalid previous channel ID")
+		}
+	}
+	if len(msg.ProofInit) == 0 {
+		return sdkerrors.Wrap(commitmenttypes.ErrInvalidProof, "cannot submit an empty proof init")
+	}
+	if msg.ProofHeight.IsZero() {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidHeight, "proof height must be non-zero")
+	}
+	if msg.Channel.State != TRYOPEN {
+		return sdkerrors.Wrapf(ErrInvalidChannelState,
+			"channel state must be TRYOPEN in MsgChannelOpenTry. expected: %s, got: %s",
+			TRYOPEN, msg.Channel.State,
+		)
+	}
+	// counterparty validate basic allows empty counterparty channel identifiers
+	if err := host.ChannelIdentifierValidator(msg.Channel.Counterparty.ChannelId); err != nil {
+		return sdkerrors.Wrap(err, "invalid counterparty channel ID")
+	}
+
+	_, err := sdk.AccAddressFromBech32(msg.Signer)
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "string could not be parsed as address: %v", err)
+	}
+	return msg.Channel.ValidateBasic()
 }
 
 func (m MsgChannelOpenTry) GetFromAddress() sdk.AccAddress {
@@ -127,7 +130,7 @@ func (m MsgChannelOpenTry) GetFromAddress() sdk.AccAddress {
 }
 
 func (m MsgChannelOpenTry) Bytes() []byte {
-	return channelCdc.MustMarshalBinaryLengthPrefixed(m)
+	return ChannelCdc.MustMarshalBinaryLengthPrefixed(m)
 }
 
 // -----------MsgChannelOpenAck
@@ -157,27 +160,26 @@ func (m MsgChannelOpenAck) MsgType() string {
 	return "channel_open_ack"
 }
 
-func (m MsgChannelOpenAck) ValidateBasic() sdk.Error {
-	//if err := host.PortIdentifierValidator(msg.PortId); err != nil {
-	//	return sdkerrors.Wrap(err, "invalid port ID")
-	//}
-	//if !IsValidChannelID(msg.ChannelId) {
-	//	return ErrInvalidChannelIdentifier
-	//}
-	//if err := host.ChannelIdentifierValidator(msg.CounterpartyChannelId); err != nil {
-	//	return sdkerrors.Wrap(err, "invalid counterparty channel ID")
-	//}
-	//if len(msg.ProofTry) == 0 {
-	//	return sdkerrors.Wrap(commitmenttypes.ErrInvalidProof, "cannot submit an empty proof try")
-	//}
-	//if msg.ProofHeight.IsZero() {
-	//	return sdkerrors.Wrap(sdkerrors.ErrInvalidHeight, "proof height must be non-zero")
-	//}
-	//_, err := sdk.AccAddressFromBech32(msg.Signer)
-	//if err != nil {
-	//	return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "string could not be parsed as address: %v", err)
-	//}
-	//return nil
+func (msg MsgChannelOpenAck) ValidateBasic() error {
+	if err := host.PortIdentifierValidator(msg.PortId); err != nil {
+		return sdkerrors.Wrap(err, "invalid port ID")
+	}
+	if !IsValidChannelID(msg.ChannelId) {
+		return ErrInvalidChannelIdentifier
+	}
+	if err := host.ChannelIdentifierValidator(msg.CounterpartyChannelId); err != nil {
+		return sdkerrors.Wrap(err, "invalid counterparty channel ID")
+	}
+	if len(msg.ProofTry) == 0 {
+		return sdkerrors.Wrap(commitmenttypes.ErrInvalidProof, "cannot submit an empty proof try")
+	}
+	if msg.ProofHeight.IsZero() {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidHeight, "proof height must be non-zero")
+	}
+	_, err := sdk.AccAddressFromBech32(msg.Signer)
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "string could not be parsed as address: %v", err)
+	}
 	return nil
 }
 
@@ -186,7 +188,7 @@ func (m MsgChannelOpenAck) GetFromAddress() sdk.AccAddress {
 }
 
 func (m MsgChannelOpenAck) Bytes() []byte {
-	return channelCdc.MustMarshalBinaryLengthPrefixed(m)
+	return ChannelCdc.MustMarshalBinaryLengthPrefixed(m)
 
 }
 
@@ -216,23 +218,23 @@ func (m MsgChannelOpenConfirm) MsgType() string {
 	return "channel_open_confirm"
 }
 
-func (m MsgChannelOpenConfirm) ValidateBasic() sdk.Error {
-	//if err := host.PortIdentifierValidator(msg.PortId); err != nil {
-	//	return sdkerrors.Wrap(err, "invalid port ID")
-	//}
-	//if !IsValidChannelID(msg.ChannelId) {
-	//	return ErrInvalidChannelIdentifier
-	//}
-	//if len(msg.ProofAck) == 0 {
-	//	return sdkerrors.Wrap(commitmenttypes.ErrInvalidProof, "cannot submit an empty proof ack")
-	//}
-	//if msg.ProofHeight.IsZero() {
-	//	return sdkerrors.Wrap(sdkerrors.ErrInvalidHeight, "proof height must be non-zero")
-	//}
-	//_, err := sdk.AccAddressFromBech32(msg.Signer)
-	//if err != nil {
-	//	return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "string could not be parsed as address: %v", err)
-	//}
+func (msg MsgChannelOpenConfirm) ValidateBasic() error {
+	if err := host.PortIdentifierValidator(msg.PortId); err != nil {
+		return sdkerrors.Wrap(err, "invalid port ID")
+	}
+	if !IsValidChannelID(msg.ChannelId) {
+		return ErrInvalidChannelIdentifier
+	}
+	if len(msg.ProofAck) == 0 {
+		return sdkerrors.Wrap(commitmenttypes.ErrInvalidProof, "cannot submit an empty proof ack")
+	}
+	if msg.ProofHeight.IsZero() {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidHeight, "proof height must be non-zero")
+	}
+	_, err := sdk.AccAddressFromBech32(msg.Signer)
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "string could not be parsed as address: %v", err)
+	}
 	return nil
 }
 
@@ -241,7 +243,7 @@ func (m MsgChannelOpenConfirm) GetFromAddress() sdk.AccAddress {
 }
 
 func (m MsgChannelOpenConfirm) Bytes() []byte {
-	return channelCdc.MustMarshalBinaryLengthPrefixed(m)
+	return ChannelCdc.MustMarshalBinaryLengthPrefixed(m)
 }
 
 
@@ -274,22 +276,21 @@ func (m MsgAcknowledgement) MsgType() string {
 	return "acknowledge_packet"
 }
 
-func (m MsgAcknowledgement) ValidateBasic() sdk.Error {
-	//if len(msg.ProofAcked) == 0 {
-	//	return sdkerrors.Wrap(commitmenttypes.ErrInvalidProof, "cannot submit an empty proof")
-	//}
-	//if msg.ProofHeight.IsZero() {
-	//	return sdkerrors.Wrap(sdkerrors.ErrInvalidHeight, "proof height must be non-zero")
-	//}
-	//if len(msg.Acknowledgement) == 0 {
-	//	return sdkerrors.Wrap(ErrInvalidAcknowledgement, "ack bytes cannot be empty")
-	//}
-	//_, err := sdk.AccAddressFromBech32(msg.Signer)
-	//if err != nil {
-	//	return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "string could not be parsed as address: %v", err)
-	//}
-	//return msg.Packet.ValidateBasic()
-	return nil
+func (msg MsgAcknowledgement) ValidateBasic() error {
+	if len(msg.ProofAcked) == 0 {
+		return sdkerrors.Wrap(commitmenttypes.ErrInvalidProof, "cannot submit an empty proof")
+	}
+	if msg.ProofHeight.IsZero() {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidHeight, "proof height must be non-zero")
+	}
+	if len(msg.Acknowledgement) == 0 {
+		return sdkerrors.Wrap(ErrInvalidAcknowledgement, "ack bytes cannot be empty")
+	}
+	_, err := sdk.AccAddressFromBech32(msg.Signer)
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "string could not be parsed as address: %v", err)
+	}
+	return msg.Packet.ValidateBasic()
 }
 
 func (m MsgAcknowledgement) GetFromAddress() sdk.AccAddress {
@@ -297,7 +298,7 @@ func (m MsgAcknowledgement) GetFromAddress() sdk.AccAddress {
 }
 
 func (m MsgAcknowledgement) Bytes() []byte {
-	return channelCdc.MustMarshalBinaryLengthPrefixed(m)
+	return ChannelCdc.MustMarshalBinaryLengthPrefixed(m)
 }
 
 
@@ -311,18 +312,18 @@ func (m MsgRecvPacket) MsgType() string {
 	return "receive_packet"
 }
 
-func (m MsgRecvPacket) ValidateBasic() sdk.Error {
-	//if len(msg.ProofCommitment) == 0 {
-	//	return sdkerrors.Wrap(commitmenttypes.ErrInvalidProof, "cannot submit an empty proof")
-	//}
-	//if msg.ProofHeight.IsZero() {
-	//	return sdkerrors.Wrap(sdkerrors.ErrInvalidHeight, "proof height must be non-zero")
-	//}
-	//if err != nil {
-	//	return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "string could not be parsed as address: %v", err)
-	//}
-	//return msg.Packet.ValidateBasic()
-	return nil
+func (msg MsgRecvPacket) ValidateBasic() error {
+	if len(msg.ProofCommitment) == 0 {
+		return sdkerrors.Wrap(commitmenttypes.ErrInvalidProof, "cannot submit an empty proof")
+	}
+	if msg.ProofHeight.IsZero() {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidHeight, "proof height must be non-zero")
+	}
+	_, err := sdk.AccAddressFromBech32(msg.Signer)
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "string could not be parsed as address: %v", err)
+	}
+	return msg.Packet.ValidateBasic()
 }
 
 func (m MsgRecvPacket) GetFromAddress() sdk.AccAddress {
@@ -330,7 +331,7 @@ func (m MsgRecvPacket) GetFromAddress() sdk.AccAddress {
 }
 
 func (m MsgRecvPacket) Bytes() []byte {
-	return channelCdc.MustMarshalBinaryLengthPrefixed(m)
+	return ChannelCdc.MustMarshalBinaryLengthPrefixed(m)
 }
 
 
@@ -361,22 +362,21 @@ func (m MsgTimeout) MsgType() string {
 	return "timeout_packet"
 }
 
-func (m MsgTimeout) ValidateBasic() sdk.Error {
-	//if len(msg.ProofUnreceived) == 0 {
-	//	return sdkerrors.Wrap(commitmenttypes.ErrInvalidProof, "cannot submit an empty unreceived proof")
-	//}
-	//if msg.ProofHeight.IsZero() {
-	//	return sdkerrors.Wrap(sdkerrors.ErrInvalidHeight, "proof height must be non-zero")
-	//}
-	//if msg.NextSequenceRecv == 0 {
-	//	return sdkerrors.Wrap(sdkerrors.ErrInvalidSequence, "next sequence receive cannot be 0")
-	//}
-	//_, err := sdk.AccAddressFromBech32(msg.Signer)
-	//if err != nil {
-	//	return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "string could not be parsed as address: %v", err)
-	//}
-	//return msg.Packet.ValidateBasic()
-	return nil
+func (msg MsgTimeout) ValidateBasic() error {
+	if len(msg.ProofUnreceived) == 0 {
+		return sdkerrors.Wrap(commitmenttypes.ErrInvalidProof, "cannot submit an empty unreceived proof")
+	}
+	if msg.ProofHeight.IsZero() {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidHeight, "proof height must be non-zero")
+	}
+	if msg.NextSequenceRecv == 0 {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidSequence, "next sequence receive cannot be 0")
+	}
+	_, err := sdk.AccAddressFromBech32(msg.Signer)
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "string could not be parsed as address: %v", err)
+	}
+	return msg.Packet.ValidateBasic()
 }
 
 func (m MsgTimeout) GetFromAddress() sdk.AccAddress {
@@ -384,7 +384,7 @@ func (m MsgTimeout) GetFromAddress() sdk.AccAddress {
 }
 
 func (m MsgTimeout) Bytes() []byte {
-	return channelCdc.MustMarshalBinaryLengthPrefixed(m)
+	return ChannelCdc.MustMarshalBinaryLengthPrefixed(m)
 }
 
 

@@ -1,9 +1,9 @@
 package types
 
 import (
-	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	channeltypes "github.com/ci123chain/ci123chain/pkg/ibc/core/channel/types"
 	clienttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/clients/types"
 	commitmenttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/commitment/types"
@@ -135,50 +135,52 @@ func (cs ClientState) ZeroCustomFields() exported.ClientState {
 	}
 }
 
-// basic validate for cs
+// Validate performs a basic validation of the client state fields.
 func (cs ClientState) Validate() error {
 	if strings.TrimSpace(cs.ChainId) == "" {
-		return errors.New("chain-id cannot be empty string")
+		return sdkerrors.Wrap(ErrInvalidChainID, "chain id cannot be empty string")
 	}
-	// todo verify tendermint trustlevel
-
 	if cs.TrustingPeriod == 0 {
-		return errors.New("trusting period cannot be zero")
+		return sdkerrors.Wrap(ErrInvalidTrustingPeriod, "trusting period cannot be zero")
 	}
 	if cs.UnbondingPeriod == 0 {
-		return errors.New("unbonding period cannot be zero")
+		return sdkerrors.Wrap(ErrInvalidUnbondingPeriod, "unbonding period cannot be zero")
 	}
 	if cs.MaxClockDrift == 0 {
-		return errors.New("max clock drift cannot be zero")
+		return sdkerrors.Wrap(ErrInvalidMaxClockDrift, "max clock drift cannot be zero")
 	}
 	if cs.LatestHeight.RevisionHeight == 0 {
-		return errors.New("tendermint revision height cannot be zero")
+		return sdkerrors.Wrapf(ErrInvalidHeaderHeight, "tendermint revision height cannot be zero")
 	}
 	if cs.TrustingPeriod >= cs.UnbondingPeriod {
-		return fmt.Errorf("trusting period (%s) should be < unbounding period (%s)", cs.TrustingPeriod, cs.UnbondingPeriod)
+		return sdkerrors.Wrapf(
+			ErrInvalidTrustingPeriod,
+			"trusting period (%s) should be < unbonding period (%s)", cs.TrustingPeriod, cs.UnbondingPeriod,
+		)
 	}
 
 	if cs.ProofSpecs == nil {
-		return errors.New("proof specs cannot be nil")
+		return sdkerrors.Wrap(ErrInvalidProofSpecs, "proof specs cannot be nil for tm client")
 	}
-
 	for i, spec := range cs.ProofSpecs {
-		if  spec == nil {
-			return fmt.Errorf("proof spec cannot be nil at index %d", i)
+		if spec == nil {
+			return sdkerrors.Wrapf(ErrInvalidProofSpecs, "proof spec cannot be nil at index: %d", i)
 		}
 	}
-
+	// UpgradePath may be empty, but if it isn't, each key must be non-empty
 	for i, k := range cs.UpgradePath {
 		if strings.TrimSpace(k) == "" {
-			return errors.Errorf("key in upgrade path at index %d cannot be empty string", i)
+			return sdkerrors.Wrapf(clienttypes.ErrInvalidClient, "key in upgrade path at index %d cannot be empty", i)
 		}
 	}
+
 	return nil
 }
 
 func (cs ClientState) Initialize(ctx sdk.Context, clientStore sdk.KVStore, consState exported.ConsensusState) error {
 	if _, ok := consState.(*ConsensusState); !ok {
-		return errors.Errorf("invalid initial consensus state. expected types: %T, got: %T", &ConsensusState{}, consState)
+		return sdkerrors.Wrapf(clienttypes.ErrInvalidConsensus, "invalid initial consensus state. expected type: %T, got: %T",
+			&ConsensusState{}, consState)
 	}
 	SetProcessedTime(clientStore, cs.GetLatestHeight(), uint64(ctx.BlockHeader().Time.UnixNano()))
 	return nil
@@ -217,11 +219,11 @@ func (cs ClientState) VerifyClientState(
 		return err
 	}
 	if clientState == nil {
-		return errors.New("client state cannot be empty")
+		return sdkerrors.Wrap(clienttypes.ErrInvalidClient, "client state cannot be empty")
 	}
 	_, ok := clientState.(*ClientState)
 	if !ok {
-		return errors.Errorf("invalid client types %T, expected %T", clientState, &ClientState{})
+		return sdkerrors.Wrapf(clienttypes.ErrInvalidClient, "invalid client type %T, expected %T", clientState, &ClientState{})
 	}
 
 	bz, err := cdc.MarshalBinaryBare(clientState)
@@ -256,7 +258,7 @@ func (cs ClientState) VerifyConnectionState(
 
 	connection, ok := connectionEnd.(connectiontypes.ConnectionEnd)
 	if !ok {
-		return errors.Errorf("invalid connection types %T", connectionEnd)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidType, "invalid connection type %T", connectionEnd)
 	}
 
 	bz, err := cdc.MarshalBinaryBare(&connection)
@@ -292,11 +294,11 @@ func (cs ClientState) VerifyClientConsensusState(
 		return err
 	}
 	if consensusState == nil {
-		return errors.New("consensus state cannot be empty")
+		return sdkerrors.Wrap(clienttypes.ErrInvalidConsensus, "consensus state cannot be empty")
 	}
 	_, ok := consensusState.(*ConsensusState)
 	if !ok {
-		return errors.Errorf("invalid consensus types %T, expected %T", consensusState, &ConsensusState{})
+		return sdkerrors.Wrapf(clienttypes.ErrInvalidConsensus, "invalid consensus type %T, expected %T", consensusState, &ConsensusState{})
 	}
 	bz, err := cdc.MarshalBinaryBare(consensusState)
 	if err != nil {
@@ -325,7 +327,7 @@ func (cs ClientState) VerifyChannelState(store sdk.KVStore,
 	}
 	channelEnd, ok := channel.(channeltypes.Channel)
 	if !ok {
-		return errors.Errorf("invalid channel type %T", channel)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidType, "invalid channel type %T", channel)
 	}
 
 	bz, err := cdc.MarshalBinaryBare(&channelEnd)
@@ -359,21 +361,23 @@ func produceVerificationArgs(
 	proof []byte,
 ) (merkleProof commitmenttypes.MerkleProof, consensusState *ConsensusState, err error) {
 	if cs.GetLatestHeight().LT(height) {
-		return commitmenttypes.MerkleProof{}, nil, errors.Errorf("client state height < proof height (%d < %d)", cs.GetLatestHeight(), height)
-	}
+		return commitmenttypes.MerkleProof{}, nil, sdkerrors.Wrapf(
+			sdkerrors.ErrInvalidHeight,
+			"client state height < proof height (%d < %d)", cs.GetLatestHeight(), height,
+		)	}
 	if cs.IsFrozen() && !cs.FrozenHeight.GT(height) {
-		return commitmenttypes.MerkleProof{}, nil, errors.New("light client is frozen due to misbehaviou")
+		return commitmenttypes.MerkleProof{}, nil, clienttypes.ErrClientFrozen
 	}
 	if prefix == nil {
-		return commitmenttypes.MerkleProof{}, nil, errors.New("prefix cannot be empty")
+		return commitmenttypes.MerkleProof{}, nil, sdkerrors.Wrap(commitmenttypes.ErrInvalidPrefix, "prefix cannot be empty")
 	}
 	_, ok := prefix.(*commitmenttypes.MerklePrefix)
 	if !ok {
-		return commitmenttypes.MerkleProof{}, nil, errors.Errorf("invalid prefix types %T, expected *MerklePrefix", prefix)
+		return commitmenttypes.MerkleProof{}, nil, sdkerrors.Wrapf(commitmenttypes.ErrInvalidPrefix, "invalid prefix type %T, expected *MerklePrefix", prefix)
 	}
 
 	if err = cdc.UnmarshalBinaryBare(proof, &merkleProof); err != nil {
-		return commitmenttypes.MerkleProof{}, nil, errors.New("failed to unmarshal proof into commitment merkle proof")
+		return commitmenttypes.MerkleProof{}, nil, sdkerrors.Wrap(commitmenttypes.ErrInvalidProof, "failed to unmarshal proof into commitment merkle proof")
 	}
 	consensusState, err = GetConsensusState(store, cdc, height)
 	if err != nil {

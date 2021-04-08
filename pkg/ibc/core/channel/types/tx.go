@@ -1,7 +1,6 @@
 package types
 
 import (
-	"github.com/ci123chain/ci123chain/pkg/abci/types/pagination"
 	clienttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/clients/types"
 )
 

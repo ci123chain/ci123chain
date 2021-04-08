@@ -4,8 +4,8 @@ import (
 	"crypto/sha256"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	clienttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/clients/types"
-	ibcerrors "github.com/ci123chain/ci123chain/pkg/ibc/core/errors"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/exported"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/host"
 	"github.com/pkg/errors"
@@ -108,22 +108,22 @@ func (p Packet) ValidateBasic() error {
 		return errors.Wrap(err, "invalid source port ID")
 	}
 	if err := host.PortIdentifierValidator(p.DestinationPort); err != nil {
-		return errors.Wrap(err, "invalid destination port ID")
+		return sdkerrors.Wrap(err, "invalid destination port ID")
 	}
 	if err := host.ChannelIdentifierValidator(p.SourceChannel); err != nil {
-		return errors.Wrap(err, "invalid source channel ID")
+		return sdkerrors.Wrap(err, "invalid source channel ID")
 	}
 	if err := host.ChannelIdentifierValidator(p.DestinationChannel); err != nil {
-		return errors.Wrap(err, "invalid destination channel ID")
+		return sdkerrors.Wrap(err, "invalid destination channel ID")
 	}
 	if p.Sequence == 0 {
-		return errors.Wrap(ibcerrors.ErrInvalidPacket, "packet sequence cannot be 0")
+		return sdkerrors.Wrap(ErrInvalidPacket, "packet sequence cannot be 0")
 	}
 	if p.TimeoutHeight.IsZero() && p.TimeoutTimestamp == 0 {
-		return errors.Wrap(ibcerrors.ErrInvalidPacket, "packet timeout height and packet timeout timestamp cannot both be 0")
+		return sdkerrors.Wrap(ErrInvalidPacket, "packet timeout height and packet timeout timestamp cannot both be 0")
 	}
 	if len(p.Data) == 0 {
-		return errors.Wrap(ibcerrors.ErrInvalidPacket, "packet data bytes cannot be empty")
+		return sdkerrors.Wrap(ErrInvalidPacket, "packet data bytes cannot be empty")
 	}
 	return nil
 }

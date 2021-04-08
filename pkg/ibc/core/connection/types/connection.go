@@ -1,11 +1,10 @@
 package types
 
 import (
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	commitmenttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/commitment/types"
-	errors2 "github.com/ci123chain/ci123chain/pkg/ibc/core/errors"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/exported"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/host"
-	"github.com/pkg/errors"
 )
 
 var _ exported.ConnectionI = (*ConnectionEnd)(nil)
@@ -67,10 +66,10 @@ func (c ConnectionEnd) GetDelayPeriod() uint64 {
 // counterparty's.
 func (c ConnectionEnd) ValidateBasic() error {
 	if err := host.ClientIdentifierValidator(c.ClientId); err != nil {
-		return errors.Wrap(err, "invalid client ID")
+		return sdkerrors.Wrap(err, "invalid client ID")
 	}
 	if len(c.Versions) == 0 {
-		return errors.New("empty connection versions")
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidVersion, "empty connection versions")
 	}
 	for _, version := range c.Versions {
 		if err := ValidateVersion(version); err != nil {
@@ -123,14 +122,14 @@ func (c Counterparty) GetPrefix() exported.Prefix {
 func (c Counterparty) ValidateBasic() error {
 	if c.ConnectionId != "" {
 		if err := host.ConnectionIdentifierValidator(c.ConnectionId); err != nil {
-			return errors2.ErrorCounterpartyConnectionID(errors2.DefaultCodespace, err)
+			return sdkerrors.Wrap(err, "invalid counterparty connection ID")
 		}
 	}
 	if err := host.ClientIdentifierValidator(c.ClientId); err != nil {
-		return errors2.ErrorCounterpartyConnectionID(errors2.DefaultCodespace, err)
+		return sdkerrors.Wrap(err, "invalid counterparty client ID")
 	}
 	if c.Prefix.Empty() {
-		return errors2.ErrorCounterpartyPrefix(errors2.DefaultCodespace, errors.New("counterparty prefix cannot be empty"))
+		return sdkerrors.Wrap(ErrInvalidCounterparty, "counterparty prefix cannot be empty")
 	}
 	return nil
 }

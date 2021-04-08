@@ -3,13 +3,13 @@ package collactor
 import (
 	"context"
 	"fmt"
+	retry "github.com/avast/retry-go"
 	"github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/light"
-	dbm "github.com/tendermint/tm-db"
-	retry "github.com/avast/retry-go"
 	lightp "github.com/tendermint/tendermint/light/provider"
 	lighthttp "github.com/tendermint/tendermint/light/provider/http"
 	dbs "github.com/tendermint/tendermint/light/store/db"
+	dbm "github.com/tendermint/tm-db"
 	"io/ioutil"
 )
 var logger = light.Logger(log.NewTMLogger(log.NewSyncWriter(ioutil.Discard)))

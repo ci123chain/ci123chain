@@ -1,10 +1,9 @@
 package types
 
 import (
-	"fmt"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/exported"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/host"
-	"github.com/pkg/errors"
 	"math"
 	"strings"
 )
@@ -27,7 +26,7 @@ func NewIdentifiedClientState(clientID string, clientState exported.ClientState)
 // client identifier when used with '0' or the maximum uint64 as the sequence.
 func ValidateClientType(clientType string) error {
 	if strings.TrimSpace(clientType) == "" {
-		return errors.New("client types cannot be blank")
+		return sdkerrors.Wrap(ErrInvalidClientType, "client type cannot be blank")
 	}
 
 	smallestPossibleClientID := FormatClientIdentifier(clientType, 0)
@@ -35,14 +34,14 @@ func ValidateClientType(clientType string) error {
 
 	// IsValidClientID will check client types format and if the sequence is a uint64
 	if !IsValidClientID(smallestPossibleClientID) {
-		return errors.New(fmt.Sprintf("Invalid ClientID: %s", smallestPossibleClientID))
+		return sdkerrors.Wrap(ErrInvalidClientType, "")
 	}
 
 	if err := host.ClientIdentifierValidator(smallestPossibleClientID); err != nil {
-		return errors.Wrap(err, "client types results in smallest client identifier being invalid")
+		return sdkerrors.Wrap(err, "client types results in smallest client identifier being invalid")
 	}
 	if err := host.ClientIdentifierValidator(largestPossibleClientID); err != nil {
-		return errors.Wrap(err, "client types results in largest client identifier being invalid")
+		return sdkerrors.Wrap(err, "client types results in largest client identifier being invalid")
 	}
 
 	return nil

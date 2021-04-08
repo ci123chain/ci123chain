@@ -1,60 +1,64 @@
 package core
 
 import (
-	"encoding/json"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	channeltypes "github.com/ci123chain/ci123chain/pkg/ibc/core/channel/types"
 	clienttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/clients/types"
 	connectiontypes "github.com/ci123chain/ci123chain/pkg/ibc/core/connection/types"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/keeper"
-	"github.com/pkg/errors"
 )
 
 func NewHandler(k keeper.Keeper) sdk.Handler {
-	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
+	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 		var err error
 		var res interface{}
 		switch msg := msg.(type) {
 		case *clienttypes.MsgCreateClient:
 			res, err = k.CreateClient(ctx, msg)
-			break
+			return sdk.WrapServiceResult(ctx, res, err)
+
 		case *clienttypes.MsgUpdateClient:
 			res, err = k.UpdateClient(ctx, msg)
-			break
+			return sdk.WrapServiceResult(ctx, res, err)
+
 			// IBC connection msgs
 		case *connectiontypes.MsgConnectionOpenInit:
 			res, err = k.ConnectionOpenInit(ctx, msg)
-			break
+			return sdk.WrapServiceResult(ctx, res, err)
+
 		case *connectiontypes.MsgConnectionOpenTry:
 			res, err = k.ConnectionOpenTry(ctx, msg)
-			break
+			return sdk.WrapServiceResult(ctx, res, err)
+
 		case *connectiontypes.MsgConnectionOpenAck:
 			res, err = k.ConnectionOpenAck(ctx, msg)
-			break
+			return sdk.WrapServiceResult(ctx, res, err)
+
 		case *connectiontypes.MsgConnectionOpenConfirm:
 			res, err = k.ConnectionOpenConfirm(ctx, msg)
-			break
+			return sdk.WrapServiceResult(ctx, res, err)
+
 		// IBC channel msgs
 		case *channeltypes.MsgChannelOpenInit:
 			res, err = k.ChannelOpenInit(ctx, msg)
-			break
+			return sdk.WrapServiceResult(ctx, res, err)
+
 		case *channeltypes.MsgChannelOpenTry:
 			res, err = k.ChannelOpenTry(ctx, msg)
-			break
+			return sdk.WrapServiceResult(ctx, res, err)
+
 		case *channeltypes.MsgChannelOpenAck:
 			res, err = k.ChannelOpenAck(ctx, msg)
-			break
+			return sdk.WrapServiceResult(ctx, res, err)
+
 		case *channeltypes.MsgChannelOpenConfirm:
 			res, err = k.ChannelOpenConfirm(ctx, msg)
-			break
+			return sdk.WrapServiceResult(ctx, res, err)
+
 		default:
-			err = errors.Errorf("unrecognized ICS-20 transfer message type: %T")
+			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized IBC message type: %T", msg)
 		}
-		if err != nil {
-			return sdk.NewError("ibc", 501, err.Error()).Result()
-		}
-		res1, _ := json.Marshal(res)
-		return sdk.Result{Data: res1}
 	}
 }

@@ -4,11 +4,12 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	"github.com/ci123chain/ci123chain/pkg/abci/store"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
+	clienttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/clients/types"
 	commitmenttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/commitment/types"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/connection/types"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/exported"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/host"
-	"github.com/pkg/errors"
 	"github.com/tendermint/tendermint/libs/log"
 )
 
@@ -67,8 +68,10 @@ func (k Keeper) GetTimestampAtHeight(ctx sdk.Context, connection types.Connectio
 	)
 
 	if !found {
-		return 0, errors.Errorf("clientID (%s), height (%s)", connection.GetClientID(), height)
-	}
+		return 0, sdkerrors.Wrapf(
+			clienttypes.ErrConsensusStateNotFound,
+			"clientID (%s), height (%s)", connection.GetClientID(), height,
+		)	}
 
 	return consensusState.GetTimestamp(), nil
 }
@@ -118,7 +121,7 @@ func (k Keeper) SetClientConnectionPaths(ctx sdk.Context, clientID string, paths
 func (k Keeper) addConnectionToClient(ctx sdk.Context, clientID, connectionID string) error {
 	_, found := k.clientKeeper.GetClientState(ctx, clientID)
 	if !found {
-		return errors.Errorf("client not found for client_id: %s", clientID)
+		return sdkerrors.Wrap(clienttypes.ErrClientNotFound, clientID)
 	}
 
 	conns, found := k.GetClientConnectionPaths(ctx, clientID)

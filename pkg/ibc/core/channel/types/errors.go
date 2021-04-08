@@ -1,20 +1,28 @@
 package types
 
-import "github.com/pkg/errors"
+import (
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
+)
 
+// IBC channel sentinel errors
 var (
-	ErrChannelNotFound = errors.New("channel not found")
-	ErrInvalidChannelState = errors.New("channel state invalid")
-	ErrInvalidChannelCapability = errors.New("channel capability invalid")
-	ErrInvalidPacket = errors.New("invalid packet")
-	ErrSequenceAckNotFound = errors.New("sequense ack not found")
-	ErrInvalidSequence = errors.New("sequense invalid")
-	ErrPacketTimeout = errors.New("packet timeout !")
-	ErrSequenceSendNotFound = errors.New("sequence send not found !")
-	ErrChannelCapabilityNotFound = errors.New("channel capability not found !")
-	ErrSequenceReceiveNotFound = errors.New("sequence receive not found !")
-	ErrAcknowledgementExists = errors.New("acknowledgement already exists !")
-	ErrInvalidAcknowledgement = errors.New("invalid acknowledgement !")
-	ErrInvalidChannelOrdering = errors.New("invalid channel ordering !")
-
+	ErrChannelExists             = sdkerrors.Register(SubModuleName, 2, "channel already exists")
+	ErrChannelNotFound           = sdkerrors.Register(SubModuleName, 3, "channel not found")
+	ErrInvalidChannel            = sdkerrors.Register(SubModuleName, 4, "invalid channel")
+	ErrInvalidChannelState       = sdkerrors.Register(SubModuleName, 5, "invalid channel state")
+	ErrInvalidChannelOrdering    = sdkerrors.Register(SubModuleName, 6, "invalid channel ordering")
+	ErrInvalidCounterparty       = sdkerrors.Register(SubModuleName, 7, "invalid counterparty channel")
+	ErrInvalidChannelCapability  = sdkerrors.Register(SubModuleName, 8, "invalid channel capability")
+	ErrChannelCapabilityNotFound = sdkerrors.Register(SubModuleName, 9, "channel capability not found")
+	ErrSequenceSendNotFound      = sdkerrors.Register(SubModuleName, 10, "sequence send not found")
+	ErrSequenceReceiveNotFound   = sdkerrors.Register(SubModuleName, 11, "sequence receive not found")
+	ErrSequenceAckNotFound       = sdkerrors.Register(SubModuleName, 12, "sequence acknowledgement not found")
+	ErrInvalidPacket             = sdkerrors.Register(SubModuleName, 13, "invalid packet")
+	ErrPacketTimeout             = sdkerrors.Register(SubModuleName, 14, "packet timeout")
+	ErrTooManyConnectionHops     = sdkerrors.Register(SubModuleName, 15, "too many connection hops")
+	ErrInvalidAcknowledgement    = sdkerrors.Register(SubModuleName, 16, "invalid acknowledgement")
+	ErrPacketCommitmentNotFound  = sdkerrors.Register(SubModuleName, 17, "packet commitment not found")
+	ErrPacketReceived            = sdkerrors.Register(SubModuleName, 18, "packet already received")
+	ErrAcknowledgementExists     = sdkerrors.Register(SubModuleName, 19, "acknowledgement for packet already exists")
+	ErrInvalidChannelIdentifier  = sdkerrors.Register(SubModuleName, 20, "invalid channel identifier")
 )

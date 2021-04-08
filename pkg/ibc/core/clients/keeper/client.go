@@ -1,28 +1,28 @@
 package keeper
 
 import (
-	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/clients/types"
-	errors2 "github.com/ci123chain/ci123chain/pkg/ibc/core/errors"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/exported"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/host"
-	"github.com/pkg/errors"
 )
 
 func (k Keeper)CreateClient(ctx sdk.Context, clientState exported.ClientState,
-	consensusState exported.ConsensusState ) (string, sdk.Error) {
+	consensusState exported.ConsensusState ) (string, error) {
 	params := k.GetParams(ctx)
 	if params.IsAllowedClient(clientState.ClientType()) {
-		return "", errors2.ErrInvalidClientType(errors2.DefaultCodespace, fmt.Errorf("client state types %s is not registered in the allowlist", clientState.ClientType()))
-	}
+		return "", sdkerrors.Wrapf(
+			types.ErrInvalidClientType,
+			"client state type %s is not registered in the allowlist", clientState.ClientType(),
+		)	}
 
 	clientID := k.GenerateClientIdentifier(ctx, clientState.ClientType())
 	k.SetClientState(ctx, clientID, clientState)
 	k.Logger(ctx).Info("client created at height", "client-id", clientID, "height", clientState.GetLatestHeight().String())
 
 	if err := clientState.Initialize(ctx, k.ClientStore(ctx, clientID), consensusState); err != nil {
-		return "", errors2.ErrInitClientState(errors2.DefaultCodespace, err)
+		return "", err
 	}
 
 	if consensusState != nil {
@@ -40,17 +40,17 @@ func (k Keeper)CreateClient(ctx sdk.Context, clientState exported.ClientState,
 func (k Keeper) UpdateClient(ctx sdk.Context, clientID string, header exported.Header) error {
 	clientState, found := k.GetClientState(ctx, clientID)
 	if !found {
-		return errors.Errorf("client not found, cannot update client with ID %s", clientID)
+		return sdkerrors.Wrapf(types.ErrClientNotFound, "cannot update client with ID %s", clientID)
 	}
 
 	// prevent update if the client is frozen before or at header height
 	if clientState.IsFrozen() && clientState.GetFrozenHeight().LTE(header.GetHeight()) {
-		return errors.Errorf("frozen client, cannot update client with ID %s", clientID)
+		return sdkerrors.Wrapf(types.ErrClientFrozen, "cannot update client with ID %s", clientID)
 	}
 
 	clientState, consensusState, err := clientState.CheckHeaderAndUpdateState(ctx, k.cdc, k.ClientStore(ctx, clientID), header)
 	if err != nil {
-		return errors.Wrapf(err, "cannot check and update client with ID %s", clientID)
+		return sdkerrors.Wrapf(err, "cannot update client with ID %s", clientID)
 	}
 
 	k.SetClientState(ctx, clientID, clientState)

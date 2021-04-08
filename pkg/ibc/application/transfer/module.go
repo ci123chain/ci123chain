@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/module"
 	capabilitytypes "github.com/ci123chain/ci123chain/pkg/capability/types"
 	"github.com/ci123chain/ci123chain/pkg/ibc/application/transfer/keeper"
@@ -12,7 +13,6 @@ import (
 	channeltypes "github.com/ci123chain/ci123chain/pkg/ibc/core/channel/types"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/host"
 	porttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/port/types"
-	sdkerrors "github.com/pkg/errors"
 	abci "github.com/tendermint/tendermint/abci/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 	"math"
@@ -83,7 +83,7 @@ func (am AppModule) OnRecvPacket(
 ) (*sdk.Result, []byte, error) {
 	var data types.FungibleTokenPacketData
 	if err := types.IBCTransferCdc.UnmarshalJSON(packet.GetData(), &data); err != nil {
-		return nil, nil, sdkerrors.Wrapf(types.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet data: %s", err.Error())
+		return nil, nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet data: %s", err.Error())
 	}
 
 	acknowledgement := channeltypes.NewResultAcknowledgement([]byte{byte(1)})
@@ -119,11 +119,11 @@ func (am AppModule) OnAcknowledgementPacket(
 ) (*sdk.Result, error) {
 	var ack channeltypes.Acknowledgement
 	if err := types.IBCTransferCdc.UnmarshalJSON(acknowledgement, &ack); err != nil {
-		return nil, sdkerrors.Wrapf(types.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet acknowledgement: %v", err)
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet acknowledgement: %v", err)
 	}
 	var data types.FungibleTokenPacketData
 	if err := types.IBCTransferCdc.UnmarshalJSON(packet.GetData(), &data); err != nil {
-		return nil, sdkerrors.Wrapf(types.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet data: %s", err.Error())
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet data: %s", err.Error())
 	}
 
 	if err := am.keeper.OnAcknowledgementPacket(ctx, packet, data, ack); err != nil {
@@ -214,7 +214,7 @@ func (am AppModule) OnChanOpenConfirm(ctx sdk.Context, portID, channelID string)
 func (am AppModule) OnTimeoutPacket(ctx sdk.Context, packet channeltypes.Packet) (*sdk.Result, error) {
 	var data types.FungibleTokenPacketData
 	if err := types.IBCTransferCdc.UnmarshalJSON(packet.GetData(), &data); err != nil {
-		return nil, sdkerrors.Wrapf(types.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet data: %s", err.Error())
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet data: %s", err.Error())
 	}
 	// refund tokens
 	if err := am.keeper.OnTimeoutPacket(ctx, packet, data); err != nil {

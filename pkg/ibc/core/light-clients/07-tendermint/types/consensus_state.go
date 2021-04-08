@@ -1,9 +1,10 @@
 package types
 
 import (
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
+	clienttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/clients/types"
 	commitmenttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/commitment/types"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/exported"
-	"github.com/pkg/errors"
 	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 	tmtypes "github.com/tendermint/tendermint/types"
 	"time"
@@ -50,13 +51,13 @@ func (cs ConsensusState) GetTimestamp() uint64 {
 // as opposed to a consensus state constructed by the chain.
 func (cs ConsensusState) ValidateBasic() error {
 	if cs.Root.Empty() {
-		return errors.New("root cannot be empty")
+		return sdkerrors.Wrap(clienttypes.ErrInvalidConsensus, "root cannot be empty")
 	}
 	if err := tmtypes.ValidateHash(cs.NextValidatorsHash); err != nil {
-		return errors.Wrap(err, "next validators hash is invalid")
+		return sdkerrors.Wrap(err, "next validators hash is invalid")
 	}
 	if cs.Timestamp.Unix() <= 0 {
-		return errors.New("timestamp must be a positive Unix time")
+		return sdkerrors.Wrap(clienttypes.ErrInvalidConsensus, "timestamp must be a positive Unix time")
 	}
 	return nil
 }

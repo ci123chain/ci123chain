@@ -1,6 +1,7 @@
 package types
 
 import (
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/pkg/errors"
 	"strings"
 )
@@ -28,10 +29,10 @@ func (ftpd FungibleTokenPacketData) ValidateBasic() error {
 		return errors.Wrap(ErrInvalidAmount, "amount cannot be 0")
 	}
 	if strings.TrimSpace(ftpd.Sender) == "" {
-		return errors.Wrap(ErrInvalidAddress, "sender address cannot be blank")
+		return errors.Wrap(sdkerrors.ErrInvalidAddress, "sender address cannot be blank")
 	}
 	if strings.TrimSpace(ftpd.Receiver) == "" {
-		return errors.Wrap(ErrInvalidAddress, "receiver address cannot be blank")
+		return errors.Wrap(sdkerrors.ErrInvalidAddress, "receiver address cannot be blank")
 	}
 	//return ValidatePrefixedDenom(ftpd.Denom)
 	return nil

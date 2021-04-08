@@ -3,10 +3,10 @@ package types
 import (
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	clienttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/clients/types"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/exported"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/host"
-	"github.com/pkg/errors"
 )
 
 var KeyProcessedTime = []byte("/processedTime")
@@ -26,19 +26,21 @@ func SetProcessedTime(clientStore sdk.KVStore, height exported.Height, timeNs ui
 func GetConsensusState(store sdk.KVStore, cdc *codec.Codec, height exported.Height) (*ConsensusState, error) {
 	bz := store.Get(host.ConsensusStateKey(height))
 	if bz == nil {
-		return nil, errors.Errorf(
+		return nil, sdkerrors.Wrapf(
+			clienttypes.ErrConsensusStateNotFound,
 			"consensus state does not exist for height %s", height,
 		)
 	}
 	consensusStateI, err := clienttypes.UnmarshalConsensusState(cdc, bz)
 	if err != nil {
-		return nil, errors.Errorf("unmarshal error: %v", err)
+		return nil, sdkerrors.Wrapf(clienttypes.ErrInvalidConsensus, "unmarshal error: %v", err)
 	}
 	consensusState, ok := consensusStateI.(*ConsensusState)
 
 	if !ok {
-		return nil, errors.Errorf(
-			"invalid consensus types %T, expected %T", consensusState, &ConsensusState{},
+		return nil, sdkerrors.Wrapf(
+			clienttypes.ErrInvalidConsensus,
+			"invalid consensus type %T, expected %T", consensusState, &ConsensusState{},
 		)
 	}
 

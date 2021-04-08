@@ -60,7 +60,7 @@ type BaseApp struct {
 	cms         sdk.CommitMultiStore // Main (uncached) state
 	queryRouter QueryRouter          // router for redirecting query calls
 	//handler     sdk.Handler
-	router 		Router
+	router 		sdk.Router
 
 	txDecoder   sdk.TxDecoder // unmarshal []byte into sdk.Tx
 
@@ -230,7 +230,7 @@ func NewBaseApp(name string, logger log.Logger, ldb dbm.DB, cdb dbm.DB, cacheDir
 		cms:         store.NewCommitMultiStore(ldb, cdb, cacheDir),
 		//cms:         store.NewBaseMultiStore(db),
 		queryRouter: NewQueryRouter(),
-		router: 	 NewRouter(),
+		router: 	 sdk.NewRouter(),
 		txDecoder:   txDecoder,
 	}
 

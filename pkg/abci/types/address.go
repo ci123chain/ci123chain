@@ -21,7 +21,9 @@ func ToAccAddress(addr []byte) AccAddress {
 		Address: common.BytesToAddress(addr),
 	}
 }
-
+func AccAddressFromBech32(addr string) (AccAddress, error) {
+	return HexToAddress(addr), nil
+}
 func HexToAddress(addr string) AccAddress {
 	return AccAddress{
 		common.HexToAddress(addr),

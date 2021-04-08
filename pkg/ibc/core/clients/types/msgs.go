@@ -1,9 +1,8 @@
 package types
 
 import (
-	"errors"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	errors2 "github.com/ci123chain/ci123chain/pkg/ibc/core/errors"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/exported"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/host"
 )
@@ -46,23 +45,20 @@ func (msg MsgCreateClient) MsgType() string {
 	return TypeMsgCreateClient
 }
 
-func (msg MsgCreateClient) ValidateBasic() sdk.Error {
+func (msg MsgCreateClient) ValidateBasic() error {
 	if err := msg.ClientState.Validate(); err != nil {
-		return errors2.ErrorClientState(errors2.DefaultCodespace, err)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "string could not be parsed as address: %v", err)
 	}
 	if msg.ClientState.ClientType() == exported.Localhost {
-		return errors2.ErrorClientState(errors2.DefaultCodespace, errors.New("localhost client can only be created on chain initialization"))
+		return sdkerrors.Wrap(ErrInvalidClient, "localhost client can only be created on chain initialization")
 	}
 	if msg.ClientState.ClientType() != msg.ConsensusState.ClientType() {
-		return errors2.ErrorClientState(errors2.DefaultCodespace, errors.New("client types for client state and consensus state do not match"))
+		return sdkerrors.Wrap(ErrInvalidClientType, "client type for client state and consensus state do not match")
 	}
 	if err := ValidateClientType(msg.ClientState.ClientType()); err != nil {
-		return errors2.ErrInvalidClientType(errors2.DefaultCodespace, err)
+		return sdkerrors.Wrap(err, "client type does not meet naming constraints")
 	}
-	if err := msg.ConsensusState.ValidateBasic(); err != nil {
-		return errors2.ErrorConsensusState(errors2.DefaultCodespace, err)
-	}
-	return nil
+	return msg.ConsensusState.ValidateBasic()
 }
 
 func (msg MsgCreateClient) GetFromAddress() sdk.AccAddress {
@@ -97,23 +93,15 @@ func (m MsgUpdateClient) MsgType() string {
 	return TypeMsgUpdateClient
 }
 
-func (m MsgUpdateClient) ValidateBasic() sdk.Error {
-	//_, err := sdk.AccAddressFromBech32(msg.Signer)
-	//if err != nil {
-	//	return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "string could not be parsed as address: %v", err)
-	//}
-	//header, err := UnpackHeader(msg.Header)
-	//if err != nil {
-	//	return err
-	//}
-	//if err := header.ValidateBasic(); err != nil {
-	//	return err
-	//}
-	//if msg.ClientId == exported.Localhost {
-	//	return sdkerrors.Wrap(ErrInvalidClient, "localhost client is only updated on ABCI BeginBlock")
-	//}
-	//return host.ClientIdentifierValidator(msg.ClientId)
-	return nil
+func (msg MsgUpdateClient) ValidateBasic() error {
+
+	if err := msg.Header.ValidateBasic(); err != nil {
+		return err
+	}
+	if msg.ClientId == exported.Localhost {
+		return sdkerrors.Wrap(ErrInvalidClient, "localhost client is only updated on ABCI BeginBlock")
+	}
+	return host.ClientIdentifierValidator(msg.ClientId)
 }
 
 func (m MsgUpdateClient) GetFromAddress() sdk.AccAddress {

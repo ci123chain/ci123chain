@@ -2,10 +2,10 @@ package collactor
 
 import (
 	"fmt"
+	retry "github.com/avast/retry-go"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	sdkCtx "github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/tendermint/tendermint/libs/log"
-	retry "github.com/avast/retry-go"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
 	rpchttp "github.com/tendermint/tendermint/rpc/client/http"
 	libclient "github.com/tendermint/tendermint/rpc/jsonrpc/client"

@@ -1,7 +1,16 @@
 package host
 
-import "github.com/pkg/errors"
+import (
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
+)
 
+
+// SubModuleName defines the ICS 24 host
+const SubModuleName = "host"
+
+// IBC client sentinel errors
 var (
-	ErrInvalidID = errors.New("invalid id !")
+	ErrInvalidID     = sdkerrors.Register(SubModuleName, 2, "invalid identifier")
+	ErrInvalidPath   = sdkerrors.Register(SubModuleName, 3, "invalid path")
+	ErrInvalidPacket = sdkerrors.Register(SubModuleName, 4, "invalid packet")
 )
