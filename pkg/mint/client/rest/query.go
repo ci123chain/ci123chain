@@ -25,7 +25,7 @@ func queryParamsHandleFn(cliCtx context.Context) http.HandlerFunc {
 		res, _, _, err := cliCtx.Query(route, nil, false)
 
 		if err != nil {
-			rest.WriteErrorRes(w, err)
+			rest.WriteErrorRes(w, err.Error())
 			return
 		}
 		var params types.Params
@@ -42,7 +42,7 @@ func queryInflationHandleFn(cliCtx context.Context) http.HandlerFunc {
 		res, _, _, err := cliCtx.Query(route, nil, false)
 
 		if err != nil {
-			rest.WriteErrorRes(w, err)
+			rest.WriteErrorRes(w, err.Error())
 			return
 		}
 		var inflation sdk.Dec
@@ -60,7 +60,7 @@ func queryAnnualProvisionsHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		res, _, _, err := cliCtx.Query(route, nil, false)
 
 		if err != nil {
-			rest.WriteErrorRes(w, err)
+			rest.WriteErrorRes(w, err.Error())
 			return
 		}
 		var annualPrivisions sdk.Dec

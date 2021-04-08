@@ -4,22 +4,23 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/order/keeper"
 	order "github.com/ci123chain/ci123chain/pkg/order/types"
+	"github.com/pkg/errors"
 	"reflect"
 )
 
 func NewHandler(keeper *keeper.OrderKeeper) types.Handler {
-	return func(ctx types.Context, msg types.Msg) types.Result {
+	return func(ctx types.Context, msg types.Msg) (*types.Result, error) {
 		switch msg := msg.(type) {
 		case *order.MsgUpgrade:
 			return handlerMsgUpgrade(ctx, keeper, msg)
 		default:
 			errMsg := "Unrecognized msg type: " + reflect.TypeOf(msg).Name()
-			return types.ErrUnknownRequest(errMsg).Result()
+			return nil, errors.New(errMsg)
 		}
 	}
 }
 
-func handlerMsgUpgrade(ctx types.Context,k *keeper.OrderKeeper, msg *order.MsgUpgrade) types.Result {
+func handlerMsgUpgrade(ctx types.Context,k *keeper.OrderKeeper, msg *order.MsgUpgrade) (*types.Result, error) {
 	///扩展容量交易的处理
 
 	orderbook, err := k.GetOrderBook(ctx)
@@ -43,5 +44,5 @@ func handlerMsgUpgrade(ctx types.Context,k *keeper.OrderKeeper, msg *order.MsgUp
 	//		types.NewAttribute([]byte(types.AttributeKeySender), []byte(msg.FromAddress.String())),
 	//	),
 	//})
-	return types.Result{Events: em.Events(),}
+	return &types.Result{Events: em.Events()}, nil
 }

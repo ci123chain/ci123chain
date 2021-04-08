@@ -30,6 +30,7 @@ import (
 	"os"
 	"path"
 	"strings"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 )
 
 const UINT_MAX uint64 = ^uint64(0)
@@ -88,7 +89,7 @@ func (k *Keeper) Upload(ctx sdk.Context, wasmCode []byte, creator sdk.AccAddress
 	if wasmerBz != nil {
 		k.cdc.MustUnmarshalJSON(wasmerBz, &wasmer)
 		if wasmer.LastFileID == 0 {
-			return nil, sdk.ErrInternal("empty wasmer")
+			return nil, sdkerrors.Wrap(sdkerrors.ErrInternal, "emppty wasmer")
 		}
 		k.wasmer = Wasmer{
 			FilePathMap: mapFromSortMaps(wasmer.SortMaps),
@@ -133,7 +134,7 @@ func (k *Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAd
 	ccstore := ctx.KVStore(k.storeKey)
 	bz := ccstore.Get(types.GetCodeKey(codeHash))
 	if bz == nil {
-		return sdk.AccAddress{}, sdk.ErrInternal("codeHash not found")
+		return sdk.AccAddress{}, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid code_hash")
 	}
 	var contractAddress sdk.AccAddress
 	if isGenesis {
@@ -163,7 +164,7 @@ func (k *Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAd
 	if wasmerBz != nil {
 		k.cdc.MustUnmarshalJSON(wasmerBz, &wasmer)
 		if wasmer.LastFileID == 0 {
-			return sdk.AccAddress{}, sdk.ErrInternal("empty wasmer")
+			return sdk.AccAddress{}, sdkerrors.Wrap(sdkerrors.ErrInternal, "empty wasmer")
 		}
 		k.wasmer = Wasmer{
 			FilePathMap: mapFromSortMaps(wasmer.SortMaps),
@@ -370,20 +371,20 @@ func (k *Keeper) contractInstance(ctx sdk.Context, contractAddress sdk.AccAddres
 	ccstore := ctx.KVStore(k.storeKey)
 	contractBz := ccstore.Get(types.GetContractAddressKey(contractAddress))
 	if contractBz == nil {
-		return types.CodeInfo{}, sdk.ErrInternal(" get contract address failed")
+		return types.CodeInfo{}, sdkerrors.Wrap(sdkerrors.ErrInternal, " get contract address failed")
 	}
 	var contract types.ContractInfo
 	k.cdc.MustUnmarshalBinaryBare(contractBz, &contract)
 	codeHash, _ := hex.DecodeString(contract.CodeInfo.CodeHash)
 	bz := ccstore.Get(types.GetCodeKey(codeHash))
 	if bz == nil {
-		return types.CodeInfo{}, sdk.ErrInternal("get code key failed")
+		return types.CodeInfo{}, sdkerrors.Wrap(sdkerrors.ErrParams, fmt.Sprintf("invalid code_hash: %v", codeHash))
 	}
 	wasmerBz := ccstore.Get(types.GetWasmerKey())
 	if wasmerBz != nil {
 		k.cdc.MustUnmarshalJSON(wasmerBz, &wasmer)
 		if wasmer.LastFileID == 0 {
-			return types.CodeInfo{}, sdk.ErrInternal("unexpected wasmer info")
+			return types.CodeInfo{}, sdkerrors.Wrap(sdkerrors.ErrInternal, "unexpected wasmer info")
 		}
 		k.wasmer = Wasmer{
 			FilePathMap: mapFromSortMaps(wasmer.SortMaps),
@@ -495,7 +496,7 @@ func (k *Keeper) create(ctx sdk.Context, invokerAddr sdk.AccAddress, wasmCode []
 	}
 	bz := k.cdc.MustMarshalJSON(newWasmer)
 	if bz == nil {
-		return nil, sdk.ErrInternal("marshal json failed")
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInternal, "cdc marshal failed")
 	}
 	ccstore.Set(types.GetWasmerKey(), bz)
 	ccstore.Set(codeHash, wasmCode)

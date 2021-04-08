@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/client"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/client/helper"
-	"github.com/ci123chain/ci123chain/pkg/transfer"
 	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/tendermint/tendermint/crypto/merkle"
 	"github.com/tendermint/tendermint/types"
@@ -71,36 +71,36 @@ func CheckHeightAndProve(w http.ResponseWriter, height, prove string, codespace 
 	if height != "" {
 		_, Err := util.CheckInt64(height)
 		if Err != nil {
-			WriteErrorRes(w, client.ErrParseParam(codespace, Err))
+			WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid height").Error())
 			isValid = false
 			return
 		}
 	}
 	if prove != "" && prove != "true" && prove != "false"{
-		WriteErrorRes(w, client.ErrParseParam(codespace, errors.New("prove need true or false")))
+		WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrParams, "prove need true or false").Error())
 		isValid = false
 		return
 	}
 	return true
 }
 
-func NewErrorRes(err sdk.Error) Response {
-	buildData := struct {
-		Code sdk.CodeType `json:"code"`
-		CodeSpace sdk.CodespaceType `json:"code_space"`
-	}{
-		err.Code(),
-		err.Codespace(),
-	}
-	data, _ := json.Marshal(buildData)
+func NewErrorRes(err string) Response {
+	//buildData := struct {
+	//	Code sdk.CodeType `json:"code"`
+	//	CodeSpace sdk.CodespaceType `json:"code_space"`
+	//}{
+	//	err.Code(),
+	//	err.Codespace(),
+	//}
+	//data, _ := json.Marshal(buildData)
 	return Response{
 		Ret:		-1,
-		Data:       data,
-		Message:	err.ABCILog(),
+		//Data:       data,
+		Message:	err,
 	}
 }
 
-func WriteErrorRes(w http.ResponseWriter, err sdk.Error) {
+func WriteErrorRes(w http.ResponseWriter, err string) {
 	w.Header().Set("Content-Type", "application/json")
 	nerr := NewErrorRes(err)
 	resp, _ := json.Marshal(nerr)
@@ -151,15 +151,15 @@ func PostProcessResponseBare(w http.ResponseWriter, ctx context.Context, body in
 	_, _ = w.Write(resp)
 }
 
-func ParseQueryHeightOrReturnBadRequest(w http.ResponseWriter, cliCtx context.Context, r *http.Request, heightStr string) (context.Context, bool, sdk.Error) {
+func ParseQueryHeightOrReturnBadRequest(w http.ResponseWriter, cliCtx context.Context, r *http.Request, heightStr string) (context.Context, bool, error) {
 
 	if heightStr != "" {
 		height, err := strconv.ParseInt(heightStr, 10, 64)
 		if err != nil {
-			return cliCtx, false , transfer.ErrCheckParams(sdk.CodespaceRoot, "height error")
+			return cliCtx, false , sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, "invalid height")
 		}
 		if height < 0 {
-			return cliCtx, false , transfer.ErrCheckParams(sdk.CodespaceRoot, "height error")
+			return cliCtx, false , sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, "invalid height")
 		}
 		if height > 0 {
 			cliCtx = cliCtx.WithHeight(height)
@@ -226,13 +226,13 @@ func MiddleHandler(ctx context.Context, f func(clictx context.Context, w http.Re
 	return func(w http.ResponseWriter, r *http.Request) {
 		async, err := util.CheckBool(r.FormValue("async"))
 		if err != nil {
-			WriteErrorRes(w, client.ErrParseParam(codeSpace, errors.New("error async")))
+			WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrParams, "err async").Error())
 			return
 		}
 		from_str := r.FormValue("from")
 		from, err := helper.StrToAddress(from_str)
 		if err != nil {
-			WriteErrorRes(w, client.ErrParseParam(codeSpace, errors.New("error from")))
+			WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid from").Error())
 			return
 		}
 		ctx = ctx.WithBlocked(async)

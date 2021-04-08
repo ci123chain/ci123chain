@@ -1,8 +1,10 @@
 package types
 
 import (
+	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/util"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 )
 
 type IBCTransfer struct {
@@ -24,18 +26,17 @@ func NewIBCTransferMsg(from, to sdk.AccAddress, amount sdk.Coin) *IBCTransfer {
 	}
 }
 
-func (msg *IBCTransfer) ValidateBasic() sdk.Error {
+func (msg *IBCTransfer) ValidateBasic() error {
 	if msg.ToAddress.Empty() {
-		return sdk.ErrInvalidAddress("missing sender address")
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "empty to address")
 	}
 	if !msg.Coin.IsValid() {
-		return sdk.ErrInvalidCoins("coin is invalid" + msg.Coin.String())
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, fmt.Sprintf("coin is invalid" + msg.Coin.String()))
 	}
 	if msg.FromAddress.Empty() {
-		return sdk.ErrInvalidAddress("missing from address")
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "empty to address")
 	}
 	return nil
-	//return msg.CommonTx.VerifySignature(msg.GetSignBytes(), true)
 }
 
 func (msg *IBCTransfer) GetSignBytes() []byte {

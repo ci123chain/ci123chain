@@ -9,17 +9,17 @@ import (
 )
 
 // nolint - Mostly for testing
-func (app *BaseApp) Check(tx sdk.Tx) (result sdk.Result) {
+func (app *BaseApp) Check(tx sdk.Tx) (result sdk.Result, err error) {
 	return app.runTx(runTxModeCheck, nil, tx)
 }
 
 // nolint - full tx execution
-func (app *BaseApp) Simulate(tx sdk.Tx) (result sdk.Result) {
+func (app *BaseApp) Simulate(tx sdk.Tx) (result sdk.Result, err error) {
 	return app.runTx(runTxModeSimulate, nil, tx)
 }
 
 // nolint
-func (app *BaseApp) Deliver(tx sdk.Tx) (result sdk.Result) {
+func (app *BaseApp) Deliver(tx sdk.Tx) (result sdk.Result, err error) {
 	return app.runTx(runTxModeDeliver, nil, tx)
 }
 

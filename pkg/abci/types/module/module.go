@@ -134,9 +134,6 @@ func (am AppManager) EndBlocker(ctx types.Context, req abci.RequestEndBlock) abc
 			continue
 		}
 		moduleValUpdates := m.EndBlock(ctx, req)
-		//for _,v := range sub_events {
-		//	all_events = append(all_events, v)
-		//}
 		if len(moduleValUpdates) > 0 {
 			if len(validatorUpdates) > 0 {
 				panic("validator EndBlock updates already set by a previous module")

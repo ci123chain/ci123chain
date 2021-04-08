@@ -2,6 +2,7 @@ package rest
 
 import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/distribution/client/common"
@@ -91,7 +92,7 @@ func QueryValidatorOutstandingRewardsHandleFn(cliCtx context.Context) http.Handl
 		res, _, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryValidatorOutstandingRewards, b, false)
 
 		if err != nil {
-			rest.WriteErrorRes(writer, err)
+			rest.WriteErrorRes(writer, err.Error())
 			return
 		}
 		var rewards types.ValidatorOutstandingRewards
@@ -105,7 +106,7 @@ func QueryCommunityPoolHandleFn(cliCtx context.Context) http.HandlerFunc {
 		res, _, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryCommunityPool, nil, false)
 
 		if err != nil {
-			rest.WriteErrorRes(w, err)
+			rest.WriteErrorRes(w, err.Error())
 		}
 		var result sdk.DecCoin
 		cliCtx.Cdc.MustUnmarshalJSON(res, &result)
@@ -123,7 +124,7 @@ func QueryWithDrawAddress(cliCtx context.Context) http.HandlerFunc {
 		res, _, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryWithdrawAddress, b, false)
 
 		if err != nil {
-			rest.WriteErrorRes(w, err)
+			rest.WriteErrorRes(w, err.Error())
 			return
 		}
 		var result sdk.AccAddress
@@ -160,7 +161,7 @@ func validatorCommissionInfoHandleFn(cliCtx context.Context) http.HandlerFunc {
 		//commission
 		res, err := common.QueryValidatorCommission(cliCtx, types.ModuleName, val)
 		if err != nil {
-			rest.WriteErrorRes(writer, types.ErrInternalServer(types.DefaultCodespace))
+			rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, err.Error()).Error())
 			return
 		}
 		var commission types.ValidatorAccumulatedCommission
@@ -196,7 +197,7 @@ func queryDelegatorRewardsHandleFn(cliCtx context.Context) http.HandlerFunc {
 		//delegator rewards
 		resp, Err := common.QueryDelegationRewards(cliCtx, types.ModuleName, val, del)
 		if Err != nil {
-			rest.WriteErrorRes(writer, types.ErrInternalServer(types.DefaultCodespace))
+			rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, Err.Error()).Error())
 			return
 		}
 		var rewards sdk.DecCoin
@@ -217,7 +218,7 @@ func QueryDelegatorAccountInfoHandleFn(cliCtx context.Context) http.HandlerFunc 
 		res, _, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryAccountInfo, b, false)
 
 		if err != nil {
-			rest.WriteErrorRes(writer, err)
+			rest.WriteErrorRes(writer, err.Error())
 			return
 		}
 		var rewards types.DelegatorAccountInfo

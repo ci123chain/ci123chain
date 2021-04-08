@@ -2,13 +2,14 @@ package keeper
 
 import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/staking/types"
 )
 
 // Return all validators that a delegator is bonded to. If maxRetrieve is supplied, the respective amount will be returned.
 func (k StakingKeeper) GetDelegatorValidators(
 	ctx sdk.Context, delegatorAddr sdk.AccAddress, maxRetrieve uint32,
-) ([]types.Validator, sdk.Error) {
+) ([]types.Validator, error) {
 	var delegation types.Delegation
 
 	validators := make([]types.Validator, maxRetrieve)
@@ -29,7 +30,7 @@ func (k StakingKeeper) GetDelegatorValidators(
 
 		validator, found := k.GetValidator(ctx, delegation.ValidatorAddress)
 		if !found {
-			return nil, sdk.ErrNoValidatorFound("no validator found")
+			return nil, sdkerrors.Wrap(sdkerrors.ErrResponse, "no validator found")
 		}
 
 		validators[i] = validator
@@ -42,16 +43,16 @@ func (k StakingKeeper) GetDelegatorValidators(
 // return a validator that a delegator is bonded to
 func (k StakingKeeper) GetDelegatorValidator(
 	ctx sdk.Context, delegatorAddr sdk.AccAddress, validatorAddr sdk.AccAddress,
-) (validator types.Validator, err sdk.Error) {
+) (validator types.Validator, err error) {
 
 	delegation, found := k.GetDelegation(ctx, delegatorAddr, validatorAddr)
 	if !found {
-		return validator, sdk.ErrNoDelegation("no delegation")
+		return validator, sdkerrors.Wrap(sdkerrors.ErrResponse, "no delegation found")
 	}
 
 	validator, found = k.GetValidator(ctx, delegation.ValidatorAddress)
 	if !found {
-		return validator, sdk.ErrNoValidatorFound("no validator found")
+		return validator, sdkerrors.Wrap(sdkerrors.ErrResponse, "no validator found")
 	}
 
 	return validator, nil

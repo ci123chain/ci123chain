@@ -24,18 +24,18 @@ var (
 	RegisterRoutes = rest.RegisterTxRoutes
 	NewQuerier = keeper.NewQuerier
 
-	ErrBadBankSignature       	= types.ErrBadBankSignature
-	ErrBadReceiptSignature		= types.ErrBadReceiptSignature
-	ErrBadUnmarshal      		= types.ErrFailedUnmarshal
-	ErrBadMarshal      			= types.ErrFailedMarshal
-	ErrGetBankAddr				= types.ErrGetBankAddr
-	ErrMakeIBCMsg				= types.ErrMakeIBCMsg
-	ErrSetIBCMsg				= types.ErrSetIBCMsg
-	ErrApplyIBCMsg				= types.ErrApplyIBCMsg
-	ErrMakeBankReceipt			= types.ErrMakeBankReceipt
-	ErrBankSend					= types.ErrBankSend
-	ErrReceiveReceipt			= types.ErrReceiveReceipt
-	ErrState					= types.ErrState
+	//ErrBadBankSignature       	= types.ErrBadBankSignature
+	//ErrBadReceiptSignature		= types.ErrBadReceiptSignature
+	//ErrBadUnmarshal      		= types.ErrFailedUnmarshal
+	//ErrBadMarshal      			= types.ErrFailedMarshal
+	//ErrGetBankAddr				= types.ErrGetBankAddr
+	//ErrMakeIBCMsg				= types.ErrMakeIBCMsg
+	//ErrSetIBCMsg				= types.ErrSetIBCMsg
+	//ErrApplyIBCMsg				= types.ErrApplyIBCMsg
+	//ErrMakeBankReceipt			= types.ErrMakeBankReceipt
+	//ErrBankSend					= types.ErrBankSend
+	//ErrReceiveReceipt			= types.ErrReceiveReceipt
+	//ErrState					= types.ErrState
 )
 
 

@@ -111,7 +111,7 @@ func (k StakingKeeper) ValidateUnbondAmount(ctx sdk.Context, delAddr sdk.AccAddr
 	valAddr sdk.AccAddress, amt sdk.Int) (shares sdk.Dec, err error) {
 	validator, found := k.GetValidator(ctx, valAddr)
 	if !found {
-		return shares, types.ErrNoExpectedValidator(types.StakingCodespace, err)
+		return shares, types.ErrNoExpectedValidator(err)
 	}
 	shares, err = validator.SharesFromTokens(amt)
 	if err != nil {

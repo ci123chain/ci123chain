@@ -3,13 +3,14 @@ package rest
 import (
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
 	"github.com/ci123chain/ci123chain/pkg/account/exported"
 	keeper2 "github.com/ci123chain/ci123chain/pkg/account/keeper"
 	"github.com/ci123chain/ci123chain/pkg/account/types"
 	types2 "github.com/ci123chain/ci123chain/pkg/app/types"
-	"github.com/ci123chain/ci123chain/pkg/client"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
 	evm "github.com/ci123chain/ci123chain/pkg/vm/evmtypes"
 	"github.com/ci123chain/ci123chain/pkg/vm/keeper"
@@ -32,13 +33,13 @@ func uploadContractHandler(cliCtx context.Context, w http.ResponseWriter, r *htt
 
 	privKey, from, nonce, gas, err := rest.GetNecessaryParams(cliCtx, r, cdc, broadcast)
 	if err != nil {
-		rest.WriteErrorRes(w, wasmtypes.ErrCheckParams(vmmodule.DefaultCodespace, err.Error()))
+		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid new_rate").Error())
 		return
 	}
 
 	code, err := getCode(r)
 	if err != nil || code == nil {
-		rest.WriteErrorRes(w, wasmtypes.ErrCheckParams(vmmodule.DefaultCodespace, "get contract code failed"))
+		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrParams, "get contract code failed").Error())
 		return
 	}
 
@@ -46,19 +47,19 @@ func uploadContractHandler(cliCtx context.Context, w http.ResponseWriter, r *htt
 	if keeper.IsWasm(code) {
 		wasmCode, err := keeper.UnCompress(code)
 		if err != nil {
-			rest.WriteErrorRes(w, sdk.ErrInternal("UnCompress code failed"))
+			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrParams, "uncompress code failed").Error())
 			return
 		}
 		codeHash := keeper.MakeCodeHash(wasmCode)
 		params := wasmtypes.NewQueryCodeInfoParams(strings.ToUpper(hex.EncodeToString(codeHash)))
 		bz, Er := cliCtx.Cdc.MarshalJSON(params)
 		if Er != nil {
-			rest.WriteErrorRes(w, sdk.ErrInternal("marshal failed"))
+			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, Er.Error()).Error())
 			return
 		}
 		res, _, _, Err := cliCtx.Query("/custom/" + vmmodule.ModuleName + "/" + wasmtypes.QueryCodeInfo, bz, false)
 		if Err != nil {
-			rest.WriteErrorRes(w, Err)
+			rest.WriteErrorRes(w, Err.Error())
 			return
 		}
 		if len(res) > 0 { //already exists
@@ -79,12 +80,12 @@ func uploadContractHandler(cliCtx context.Context, w http.ResponseWriter, r *htt
 	}
 	txByte, err := types2.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
 	if err != nil {
-		rest.WriteErrorRes(w, wasmtypes.ErrCheckParams(vmmodule.DefaultCodespace,err.Error()))
+		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInternal, err.Error()).Error())
 		return
 	}
 	resp, err := cliCtx.BroadcastSignedTx(txByte)
 	if err != nil {
-		rest.WriteErrorRes(w, client.ErrBroadcast(vmmodule.DefaultCodespace, err))
+		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInternal, err.Error()).Error())
 		return
 	}
 	rest.PostProcessResponseBare(w, cliCtx, resp)
@@ -97,28 +98,28 @@ func instantiateContractHandler(cliCtx context.Context,w http.ResponseWriter, r 
 	}
 	privKey, from, nonce, gas, err := rest.GetNecessaryParams(cliCtx, r, cdc, broadcast)
 	if err != nil {
-		rest.WriteErrorRes(w, wasmtypes.ErrCheckParams(vmmodule.DefaultCodespace, err.Error()))
+		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrParams, err.Error()).Error())
 		return
 	}
 	codeHash := r.FormValue("code_hash")
 	hash, err := hex.DecodeString(strings.ToLower(codeHash))
 	if err != nil {
-		rest.WriteErrorRes(w, wasmtypes.ErrCheckParams(vmmodule.DefaultCodespace, err.Error()))
+		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrParams, err.Error()).Error())
 	}
 	name, version, author, email, describe, err := adjustInstantiateParams(r)
 	if err != nil {
-		rest.WriteErrorRes(w, wasmtypes.ErrCheckParams(vmmodule.DefaultCodespace, "get params failed"))
+		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrParams, err.Error()).Error())
 		return
 	}
 	var args utils.CallData
 	argsStr := r.FormValue("calldata")
 	if argsStr == "" {
-		rest.WriteErrorRes(w, wasmtypes.ErrCheckParams(vmmodule.DefaultCodespace, "get callData failed"))
+		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrParams, "get calldata failed").Error())
 		return
 	}else {
 		err := json.Unmarshal([]byte(argsStr), &args)
 		if err != nil  {
-			rest.WriteErrorRes(w, wasmtypes.ErrCheckParams(vmmodule.DefaultCodespace, "get callData failed"))
+			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error()).Error())
 			return
 		}
 	}
@@ -130,12 +131,12 @@ func instantiateContractHandler(cliCtx context.Context,w http.ResponseWriter, r 
 
 	txByte, err := types2.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
 	if err != nil {
-		rest.WriteErrorRes(w, wasmtypes.ErrCheckParams(vmmodule.DefaultCodespace,err.Error()))
+		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInternal, err.Error()).Error())
 		return
 	}
 	res, err := cliCtx.BroadcastSignedTx(txByte)
 	if err != nil {
-		rest.WriteErrorRes(w, client.ErrBroadcast(vmmodule.DefaultCodespace, err))
+		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInternal, err.Error()).Error())
 		return
 	}
 	rest.PostProcessResponseBare(w, cliCtx, res)
@@ -148,7 +149,7 @@ func executeContractHandler(cliCtx context.Context,w http.ResponseWriter, r *htt
 	}
 	privKey, from, nonce, gas, err := rest.GetNecessaryParams(cliCtx, r, cdc, broadcast)
 	if err != nil {
-		rest.WriteErrorRes(w, wasmtypes.ErrCheckParams(vmmodule.DefaultCodespace, err.Error()))
+		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrParams, err.Error()).Error())
 		return
 	}
 
@@ -157,35 +158,35 @@ func executeContractHandler(cliCtx context.Context,w http.ResponseWriter, r *htt
 	qparams := keeper2.NewQueryAccountParams(contractAddress)
 	bz, err := cliCtx.Cdc.MarshalJSON(qparams)
 	if err != nil {
-		rest.WriteErrorRes(w, wasmtypes.ErrCheckParams(vmmodule.DefaultCodespace, err.Error()))
+		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrParams, err.Error()).Error())
 		return
 	}
 
 	queryRes, _, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryAccount, bz, false)
 	if err != nil {
-		rest.WriteErrorRes(w, wasmtypes.ErrCheckParams(vmmodule.DefaultCodespace,"query contract account failed"))
+		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInternal, err.Error()).Error())
 		return
 	}
 	if queryRes == nil{
-		rest.WriteErrorRes(w, wasmtypes.ErrCheckParams(vmmodule.DefaultCodespace,"contract account does not exist"))
+		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInternal, "contract account does not exist").Error())
 		return
 	}
 	var acc exported.Account
 	err2 := cliCtx.Cdc.UnmarshalBinaryLengthPrefixed(queryRes, &acc)
 	if err2 != nil {
-		rest.WriteErrorRes(w, sdk.ErrInternal("unmarshal query response to account failed"))
+		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("cdc unmarshal faield: %v", err2)).Error())
 		return
 	}
 	var msg sdk.Msg
 	var args utils.CallData
 	args_str := r.FormValue("calldata")
 	if args_str == "" {
-		rest.WriteErrorRes(w, wasmtypes.ErrCheckParams(vmmodule.DefaultCodespace, "get callData failed"))
+		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid calldata").Error())
 		return
 	}else {
 		err := json.Unmarshal([]byte(args_str), &args)
 		if err != nil  {
-			rest.WriteErrorRes(w, wasmtypes.ErrCheckParams(vmmodule.DefaultCodespace, "get callData failed"))
+			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error()).Error())
 			return
 		}
 	}
@@ -195,7 +196,7 @@ func executeContractHandler(cliCtx context.Context,w http.ResponseWriter, r *htt
 		var to *ethcmn.Address
 		to_str := r.FormValue("contract_address")
 		if len(to_str) == 0 {
-			rest.WriteErrorRes(w, wasmtypes.ErrCheckParams(vmmodule.DefaultCodespace, "contract_address cannot be empty"))
+			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrParams, "contract_address cannot be empty").Error())
 			return
 		} else {
 			to_addr := ethcmn.HexToAddress(to_str)
@@ -213,12 +214,12 @@ func executeContractHandler(cliCtx context.Context,w http.ResponseWriter, r *htt
 
 		payload, err := evm.EVMEncode(args)
 		if err != nil {
-			rest.WriteErrorRes(w, wasmtypes.ErrCheckParams(vmmodule.DefaultCodespace, "encode evm callData failed"))
+			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrParams, "encode evm callData failed").Error())
 			return
 		}
 		msg = evm.NewMsgEvmTx(from, nonce, to, amount, gas, big.NewInt(1), payload)
 	} else {
-		rest.WriteErrorRes(w, wasmtypes.ErrCheckParams(vmmodule.DefaultCodespace,"not contract account"))
+		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrParams, "encode evm callData failed").Error())
 		return
 	}
 
@@ -228,12 +229,12 @@ func executeContractHandler(cliCtx context.Context,w http.ResponseWriter, r *htt
 	}
 	txByte, err := types2.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
 	if err != nil {
-		rest.WriteErrorRes(w, wasmtypes.ErrCheckParams(vmmodule.DefaultCodespace,err.Error()))
+		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("sign tx failed: %v", err.Error())).Error())
 		return
 	}
 	res, err := cliCtx.BroadcastSignedTx(txByte)
 	if err != nil {
-		rest.WriteErrorRes(w, client.ErrBroadcast(vmmodule.DefaultCodespace, err))
+		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("boradcast tx faiedl: %v", err.Error())).Error())
 		return
 	}
 	rest.PostProcessResponseBare(w, cliCtx, res)
@@ -246,7 +247,7 @@ func migrateContractHandler(cliCtx context.Context,w http.ResponseWriter, r *htt
 	}
 	privKey, from, nonce, gas, err := rest.GetNecessaryParams(cliCtx, r, cdc, broadcast)
 	if err != nil {
-		rest.WriteErrorRes(w, wasmtypes.ErrCheckParams(vmmodule.DefaultCodespace, err.Error()))
+		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrParams, err.Error()).Error())
 		return
 	}
 
@@ -257,12 +258,12 @@ func migrateContractHandler(cliCtx context.Context,w http.ResponseWriter, r *htt
 	queryParam := []byte(CAN_MIGRATE)
 	err = json.Unmarshal(queryParam, &arg)
 	if err != nil {
-		rest.WriteErrorRes(w, wasmtypes.ErrCheckParams(vmmodule.DefaultCodespace, err.Error()))
+		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error()).Error())
 	}
 	params := wasmtypes.NewContractStateParam(contractAddress, sender, arg)
 	bz, Er := cliCtx.Cdc.MarshalJSON(params)
 	if Er != nil {
-		rest.WriteErrorRes(w, sdk.ErrInternal("marshal failed"))
+		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("cdc marhsal faield:%v", Er.Error())).Error())
 		return
 	}
 
@@ -270,31 +271,31 @@ func migrateContractHandler(cliCtx context.Context,w http.ResponseWriter, r *htt
 	var contractState wasmtypes.ContractState
 	cliCtx.Cdc.MustUnmarshalJSON(resQuery, &contractState)
 	if contractState.Result != "true" {
-		rest.WriteErrorRes(w, sdk.ErrInternal("No permissions to migrate contracts"))
+		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrResponse, "No permissions to migrate contracts").Error())
 		return
 	}
 
 	codeHash := r.FormValue("code_hash")
 	hash, err := hex.DecodeString(strings.ToLower(codeHash))
 	if err != nil {
-		rest.WriteErrorRes(w, wasmtypes.ErrCheckParams(vmmodule.DefaultCodespace, "codeHash error"))
+		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid code_hash").Error())
 		return
 	}
 	name, version, author, email, describe, err := adjustInstantiateParams(r)
 	if err != nil {
-		rest.WriteErrorRes(w, wasmtypes.ErrCheckParams(vmmodule.DefaultCodespace, "get params failed"))
+		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrParams, err.Error()).Error())
 		return
 	}
 
 	var args utils.CallData
 	args_str := r.FormValue("calldata")
 	if args_str == "" {
-		rest.WriteErrorRes(w, wasmtypes.ErrCheckParams(vmmodule.DefaultCodespace, "get callData failed"))
+		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid calldata").Error())
 		return
 	}else {
 		err := json.Unmarshal([]byte(args_str), &args)
 		if err != nil  {
-			rest.WriteErrorRes(w, wasmtypes.ErrCheckParams(vmmodule.DefaultCodespace, "get callData failed"))
+			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error()).Error())
 			return
 		}
 	}
@@ -306,12 +307,12 @@ func migrateContractHandler(cliCtx context.Context,w http.ResponseWriter, r *htt
 
 	txByte, err := types2.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
 	if err != nil {
-		rest.WriteErrorRes(w, wasmtypes.ErrCheckParams(vmmodule.DefaultCodespace,err.Error()))
+		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("sign tx faied: %v", err.Error())).Error())
 		return
 	}
 	res, err := cliCtx.BroadcastSignedTx(txByte)
 	if err != nil {
-		rest.WriteErrorRes(w, client.ErrBroadcast(vmmodule.DefaultCodespace, err))
+		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("boradcast tx failed: %v", err.Error())).Error())
 		return
 	}
 	rest.PostProcessResponseBare(w, cliCtx, res)

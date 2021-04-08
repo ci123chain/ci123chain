@@ -13,7 +13,7 @@ import (
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 
-func QueryTx(cliCtx context.Context, hashHexStr string) (sdk.TxResponse, sdk.Error) {
+func QueryTx(cliCtx context.Context, hashHexStr string) (sdk.TxResponse, error) {
 	hash, err := hex.DecodeString(hashHexStr)
 	if err != nil {
 		return sdk.TxResponse{}, types.ErrQueryTx(types.DefaultCodespace, err.Error())
@@ -41,7 +41,7 @@ func QueryTx(cliCtx context.Context, hashHexStr string) (sdk.TxResponse, sdk.Err
 	return out, nil
 }
 
-func QueryTxsWithHeight(cliCtx context.Context, heights []int64) ([]sdk.TxsResult, sdk.Error) {
+func QueryTxsWithHeight(cliCtx context.Context, heights []int64) ([]sdk.TxsResult, error) {
 	var results = make([]sdk.TxsResult, 0)
 	for _, v := range heights {
 		var result sdk.TxsResult

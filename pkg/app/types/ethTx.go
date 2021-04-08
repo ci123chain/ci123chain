@@ -1,18 +1,19 @@
 package types
 
 import (
+	"crypto/ecdsa"
+	"errors"
+	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	ethcmn "github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
-	"crypto/ecdsa"
 	"github.com/ethereum/go-ethereum/rlp"
 	"golang.org/x/crypto/sha3"
+	"io"
 	"math/big"
 	"sync/atomic"
-	"fmt"
-	"errors"
-	"io"
 )
 
 const (
@@ -98,18 +99,18 @@ func (msg MsgEthereumTx) MsgType() string { return TypeMsgEthereumTx }
 
 // ValidateBasic implements the sdk.Msg interface. It performs basic validation
 // checks of a Transaction. If returns an error if validation fails.
-func (msg MsgEthereumTx) ValidateBasic() sdk.Error {
+func (msg MsgEthereumTx) ValidateBasic() error {
 	if msg.Data.Price.Cmp(big.NewInt(0)) == 0 {
-		return sdk.ErrValidateEtherTx("gas price cannot be 0")
+		return sdkerrors.Wrap(sdkerrors.ErrInternal, "gas price cannot be 0")
 	}
 
 	if msg.Data.Price.Sign() == -1 {
-		return sdk.ErrValidateEtherTx(fmt.Sprintf("gas price cannot be negative %s", msg.Data.Price))
+		return sdkerrors.Wrap(sdkerrors.ErrParams, fmt.Sprintf("gas price cannot be negative %s", msg.Data.Price))
 	}
 
 	// Amount can be 0
 	if msg.Data.Amount.Sign() == -1 {
-		return sdk.ErrValidateEtherTx(fmt.Sprintf("amount cannot be negative %s", msg.Data.Amount))
+		return sdkerrors.Wrap(sdkerrors.ErrParams, fmt.Sprintf("amount cannot be negative %s", msg.Data.Amount))
 	}
 
 	return nil

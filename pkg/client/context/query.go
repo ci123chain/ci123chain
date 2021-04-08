@@ -1,22 +1,21 @@
 package context
 
 import (
-	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	"github.com/ci123chain/ci123chain/pkg/client/types"
+	"fmt"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 
-	"github.com/ci123chain/ci123chain/pkg/transfer"
 	"github.com/tendermint/tendermint/crypto/merkle"
 
 	"github.com/tendermint/tendermint/libs/bytes"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
 )
 
-func (ctx Context) Query(path string, key bytes.HexBytes, isProve bool) ([]byte, int64, *merkle.Proof, sdk.Error) {
+func (ctx Context) Query(path string, key bytes.HexBytes, isProve bool) ([]byte, int64, *merkle.Proof, error) {
 	var res []byte
 	var height int64
 	node, err := ctx.GetNode()
 	if err != nil {
-		return res, height, nil, transfer.ErrQueryTx(types.DefaultCodespace, err.Error())
+		return res, height, nil, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("get node failed:%v", err.Error()))
 
 	}
 
@@ -28,13 +27,13 @@ func (ctx Context) Query(path string, key bytes.HexBytes, isProve bool) ([]byte,
 	}
    	result, err := node.ABCIQueryWithOptions(ctx.Context(), path, key, opt)
 	if err != nil {
-		return res, height, nil, transfer.ErrQueryTx(types.DefaultCodespace, err.Error())
+		return res, height, nil, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("query failed: %v", err.Error()))
 
 	}
 
 	resp := result.Response
 	if !resp.IsOK() {
-		return res, resp.Height, nil, transfer.ErrQueryTx(types.DefaultCodespace, resp.Log)
+		return res, resp.Height, nil, sdkerrors.Wrap(sdkerrors.ErrResponse, fmt.Sprintf("query failed, got: %v", resp))
 
 	}
 

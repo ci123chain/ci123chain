@@ -1,9 +1,8 @@
 package transfer
 
 import (
-	"errors"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	"github.com/ci123chain/ci123chain/pkg/transfer/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 )
 
 const RouteKey = "Transfer"
@@ -25,12 +24,9 @@ func NewMsgTransfer(from, to sdk.AccAddress, amount sdk.Coins, isFabric bool ) *
 	return msg
 }
 
-func (msg *MsgTransfer) ValidateBasic() sdk.Error {
-	//if msg.Amount.IsEqual(sdk.NewChainCoin(sdk.NewInt(0)))  {
-	//	return types.ErrBadAmount(types.DefaultCodespace, errors.New("amount = 0"))
-	//}
+func (msg *MsgTransfer) ValidateBasic() error {
 	if msg.To.Empty() {
-		return types.ErrBadReceiver(types.DefaultCodespace, errors.New("empty to address"))
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "empty to address")
 	}
 	return nil
 }

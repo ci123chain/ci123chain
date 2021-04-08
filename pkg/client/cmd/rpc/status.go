@@ -20,7 +20,7 @@ func NodeInfoRequestHandlerFn(ctx context.Context) http.HandlerFunc  {
 	return func(w http.ResponseWriter, request *http.Request) {
 		status, err := getNodeStatus(ctx)
 		if err != nil {
-			rest.WriteErrorRes(w, types.ErrNode(types.DefaultCodespace, err))
+			rest.WriteErrorRes(w, types.ErrNode(types.DefaultCodespace, err).Error())
 			return
 		}
 		resp := NodeInfoResponse{

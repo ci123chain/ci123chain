@@ -13,7 +13,7 @@ import (
 )
 
 func NewHandler(k keeper.StakingKeeper) sdk.Handler {
-	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
+	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 
 		switch msg := msg.(type) {
@@ -29,26 +29,26 @@ func NewHandler(k keeper.StakingKeeper) sdk.Handler {
 			return handleMsgUndelegate(ctx, k, *msg)
 		default:
 			errMsg := fmt.Sprintf("unrecognized supply message type: %T", msg)
-			return sdk.ErrUnknownRequest(errMsg).Result()
+			return nil, errors.New(errMsg)
 		}
 	}
 }
 
-func handleMsgCreateValidator(ctx sdk.Context, k keeper.StakingKeeper, msg staking.MsgCreateValidator) sdk.Result {
+func handleMsgCreateValidator(ctx sdk.Context, k keeper.StakingKeeper, msg staking.MsgCreateValidator) (*sdk.Result, error) {
 	if _, found := k.GetValidator(ctx, msg.ValidatorAddress); found {
-		return types.ErrValidatorExisted(types.DefaultCodespace, errors.New(fmt.Sprintf("validator %s has existed", msg.ValidatorAddress.String()))).Result()
+		return nil, errors.New(fmt.Sprintf("validator %s has existed", msg.ValidatorAddress.String()))
 	}
 	pk, err := util.ParsePubKey(msg.PublicKey)
 	if err != nil {
-		return types.ErrCheckParams(types.DefaultCodespace, "public_key").Result()
+		return nil, err
 	}
 
 	if _, found := k.GetValidatorByConsAddr(ctx, sdk.GetConsAddress(pk)); found {
-		return types.ErrValidatorExisted(types.DefaultCodespace, errors.New(fmt.Sprintf("the pubKey has been bonded"))).Result()
+		return nil, errors.New(fmt.Sprintf("the pubKey has been bonded"))
 	}
 
 	if _, err := msg.Description.EnsureLength(); err != nil {
-		return types.ErrDescriptionOutOfLength(types.DefaultCodespace, err).Result()
+		return nil, err
 	}
 
 	//--------------
@@ -63,20 +63,20 @@ func handleMsgCreateValidator(ctx sdk.Context, k keeper.StakingKeeper, msg staki
 
 	validator, err := staking.NewValidator(msg.ValidatorAddress, msg.PublicKey, msg.Description)
 	if err != nil {
-		return types.ErrSetValidatorFailed(types.DefaultCodespace, err).Result()
+		return nil, err
 	}
 	commission := staking.NewCommissionWithTime(msg.Commission.Rate,
 		msg.Commission.MaxRate, msg.Commission.MaxChangeRate, ctx.BlockHeader().Time)
 
 	validator, err = validator.SetInitialCommission(commission)
 	if err != nil {
-		return types.ErrSetCommissionFailed(types.DefaultCodespace, err).Result()
+		return nil, err
 	}
 	validator.MinSelfDelegation = msg.MinSelfDelegation
 
 	err = k.SetValidator(ctx, validator)
 	if err != nil {
-		return types.ErrSetValidatorFailed(types.DefaultCodespace, err).Result()
+		return nil, err
 	}
 	k.SetValidatorByConsAddr(ctx, validator)
 	k.SetNewValidatorByPowerIndex(ctx, validator)
@@ -85,7 +85,7 @@ func handleMsgCreateValidator(ctx sdk.Context, k keeper.StakingKeeper, msg staki
 
 	_, err = k.Delegate(ctx, msg.DelegatorAddress, msg.Value.Amount, sdk.Unbonded, validator, true)
 	if err != nil {
-		return types.ErrDelegateFailed(types.DefaultCodespace, err).Result()
+		return nil, err
 	}
 
 	em := sdk.NewEventManager()
@@ -104,18 +104,18 @@ func handleMsgCreateValidator(ctx sdk.Context, k keeper.StakingKeeper, msg staki
 		//	),
 	})
 
-	return sdk.Result{Events: em.Events()}
+	return &sdk.Result{Events: em.Events()}, nil
 }
 
-func handleMsgEditValidator(ctx sdk.Context, k keeper.StakingKeeper, msg staking.MsgEditValidator) sdk.Result {
+func handleMsgEditValidator(ctx sdk.Context, k keeper.StakingKeeper, msg staking.MsgEditValidator) (*sdk.Result, error) {
 
 	validator, found := k.GetValidator(ctx, msg.ValidatorAddress)
 	if !found {
-		return types.ErrNoExpectedValidator(types.DefaultCodespace, errors.New(fmt.Sprintf("%s not found", validator.OperatorAddress.String()))).Result()
+		return nil, errors.New(fmt.Sprintf("%s not found", validator.OperatorAddress.String()))
 	}
 	description, err := validator.Description.UpdateDescription(msg.Description)
 	if err != nil {
-		return types.ErrCheckParams(types.DefaultCodespace, err.Error()).Result()
+		return nil, err
 	}
 
 	validator.Description = description
@@ -124,7 +124,7 @@ func handleMsgEditValidator(ctx sdk.Context, k keeper.StakingKeeper, msg staking
 	if msg.CommissionRate != nil {
 		commission, err := k.UpdateValidatorCommission(ctx, validator, *msg.CommissionRate)
 		if err != nil {
-			return types.ErrCheckParams(types.DefaultCodespace, err.Error()).Result()
+			return nil, err
 		}
 
 		k.BeforeValidatorModified(ctx, msg.ValidatorAddress)
@@ -133,16 +133,16 @@ func handleMsgEditValidator(ctx sdk.Context, k keeper.StakingKeeper, msg staking
 	//if minSelfDelegation == nil, no change.
 	if msg.MinSelfDelegation != nil {
 		if !msg.MinSelfDelegation.GT(validator.MinSelfDelegation) {
-			return types.ErrCheckParams(types.DefaultCodespace, fmt.Sprintf("new minSelfDelegation should be greater than before: %s", validator.MinSelfDelegation.String())).Result()
+			return nil, errors.New(fmt.Sprintf("new minSelfDelegation should be greater than before: %s", validator.MinSelfDelegation.String()))
 		}
 		if msg.MinSelfDelegation.GT(validator.Tokens) {
-			return types.ErrCheckParams(types.DefaultCodespace, fmt.Sprintf("new minSelfDelegation can not be greater than tokens that you hold on")).Result()
+			return nil, errors.New(fmt.Sprintf("new minSelfDelegation can not be greater than tokens that you hold on"))
 		}
 		validator.MinSelfDelegation = *msg.MinSelfDelegation
 	}
 	err = k.SetValidator(ctx, validator)
 	if err != nil {
-		return types.ErrSetValidatorFailed(types.DefaultCodespace, err).Result()
+		return nil, err
 	}
 	em := sdk.NewEventManager()
 	em.EmitEvents(sdk.Events{
@@ -161,22 +161,22 @@ func handleMsgEditValidator(ctx sdk.Context, k keeper.StakingKeeper, msg staking
 		//),
 	})
 
-	return sdk.Result{Events: em.Events()}
+	return &sdk.Result{Events: em.Events()}, nil
 }
 
-func handleMsgDelegate(ctx sdk.Context, k keeper.StakingKeeper, msg staking.MsgDelegate) sdk.Result {
+func handleMsgDelegate(ctx sdk.Context, k keeper.StakingKeeper, msg staking.MsgDelegate) (*sdk.Result, error) {
 	//
 	validator, found := k.GetValidator(ctx, msg.ValidatorAddress)
 	if !found {
-		return types.ErrNoExpectedValidator(types.DefaultCodespace, nil).Result()
+		return nil, errors.New(fmt.Sprintf("No expected validator: %s", validator.OperatorAddress.String()))
 	}
 	denom := k.BondDenom(ctx)
 	if msg.Amount.Denom != denom {
-		return types.ErrBondedDenomDiff(types.DefaultCodespace, nil).Result()
+		return nil, errors.New(fmt.Sprintf("unexpected denom: %s", msg.Amount.Denom))
 	}
 	_, err := k.Delegate(ctx, msg.DelegatorAddress, msg.Amount.Amount, sdk.Unbonded, validator, true)
 	if err != nil {
-		return types.ErrDelegateFailed(types.ModuleName, err).Result()
+		return nil, err
 	}
 	em := sdk.NewEventManager()
 	em.EmitEvents(sdk.Events{
@@ -194,26 +194,26 @@ func handleMsgDelegate(ctx sdk.Context, k keeper.StakingKeeper, msg staking.MsgD
 		//	),
 	})
 
-	return sdk.Result{Events: em.Events()}
+	return &sdk.Result{Events: em.Events()}, nil
 }
 
-func handleMsgRedelegate(ctx sdk.Context, k keeper.StakingKeeper, msg staking.MsgRedelegate) sdk.Result {
+func handleMsgRedelegate(ctx sdk.Context, k keeper.StakingKeeper, msg staking.MsgRedelegate) (*sdk.Result, error) {
 	shares, err := k.ValidateUnbondAmount(ctx, msg.DelegatorAddress, msg.ValidatorSrcAddress, msg.Amount.Amount)
 	if err != nil {
-		return types.ErrValidateUnBondAmountFailed(types.DefaultCodespace, err).Result()
+		return nil, err
 	}
 	if msg.Amount.Denom != k.BondDenom(ctx) {
-		return types.ErrBondedDenomDiff(types.ModuleName, nil).Result()
+		return nil, errors.New(fmt.Sprintf("unexpected denom: %s", msg.Amount.Denom))
 	}
 
 	completionTime, err := k.Redelegate(ctx, msg.DelegatorAddress, msg.ValidatorSrcAddress, msg.ValidatorDstAddress, shares)
 	if err != nil {
-		return types.ErrRedelegationFailed(types.ModuleName, err).Result()
+		return nil, err
 	}
 
 	ts, err := gogotypes.TimestampProto(completionTime)
 	if err != nil {
-		return types.ErrGotTimeFailed(types.ModuleName, err).Result()
+		return nil, err
 	}
 
 	completionTimeBz := types.StakingCodec.MustMarshalBinaryLengthPrefixed(ts)
@@ -237,26 +237,25 @@ func handleMsgRedelegate(ctx sdk.Context, k keeper.StakingKeeper, msg staking.Ms
 		//	),
 	})
 
-	return sdk.Result{Data: completionTimeBz, Events: em.Events()}
+	return &sdk.Result{Data: completionTimeBz, Events: em.Events()}, nil
 }
 
-func handleMsgUndelegate(ctx sdk.Context, k keeper.StakingKeeper, msg staking.MsgUndelegate) sdk.Result {
+func handleMsgUndelegate(ctx sdk.Context, k keeper.StakingKeeper, msg staking.MsgUndelegate) (*sdk.Result, error) {
 	//
 	shares, err := k.ValidateUnbondAmount(ctx, msg.DelegatorAddress, msg.ValidatorAddress, msg.Amount.Amount)
 	if err != nil {
-		return types.ErrValidateUnBondAmountFailed(types.DefaultCodespace, err).Result()
+		return nil, err
 	}
 	if msg.Amount.Denom != k.BondDenom(ctx) {
-		return types.ErrBondedDenomDiff(types.ModuleName, nil).Result()
+		return nil, errors.New(fmt.Sprintf("unexpected denom : %s", msg.Amount.Denom))
 	}
 	completionTime, err := k.Undelegate(ctx, msg.DelegatorAddress, msg.ValidatorAddress, shares)
 	if err != nil {
-		//
-		return types.ErrUndelegateFailed(types.DefaultCodespace, err).Result()
+		return nil, err
 	}
 	ts, err := gogotypes.TimestampProto(completionTime)
 	if err != nil {
-		return types.ErrGotTimeFailed(types.DefaultCodespace, err).Result()
+		return nil, err
 	}
 	completionTimeBz := types.StakingCodec.MustMarshalBinaryLengthPrefixed(ts)
 	em := sdk.NewEventManager()
@@ -277,5 +276,5 @@ func handleMsgUndelegate(ctx sdk.Context, k keeper.StakingKeeper, msg staking.Ms
 		//	),
 		})
 
-	return sdk.Result{Data: completionTimeBz, Events: em.Events()}
+	return &sdk.Result{Data: completionTimeBz, Events: em.Events()}, nil
 }

@@ -2,10 +2,9 @@ package types
 
 import (
 	"encoding/json"
-	"errors"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
-	"github.com/ci123chain/ci123chain/pkg/transaction"
 	"time"
 )
 
@@ -21,13 +20,13 @@ const (
 	TimeoutProcessing = 30
 )
 
-func ValidateState(state string) sdk.Error {
+func ValidateState(state string) error {
 	if state == StateReady ||
 		state == StateProcessing ||
 		state == StateDone {
 		return nil
 	}
-	return ErrState(DefaultCodespace, errors.New("state not ready processing or done"))
+	return sdkerrors.Wrap(sdkerrors.ErrInternal, "state not ready processing or done")
 }
 
 // 链上保存的跨链交易信息
@@ -102,10 +101,10 @@ func (sim ApplyReceipt) Sign(priv []byte) (ApplyReceipt, error) {
 	sid := cryptosuit.NewFabSignIdentity()
 	signature, err := sid.Sign(signBytes, priv)
 	if err != nil {
-		return sim, transaction.ErrSignature(DefaultCodespace, err)
+		return sim, sdkerrors.Wrap(sdkerrors.ErrorInvalidSigner, err.Error())
 	}
 	if len(signature) < 1 {
-		return sim, transaction.ErrSignature(DefaultCodespace, errors.New("len signature less than 1"))
+		return sim, sdkerrors.Wrap(sdkerrors.ErrNoSignatures, "len signature less than 1")
 	}
 	sim.Signature = signature
 	return sim, nil
@@ -162,10 +161,10 @@ func (br *BankReceipt) Sign(priv []byte) (*BankReceipt, error) {
 	sid := cryptosuit.NewFabSignIdentity()
 	signature, err := sid.Sign(signBytes, priv)
 	if err != nil {
-		return br, transaction.ErrSignature(DefaultCodespace, err)
+		return br, sdkerrors.Wrap(sdkerrors.ErrorInvalidSigner, err.Error())
 	}
 	if len(signature) < 1 {
-		return br, transaction.ErrSignature(DefaultCodespace, errors.New("len signature less than 1"))
+		return br, sdkerrors.Wrap(sdkerrors.ErrNoSignatures, "len signature less than 1")
 	}
 	br.Signature = signature
 	return br, nil

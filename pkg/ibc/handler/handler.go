@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/ibc/keeper"
@@ -9,7 +10,7 @@ import (
 )
 
 func NewHandler(k keeper.IBCKeeper) sdk.Handler {
-	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
+	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 		switch msg := msg.(type) {
 		case *types.IBCTransfer:
@@ -22,47 +23,47 @@ func NewHandler(k keeper.IBCKeeper) sdk.Handler {
 			return handleMsgReceiveReceipt(ctx, k, *msg)
 		default:
 			errMsg := fmt.Sprintf("unrecognized supply message type: %T", msg)
-			return sdk.ErrUnknownRequest(errMsg).Result()
+			return nil, errors.New(errMsg)
 		}
 	}
 }
 
 // 新增跨链消息
-func handleMsgIBCTransfer(ctx sdk.Context, k keeper.IBCKeeper, tx types.IBCTransfer) sdk.Result {
+func handleMsgIBCTransfer(ctx sdk.Context, k keeper.IBCKeeper, tx types.IBCTransfer) (*sdk.Result, error) {
 	uuidStr := keeper.GenerateUniqueID(tx.Bytes())
 
 	retbz := []byte(uuidStr)
 	ibcMsg, err := makeIBCMsg([]byte(uuidStr), tx)
 	if err != nil {
-		return types.ErrMakeIBCMsg(types.DefaultCodespace, err).Result()
+		return nil, err
 	}
 	err = k.SetIBCMsg(ctx, ibcMsg)
 	if err != nil {
-		return types.ErrSetIBCMsg(types.DefaultCodespace, err).Result()
+		return nil, err
 	}
 	ctx.Logger().Info("Create IBCTransaction successed")
 
-	return sdk.Result{Data: retbz}
+	return &sdk.Result{Data: retbz}, nil
 }
 
 // 第一步: 申请处理跨链交易
-func handleMsgApplyIBCTx(ctx sdk.Context, k keeper.IBCKeeper, tx types.MsgApplyIBC) sdk.Result {
+func handleMsgApplyIBCTx(ctx sdk.Context, k keeper.IBCKeeper, tx types.MsgApplyIBC) (*sdk.Result, error) {
 	signedIBCMsg, err := k.ApplyIBCMsg(ctx, tx)
 	if err != nil {
-		return types.ErrApplyIBCMsg(types.DefaultCodespace, err).Result()
+		return nil, err
 	}
 	signedIBCMsgBz, _ := json.Marshal(signedIBCMsg)
 
 	ctx.Logger().Info("Apply IBCTransaction successed")
-	return sdk.Result{Data: signedIBCMsgBz}
+	return &sdk.Result{Data: signedIBCMsgBz}, nil
 }
 
 // 第二步: 跨链交易 bank 转账 (fabric -> ci)
-func handleMsgIBCBankSendTx(ctx sdk.Context, k keeper.IBCKeeper, tx types.IBCMsgBankSend) sdk.Result {
+func handleMsgIBCBankSendTx(ctx sdk.Context, k keeper.IBCKeeper, tx types.IBCMsgBankSend) (*sdk.Result, error) {
 
 	ibcMsg, err := keeper.ValidateRawIBCMessage(tx)
 	if err != nil {
-		return err.Result()
+		return nil, err
 	}
 
 	// todo warning
@@ -74,30 +75,30 @@ func handleMsgIBCBankSendTx(ctx sdk.Context, k keeper.IBCKeeper, tx types.IBCMsg
 	if old_ibcMsg != nil && old_ibcMsg.State == types.StateDone {
 		receipt, err := k.MakeBankReceipt(ctx, *ibcMsg)
 		if err != nil {
-			return types.ErrMakeBankReceipt(types.DefaultCodespace, err).Result()
+			return nil, err
 		}
 
 		receiptBz, _ := json.Marshal(*receipt)
-		return sdk.Result{Data: receiptBz}
+		return &sdk.Result{Data: receiptBz}, nil
 	}
 
 	ibcMsg.State = types.StateDone
 
 	receipt, err2 := k.MakeBankReceipt(ctx, *ibcMsg)
 	if err2 != nil {
-		return types.ErrMakeBankReceipt(types.DefaultCodespace, err2).Result()
+		return nil, err2
 	}
 
 	// todo bank action
 	err2 = k.BankSend(ctx, *ibcMsg)
 	if err2 != nil {
-		return types.ErrBankSend(types.DefaultCodespace, err2).Result()
+		return nil, err2
 	}
 
 	// 保存该交易
 	err2 = k.SetIBCMsg(ctx, *ibcMsg)
 	if err2 != nil {
-		return types.ErrSetIBCMsg(types.DefaultCodespace, err2).Result()
+		return nil, err2
 	}
 	receiptBz, _ := json.Marshal(*receipt)
 
@@ -112,19 +113,19 @@ func handleMsgIBCBankSendTx(ctx sdk.Context, k keeper.IBCKeeper, tx types.IBCMsg
 
 	ctx.Logger().Info("Handle IBCTransaction successed")
 
-	return sdk.Result{Data: receiptBz}
+	return &sdk.Result{Data: receiptBz}, nil
 }
 
 // 接收到回执消息
-func handleMsgReceiveReceipt(ctx sdk.Context, k keeper.IBCKeeper, tx types.IBCReceiveReceiptMsg) sdk.Result  {
+func handleMsgReceiveReceipt(ctx sdk.Context, k keeper.IBCKeeper, tx types.IBCReceiveReceiptMsg) (*sdk.Result, error)  {
 
 	receiveObj, err := keeper.ValidateRawReceiptMessage(tx)
 	if err != nil {
-		return err.Result()
+		return nil, err
 	}
 	err2 := k.ReceiveReceipt(ctx, *receiveObj)
 	if err2 != nil {
-		return types.ErrReceiveReceipt(types.DefaultCodespace, err2).Result()
+		return nil, err2
 	}
 	//交易成功，observer nonce+1
 	//account := k.AccountKeeper.GetAccount(ctx, tx.From)
@@ -136,7 +137,7 @@ func handleMsgReceiveReceipt(ctx sdk.Context, k keeper.IBCKeeper, tx types.IBCRe
 	//
 	ctx.Logger().Info("Handle receipt successed")
 
-	return sdk.Result{Data: []byte(receiveObj.UniqueID)}
+	return &sdk.Result{Data: []byte(receiveObj.UniqueID)}, nil
 }
 
 // 生成 IbcInfo

@@ -3,6 +3,7 @@ package store
 import (
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	abci "github.com/tendermint/tendermint/abci/types"
 	dbm "github.com/tendermint/tm-db"
 	"io"
@@ -237,18 +238,18 @@ func (bs *baseMultiStore) Query(req abci.RequestQuery) abci.ResponseQuery {
 	path := req.Path
 	storeName, subpath, err := parsePath(path)
 	if err != nil {
-		return err.QueryResult()
+		return sdkerrors.QueryResult(err)
 	}
 
 	store := bs.getStoreByName(storeName).Prefix([]byte(storeName + "//"))
 	if store == nil {
 		msg := fmt.Sprintf("no such store: %s", storeName)
-		return sdk.ErrUnknownRequest(msg).QueryResult()
+		return sdkerrors.QueryResult(sdkerrors.Wrap(sdkerrors.ErrInternal, msg))
 	}
 	queryable, ok := store.Parent().(Queryable)
 	if !ok {
 		msg := fmt.Sprintf("store %s doesn't support queries", storeName)
-		return sdk.ErrUnknownRequest(msg).QueryResult()
+		return sdkerrors.QueryResult(sdkerrors.Wrap(sdkerrors.ErrInternal, msg))
 	}
 
 	// trim the path and make the query

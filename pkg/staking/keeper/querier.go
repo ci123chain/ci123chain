@@ -2,7 +2,9 @@ package keeper
 
 import (
 	"encoding/hex"
+	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/staking/types"
 	s "github.com/ci123chain/ci123chain/pkg/staking/types"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -10,7 +12,7 @@ import (
 )
 
 func NewQuerier(k StakingKeeper) sdk.Querier {
-	return func(ctx sdk.Context, path []string, req abci.RequestQuery) (res []byte, err sdk.Error)  {
+	return func(ctx sdk.Context, path []string, req abci.RequestQuery) (res []byte, err error)  {
 		switch path[0] {
 		case s.QueryDelegation:
 			return queryDelegation(ctx, req, k)
@@ -32,53 +34,49 @@ func NewQuerier(k StakingKeeper) sdk.Querier {
 			return queryOperatorAddressByConsAddresses(ctx, req, k)
 
 		default:
-			return nil, sdk.ErrUnknownRequest("unknown query endpoint")
+			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "unknown request endpoint")
 		}
 	}
 }
 
-func queryDelegation(ctx sdk.Context, req abci.RequestQuery, k StakingKeeper) ([]byte, sdk.Error) {
+func queryDelegation(ctx sdk.Context, req abci.RequestQuery, k StakingKeeper) ([]byte, error) {
 	//
 	var params types.QueryBondsParams
 
 	err := types.StakingCodec.UnmarshalJSON(req.Data, &params)
 	if err != nil {
-		return nil, sdk.ErrInternal("unmarshal failed")
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("cdc unmarshal failed: %v", err.Error()))
 	}
 
 	delegation, found := k.GetDelegation(ctx, params.DelegatorAddr, params.ValidatorAddr)
 	if !found {
-		return nil, sdk.ErrNoDelegation("no delegation")
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInternal, "no delegation found")
 	}
 
 	delegationResp, err := delegationToDelegationResponse(ctx, k, delegation)
 	if err != nil {
-		return nil, sdk.ErrInternal("delegation to delegationResponse failed")
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInternal, "delegation to delegationResponse failed")
 	}
 
 	res := types.StakingCodec.MustMarshalJSON(delegationResp)
-	/*if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
-	}*/
 
 	return res, nil
 
-	//return nil, nil
 }
 
-func queryAllDelegation(ctx sdk.Context, req abci.RequestQuery, k StakingKeeper) ([]byte, sdk.Error) {
+func queryAllDelegation(ctx sdk.Context, req abci.RequestQuery, k StakingKeeper) ([]byte, error) {
 	//
 	var params types.QueryValidatorParams
 
 	err := types.StakingCodec.UnmarshalJSON(req.Data, &params)
 	if err != nil {
-		return nil, sdk.ErrInternal("unmarshal failed")
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("cdc unmarshal failed: %v", err.Error()))
 	}
 
 	delegations := k.GetValidatorDelegations(ctx, params.ValidatorAddr)
 	delegationResps, err := delegationsToDelegationResponses(ctx, k, delegations)
 	if err != nil {
-		return nil, sdk.ErrInternal("failed get delegation responses")
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("delegation to delegationResponse failed: %v", err.Error()))
 	}
 
 	if delegationResps == nil {
@@ -91,12 +89,12 @@ func queryAllDelegation(ctx sdk.Context, req abci.RequestQuery, k StakingKeeper)
 }
 
 
-func queryValidators(ctx sdk.Context, req abci.RequestQuery, k StakingKeeper) ([]byte, sdk.Error) {
+func queryValidators(ctx sdk.Context, req abci.RequestQuery, k StakingKeeper) ([]byte, error) {
 	var params types.QueryValidatorsParams
 
 	err := types.StakingCodec.UnmarshalJSON(req.Data, &params)
 	if err != nil {
-		return nil, sdk.ErrInternal("unmarshal failed")
+		return nil,sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("cdc unmarshal failed: %v", err.Error()))
 	}
 
 	validators := k.GetAllValidators(ctx)
@@ -125,78 +123,70 @@ func queryValidators(ctx sdk.Context, req abci.RequestQuery, k StakingKeeper) ([
 	return res, nil
 }
 
-func queryValidator(ctx sdk.Context, req abci.RequestQuery, k StakingKeeper) ([]byte, sdk.Error) {
+func queryValidator(ctx sdk.Context, req abci.RequestQuery, k StakingKeeper) ([]byte, error) {
 	var params types.QueryValidatorParams
 
 	err := types.StakingCodec.UnmarshalJSON(req.Data, &params)
 	if err != nil {
-		return nil, sdk.ErrInternal("unmarshal failed")
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("cdc unmarshal failed: %v", err.Error()))
 	}
 
 	validator, found := k.GetValidator(ctx, params.ValidatorAddr)
 	if !found {
-		return nil, sdk.ErrNoValidatorFound("no validator found")
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInternal, "no validator found")
 	}
 	res := types.StakingCodec.MustMarshalJSON(validator)
 
 	return res, nil
 }
 
-func queryDelegatorValidators(ctx sdk.Context, req abci.RequestQuery, k StakingKeeper) ([]byte, sdk.Error) {
+func queryDelegatorValidators(ctx sdk.Context, req abci.RequestQuery, k StakingKeeper) ([]byte, error) {
 	var params types.QueryDelegatorParams
 
 	stakingParams := k.GetParams(ctx)
 
 	err := types.StakingCodec.UnmarshalJSON(req.Data, &params)
 	if err != nil {
-		return nil, sdk.ErrInternal("unmarshal failed")
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("cdc unmarshal failed: %v", err.Error()))
 	}
 
 	validators, err := k.GetDelegatorValidators(ctx, params.DelegatorAddr, stakingParams.MaxValidators)
 	if err != nil {
-		return nil, sdk.ErrNoValidatorFound("no validator found")
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("no validator found: %v", err.Error()))
 	}
 	if validators == nil {
 		validators = types.Validators{}
 	}
 	res := types.StakingCodec.MustMarshalJSON(validators)
 
-	/*res, err := app.MarshalJSONIndent(types.StakingCodec, validators)
-	if err != nil {
-		return nil, sdk.ErrInternal("marshal failed")
-	}*/
 
 	return res, nil
 }
 
-func queryDelegatorValidator(ctx sdk.Context, req abci.RequestQuery, k StakingKeeper) ([]byte, sdk.Error) {
+func queryDelegatorValidator(ctx sdk.Context, req abci.RequestQuery, k StakingKeeper) ([]byte, error) {
 	var params types.QueryBondsParams
 
 	err := types.StakingCodec.UnmarshalJSON(req.Data, &params)
 	if err != nil {
-		return nil, sdk.ErrInternal("unmarshal failed")
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("cdc unmarshal failed: %v", err.Error()))
 	}
 
 	validator, err := k.GetDelegatorValidator(ctx, params.DelegatorAddr, params.ValidatorAddr)
 	if err != nil {
-		return nil, sdk.ErrInternal("get validator failed")
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("get validator failed: %v", err.Error()))
 	}
 
 	res := types.StakingCodec.MustMarshalJSON(validator)
-	/*res, err := app.MarshalJSONIndent(types.StakingCodec, validator)
-	if err != nil {
-		return nil, sdk.ErrInternal("marshal failed")
-	}*/
 
 	return res, nil
 }
 
-func queryRedelegations(ctx sdk.Context, req abci.RequestQuery, k StakingKeeper) ([]byte, sdk.Error) {
+func queryRedelegations(ctx sdk.Context, req abci.RequestQuery, k StakingKeeper) ([]byte, error) {
 	var params types.QueryRedelegationParams
 
 	err := types.StakingCodec.UnmarshalJSON(req.Data, &params)
 	if err != nil {
-		return nil, sdk.ErrInternal("unmarshal failed")
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("cdc unmarshal failed: %v", err.Error()))
 	}
 
 	var redels []types.Redelegation
@@ -205,7 +195,7 @@ func queryRedelegations(ctx sdk.Context, req abci.RequestQuery, k StakingKeeper)
 	case !params.DelegatorAddr.Empty() && !params.SrcValidatorAddr.Empty() && !params.DstValidatorAddr.Empty():
 		redel, found := k.GetRedelegation(ctx, params.DelegatorAddr, params.SrcValidatorAddr, params.DstValidatorAddr)
 		if !found {
-			return nil, sdk.ErrNoRedelegation("no redelegation")
+			return nil, sdkerrors.Wrap(sdkerrors.ErrInternal, "no redelegation")
 		}
 
 		redels = []types.Redelegation{redel}
@@ -217,7 +207,7 @@ func queryRedelegations(ctx sdk.Context, req abci.RequestQuery, k StakingKeeper)
 
 	redelResponses, err := redelegationsToRedelegationResponses(ctx, k, redels)
 	if err != nil {
-		return nil, sdk.ErrInternal("redelegaion to redelegaionResponse failed")
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInternal, "redelegaion to redelegaionResponse failed")
 	}
 
 	if redelResponses == nil {
@@ -225,10 +215,6 @@ func queryRedelegations(ctx sdk.Context, req abci.RequestQuery, k StakingKeeper)
 	}
 
 	res := types.StakingCodec.MustMarshalJSON(redelResponses)
-	/*res, err := app.MarshalJSONIndent(types.StakingCodec, redelResponses)
-	if err != nil {
-		return nil, sdk.ErrInternal("marshal failed")
-	}*/
 
 	return res, nil
 }
@@ -251,11 +237,11 @@ func delegationsToDelegationResponses(
 	return resp, nil
 }
 
-func delegationToDelegationResponse(ctx sdk.Context, k StakingKeeper, del types.Delegation) (types.DelegationResponse, sdk.Error) {
+func delegationToDelegationResponse(ctx sdk.Context, k StakingKeeper, del types.Delegation) (types.DelegationResponse, error) {
 
 	val, found := k.GetValidator(ctx, del.ValidatorAddress)
 	if !found {
-		return types.DelegationResponse{}, sdk.ErrNoValidatorFound("no validator found")
+		return types.DelegationResponse{}, sdkerrors.Wrap(sdkerrors.ErrInternal, "no validator found")
 	}
 
 	return types.NewDelegationResp(
@@ -274,7 +260,7 @@ func redelegationsToRedelegationResponses(
 	for i, redel := range redels {
 		val, found := k.GetValidator(ctx, redel.ValidatorDstAddress)
 		if !found {
-			return nil, sdk.ErrNoValidatorFound("no validator found")
+			return nil, sdkerrors.Wrap(sdkerrors.ErrInternal, "no validator found")
 		}
 
 		entryResponses := make([]types.RedelegationEntryResponse, len(redel.Entries))
@@ -299,19 +285,19 @@ func redelegationsToRedelegationResponses(
 	return resp, nil
 }
 
-func queryDelegatorDelegations(ctx sdk.Context, req abci.RequestQuery, k StakingKeeper) ([]byte, sdk.Error) {
+func queryDelegatorDelegations(ctx sdk.Context, req abci.RequestQuery, k StakingKeeper) ([]byte, error) {
 
 	var params types.QueryDelegatorParams
 
 	err := types.StakingCodec.UnmarshalJSON(req.Data, &params)
 	if err != nil {
-		return nil, sdk.ErrInternal("unmarshal failed")
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("cdc unmarshal failed: %v", err.Error()))
 	}
 
 	delegations := k.GetAllDelegatorDelegations(ctx, params.DelegatorAddr)
 	delegationResps, err := delegationsToDelegationResponses(ctx, k, delegations)
 	if err != nil {
-		return nil, sdk.ErrInternal("failed to get delegation responses")
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInternal, "failed to get delegation responses")
 	}
 
 	if delegationResps == nil {
@@ -323,12 +309,12 @@ func queryDelegatorDelegations(ctx sdk.Context, req abci.RequestQuery, k Staking
 	return res, nil
 }
 
-func queryOperatorAddressByConsAddresses(ctx sdk.Context, req abci.RequestQuery, k StakingKeeper) ([]byte, sdk.Error) {
+func queryOperatorAddressByConsAddresses(ctx sdk.Context, req abci.RequestQuery, k StakingKeeper) ([]byte, error) {
 
 	var addressSet types.QueryOperatorAddressesParams
 	err := types.StakingCodec.UnmarshalJSON(req.Data, &addressSet)
 	if err != nil {
-		return nil, sdk.ErrInternal("unmarshal failed")
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("cdc unmarshal failed: %v", err.Error()))
 	}
 
 	var responseSet = make([]types.ValidatorOperatorAddressResponse, 0)

@@ -3,6 +3,7 @@ package types
 import (
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 )
 
 type MsgCreateValidator struct {
@@ -34,37 +35,37 @@ func (msg *MsgCreateValidator) Route() string {return RouteKey}
 
 func (msg *MsgCreateValidator) MsgType() string {return "create-validator"}
 
-func (msg *MsgCreateValidator) ValidateBasic() types.Error {
+func (msg *MsgCreateValidator) ValidateBasic() error {
 	// note that unmarshaling from bech32 ensures either empty or valid
 	if msg.DelegatorAddress.Empty() {
-		return ErrInvalidAddress(DefaultCodespace, fmt.Sprintf("empty delegator address"))
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "empty delegator address")
 	}
 	if msg.ValidatorAddress.Empty() {
-		return ErrInvalidAddress(DefaultCodespace, fmt.Sprintf("empty validator address"))
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "empty validator address")
 	}
 	if !msg.ValidatorAddress.Equals(msg.DelegatorAddress) {
-		return ErrInvalidAddress(DefaultCodespace, fmt.Sprintf("expected %s, got %s", msg.DelegatorAddress, msg.ValidatorAddress))
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, fmt.Sprintf("expected %s, got %s", msg.DelegatorAddress, msg.ValidatorAddress))
 	}
 	if msg.PublicKey == "" {
-		return ErrEmptyPublicKey(DefaultCodespace, "empty publicKey")
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidPubKey, "empty publickey")
 	}
 	if !msg.Value.Amount.IsPositive() {
-		return ErrCheckParams(DefaultCodespace, "invalid amount")
+		return sdkerrors.Wrap(sdkerrors.ErrParams, "amount can not be negative")
 	}
 	if msg.Description == (Description{}) {
-		return ErrCheckParams(DefaultCodespace, "description can not be empty")
+		return sdkerrors.Wrap(sdkerrors.ErrParams, "description can not be empty")
 	}
 	if msg.Commission == (CommissionRates{}) {
-		return ErrCheckParams(DefaultCodespace, "commission can not be empty")
+		return sdkerrors.Wrap(sdkerrors.ErrParams, "commission can not be empty")
 	}
 	if err := msg.Commission.Validate(); err != nil {
-		return ErrCheckParams(DefaultCodespace, err.Error())
+		return sdkerrors.Wrap(sdkerrors.ErrParams, err.Error())
 	}
 	if !msg.MinSelfDelegation.IsPositive() {
-		return ErrCheckParams(DefaultCodespace, "invalid minSelfDelegation")
+		return sdkerrors.Wrap(sdkerrors.ErrParams, "invalid minSelfDelegation")
 	}
 	if msg.Value.Amount.LT(msg.MinSelfDelegation) {
-		return ErrCheckParams(DefaultCodespace, "self delegation below minnium")
+		return sdkerrors.Wrap(sdkerrors.ErrParams, "self delegation must greater than minnium")
 	}
 
 	return nil

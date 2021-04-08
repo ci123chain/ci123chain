@@ -7,6 +7,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/account"
 	"github.com/ci123chain/ci123chain/pkg/supply/exported"
 	types2 "github.com/ci123chain/ci123chain/pkg/supply/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 )
 
 type Keeper struct {
@@ -81,7 +82,7 @@ func (k Keeper) SetModuleAccount(ctx sdk.Context, macc exported.ModuleAccountI) 
 
 // SendCoinsFromAccountToModule transfers coins from an AccAddress to a ModuleAccount
 func (k Keeper) SendCoinsFromAccountToModule(ctx sdk.Context, senderAddr sdk.AccAddress,
-	recipientModule string, amt sdk.Coin) sdk.Error {
+	recipientModule string, amt sdk.Coin) error {
 
 	// create the account if it doesn't yet exist
 	recipientAcc := k.GetModuleAccount(ctx, recipientModule)
@@ -93,11 +94,11 @@ func (k Keeper) SendCoinsFromAccountToModule(ctx sdk.Context, senderAddr sdk.Acc
 
 // SendCoinsFromModuleToAccount transfers coins from a ModuleAccount to an AccAddress
 func (k Keeper) SendCoinsFromModuleToAccount(ctx sdk.Context, senderModule string,
-	recipientAddr sdk.AccAddress, amt sdk.Coin) sdk.Error {
+	recipientAddr sdk.AccAddress, amt sdk.Coin) error {
 
 	senderAddr := k.GetModuleAddress(senderModule)
 	if senderAddr.Empty() {
-		return sdk.ErrUnknownAddress(fmt.Sprintf("module account %s does not exist", senderModule))
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, fmt.Sprintf("module account %s does not exist", senderModule))
 	}
 
 
@@ -108,11 +109,11 @@ func (k Keeper) SendCoinsFromModuleToModule(ctx sdk.Context, senderModule, recip
 
 	senderAddr := k.GetModuleAddress(senderModule)
 	if senderAddr.Empty() {
-		return sdk.ErrUnknownAddress(fmt.Sprintf("module account %s does not exist", senderModule))
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, fmt.Sprintf("module account %s does not exist", senderModule))
 	}
 	recipientAcc := k.GetModuleAccount(ctx, recipientModule)
 	if recipientAcc == nil {
-		return sdk.ErrUnknownAddress(fmt.Sprintf("module account %s isn't able to be created", recipientModule))
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, fmt.Sprintf("module account %s isn't able to be created", recipientModule))
 	}
 	return k.ak.Transfer(ctx, senderAddr, recipientAcc.GetAddress(), sdk.NewCoins(amt))
 }
@@ -122,11 +123,11 @@ func (k Keeper) DelegateCoinsFromAccountToModule(ctx sdk.Context, senderAddr sdk
 
 	recipientAcc := k.GetModuleAccount(ctx, recipientModule)
 	if recipientAcc == nil {
-		return sdk.ErrUnknownAddress(fmt.Sprintf("module account %s isn't able to be created", recipientModule))
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, fmt.Sprintf("module account %s isn't able to be created", recipientModule))
 	}
 
 	if !recipientAcc.HasPermission(types2.Staking) {
-		return sdk.ErrNoPermission(fmt.Sprintf("module account %s has no expected permission", recipientModule))
+		return sdkerrors.Wrap(sdkerrors.ErrParams, fmt.Sprintf("module account %s has no expected permission", recipientModule))
 	}
 	return k.ak.Transfer(ctx, senderAddr, recipientAcc.GetAddress(), sdk.NewCoins(amt))
 }
@@ -140,11 +141,11 @@ func (k Keeper) UndelegateCoinsFromModuleToAccount(
 
 	acc := k.GetModuleAccount(ctx, senderModule)
 	if acc == nil {
-		return sdk.ErrUnknownAddress(fmt.Sprintf("module account %s isn't able to be created", recipientAddr))
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, fmt.Sprintf("module account %s isn't able to be created", recipientAddr))
 	}
 
 	if !acc.HasPermission(types2.Staking) {
-		return sdk.ErrNoPermission(fmt.Sprintf("module account %s has no expected permission", recipientAddr))
+		return sdkerrors.Wrap(sdkerrors.ErrParams, fmt.Sprintf("module account %s has no expected permission", recipientAddr))
 	}
 
 	return k.ak.Transfer(ctx, acc.GetAddress(), recipientAddr, sdk.NewCoins(amt))

@@ -2,11 +2,12 @@ package rest
 
 import (
 	"encoding/json"
+	"fmt"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
-	"github.com/gorilla/mux"
-	//"github.com/ci123chain/ci123chain/pkg/order"
 	"github.com/ci123chain/ci123chain/pkg/order/types"
+	"github.com/gorilla/mux"
 	"net/http"
 )
 
@@ -54,24 +55,16 @@ func QueryShardStatesRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 
 	return func(writer http.ResponseWriter, request *http.Request) {
 
-		/*
-		var params QueryShardStateParams
-		b, readErr := ioutil.ReadAll(request.Body)
-		readErr = json.Unmarshal(b, &params)
-		if readErr != nil {
-			//
-		}
-		*/
 		height := request.FormValue("height")
 		prove := request.FormValue("prove")
 
 		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(writer, cliCtx, request, "")
-		if !ok {
-			rest.WriteErrorRes(writer, err)
+		if !ok || err != nil {
+			rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("get clictx failed")).Error())
 			return
 		}
 
-		if !rest.CheckHeightAndProve(writer, height, prove, types.DefaultCodespace) {
+		if !rest.CheckHeightAndProve(writer, height, prove, sdkerrors.RootCodespace) {
 			return
 		}
 		isProve := false
@@ -80,7 +73,7 @@ func QueryShardStatesRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		}
 		res, _, proof, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryState, nil, isProve)
 		if err != nil {
-			rest.WriteErrorRes(writer, err)
+			rest.WriteErrorRes(writer, err.Error())
 			return
 		}
 		if len(res) < 1 {

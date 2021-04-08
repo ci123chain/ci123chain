@@ -313,11 +313,6 @@ type AppInit struct {
 
 
 func NewAppInit() AppInit {
-	//fsAppGenState := pflag.NewFlagSet("", pflag.ContinueOnError)
-	//fsAppGenTx := pflag.NewFlagSet("", pflag.ContinueOnError)
-	//fsAppGenTx.String(flagAddress, "", "address, required")
-	//fsAppGenTx.String(flagClientHome, DefaultCLIHome,
-	//	"home directory for the client, used for types generation")
 
 	return AppInit{
 		//FlagsAppGenState: fsAppGenState,

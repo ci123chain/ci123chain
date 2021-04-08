@@ -3,6 +3,7 @@ package rest
 import (
 	"encoding/json"
 	"fmt"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	//sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
@@ -19,7 +20,7 @@ func queryStoredContentFn(cliCtx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		keyStr := r.FormValue("key")
 		if keyStr == "" {
-			rest.WriteErrorRes(w,types.ErrCheckParams(types.DefaultCodespace, "key"))
+			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid key").Error())
 			return
 		}
 		b := cliCtx.Cdc.MustMarshalJSON(types.NewContentParams([]byte(keyStr)))
@@ -28,7 +29,7 @@ func queryStoredContentFn(cliCtx context.Context) http.HandlerFunc {
 		res, _, _, err := cliCtx.Query(route, b, false)
 
 		if err != nil {
-			rest.WriteErrorRes(w, err)
+			rest.WriteErrorRes(w, err.Error())
 			return
 		}
 		var result types.StoredContent

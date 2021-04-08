@@ -4,11 +4,10 @@ import (
 	"crypto/ecdsa"
 	"crypto/md5"
 	"encoding/hex"
-	"github.com/ci123chain/ci123chain/pkg/ibc/types"
-	"github.com/ci123chain/ci123chain/pkg/transaction"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/tanhuiya/fabric-crypto/cryptoutil"
 	"strings"
-	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 )
 
 func GenerateUniqueID(b []byte) string {
@@ -22,7 +21,7 @@ func GenerateUniqueID(b []byte) string {
 func getPrivateKey() ([]byte, error) {
 	priKey, err := cryptoutil.DecodePriv([]byte(Priv))
 	if err != nil {
-		return nil, transaction.ErrBadPrivkey(types.DefaultCodespace, err)
+		return nil, sdkerrors.Wrap(sdkerrors.ErrParams, "bad privatekey")
 	}
 	priBz := cryptoutil.MarshalPrivateKey(priKey)
 	return priBz, nil
@@ -31,7 +30,7 @@ func getPrivateKey() ([]byte, error) {
 func getPublicKey() ([]byte, error){
 	priKey, err := cryptoutil.DecodePriv([]byte(Priv))
 	if err != nil {
-		return nil, transaction.ErrBadPrivkey(types.DefaultCodespace, err)
+		return nil, sdkerrors.Wrap(sdkerrors.ErrParams, "bad privatekey")
 	}
 	pubKey := priKey.Public().(*ecdsa.PublicKey)
 	pubketBz := cryptoutil.MarshalPubkey(pubKey)
@@ -41,16 +40,16 @@ func getPublicKey() ([]byte, error){
 func getBankAddress() (sdk.AccAddress, error) {
 	privBz, err := getPrivateKey()
 	if err != nil {
-		return sdk.AccAddress{}, transaction.ErrBadPrivkey(types.DefaultCodespace, err)
+		return sdk.AccAddress{}, sdkerrors.Wrap(sdkerrors.ErrParams, "bad privatekey")
 	}
 	privKey, err := cryptoutil.UnMarshalPrivateKey(privBz)
 	if err != nil {
-		return sdk.AccAddress{}, transaction.ErrBadPrivkey(types.DefaultCodespace, err)
+		return sdk.AccAddress{},sdkerrors.Wrap(sdkerrors.ErrParams, "bad privatekey")
 	}
 	pubKey := privKey.Public().(*ecdsa.PublicKey)
 	address, err := cryptoutil.PublicKeyToAddress(pubKey)
 	if err != nil {
-		return sdk.AccAddress{}, transaction.ErrBadPubkey(types.DefaultCodespace, err)
+		return sdk.AccAddress{},sdkerrors.Wrap(sdkerrors.ErrParams, "bad pubkey")
 	}
 	return sdk.HexToAddress(address), nil
 }

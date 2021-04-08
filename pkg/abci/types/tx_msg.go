@@ -3,14 +3,14 @@ package types
 type Msg interface {
 	Route() string
 	MsgType() string
-	ValidateBasic() Error
+	ValidateBasic() error
 	GetFromAddress() AccAddress
 	Bytes() []byte
 }
 
 type Tx interface {
 	GetMsgs() []Msg
-	ValidateBasic() Error
+	ValidateBasic() error
 	GetSignBytes() []byte
 	GetSignature() []byte
 	SetSignature([]byte)
@@ -22,4 +22,4 @@ type Tx interface {
 }
 
 // TxDecoder unmarshals transfer bytes
-type TxDecoder func(txBytes []byte) (Tx, Error)
+type TxDecoder func(txBytes []byte) (Tx, error)

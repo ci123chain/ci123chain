@@ -3,6 +3,7 @@ package types
 import (
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 )
 
 type MsgRedelegate struct {
@@ -13,7 +14,7 @@ type MsgRedelegate struct {
 	Amount               types.Coin	 		 `json:"amount"`
 }
 
-func NewMsgRedelegate(from types.AccAddress, delegateAddr types.AccAddress, validatorSrcAddr,
+func NewMsgRedelegate(_ types.AccAddress, delegateAddr types.AccAddress, validatorSrcAddr,
 	validatorDstAddr types.AccAddress, amount types.Coin) *MsgRedelegate {
 	//
 	return &MsgRedelegate{
@@ -25,21 +26,21 @@ func NewMsgRedelegate(from types.AccAddress, delegateAddr types.AccAddress, vali
 	}
 }
 
-func (msg *MsgRedelegate) ValidateBasic() types.Error {
+func (msg *MsgRedelegate) ValidateBasic() error {
 	if msg.DelegatorAddress.Empty() {
-		return ErrInvalidAddress(DefaultCodespace, fmt.Sprintf("empty delegator address"))
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "empty delegator address")
 	}
 	if msg.ValidatorSrcAddress.Empty() {
-		return ErrInvalidAddress(DefaultCodespace, fmt.Sprintf("empty validator address"))
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "empty validatorSrc address")
 	}
 	if msg.ValidatorDstAddress.Empty() {
-		return ErrInvalidAddress(DefaultCodespace, fmt.Sprintf("empty validator address"))
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "empty validatorDst address")
 	}
 	if !msg.Amount.Amount.IsPositive() {
-		return types.ErrBadSharesAmount("bad shares amount")
+		return sdkerrors.Wrap(sdkerrors.ErrParams, "amount can not be negative")
 	}
 	if !msg.FromAddress.Equal(msg.DelegatorAddress) {
-		return ErrInvalidAddress(DefaultCodespace, fmt.Sprintf("expected %s, got %s", msg.FromAddress.String(), msg.DelegatorAddress.String()))
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, fmt.Sprintf("expected %s, got %s", msg.FromAddress.String(), msg.DelegatorAddress.String()))
 	}
 	return nil
 }

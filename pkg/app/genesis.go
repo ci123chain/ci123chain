@@ -3,9 +3,9 @@ package app
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/ci123chain/ci123chain/pkg/abci"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/app/module"
 	"github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -22,7 +22,7 @@ func AppGenStateJSON(validators []tmtypes.GenesisValidator) (json.RawMessage, er
 	appState := module.ModuleBasics.DefaultGenesis(validators)
 	stateBytes, err := json.Marshal(appState)
 	if err != nil {
-		return nil, abci.ErrInternal("Marshal failed")
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
 	return stateBytes, nil
 }
@@ -63,7 +63,7 @@ func GenesisStateFromGenFile(cdc *codec.Codec, genFile string) (genesisState map
 func GenesisStateFromGenDoc(cdc *codec.Codec, genDoc tmtypes.GenesisDoc,
 ) (genesisState map[string]json.RawMessage, err error) {
 	if err = cdc.UnmarshalJSON(genDoc.AppState, &genesisState); err != nil {
-		return genesisState, abci.ErrInternal("Unmarshal failed")
+		return genesisState, sdkerrors.Wrap(sdkerrors.ErrInternal, err.Error())
 	}
 	return genesisState, nil
 }

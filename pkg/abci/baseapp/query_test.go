@@ -21,7 +21,7 @@ func TestQuery(t *testing.T) {
 	}
 
 	routerOpt := func(bapp *BaseApp) {
-		bapp.SetHandler(func(ctx sdk.Context, tx sdk.Tx) sdk.Result {
+		bapp.SetDeferHandler(func(ctx sdk.Context, tx sdk.Tx, out, simulte bool) sdk.Result {
 			store := ctx.KVStore(capKey1)
 			store.Set(key, value)
 			return sdk.Result{}
@@ -46,14 +46,14 @@ func TestQuery(t *testing.T) {
 	require.Equal(t, 0, len(res.Value))
 
 	// query is still empty after a CheckTx
-	resTx := app.Check(tx)
+	resTx, _ := app.Check(tx)
 	require.True(t, resTx.IsOK(), fmt.Sprintf("%v", resTx))
 	res = app.Query(query)
 	require.Equal(t, 0, len(res.Value))
 
 	// query is still empty after a DeliverTx before we commit
 	app.BeginBlock(abci.RequestBeginBlock{})
-	resTx = app.Deliver(tx)
+	resTx, _ = app.Deliver(tx)
 	require.True(t, resTx.IsOK(), fmt.Sprintf("%v", resTx))
 	res = app.Query(query)
 	require.Equal(t, 0, len(res.Value))

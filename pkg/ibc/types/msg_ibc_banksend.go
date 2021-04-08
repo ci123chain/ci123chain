@@ -3,6 +3,7 @@ package types
 import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/util"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 )
 
 // bank to account
@@ -21,13 +22,12 @@ func NewIBCMsgBankSendMsg(from sdk.AccAddress, raw []byte) *IBCMsgBankSend {
 	}
 }
 
-func (msg *IBCMsgBankSend) ValidateBasic() sdk.Error {
+func (msg *IBCMsgBankSend) ValidateBasic() error {
 	if msg.FromAddress.Empty() {
-		return sdk.ErrInvalidAddress("from address is empty")
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "empty from address")
 	}
 	// todo unmarshal to signedIBCMsg
 	return nil
-	//return msg.CommonTx.VerifySignature(msg.GetSignBytes(), true)
 }
 
 func (msg *IBCMsgBankSend) GetSignBytes() []byte {

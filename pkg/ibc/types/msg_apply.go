@@ -2,8 +2,9 @@ package types
 
 import (
 	"encoding/hex"
+	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	"github.com/ci123chain/ci123chain/pkg/transfer"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/util"
 )
 
@@ -24,18 +25,18 @@ func NewMsgApplyIBC(from sdk.AccAddress, uniqueID, observerID []byte) *MsgApplyI
 	}
 }
 
-func (msg *MsgApplyIBC) ValidateBasic() sdk.Error {
+func (msg *MsgApplyIBC) ValidateBasic() error {
 	if err := msg.ValidateBasic(); err != nil {
 		return err
 	}
 	if len(msg.UniqueID) < 1 {
-		return transfer.ErrCheckParams(DefaultCodespace, "UniqueID is invalid " + hex.EncodeToString(msg.UniqueID))
+		return sdkerrors.Wrap(sdkerrors.ErrParams, fmt.Sprintf("UniqueID is invalid " + hex.EncodeToString(msg.UniqueID)))
 	}
 	if len(msg.ObserverID) < 1 {
-		return transfer.ErrCheckParams(DefaultCodespace, "ObserverID is invalid " + hex.EncodeToString(msg.ObserverID))
+		return sdkerrors.Wrap(sdkerrors.ErrParams, fmt.Sprintf("ObserverID is invalid " + hex.EncodeToString(msg.ObserverID)))
 	}
 	if msg.FromAddress.Empty() {
-		return transfer.ErrCheckParams(DefaultCodespace, "fromAddress is empty")
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "empty from address")
 	}
 	return nil
 	//return msg.CommonTx.VerifySignature(msg.GetSignBytes(), true)

@@ -1,16 +1,16 @@
 package handler
 
 import (
-	"errors"
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/distribution/keeper"
 	"github.com/ci123chain/ci123chain/pkg/distribution/types"
+	"github.com/pkg/errors"
 )
 
 
 func NewHandler(k keeper.DistrKeeper) sdk.Handler {
-	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
+	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 
 		switch msg := msg.(type) {
@@ -24,27 +24,27 @@ func NewHandler(k keeper.DistrKeeper) sdk.Handler {
 			return handleMsgFundCommunityPool(ctx, *msg, k)
 		default:
 			errMsg := fmt.Sprintf("unrecognized supply message type: %T", msg)
-			return sdk.ErrUnknownRequest(errMsg).Result()
+			return nil, errors.New(errMsg)
 		}
 	}
 }
 
 
-func handleMsgModifyWithdrawAddress(ctx sdk.Context, msg types.MsgSetWithdrawAddress, k keeper.DistrKeeper) sdk.Result {
+func handleMsgModifyWithdrawAddress(ctx sdk.Context, msg types.MsgSetWithdrawAddress, k keeper.DistrKeeper) (*sdk.Result, error) {
 
 	//verify identity
 	if !msg.FromAddress.Equal(msg.DelegatorAddress) {
-		return types.ErrWithdrawAddressInfoMismatch(types.DefaultCodespace, msg.FromAddress, msg.DelegatorAddress).Result()
+		return nil, errors.New(fmt.Sprintf("account address mismatch, expected %s, got %s", msg.FromAddress.String(), msg.DelegatorAddress.String()))
 	}
 	//check validator that is bonded to delegator account.
 	validators, Err := k.StakingKeeper.GetDelegatorValidators(ctx, msg.DelegatorAddress, 3)
 	if Err != nil || validators == nil {
-		return types.ErrBadAddress(types.DefaultCodespace, errors.New(fmt.Sprintf("got no validator that is bonded to %s", msg.DelegatorAddress.String()))).Result()
+		return nil, errors.New(fmt.Sprintf("got no validator that is bonded to %s", msg.DelegatorAddress.String()))
 	}
 
 	err := k.SetWithdrawAddr(ctx, msg.DelegatorAddress, msg.WithdrawAddress)
 	if err != nil {
-		return types.ErrHandleTxFailed(types.DefaultCodespace, err).Result()
+		return nil, err
 	}
 
 	//ctx.EventManager().EmitEvent(
@@ -56,19 +56,19 @@ func handleMsgModifyWithdrawAddress(ctx sdk.Context, msg types.MsgSetWithdrawAdd
 	//	),
 	//)
 
-	return sdk.Result{Events: ctx.EventManager().Events()}
+	return &sdk.Result{Events: ctx.EventManager().Events()}, nil
 }
 
-func handleMsgWithdrawDelegatorReward(ctx sdk.Context, msg types.MsgWithdrawDelegatorReward, k keeper.DistrKeeper) sdk.Result {
+func handleMsgWithdrawDelegatorReward(ctx sdk.Context, msg types.MsgWithdrawDelegatorReward, k keeper.DistrKeeper) (*sdk.Result, error) {
 
 	//verify identity
 	if !msg.FromAddress.Equal(msg.DelegatorAddress) {
-		return types.ErrWithdrawAddressInfoMismatch(types.DefaultCodespace, msg.FromAddress, msg.DelegatorAddress).Result()
+		return nil, errors.New(fmt.Sprintf("account address mismatch, expected %s, got %s", msg.FromAddress.String(), msg.DelegatorAddress.String()))
 	}
 
 	_, err := k.WithdrawDelegationRewards(ctx, msg.DelegatorAddress, msg.ValidatorAddress)
 	if err != nil {
-		return types.ErrHandleTxFailed(types.DefaultCodespace, err).Result()
+		return nil, err
 	}
 
 	//ctx.EventManager().EmitEvent(
@@ -81,23 +81,23 @@ func handleMsgWithdrawDelegatorReward(ctx sdk.Context, msg types.MsgWithdrawDele
 	//	),
 	//)
 
-	return sdk.Result{Events: ctx.EventManager().Events()}
+	return &sdk.Result{Events: ctx.EventManager().Events()}, nil
 }
 
-func handleMsgWithdrawValidatorCommission(ctx sdk.Context, msg types.MsgWithdrawValidatorCommission, k keeper.DistrKeeper) sdk.Result {
+func handleMsgWithdrawValidatorCommission(ctx sdk.Context, msg types.MsgWithdrawValidatorCommission, k keeper.DistrKeeper) (*sdk.Result, error) {
 	//verify identity
 	if !msg.FromAddress.Equal(msg.ValidatorAddress) {
-		return types.ErrWithdrawAddressInfoMismatch(types.DefaultCodespace, msg.FromAddress, msg.ValidatorAddress).Result()
+		return nil, errors.New(fmt.Sprintf("account address mismatch, expected %s, got %s", msg.FromAddress.String(), msg.ValidatorAddress.String()))
 	}
 
 	_, ok := k.StakingKeeper.GetValidator(ctx, msg.ValidatorAddress)
 	if !ok {
-		return types.ErrNoValidatorExist(types.DefaultCodespace, msg.ValidatorAddress.String()).Result()
+		return nil, errors.New(fmt.Sprintf("validator %s not exist", msg.ValidatorAddress.String()))
 	}
 
 	_, err := k.WithdrawValidatorCommission(ctx, msg.ValidatorAddress)
 	if err != nil {
-		return types.ErrHandleTxFailed(types.DefaultCodespace, err).Result()
+		return nil, err
 	}
 
 	//ctx.EventManager().EmitEvent(
@@ -110,13 +110,13 @@ func handleMsgWithdrawValidatorCommission(ctx sdk.Context, msg types.MsgWithdraw
 	//	),
 	//)
 
-	return sdk.Result{Events: ctx.EventManager().Events()}
+	return &sdk.Result{Events: ctx.EventManager().Events()}, nil
 }
 
 //send funds from personal account to communityPool.
-func handleMsgFundCommunityPool(ctx sdk.Context, msg types.MsgFundCommunityPool, k keeper.DistrKeeper) sdk.Result {
+func handleMsgFundCommunityPool(ctx sdk.Context, msg types.MsgFundCommunityPool, k keeper.DistrKeeper) (*sdk.Result, error) {
 	if err := k.FundCommunityPool(ctx, msg.Amount, msg.Depositor); err != nil {
-		return types.ErrHandleTxFailed(types.DefaultCodespace, err).Result()
+		return nil, err
 	}
 
 	//ctx.EventManager().EmitEvent(
@@ -128,5 +128,5 @@ func handleMsgFundCommunityPool(ctx sdk.Context, msg types.MsgFundCommunityPool,
 	//	),
 	//)
 
-	return sdk.Result{Events: ctx.EventManager().Events()}
+	return &sdk.Result{Events: ctx.EventManager().Events()}, nil
 }

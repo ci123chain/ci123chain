@@ -3,25 +3,23 @@ package keeper
 import (
 	"crypto/ecdsa"
 	"encoding/json"
-	"errors"
-	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
 	"github.com/ci123chain/ci123chain/pkg/ibc/types"
-	"github.com/ci123chain/ci123chain/pkg/transaction"
 	"github.com/tanhuiya/fabric-crypto/cryptoutil"
 )
 
 // 验证 apply 消息
-func ValidateRawIBCMessage(tx types.IBCMsgBankSend) (*types.IBCInfo, sdk.Error) {
+func ValidateRawIBCMessage(tx types.IBCMsgBankSend) (*types.IBCInfo, error) {
 	var signObj types.ApplyReceipt
 
 	// 反序列化
 	err := json.Unmarshal(tx.RawMessage, &signObj)
 	if err != nil {
-		return nil, types.ErrFailedUnmarshal(types.DefaultCodespace, err.Error())
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 	if len(signObj.Signature) < 1 || len(signObj.IBCMsgBytes) < 1 {
-		return nil, types.ErrBadBankSignature(types.DefaultCodespace, errors.New("signature or ibcMsgBytes len less than 1"))
+		return nil, sdkerrors.Wrap(sdkerrors.ErrNoSignatures, "signature or ibcMsgBytes len less than 1")
 	}
 
 	sid := cryptosuit.NewFabSignIdentity()
@@ -31,37 +29,36 @@ func ValidateRawIBCMessage(tx types.IBCMsgBankSend) (*types.IBCInfo, sdk.Error) 
 	pubketBz := cryptoutil.MarshalPubkey(pubKey)
 	valid, err := sid.Verifier(signObj.GetSignBytes(), signObj.Signature, pubketBz, nil)
 	if !valid  {
-		return nil, types.ErrBadBankSignature(types.DefaultCodespace, err)
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInternal, "signature verify faield")
 	}
 
 	var ibcMsg types.IBCInfo
 	err = json.Unmarshal(signObj.IBCMsgBytes, &ibcMsg)
-	//fmt.Println(string(ibcMsg.UniqueID))
 	if err != nil {
-		return nil, types.ErrFailedUnmarshal(types.DefaultCodespace, err.Error())
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 	return &ibcMsg, nil
 }
 
 
 // 验证 回执 消息
-func ValidateRawReceiptMessage(tx types.IBCReceiveReceiptMsg) (*types.BankReceipt, sdk.Error) {
+func ValidateRawReceiptMessage(tx types.IBCReceiveReceiptMsg) (*types.BankReceipt, error) {
 	var receiveObj types.BankReceipt
 	// 反序列化
 	err := json.Unmarshal(tx.RawMessage, &receiveObj)
 	if err != nil {
-		return nil, types.ErrFailedUnmarshal(types.DefaultCodespace, err.Error())
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 
 	sid := cryptosuit.NewFabSignIdentity()
 	pubBz, err := getPublicKey()
 	if err != nil {
-		return nil, transaction.ErrBadPubkey(types.DefaultCodespace, err)
+		return nil, sdkerrors.Wrap(sdkerrors.ErrParams, "get pubkey failed")
 	}
 
 	valid, err := sid.Verifier(receiveObj.GetSignBytes(), receiveObj.Signature, pubBz, nil)
 	if !valid || err != nil {
-		return nil, types.ErrBadReceiptSignature(types.DefaultCodespace, err)
+		return nil, sdkerrors.Wrap(sdkerrors.ErrParams, "signature verify failed")
 	}
 	return &receiveObj, nil
 }

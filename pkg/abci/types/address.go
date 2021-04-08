@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/tendermint/tendermint/crypto"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 )
 
 const (
@@ -67,7 +68,7 @@ func (aa *AccAddress) UnmarshalJSON(data []byte) error {
 	var s string
 	err := json.Unmarshal(data, &s)
 	if err != nil {
-		return ErrInternal("Unmarshal failed")
+		return sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 	addr2 := common.HexToAddress(s)
 	*aa = AccAddress{

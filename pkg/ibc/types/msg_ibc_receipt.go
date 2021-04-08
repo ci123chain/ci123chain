@@ -2,6 +2,7 @@ package types
 
 import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/util"
 )
 
@@ -21,12 +22,11 @@ func NewIBCReceiveReceiptMsg(from sdk.AccAddress, raw []byte) *IBCReceiveReceipt
 	}
 }
 
-func (msg *IBCReceiveReceiptMsg) ValidateBasic() sdk.Error {
+func (msg *IBCReceiveReceiptMsg) ValidateBasic() error {
 	if msg.FromAddress.Empty(){
-		return sdk.ErrInvalidAddress("from address is empty")
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "empty from address")
 	}
 	return nil
-	//return msg.CommonTx.VerifySignature(msg.GetSignBytes(), true)
 }
 
 func (msg *IBCReceiveReceiptMsg) GetSignBytes() []byte {

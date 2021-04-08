@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
 	types2 "github.com/ci123chain/ci123chain/pkg/app/types"
-	"github.com/ci123chain/ci123chain/pkg/client"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/staking"
 	"github.com/ci123chain/ci123chain/pkg/staking/types"
@@ -35,33 +35,33 @@ func CreateValidatorRequest(cliCtx context.Context, writer http.ResponseWriter, 
 	}
 	privKey, from, nonce, gas, err := rest.GetNecessaryParams(cliCtx, request, cdc, broadcast)
 	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, err.Error()).Error())
 		return
 	}
 	delegatorAddr := from
 	validatorAddr := from
 	amount, ok := sdk.NewIntFromString(request.FormValue("amount"))
 	if !ok {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, "invalid amount"))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid amount").Error())
 		return
 	}
 	//verify account exists
 	err = checkAccountExist(cliCtx, from)
 	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid from").Error())
 		return
 	}
 
 	msd, r, mr, mcr, moniker, identity, website, securityContact, details,
 	publicKey,err := parseOtherArgs(request)
 	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, err.Error()).Error())
 		return
 	}
 
 	coin := sdk.NewChainCoin(amount)
 	if coin.IsNegative() || coin.IsZero() {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, "invalid amount"))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid amount").Error())
 		return
 	}
 	MSD, R, MR, MXR := sSdk.CreateParseArgs(msd, r, mr, mcr)
@@ -75,12 +75,12 @@ func CreateValidatorRequest(cliCtx context.Context, writer http.ResponseWriter, 
 
 	txByte, err := types2.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
 	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, err.Error()).Error())
 		return
 	}
 	res, err := cliCtx.BroadcastSignedTx(txByte)
 	if err != nil {
-		rest.WriteErrorRes(writer, client.ErrBroadcast(types.DefaultCodespace, err))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, err.Error()).Error())
 		return
 	}
 	rest.PostProcessResponseBare(writer, cliCtx, res)
@@ -93,25 +93,25 @@ func DelegateTX(cliCtx context.Context, writer http.ResponseWriter, request *htt
 	}
 	privKey, from, nonce, gas, err := rest.GetNecessaryParams(cliCtx, request, cdc, broadcast)
 	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, err.Error()).Error())
 		return
 	}
 	delegatorAddr := from
 	validatorAddr := sdk.HexToAddress(request.FormValue("validator_address"))
 	amount, ok := sdk.NewIntFromString(request.FormValue("amount"))
 	if !ok {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, "invalid amount"))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid amount").Error())
 		return
 	}
 	coin := sdk.NewChainCoin(amount)
 	if coin.IsNegative() || coin.IsZero() {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, "invalid amount"))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid amount").Error())
 		return
 	}
 	//verify account exists
 	err = checkAccountExist(cliCtx, from, validatorAddr)
 	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, err.Error()).Error())
 		return
 	}
 
@@ -124,12 +124,12 @@ func DelegateTX(cliCtx context.Context, writer http.ResponseWriter, request *htt
 
 	txByte, err := types2.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
 	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, err.Error()).Error())
 		return
 	}
 	res, err := cliCtx.BroadcastSignedTx(txByte)
 	if err != nil {
-		rest.WriteErrorRes(writer, client.ErrBroadcast(types.DefaultCodespace, err))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, err.Error()).Error())
 		return
 	}
 	rest.PostProcessResponseBare(writer, cliCtx, res)
@@ -142,7 +142,7 @@ func RedelegateTX(cliCtx context.Context, writer http.ResponseWriter, request *h
 	}
 	privKey, from, nonce, gas, err := rest.GetNecessaryParams(cliCtx, request, cdc, broadcast)
 	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, err.Error()).Error())
 		return
 	}
 	delegatorAddr := from
@@ -150,19 +150,19 @@ func RedelegateTX(cliCtx context.Context, writer http.ResponseWriter, request *h
 	validatorDstAddr := sdk.HexToAddress(request.FormValue("validator_dst_address"))
 	amount, ok := sdk.NewIntFromString(request.FormValue("amount"))
 	if !ok {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, "invalid amount"))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid amount").Error())
 		return
 	}
 	//verify account exists
 	err = checkAccountExist(cliCtx, from, validatorSrcAddr, validatorDstAddr)
 	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, err.Error()).Error())
 		return
 	}
 
 	coin := sdk.NewChainCoin(amount)
 	if coin.IsNegative() || coin.IsZero() {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, "invalid amount"))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid amount").Error())
 		return
 	}
 	msg := staking.NewRedelegateMsg(from, delegatorAddr, validatorSrcAddr, validatorDstAddr, coin)
@@ -174,12 +174,12 @@ func RedelegateTX(cliCtx context.Context, writer http.ResponseWriter, request *h
 
 	txByte, err := types2.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
 	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, err.Error()).Error())
 		return
 	}
 	res, err := cliCtx.BroadcastSignedTx(txByte)
 	if err != nil {
-		rest.WriteErrorRes(writer, client.ErrBroadcast(types.DefaultCodespace, err))
+		rest.WriteErrorRes(writer,sdkerrors.Wrap(sdkerrors.ErrInternal, err.Error()).Error())
 		return
 	}
 	rest.PostProcessResponseBare(writer, cliCtx, res)
@@ -192,26 +192,26 @@ func UndelegateTX(cliCtx context.Context, writer http.ResponseWriter, request *h
 	}
 	privKey, from, nonce, gas, err := rest.GetNecessaryParams(cliCtx, request, cdc, broadcast)
 	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, err.Error()).Error())
 		return
 	}
 	delegatorAddr := from
 	validatorAddr := sdk.HexToAddress(request.FormValue("validator_address"))
 	amount, ok := sdk.NewIntFromString(request.FormValue("amount"))
 	if !ok {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, "invalid amount"))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid amount").Error())
 		return
 	}
 	//verify account exists
 	err = checkAccountExist(cliCtx, from, validatorAddr)
 	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, err.Error()).Error())
 		return
 	}
 
 	coin := sdk.NewChainCoin(amount)
 	if coin.IsNegative() || coin.IsZero() {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, "invalid amount"))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid amount").Error())
 		return
 	}
 	msg := staking.NewUndelegateMsg(from, delegatorAddr, validatorAddr, coin)
@@ -222,12 +222,12 @@ func UndelegateTX(cliCtx context.Context, writer http.ResponseWriter, request *h
 
 	txByte, err := types2.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
 	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, err.Error()).Error())
 		return
 	}
 	res, err := cliCtx.BroadcastSignedTx(txByte)
 	if err != nil {
-		rest.WriteErrorRes(writer, client.ErrBroadcast(types.DefaultCodespace, err))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, err.Error()).Error())
 		return
 	}
 	rest.PostProcessResponseBare(writer, cliCtx, res)
@@ -240,13 +240,13 @@ func EditValidatorTX(cliCtx context.Context, writer http.ResponseWriter, request
 	}
 	privKey, from, nonce, gas, err := rest.GetNecessaryParams(cliCtx, request, cdc, broadcast)
 	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, err.Error()).Error())
 		return
 	}
 	//verify account exists
 	err = checkAccountExist(cliCtx, from)
 	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, err.Error()).Error())
 		return
 	}
 	moniker, identity, website, secu, details := getDescription(request)
@@ -260,7 +260,7 @@ func EditValidatorTX(cliCtx context.Context, writer http.ResponseWriter, request
 		if newRate == -1 {
 			nrArg = nil
 		}else {
-			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, "new_rate error"))
+			rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid new_rate").Error())
 			return
 		}
 	}else {
@@ -271,7 +271,7 @@ func EditValidatorTX(cliCtx context.Context, writer http.ResponseWriter, request
 		if minSelf == -1 {
 			minArg = nil
 		}else {
-			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, "min_self_delegation error"))
+			rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "min_self_delegation error").Error())
 			return
 		}
 	}else {
@@ -293,12 +293,12 @@ func EditValidatorTX(cliCtx context.Context, writer http.ResponseWriter, request
 
 	txByte, err := types2.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
 	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, err.Error()).Error())
 		return
 	}
 	res, err := cliCtx.BroadcastSignedTx(txByte)
 	if err != nil {
-		rest.WriteErrorRes(writer, client.ErrBroadcast(types.DefaultCodespace, err))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, err.Error()).Error())
 		return
 	}
 	rest.PostProcessResponseBare(writer, cliCtx, res)
@@ -312,7 +312,7 @@ func getMinSelfAndNewRate(w http.ResponseWriter, req *http.Request) (int64, int6
 	if ms != "" {
 		minSelf, err = util.CheckInt64(ms)
 		if err != nil || minSelf <= 0 {
-			rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "invalid min_self_delegation"))
+			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid min_self_delegation").Error())
 			return 0, 0, false
 		}
 	}else {
@@ -322,7 +322,7 @@ func getMinSelfAndNewRate(w http.ResponseWriter, req *http.Request) (int64, int6
 	if nr != "" {
 		newRate, err = util.CheckInt64(nr)
 		if err != nil || newRate > 100 || newRate <= 0 {
-			rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "invalid new_rate"))
+			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid new_rate").Error())
 			return 0, 0, false
 		}
 	}else {
@@ -355,53 +355,6 @@ func getDescription(req *http.Request) (string, string, string, string, string) 
 	return moniker, identity, website, secu, details
 }
 
-/*func parseBasicArgs(w http.ResponseWriter, req *http.Request) (string, uint64, uint64, string, bool) {
-
-	from, ok := util.CheckFromAddressVar(req)
-	if !ok {
-		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "invalid from address"))
-		return "", 0, 0, "", false
-	}
-	gas, ok := util.CheckGasVar(req)
-	if !ok {
-		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "invalid gas"))
-		return "", 0, 0, "", false
-	}
-	nonce, ok := checkNonce(req, sdk.HexToAddress(from), cdc)
-	if !ok {
-		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "invalid nonce"))
-		return "", 0, 0, "", false
-	}
-	privateKey, ok := util.CheckPrivateKey(req)
-	if !ok {
-		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "invalid private key"))
-		return "", 0, 0, "", false
-	}
-	return from, gas, nonce, privateKey, true
-}*/
-
-/*func checkNonce(r *http.Request, from sdk.AccAddress, cdc *codec.Codec) (uint64, bool) {
-	nonce := r.FormValue("nonce")
-	var Nonce uint64
-	if nonce == "" {
-		ctx, err := client.NewClientContextFromViper(cdc)
-		if err != nil {
-			return 0, false
-		}
-		var Err error
-		Nonce, _, Err = ctx.GetNonceByAddress(from, false)
-		if Err != nil {
-			return 0, false
-		}
-	}else {
-		var checkErr error
-		Nonce, checkErr = util.CheckUint64(nonce)
-		if checkErr != nil {
-			return 0, false
-		}
-	}
-	return Nonce, true
-}*/
 
 
 func checkAccountExist(ctx context.Context, address... sdk.AccAddress) error {
@@ -466,26 +419,4 @@ func parseOtherArgs(request *http.Request) (int64, int64, int64, int64, string,
 
 	return msd, r, mr, mcr, moniker, identity, website, securityContact, details, publicKey, nil
 }
-
-
-
-/*
-func parseBaseArgs(w http.ResponseWriter, req *http.Request) (string, string, string, int64, uint64, uint64, bool) {
-
-	//为了确保 createValidator交易是from账户发出的，validator的地址就直接是这个from;
-	//只能是 设置 提取奖金的地址；那么就要保证 from validator delegator是一致的；但是 又没有验证；因为它本身就是使用相同的值；
-	//要保证delegator跟from一致；
-	from, gas, nonce, privateKey, ok := parseBasicArgs(w, req)
-	if !ok {
-		return "", "", "", 0, 0, 0, false
-	}
-	amount, ok := util.CheckAmountVar(req)
-	if !ok {
-		rest.WriteErrorRes(w, types.ErrCheckParams(types.DefaultCodespace, "invalid amount"))
-		return "", "", "", 0, 0, 0, false
-	}
-	delegatorAddrStr := from
-	return from, delegatorAddrStr, privateKey, amount, gas, nonce, true
-}
-*/
 

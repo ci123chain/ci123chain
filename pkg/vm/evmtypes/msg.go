@@ -1,12 +1,12 @@
 package evmtypes
 
 import (
-	"errors"
 	"math/big"
 	"sync/atomic"
 
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	ethcmn "github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 )
@@ -122,18 +122,18 @@ func (msg MsgEvmTx) GetFromAddress() sdk.AccAddress {
 
 // ValidateBasic implements the sdk.Msg interface. It performs basic validation
 // checks of a Transaction. If returns an error if validation fails.
-func (msg MsgEvmTx) ValidateBasic() sdk.Error {
+func (msg MsgEvmTx) ValidateBasic() error {
 	if msg.Data.Price.Cmp(big.NewInt(0)) == 0 {
-		return ErrInvalidMsg(DefaultCodespace, errors.New("price is invalid"))
+		return sdkerrors.Wrap(sdkerrors.ErrParams, "invalid price")
 	}
 
 	if msg.Data.Price.Sign() == -1 {
-		return ErrInvalidMsg(DefaultCodespace, errors.New("price sign is invalid"))
+		return sdkerrors.Wrap(sdkerrors.ErrParams, "invalid sig")
 	}
 
 	// Amount can be 0
 	if msg.Data.Amount.Sign() == -1 {
-		return ErrInvalidMsg(DefaultCodespace, errors.New("amount is invalid"))
+		return sdkerrors.Wrap(sdkerrors.ErrParams, "invalid amount")
 	}
 
 	return nil
