@@ -17,6 +17,8 @@ import (
 
 	"github.com/ci123chain/ci123chain/pkg/abci/store/internal/maps"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 )
 
 const (
@@ -329,18 +331,18 @@ func (rs *rootMultiStore) Query(req abci.RequestQuery) abci.ResponseQuery {
 	path := req.Path
 	storeName, subpath, err := parsePath(path)
 	if err != nil {
-		return err.QueryResult()
+		return sdkerrors.QueryResult(err)
 	}
 
 	store := rs.getStoreByName(storeName)
 	if store == nil {
 		msg := fmt.Sprintf("no such store: %s", storeName)
-		return sdk.ErrUnknownRequest(msg).QueryResult()
+		return sdkerrors.QueryResult(sdkerrors.Wrap(sdkerrors.ErrParams, msg))
 	}
 	queryable, ok := store.(Queryable)
 	if !ok {
 		msg := fmt.Sprintf("store %s doesn't support queries", storeName)
-		return sdk.ErrUnknownRequest(msg).QueryResult()
+		return sdkerrors.QueryResult(sdkerrors.Wrap(sdkerrors.ErrParams, msg))
 	}
 
 	// trim the path and make the query
@@ -352,12 +354,12 @@ func (rs *rootMultiStore) Query(req abci.RequestQuery) abci.ResponseQuery {
 	}
 
 	if res.ProofOps == nil || len(res.ProofOps.Ops) == 0 {
-		return sdk.ErrInternal("substore proof was nil/empty when it should never be").QueryResult()
+		return sdkerrors.QueryResult(sdkerrors.Wrap(sdkerrors.ErrResponse, "substore proof was nil/empty when it should never be"))
 	}
 
 	commitInfo, errMsg := getCommitInfo(dbStoreAdapter{rs.ldb}, res.Height)
 	if errMsg != nil {
-		return sdk.ErrInternal(errMsg.Error()).QueryResult()
+		return sdkerrors.QueryResult(errMsg)
 	}
 
 	// Restore origin path and append proof op.
@@ -374,9 +376,9 @@ func (rs *rootMultiStore) Query(req abci.RequestQuery) abci.ResponseQuery {
 // parsePath expects a format like /<storeName>[/<subpath>]
 // Must start with /, subpath may be empty
 // Returns error if it doesn't start with /
-func parsePath(path string) (storeName string, subpath string, err sdk.Error) {
+func parsePath(path string) (storeName string, subpath string, err error) {
 	if !strings.HasPrefix(path, "/") {
-		err = sdk.ErrUnknownRequest(fmt.Sprintf("invalid path: %s", path))
+		err = sdkerrors.Wrap(sdkerrors.ErrParams, fmt.Sprintf("invalid path: %v", path))
 		return
 	}
 

@@ -12,12 +12,12 @@ const (
 )
 
 var (
-	SetGenesisStateInAppState 	= types.SetGenesisStateInAppState
+	//SetGenesisStateInAppState 	= types.SetGenesisStateInAppState
 	NewGenesisAccountRaw 		= types.NewGenesisAccountRaw
 	ModuleCdc 					= types.ModuleCdc
 	NewQuerier					= keeper.NewQuerier
-	ErrSetAccount				= types.ErrSetAccount
-	ErrGetAccount				= types.ErrGetAccount
+	//ErrSetAccount				= types.ErrSetAccount
+	//ErrGetAccount				= types.ErrGetAccount
 )
 
 type (

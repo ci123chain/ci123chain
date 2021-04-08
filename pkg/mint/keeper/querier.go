@@ -2,13 +2,14 @@ package keeper
 
 import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/mint/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 )
 
 
 func NewQuerier(k MinterKeeper) sdk.Querier {
-	return func(ctx sdk.Context, path []string, req abci.RequestQuery) (res []byte, err sdk.Error) {
+	return func(ctx sdk.Context, path []string, req abci.RequestQuery) (res []byte, err error) {
 		switch path[0] {
 		case types.QueryAnnualProvisions:
 			return queryAnnualProvisions(ctx, k)
@@ -17,13 +18,13 @@ func NewQuerier(k MinterKeeper) sdk.Querier {
 		case types.QueryParameters:
 			return QueryParams(ctx, k)
 		default:
-			return nil, sdk.ErrUnknownRequest("unknown query endpoint")
+			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "unknown query endpoint")
 		}
 	}
 }
 
 
-func QueryParams(ctx sdk.Context,k MinterKeeper) ([]byte, sdk.Error) {
+func QueryParams(ctx sdk.Context,k MinterKeeper) ([]byte, error) {
 
 	params := k.GetParams(ctx)
 
@@ -32,7 +33,7 @@ func QueryParams(ctx sdk.Context,k MinterKeeper) ([]byte, sdk.Error) {
 }
 
 
-func QueryInflation(ctx sdk.Context,k MinterKeeper) ([]byte, sdk.Error) {
+func QueryInflation(ctx sdk.Context,k MinterKeeper) ([]byte, error) {
 
 	minter := k.GetMinter(ctx)
 	res := types.MintCdc.MustMarshalJSON(minter.Inflation)
@@ -41,7 +42,7 @@ func QueryInflation(ctx sdk.Context,k MinterKeeper) ([]byte, sdk.Error) {
 }
 
 
-func queryAnnualProvisions(ctx sdk.Context,k MinterKeeper) ([]byte, sdk.Error) {
+func queryAnnualProvisions(ctx sdk.Context,k MinterKeeper) ([]byte, error) {
 	minter := k.GetMinter(ctx)
 	res := types.MintCdc.MustMarshalJSON(minter.AnnualProvisions)
 

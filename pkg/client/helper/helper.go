@@ -5,11 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"github.com/bgentry/speakeasy"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/mattn/go-isatty"
 	"github.com/spf13/viper"
-	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	"github.com/ci123chain/ci123chain/pkg/client/types"
 	"os"
 	"strings"
 )
@@ -67,7 +67,7 @@ func GetPasswordFromStd() (string, error) {
 	buf := BufferStdin()
 	pass, err := GetCheckPassword("Enter a passphrase for your account:", "Repeat the passphrase:", buf)
 	if err != nil {
-		return "", types.ErrGetCheckPassword(types.DefaultCodespace, err)
+		return "", sdkerrors.Wrap(sdkerrors.ErrWrongPassword, err.Error())
 	}
 	return pass, nil
 }
@@ -80,14 +80,14 @@ func GetCheckPassword(prompt, prompt2 string, buf *bufio.Reader) (string, error)
 
 	pass, err := GetPassword(prompt, buf)
 	if err != nil {
-		return "", types.ErrGetPassword(types.DefaultCodespace, err)
+		return "", sdkerrors.Wrap(sdkerrors.ErrWrongPassword, err.Error())
 	}
 	pass2, err := GetPassword(prompt2, buf)
 	if err != nil {
-		return "", types.ErrGetPassword(types.DefaultCodespace, err)
+		return "", sdkerrors.Wrap(sdkerrors.ErrWrongPassword, err.Error())
 	}
 	if pass != pass2 {
-		return "", types.ErrPhrasesNotMatch(types.DefaultCodespace, err)
+		return "", sdkerrors.Wrap(sdkerrors.ErrWrongPassword, fmt.Sprintf("password does not math"))
 	}
 	return pass, nil
 }

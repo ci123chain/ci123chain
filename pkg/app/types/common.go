@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	types2 "github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
-	"github.com/ci123chain/ci123chain/pkg/transaction/types"
 	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/ethereum/go-ethereum/crypto"
 )
@@ -30,16 +31,16 @@ func NewCommonTx(from types2.AccAddress, nonce, gas uint64, msgs []types2.Msg) *
 	}
 }
 
-func (tx CommonTx) ValidateBasic() types2.Error {
+func (tx CommonTx) ValidateBasic() error {
 	if tx.From.Empty() {
-		return types.ErrInvalidTransfer(types.DefaultCodespace, errors.New("empty from address"))
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "empty from address")
 	}
 	// TODO Currently we don't support a gas system.
 	if len(tx.Msgs) == 0 {
-		return types2.ErrTxDecode("empty msgs")
+		return sdkerrors.Wrap(sdkerrors.ErrParams, "empty messagees")
 	}
 	if len(tx.Signature) == 0 {
-		return types.ErrSignature(types.DefaultCodespace, errors.New("no signature"))
+		return sdkerrors.Wrap(sdkerrors.ErrNoSignatures, "message with no signature")
 	}
 	return nil
 }
@@ -87,19 +88,19 @@ func (msg *CommonTx) GetFromAddress() types2.AccAddress{
 	return msg.From
 }
 
-func (tx *CommonTx) VerifySignature(hash []byte, fabricMode bool) types2.Error {
+func (tx *CommonTx) VerifySignature(hash []byte, fabricMode bool) error {
 
 	if fabricMode {
 		fab := cryptosuit.NewFabSignIdentity()
 		valid, err := fab.Verifier(hash, tx.Signature, tx.PubKey, tx.From.Bytes())
 		if !valid || err != nil {
-			return types.ErrSignature(types.DefaultCodespace, errors.New("verifier failed"))
+			return sdkerrors.Wrap(sdkerrors.ErrInternal, "verified failed")
 		}
 	} else {
 		eth := cryptosuit.NewETHSignIdentity()
 		valid, err := eth.Verifier(hash, tx.Signature, nil, tx.From.Bytes())
 		if !valid || err != nil {
-			return types.ErrSignature(types.DefaultCodespace, errors.New("verifier failed"))
+			return sdkerrors.Wrap(sdkerrors.ErrInternal, "verified failed")
 		}
 	}
 	return nil
@@ -123,14 +124,14 @@ func SignCommonTx(from types2.AccAddress, nonce, gas uint64, msgs []types2.Msg, 
 
 // DefaultTxDecoder logic for standard transfer decoding
 func DefaultTxDecoder(cdc *codec.Codec) types2.TxDecoder {
-	return func(txBytes []byte) (types2.Tx, types2.Error) {
+	return func(txBytes []byte) (types2.Tx, error) {
 		var transfer *CommonTx
 		err := cdc.UnmarshalBinaryBare(txBytes, &transfer)
 		if err != nil {
 			var ethTx *MsgEthereumTx
 			err := cdc.UnmarshalBinaryBare(txBytes, &ethTx)
 			if err != nil {
-				return nil, types2.ErrTxDecode("decode msg failed").TraceSDK(err.Error())
+				return nil, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("decode msg failed: %v", err.Error()))
 			}
 			return ethTx, nil
 		}

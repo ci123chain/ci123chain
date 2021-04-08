@@ -11,6 +11,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	abcierrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/tmhash"
 	"github.com/tendermint/tendermint/libs/log"
@@ -18,6 +19,7 @@ import (
 
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/abci/version"
 	distypes "github.com/ci123chain/ci123chain/pkg/distribution/types"
 	iftypes "github.com/ci123chain/ci123chain/pkg/infrastructure/types"
@@ -58,7 +60,7 @@ type BaseApp struct {
 	cms         sdk.CommitMultiStore // Main (uncached) state
 	queryRouter QueryRouter          // router for redirecting query calls
 	//handler     sdk.Handler
-	router 		sdk.Router
+	router 		Router
 
 	txDecoder   sdk.TxDecoder // unmarshal []byte into sdk.Tx
 
@@ -228,7 +230,7 @@ func NewBaseApp(name string, logger log.Logger, ldb dbm.DB, cdb dbm.DB, cacheDir
 		cms:         store.NewCommitMultiStore(ldb, cdb, cacheDir),
 		//cms:         store.NewBaseMultiStore(db),
 		queryRouter: NewQueryRouter(),
-		router:      sdk.NewRouter(),
+		router: 	 NewRouter(),
 		txDecoder:   txDecoder,
 	}
 
@@ -433,7 +435,7 @@ func (app *BaseApp) Query(req abci.RequestQuery) (res abci.ResponseQuery) {
 	path := splitPath(req.Path)
 	if len(path) == 0 {
 		msg := "no query path provided"
-		return sdk.ErrUnknownRequest(msg).QueryResult()
+		return sdkerrors.QueryResult(sdkerrors.Wrap(sdkerrors.ErrParams, msg))
 	}
 	switch path[0] {
 	// "/app" prefix for special application queries
@@ -448,7 +450,7 @@ func (app *BaseApp) Query(req abci.RequestQuery) (res abci.ResponseQuery) {
 	}
 
 	msg := "unknown query path"
-	return sdk.ErrUnknownRequest(msg).QueryResult()
+	return sdkerrors.QueryResult(sdkerrors.Wrap(sdkerrors.ErrParams, msg))
 }
 
 func handleQueryApp(app *BaseApp, path []string, req abci.RequestQuery) (res abci.ResponseQuery) {
@@ -459,9 +461,12 @@ func handleQueryApp(app *BaseApp, path []string, req abci.RequestQuery) (res abc
 			txBytes := req.Data
 			tx, err := app.txDecoder(txBytes)
 			if err != nil {
-				result = err.Result()
+				return abcierrors.QueryResult(sdkerrors.Wrap(sdkerrors.ErrTxDecode, err.Error()))
 			} else {
-				result = app.Simulate(tx)
+				result, err = app.Simulate(tx)
+				if err != nil {
+					return abcierrors.QueryResult(err)
+				}
 			}
 			simulationResp := sdk.QureyAppResponse{
 				Code:       uint32(result.Code),
@@ -485,19 +490,19 @@ func handleQueryApp(app *BaseApp, path []string, req abci.RequestQuery) (res abc
 				Value:     []byte(version.GetVersion()),
 			}
 		default:
-			result = sdk.ErrUnknownRequest(fmt.Sprintf("Unknown query: %s", path)).Result()
+			return sdkerrors.QueryResult(sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, fmt.Sprintf("Unknown query: %s", path)))
 		}
 
 		// Encode with json
-		value := codec.Cdc.MustMarshalBinaryLengthPrefixed(result)
-		return abci.ResponseQuery{
-			Code:      uint32(sdk.CodeOK),
-			Codespace: string(sdk.CodespaceRoot),
-			Value:     value,
-		}
+		//value := codec.Cdc.MustMarshalBinaryLengthPrefixed(result)
+		//return abci.ResponseQuery{
+		//	Code:      uint32(sdk.CodeOK),
+		//	Codespace: string(sdk.CodespaceRoot),
+		//	Value:     value,
+		//}
 	}
 	msg := "Expected second parameter to be either simulate or version, neither was present"
-	return sdk.ErrUnknownRequest(msg).QueryResult()
+	return sdkerrors.QueryResult(sdkerrors.Wrap(sdkerrors.ErrParams, msg))
 }
 
 func handleQueryStore(app *BaseApp, path []string, req abci.RequestQuery) (res abci.ResponseQuery) {
@@ -505,7 +510,7 @@ func handleQueryStore(app *BaseApp, path []string, req abci.RequestQuery) (res a
 	queryable, ok := app.cms.(sdk.Queryable)
 	if !ok {
 		msg := "multistore doesn't support queries"
-		return sdk.ErrUnknownRequest(msg).QueryResult()
+		return abcierrors.QueryResult(errors.New(msg))
 	}
 	req.Path = "/" + strings.Join(path[1:], "/")
 	return queryable.Query(req)
@@ -526,23 +531,24 @@ func handleQueryP2P(app *BaseApp, path []string, req abci.RequestQuery) (res abc
 			}
 		} else {
 			msg := "Expected second parameter to be filter"
-			return sdk.ErrUnknownRequest(msg).QueryResult()
+			//return sdk.ErrUnknownRequest(msg).QueryResult()
+			return abcierrors.QueryResult(errors.New(msg))
 		}
 	}
 
 	msg := "Expected path is p2p filter <addr|pubkey> <parameter>"
-	return sdk.ErrUnknownRequest(msg).QueryResult()
+	return abcierrors.QueryResult(errors.New(msg))
 }
 
 func handleQueryCustom(app *BaseApp, path []string, req abci.RequestQuery) (res abci.ResponseQuery) {
 	// path[0] should be "custom" because "/custom" prefix is required for keeper queries.
 	// the queryRouter routes using path[1]. For example, in the path "custom/gov/proposal", queryRouter routes using "gov"
 	if len(path) < 2 || path[1] == "" {
-		return sdk.ErrUnknownRequest("No route for custom query specified").QueryResult()
+		return abcierrors.QueryResult(errors.New("No route for custom query specified"))
 	}
 	querier := app.queryRouter.Route(path[1])
 	if querier == nil {
-		return sdk.ErrUnknownRequest(fmt.Sprintf("no custom querier found for route %s", path[1])).QueryResult()
+		return abcierrors.QueryResult(errors.New(fmt.Sprintf("no custom querier found for route %s", path[1])))
 	}
 
 	// Cache wrap the commit-multistore for safety.
@@ -552,10 +558,11 @@ func handleQueryCustom(app *BaseApp, path []string, req abci.RequestQuery) (res 
 	// For example, in the path "custom/gov/proposal/test", the gov querier gets []string{"proposal", "test"} as the path
 	resBytes, err := querier(ctx, path[2:], req)
 	if err != nil {
+		codespace, code, l :=sdkerrors.ABCIInfo(err, false)
 		return abci.ResponseQuery{
-			Code:      uint32(err.Code()),
-			Codespace: string(err.Codespace()),
-			Log:       err.ABCILog(),
+			Code:      code,
+			Codespace: codespace,
+			Log:       l,
 		}
 	}
 	return abci.ResponseQuery{
@@ -600,46 +607,55 @@ func (app *BaseApp) BeginBlock(req abci.RequestBeginBlock) (res abci.ResponseBeg
 // the route match to see whether a handler exists.
 //
 // NOTE:CheckTx does not run the actual Tx handler function(s).
-func (app *BaseApp) CheckTx(req abci.RequestCheckTx) (res abci.ResponseCheckTx) {
+func (app *BaseApp) CheckTx(req abci.RequestCheckTx) abci.ResponseCheckTx {
 	var result sdk.Result
 
 	tx, err := app.txDecoder(req.Tx)
 	if err != nil {
-		result = err.Result()
+		return abcierrors.ResponseCheckTx(err, 0, 0, false)
 	} else {
-		result = app.runTx(runTxModeCheck, req.Tx, tx)
+		res, err := app.runTx(runTxModeCheck, req.Tx, tx)
+		if err != nil {
+			return abcierrors.ResponseCheckTx(err, res.GasWanted, res.GasUsed, false)
+		}
+		result = res
 	}
 	return abci.ResponseCheckTx{
 		Code:      uint32(result.Code),
 		Codespace: string(result.Codespace),
 		Data:      result.Data,
 		Log:       result.Log,
-		GasWanted: int64(result.GasWanted), // TODO: Should types accept unsigned ints?
-		GasUsed:   int64(result.GasUsed),   // TODO: Should types accept unsigned ints?
+		GasWanted: int64(result.GasWanted), // TODO: Should type accept unsigned ints?
+		GasUsed:   int64(result.GasUsed),   // TODO: Should type accept unsigned ints?
 		Events:    result.Events.ToABCIEvents(),
 	}
 }
 
 // DeliverTx implements the ABCI interface.
-func (app *BaseApp) DeliverTx(req abci.RequestDeliverTx) (res abci.ResponseDeliverTx) {
+func (app *BaseApp) DeliverTx(req abci.RequestDeliverTx) abci.ResponseDeliverTx {
 	var result sdk.Result
 
 	tx, err := app.txDecoder(req.Tx)
 	if err != nil {
-		result = err.Result()
+		return abcierrors.ResponseDeliverTx(err, 0, 0, false)
 	} else {
-		result = app.runTx(runTxModeDeliver, req.Tx, tx)
+		var err error
+		result, err = app.runTx(runTxModeDeliver, req.Tx, tx)
+		if err != nil {
+			return abcierrors.ResponseDeliverTx(err, result.GasWanted, result.GasUsed, false)
+		}
 	}
 
-	return abci.ResponseDeliverTx{
+	res := abci.ResponseDeliverTx{
 		Code:      uint32(result.Code),
 		Codespace: string(result.Codespace),
 		Data:      result.Data,
 		Log:       result.Log,
-		GasWanted: int64(result.GasWanted), // TODO: Should types accept unsigned ints?
-		GasUsed:   int64(result.GasUsed),   // TODO: Should types accept unsigned ints?
+		GasWanted: int64(result.GasWanted), // TODO: Should type accept unsigned ints?
+		GasUsed:   int64(result.GasUsed),   // TODO: Should type accept unsigned ints?
 		Events:    result.Events.ToABCIEvents(),
 	}
+	return res
 }
 
 // retrieve the context for the tx w/ txBytes and other memoized values.
@@ -653,7 +669,7 @@ func (app *BaseApp) getContextForTx(mode runTxMode, txBytes []byte) (ctx sdk.Con
 	return
 }
 
-func (app *BaseApp) runMsgs(ctx sdk.Context, msgs []sdk.Msg, mode runTxMode) sdk.Result {
+func (app *BaseApp) runMsgs(ctx sdk.Context, msgs []sdk.Msg, mode runTxMode) (sdk.Result, error){
 	idxLogs := make([]sdk.ABCIMessageLog, 0, len(msgs))
 	var code      sdk.CodeType
 	var codespace sdk.CodespaceType
@@ -664,14 +680,19 @@ func (app *BaseApp) runMsgs(ctx sdk.Context, msgs []sdk.Msg, mode runTxMode) sdk
 		msgRoute := msg.Route()
 		handler := app.router.Route(msgRoute)
 		if handler == nil {
-			return sdk.ErrUnknownRequest("Unrecognized Msg types: " + msgRoute).Result()
+			return sdk.Result{}, errors.New(fmt.Sprintf("Unrecognized Msg type: %v", msgRoute))
 		}
 
-		var msgResult sdk.Result
+		var msgResult *sdk.Result
+		var err error
 
 		// check 不实际执行
 		if mode != runTxModeCheck {
-			msgResult = handler(ctx, msg)
+			msgResult, err = handler(ctx, msg)
+		}
+
+		if err != nil {
+			return sdk.Result{}, err
 		}
 
 		// append date and log and events
@@ -700,7 +721,7 @@ func (app *BaseApp) runMsgs(ctx sdk.Context, msgs []sdk.Msg, mode runTxMode) sdk
 		Log: 		strings.TrimSpace(string(logJSON)),
 		Data: 		data,
 		Events: 	events,
-	}
+	}, nil
 }
 
 // Returns the applicantion's deliverState if app is in runTxModeDeliver,
@@ -738,7 +759,7 @@ func (app *BaseApp) cacheTxContext(ctx sdk.Context, txBytes []byte) (
 // anteHandler. The provided txBytes may be nil in some cases, eg. in tests. For
 // further details on transfer execution, reference the BaseApp SDK
 // documentation.
-func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk.Result) {
+func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk.Result, err error) {
 	// NOTE: GasWanted should be returned by the AnteHandler. GasUsed is
 	// determined by the GasMeter. We need access to the context to get the gas
 	// meter so we initialize upfront.
@@ -755,15 +776,17 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 		if r := recover(); r != nil {
 			switch rType := r.(type) {
 			case sdk.ErrorOutOfGas:
-				app.deferHandler(ctx, tx, true, mode == runTxModeSimulate)
-				newLog := fmt.Sprintf("out of gas in location: %v", rType.Descriptor)
-				result = sdk.ErrOutOfGas(newLog).Result()
-				result.GasUsed = gasWanted
+				res := app.deferHandler(ctx, tx, true, mode == runTxModeSimulate)
+				newLog := fmt.Sprintf("out of gas in location -- %v", rType.Descriptor)
+				result.GasUsed = res.GasUsed
+				result.GasWanted = res.GasWanted
+				err = abcierrors.Wrap(abcierrors.ErrOutOfGas, newLog)
 			default:
 				res := app.deferHandler(ctx, tx, false, mode == runTxModeSimulate)
-				newLog := fmt.Sprintf("recovered: %v\nstack:%v\n", r, string(debug.Stack()))
-				result = sdk.ErrInternal(newLog).Result()
+				newLog := fmt.Sprintf("recovered -- %v\nstack:%v\n", r, string(debug.Stack()))
 				result.GasUsed = res.GasUsed
+				result.GasWanted = res.GasWanted
+				err = abcierrors.Wrap(abcierrors.ErrInternalStack, newLog)
 			}
 			for _, v := range all_attributes {
 				v = append(v, sdk.NewAttribute([]byte(sdk.EventTypeType), []byte(sdk.AttributeKeyInvalidTx)))
@@ -773,23 +796,23 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 		} else {
 			res := app.deferHandler(ctx, tx, false, mode == runTxModeSimulate)
 			result.GasUsed = res.GasUsed
+			result.GasWanted = gasWanted
 			for _, v := range all_attributes {
 				v = append(v, sdk.NewAttribute([]byte(sdk.EventTypeType), []byte(sdk.AttributeKeyValidTx)))
 				event := sdk.NewEvent(sdk.AttributeKeyTx, v...)
 				result.Events = append(result.Events, event)
 			}
 		}
-		result.GasWanted = gasWanted
 	}()
 	msgs := tx.GetMsgs()
 	if mode != runTxModeSimulate {
 		signer := tx.GetFromAddress()
 		err := validateBasicTxMsgs(msgs, signer)
 		if err != nil {
-			return err.Result()
+			return sdk.Result{}, err
 		}
 		if err := tx.ValidateBasic(); err != nil {
-			return err.Result()
+			return sdk.Result{}, err
 		}
 	}
 
@@ -805,7 +828,7 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 		// writes do not happen if aborted/failed.  This may have some
 		// performance benefits, but it'll be more difficult to get right.
 		anteCtx, msCache = app.cacheTxContext(ctx, txBytes)
-		newCtx, result, abort := app.anteHandler(anteCtx, tx, (mode == runTxModeSimulate))
+		newCtx, res, anteErr, abort := app.anteHandler(anteCtx, tx, (mode == runTxModeSimulate))
 
 		if !newCtx.IsZero() {
 			// At this point, newCtx.MultiStore() is cache wrapped,
@@ -817,7 +840,8 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 		//gasWanted = result.GasWanted
 		//gasUsed = result.GasUsed
 		if abort {
-			return result
+			result = res
+			return result, abcierrors.Wrap(abcierrors.ErrInternalStack, anteErr.Error())
 		}
 
 		msCache.Write()
@@ -833,7 +857,7 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 	all_attributes = allMsgAttributes(msgs)
 
 	runMsgCtx, msCache := app.cacheTxContext(ctx, txBytes)
-	result = app.runMsgs(runMsgCtx, msgs, mode)
+	result, err = app.runMsgs(runMsgCtx, msgs, mode)
 
 	if mode == runTxModeSimulate  { // XXX
 		return
@@ -843,7 +867,7 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 	if result.IsOK() {
 		msCache.Write()
 	}
-	return result
+	return
 }
 
 // EndBlock implements the ABCI application interface.
@@ -865,16 +889,6 @@ func (app *BaseApp) EndBlock(req abci.RequestEndBlock) (res abci.ResponseEndBloc
 // Implements ABCI
 func (app *BaseApp) Commit() (res abci.ResponseCommit) {
 	header := app.deliverState.ctx.BlockHeader()
-	/*
-		// Write the latest Header to the store
-			headerBytes, err := proto.Marshal(&header)
-
-
-			if err != nil {
-				panic(err)
-			}
-			app.db.SetSync(dbHeaderKey, headerBytes)
-	*/
 	// Write the Deliver state and commit the MultiStore
 	app.deliverState.ms.Write()
 	commitID := app.cms.Commit()
@@ -896,15 +910,15 @@ func (app *BaseApp) Commit() (res abci.ResponseCommit) {
 	}
 }
 
-func validateBasicTxMsgs(msgs []sdk.Msg, signer sdk.AccAddress) sdk.Error {
+func validateBasicTxMsgs(msgs []sdk.Msg, signer sdk.AccAddress) error {
 	if msgs == nil || len(msgs) == 0 {
-		return sdk.ErrUnknownRequest("Tx.GetMsgs() must return at least one message in list")
+		return abcierrors.Wrap(errors.New("Tx.GetMsgs() must return at least one message in list"), "")
 	}
 
 	for _, msg := range msgs {
 		// Validate the Msg.
 		if signer != msg.GetFromAddress(){
-			return sdk.ErrInvalidSign("Signer is different from msg.from")
+			return abcierrors.Wrap(abcierrors.ErrorInvalidSigner, "Signer is different from msg.from")
 		}
 		err := msg.ValidateBasic()
 		if err != nil {

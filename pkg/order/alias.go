@@ -10,7 +10,7 @@ var (
 	NewQuerier 				= keeper.NewQuerier
 	NewKeeper  				= keeper.NewOrderKeeper
 	RegisterTxRoutes 		= rest.RegisterTxRoutes
-	ErrQueryTx				= types.ErrQueryTx
+	//ErrQueryTx				= types.ErrQueryTx
 	NewMsgUpgrade           = types.NewMsgUpgrade
 	StoreKey				= types.StoreKey
 

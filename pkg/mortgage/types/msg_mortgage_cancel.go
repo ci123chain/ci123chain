@@ -2,7 +2,7 @@ package types
 
 import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	"github.com/ci123chain/ci123chain/pkg/transfer"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/util"
 )
 
@@ -29,15 +29,14 @@ func (msg *MsgMortgageCancel) MsgType() string {
 	return "mortgage_cancel"
 }
 
-func (msg *MsgMortgageCancel) ValidateBasic() sdk.Error {
+func (msg *MsgMortgageCancel) ValidateBasic() error {
 	if msg.FromAddress .Empty() {
-		return transfer.ErrCheckParams(DefaultCodespace, "missing sender address")
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "empty from address")
 	}
 	if len(msg.UniqueID) < 1 {
-		return transfer.ErrCheckParams(DefaultCodespace, "param mortgageRecord missing")
+		return sdkerrors.Wrap(sdkerrors.ErrParams, "param mortgageRecord missing")
 	}
 	return nil
-	//return msg.CommonTx.VerifySignature(msg.GetSignBytes(), true)
 }
 
 func (msg *MsgMortgageCancel) GetSignBytes() []byte {

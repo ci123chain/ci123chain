@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	ethcmn "github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
@@ -142,11 +143,11 @@ func DecodeResultData(in []byte) (ResultData, error) {
 // TxDecoder returns an sdk.TxDecoder that can decode both auth.StdTx and
 // MsgEthereumTx transactions.
 func TxDecoder(cdc *codec.Codec) sdk.TxDecoder {
-	return func(txBytes []byte) (sdk.Tx, sdk.Error) {
+	return func(txBytes []byte) (sdk.Tx, error) {
 		var tx sdk.Tx
 
 		if len(txBytes) == 0 {
-			return nil, sdk.ErrTxDecode("tx bytes are empty")
+			return nil, sdkerrors.Wrap(sdkerrors.ErrParams, "empty tx")
 		}
 
 		// sdk.Tx is an interface. The concrete message types
@@ -154,7 +155,7 @@ func TxDecoder(cdc *codec.Codec) sdk.TxDecoder {
 		// TODO: switch to UnmarshalBinaryBare on SDK v0.40.0
 		err := cdc.UnmarshalBinaryLengthPrefixed(txBytes, &tx)
 		if err != nil {
-			return nil, sdk.ErrInternal(err.Error())
+			return nil, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("cdc unmarshal failed: %v", err.Error()))
 		}
 
 		return tx, nil

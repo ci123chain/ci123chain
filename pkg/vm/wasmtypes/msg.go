@@ -1,11 +1,11 @@
 package types
 
 import (
-	"errors"
 	vmmodule "github.com/ci123chain/ci123chain/pkg/vm/moduletypes"
 	"github.com/ci123chain/ci123chain/pkg/vm/moduletypes/utils"
 
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 )
 
 type MsgUploadContract struct {
@@ -21,13 +21,13 @@ func NewMsgUploadContract(code []byte, from sdk.AccAddress) *MsgUploadContract {
 }
 
 //TODO
-func (msg *MsgUploadContract) ValidateBasic() sdk.Error {
+func (msg *MsgUploadContract) ValidateBasic() error {
 	if msg.Code == nil {
-		return ErrInvalidMsg(DefaultCodespace, errors.New("code is invalid"))
+		return sdkerrors.Wrap(sdkerrors.ErrParams, "empty code")
 	}
 
 	if msg.FromAddress.Empty() {
-		return ErrInvalidMsg(DefaultCodespace, errors.New("sender is invalid"))
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "empty from address")
 	}
 
 	return nil
@@ -82,13 +82,13 @@ func NewMsgInstantiateContract(codeHash []byte, from sdk.AccAddress, name, versi
 }
 
 //TODO
-func (msg *MsgInstantiateContract) ValidateBasic() sdk.Error {
+func (msg *MsgInstantiateContract) ValidateBasic() error {
 	if len(msg.CodeHash) == 0 {
-		return ErrInvalidMsg(DefaultCodespace, errors.New("code is invalid"))
+		return sdkerrors.Wrap(sdkerrors.ErrParams, "invalid code_hash")
 	}
 
 	if msg.FromAddress.Empty() {
-		return ErrInvalidMsg(DefaultCodespace, errors.New("sender is invalid"))
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "empty from address")
 	}
 
 	return nil
@@ -130,17 +130,17 @@ func NewMsgExecuteContract(from sdk.AccAddress, contractAddress sdk.AccAddress, 
 }
 
 //TODO
-func (msg *MsgExecuteContract) ValidateBasic() sdk.Error {
+func (msg *MsgExecuteContract) ValidateBasic() error {
 	if msg.Contract.Empty() {
-		return ErrInvalidMsg(DefaultCodespace, errors.New("contractAddress is invalid"))
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "empty contract address")
 	}
 
 	if msg.FromAddress.Empty() {
-		return ErrInvalidMsg(DefaultCodespace, errors.New("sender is invalid"))
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "empty from address")
 	}
 
 	if msg.Args.Method == "" {
-		return ErrInvalidMsg(DefaultCodespace, errors.New("args is invalid"))
+		return sdkerrors.Wrap(sdkerrors.ErrParams, "invalid args")
 	}
 	return nil
 }
@@ -193,17 +193,17 @@ func NewMsgMigrateContract(codeHash []byte, from sdk.AccAddress, name, version, 
 	}
 }
 
-func (msg *MsgMigrateContract) ValidateBasic() sdk.Error {
+func (msg *MsgMigrateContract) ValidateBasic() error {
 	if len(msg.CodeHash) == 0 {
-		return ErrInvalidMsg(DefaultCodespace, errors.New("code is invalid"))
+		return sdkerrors.Wrap(sdkerrors.ErrParams, "empty code_hash")
 	}
 
 	if msg.FromAddress.Empty() {
-		return ErrInvalidMsg(DefaultCodespace, errors.New("sender is invalid"))
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "empty from address")
 	}
 
 	if msg.Contract.Empty() {
-		return ErrInvalidMsg(DefaultCodespace, errors.New("contract is invalid"))
+		return sdkerrors.Wrap(sdkerrors.ErrParams, "empty contract")
 	}
 	return nil
 }

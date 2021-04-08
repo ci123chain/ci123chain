@@ -4,16 +4,13 @@ import (
 	"encoding/hex"
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
 	types2 "github.com/ci123chain/ci123chain/pkg/app/types"
-	"github.com/ci123chain/ci123chain/pkg/client"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/client/helper"
-	"github.com/ci123chain/ci123chain/pkg/transaction"
 	transfer2 "github.com/ci123chain/ci123chain/pkg/transfer"
-	"github.com/ci123chain/ci123chain/pkg/transfer/types"
 	"github.com/ci123chain/ci123chain/pkg/util"
-	"github.com/pkg/errors"
 	"net/http"
 	"strconv"
 )
@@ -25,7 +22,7 @@ func SendRequestHandlerFn(cliCtx context.Context, writer http.ResponseWriter, re
 	}
 	privKey, from, nonce, gas, err := rest.GetNecessaryParams(cliCtx, request, cdc, broadcast)
 	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, err.Error()).Error())
 		return
 	}
 	fabric := request.FormValue("fabric")
@@ -35,23 +32,23 @@ func SendRequestHandlerFn(cliCtx context.Context, writer http.ResponseWriter, re
 	}
 	denom := request.FormValue("denom")
 	if denom == "" {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, "the name of the coin which you want to transfer cant not be empty"))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "the name of the coin which you want to transfer cant not be empty").Error())
 		return
 	}
 	to := sdk.HexToAddress(request.FormValue("to"))
 	amount, err := strconv.ParseUint(request.FormValue("amount"), 10, 64)
 	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, err.Error()).Error())
 		return
 	}
 	isBalanceEnough := CheckAccountAndBalanceFromParams(cliCtx, request, writer, denom)
 	if !isBalanceEnough {
-		rest.WriteErrorRes(writer, transaction.ErrAmount(types.DefaultCodespace, errors.New("The balance is not enough to pay the amount")) )
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "The balance is not enough to pay the amount").Error())
 		return
 	}
 	coin := sdk.NewUInt64Coin(denom, amount)
 	if coin.IsNegative() || coin.IsZero() {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, "invalid amount"))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid amount").Error())
 		return
 	}
 	msg := transfer2.NewMsgTransfer(from, to, sdk.NewCoins(coin), isFabric)
@@ -62,7 +59,7 @@ func SendRequestHandlerFn(cliCtx context.Context, writer http.ResponseWriter, re
 
 	txByte, err := types2.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
 	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, err.Error()).Error())
 		return
 	}
 	var a types2.CommonTx
@@ -73,7 +70,7 @@ func SendRequestHandlerFn(cliCtx context.Context, writer http.ResponseWriter, re
 
 	res, err := cliCtx.BroadcastSignedTx(txByte)
 	if err != nil {
-		rest.WriteErrorRes(writer, client.ErrBroadcast(types.DefaultCodespace, err))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, "broadcast failed").Error())
 		return
 	}
 	rest.PostProcessResponseBare(writer, cliCtx, res)
@@ -88,14 +85,13 @@ func CheckAccountAndBalanceFromParams(ctx context.Context, r *http.Request, w ht
 
 	acc, _ := helper.StrToAddress(from)
 	balance, _, err := ctx.GetBalanceByAddress(acc, false)
-
 	if err != nil {
-		rest.WriteErrorRes(w, sdk.ErrInternal("get balances of from account failed"))
+		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInternal, "get balances of from account failed").Error())
 		return false
 	}
 	amountI, ok := sdk.NewIntFromString(amount)
 	if !ok {
-		rest.WriteErrorRes(w, sdk.ErrInternal(fmt.Sprintf("invalid amount %s", amount)))
+		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid amount").Error())
 		return false
 	}
 	if balance.AmountOf(denom).LT(amountI) {

@@ -1,8 +1,9 @@
 package types
 
 import (
+	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	"github.com/ci123chain/ci123chain/pkg/transfer"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/util"
 )
 
@@ -34,21 +35,20 @@ func NewMsgMortgage(from, to sdk.AccAddress, coin sdk.Coin, uniqueID []byte) *Ms
 	return msg
 }
 
-func (msg *MsgMortgage) ValidateBasic() sdk.Error {
+func (msg *MsgMortgage) ValidateBasic() error {
 	if msg.FromAddress.Empty() {
-		return transfer.ErrCheckParams(DefaultCodespace, "missing from address")
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "empty from address")
 	}
 	if msg.ToAddress.Empty() {
-		return transfer.ErrCheckParams(DefaultCodespace, "missing to address")
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "empty to address")
 	}
 	if len(msg.UniqueID) < 1 {
-		return transfer.ErrCheckParams(DefaultCodespace, "param mortgageRecord missing")
+		return sdkerrors.Wrap(sdkerrors.ErrParams, "param mortgageRecord missing")
 	}
 	if !msg.Coin.IsValid() {
-		return transfer.ErrCheckParams(DefaultCodespace, "coin is invalid" + msg.Coin.String())
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, fmt.Sprintf("coin is invalid" + msg.Coin.String()))
 	}
 	return nil
-	//return msg.CommonTx.VerifySignature(msg.GetSignBytes(), true)
 }
 
 func (msg *MsgMortgage) GetSignBytes() []byte {

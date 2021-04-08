@@ -7,12 +7,11 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/account/exported"
 	types2 "github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/auth"
-	"github.com/ci123chain/ci123chain/pkg/auth/types"
 	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
 	"math/big"
 
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/supply"
-	"github.com/ci123chain/ci123chain/pkg/transaction"
 )
 const (
 	Price uint64 = 1
@@ -21,7 +20,7 @@ const (
 
 //const unit = 1000
 func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, sk supply.Keeper) sdk.AnteHandler {
-	return func(ctx sdk.Context, tx sdk.Tx, simulate bool) (newCtx sdk.Context, res sdk.Result, abort bool) {
+	return func(ctx sdk.Context, tx sdk.Tx, simulate bool) (newCtx sdk.Context, res sdk.Result, err error, abort bool) {
 		if simulate {
 			return
 		}
@@ -30,14 +29,14 @@ func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, sk su
 		if etx, ok := tx.(*types2.MsgEthereumTx); ok {
 			from, err := etx.VerifySig(big.NewInt(ChainID))
 			if err != nil {
-				return newCtx, transaction.ErrInvalidTx(types.DefaultCodespace, "tx signature invalid").Result(), true
+				return newCtx, sdk.Result{}, sdkerrors.ErrorInvalidSigner, true
 			}
 			signer = sdk.AccAddress{from}
 		} else {
 			eth := cryptosuit.NewETHSignIdentity()
 			valid, err := eth.Verifier(tx.GetSignBytes(), tx.GetSignature(), nil, tx.GetFromAddress().Bytes())
 			if !valid || err != nil {
-				return newCtx, transaction.ErrInvalidTx(types.DefaultCodespace, "tx signature invalid").Result(), true
+				return newCtx, sdk.Result{}, sdkerrors.ErrorInvalidSigner, true
 			}
 			signer = tx.GetFromAddress()
 		}
@@ -45,13 +44,13 @@ func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, sk su
 		acc := ak.GetAccount(ctx, signer)
 		if acc == nil {
 			newCtx := ctx.WithGasMeter(sdk.NewGasMeter(0))
-			return newCtx, transaction.ErrInvalidTx(types.DefaultCodespace, "Invalid account").Result(), true
+			return newCtx, sdk.Result{}, sdkerrors.Wrap(sdkerrors.ErrorInvalidSigner, "the account not exist"), true
 		}
 		accountSequence := acc.GetSequence()
 		txNonce := tx.GetNonce()
 		if txNonce != accountSequence {
 			newCtx := ctx.WithGasMeter(sdk.NewGasMeter(0))
-			return newCtx, transaction.ErrInvalidTx(types.DefaultCodespace, "Unexpected nonce ").Result(), true
+			return newCtx, sdk.Result{}, sdkerrors.Wrap(sdkerrors.ErrParams, "unexpected nonce"), true
 		}
 
 		params := authKeeper.GetParams(ctx)
@@ -61,15 +60,18 @@ func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, sk su
 		if ctx.IsCheckTx() && !simulate {
 			res := EnsureSufficientMempoolFees()
 			if !res.IsOK() {
-				return newCtx, res, true
+				return newCtx, res, sdkerrors.Wrap(sdkerrors.ErrInternal, "insufficient mempool fees"), true
 			}
 		}
 		gas := tx.GetGas()//用户期望的gas值 g.limit
 		//检查是否足够支付gas limit, 并预先扣除
 		if acc.GetCoins().AmountOf(sdk.ChainCoinDenom).LT(sdk.NewIntFromBigInt(big.NewInt(int64(gas)))) {
-			return newCtx, sdk.ErrInsufficientCoins("Can't pay enough gasLimit").Result(),true
+			return newCtx, sdk.Result{}, sdkerrors.Wrap(sdkerrors.ErrInternal, "insufficient funds to pay gas"),true
 		}
-		DeductFees(acc,sdk.NewUInt64Coin(sdk.ChainCoinDenom, gas),ak,ctx)
+		err = DeductFees(acc,sdk.NewUInt64Coin(sdk.ChainCoinDenom, gas),ak,ctx)
+		if err != nil {
+			return newCtx, sdk.Result{}, err, true
+		}
 		newCtx = SetGasMeter(simulate, ctx, gas)//设置为GasMeter的gasLimit,成为用户可承受的gas上限.
 		//pms.TxSizeCostPerByte*sdk.Gas(len(newCtx.TxBytes()))
 		
@@ -106,11 +108,10 @@ func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, sk su
 		//存储奖励金到feeCollector Module账户
 		feeCollectorModuleAccount := sk.GetModuleAccount(ctx, auth.FeeCollectorName)
 		newFee := feeCollectorModuleAccount.GetCoins().Add(getFee)
-		err := feeCollectorModuleAccount.SetCoins(newFee)
+		err = feeCollectorModuleAccount.SetCoins(newFee)
 
 		if err != nil {
-			fmt.Println("fee_collector module account set coin failed")
-			panic(err)
+			return newCtx, sdk.Result{}, sdkerrors.Wrap(sdkerrors.ErrInternal, "fee_collector module account set coin failed"), true
 		}
 		ak.SetAccount(ctx, feeCollectorModuleAccount)
 		//fck.AddCollectedFees(newCtx, getFee)
@@ -119,7 +120,7 @@ func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, sk su
 		nowSequence := accountSequence + 1
 		_ = acc.SetSequence(nowSequence)
 		ak.SetAccount(ctx, acc)
-		return newCtx, sdk.Result{GasWanted:gas,GasUsed:fee}, false
+		return newCtx, sdk.Result{GasWanted:gas,GasUsed:fee}, nil, false
 	}
 }
 
@@ -156,31 +157,29 @@ func EnsureSufficientMempoolFees() sdk.Result {
 }
 
 
-func DeductFees(acc exported.Account, fee sdk.Coin, ak account.AccountKeeper, ctx sdk.Context) sdk.Result {
+func DeductFees(acc exported.Account, fee sdk.Coin, ak account.AccountKeeper, ctx sdk.Context) error{
 	coin := acc.GetCoins()
 	newCoins, hasNeg := coin.SafeSub(sdk.NewCoins(fee))
 	if hasNeg {
-		return sdk.ErrInsufficientFunds(
-			fmt.Sprintf("insufficient funds to pay for fees; %s < %s", coin, fee),
-		).Result()
+		return sdkerrors.Wrap(sdkerrors.ErrInsufficientFunds, fmt.Sprintf("insufficient funds to pay for fees; %s < %s", coin, fee))
 	}
 
 	if err := acc.SetCoins(newCoins); err != nil {
-		return account.ErrSetAccount(types.DefaultCodespace, err).Result()
+		return sdkerrors.Wrap(sdkerrors.ErrInternal, "set coins failed")
 	}
 	ak.SetAccount(ctx, acc)
 
-	return sdk.Result{}
+	return nil
 }
 
-func ReturnFees(acc exported.Account, restFee sdk.Coin, ak account.AccountKeeper, ctx sdk.Context) sdk.Result {
+func ReturnFees(acc exported.Account, restFee sdk.Coin, ak account.AccountKeeper, ctx sdk.Context) error {
 	coin := acc.GetCoins()
 	newCoins:= coin.Add(restFee)
 
 	if err := acc.SetCoins(newCoins); err != nil {
-		return account.ErrSetAccount(types.DefaultCodespace, err).Result()
+		return sdkerrors.Wrap(sdkerrors.ErrInternal, "set coins failed")
 	}
 	ak.SetAccount(ctx, acc)
 
-	return sdk.Result{}
+	return nil
 }

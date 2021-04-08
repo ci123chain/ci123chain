@@ -1,12 +1,12 @@
 package cmd
 
 import (
-	"errors"
+	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	types2 "github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/client"
 	"github.com/ci123chain/ci123chain/pkg/client/helper"
-	"github.com/ci123chain/ci123chain/pkg/client/types"
 	transfer2 "github.com/ci123chain/ci123chain/pkg/transfer"
 	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/spf13/cobra"
@@ -52,14 +52,14 @@ var transferCmd = &cobra.Command{
 		from := sdk.HexToAddress(viper.GetString(flagFrom))
 		tos, err := helper.ParseAddrs(viper.GetString(flagTo))
 		if err != nil {
-			return types.ErrParseAddr(types.DefaultCodespace, err)
+			return sdkerrors.Wrap(sdkerrors.ErrParams, "invalid to address")
 		}
 		if len(tos) == 0 {
-			return types.ErrNoAddr(types.DefaultCodespace, err)
+			return sdkerrors.Wrap(sdkerrors.ErrParams, "invalid to address")
 		}
 		d := viper.GetString(flagDenom)
 		if d == "" {
-			return types.ErrParseParam(types.DefaultCodespace, errors.New("coin denom can't be emtpy"))
+			return sdkerrors.Wrap(sdkerrors.ErrParams, "invalid denom")
 		}
 
 		gas := uint64((viper.GetInt(flagGas)))
@@ -71,19 +71,19 @@ var transferCmd = &cobra.Command{
 		msg := transfer2.NewMsgTransfer(from, tos[0], sdk.NewCoins(coin), isFabric)
 		nonce, err := transfer2.GetNonceByAddress(from)
 		if err != nil {
-			return types.ErrParseParam(types.DefaultCodespace, err)
+			return sdkerrors.Wrap(sdkerrors.ErrParams, "invalid nonce")
 		}
 
 		txByte, err := types2.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
 		if err != nil {
-			return types.ErrParseParam(types.DefaultCodespace, err)
+			return sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("sign tx failed: %v", err.Error()))
 		}
 
 		res, err := ctx.BroadcastSignedData(txByte)
 		if err != nil {
-			return types.ErrBroadcast(types.DefaultCodespace, err)
+			return sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("boradcast tx failed:%v", err.Error()))
 		}
-		ctx.PrintOutput(res)
+		_ = ctx.PrintOutput(res)
 		return nil
 	},
 }

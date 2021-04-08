@@ -6,9 +6,9 @@ import (
 	"errors"
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
 	types2 "github.com/ci123chain/ci123chain/pkg/app/types"
-	"github.com/ci123chain/ci123chain/pkg/client"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/infrastructure"
 	"github.com/ci123chain/ci123chain/pkg/infrastructure/types"
@@ -18,7 +18,7 @@ import (
 )
 
 func RegisterRestTxRoutes(cliCtx context.Context, r *mux.Router)  {
-	r.HandleFunc("/infrastructure/store_content", rest.MiddleHandler(cliCtx, StoreContentRequest, types.DefaultCodespace)).Methods("POST")
+	r.HandleFunc("/infrastructure/store_content", rest.MiddleHandler(cliCtx, StoreContentRequest, sdkerrors.RootCodespace)).Methods("POST")
 }
 
 var cdc = types2.MakeCodec()
@@ -32,31 +32,31 @@ func StoreContentRequest(cliCtx context.Context, writer http.ResponseWriter, req
 	}
 	privKey, from, nonce, gas, err := rest.GetNecessaryParams(cliCtx, request, cdc, broadcast)
 	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, err.Error()).Error())
 		return
 	}
 
 	//verify account exists
 	err = checkAccountExist(cliCtx, from)
 	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, err.Error()).Error())
 		return
 	}
 	key_str := request.FormValue("key")
 	content_str := request.FormValue("content")
 	if key_str == ""{
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, "key"))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "key cant not be empty").Error())
 		return
 	}
 	if content_str == ""{
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, "content"))
+		rest.WriteErrorRes(writer,sdkerrors.Wrap(sdkerrors.ErrParams, "conten can not be empty").Error())
 		return
 	}
 	//key, err := hex.DecodeString(key_str)
 	//content, err := hex.DecodeString(content_str)
 	value, err := json.Marshal(types.NewStoredContent(key_str, content_str))
 	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrMarshalFailed(types.DefaultCodespace, err))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error()).Error())
 		return
 	}
 	msg := infrastructure.NewStoreContentMsg(from, key_str, value)
@@ -68,12 +68,12 @@ func StoreContentRequest(cliCtx context.Context, writer http.ResponseWriter, req
 
 	txByte, err := types2.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
 	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, "sign tx failed").Error())
 		return
 	}
 	res, err := cliCtx.BroadcastSignedTx(txByte)
 	if err != nil {
-		rest.WriteErrorRes(writer, client.ErrBroadcast(types.DefaultCodespace, err))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, "broadcast tx failed").Error())
 		return
 	}
 	rest.PostProcessResponseBare(writer, cliCtx, res)

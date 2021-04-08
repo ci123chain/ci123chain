@@ -24,7 +24,7 @@ func (msg MsgStoreContent) Route() string { return RouteKey }
 
 func (msg MsgStoreContent) MsgType() string { return "store-content" }
 
-func (msg MsgStoreContent) ValidateBasic() sdk.Error {
+func (msg MsgStoreContent) ValidateBasic() error {
 	return nil
 }
 

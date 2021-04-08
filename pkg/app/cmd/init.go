@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/ci123chain/ci123chain/pkg/abci"
 	abcitypes "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/app"
 	"github.com/ci123chain/ci123chain/pkg/app/types"
@@ -26,6 +25,7 @@ import (
 	"regexp"
 	"time"
 	//"regexp"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 )
 
 var (
@@ -146,7 +146,7 @@ func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Com
 			}
 			chainID, nodeID, appMessage, pubKey, err := InitWithConfig(cdc, appInit, ctxConfig, initConfig)
 			if err != nil {
-				return types.ErrInitWithCfg(types.DefaultCodespace, err)
+				return sdkerrors.Wrap(sdkerrors.ErrParams, fmt.Sprintf("invalid params: %v", err.Error()))
 			}
 
 			// print out some types information
@@ -163,7 +163,7 @@ func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Com
 			}
 			out, err := types.MarshalJSONIndent(cdc, toPrint)
 			if err != nil {
-				return abci.ErrInternal("Marshal failed")
+				return sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, fmt.Sprintf("marshal failed: %v", err.Error()))
 			}
 			fmt.Println(string(out))
 			return nil

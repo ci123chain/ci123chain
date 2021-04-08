@@ -1,10 +1,12 @@
 package keeper
 
 import (
+	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/distribution/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"strconv"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 )
 
 const (
@@ -12,7 +14,7 @@ const (
 )
 
 func NewQuerier(keeper DistrKeeper) sdk.Querier {
-	return func(ctx sdk.Context, path []string, req abci.RequestQuery) (res []byte, err sdk.Error) {
+	return func(ctx sdk.Context, path []string, req abci.RequestQuery) (res []byte, err error) {
 		switch path[0] {
 		case QueryRewards:
 			return queryRewards(ctx, path[1:], req, keeper)
@@ -30,12 +32,12 @@ func NewQuerier(keeper DistrKeeper) sdk.Querier {
 			return queryDelegatorAccountInfo(ctx, req, keeper)
 
 		default:
-			return nil, sdk.ErrUnknownRequest("unknown query endpoint")
+			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "unknown query endpoint")
 		}
 	}
 }
 
-func queryRewards(ctx sdk.Context, path []string, _ abci.RequestQuery, keeper DistrKeeper) ([]byte, sdk.Error){
+func queryRewards(ctx sdk.Context, path []string, _ abci.RequestQuery, keeper DistrKeeper) ([]byte, error){
 
 	accountAddress := path[0]
 	height := path[1]
@@ -45,7 +47,7 @@ func queryRewards(ctx sdk.Context, path []string, _ abci.RequestQuery, keeper Di
 	}else {
 		_, Err := strconv.ParseInt(height, 10, 64)
 		if Err != nil {
-			return nil, types.ErrBadHeight(types.DefaultCodespace, Err)
+			return nil, sdkerrors.Wrap(sdkerrors.ErrParams, fmt.Sprintf("invalid height: %v", Err.Error()))
 		}
 	}
 	key := accountAddress + height
@@ -53,22 +55,22 @@ func queryRewards(ctx sdk.Context, path []string, _ abci.RequestQuery, keeper Di
 	addr := sdk.AccAddr(address)
 	rewards, err := keeper.GetValCurrentRewards(ctx, addr)
 	if err != nil {
-		return nil, types.ErrBadHeight(types.DefaultCodespace, err)
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("get validator current rewards failed: %v", err.Error()))
 	}
 
 	amount := uint64(rewards.Amount.Int64())
 	retbz, err := types.DistributionCdc.MarshalBinaryLengthPrefixed(amount)
 	if err != nil {
-		return nil, types.ErrFailedMarshal(types.DefaultCodespace, err.Error())
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("cdc marshal failed: %v", err.Error()))
 	}
 	return retbz, nil
 }
 
-func queryValidatorOutstandingRewards(ctx sdk.Context, req abci.RequestQuery, k DistrKeeper) ([]byte, sdk.Error) {
+func queryValidatorOutstandingRewards(ctx sdk.Context, req abci.RequestQuery, k DistrKeeper) ([]byte, error) {
 	var params types.QueryValidatorOutstandingRewardsParams
 	err := k.cdc.UnmarshalJSON(req.Data, &params)
 	if err != nil {
-		return nil, types.ErrFailedMarshal(types.DefaultCodespace, err.Error())
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("cdc marshal failed: %v", err.Error()))
 	}
 
 	rewards := k.GetValidatorOutstandingRewards(ctx, params.ValidatorAddress)
@@ -78,7 +80,7 @@ func queryValidatorOutstandingRewards(ctx sdk.Context, req abci.RequestQuery, k 
 	return res, nil
 }
 
-func queryCommunityPool(ctx sdk.Context, _ abci.RequestQuery, k DistrKeeper) ([]byte, sdk.Error) {
+func queryCommunityPool(ctx sdk.Context, _ abci.RequestQuery, k DistrKeeper) ([]byte, error) {
 
 	pool := k.GetFeePoolCommunity(ctx)
 
@@ -86,12 +88,12 @@ func queryCommunityPool(ctx sdk.Context, _ abci.RequestQuery, k DistrKeeper) ([]
 	return res, nil
 }
 
-func queryDelegatorWithdrawAddress(ctx sdk.Context, req abci.RequestQuery, k DistrKeeper) ([]byte, sdk.Error) {
+func queryDelegatorWithdrawAddress(ctx sdk.Context, req abci.RequestQuery, k DistrKeeper) ([]byte, error) {
 
 	var params types.QueryDelegatorWithdrawAddrParams
 	err := k.cdc.UnmarshalJSON(req.Data, &params)
 	if err != nil {
-		return nil, types.ErrFailedMarshal(types.DefaultCodespace, err.Error())
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("cdc marshal failed: %v", err.Error()))
 	}
 	withdrawAddr := k.GetDelegatorWithdrawAddr(ctx, params.DelegatorAddress)
 
@@ -99,22 +101,22 @@ func queryDelegatorWithdrawAddress(ctx sdk.Context, req abci.RequestQuery, k Dis
 	return res, nil
 }
 
-func queryValidatorCommission(ctx sdk.Context, req abci.RequestQuery, k DistrKeeper) ([]byte, sdk.Error) {
+func queryValidatorCommission(ctx sdk.Context, req abci.RequestQuery, k DistrKeeper) ([]byte, error) {
 	var params types.QueryValidatorCommissionParams
 	err := k.cdc.UnmarshalJSON(req.Data, &params)
 	if err != nil {
-		return nil, types.ErrFailedMarshal(types.DefaultCodespace, err.Error())
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("cdc marshal failed: %v", err.Error()))
 	}
 	commission := k.GetValidatorAccumulatedCommission(ctx, params.ValidatorAddress)
 	res := types.DistributionCdc.MustMarshalJSON(commission)
 	return res, nil
 }
 
-func queryDelegationRewards(ctx sdk.Context, req abci.RequestQuery, k DistrKeeper) ([]byte, sdk.Error) {
+func queryDelegationRewards(ctx sdk.Context, req abci.RequestQuery, k DistrKeeper) ([]byte, error) {
 	var params types.QueryDelegationRewardsParams
 	err := k.cdc.UnmarshalJSON(req.Data, &params)
 	if err != nil {
-		return nil, types.ErrFailedMarshal(types.DefaultCodespace, err.Error())
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("cdc marshal failed: %v", err.Error()))
 	}
 
 	// cache-wrap context as to not persist state changes during querying
@@ -136,12 +138,12 @@ func queryDelegationRewards(ctx sdk.Context, req abci.RequestQuery, k DistrKeepe
 	return res, nil
 }
 
-func queryDelegatorAccountInfo(ctx sdk.Context, req abci.RequestQuery, k DistrKeeper) ([]byte, sdk.Error) {
+func queryDelegatorAccountInfo(ctx sdk.Context, req abci.RequestQuery, k DistrKeeper) ([]byte, error) {
 	var params types.QueryDelegatorBalanceParams
 
 	err := k.cdc.UnmarshalJSON(req.Data, &params)
 	if err != nil {
-		return nil, sdk.ErrInternal("unmarshal failed")
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("cdc marshal failed: %v", err.Error()))
 	}
 
 	ctx, _ = ctx.CacheContext()

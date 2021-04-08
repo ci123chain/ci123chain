@@ -1,23 +1,21 @@
 package client
 
-import "github.com/ci123chain/ci123chain/pkg/client/types"
-
-var (
-	ErrNewClientCtx		= types.ErrNewClientCtx
-	ErrGetInputAddr		= types.ErrGetInputAddrCtx
-	ErrParseAddr		= types.ErrParseAddr
-	ErrParseParam		= types.ErrParseParam
-	ErrNoAddr       	= types.ErrNoAddr
-	ErrGetPassPhrase	= types.ErrGetPassPhrase
-	ErrGetSignData		= types.ErrGetSignData
-	ErrBroadcast		= types.ErrBroadcast
-	ErrGetCheckPassword	= types.ErrGetCheckPassword
-	ErrGetPassword		= types.ErrGetPassword
-	ErrPhrasesNotMatch	= types.ErrPhrasesNotMatch
-	ErrNode				= types.ErrNode
-	ErrGenValidatorKey  = types.ErrGenValidatorKey
-	ErrGenAccount       = types.ErrGenAccount
-)
+//var (
+//	ErrNewClientCtx		= types.ErrNewClientCtx
+//	ErrGetInputAddr		= types.ErrGetInputAddrCtx
+//	ErrParseAddr		= types.ErrParseAddr
+//	ErrParseParam		= types.ErrParseParam
+//	ErrNoAddr       	= types.ErrNoAddr
+//	ErrGetPassPhrase	= types.ErrGetPassPhrase
+//	ErrGetSignData		= types.ErrGetSignData
+//	ErrBroadcast		= types.ErrBroadcast
+//	ErrGetCheckPassword	= types.ErrGetCheckPassword
+//	ErrGetPassword		= types.ErrGetPassword
+//	ErrPhrasesNotMatch	= types.ErrPhrasesNotMatch
+//	ErrNode				= types.ErrNode
+//	ErrGenValidatorKey  = types.ErrGenValidatorKey
+//	ErrGenAccount       = types.ErrGenAccount
+//)
 
 type TMResponse struct {
 	Jsonrpc  string `json:"jsonrpc"`

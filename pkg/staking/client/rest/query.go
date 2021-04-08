@@ -2,11 +2,12 @@ package rest
 
 import (
 	"encoding/hex"
+	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/staking/types"
-	"github.com/ci123chain/ci123chain/pkg/transfer"
 	"github.com/gorilla/mux"
 	"net/http"
 	"strings"
@@ -47,12 +48,12 @@ func delegatorDelegationsHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		params := types.NewQueryDelegatorParams(delegatorAddr)
 		bz, Err := cliCtx.Cdc.MarshalJSON(params)
 		if Err != nil {
-			rest.WriteErrorRes(writer, sdk.ErrInternal("marshal failed"))
+			rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("cdc marshal failed: %v", Err.Error())).Error())
 			return
 		}
 		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(writer, cliCtx, request, "")
 		if !ok || err != nil {
-			rest.WriteErrorRes(writer, err)
+			rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, "get clictx failed").Error())
 			return
 		}
 		if !rest.CheckHeightAndProve(writer, height, prove, types.DefaultCodespace) {
@@ -65,11 +66,11 @@ func delegatorDelegationsHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		}
 		res, _, proof, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryDelegatorDelegations, bz, isProve)
 		if err != nil {
-			rest.WriteErrorRes(writer, err)
+			rest.WriteErrorRes(writer, err.Error())
 			return
 		}
 		if len(res) < 1 {
-			rest.WriteErrorRes(writer, transfer.ErrQueryTx(types.DefaultCodespace, "query response length less than 1"))
+			rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrResponse, fmt.Sprintf("unexpected res: %v", res)).Error())
 			return
 		}
 		var delegations types.DelegationResponses
@@ -86,7 +87,7 @@ func validatorsHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		prove := request.FormValue("prove")
 		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(writer, cliCtx, request, "")
 		if !ok {
-			rest.WriteErrorRes(writer, err)
+			rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, "get clictx failed").Error())
 			return
 		}
 		if !rest.CheckHeightAndProve(writer, height, prove, types.DefaultCodespace) {
@@ -95,7 +96,7 @@ func validatorsHandlerFn(cliCtx context.Context) http.HandlerFunc {
 
 		_, page, limit, Err := rest.ParseHTTPArgsWithLimit(request, 0)
 		if err != nil {
-			rest.WriteErrorRes(writer, err)
+			rest.WriteErrorRes(writer, err.Error())
 			return
 		}
 
@@ -107,7 +108,7 @@ func validatorsHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		params := types.NewQueryValidatorsParams(page, limit, status)
 		bz, Err := cliCtx.Cdc.MarshalJSON(params)
 		if Err != nil {
-			rest.WriteErrorRes(writer, sdk.ErrInternal("marshal failed"))
+			rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("cdc marshal failed: %v", Err.Error())).Error())
 			return
 		}
 
@@ -117,20 +118,15 @@ func validatorsHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		}
 		res, _, proof, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryValidators, bz, isProve)
 		if err != nil {
-			rest.WriteErrorRes(writer, err)
+			rest.WriteErrorRes(writer, err.Error())
 			return
 		}
 		if len(res) < 1 {
-			rest.WriteErrorRes(writer, transfer.ErrQueryTx(types.DefaultCodespace, "query response length less than 1"))
+			rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrResponse, fmt.Sprintf("get unexpected res: %v", res)).Error())
 			return
 		}
 		var validators []types.Validator
 		cliCtx.Cdc.MustUnmarshalJSON(res, &validators)
-		/*Err = types.StakingCodec.UnmarshalJSON(res, &validators)
-		if Err != nil {
-			//rest.WriteErrorRes(writer, transfer.ErrQueryTx(types.DefaultCodespace, "unmarshal failed"))
-			//return
-		}*/
 		value := validators
 		resp := rest.BuildQueryRes(height, isProve, value, proof)
 		rest.PostProcessResponseBare(writer, cliCtx, resp)
@@ -144,7 +140,7 @@ func validatorHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		prove := request.FormValue("prove")
 		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(writer, cliCtx, request, "")
 		if !ok || err != nil {
-			rest.WriteErrorRes(writer, err)
+			rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("get clictx failed")).Error())
 			return
 		}
 		if !rest.CheckHeightAndProve(writer, height, prove, types.DefaultCodespace) {
@@ -156,7 +152,7 @@ func validatorHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		params := types.NewQueryValidatorParams(validatorAddr)
 		bz, Err := cliCtx.Cdc.MarshalJSON(params)
 		if Err != nil {
-			rest.WriteErrorRes(writer, sdk.ErrInternal("marshal failed"))
+			rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("cdc marshal faield: %v", Err.Error())).Error())
 			return
 		}
 
@@ -166,11 +162,11 @@ func validatorHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		}
 		res, _, proof, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryValidator, bz, isProve)
 		if err != nil {
-			rest.WriteErrorRes(writer, err)
+			rest.WriteErrorRes(writer, err.Error())
 			return
 		}
 		if len(res) < 1 {
-			rest.WriteErrorRes(writer, transfer.ErrQueryTx(types.DefaultCodespace, "query response length less than 1"))
+			rest.WriteErrorRes(writer,sdkerrors.Wrap(sdkerrors.ErrResponse, fmt.Sprintf("get unexpected res: %v", res)).Error())
 			return
 		}
 		var validator types.Validator
@@ -192,13 +188,13 @@ func validatorDelegationsHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		params := types.NewQueryValidatorParams(validatorAddr)
 		bz, Err := cliCtx.Cdc.MarshalJSON(params)
 		if Err != nil {
-			rest.WriteErrorRes(writer, sdk.ErrInternal("marshal failed"))
+			rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("cdc marhsal failed: %v", Err.Error())).Error())
 			return
 		}
 
 		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(writer, cliCtx, request, "")
 		if !ok || err != nil {
-			rest.WriteErrorRes(writer, err)
+			rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, "get clictx failed").Error())
 			return
 		}
 		if !rest.CheckHeightAndProve(writer, height, prove, types.DefaultCodespace) {
@@ -211,11 +207,11 @@ func validatorDelegationsHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		}
 		res, _, proof, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryValidatorDelegations, bz, isProve)
 		if err != nil {
-			rest.WriteErrorRes(writer, err)
+			rest.WriteErrorRes(writer, err.Error())
 			return
 		}
 		if len(res) < 1 {
-			rest.WriteErrorRes(writer, transfer.ErrQueryTx(types.DefaultCodespace, "query response length less than 1"))
+			rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrResponse, fmt.Sprintf("get unexpected res: %v", res)).Error())
 			return
 		}
 		var delegations types.DelegationResponses
@@ -239,13 +235,13 @@ func delegatorValidatorsHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		params := types.NewQueryDelegatorParams(delegatorAddr)
 		bz, Err := cliCtx.Cdc.MarshalJSON(params)
 		if Err != nil {
-			rest.WriteErrorRes(writer, sdk.ErrInternal("marshal failed"))
+			rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("cdc marhsal failed: %v", Err.Error())).Error())
 			return
 		}
 
 		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(writer, cliCtx, request, "")
 		if !ok || err != nil {
-			rest.WriteErrorRes(writer, err)
+			rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, "get clictx failed").Error())
 			return
 		}
 		if !rest.CheckHeightAndProve(writer, height, prove, types.DefaultCodespace) {
@@ -258,11 +254,11 @@ func delegatorValidatorsHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		}
 		res, _, proof, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryDelegatorValidators, bz, isProve)
 		if err != nil {
-			rest.WriteErrorRes(writer, err)
+			rest.WriteErrorRes(writer, err.Error())
 			return
 		}
 		if len(res) < 1 {
-			rest.WriteErrorRes(writer, transfer.ErrQueryTx(types.DefaultCodespace, "query response length less than 1"))
+			rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrResponse, fmt.Sprintf("get unexpected res: %v", res)).Error())
 			return
 		}
 		var validators []types.Validator
@@ -289,13 +285,13 @@ func delegatorValidatorHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		params := types.NewQueryBondsParams(delegatorAddr, validatorAddr)
 		bz, Err := cliCtx.Cdc.MarshalJSON(params)
 		if Err != nil {
-			rest.WriteErrorRes(writer, sdk.ErrInternal("marshal failed"))
+			rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("cdc marhsal failed: %v", Err.Error())).Error())
 			return
 		}
 
 		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(writer, cliCtx, request, "")
 		if !ok || err != nil {
-			rest.WriteErrorRes(writer, err)
+			rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, "get clictx failed").Error())
 			return
 		}
 		if !rest.CheckHeightAndProve(writer, height, prove, types.DefaultCodespace) {
@@ -307,11 +303,11 @@ func delegatorValidatorHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		}
 		res, _, proof, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryDelegatorValidator, bz, isProve)
 		if err != nil {
-			rest.WriteErrorRes(writer, err)
+			rest.WriteErrorRes(writer, err.Error())
 			return
 		}
 		if len(res) < 1 {
-			rest.WriteErrorRes(writer, transfer.ErrQueryTx(types.DefaultCodespace, "query response length less than 1"))
+			rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrResponse, fmt.Sprintf("get unexpected res: %v", res)).Error())
 			return
 		}
 		var validator types.Validator
@@ -336,13 +332,13 @@ func delegationHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		params := types.NewQueryBondsParams(delegatorAddr, validatorAddr)
 		bz, Err := cliCtx.Cdc.MarshalJSON(params)
 		if Err != nil {
-			rest.WriteErrorRes(writer, sdk.ErrInternal("marshal failed"))
+			rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("cdc marhsal failed: %v", Err.Error())).Error())
 			return
 		}
 
 		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(writer, cliCtx, request, "")
 		if !ok || err != nil {
-			rest.WriteErrorRes(writer, err)
+			rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, "get clictx failed").Error())
 			return
 		}
 		if !rest.CheckHeightAndProve(writer, height, prove, types.DefaultCodespace) {
@@ -354,11 +350,11 @@ func delegationHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		}
 		res, _, proof, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryDelegation, bz, isProve)
 		if err != nil {
-			rest.WriteErrorRes(writer, err)
+			rest.WriteErrorRes(writer, err.Error())
 			return
 		}
 		if len(res) < 1 {
-			rest.WriteErrorRes(writer, transfer.ErrQueryTx(types.DefaultCodespace, "query response length less than 1"))
+			rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrResponse, fmt.Sprintf("get unexpected res: %v", res)).Error())
 			return
 		}
 		var delegation types.DelegationResponse
@@ -376,7 +372,7 @@ func redelegationsHandlerFn(cliCtx context.Context) http.HandlerFunc {
 
 		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r, "")
 		if !ok || err != nil {
-			rest.WriteErrorRes(w, err)
+			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInternal, "get clictx failed").Error())
 			return
 		}
 		height := r.FormValue("height")
@@ -394,7 +390,7 @@ func redelegationsHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		params.DstValidatorAddr = validatorDstAddr
 		bz, Err := cliCtx.Cdc.MarshalJSON(params)
 		if Err != nil {
-			rest.WriteErrorRes(w, sdk.ErrInternal("marshal failed"))
+			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("cdc marhsal failed: %v", Err.Error())).Error())
 			return
 		}
 		if !rest.CheckHeightAndProve(w, height, prove, types.DefaultCodespace) {
@@ -406,11 +402,11 @@ func redelegationsHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		}
 		res, _, proof, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryRedelegations, bz, isProve)
 		if err != nil {
-			rest.WriteErrorRes(w, err)
+			rest.WriteErrorRes(w, err.Error())
 			return
 		}
 		if len(res) < 1 {
-			rest.WriteErrorRes(w, transfer.ErrQueryTx(types.DefaultCodespace, "query response length less than 1"))
+			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrResponse, fmt.Sprintf("get unexpected res: %v", res)).Error())
 			return
 		}
 		var redelegations types.RedelegationResponses
@@ -427,7 +423,7 @@ func operatorAddressSetQueryHandleFn(cliCtx context.Context) http.HandlerFunc {
 		var params types.QueryOperatorAddressesParams
 		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r, "")
 		if !ok || err != nil {
-			rest.WriteErrorRes(w, err)
+			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInternal, "get clictx failed").Error())
 			return
 		}
 		params.ConsAddresses = make([]sdk.AccAddr, 0)
@@ -438,14 +434,14 @@ func operatorAddressSetQueryHandleFn(cliCtx context.Context) http.HandlerFunc {
 		for _, v := range sets {
 			b, err := hex.DecodeString(v)
 			if err != nil {
-				rest.WriteErrorRes(w, transfer.ErrQueryTx(types.DefaultCodespace, err.Error()))
+				rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrParams, err.Error()).Error())
 				return
 			}
 			params.ConsAddresses = append(params.ConsAddresses, sdk.AccAddr(b))
 		}
 		bz, Err := cliCtx.Cdc.MarshalJSON(params)
 		if Err != nil {
-			rest.WriteErrorRes(w, sdk.ErrInternal("marshal failed"))
+			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("cdc marhsal failed: %v", Err.Error())).Error())
 			return
 		}
 		if !rest.CheckHeightAndProve(w, height, prove, types.DefaultCodespace) {
@@ -457,11 +453,11 @@ func operatorAddressSetQueryHandleFn(cliCtx context.Context) http.HandlerFunc {
 		}
 		res, _, proof, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryOperatorAddressSet, bz, isProve)
 		if err != nil {
-			rest.WriteErrorRes(w, err)
+			rest.WriteErrorRes(w, err.Error())
 			return
 		}
 		if len(res) < 1 {
-			rest.WriteErrorRes(w, transfer.ErrQueryTx(types.DefaultCodespace, "query response length less than 1"))
+			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrResponse, fmt.Sprintf("get unexpected res: %v", res)).Error())
 			return
 		}
 		var result []types.ValidatorOperatorAddressResponse

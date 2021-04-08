@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/ci123chain/ci123chain/pkg/abci"
 	"github.com/ci123chain/ci123chain/pkg/app/types"
 	r "github.com/ci123chain/ci123chain/pkg/redis"
 	"github.com/go-redis/redis/v8"
@@ -18,6 +17,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 )
 type (
 	AppCreator func(home string, logger log.Logger, statedb, traceStore string) (sdk.Application, error)
@@ -50,7 +50,7 @@ func ConstructAppCreator(appFn AppCreatorInit, name string) AppCreator {
 				0666,
 				)
 			if err != nil {
-				return nil, abci.ErrInternal("Open file failed")
+				return nil,sdkerrors.Wrap(sdkerrors.ErrInternal, err.Error())
 			}
 		}
 		app := appFn(logger, ldb, rdb, traceStoreWriter)
@@ -73,7 +73,7 @@ func ConstructAppExporter(appFn AppExporterInit, name string) AppExporter {
 		//RedisDB
 		rdb, err := GetRDB(statedb)
 		if err != nil {
-			return nil, nil, abci.ErrInternal("GetRDB failed")
+			return nil, nil, sdkerrors.Wrap(sdkerrors.ErrInternal, "get db failed")
 		}
 		var traceStoreWriter io.Writer
 		if traceStore != "" {
@@ -83,7 +83,7 @@ func ConstructAppExporter(appFn AppExporterInit, name string) AppExporter {
 				0666,
 				)
 			if err != nil {
-				return nil, nil, abci.ErrInternal("Open file failed")
+				return nil, nil, sdkerrors.Wrap(sdkerrors.ErrInternal, err.Error())
 			}
 		}
 		return appFn(logger, ldb, rdb, traceStoreWriter)

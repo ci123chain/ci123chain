@@ -5,11 +5,11 @@ import (
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/mortgage/types"
-	"github.com/ci123chain/ci123chain/pkg/transaction"
+	"github.com/pkg/errors"
 )
 
 func NewHandler(k MortgageKeeper) sdk.Handler {
-	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
+	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 		switch msg := msg.(type) {
 		case *types.MsgMortgage:
@@ -19,75 +19,75 @@ func NewHandler(k MortgageKeeper) sdk.Handler {
 		case *types.MsgMortgageCancel:
 			return handleMsgMortgageCancel(ctx, k, *msg)
 		default:
-			errMsg := fmt.Sprintf("unrecognized supply message types: %T", msg)
-			return sdk.ErrUnknownRequest(errMsg).Result()
+			errMsg := fmt.Sprintf("unrecognized supply message type: %T", msg)
+			return nil, errors.New(errMsg)
 		}
 	}
 }
 
 // 抵押消息
-func handleMsgMortgage(ctx sdk.Context, k MortgageKeeper, msg types.MsgMortgage) sdk.Result {
+func handleMsgMortgage(ctx sdk.Context, k MortgageKeeper, msg types.MsgMortgage) (*sdk.Result, error) {
 
 	mort := getMortgage(ctx, k.StoreKey, msg.UniqueID)
 	if mort != nil {
-		return transaction.ErrInvalidTx(types.DefaultCodespace,"uniqueID is exist").Result()
+		return nil, errors.New("uniqueID is exist")
 	}
 
 	if err := k.SupplyKeeper.SendCoinsFromAccountToModule(ctx, msg.FromAddress, types.ModuleName, msg.Coin); err != nil {
-		return err.Result()
+		return nil, err
 	}
 	setMortgage(ctx, k.StoreKey, types.Mortgage{
 		MsgMortgage: msg,
 		State:  types.StateMortgaged,
 	})
-	return sdk.Result{}
+	return &sdk.Result{}, nil
 }
 
 // 更新抵押取消交易
-func handleMsgMortgageCancel (ctx sdk.Context, k MortgageKeeper, msg types.MsgMortgageCancel) sdk.Result {
+func handleMsgMortgageCancel (ctx sdk.Context, k MortgageKeeper, msg types.MsgMortgageCancel) (*sdk.Result, error) {
 
 	mort := getMortgage(ctx, k.StoreKey, msg.UniqueID)
 	if mort == nil {
-		return transaction.ErrInvalidTx(types.DefaultCodespace, fmt.Sprintf("mortgage record not exist :uniqueID = %s", hex.EncodeToString(msg.UniqueID))).Result()
+		return nil, errors.New(fmt.Sprintf("mortgage record not exist :uniqueID = %s", hex.EncodeToString(msg.UniqueID)))
 	}
 	if !mort.FromAddress.Equal(msg.FromAddress) {
-		return transaction.ErrInvalidTx(types.DefaultCodespace, "from address error").Result()
+		return nil, errors.New(fmt.Sprintf("account address mismatch, expected %s, got %s", msg.FromAddress.String(), mort.FromAddress.String()))
 	}
 
 	if err := k.SupplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, mort.FromAddress, mort.Coin); err != nil {
-		return err.Result()
+		return nil, err
 	}
 	if mort.State == types.StateMortgaged {
 		mort.State = types.StateCancel
 	} else {
-		return transaction.ErrInvalidTx(types.DefaultCodespace, "mortgage record state have done or canceled").Result()
+		return nil, errors.New("mortgage record state have done or canceled")
 	}
 	setMortgage(ctx, k.StoreKey, *mort)
-	return sdk.Result{}
+	return &sdk.Result{}, nil
 }
 
 // 更新抵押状态为成功
-func handleMsgMortgageSuccess (ctx sdk.Context, k MortgageKeeper, msg types.MsgMortgageDone) sdk.Result {
+func handleMsgMortgageSuccess (ctx sdk.Context, k MortgageKeeper, msg types.MsgMortgageDone) (*sdk.Result, error) {
 
 	mort := getMortgage(ctx, k.StoreKey, msg.UniqueID)
 	if mort == nil {
-		return transaction.ErrInvalidTx(types.DefaultCodespace, fmt.Sprintf("mortgage record not exist :uniqueID = %s", hex.EncodeToString(msg.UniqueID))).Result()
+		return nil, errors.New(fmt.Sprintf("mortgage record not exist :uniqueID = %s", hex.EncodeToString(msg.UniqueID)))
 	}
 
 	if !mort.FromAddress.Equal(msg.FromAddress) {
-		return transaction.ErrInvalidTx(types.DefaultCodespace, "from address error").Result()
+		return nil, errors.New(fmt.Sprintf("account address mismatch, expected %s, got %s", msg.FromAddress.String(), mort.FromAddress.String()))
 	}
 
 	if err := k.SupplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, mort.ToAddress, mort.Coin); err != nil {
-		return transaction.ErrSendCoin(types.DefaultCodespace, err).Result()
+		return nil, err
 	}
 	if mort.State == types.StateMortgaged {
 		mort.State = types.StateSuccess
 	} else {
-		return transaction.ErrInvalidTx(types.DefaultCodespace, "mortgage record state have done or canceled").Result()
+		return nil, errors.New("mortgage record state have done or canceled")
 	}
 	setMortgage(ctx, k.StoreKey, *mort)
-	return sdk.Result{}
+	return &sdk.Result{}, nil
 }
 
 func getMortgage(ctx sdk.Context, key sdk.StoreKey, uniqueID []byte) (*types.Mortgage) {

@@ -2,11 +2,12 @@ package types
 
 import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 )
 
 type MsgUpgrade struct {
 	FromAddress sdk.AccAddress	`json:"from_address"`
-	Type      	string   		`json:"types"`
+	Type      	string   		`json:"type"`
 	Height    	int64    		`json:"height"`
 	Name      	string   		`json:"name"`
 }
@@ -24,15 +25,15 @@ func (msg *MsgUpgrade) Route() string { return RouteKey }
 
 func (msg *MsgUpgrade) MsgType() string { return "upgrade"}
 
-func (msg *MsgUpgrade) ValidateBasic() sdk.Error{
+func (msg *MsgUpgrade) ValidateBasic() error {
 	if len(msg.Type) == 0 {
-		return ErrCheckParams(DefaultCodespace, "types is invalid")
+		return sdkerrors.Wrap(sdkerrors.ErrParams, "invalid type of msg")
 	}
 	if msg.Height < 0 {
-		return ErrCheckParams(DefaultCodespace, "height is invalid")
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidHeight, "height should be positive")
 	}
 	if len(msg.Name) == 0 {
-		return ErrCheckParams(DefaultCodespace, "name is invalid")
+		return sdkerrors.Wrap(sdkerrors.ErrParams, "invalid name of msg")
 	}
 	return nil
 }

@@ -16,6 +16,8 @@ import (
 
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
+	abcitypes "github.com/tendermint/tendermint/proto/tendermint/types"
 )
 
 var (
@@ -36,7 +38,7 @@ func newBaseApp(name string, options ...func(*BaseApp)) *BaseApp {
 	db := dbm.NewMemDB()
 	codec := codec.New()
 	registerTestCodec(codec)
-	return NewBaseApp(name, logger, db, testTxDecoder(codec), options...)
+	return NewBaseApp(name, logger,db,  db, "./chain/cache", testTxDecoder(codec), options...)
 }
 
 func registerTestCodec(cdc *codec.Codec) {
@@ -84,7 +86,7 @@ func TestLoadVersion(t *testing.T) {
 	logger := defaultLogger()
 	db := dbm.NewMemDB()
 	name := t.Name()
-	app := NewBaseApp(name, logger, db, nil)
+	app := NewBaseApp(name, logger, db,  db, "./chain/cache", nil)
 
 	// make a cap types and mount the store
 	capKey := sdk.NewKVStoreKey("main")
@@ -101,19 +103,19 @@ func TestLoadVersion(t *testing.T) {
 	require.Equal(t, emptyCommitID, lastID)
 
 	// execute a block, collect commit ID
-	header := abci.Header{Height: 1}
+	header := abcitypes.Header{Height: 1}
 	app.BeginBlock(abci.RequestBeginBlock{Header: header})
 	res := app.Commit()
 	commitID1 := sdk.CommitID{1, res.Data}
 
 	// execute a block, collect commit ID
-	header = abci.Header{Height: 2}
+	header = abcitypes.Header{Height: 2}
 	app.BeginBlock(abci.RequestBeginBlock{Header: header})
 	res = app.Commit()
 	commitID2 := sdk.CommitID{2, res.Data}
 
 	// reload with LoadLatestVersion
-	app = NewBaseApp(name, logger, db, nil)
+	app = NewBaseApp(name, logger, db,  db, "./chain/cache", nil)
 	app.MountStoresIAVL(capKey)
 	err = app.LoadLatestVersion(capKey)
 	require.Nil(t, err)
@@ -121,7 +123,7 @@ func TestLoadVersion(t *testing.T) {
 
 	// reload with LoadVersion, see if you can commit the same block and get
 	// the same result
-	app = NewBaseApp(name, logger, db, nil)
+	app = NewBaseApp(name, logger, db, db, "./chain/cache", nil)
 	app.MountStoresIAVL(capKey)
 	err = app.LoadVersion(1, capKey)
 	require.Nil(t, err)
@@ -141,7 +143,7 @@ func testLoadVersionHelper(t *testing.T, app *BaseApp, expectedHeight int64, exp
 func TestOptionFunction(t *testing.T) {
 	logger := defaultLogger()
 	db := dbm.NewMemDB()
-	bap := NewBaseApp("starting name", logger, db, nil, testChangeNameHelper("new name"))
+	bap := NewBaseApp("starting name", logger, db, db, "./chain/cache", nil, testChangeNameHelper("new name"))
 	require.Equal(t, bap.name, "new name", "BaseApp should have had name changed via option function")
 }
 
@@ -209,7 +211,7 @@ func TestInitChainer(t *testing.T) {
 	// we can reload the same  app later
 	db := dbm.NewMemDB()
 	logger := defaultLogger()
-	app := NewBaseApp(name, logger, db, nil)
+	app := NewBaseApp(name, logger, db, db , "./chain/cache", nil)
 	capKey := sdk.NewKVStoreKey("main")
 	capKey2 := sdk.NewKVStoreKey("key2")
 	app.MountStoresIAVL(capKey, capKey2)
@@ -253,7 +255,7 @@ func TestInitChainer(t *testing.T) {
 	require.Equal(t, value, res.Value)
 
 	// reload app
-	app = NewBaseApp(name, logger, db, nil)
+	app = NewBaseApp(name, logger, db, db, "./chain/cache", nil)
 	app.SetInitChainer(initChainer)
 	app.MountStoresIAVL(capKey, capKey2)
 	err = app.LoadLatestVersion(capKey) // needed to make stores non-nil
@@ -282,6 +284,46 @@ type txTest struct {
 	FailOnHandler bool
 }
 
+func (tx txTest) GetMsgs() []sdk.Msg {
+	return nil
+}
+
+func (tx txTest) ValidateBasic() error {
+	return nil
+}
+
+func (tx txTest) GetSignBytes() []byte {
+	return nil
+}
+
+func (tx txTest) GetSignature() []byte {
+	return nil
+}
+
+func (tx txTest) SetSignature([]byte) {
+	//
+}
+
+func (tx txTest) Bytes() []byte {
+	return nil
+}
+
+func (tx txTest) SetPubKey([]byte) {
+	//
+}
+
+func (tx txTest) GetGas() uint64 {
+	return 0
+}
+
+func (tx txTest) GetNonce() uint64 {
+	return 0
+}
+
+func (tx txTest) GetFromAddress() sdk.AccAddress {
+	return sdk.HexToAddress("0x00000000000000000000000000")
+}
+
 func (tx *txTest) setFailOnAnte(fail bool) {
 	tx.FailOnAnte = fail
 }
@@ -290,13 +332,6 @@ func (tx *txTest) setFailOnHandler(fail bool) {
 	tx.FailOnHandler = fail
 }
 
-// Implements Tx
-func (tx txTest) ValidateBasic() sdk.Error {
-	if tx.Tx == nil {
-		return sdk.ErrTxDecode("tx is nil")
-	}
-	return nil
-}
 
 // ValidateBasic() fails on negative counters.
 // Otherwise it's up to the handlers
@@ -304,9 +339,45 @@ type msgCounter struct{}
 
 // Implements Msg
 func (msg msgCounter) Type() string         { return "counter1" }
-func (msg msgCounter) GetSignBytes() []byte { return nil }
-func (msg msgCounter) ValidateBasic() sdk.Error {
+
+func (msg msgCounter) GetMsgs() []sdk.Msg {
 	return nil
+}
+
+func (msg msgCounter) ValidateBasic() error {
+	return nil
+}
+
+func (msg msgCounter) GetSignBytes() []byte {
+	panic("implement me")
+}
+
+func (msg msgCounter) GetSignature() []byte {
+	panic("implement me")
+}
+
+func (msg msgCounter) SetSignature([]byte) {
+	panic("implement me")
+}
+
+func (msg msgCounter) Bytes() []byte {
+	panic("implement me")
+}
+
+func (msg msgCounter) SetPubKey([]byte) {
+	panic("implement me")
+}
+
+func (msg msgCounter) GetGas() uint64 {
+	panic("implement me")
+}
+
+func (msg msgCounter) GetNonce() uint64 {
+	panic("implement me")
+}
+
+func (msg msgCounter) GetFromAddress() sdk.AccAddress {
+	panic("implement me")
 }
 
 func newTxCounter() *txTest {
@@ -323,9 +394,45 @@ type msgNoDecode struct {
 	msgCounter
 }
 
+func (m msgNoDecode) GetMsgs() []sdk.Msg {
+	return nil
+}
+
+func (m msgNoDecode) ValidateBasic() error {
+	return nil
+}
+
+func (m msgNoDecode) GetSignature() []byte {
+	return nil
+}
+
+func (m msgNoDecode) SetSignature([]byte) {
+	//
+}
+
+func (m msgNoDecode) Bytes() []byte {
+	return nil
+}
+
+func (m msgNoDecode) SetPubKey([]byte) {
+	//
+}
+
+func (m msgNoDecode) GetGas() uint64 {
+	return 0
+}
+
+func (m msgNoDecode) GetNonce() uint64 {
+	return 0
+}
+
+func (m msgNoDecode) GetFromAddress() sdk.AccAddress {
+	return sdk.HexToAddress("0x000000000000000000000000000")
+}
+
 // amino decode
 func testTxDecoder(cdc *codec.Codec) sdk.TxDecoder {
-	return func(txBytes []byte) (sdk.Tx, sdk.Error) {
+	return func(txBytes []byte) (sdk.Tx, error) {
 		var tx txTest
 		if len(txBytes) == 0 {
 			return nil, sdk.ErrTxDecode("txBytes are empty")
@@ -334,7 +441,7 @@ func testTxDecoder(cdc *codec.Codec) sdk.TxDecoder {
 		if err != nil {
 			return nil, sdk.ErrTxDecode("").TraceSDK(err.Error())
 		}
-		return tx, nil
+		return &tx, nil
 	}
 }
 
@@ -352,17 +459,17 @@ func anteHandlerTxTest(t *testing.T, capKey *sdk.KVStoreKey, storeKey []byte) sd
 	}
 }
 
-func handlerMsgCounter(t *testing.T, capKey *sdk.KVStoreKey, deliverKey []byte) sdk.Handler {
-	return func(ctx sdk.Context, tx sdk.Tx) sdk.Result {
+func handlerMsgCounter(t *testing.T, capKey *sdk.KVStoreKey, deliverKey []byte) sdk.DeferHandler {
+	return func(ctx sdk.Context, tx sdk.Tx, out, simulte bool) sdk.Result {
 		store := ctx.KVStore(capKey)
 		switch tx := tx.(type) {
 		case txTest:
 			if tx.FailOnHandler {
-				return sdk.ErrInternal("handler failure").Result()
+				return sdk.Result{}
 			}
 			return incrementingCounter(t, store, deliverKey)
 		default:
-			return sdk.ErrInternal(fmt.Sprintf("%T", tx)).Result()
+			return sdk.Result{}
 		}
 	}
 }
@@ -416,7 +523,7 @@ func TestCheckTx(t *testing.T) {
 
 	anteOpt := func(bapp *BaseApp) { bapp.SetAnteHandler(anteHandlerTxTest(t, capKey1, counterKey)) }
 	routerOpt := func(bapp *BaseApp) {
-		bapp.SetHandler(func(ctx sdk.Context, tx sdk.Tx) sdk.Result { return sdk.Result{} })
+		bapp.SetDeferHandler(func(ctx sdk.Context, tx sdk.Tx, out,  simulte bool) sdk.Result { return sdk.Result{} })
 	}
 
 	app := setupBaseApp(t, anteOpt, routerOpt)
@@ -463,7 +570,7 @@ func TestDeliverTx(t *testing.T) {
 	// test increments in the handler
 	deliverKey := []byte("deliver-types")
 	routerOpt := func(bapp *BaseApp) {
-		bapp.SetHandler(handlerMsgCounter(t, capKey1, deliverKey))
+		bapp.SetDeferHandler(handlerMsgCounter(t, capKey1, deliverKey))
 	}
 
 	app := setupBaseApp(t, anteOpt, routerOpt)
@@ -515,7 +622,7 @@ func TestSimulateTx(t *testing.T) {
 	}
 
 	routerOpt := func(bapp *BaseApp) {
-		bapp.SetHandler(func(ctx sdk.Context, tx sdk.Tx) sdk.Result {
+		bapp.SetDeferHandler(func(ctx sdk.Context, tx sdk.Tx, out, simulte bool) sdk.Result {
 			ctx.GasMeter().ConsumeGas(gasConsumed, "test")
 			return sdk.Result{GasUsed: ctx.GasMeter().GasConsumed()}
 		})
@@ -536,12 +643,12 @@ func TestSimulateTx(t *testing.T) {
 		tx := newTxCounter()
 
 		// simulate a message, check gas reported
-		result := app.Simulate(tx)
+		result, _ := app.Simulate(tx)
 		require.True(t, result.IsOK(), result.Log)
 		require.Equal(t, gasConsumed, result.GasUsed)
 
 		// simulate again, same result
-		result = app.Simulate(tx)
+		result, _ = app.Simulate(tx)
 		require.True(t, result.IsOK(), result.Log)
 		require.Equal(t, gasConsumed, result.GasUsed)
 
@@ -576,7 +683,7 @@ func TestRunInvalidTransaction(t *testing.T) {
 		})
 	}
 	routerOpt := func(bapp *BaseApp) {
-		bapp.SetHandler(func(ctx sdk.Context, tx sdk.Tx) (res sdk.Result) { return })
+		bapp.SetDeferHandler(func(ctx sdk.Context, tx sdk.Tx, out, simulte bool) (res sdk.Result) { return })
 	}
 
 	app := setupBaseApp(t, anteOpt, routerOpt)
@@ -585,9 +692,10 @@ func TestRunInvalidTransaction(t *testing.T) {
 	// Transaction with no messages
 	{
 		emptyTx := &txTest{}
-		err := app.Deliver(emptyTx)
-		require.EqualValues(t, sdk.CodeTxDecode, err.Code)
-		require.EqualValues(t, sdk.CodespaceRoot, err.Codespace)
+		_, err := app.Deliver(emptyTx)
+		codespace, code, _ := sdkerrors.ABCIInfo(err, false)
+		require.EqualValues(t, sdk.CodeTxDecode, code)
+		require.EqualValues(t, sdk.CodespaceRoot, codespace)
 	}
 
 	// Transaction with an unregistered message
@@ -621,7 +729,7 @@ func TestBaseAppAnteHandler(t *testing.T) {
 
 	deliverKey := []byte("deliver-types")
 	routerOpt := func(bapp *BaseApp) {
-		bapp.SetHandler(handlerMsgCounter(t, capKey1, deliverKey))
+		bapp.SetDeferHandler(handlerMsgCounter(t, capKey1, deliverKey))
 	}
 
 	cdc := codec.New()

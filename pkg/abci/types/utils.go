@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"time"
 
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	tcmd "github.com/tendermint/tendermint/cmd/tendermint/commands"
 	tmtypes "github.com/tendermint/tendermint/types"
 )
@@ -21,11 +22,11 @@ func SortJSON(toSortJSON []byte) ([]byte, error) {
 	var c interface{}
 	err := json.Unmarshal(toSortJSON, &c)
 	if err != nil {
-		return nil, ErrInternal("Unmarshal failed")
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 	js, err := json.Marshal(c)
 	if err != nil {
-		return nil, ErrInternal("Marshal failed")
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
 	return js, nil
 }

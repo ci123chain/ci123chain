@@ -2,11 +2,10 @@ package rest
 
 import (
 	"encoding/hex"
-	"errors"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
 	types2 "github.com/ci123chain/ci123chain/pkg/app/types"
-	"github.com/ci123chain/ci123chain/pkg/client"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/distribution/types"
 	sSDK "github.com/ci123chain/ci123chain/sdk/distribution"
@@ -37,7 +36,7 @@ func fundCommunityPoolHandler(cliCtx context.Context, writer http.ResponseWriter
 	}
 	nonce, err := checkNonce(writer,  req, sdk.HexToAddress(accountAddress))
 	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrSignTx(types.DefaultCodespace, err))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, err.Error()).Error())
 		return
 	}
 	privateKey, ok := checkPrivateKey(writer, req)
@@ -45,19 +44,19 @@ func fundCommunityPoolHandler(cliCtx context.Context, writer http.ResponseWriter
 		return
 	}
 	if amount.IsNegative() || amount.IsZero() {
-		rest.WriteErrorRes(writer, types.ErrParams(types.DefaultCodespace, errors.New("invalid amount")))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid amount").Error())
 		return
 	}
 
 	txByte, err := sSDK.SignFundCommunityPoolTx(accountAddress, amount, gas, nonce, privateKey)
 	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrSignTx(types.DefaultCodespace,err))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, "sign tx failed").Error())
 		return
 	}
 
 	res, err := cliCtx.BroadcastSignedTx(txByte)
 	if err != nil {
-		rest.WriteErrorRes(writer, client.ErrBroadcast(types.DefaultCodespace, err))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, "broadcast tx failed").Error())
 		return
 	}
 	rest.PostProcessResponseBare(writer, cliCtx, res)
@@ -70,7 +69,7 @@ func withdrawValidatorCommissionsHandler(cliCtx context.Context, writer http.Res
 	}
 	privKey, from, nonce, gas, err := rest.GetNecessaryParams(cliCtx, req, cdc, broadcast)
 	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrParams(types.DefaultCodespace, err))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, err.Error()).Error())
 		return
 	}
 	validator := from
@@ -81,12 +80,12 @@ func withdrawValidatorCommissionsHandler(cliCtx context.Context, writer http.Res
 	}
 	txByte, err := types2.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
 	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrParams(types.DefaultCodespace, err))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, "sign tx failed").Error())
 		return
 	}
 	res, err := cliCtx.BroadcastSignedTx(txByte)
 	if err != nil {
-		rest.WriteErrorRes(writer, client.ErrBroadcast(types.DefaultCodespace, err))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, "broadcast tx failed").Error())
 		return
 	}
 	rest.PostProcessResponseBare(writer, cliCtx, res)
@@ -100,7 +99,7 @@ func withdrawDelegationRewardsHandler(cliCtx context.Context, writer http.Respon
 
 	privKey, from, nonce, gas, err := rest.GetNecessaryParams(cliCtx, req, cdc, broadcast)
 	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrParams(types.DefaultCodespace, err))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, err.Error()).Error())
 		return
 	}
 
@@ -114,12 +113,12 @@ func withdrawDelegationRewardsHandler(cliCtx context.Context, writer http.Respon
 
 	txByte, err := types2.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
 	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrParams(types.DefaultCodespace, err))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, "sign tx failed").Error())
 		return
 	}
 	res, err := cliCtx.BroadcastSignedTx(txByte)
 	if err != nil {
-		rest.WriteErrorRes(writer, client.ErrBroadcast(types.DefaultCodespace, err))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, "broadcast tx failed").Error())
 		return
 	}
 	rest.PostProcessResponseBare(writer, cliCtx, res)
@@ -132,7 +131,7 @@ func setDelegatorWithdrawalAddrHandler(cliCtx context.Context, writer http.Respo
 	}
 	privKey, from, nonce, gas, err := rest.GetNecessaryParams(cliCtx, req, cdc, broadcast)
 	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrParams(types.DefaultCodespace, err))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, err.Error()).Error())
 		return
 	}
 
@@ -145,12 +144,12 @@ func setDelegatorWithdrawalAddrHandler(cliCtx context.Context, writer http.Respo
 	}
 	txByte, err := types2.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
 	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrParams(types.DefaultCodespace, err))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, "sign tx failed").Error())
 		return
 	}
 	res, err := cliCtx.BroadcastSignedTx(txByte)
 	if err != nil {
-		rest.WriteErrorRes(writer, client.ErrBroadcast(types.DefaultCodespace, err))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, "broadcast tx failed").Error())
 		return
 	}
 	rest.PostProcessResponseBare(writer, cliCtx, res)

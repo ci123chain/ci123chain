@@ -9,6 +9,7 @@ import (
 
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/params"
 )
@@ -104,43 +105,43 @@ func getBlockValue(block sdk.Int) *big.Int {
 // if any of the block values is uninitialized (i.e nil) or if the EIP150Hash is an invalid hash.
 func (cc ChainConfig) Validate() error {
 	if err := validateBlock(cc.HomesteadBlock); err != nil {
-		return sdk.ErrValidateBlock(err.Error())
+		return sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("invalid block: %v", err))
 	}
 	if err := validateBlock(cc.DAOForkBlock); err != nil {
-		return sdk.ErrValidateBlock(err.Error())
+		return sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("invalid block: %v", err))
 	}
 	if err := validateBlock(cc.EIP150Block); err != nil {
-		return sdk.ErrValidateBlock(err.Error())
+		return sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("invalid block: %v", err))
 	}
 	if err := validateHash(cc.EIP150Hash); err != nil {
 		return err
 	}
 	if err := validateBlock(cc.EIP155Block); err != nil {
-		return sdk.ErrValidateBlock(err.Error())
+		return sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("invalid block: %v", err))
 	}
 	if err := validateBlock(cc.EIP158Block); err != nil {
-		return sdk.ErrValidateBlock(err.Error())
+		return sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("invalid block: %v", err))
 	}
 	if err := validateBlock(cc.ByzantiumBlock); err != nil {
-		return sdk.ErrValidateBlock(err.Error())
+		return sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("invalid block: %v", err))
 	}
 	if err := validateBlock(cc.ConstantinopleBlock); err != nil {
-		return sdk.ErrValidateBlock(err.Error())
+		return sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("invalid block: %v", err))
 	}
 	if err := validateBlock(cc.PetersburgBlock); err != nil {
-		return sdk.ErrValidateBlock(err.Error())
+		return sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("invalid block: %v", err))
 	}
 	if err := validateBlock(cc.IstanbulBlock); err != nil {
-		return sdk.ErrValidateBlock(err.Error())
+		return sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("invalid block: %v", err))
 	}
 	if err := validateBlock(cc.MuirGlacierBlock); err != nil {
-		return sdk.ErrValidateBlock(err.Error())
+		return sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("invalid block: %v", err))
 	}
 	if err := validateBlock(cc.YoloV1Block); err != nil {
-		return sdk.ErrValidateBlock(err.Error())
+		return sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("invalid block: %v", err))
 	}
 	if err := validateBlock(cc.EWASMBlock); err != nil {
-		return sdk.ErrValidateBlock(err.Error())
+		return sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("invalid block: %v", err))
 	}
 
 	return nil
@@ -148,13 +149,13 @@ func (cc ChainConfig) Validate() error {
 
 func validateHash(hex string) error {
 	if hex != "" && strings.TrimSpace(hex) == "" {
-		return sdk.ErrValidateBlock("hash cannot be blank")
+		return sdkerrors.Wrap(sdkerrors.ErrParams, "hash can not be empty")
 	}
 
 	bz := common.FromHex(hex)
 	lenHex := len(bz)
 	if lenHex > 0 && lenHex != common.HashLength {
-		return sdk.ErrValidateBlock(fmt.Sprintf("invalid hash length, expected %d, got %d", common.HashLength, lenHex))
+		return sdkerrors.Wrap(sdkerrors.ErrParams, fmt.Sprintf("invalid hash length, expected %d, got %d", common.HashLength, lenHex))
 	}
 
 	return nil
@@ -162,9 +163,7 @@ func validateHash(hex string) error {
 
 func validateBlock(block sdk.Int) error {
 	if block == (sdk.Int{}) || block.BigInt() == nil {
-		return sdk.ErrValidateBlock(
-			"cannot use uninitialized or nil values for Int, set a negative Int value if you want to define a nil Ethereum block",
-		)
+		return sdkerrors.Wrap(sdkerrors.ErrParams, "cannot use uninitialized or nil values for Int, set a negative Int value if you want to define a nil Ethereum block")
 	}
 
 	return nil

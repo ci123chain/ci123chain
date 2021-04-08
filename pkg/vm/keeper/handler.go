@@ -7,6 +7,7 @@ import (
 	evm "github.com/ci123chain/ci123chain/pkg/vm/evmtypes"
 	wasm "github.com/ci123chain/ci123chain/pkg/vm/wasmtypes"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/pkg/errors"
 	tmtypes "github.com/tendermint/tendermint/types"
 	"math/big"
 )
@@ -16,7 +17,7 @@ const (
 	ChainID = 999
 )
 func NewHandler(k Keeper) sdk.Handler {
-	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
+	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 		switch tx := msg.(type) {
 		case *wasm.MsgUploadContract:
@@ -32,72 +33,73 @@ func NewHandler(k Keeper) sdk.Handler {
 		case types.MsgEthereumTx:
 			return handleMsgEthereumTx(ctx, k, tx)
 		default:
-			errMsg := fmt.Sprintf("unrecognized supply message types: %T", tx)
-			return sdk.ErrUnknownRequest(errMsg).Result()
+			errMsg := fmt.Sprintf("unrecognized supply message type: %T", tx)
+			return nil, errors.New(errMsg)
 		}
 	}
 }
 
-func handleMsgUploadContract(ctx sdk.Context, k Keeper, msg wasm.MsgUploadContract) (res sdk.Result) {
+func handleMsgUploadContract(ctx sdk.Context, k Keeper, msg wasm.MsgUploadContract) (res *sdk.Result, err error) {
 	codeHash, err := k.Upload(ctx, msg.Code, msg.FromAddress)
 	if err != nil {
-		return wasm.ErrUploadFailed(wasm.DefaultCodespace, err).Result()
+		return nil, err
 	}
-	res = sdk.Result{
+	res = &sdk.Result{
 		Data:  codeHash,
 		Events: ctx.EventManager().Events(),
 	}
 	return
 }
 
-func handleMsgInstantiateContract(ctx sdk.Context, k Keeper, msg wasm.MsgInstantiateContract) (res sdk.Result) {
+func handleMsgInstantiateContract(ctx sdk.Context, k Keeper, msg wasm.MsgInstantiateContract) (res *sdk.Result, err error) {
 	gasLimit := ctx.GasLimit()
 	gasWanted := gasLimit - ctx.GasMeter().GasConsumed()
 
 	args, err := wasm.CallData2Input(msg.Args)
 	if err != nil {
-		return wasm.ErrInstantiateFailed(wasm.DefaultCodespace, err).Result()
+		return nil, err
 	}
 	contractAddr, err := k.Instantiate(ctx, msg.CodeHash, msg.FromAddress, args, msg.Name, msg.Version, msg.Author, msg.Email, msg.Describe, wasm.EmptyAddress, gasWanted)
 	if err != nil {
-		return wasm.ErrInstantiateFailed(wasm.DefaultCodespace, err).Result()
+		return nil, err
 	}
-	res = sdk.Result{
+	res = &sdk.Result{
 		Data:  []byte(fmt.Sprintf("%s", contractAddr.String())),
 		Events: ctx.EventManager().Events(),
 	}
 	return
 }
 
-func handleMsgExecuteContract(ctx sdk.Context, k Keeper, msg wasm.MsgExecuteContract) (res sdk.Result){
+func handleMsgExecuteContract(ctx sdk.Context, k Keeper, msg wasm.MsgExecuteContract) (res *sdk.Result, err error){
 	gasLimit := ctx.GasLimit()
 	gasWanted := gasLimit - ctx.GasMeter().GasConsumed()
 
 	args, err := wasm.CallData2Input(msg.Args)
 	if err != nil {
-		return wasm.ErrExecuteFailed(wasm.DefaultCodespace, err).Result()
+		return nil, err
 	}
-	res, err = k.Execute(ctx, msg.Contract, msg.FromAddress, args, gasWanted)
-	if err != nil {
-		return wasm.ErrExecuteFailed(wasm.DefaultCodespace, err).Result()
+	result, Err := k.Execute(ctx, msg.Contract, msg.FromAddress, args, gasWanted)
+	if Err != nil {
+		return nil, Err
 	}
+	res = &result
 	res.Events = ctx.EventManager().Events()
 	return
 }
 
-func handleMsgMigrateContract(ctx sdk.Context, k Keeper, msg wasm.MsgMigrateContract) (res sdk.Result) {
+func handleMsgMigrateContract(ctx sdk.Context, k Keeper, msg wasm.MsgMigrateContract) (res *sdk.Result, err error) {
 	gasLimit := ctx.GasLimit()
 	gasWanted := gasLimit - ctx.GasMeter().GasConsumed()
 
 	args, err := wasm.CallData2Input(msg.Args)
 	if err != nil {
-		return wasm.ErrMigrateFailed(wasm.DefaultCodespace, err).Result()
+		return nil, err
 	}
 	contractAddr, err := k.Migrate(ctx, msg.CodeHash, msg.FromAddress, msg.Contract, args, msg.Name, msg.Version, msg.Author, msg.Email, msg.Describe, gasWanted)
 	if err != nil {
-		return wasm.ErrMigrateFailed(wasm.DefaultCodespace, err).Result()
+		return nil, err
 	}
-	res = sdk.Result{
+	res = &sdk.Result{
 		Data:  []byte(fmt.Sprintf("%s", contractAddr.String())),
 		Events: ctx.EventManager().Events(),
 	}
@@ -105,7 +107,7 @@ func handleMsgMigrateContract(ctx sdk.Context, k Keeper, msg wasm.MsgMigrateCont
 }
 
 // handleMsgEvmTx handles an Ethereum specific tx
-func handleMsgEvmTx(ctx sdk.Context, k Keeper, msg evm.MsgEvmTx) sdk.Result {
+func handleMsgEvmTx(ctx sdk.Context, k Keeper, msg evm.MsgEvmTx) (*sdk.Result, error) {
 	// parse the chainID from a string to a base-10 integer
 	//todo
 	chainIDEpoch := big.NewInt(123)
@@ -142,12 +144,12 @@ func handleMsgEvmTx(ctx sdk.Context, k Keeper, msg evm.MsgEvmTx) sdk.Result {
 
 	config, found := k.GetChainConfig(ctx)
 	if !found {
-		return evm.ErrChainConfigNotFound(evm.DefaultCodespace, "chain config not found").Result()
+		return nil, errors.New("chain config not found")
 	}
 
 	executionResult, err := st.TransitionDb(ctx, config)
 	if err != nil {
-		return evm.ErrTransitionDb(evm.DefaultCodespace, fmt.Sprintf("err transitionDb: %s", err.Error())).Result()
+		return nil, errors.New(fmt.Sprintf("err transitionDb: %s", err.Error()))
 	}
 
 	if !st.Simulate {
@@ -187,10 +189,10 @@ func handleMsgEvmTx(ctx sdk.Context, k Keeper, msg evm.MsgEvmTx) sdk.Result {
 	
 	// set the events to the result
 	executionResult.Result.Events = ctx.EventManager().Events()
-	return *executionResult.Result
+	return executionResult.Result, nil
 }
 
-func handleMsgEthereumTx(ctx sdk.Context, k Keeper, msg types.MsgEthereumTx) sdk.Result {
+func handleMsgEthereumTx(ctx sdk.Context, k Keeper, msg types.MsgEthereumTx) (*sdk.Result, error) {
 	// parse the chainID from a string to a base-10 integer
 	//todo
 	chainIDEpoch := big.NewInt(ChainID)
@@ -198,7 +200,7 @@ func handleMsgEthereumTx(ctx sdk.Context, k Keeper, msg types.MsgEthereumTx) sdk
 	// Verify signature and retrieve sender address
 	sender, err := msg.VerifySig(chainIDEpoch)
 	if err != nil {
-		return evm.ErrInvalidMsg(evm.DefaultCodespace, err).Result()
+		return nil, err
 	}
 
 	txHash := tmtypes.Tx(ctx.TxBytes()).Hash()
@@ -230,12 +232,12 @@ func handleMsgEthereumTx(ctx sdk.Context, k Keeper, msg types.MsgEthereumTx) sdk
 
 	config, found := k.GetChainConfig(ctx)
 	if !found {
-		return evm.ErrChainConfigNotFound(evm.DefaultCodespace, "chain config not found").Result()
+		return nil, errors.New("chain config not found")
 	}
 
 	executionResult, err := st.TransitionDb(ctx, config)
 	if err != nil {
-		return evm.ErrTransitionDb(evm.DefaultCodespace, fmt.Sprintf("err transitionDb: %s", err.Error())).Result()
+		return nil, errors.New(fmt.Sprintf("err transitionDb: %s", err.Error()))
 	}
 
 	if !st.Simulate {
@@ -275,7 +277,7 @@ func handleMsgEthereumTx(ctx sdk.Context, k Keeper, msg types.MsgEthereumTx) sdk
 
 	// set the events to the result
 	executionResult.Result.Events = ctx.EventManager().Events()
-	return *executionResult.Result
+	return executionResult.Result, nil
 }
 
 

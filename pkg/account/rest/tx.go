@@ -3,20 +3,17 @@ package rest
 import (
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	abcitype "github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
-	"github.com/ci123chain/ci123chain/pkg/account/types"
 	types2 "github.com/ci123chain/ci123chain/pkg/app/types"
-	"github.com/ci123chain/ci123chain/pkg/client"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/client/helper"
-	"github.com/ci123chain/ci123chain/pkg/transfer"
 	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/gorilla/mux"
 	"github.com/tendermint/go-amino"
-	"github.com/tendermint/tendermint/crypto/secp256k1"
+	"github.com/tendermint/tendermint/crypto/ed25519"
 	"net/http"
 )
 
@@ -27,7 +24,7 @@ func RegisterRoutes(cliCtx context.Context, r *mux.Router) {
 	r.HandleFunc("/bank/balance", QueryBalancesRequestHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/account/nonce", QueryNonceRequestHandleFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/node/new_validator", CreateNewValidatorKey(cliCtx)).Methods("POST")
-	r.HandleFunc("/transaction/multi_msgs_tx", rest.MiddleHandler(cliCtx, MultiMsgsRequest, types.DefaultCodespace)).Methods("POST")
+	r.HandleFunc("/transaction/multi_msgs_tx", rest.MiddleHandler(cliCtx, MultiMsgsRequest, sdkerrors.RootCodespace)).Methods("POST")
 }
 
 type BalanceData struct {
@@ -58,11 +55,11 @@ func NewAccountRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 
 		key, err := crypto.GenerateKey()
 		if err != nil {
-			rest.WriteErrorRes(w, client.ErrGenAccount(types.DefaultCodespace, err))
+			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrResponse, "generate key failed").Error())
 			return
 		}
 		if key == nil {
-			rest.WriteErrorRes(w, client.ErrGenAccount(types.DefaultCodespace, errors.New("key is empty")))
+			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrResponse, "generate empty key").Error())
 			return
 		}
 
@@ -86,21 +83,21 @@ func QueryBalancesRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		prove := request.FormValue("prove")
 		checkErr := util.CheckStringLength(42, 100, address)
 		if checkErr != nil {
-			rest.WriteErrorRes(w, client.ErrParseParam(types.DefaultCodespace, checkErr))
+			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid address").Error())
 			return
 		}
-		if !rest.CheckHeightAndProve(w, height, prove, types.DefaultCodespace) {
+		if !rest.CheckHeightAndProve(w, height, prove, sdkerrors.RootCodespace) {
 			return
 		}
 
 		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, request, height)
 		if !ok || err != nil {
-			rest.WriteErrorRes(w, err)
+			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInvalidHeight, "parse hetight faield").Error())
 			return
 		}
 		addr, err2 := helper.StrToAddress(address)
 		if err2 != nil {
-			rest.WriteErrorRes(w, client.ErrParseParam(types.DefaultCodespace, err2))
+			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid address").Error())
 			return
 		}
 		//params := types.NewQueryBalanceParams(addr)
@@ -110,7 +107,7 @@ func QueryBalancesRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		}
 		res, proof, err2 := cliCtx.GetBalanceByAddress(addr, isProve)
 		if err2 != nil {
-			rest.WriteErrorRes(w, transfer.ErrQueryTx(types.DefaultCodespace, err2.Error()))
+			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInternal, "query balance failed").Error())
 			return
 		}
 		value := BalanceData{BalanceList:res}
@@ -128,21 +125,21 @@ func QueryNonceRequestHandleFn(cliCtx context.Context) http.HandlerFunc {
 		prove := r.FormValue("prove")
 		checkErr := util.CheckStringLength(42, 100, address)
 		if checkErr != nil {
-			rest.WriteErrorRes(w, client.ErrParseAddr(types.DefaultCodespace, checkErr))
+			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid address").Error())
 			return
 		}
-		if !rest.CheckHeightAndProve(w, height, prove, types.DefaultCodespace) {
+		if !rest.CheckHeightAndProve(w, height, prove, sdkerrors.RootCodespace) {
 			return
 		}
 
 		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r, "")
 		if !ok || err != nil {
-			rest.WriteErrorRes(w, err)
+			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInvalidHeight, "prase height failed").Error())
 			return
 		}
 		addrBytes, err2 := helper.ParseAddrs(address)
 		if len(addrBytes) < 1 || err2 != nil {
-			rest.WriteErrorRes(w, client.ErrParseAddr(types.DefaultCodespace, err2))
+			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid address").Error())
 			return
 		}
 		isProve := false
@@ -151,7 +148,7 @@ func QueryNonceRequestHandleFn(cliCtx context.Context) http.HandlerFunc {
 		}
 		res, proof, err2 := cliCtx.GetNonceByAddress(addrBytes[0], isProve)
 		if err2 != nil {
-			rest.WriteErrorRes(w, transfer.ErrQueryTx(types.DefaultCodespace, err2.Error()))
+			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrResponse, "get nonce failed").Error())
 			return
 		}
 		value := NonceData{Nonce:res}
@@ -163,12 +160,12 @@ func QueryNonceRequestHandleFn(cliCtx context.Context) http.HandlerFunc {
 func CreateNewValidatorKey(cliCtx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		validatorKey := secp256k1.GenPrivKey()
+		validatorKey := ed25519.GenPrivKey()
 
 		cdc := amino.NewCodec()
 		keyByte, err := cdc.MarshalJSON(validatorKey)
 		if err != nil {
-			rest.WriteErrorRes(w, client.ErrGenValidatorKey(types.DefaultCodespace, err))
+			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInternal, "cdc marshal failed").Error())
 		}
 		resp := Key{ValidatorKey:string(keyByte[1:len(keyByte)-1])}
 		rest.PostProcessResponseBare(w, cliCtx, resp)
@@ -182,36 +179,36 @@ func MultiMsgsRequest(cliCtx context.Context, w http.ResponseWriter, r *http.Req
 	var msgs_str []string
 	err := json.Unmarshal([]byte(msg_str), &msgs_str)
 	if err != nil {
-		rest.WriteErrorRes(w, client.ErrParseParam(types.DefaultCodespace, err))
+		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error()).Error())
 		return
 	}
 	privKey, from, nonce, gas, err := rest.GetNecessaryParams(cliCtx, r, cdc, true)
 	if err != nil {
-		rest.WriteErrorRes(w, client.ErrParseParam(types.DefaultCodespace, err))
+		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrParams, err.Error()).Error())
 		return
 	}
 	for _, v := range msgs_str{
 		var msg abcitype.Msg
 		msg_byte, err := hex.DecodeString(v)
 		if err != nil {
-			rest.WriteErrorRes(w, client.ErrParseParam(types.DefaultCodespace, err))
+			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrParams, err.Error()).Error())
 			return
 		}
 		err = cdc.UnmarshalBinaryLengthPrefixed(msg_byte, &msg)
 		if err != nil {
-			rest.WriteErrorRes(w, client.ErrParseParam(types.DefaultCodespace, err))
+			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInternal, err.Error()).Error())
 			return
 		}
 		msgs = append(msgs, msg)
 	}
 	txByte, err := types2.SignCommonTx(from, nonce, gas, msgs, privKey, cdc)
 	if err != nil {
-		rest.WriteErrorRes(w, client.ErrParseParam(types.DefaultCodespace, err))
+		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInternal, err.Error()).Error())
 		return
 	}
 	res, err := cliCtx.BroadcastSignedTx(txByte)
 	if err != nil {
-		rest.WriteErrorRes(w, client.ErrBroadcast(types.DefaultCodespace, err))
+		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInternal, err.Error()).Error())
 		return
 	}
 	rest.PostProcessResponseBare(w, cliCtx, res)

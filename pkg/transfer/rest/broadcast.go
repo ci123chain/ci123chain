@@ -2,10 +2,9 @@ package rest
 
 import (
 	"encoding/hex"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
-	"github.com/ci123chain/ci123chain/pkg/client"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
-	"github.com/ci123chain/ci123chain/pkg/transfer/types"
 	"github.com/ci123chain/ci123chain/pkg/util"
 	"net/http"
 )
@@ -16,18 +15,18 @@ func BroadcastTxRequest(cliCtx context.Context) http.HandlerFunc {
 		data := request.FormValue("tx_byte")
 		err := util.CheckStringLength(1, 1000, data)
 		if err != nil {
-			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"error txByte length"))
+			rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid tx_byte").Error())
 			return
 		}
 		txByte, err := hex.DecodeString(data)
 		if err != nil {
-			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"error txByte"))
+			rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid tx_byte").Error())
 			return
 		}
 
 		res, err := cliCtx.BroadcastSignedData(txByte)
 		if err != nil {
-			rest.WriteErrorRes(writer, client.ErrBroadcast(types.DefaultCodespace, err))
+			rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, err.Error()).Error())
 			return
 		}
 		rest.PostProcessResponseBare(writer, cliCtx, res)
@@ -40,7 +39,7 @@ func BroadcastTxRequestAsync(cliCtx context.Context) http.HandlerFunc {
 		data := request.FormValue("tx_byte")
 		txByte, err := hex.DecodeString(data)
 		if err != nil {
-			rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
+			rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid tx_byte").Error())
 			return
 		}
 

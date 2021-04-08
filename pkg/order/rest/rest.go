@@ -3,9 +3,9 @@ package rest
 import (
 	"encoding/hex"
 	abcitypes "github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
 	types2 "github.com/ci123chain/ci123chain/pkg/app/types"
-	"github.com/ci123chain/ci123chain/pkg/client"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/order/types"
 	"github.com/gorilla/mux"
@@ -14,7 +14,7 @@ import (
 )
 
 func RegisterTxRoutes(cliCtx context.Context, r *mux.Router)  {
-	r.HandleFunc("/shared/add", rest.MiddleHandler(cliCtx, AddShardTxRequest, types.DefaultCodespace)).Methods("POST")
+	r.HandleFunc("/shared/add", rest.MiddleHandler(cliCtx, AddShardTxRequest, sdkerrors.RootCodespace)).Methods("POST")
 }
 
 var cdc = types2.MakeCodec()
@@ -26,7 +26,7 @@ func AddShardTxRequest(cliCtx context.Context, writer http.ResponseWriter, reque
 	}
 	privKey, from, nonce, gas, err := rest.GetNecessaryParams(cliCtx, request, cdc, broatcast)
 	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace, err.Error()))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, err.Error()).Error())
 		return
 	}
 	Type := request.FormValue("types")
@@ -35,7 +35,7 @@ func AddShardTxRequest(cliCtx context.Context, writer http.ResponseWriter, reque
 	//isFabricMode := request.FormValue("isFabric")
 	Height, err := strconv.ParseInt(height, 10, 64)
 	if err != nil || Height < 0 {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,"height error"))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid height").Error())
 		return
 	}
 
@@ -47,12 +47,12 @@ func AddShardTxRequest(cliCtx context.Context, writer http.ResponseWriter, reque
 
 	txByte, err := types2.SignCommonTx(from, nonce, gas, []abcitypes.Msg{msg}, privKey, cdc)
 	if err != nil {
-		rest.WriteErrorRes(writer, types.ErrCheckParams(types.DefaultCodespace,err.Error()))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, err.Error()).Error())
 		return
 	}
 	res, err := cliCtx.BroadcastSignedTx(txByte)
 	if err != nil {
-		rest.WriteErrorRes(writer, client.ErrBroadcast(types.DefaultCodespace, err))
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, err.Error()).Error())
 		return
 	}
 	rest.PostProcessResponseBare(writer, cliCtx, res)

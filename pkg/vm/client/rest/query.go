@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
 	"github.com/ci123chain/ci123chain/pkg/account/exported"
 	"github.com/ci123chain/ci123chain/pkg/account/keeper"
@@ -12,8 +13,6 @@ import (
 	types3 "github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/client"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
-	"github.com/ci123chain/ci123chain/pkg/transfer"
-	"github.com/ci123chain/ci123chain/pkg/vm"
 	evm "github.com/ci123chain/ci123chain/pkg/vm/evmtypes"
 	"github.com/ci123chain/ci123chain/pkg/vm/moduletypes"
 	"github.com/ci123chain/ci123chain/pkg/vm/moduletypes/utils"
@@ -33,8 +32,8 @@ func queryCodeHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		prove := r.FormValue("prove")
 		codeHash := r.FormValue("code_hash")
 		cliCtx, ok, Err := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r, "")
-		if !ok {
-			rest.WriteErrorRes(w, Err)
+		if !ok || Err != nil {
+			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInternal, "get clictx failed").Error())
 			return
 		}
 		if !rest.CheckHeightAndProve(w, height, prove, moduletypes.DefaultCodespace) {
@@ -43,7 +42,7 @@ func queryCodeHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		params := types.NewQueryCodeInfoParams(codeHash)
 		bz, Er := cliCtx.Cdc.MarshalJSON(params)
 		if Er != nil {
-			rest.WriteErrorRes(w, sdk.ErrInternal("marshal failed"))
+			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("cdc marshal failed: %v", Er.Error())).Error())
 			return
 		}
 
@@ -53,11 +52,11 @@ func queryCodeHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		}
 		res, _, proof, Err := cliCtx.Query("/custom/" + moduletypes.ModuleName + "/" + types.QueryCodeInfo, bz, isProve)
 		if Err != nil {
-			rest.WriteErrorRes(w, Err)
+			rest.WriteErrorRes(w, Err.Error())
 			return
 		}
 		if len(res) < 1 {
-			rest.WriteErrorRes(w, transfer.ErrQueryTx(types.DefaultCodespace, "no excepted code"))
+			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrResponse, fmt.Sprintf("unexpected res: %v", res)).Error())
 			return
 		}
 		var codeInfo types.CodeInfo
@@ -78,10 +77,10 @@ func listContractsByCodeHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		params := types.NewContractListParams(accountAddress)
 		bz, Er := cliCtx.Cdc.MarshalJSON(params)
 		if Er != nil {
-			rest.WriteErrorRes(w, sdk.ErrInternal("marshal failed"))
+			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInternal, "cdc marshal failed").Error())
 			return
 		}
-		if !rest.CheckHeightAndProve(w, height, prove, types.DefaultCodespace) {
+		if !rest.CheckHeightAndProve(w, height, prove, sdkerrors.RootCodespace) {
 			return
 		}
 		isProve := false
@@ -90,11 +89,11 @@ func listContractsByCodeHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		}
 		res, _, _, err := cliCtx.Query("/custom/" + moduletypes.ModuleName + "/" + types.QueryContractList, bz, isProve)
 		if err != nil {
-			rest.WriteErrorRes(w, err)
+			rest.WriteErrorRes(w, err.Error())
 			return
 		}
 		if len(res) < 1 {
-			rest.WriteErrorRes(w, transfer.ErrQueryTx(types.DefaultCodespace, "the length of contract list is 0"))
+			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrResponse, fmt.Sprintf("unexpected res: %v", res)).Error())
 			return
 		}
 		var contractList types.ContractListResponse
@@ -112,18 +111,18 @@ func queryContractHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		contractAddress := sdk.HexToAddress(contractAddr)
 
 		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r, "")
-		if !ok {
-			rest.WriteErrorRes(w, err)
+		if !ok || err != nil {
+			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInternal, "get clictx failed").Error())
 			return
 		}
-		if !rest.CheckHeightAndProve(w, height, prove, types.DefaultCodespace) {
+		if !rest.CheckHeightAndProve(w, height, prove, sdkerrors.RootCodespace) {
 			return
 		}
 
 		params := types.NewQueryContractInfoParams(contractAddress)
 		bz, Er := cliCtx.Cdc.MarshalJSON(params)
 		if Er != nil {
-			rest.WriteErrorRes(w, sdk.ErrInternal("marshal failed"))
+			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInternal, "cdc marshal failed").Error())
 			return
 		}
 
@@ -133,11 +132,11 @@ func queryContractHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		}
 		res, _, proof, err := cliCtx.Query("/custom/" + moduletypes.ModuleName + "/" + types.QueryContractInfo, bz, isProve)
 		if err != nil {
-			rest.WriteErrorRes(w, err)
+			rest.WriteErrorRes(w, err.Error())
 			return
 		}
 		if len(res) < 1 {
-			rest.WriteErrorRes(w, transfer.ErrQueryTx(types.DefaultCodespace, "no expected contract"))
+			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrResponse, fmt.Sprintf("unexpected res: %v", res)).Error())
 			return
 		}
 		var contractInfo types.ContractInfo
@@ -155,12 +154,12 @@ func queryContractStateAllHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		qparams := keeper.NewQueryAccountParams(contractAddress)
 		bz, err := cliCtx.Cdc.MarshalJSON(qparams)
 		if err != nil {
-			rest.WriteErrorRes(w, types.ErrCheckParams(vm.DefaultCodespace, err.Error()))
+			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInternal, "cdc marshal failed").Error())
 			return
 		}
 		ctx, err2 := client.NewClientContextFromViper(cdc)
 		if err2 != nil {
-			rest.WriteErrorRes(w, types.ErrCheckParams(vm.DefaultCodespace, err2.Error()))
+			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrParams, fmt.Sprintf("new context failed: %v", err2.Error())).Error())
 			return
 		}
 		var fromAddr sdk.AccAddress
@@ -179,7 +178,7 @@ func queryContractStateAllHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		if gasStr != "" {
 			gas, err = strconv.ParseUint(gasStr, 10, 64)
 			if err != nil {
-				rest.WriteErrorRes(w, types.ErrCheckParams(vm.DefaultCodespace, err.Error()))
+				rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrParams,  fmt.Sprintf("invalid gas: %v", err.Error())).Error())
 				return
 			}
 		} else {
@@ -190,28 +189,28 @@ func queryContractStateAllHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		var args utils.CallData
 		args_str := r.FormValue("calldata")
 		if args_str == "" {
-			rest.WriteErrorRes(w, types.ErrCheckParams(vm.DefaultCodespace, "get callData failed"))
+			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid calldata").Error())
 			return
 		}else {
 			err := json.Unmarshal([]byte(args_str), &args)
 			if err != nil  {
-				rest.WriteErrorRes(w, types.ErrCheckParams(vm.DefaultCodespace, "get callData failed"))
+				rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, fmt.Sprintf("json unmarshal calldata failed: %v", err.Error())).Error())
 				return
 			}
 		}
 		queryRes, _, _, err := cliCtx.Query("/custom/" + types2.ModuleName + "/" + types2.QueryAccount, bz, false)
 		if err != nil {
-			rest.WriteErrorRes(w, types.ErrCheckParams(vm.DefaultCodespace,"query contract account failed"))
+			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("query contract account failed:%v", err.Error())).Error())
 			return
 		}
 		if queryRes == nil{
-			rest.WriteErrorRes(w, types.ErrCheckParams(vm.DefaultCodespace,"contract account does not exist"))
+			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInternal, "contract account does not exist").Error())
 			return
 		}
 		var acc exported.Account
 		err2 = cliCtx.Cdc.UnmarshalBinaryLengthPrefixed(queryRes, &acc)
 		if err2 != nil {
-			rest.WriteErrorRes(w, sdk.ErrInternal("unmarshal query response to account failed"))
+			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("unmarshal query response to account failed:%v", err2.Error())).Error())
 			return
 		}
 		if acc.GetContractType() == types2.WasmContractType {
@@ -234,29 +233,29 @@ func queryContractStateAllHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			s := hex.EncodeToString(payload)
 			fmt.Println(s)
 			if err != nil {
-				rest.WriteErrorRes(w, types.ErrCheckParams(vm.DefaultCodespace, "encode evm callData failed"))
+				rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrParams, fmt.Sprintf("encode evm callData failed: %v", err.Error())).Error())
 				return
 			}
 			msg = evm.NewMsgEvmTx(fromAddr, nonce, to, amount, gas, big.NewInt(1), payload)
 		} else {
-			rest.WriteErrorRes(w, types.ErrCheckParams(vm.DefaultCodespace,"not contract account"))
+			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrParams, "not contract account").Error())
 			return
 		}
 
 		txBytes, err := cdc.MarshalBinaryBare(types3.NewCommonTx(fromAddr, nonce, gas, []sdk.Msg{msg}))
 		if err != nil {
-			rest.WriteErrorRes(w, types.ErrCheckParams(vm.DefaultCodespace,err.Error()))
+			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("cdc marshal failed: %v", err.Error())).Error())
 			return
 		}
 
 		res, _, _, err := cliCtx.Query("app/simulate", txBytes, false)
 		if err != nil {
-			rest.WriteErrorRes(w, transfer.ErrQueryTx(types.DefaultCodespace, err.Error()))
+			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("unexpected res: %v", err.Error())).Error())
 			return
 		}
 		var simResponse sdk.QureyAppResponse
 		if err := cdc.UnmarshalBinaryBare(res, &simResponse); err != nil {
-			rest.WriteErrorRes(w, transfer.ErrQueryTx(types.DefaultCodespace, err.Error()))
+			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("cdc unmarshal failed: %v", err.Error())).Error())
 			return
 		}
 
