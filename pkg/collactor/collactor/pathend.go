@@ -1,10 +1,20 @@
 package collactor
 
 import (
+	commitmenttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/commitment/types"
 	"strings"
 
 	chantypes "github.com/ci123chain/ci123chain/pkg/ibc/core/channel/types"
 )
+
+
+var (
+	defaultChainPrefix = commitmenttypes.NewMerklePrefix([]byte("ibc"))
+	defaultDelayPeriod = uint64(0)
+	// DefaultUpgradePath is the default IBC upgrade path set for an on-chain light client
+	DefaultUpgradePath = []string{"upgrade", "upgradedIBCState"}
+)
+
 
 // PathEnd represents the local connection identifers for a relay path
 // The path is set on the chain before performing operations

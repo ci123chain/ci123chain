@@ -81,3 +81,27 @@ func UnmarshalConsensusState(cdc *codec.Codec, bz []byte) (exported.ConsensusSta
 
 	return consensusState, nil
 }
+
+func MustMarshalClientStateResp(cdc *codec.Codec, resp QueryClientStatesResponse) []byte {
+	bz, err := MarshalClientStatesResp(cdc, resp)
+	if err != nil {
+		panic(fmt.Errorf("failed to decode clientstates response: %w", err))
+	}
+	return bz
+}
+func MarshalClientStatesResp(cdc *codec.Codec, resp QueryClientStatesResponse) ([]byte, error) {
+	return cdc.MarshalJSON(resp)
+}
+
+func MustUnmarshalClientStateResp(cdc *codec.Codec, bz []byte) QueryClientStatesResponse {
+	resp, err := UnmarshalClientStateResp(cdc, bz)
+	if err != nil {
+		panic(fmt.Errorf("failed to encode clientstates response: %w", err))
+	}
+	return resp
+}
+func UnmarshalClientStateResp(cdc *codec.Codec, bz []byte) (QueryClientStatesResponse, error) {
+	var req QueryClientStatesResponse
+	err := cdc.UnmarshalJSON(bz, &req)
+	return req, err
+}

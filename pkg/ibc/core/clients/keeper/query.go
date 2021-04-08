@@ -1,8 +1,10 @@
 package keeper
 
 import (
+	store2 "github.com/ci123chain/ci123chain/pkg/abci/store"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
+	"github.com/ci123chain/ci123chain/pkg/abci/types/pagination"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/clients/types"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/exported"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/host"
@@ -10,6 +12,8 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"sort"
+	"strings"
 )
 
 
@@ -35,6 +39,50 @@ func (q Keeper)ClientState(ctx sdk.Context, req abci.RequestQuery) ([]byte, erro
 		ProofHeight: proofHeight,
 	}
 	return types.IBCClientCodec.MustMarshalJSON(resp), nil
+}
+
+
+func (q Keeper)ClientStates(ctx sdk.Context, req abci.RequestQuery) ([]byte, error) {
+	var reqClientState types.QueryClientStatesRequest
+	if err := types.IBCClientCodec.UnmarshalJSON(req.Data, &reqClientState); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	clientStates := types.IdentifiedClientStates{}
+	store := store2.NewPrefixStore(ctx.KVStore(q.storeKey), host.KeyClientStorePrefix)
+
+	pageRes, err := pagination.Paginate(store, reqClientState.Pagination, func(key, value []byte) error {
+		keySplit := strings.Split(string(key), "/")
+		if keySplit[len(keySplit)-1] != "clientState" {
+			return nil
+		}
+
+		clientState, err := q.UnmarshalClientState(value)
+		if err != nil {
+			return err
+		}
+
+		clientID := keySplit[1]
+		if err := host.ClientIdentifierValidator(clientID); err != nil {
+			return err
+		}
+
+		identifiedClient := types.NewIdentifiedClientState(clientID, clientState)
+		clientStates = append(clientStates, identifiedClient)
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	sort.Sort(clientStates)
+
+	resp := types.QueryClientStatesResponse{
+		ClientStates: clientStates,
+		Pagination:   pageRes,
+	}
+	return types.MustMarshalClientStateResp(types.IBCClientCodec, resp), nil
 }
 
 
@@ -76,3 +124,4 @@ func (q Keeper) ConsensusState(ctx sdk.Context,  req abci.RequestQuery ) ([]byte
 	}
 	return types.IBCClientCodec.MustMarshalJSON(resp), nil
 }
+

@@ -14,6 +14,44 @@ import (
 	"strings"
 )
 
+func (q Keeper) Channels(ctx sdk.Context, r abci.RequestQuery) ([]byte, error) {
+	req, err := types.UnmarshalQueryChannelRequest(types.ChannelCdc, r.Data)
+	if err != nil {
+		return nil, err
+	}
+	channels := []*types.IdentifiedChannel{}
+	channelStore := store.NewPrefixStore(ctx.KVStore(q.storeKey), []byte(host.KeyChannelEndPrefix))
+
+	pageRes, err := pagination.Paginate(channelStore, req.Pagination, func(key, value []byte) error {
+		var result types.Channel
+		if err := q.cdc.UnmarshalBinaryBare(value, &result); err != nil {
+			return err
+		}
+
+		portID, channelID, err := host.ParseChannelPath(string(key))
+		if err != nil {
+			return err
+		}
+
+		identifiedChannel := types.NewIdentifiedChannel(portID, channelID, result)
+		channels = append(channels, &identifiedChannel)
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	selfHeight := clienttypes.GetSelfHeight(ctx)
+
+	resp := types.QueryChannelsResponse{
+		Channels:   channels,
+		Pagination: pageRes,
+		Height:     selfHeight,
+	}
+	return types.MustMarshalQueryChannelsResp(types.ChannelCdc, resp), nil
+}
+
 // PacketCommitment implements the Query/PacketCommitment gRPC method
 func (q Keeper) PacketCommitment(ctx sdk.Context, req abci.RequestQuery) ([]byte, error) {
 	var reqPacketCommitment types.QueryPacketCommitmentRequest

@@ -20,4 +20,6 @@ func RegisterCodec(cdc *codec.Codec)  {
 	cdc.RegisterConcrete(&MsgRecvPacket{}, "ibcChannel/MsgRecvPacket", nil)
 	cdc.RegisterConcrete(&MsgAcknowledgement{}, "ibcChannel/MsgAcknowledgement", nil)
 	cdc.RegisterConcrete(&MsgTimeout{}, "ibcChannel/MsgTimeout", nil)
+	cdc.RegisterConcrete(&Channel{}, "ibcChannel/Channel", nil)
+	cdc.RegisterConcrete(&IdentifiedChannel{}, "ibcChannel/IdentifiedChannel", nil)
 }

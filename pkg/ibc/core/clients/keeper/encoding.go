@@ -17,6 +17,12 @@ func (k Keeper) MustMarshalClientState(clientState exported.ClientState) []byte 
 	return types.MustMarshalClientState(k.cdc, clientState)
 }
 
+// UnmarshalClientState attempts to decode and return an ClientState object from
+// raw encoded bytes.
+func (k Keeper) UnmarshalClientState(bz []byte) (exported.ClientState, error) {
+	return types.UnmarshalClientState(k.cdc, bz)
+}
+
 
 func (k Keeper) MustMarshalConsensusState(consensusState exported.ConsensusState) []byte {
 	return types.MustMarshalConsensusState(k.cdc, consensusState)

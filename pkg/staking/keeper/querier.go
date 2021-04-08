@@ -32,7 +32,8 @@ func NewQuerier(k StakingKeeper) sdk.Querier {
 			return queryDelegatorDelegations(ctx, req, k)
 		case s.QueryOperatorAddressSet:
 			return queryOperatorAddressByConsAddresses(ctx, req, k)
-
+		case s.QueryParameters:
+			return queryParameters(ctx, req, k)
 		default:
 			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "unknown request endpoint")
 		}
@@ -330,4 +331,11 @@ func queryOperatorAddressByConsAddresses(ctx sdk.Context, req abci.RequestQuery,
 	}
 	result  := types.StakingCodec.MustMarshalJSON(responseSet)
 	return result, nil
+}
+
+
+func queryParameters(ctx sdk.Context, req abci.RequestQuery, k StakingKeeper) ([]byte, error) {
+	params := k.GetParams(ctx)
+	res := types.StakingCodec.MustMarshalJSON(params)
+	return res, nil
 }

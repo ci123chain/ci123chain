@@ -12,8 +12,16 @@ func NewQuerier(k Keeper) sdk.Querier {
 		switch path[0] {
 		case types.QueryClientState:
 			return clientState(ctx, req, k)
-		case types.QueryConsensusState:
+		case types.QueryClientStates:
+			return clientStates(ctx, req, k)
+		case types.QueryClientConsensusState:
 			return consensusState(ctx, req, k)
+
+		case types.QueryConnections:
+			return connections(ctx, req, k)
+		case types.QueryChannels:
+			return channels(ctx, req, k)
+
 		case types.QueryPacketCommitment:
 			return packetCommitment(ctx, req, k)
 		case types.QueryPacketCommitments:
@@ -34,8 +42,26 @@ func clientState(c sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, e
 }
 
 // ClientState implements the IBC QueryServer interface
+func clientStates(c sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
+	resp, err := keeper.ClientKeeper.ClientStates(c, req)
+	return resp, err
+}
+
+// ClientState implements the IBC QueryServer interface
 func consensusState(c sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
 	resp, err := keeper.ClientKeeper.ConsensusState(c, req)
+	return resp, err
+}
+
+// ClientStates implements the IBC QueryServer interface
+func connections(c sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
+	resp, err := keeper.ConnectionKeeper.Connections(c, req)
+	return resp, err
+}
+
+// ClientStates implements the IBC QueryServer interface
+func channels(c sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
+	resp, err := keeper.ChannelKeeper.Channels(c, req)
 	return resp, err
 }
 

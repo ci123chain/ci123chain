@@ -3,14 +3,17 @@ package commands
 import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"time"
 )
 
 const (
 	flagHome = "home"
 	flagForce               = "force"
-
+	flagTimeout             = "timeout"
 	flagFile                = "file"
 	flagURL                 = "url"
+	flagMaxRetries          = "max-retries"
+
 )
 
 
@@ -33,6 +36,13 @@ func getAddInputs(cmd *cobra.Command) (file string, url string, err error) {
 }
 
 
+func getTimeout(cmd *cobra.Command) (time.Duration, error) {
+	to, err := cmd.Flags().GetString(flagTimeout)
+	if err != nil {
+		return 0, err
+	}
+	return time.ParseDuration(to)
+}
 
 func chainsAddFlags(cmd *cobra.Command) *cobra.Command {
 	fileFlag(cmd)

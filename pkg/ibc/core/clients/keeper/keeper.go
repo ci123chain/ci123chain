@@ -10,7 +10,7 @@ import (
 	commitmenttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/commitment/types"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/exported"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/host"
-	ibcclienttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/light-clients/07-tendermint/types"
+	ibcclienttypes "github.com/ci123chain/ci123chain/pkg/ibc/light-clients/07-tendermint/types"
 	paramtypes "github.com/ci123chain/ci123chain/pkg/params/subspace"
 	"github.com/tendermint/tendermint/libs/log"
 	"reflect"

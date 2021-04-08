@@ -22,6 +22,7 @@ const (
 	QueryDelegatorDelegations          = "delegatorDelegations"
 
 	QueryOperatorAddressSet = "operatorAddresses"
+	QueryParameters  = "parameters"
 )
 
 var (

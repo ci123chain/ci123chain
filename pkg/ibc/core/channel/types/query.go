@@ -111,3 +111,19 @@ func NewQueryChannelResponse(channel Channel, proof []byte, height clienttypes.H
 		ProofHeight: height,
 	}
 }
+
+
+// QueryChannelsRequest is the request type for the Query/Channels RPC method
+type QueryChannelsRequest struct {
+	// pagination request
+	Pagination *pagination.PageRequest `protobuf:"bytes,1,opt,name=pagination,proto3" json:"pagination,omitempty"`
+}
+// QueryChannelsResponse is the response type for the Query/Channels RPC method.
+type QueryChannelsResponse struct {
+	// list of stored channels of the chain.
+	Channels []*IdentifiedChannel `protobuf:"bytes,1,rep,name=channels,proto3" json:"channels,omitempty"`
+	// pagination response
+	Pagination *pagination.PageResponse `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
+	// query block height
+	Height clienttypes.Height `protobuf:"bytes,3,opt,name=height,proto3" json:"height"`
+}

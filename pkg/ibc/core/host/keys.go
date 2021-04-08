@@ -38,6 +38,11 @@ const (
 
 
 
+// FullConsensusStateKey returns the store key for the consensus state of a particular
+// client.
+func FullConsensusStateKey(clientID string, height exported.Height) []byte {
+	return []byte(FullConsensusStatePath(clientID, height))
+}
 // FullClientStateKey takes a client identifier and returns a Key under which to store a
 // particular client state.
 func FullClientStateKey(clientID string) []byte {

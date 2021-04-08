@@ -250,3 +250,38 @@ func NewErrorAcknowledgement(err string) Acknowledgement {
 		},
 	}
 }
+
+
+
+// IdentifiedChannel defines a channel with additional port and channel
+// identifier fields.
+type IdentifiedChannel struct {
+	// current state of the channel end
+	State State `protobuf:"varint,1,opt,name=state,proto3,enum=ibc.core.channel.v1.State" json:"state,omitempty"`
+	// whether the channel is ordered or unordered
+	Ordering Order `protobuf:"varint,2,opt,name=ordering,proto3,enum=ibc.core.channel.v1.Order" json:"ordering,omitempty"`
+	// counterparty channel end
+	Counterparty Counterparty `protobuf:"bytes,3,opt,name=counterparty,proto3" json:"counterparty"`
+	// list of connection identifiers, in order, along which packets sent on
+	// this channel will travel
+	ConnectionHops []string `protobuf:"bytes,4,rep,name=connection_hops,json=connectionHops,proto3" json:"connection_hops,omitempty" yaml:"connection_hops"`
+	// opaque channel version, which is agreed upon during the handshake
+	Version string `protobuf:"bytes,5,opt,name=version,proto3" json:"version,omitempty"`
+	// port identifier
+	PortId string `protobuf:"bytes,6,opt,name=port_id,json=portId,proto3" json:"port_id,omitempty"`
+	// channel identifier
+	ChannelId string `protobuf:"bytes,7,opt,name=channel_id,json=channelId,proto3" json:"channel_id,omitempty"`
+}
+
+// NewIdentifiedChannel creates a new IdentifiedChannel instance
+func NewIdentifiedChannel(portID, channelID string, ch Channel) IdentifiedChannel {
+	return IdentifiedChannel{
+		State:          ch.State,
+		Ordering:       ch.Ordering,
+		Counterparty:   ch.Counterparty,
+		ConnectionHops: ch.ConnectionHops,
+		Version:        ch.Version,
+		PortId:         portID,
+		ChannelId:      channelID,
+	}
+}

@@ -5,12 +5,17 @@ import (
 	retry "github.com/avast/retry-go"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	sdkCtx "github.com/ci123chain/ci123chain/pkg/client/context"
+	clienttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/clients/types"
+	connectiontypes "github.com/ci123chain/ci123chain/pkg/ibc/core/connection/types"
+	ibcexported "github.com/ci123chain/ci123chain/pkg/ibc/core/exported"
 	"github.com/tendermint/tendermint/libs/log"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
 	rpchttp "github.com/tendermint/tendermint/rpc/client/http"
 	libclient "github.com/tendermint/tendermint/rpc/jsonrpc/client"
+	"golang.org/x/sync/errgroup"
 	"os"
 	"path"
+	"strings"
 	"time"
 )
 
@@ -19,6 +24,9 @@ var (
 	rtyAtt    = retry.Attempts(rtyAttNum)
 	rtyDel    = retry.Delay(time.Millisecond * 400)
 	rtyErr    = retry.LastErrorOnly(true)
+
+	AllowUpdateAfterExpiry       = true
+	AllowUpdateAfterMisbehaviour = true
 )
 
 // Chain represents the necessary data for connecting to and indentifying a chain and its counterparites
@@ -61,7 +69,18 @@ func (c Chains) Get(chainID string) (*Chain, error) {
 	}
 	return &Chain{}, fmt.Errorf("chain with ID %s is not configured", chainID)
 }
-
+// Gets returns a map chainIDs to their chains
+func (c Chains) Gets(chainIDs ...string) (map[string]*Chain, error) {
+	out := make(map[string]*Chain)
+	for _, cid := range chainIDs {
+		chain, err := c.Get(cid)
+		if err != nil {
+			return out, err
+		}
+		out[cid] = chain
+	}
+	return out, nil
+}
 
 // Init initializes the pieces of a chain that aren't set when it parses a config
 // NOTE: All validation of the chain should happen here.
@@ -178,4 +197,179 @@ func lightDir(home string) string {
 func (c *Chain) GetTrustingPeriod() time.Duration {
 	tp, _ := time.ParseDuration(c.TrustingPeriod)
 	return tp
+}
+
+// Log takes a string and logs the data
+func (c *Chain) Log(s string) {
+	c.logger.Info(s)
+}
+
+// Error takes an error, wraps it in the chainID and logs the error
+func (c *Chain) Error(err error) {
+	c.logger.Error(fmt.Sprintf("%s: err(%s)", c.ChainID, err.Error()))
+}
+
+
+// MustGetAddress used for brevity
+func (c *Chain) MustGetAddress() sdk.AccAddress {
+	srcAddr, err := c.GetAddress()
+	if err != nil {
+		panic(err)
+	}
+
+	return srcAddr
+}
+
+
+
+// SendMsg wraps the msg in a stdtx, signs and sends it
+func (c *Chain) SendMsg(datagram sdk.Msg) (*sdk.TxResponse, bool, error) {
+	return c.SendMsgs([]sdk.Msg{datagram})
+}
+
+// SendMsgs wraps the msgs in a StdTx, signs and sends it. An error is returned if there
+// was an issue sending the transaction. A successfully sent, but failed transaction will
+// not return an error. If a transaction is successfully sent, the result of the execution
+// of that transaction will be logged. A boolean indicating if a transaction was successfully
+// sent and executed successfully is returned.
+func (c *Chain) SendMsgs(msgs []sdk.Msg) (*sdk.TxResponse, bool, error) {
+	// Instantiate the client context
+	ctx := c.CLIContext(0)
+
+	// Query account details
+	txf, err := tx.PrepareFactory(ctx, c.TxFactory(0))
+	if err != nil {
+		return nil, false, err
+	}
+
+	// If users pass gas adjustment, then calculate gas
+	_, adjusted, err := tx.CalculateGas(ctx.QueryWithData, txf, msgs...)
+	if err != nil {
+		return nil, false, err
+	}
+
+	// Set the gas amount on the transaction factory
+	txf = txf.WithGas(adjusted)
+
+	// Build the transaction builder
+	txb, err := tx.BuildUnsignedTx(txf, msgs...)
+	if err != nil {
+		return nil, false, err
+	}
+
+	// Attach the signature to the transaction
+	err = tx.Sign(txf, c.Key, txb, false)
+	if err != nil {
+		return nil, false, err
+	}
+
+	// Generate the transaction bytes
+	txBytes, err := ctx.TxConfig.TxEncoder()(txb.GetTx())
+	if err != nil {
+		return nil, false, err
+	}
+
+	// Broadcast those bytes
+	res, err := ctx.BroadcastTx(txBytes)
+	if err != nil {
+		return nil, false, err
+	}
+
+	// transaction was executed, log the success or failure using the tx response code
+	// NOTE: error is nil, logic should use the returned error to determine if the
+	// transaction was successfully executed.
+	if res.Code != 0 {
+		c.LogFailedTx(res, err, msgs)
+		return res, false, nil
+	}
+
+	c.LogSuccessTx(res, msgs)
+	return res, true, nil
+}
+
+
+// ValidateClientPaths takes two chains and validates their clients
+func ValidateClientPaths(src, dst *Chain) error {
+	if err := src.PathEnd.Vclient(); err != nil {
+		return err
+	}
+	if err := dst.PathEnd.Vclient(); err != nil {
+		return err
+	}
+	return nil
+}
+
+// ValidateConnectionPaths takes two chains and validates the connections
+// and underlying client identifiers
+func ValidateConnectionPaths(src, dst *Chain) error {
+	if err := src.PathEnd.Vclient(); err != nil {
+		return err
+	}
+	if err := dst.PathEnd.Vclient(); err != nil {
+		return err
+	}
+	if err := src.PathEnd.Vconn(); err != nil {
+		return err
+	}
+	if err := dst.PathEnd.Vconn(); err != nil {
+		return err
+	}
+	return nil
+}
+
+
+// ValidateChannelParams takes two chains and validates their respective channel params
+func ValidateChannelParams(src, dst *Chain) error {
+	if err := src.PathEnd.ValidateBasic(); err != nil {
+		return err
+	}
+	if err := dst.PathEnd.ValidateBasic(); err != nil {
+		return err
+	}
+	//nolint:staticcheck
+	if strings.ToUpper(src.PathEnd.Order) != strings.ToUpper(dst.PathEnd.Order) {
+		return fmt.Errorf("src and dst path ends must have same ORDER. got src: %s, dst: %s",
+			src.PathEnd.Order, dst.PathEnd.Order)
+	}
+	return nil
+}
+
+
+// GenerateConnHandshakeProof generates all the proofs needed to prove the existence of the
+// connection state on this chain. A counterparty should use these generated proofs.
+func (c *Chain) GenerateConnHandshakeProof(height uint64) (clientState ibcexported.ClientState,
+	clientStateProof []byte, consensusProof []byte, connectionProof []byte,
+	connectionProofHeight clienttypes.Height, err error) {
+	var (
+		clientStateRes     *clienttypes.QueryClientStateResponse
+		consensusStateRes  *clienttypes.QueryConsensusStateResponse
+		connectionStateRes *connectiontypes.QueryConnectionResponse
+
+		eg = new(errgroup.Group)
+	)
+
+	// query for the client state for the proof and get the height to query the consensus state at.
+	clientStateRes, err = c.QueryClientState(int64(height))
+	if err != nil {
+		return nil, nil, nil, nil, clienttypes.Height{}, err
+	}
+
+	clientState = clientStateRes.ClientState
+
+	eg.Go(func() error {
+		consensusStateRes, err = c.QueryClientConsensusState(int64(height), clientState.GetLatestHeight())
+		return err
+	})
+	eg.Go(func() error {
+		connectionStateRes, err = c.QueryConnection(int64(height))
+		return err
+	})
+
+	if err := eg.Wait(); err != nil {
+		return nil, nil, nil, nil, clienttypes.Height{}, err
+	}
+
+	return clientState, clientStateRes.Proof, consensusStateRes.Proof, connectionStateRes.Proof,
+		connectionStateRes.ProofHeight, nil
+
 }

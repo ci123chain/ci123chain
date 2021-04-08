@@ -112,6 +112,17 @@ func (m MsgUpdateClient) Bytes() []byte {
 	panic("implement me")
 }
 
+// NewMsgUpdateClient creates a new MsgUpdateClient instance
+//nolint:interfacer
+func NewMsgUpdateClient(id string, header exported.Header, signer sdk.AccAddress) *MsgUpdateClient {
+	return &MsgUpdateClient{
+		ClientId: id,
+		Header:   header,
+		Signer:   signer.String(),
+	}
+}
+
+
 // MsgUpdateClientResponse defines the Msg/UpdateClient response type.
 type MsgUpdateClientResponse struct {
 }

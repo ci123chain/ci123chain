@@ -191,6 +191,8 @@ func NewMerklePrefix(keyPrefix []byte) MerklePrefix {
 	}
 }
 
+func (m *MerklePrefix) String() string { return string(m.KeyPrefix) }
+
 // Bytes returns the key prefix bytes
 func (mp MerklePrefix) Bytes() []byte {
 	return mp.KeyPrefix

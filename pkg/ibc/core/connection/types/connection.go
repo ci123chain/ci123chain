@@ -169,3 +169,33 @@ func (x State) String() string {
 
 
 
+
+// IdentifiedConnection defines a connection with additional connection
+// identifier field.
+type IdentifiedConnection struct {
+	// connection identifier.
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" yaml:"id"`
+	// client associated with this connection.
+	ClientId string `protobuf:"bytes,2,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty" yaml:"client_id"`
+	// IBC version which can be utilised to determine encodings or protocols for
+	// channels or packets utilising this connection
+	Versions []*Version `protobuf:"bytes,3,rep,name=versions,proto3" json:"versions,omitempty"`
+	// current state of the connection end.
+	State State `protobuf:"varint,4,opt,name=state,proto3,enum=ibc.core.connection.v1.State" json:"state,omitempty"`
+	// counterparty chain associated with this connection.
+	Counterparty Counterparty `protobuf:"bytes,5,opt,name=counterparty,proto3" json:"counterparty"`
+	// delay period associated with this connection.
+	DelayPeriod uint64 `protobuf:"varint,6,opt,name=delay_period,json=delayPeriod,proto3" json:"delay_period,omitempty" yaml:"delay_period"`
+}
+
+// NewIdentifiedConnection creates a new IdentifiedConnection instance
+func NewIdentifiedConnection(connectionID string, conn ConnectionEnd) IdentifiedConnection {
+	return IdentifiedConnection{
+		Id:           connectionID,
+		ClientId:     conn.ClientId,
+		Versions:     conn.Versions,
+		State:        conn.State,
+		Counterparty: conn.Counterparty,
+		DelayPeriod:  conn.DelayPeriod,
+	}
+}

@@ -30,3 +30,29 @@ func ParseIdentifier(identifier, prefix string) (uint64, error) {
 	}
 	return sequence, nil
 }
+
+// ParseConnectionPath returns the connection ID from a full path. It returns
+// an error if the provided path is invalid.
+func ParseConnectionPath(path string) (string, error) {
+	split := strings.Split(path, "/")
+	if len(split) != 2 {
+		return "", sdkerrors.Wrapf(ErrInvalidPath, "cannot parse connection path %s", path)
+	}
+
+	return split[1], nil
+}
+
+// ParseChannelPath returns the port and channel ID from a full path. It returns
+// an error if the provided path is invalid.
+func ParseChannelPath(path string) (string, string, error) {
+	split := strings.Split(path, "/")
+	if len(split) < 5 {
+		return "", "", sdkerrors.Wrapf(ErrInvalidPath, "cannot parse channel path %s", path)
+	}
+
+	if split[1] != KeyPortPrefix || split[3] != KeyChannelPrefix {
+		return "", "", sdkerrors.Wrapf(ErrInvalidPath, "cannot parse channel path %s", path)
+	}
+
+	return split[2], split[4], nil
+}
