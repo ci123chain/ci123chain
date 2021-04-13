@@ -295,6 +295,7 @@ func (k *Keeper) Migrate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAddres
 		return sdk.AccAddress{}, err
 	}
 
+	//todo:fix iterator
 	prefix := "s/k:" + k.storeKey.Name() + "/"
 	oldKey := types.GetContractStorePrefixKey(oldContract)
 

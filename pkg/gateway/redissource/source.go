@@ -13,8 +13,6 @@ import (
 )
 
 const (
-	Domain = "DOMAIN"
-	SharedKey  = "s/k:order/OrderBook"
 	HostPattern  = "[*]+"
 	FlagNodeList   = "node-list"
 )

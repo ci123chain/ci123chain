@@ -75,7 +75,7 @@ func newIAVLStore(db dbm.DB, tree *iavl.MutableTree, numRecent int64, storeEvery
 		tree:       tree,
 		numRecent:  numRecent,
 		storeEvery: storeEvery,
-		parent: 	NewBaseKVStore(dbStoreAdapter{db}, storeEvery, numRecent, key).Prefix([]byte(key.Name())).(CommitStore),
+		parent: 	NewBaseKVStore(dbStoreAdapter{db}, storeEvery, numRecent, key),
 		lg:         logger,
 		key:        key,
 	}

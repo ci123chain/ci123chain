@@ -38,8 +38,7 @@ func (s prefixStore) key(key []byte) (res []byte) {
 	if key == nil {
 		panic("nil key on prefixStore")
 	}
-	prefix := []byte("s/k:" + string(s.prefix) + "/")
-	res = append(prefix, key...)
+	res = append(s.prefix, key...)
 	return
 }
 
