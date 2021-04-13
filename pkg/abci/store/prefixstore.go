@@ -2,11 +2,9 @@ package store
 
 import (
 	"bytes"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	db "github.com/tendermint/tm-db"
 	"io"
-	"reflect"
-
-	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 )
 
 var _ KVStore = prefixStore{}
@@ -36,7 +34,7 @@ func cloneAppend(bz []byte, tail []byte) (res []byte) {
 
 func (s prefixStore) key(key []byte) (res []byte) {
 	if key == nil {
-		panic("nil key on prefixStore")
+		return s.prefix
 	}
 	res = append(s.prefix, key...)
 	return
@@ -123,20 +121,13 @@ func (s prefixStore) Gas(meter GasMeter, config GasConfig) KVStore {
 // Implements KVStore.
 func (s prefixStore) RemoteIterator(start, end []byte) Iterator {
 	start = s.key(start)
-	end = s.key(end)
-	p := s.Parent()
-	for {
-		if reflect.TypeOf(p) != reflect.TypeOf(dbStoreAdapter{}) {
-			p = p.Parent()
-			if reflect.TypeOf(p) == reflect.TypeOf(prefixStore{}) {
-				start = p.(prefixStore).key(start)
-				end = p.(prefixStore).key(end)
-			}
-		} else {
-			break
-		}
+	if end == nil {
+		end = sdk.PrefixEndBytes(start)
+	} else {
+		end = s.key(end)
 	}
-	return p.RemoteIterator(start, end)
+
+	return s.parent.RemoteIterator(start, end)
 }
 
 // Implements KVStore
