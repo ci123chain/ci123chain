@@ -4,33 +4,33 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/client/cmd"
-	"github.com/ci123chain/ci123chain/pkg/node"
-	"github.com/spf13/viper"
 	"github.com/ci123chain/ci123chain/pkg/config"
 	"github.com/ci123chain/ci123chain/pkg/logger"
+	"github.com/ci123chain/ci123chain/pkg/node"
+	val "github.com/ci123chain/ci123chain/pkg/validator"
+	"github.com/spf13/viper"
 	"github.com/tendermint/go-amino"
 	cfg "github.com/tendermint/tendermint/config"
-	val "github.com/ci123chain/ci123chain/pkg/validator"
-	"github.com/tendermint/tendermint/crypto/secp256k1"
+	"github.com/tendermint/tendermint/crypto/ed25519"
 	"github.com/tendermint/tendermint/libs/cli"
-	"github.com/tendermint/tendermint/libs/rand"
 	"github.com/tendermint/tendermint/libs/log"
+	"github.com/tendermint/tendermint/libs/rand"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
-	"fmt"
 )
 
 const (
 	flagMasterDomain   = "master_domain"
 	flagMasterPort	   = "master_port"
 	defaultMasterPort  = "80"
-	flagConfig         = "configs" //configs.toml
-	defaultConfigFilePath = "configs.toml"
-	defaultConfigPath  = "configs"
+	flagConfig         = "config" //config.toml
+	defaultConfigFilePath = "config.toml"
+	defaultConfigPath  = "config"
 	defaultDataPath    = "data"
 )
 
@@ -125,15 +125,15 @@ func configFollowMaster(master, root string) (*cfg.Config, error){
 
 	ioutil.WriteFile(c.GenesisFile(), configFiles.GenesisFile, os.ModePerm)
 
-	var valKey secp256k1.PrivKey
-	validator := secp256k1.GenPrivKey()
+	var valKey ed25519.PrivKey
+	validator := ed25519.GenPrivKey()
 	cdc := amino.NewCodec()
 	keyByte, err := cdc.MarshalJSON(validator)
 	if err != nil {
 		return nil, err
 	}
 	validatorKey := string(keyByte[1:len(keyByte)-1])
-	privStr := fmt.Sprintf(`{"type":"%s","value":"%s"}`, secp256k1.PrivKeyName, validatorKey)
+	privStr := fmt.Sprintf(`{"type":"%s","value":"%s"}`, ed25519.PrivKeyName, validatorKey)
 	cdc = types.GetCodec()
 	err = cdc.UnmarshalJSON([]byte(privStr), &valKey)
 	if err != nil {

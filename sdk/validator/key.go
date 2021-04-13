@@ -5,25 +5,25 @@ import (
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/tendermint/go-amino"
-	"github.com/tendermint/tendermint/crypto/secp256k1"
+	"github.com/tendermint/tendermint/crypto/ed25519"
 )
 
 type PubKey struct {
-	Type string `json:"types"`
+	Type string `json:"type"`
 	Value string `json:"value"`
 }
 
 func NewValidatorKey() (validatorKey, pubKeyStr, address string, err error) {
-	var valKey secp256k1.PrivKeySecp256k1
-	validator := secp256k1.GenPrivKey()
+	var valKey ed25519.PrivKey
+	validator := ed25519.GenPrivKey()
 	cdc := amino.NewCodec()
 	keyByte, err := cdc.MarshalJSON(validator)
 	if err != nil {
 		return "","", "", err
 	}
 	validatorKey = string(keyByte[1:len(keyByte)-1])
-	privStr := fmt.Sprintf(`{"types":"%s","value":"%s"}`, secp256k1.PrivKeyAminoName, validatorKey)
-	cdc = types.GetCodec()
+	privStr := fmt.Sprintf(`{"type":"%s","value":"%s"}`, ed25519.PrivKeyName, validatorKey)
+	cdc = types.MakeCodec()
 	err = cdc.UnmarshalJSON([]byte(privStr), &valKey)
 	if err != nil {
 		return "","", "", err

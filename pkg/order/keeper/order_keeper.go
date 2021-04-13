@@ -7,6 +7,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/order/types"
 	"github.com/ci123chain/ci123chain/pkg/params/subspace"
 	"github.com/ci123chain/ci123chain/pkg/redis"
+	dbm "github.com/tendermint/tm-db"
 	"time"
 )
 
@@ -144,7 +145,8 @@ func (ok *OrderKeeper) isReady(orderbook types.OrderBook, shardID string, height
 		if orderbook.Lists[orderbook.Current.Index].Height + 1 == height {
 			orderbook.Current.State = types.StateDone
 			orderBytes, _ :=types.ModuleCdc.MarshalJSON(orderbook)
-			ok.Cdb.Set(sdk.NewPrefixedKey([]byte(types.StoreKey), []byte(types.OrderBookKey)), orderBytes)
+			cdb := dbm.NewPrefixDB(ok.Cdb, []byte("s/k:"+ok.StoreKey.Name()+"/"))
+			cdb.Set([]byte(types.OrderBookKey), orderBytes)
 			return false
 		}
 	}

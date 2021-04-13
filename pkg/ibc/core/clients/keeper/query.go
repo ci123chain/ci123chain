@@ -51,14 +51,16 @@ func (q Keeper)ClientStates(ctx sdk.Context, req abci.RequestQuery) ([]byte, err
 
 	clientStates := types.IdentifiedClientStates{}
 
-	//store := ctx.KVStore(q.storeKey)
-	//iter := store.RemoteIterator(host.KeyClientStorePrefix, sdk.PrefixEndBytes(host.KeyClientStorePrefix))
-	store := store2.NewPrefixStore(ctx.KVStore(q.storeKey), host.KeyClientStorePrefix)
-	iter := store.Iterator(nil, nil)
-
+	store := ctx.KVStore(q.storeKey)
+	iter := store.RemoteIterator(host.KeyClientStorePrefix, sdk.PrefixEndBytes(host.KeyClientStorePrefix))
 	for ; iter.Valid(); iter.Next() {
-		fmt.Println(iter.Value())
+		fmt.Println(string(iter.Key()), string(iter.Value()))
 	}
+
+	store = store2.NewPrefixStore(ctx.KVStore(q.storeKey), host.KeyClientStorePrefix)
+	iter = store.Iterator(nil, nil)
+
+
 
 	pageRes, err := pagination.Paginate(store, reqClientState.Pagination, func(key, value []byte) error {
 		keySplit := strings.Split(string(key), "/")

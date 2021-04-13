@@ -316,7 +316,8 @@ func (ks *baseKVStore) GetCache() map[string][]byte{
 		} else if cacheValue.value == nil {
 			// Skip, it already doesn't exist in parent.
 		} else {
-			valueBytes[key] = cacheValue.value
+			rawkey := "s/k:"+ks.key.Name()+"/" + key
+			valueBytes[rawkey] = cacheValue.value
 		}
 	}
 	return valueBytes

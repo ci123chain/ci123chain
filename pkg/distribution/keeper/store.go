@@ -334,8 +334,7 @@ func (k DistrKeeper) SetValidatorHistoricalRewards(ctx sdk.Context, val sdk.AccA
 func (k DistrKeeper) DeleteValidatorHistoricalRewards(ctx sdk.Context, val sdk.AccAddress) {
 	store := ctx.KVStore(k.storeKey)
 	prefix := types.GetValidatorHistoricalRewardsPrefix(val)
-	key := sdk.NewPrefixedKey([]byte(k.storeKey.Name()), prefix)
-	iterator,_ := k.cdb.Iterator(key, sdk.PrefixEndBytes(key))
+	iterator := store.RemoteIterator(prefix, sdk.PrefixEndBytes(prefix))
 	if !iterator.Valid() {
 		iterator.Close()
 		store := ctx.KVStore(k.storeKey)
@@ -403,8 +402,7 @@ func (k DistrKeeper) SetValidatorSlashEvent(ctx sdk.Context, val sdk.AccAddress,
 func (k DistrKeeper) DeleteValidatorSlashEvents(ctx sdk.Context, val sdk.AccAddress) {
 	store := ctx.KVStore(k.storeKey)
 	prefix := types.GetValidatorSlashEventPrefix(val)
-	key := sdk.NewPrefixedKey([]byte(k.storeKey.Name()), prefix)
-	iterator, _ := k.cdb.Iterator(key, sdk.PrefixEndBytes(key))
+	iterator := store.RemoteIterator(prefix, sdk.PrefixEndBytes(prefix))
 	if !iterator.Valid() {
 		iterator.Close()
 		store := ctx.KVStore(k.storeKey)

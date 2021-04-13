@@ -219,7 +219,7 @@ func (rs *rootMultiStore) Commit() CommitID {
 	if _, err := os.Stat(cacheName); os.IsNotExist(err) {
 		for _, store := range rs.stores {
 			if reflect.TypeOf(store).Elem() == reflect.TypeOf(iavlStore{}){
-				s := store.(*iavlStore).Parent().(prefixStore).GetCache()
+				s := store.(*iavlStore).Parent().(*baseKVStore).GetCache()
 				for k, v := range s{
 					cacheMap = append(cacheMap, CacheMap{
 						Key:   []byte(k),
@@ -248,19 +248,19 @@ func (rs *rootMultiStore) Commit() CommitID {
 	batch.Write()
 
 	// commitSharedDB
-	rs.commitSharedDB(rs.stores)
+	rs.commitSharedDB(cacheMap)
 
 	//remove cache
 	os.Remove(cacheName)
 
 	//done
 	var orderBook order.OrderBook
-	orderBookKey := sdk.NewPrefixedKey([]byte(order.StoreKey), []byte(order.OrderBookKey))
-	orderBytes, _ := rs.cdb.Get(orderBookKey)
+	cdb := dbm.NewPrefixDB(rs.cdb, []byte("s/k:"+order.StoreKey+"/"))
+	orderBytes, _ := cdb.Get([]byte(order.OrderBookKey))
 	order.ModuleCdc.UnmarshalJSON(orderBytes, &orderBook)
 	orderBook.Current.State = order.StateDone
 	orderBytes, _ = order.ModuleCdc.MarshalJSON(orderBook)
-	rs.cdb.Set(orderBookKey, orderBytes)
+	cdb.Set([]byte(order.OrderBookKey), orderBytes)
 
 	// Prepare for next version.
 	commitID := CommitID{
@@ -403,7 +403,7 @@ func (rs *rootMultiStore) loadCommitStoreFromParams(key sdk.StoreKey, id CommitI
 		cdb = rs.cdb
 	} else {
 		ldb = dbm.NewPrefixDB(rs.ldb, []byte("s/k:"+params.key.Name()+"/"))
-		cdb = rs.cdb
+		cdb = dbm.NewPrefixDB(rs.cdb, []byte("s/k:"+params.key.Name()+"/"))
 	}
 
 	switch params.typ {
@@ -610,14 +610,11 @@ func (rs *rootMultiStore) commitStores(version int64, storeMap map[StoreKey]Comm
 	return ci
 }
 
-func (rs *rootMultiStore) commitSharedDB(storeMap map[StoreKey]CommitStore) {
+func (rs *rootMultiStore) commitSharedDB(cacheMap []CacheMap) {
 	batch := rs.cdb.NewBatch()
 	defer batch.Close()
-	for _, store := range storeMap {
-		// Commit sharedDB
-		if reflect.TypeOf(store).Elem() == reflect.TypeOf(iavlStore{}){
-			store.(*iavlStore).Parent().(prefixStore).BatchSet(batch)
-		}
+	for _, cache := range cacheMap {
+		batch.Set(cache.Key, cache.Value)
 	}
 	batch.Write()
 }
