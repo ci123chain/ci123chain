@@ -97,7 +97,7 @@ func (c *Chain) LightClientWithoutTrust(db dbm.DB) (*light.Client, error) {
 		},
 		prov,
 		// TODO: provide actual witnesses!
-		// NOTE: This requires adding them to the chain config
+		// NOTE: This requires adding them to the chain configs
 		[]lightp.Provider{prov},
 		dbs.New(db, ""),
 		logger)
@@ -144,7 +144,7 @@ func (c *Chain) LightClient(db dbm.DB) (*light.Client, error) {
 		c.GetTrustingPeriod(),
 		prov,
 		// TODO: provide actual witnesses!
-		// NOTE: This requires adding them to the chain config
+		// NOTE: This requires adding them to the chain configs
 		[]lightp.Provider{prov},
 		dbs.New(db, ""),
 		logger,

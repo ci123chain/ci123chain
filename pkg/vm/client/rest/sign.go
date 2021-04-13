@@ -10,7 +10,7 @@ import (
 	"net/http"
 )
 
-var cdc = types.MakeCodec()
+var cdc = types.GetCodec()
 
 func getCode(r *http.Request) (code []byte, err error){
 	codeStr := r.FormValue("code_str")

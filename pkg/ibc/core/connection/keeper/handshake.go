@@ -69,7 +69,7 @@ func (k Keeper) ConnOpenTry(
 	proofInit []byte, // proof that chainA stored connectionEnd in state (on ConnOpenInit)
 	proofClient []byte, // proof that chainA stored a light client of chainB
 	proofConsensus []byte, // proof that chainA stored chainB's consensus state at consensus height
-	proofHeight exported.Height, // height at which collector constructs proof of A storing connectionEnd in state
+	proofHeight exported.Height, // height at which collator constructs proof of A storing connectionEnd in state
 	consensusHeight exported.Height, // latest height of chain B which chain A has stored in its chain B client
 ) (string, error) {
 	var (
@@ -201,7 +201,7 @@ func (k Keeper) ConnOpenAck(
 	proofTry []byte, // proof that connectionEnd was added to ChainB state in ConnOpenTry
 	proofClient []byte, // proof of client state on chainB for chainA
 	proofConsensus []byte, // proof that chainB has stored ConsensusState of chainA on its client
-	proofHeight exported.Height, // height that collector constructed proofTry
+	proofHeight exported.Height, // height that collator constructed proofTry
 	consensusHeight exported.Height, // latest height of chainA that chainB has stored on its chainA client
 ) error {
 	// Check that chainB client hasn't stored invalid height
@@ -304,7 +304,7 @@ func (k Keeper) ConnOpenConfirm(
 	ctx sdk.Context,
 	connectionID string,
 	proofAck []byte, // proof that connection opened on ChainA during ConnOpenAck
-	proofHeight exported.Height, // height that collector constructed proofAck
+	proofHeight exported.Height, // height that collator constructed proofAck
 ) error {
 	// Retrieve connection
 	connection, found := k.GetConnection(ctx, connectionID)

@@ -68,7 +68,6 @@ var signCmd = &cobra.Command{
 		if err != nil {
 			return sdkerrors.Wrap(sdkerrors.ErrParams, "invalid nonce")
 		}
-
 		txByte, err := types2.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
 		if err != nil {
 			return sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("sign tx failed: %v", err.Error()))

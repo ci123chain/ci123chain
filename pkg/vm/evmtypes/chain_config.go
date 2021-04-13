@@ -21,7 +21,7 @@ import (
 //
 // NOTE 2: This types is not a configurable Param since the SDK does not allow for validation against
 // a previous stored parameter values or the current block height (retrieved from context). If you
-// want to update the config values, use an software upgrade procedure.
+// want to update the configs values, use an software upgrade procedure.
 type ChainConfig struct {
 	HomesteadBlock sdk.Int `json:"homestead_block" yaml:"homestead_block"` // Homestead switch block (< 0 no fork, 0 = already homestead)
 

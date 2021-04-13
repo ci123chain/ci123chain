@@ -56,9 +56,19 @@ type ABCIMessageLogs []ABCIMessageLog
 
 // ABCIMessageLog defines a structure containing an indexed tx ABCI message log.
 type ABCIMessageLog struct {
-	MsgIndex uint16 `json:"msg_index"`
+	MsgIndex uint32 `json:"msg_index"`
 	Success  bool   `json:"success"`
 	Log      string `json:"log"`
+	Events StringEvents `json:"events"`
+}
+
+func NewABCIMessageLog(i uint32, success bool, log string, events Events) ABCIMessageLog {
+	return ABCIMessageLog{
+		MsgIndex: i,
+		Success: success,
+		Log:      log,
+		Events:   StringifyEvents(events.ToABCIEvents()),
+	}
 }
 
 // String implements the fmt.Stringer interface for the ABCIMessageLogs types.
@@ -81,7 +91,7 @@ type TxResponse struct {
 	FormatData string		  `json:"format_data,omitempty"`
 	Data      string          `json:"data,omitempty"`
 	RawLog    string          `json:"raw_log,omitempty"`
-	Log       string		  `json:"log,omitempty"`
+	Logs	  ABCIMessageLogs  `json:"logs"`
 	Info      string          `json:"info,omitempty"`
 	GasWanted int64           `json:"gas_wanted,omitempty"`
 	GasUsed   int64           `json:"gas_used,omitempty"`
@@ -93,7 +103,7 @@ type TxResponse struct {
 
 // Empty returns true if the response is empty
 func (r TxResponse) Empty() bool {
-	return r.TxHash == "" && r.Log == ""
+	return r.TxHash == "" && r.RawLog == ""
 }
 
 // NewResponseResultTx returns a TxResponse given a ResultTx from tendermint
@@ -102,7 +112,7 @@ func NewResponseResultTx(res *ctypes.ResultTx, tx Tx, timestamp string) TxRespon
 		return TxResponse{}
 	}
 
-	//parsedLogs, _ := ParseABCILogs(res.TxResult.Log)
+	parsedLogs, _ := ParseABCILogs(res.TxResult.Log)
 
 	return TxResponse{
 		TxHash:    res.Hash.String(),
@@ -112,8 +122,8 @@ func NewResponseResultTx(res *ctypes.ResultTx, tx Tx, timestamp string) TxRespon
 		FormatData: string(res.TxResult.Data),
 		Data:      strings.ToUpper(hex.EncodeToString(res.TxResult.Data)),
 		//FormatData: string(res.TxResult.Data),
-		//RawLog:    res.TxResult.Log,
-		Log:      res.TxResult.Log,
+		RawLog:    res.TxResult.Log,
+		Logs:  		parsedLogs,
 		Info:      res.TxResult.Info,
 		GasWanted: res.TxResult.GasWanted,
 		GasUsed:   res.TxResult.GasUsed,
@@ -137,11 +147,13 @@ func NewResponseFormatBroadcastTx(res *ctypes.ResultBroadcastTx) TxResponse {
 	if res == nil {
 		return TxResponse{}
 	}
+	parsedLogs, _ := ParseABCILogs(res.Log)
 	return TxResponse{
-		Code:res.Code,
-		Data:strings.ToUpper(hex.EncodeToString(res.Data)),
-		TxHash:strings.ToUpper(hex.EncodeToString(res.Hash)),
-		Log: res.Log,
+		Code:	res.Code,
+		Data:	strings.ToUpper(hex.EncodeToString(res.Data)),
+		TxHash:	strings.ToUpper(hex.EncodeToString(res.Hash)),
+		RawLog: res.Log,
+		Logs:   parsedLogs,
 	}
 }
 
@@ -155,7 +167,7 @@ func newTxResponseCheckTx(res *ctypes.ResultBroadcastTxCommit) TxResponse {
 		txHash = res.Hash.String()
 	}
 
-	//parsedLogs, _ := ParseABCILogs(res.CheckTx.Log)
+	parsedLogs, _ := ParseABCILogs(res.CheckTx.Log)
 
 	return TxResponse{
 		Height:    res.Height,
@@ -163,7 +175,8 @@ func newTxResponseCheckTx(res *ctypes.ResultBroadcastTxCommit) TxResponse {
 		Code:      res.CheckTx.Code,
 		Data:      strings.ToUpper(hex.EncodeToString(res.CheckTx.Data)),
 		FormatData:   string(res.CheckTx.Data),
-		Log:       res.CheckTx.Log,
+		RawLog:    res.CheckTx.Log,
+		Logs:   	parsedLogs,
 		Info:      res.CheckTx.Info,
 		GasWanted: res.CheckTx.GasWanted,
 		GasUsed:   res.CheckTx.GasUsed,
@@ -183,7 +196,7 @@ func newTxResponseDeliverTx(res *ctypes.ResultBroadcastTxCommit) TxResponse {
 		txHash = res.Hash.String()
 	}
 
-	//parsedLogs, _ := ParseABCILogs(res.DeliverTx.Log)
+	parsedLogs, _ := ParseABCILogs(res.DeliverTx.Log)
 
 	return TxResponse{
 		Height:    res.Height,
@@ -191,7 +204,8 @@ func newTxResponseDeliverTx(res *ctypes.ResultBroadcastTxCommit) TxResponse {
 		Code:      res.DeliverTx.Code,
 		FormatData:   string(res.DeliverTx.Data),
 		Data:      strings.ToUpper(hex.EncodeToString(res.DeliverTx.Data)),
-		Log:       res.DeliverTx.Log,
+		RawLog:    res.DeliverTx.Log,
+		Logs:  		parsedLogs,
 		Info:      res.DeliverTx.Info,
 		GasWanted: res.DeliverTx.GasWanted,
 		GasUsed:   res.DeliverTx.GasUsed,
@@ -225,8 +239,12 @@ func (r TxResponse) String() string {
 		sb.WriteString(fmt.Sprintf("  FormatData: %s\n", r.FormatData))
 	}
 
-	if r.Log != "" {
-		sb.WriteString(fmt.Sprintf("  Log: %s\n", r.Log))
+	if r.RawLog != "" {
+		sb.WriteString(fmt.Sprintf("  Log: %s\n", r.RawLog))
+	}
+
+	if r.Logs != nil {
+		sb.WriteString(fmt.Sprintf("  Logs: %s\n", r.Logs))
 	}
 
 	if r.Info != "" {

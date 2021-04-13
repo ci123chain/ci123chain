@@ -22,7 +22,7 @@ const (
 )
 
 var _ sdk.Tx = (*MsgEthereumTx)(nil)
-var ModuleCdc = MakeCodec()
+var ModuleCdc = GetCodec()
 var big8 = big.NewInt(8)
 
 // MsgEthereumTx encapsulates an Ethereum transaction as an SDK message.

@@ -71,7 +71,7 @@ func (p *Path) MustYAML() string {
 	return string(out)
 }
 
-// PathsFromChains returns a path from the config between two chains
+// PathsFromChains returns a path from the configs between two chains
 func (p Paths) PathsFromChains(src, dst string) (Paths, error) {
 	out := Paths{}
 	for name, path := range p {
@@ -81,7 +81,7 @@ func (p Paths) PathsFromChains(src, dst string) (Paths, error) {
 		}
 	}
 	if len(out) == 0 {
-		return Paths{}, fmt.Errorf("failed to find path in config between chains %s and %s", src, dst)
+		return Paths{}, fmt.Errorf("failed to find path in configs between chains %s and %s", src, dst)
 	}
 	return out, nil
 }

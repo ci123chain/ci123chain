@@ -17,7 +17,7 @@ func RegisterTxRoutes(cliCtx context.Context, r *mux.Router)  {
 	r.HandleFunc("/shared/add", rest.MiddleHandler(cliCtx, AddShardTxRequest, sdkerrors.RootCodespace)).Methods("POST")
 }
 
-var cdc = types2.MakeCodec()
+var cdc = types2.GetCodec()
 
 func AddShardTxRequest(cliCtx context.Context, writer http.ResponseWriter, request *http.Request) {
 	broatcast, err := strconv.ParseBool(request.FormValue("broadcast"))

@@ -312,7 +312,7 @@ func InitializeConnection(src, dst *Chain) (success, modified bool, err error) {
 
 
 // FindMatchingConnection will determine if there already exists a connection between source and counterparty
-// that matches the parameters set in the relayer config.
+// that matches the parameters set in the relayer configs.
 func FindMatchingConnection(source, counterparty *Chain) (string, bool) {
 	// TODO: add appropriate offset and limits, along with retries
 	connectionsResp, err := source.QueryConnections(0, 1000)

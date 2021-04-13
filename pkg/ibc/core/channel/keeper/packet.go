@@ -115,7 +115,7 @@ func (k Keeper) SendPacket(
 	k.SetNextSequenceSend(ctx, packet.GetSourcePort(), packet.GetSourceChannel(), nextSequenceSend)
 	k.SetPacketCommitment(ctx, packet.GetSourcePort(), packet.GetSourceChannel(), packet.GetSequence(), commitment)
 
-	// Emit Event with Packet data along with other packet information for collector to pick up
+	// Emit Event with Packet data along with other packet information for collator to pick up
 	// and relay to other chain
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
@@ -129,7 +129,7 @@ func (k Keeper) SendPacket(
 			sdk.NewAttributeString(types.AttributeKeyDstPort, packet.GetDestPort()),
 			sdk.NewAttributeString(types.AttributeKeyDstChannel, packet.GetDestChannel()),
 			sdk.NewAttributeString(types.AttributeKeyChannelOrdering, channel.Ordering.String()),
-			// we only support 1-hop packets now, and that is the most important hop for a collector
+			// we only support 1-hop packets now, and that is the most important hop for a collator
 			// (is it going to a chain I am connected to)
 			sdk.NewAttributeString(types.AttributeKeyConnection, channel.ConnectionHops[0]),
 		),
@@ -270,7 +270,7 @@ func (k Keeper) AcknowledgePacket(
 			sdk.NewAttributeString(types.AttributeKeyDstPort, packet.GetDestPort()),
 			sdk.NewAttributeString(types.AttributeKeyDstChannel, packet.GetDestChannel()),
 			sdk.NewAttributeString(types.AttributeKeyChannelOrdering, channel.Ordering.String()),
-			// we only support 1-hop packets now, and that is the most important hop for a collector
+			// we only support 1-hop packets now, and that is the most important hop for a collator
 			// (is it going to a chain I am connected to)
 			sdk.NewAttributeString(types.AttributeKeyConnection, channel.ConnectionHops[0]),
 		),
@@ -342,7 +342,7 @@ func (k Keeper) WriteAcknowledgement(
 	// log that a packet acknowledgement has been written
 	k.Logger(ctx).Info("acknowledged written", "packet", fmt.Sprintf("%v", packet))
 
-	// emit an event that the collector can query for
+	// emit an event that the collator can query for
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventTypeWriteAck,
@@ -355,7 +355,7 @@ func (k Keeper) WriteAcknowledgement(
 			sdk.NewAttributeString(types.AttributeKeyDstPort, packet.GetDestPort()),
 			sdk.NewAttributeString(types.AttributeKeyDstChannel, packet.GetDestChannel()),
 			sdk.NewAttributeString(types.AttributeKeyAck, string(acknowledgement)),
-			// we only support 1-hop packets now, and that is the most important hop for a collector
+			// we only support 1-hop packets now, and that is the most important hop for a collator
 			// (is it going to a chain I am connected to)
 			sdk.NewAttributeString(types.AttributeKeyConnection, channel.ConnectionHops[0]),
 		),
@@ -505,7 +505,7 @@ func (k Keeper) RecvPacket(
 	// log that a packet has been received & executed
 	k.Logger(ctx).Info("packet received", "packet", fmt.Sprintf("%v", packet))
 
-	// emit an event that the collector can query for
+	// emit an event that the collator can query for
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventTypeRecvPacket,
@@ -518,7 +518,7 @@ func (k Keeper) RecvPacket(
 			sdk.NewAttributeString(types.AttributeKeyDstPort, packet.GetDestPort()),
 			sdk.NewAttributeString(types.AttributeKeyDstChannel, packet.GetDestChannel()),
 			sdk.NewAttributeString(types.AttributeKeyChannelOrdering, channel.Ordering.String()),
-			// we only support 1-hop packets now, and that is the most important hop for a collector
+			// we only support 1-hop packets now, and that is the most important hop for a collator
 			// (is it going to a chain I am connected to)
 			sdk.NewAttributeString(types.AttributeKeyConnection, channel.ConnectionHops[0]),
 		),

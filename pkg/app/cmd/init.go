@@ -71,7 +71,7 @@ type ValidatorAccount struct {
 //func GenTxCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Command {
 //	cmd := &cobra.Command{
 //		Use:   "gen-tx",
-//		Short: "Create genesis transfer file (under [--home]/config/gentx/gentx-[nodeID].json)",
+//		Short: "Create genesis transfer file (under [--home]/configs/gentx/gentx-[nodeID].json)",
 //		Args:  cobra.NoArgs,
 //		RunE: func(_ *cobra.Command, args []string) error {
 //			c := ctx.Config
@@ -85,7 +85,7 @@ type ValidatorAccount struct {
 //				}
 //				ip = eip
 //			}
-//			genTxConfig := config.GenTx{
+//			genTxConfig := configs.GenTx{
 //				viper.GetString(FlagName),
 //				viper.GetString(FlagClientHome),
 //				viper.GetBool(FlagOWK),
@@ -118,7 +118,7 @@ type ValidatorAccount struct {
 func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Command {
 	cmd := &cobra.Command{
 		Use: "init",
-		Short: "Initialize genesis config, priv-validator file, and p2p-node file",
+		Short: "Initialize genesis configs, priv-validator file, and p2p-node file",
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 
@@ -137,7 +137,7 @@ func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Com
 			initConfig := InitConfig{
 				ChainID: viper.GetString(FlagChainID),
 				//viper.GetBool(FlagWithTxs),
-				//filepath.Join(config.RootDir, "config", "gentx"),
+				//filepath.Join(configs.RootDir, "configs", "gentx"),
 				Overwrite: viper.GetBool(FlagOverwrite),
 				//tmtime.Now(),
 			}
@@ -172,7 +172,7 @@ func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Com
 
 	cmd.Flags().BoolP(FlagOverwrite, "o", false, "overwrite the genesis.json file")
 	cmd.Flags().String(FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")
-	//cmd.Flags().Bool(FlagWithTxs, false, "apply existing genesis transactions from [--home]/config/gentx/")
+	//cmd.Flags().Bool(FlagWithTxs, false, "apply existing genesis transactions from [--home]/configs/gentx/")
 	//cmd.Flags().AddFlagSet(appInit.FlagsAppGenState)
 	//cmd.Flags().AddFlagSet(appInit.FlagsAppGenTx) // need to add this flagset for when no GenTx's provided
 	//cmd.AddCommand(GenTxCmd(ctx, cdc, appInit))
@@ -182,15 +182,15 @@ func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Com
 	return cmd
 }
 //
-//func gentxWithConfig(cdc *amino.Codec, appInit app.AppInit, config *cfg.Config, genTxConfig config.GenTx) (
+//func gentxWithConfig(cdc *amino.Codec, appInit app.AppInit, configs *cfg.Config, genTxConfig configs.GenTx) (
 //	cliPrint json.RawMessage, genTxFile json.RawMessage, err error ) {
 //
 //	pv := validator.GenFilePV(
-//		config.PrivValidatorKeyFile(),
-//		config.PrivValidatorStateFile(),
+//		configs.PrivValidatorKeyFile(),
+//		configs.PrivValidatorStateFile(),
 //		secp256k1.GenPrivKey(),
 //		)
-//	nodeKey, err := node.GenNodeKeyByPrivKey(config.NodeKeyFile(), pv.Key.PrivKey)
+//	nodeKey, err := node.GenNodeKeyByPrivKey(configs.NodeKeyFile(), pv.Key.PrivKey)
 //
 //	if err != nil {
 //		return
@@ -224,7 +224,7 @@ func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Com
 //
 //	genTxFile = json.RawMessage(bz)
 //	name := fmt.Sprintf("gentx-%v.json", nodeID)
-//	writePath := filepath.Join(config.RootDir, "config", "gentx")
+//	writePath := filepath.Join(configs.RootDir, "configs", "gentx")
 //	file := filepath.Join(writePath, name)
 //	err = cmn.EnsureDir(writePath, 0700)
 //	if err != nil {
@@ -234,10 +234,10 @@ func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Com
 //	if err != nil {
 //		return
 //	}
-//	// Write updated config with moniker
-//	//config.Moniker = genTxConfig.Name
-//	configFilePath := filepath.Join(config.RootDir, "config", "config.toml")
-//	cfg.WriteConfigFile(configFilePath, config)
+//	// Write updated configs with moniker
+//	//configs.Moniker = genTxConfig.Name
+//	configFilePath := filepath.Join(configs.RootDir, "configs", "configs.toml")
+//	cfg.WriteConfigFile(configFilePath, configs)
 //	return
 //}
 

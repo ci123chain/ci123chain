@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	defaultHome = os.ExpandEnv("$HOME/.collector")
+	defaultHome = os.ExpandEnv("$HOME/.collator")
 	appName     = "clt"
 	config      *Config
 	homePath    string
@@ -48,7 +48,7 @@ NOTE: Most of the commands have aliases that make typing them much quicker (i.e.
 	}
 
 	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, _ []string) error {
-		// reads `homeDir/config/config.yaml` into `var config *Config` before each command
+		// reads `homeDir/configs/configs.yaml` into `var configs *Config` before each command
 		return initConfig(rootCmd)
 	}
 
@@ -69,7 +69,7 @@ NOTE: Most of the commands have aliases that make typing them much quicker (i.e.
 		chainsCmd(),
 		//pathsCmd(),
 		//flags.LineBreak,
-		//keysCmd(),
+		keysCmd(),
 		//lightCmd(),
 		//flags.LineBreak,
 		//transactionCmd(),

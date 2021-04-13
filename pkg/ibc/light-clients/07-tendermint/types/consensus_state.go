@@ -47,7 +47,7 @@ func (cs ConsensusState) GetTimestamp() uint64 {
 }
 
 // ValidateBasic defines a basic validation for the tendermint consensus state.
-// NOTE: ProcessedTimestamp may be zero if this is an initial consensus state passed in by collector
+// NOTE: ProcessedTimestamp may be zero if this is an initial consensus state passed in by collator
 // as opposed to a consensus state constructed by the chain.
 func (cs ConsensusState) ValidateBasic() error {
 	if cs.Root.Empty() {

@@ -12,7 +12,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/order"
 )
 
-var cdc = types.MakeCodec()
+var cdc = types.GetCodec()
 //off line
 func SignUpgradeMsg(t, name string, height int64, from string, gas, nonce uint64, priv string) ([]byte, error){
 	fromAddr := sdk.HexToAddress(from)

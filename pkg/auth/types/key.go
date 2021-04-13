@@ -7,6 +7,6 @@ const (
 
 	StoreKey 	= "auth"
 
-	// FeeCollectorName the root string for the fee collector account address
+	// FeeCollectorName the root string for the fee collator account address
 	FeeCollectorName = "fee_collector"
 )

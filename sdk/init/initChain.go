@@ -130,12 +130,12 @@ func NewGenesisFiles(chainInfo ChainInfo,
 }
 
 func NewInitFiles(privKey, persistentPeers string, tlsOption bool) (*InitFiles, error){
-	//config.toml
+	//configs.toml
 	config, err := createConfig(persistentPeers)
 	if err != nil {
 		return nil, err
 	}
-	//config.P2P.TLSOption = tlsOption
+	//configs.P2P.TLSOption = tlsOption
 	var configTemplate *template.Template
 	var buffer bytes.Buffer
 	if configTemplate, err = template.New("configFileTemplate").Parse(defaultConfigTemplate); err != nil {
@@ -170,7 +170,7 @@ func NewInitFiles(privKey, persistentPeers string, tlsOption bool) (*InitFiles, 
 func createGenesis(chainInfo ChainInfo, validatorInfo []ValidatorInfo,
 	stakingInfo []StakingInfo, supplyInfo SupplyInfo,
 	accountInfo []AccountInfo) (genesisBytes []byte, err error) {
-	cdc := app_types.MakeCodec()
+	cdc := app_types.GetCodec()
 
 	var validators []tmtypes.GenesisValidator
 	for _, v := range validatorInfo {
@@ -249,7 +249,7 @@ func createPrivValidator(privKey string) (privValidatorKey, privValidatorState [
 	if err != nil {
 		return nil, nil, err
 	}
-	cdc := app_types.MakeCodec()
+	cdc := app_types.GetCodec()
 	privValidator := &pvm.FilePV{
 		Key:           pvm.FilePVKey{},
 		LastSignState: pvm.FilePVLastSignState{},
@@ -278,7 +278,7 @@ func createNodeKey(privStr string) (nodeKeyBytes []byte, err error) {
 	nodeKey := &p2p.NodeKey{
 		PrivKey: privKey,
 	}
-	cdc := app_types.MakeCodec()
+	cdc := app_types.GetCodec()
 	nodeKeyBytes, err = cdc.MarshalJSON(nodeKey)
 	if err != nil {
 		return nil, err
@@ -444,7 +444,7 @@ func privStrToPrivKey(privStr string) (*ed25519.PrivKey, error) {
 
 	var realKey *ed25519.PrivKey
 	privKey := fmt.Sprintf(`{"type":"%s","value":"%s"}`, ed25519.PrivKeyName, privStr)
-	cdc := app_types.MakeCodec()
+	cdc := app_types.GetCodec()
 	err := cdc.UnmarshalJSON([]byte(privKey), &realKey)
 	if err != nil {
 		return nil, err

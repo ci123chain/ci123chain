@@ -4,7 +4,7 @@ services:
     image: cichain:v0.0.1
     container_name: node0.example.com
     volumes:
-      - ~/ci123/node0/cid/config:/root/.ci123/config
+      - ~/ci123/node0/cid/configs:/root/.ci123/configs
       - ~/ci123/node0/cid/data:/root/.ci123/data
     ports:
       - '1319:1317'
@@ -15,7 +15,7 @@ services:
     image: cichain:v0.0.1
     container_name: node1.example.com
     volumes:
-      - ~/ci123/node1/cid/config:/root/.ci123/config
+      - ~/ci123/node1/cid/configs:/root/.ci123/configs
       - ~/ci123/node1/cid/data:/root/.ci123/data
     networks:
       cichain:
@@ -23,7 +23,7 @@ services:
     image: cichain:v0.0.1
     container_name: node2.example.com
     volumes:
-      - ~/ci123/node2/cid/config:/root/.ci123/config
+      - ~/ci123/node2/cid/configs:/root/.ci123/configs
       - ~/ci123/node2/cid/data:/root/.ci123/data
     networks:
       cichain:
@@ -31,7 +31,7 @@ services:
     image: cichain:v0.0.1
     container_name: node3.example.com
     volumes:
-      - ~/ci123/node3/cid/config:/root/.ci123/config
+      - ~/ci123/node3/cid/configs:/root/.ci123/configs
       - ~/ci123/node3/cid/data:/root/.ci123/data
     networks:
       cichain:

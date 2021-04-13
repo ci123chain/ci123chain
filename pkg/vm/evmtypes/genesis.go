@@ -50,7 +50,7 @@ func (ga GenesisAccount) Validate() error {
 }
 
 // DefaultGenesisState sets default evm genesis state with empty accounts and default params and
-// chain config values.
+// chain configs values.
 func DefaultGenesisState() GenesisState {
 	return GenesisState{
 		Accounts:    []GenesisAccount{},

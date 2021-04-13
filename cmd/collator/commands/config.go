@@ -26,7 +26,7 @@ const (
 
 func configCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "config",
+		Use:     "configs",
 		Aliases: []string{"cfg"},
 		Short:   "manage configuration file",
 	}
@@ -42,14 +42,14 @@ func configCmd() *cobra.Command {
 }
 
 
-// Command for inititalizing an empty config at the --home location
+// Command for inititalizing an empty configs at the --home location
 func configInitCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "init",
 		Aliases: []string{"i"},
 		Short:   "Creates a default home directory at path defined by --home",
 		Example: strings.TrimSpace(fmt.Sprintf(`
-$ %s config init --home %s
+$ %s configs init --home %s
 $ %s cfg i`, appName, defaultHome, appName)),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			home, err := cmd.Flags().GetString(flagHome)
@@ -57,12 +57,12 @@ $ %s cfg i`, appName, defaultHome, appName)),
 				return err
 			}
 
-			cfgDir := path.Join(home, "config")
-			cfgPath := path.Join(cfgDir, "config.yaml")
+			cfgDir := path.Join(home, "configs")
+			cfgPath := path.Join(cfgDir, "configs.yaml")
 
-			// If the config doesn't exist...
+			// If the configs doesn't exist...
 			if _, err := os.Stat(cfgPath); os.IsNotExist(err) {
-				// And the config folder doesn't exist...
+				// And the configs folder doesn't exist...
 				if _, err := os.Stat(cfgDir); os.IsNotExist(err) {
 					// And the home folder doesn't exist
 					if _, err := os.Stat(home); os.IsNotExist(err) {
@@ -71,7 +71,7 @@ $ %s cfg i`, appName, defaultHome, appName)),
 							return err
 						}
 					}
-					// Create the home config folder
+					// Create the home configs folder
 					if err = os.Mkdir(cfgDir, os.ModePerm); err != nil {
 						return err
 					}
@@ -84,7 +84,7 @@ $ %s cfg i`, appName, defaultHome, appName)),
 				}
 				defer f.Close()
 
-				// And write the default config to that location...
+				// And write the default configs to that location...
 				if _, err = f.Write(defaultConfig()); err != nil {
 					return err
 				}
@@ -93,15 +93,15 @@ $ %s cfg i`, appName, defaultHome, appName)),
 				return nil
 			}
 
-			// Otherwise, the config file exists, and an error is returned...
-			return fmt.Errorf("config already exists: %s", cfgPath)
+			// Otherwise, the configs file exists, and an error is returned...
+			return fmt.Errorf("configs already exists: %s", cfgPath)
 		},
 	}
 	return cmd
 }
 
 
-// initConfig reads in config file and ENV variables if set.
+// initConfig reads in configs file and ENV variables if set.
 func initConfig(cmd *cobra.Command) error {
 	home, err := cmd.PersistentFlags().GetString(flagHome)
 	if err != nil {
@@ -109,11 +109,11 @@ func initConfig(cmd *cobra.Command) error {
 	}
 
 	config = &Config{}
-	cfgPath := path.Join(home, "config", "config.yaml")
+	cfgPath := path.Join(home, "configs", "configs.yaml")
 	if _, err := os.Stat(cfgPath); err == nil {
 		viper.SetConfigFile(cfgPath)
 		if err := viper.ReadInConfig(); err == nil {
-			// read the config file bytes
+			// read the configs file bytes
 			file, err := ioutil.ReadFile(viper.ConfigFileUsed())
 			if err != nil {
 				fmt.Println("Error reading file:", err)
@@ -123,14 +123,14 @@ func initConfig(cmd *cobra.Command) error {
 			// unmarshall them into the struct
 			err = yaml.Unmarshal(file, config)
 			if err != nil {
-				fmt.Println("Error unmarshalling config:", err)
+				fmt.Println("Error unmarshalling configs:", err)
 				os.Exit(1)
 			}
 
-			// ensure config has []*relayer.Chain used for all chain operations
+			// ensure configs has []*relayer.Chain used for all chain operations
 			err = validateConfig(config)
 			if err != nil {
-				fmt.Println("Error parsing chain config:", err)
+				fmt.Println("Error parsing chain configs:", err)
 				os.Exit(1)
 			}
 		}
@@ -143,12 +143,12 @@ func initConfig(cmd *cobra.Command) error {
 func validateConfig(c *Config) error {
 	to, err := time.ParseDuration(config.Global.Timeout)
 	if err != nil {
-		return fmt.Errorf("did you remember to run 'clt config init' error:%w", err)
+		return fmt.Errorf("did you remember to run 'clt configs init' error:%w", err)
 	}
 
 	for _, i := range c.Chains {
 		if err := i.Init(homePath, to, nil, debug); err != nil {
-			return fmt.Errorf("did you remember to run 'clt config init' error:%w", err)
+			return fmt.Errorf("did you remember to run 'clt configs init' error:%w", err)
 		}
 	}
 
@@ -163,7 +163,7 @@ func configAddChainsCmd() *cobra.Command {
 		Short: `Add new chains to the configuration file from a
 		 directory full of chain configurations, useful for adding testnet configurations`,
 		Example: strings.TrimSpace(fmt.Sprintf(`
-$ %s config add-chains configs/chains`, appName)),
+$ %s configs add-chains configs/chains`, appName)),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			var out *Config
 			if out, err = cfgFilesAddChains(args[0]); err != nil {
@@ -186,7 +186,7 @@ func configAddPathsCmd() *cobra.Command {
 		Short: `Add new paths to the configuration file from a directory full of path configurations, useful for adding testnet configurations. 
 		Chain configuration files must be added before calling this command.`,
 		Example: strings.TrimSpace(fmt.Sprintf(`
-$ %s config add-paths configs/paths`, appName)),
+$ %s configs add-paths configs/paths`, appName)),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			var out *Config
 			if out, err = cfgFilesAddPaths(args[0]); err != nil {
@@ -287,7 +287,7 @@ func cfgFilesAddPaths(dir string) (cfg *Config, err error) {
 
 
 func overWriteConfig(cfg *Config) (err error) {
-	cfgPath := path.Join(homePath, "config", "config.yaml")
+	cfgPath := path.Join(homePath, "configs", "configs.yaml")
 	if _, err = os.Stat(cfgPath); err == nil {
 		viper.SetConfigFile(cfgPath)
 		if err = viper.ReadInConfig(); err == nil {
@@ -297,13 +297,13 @@ func overWriteConfig(cfg *Config) (err error) {
 				return err
 			}
 
-			// marshal the new config
+			// marshal the new configs
 			out, err := yaml.Marshal(cfg)
 			if err != nil {
 				return err
 			}
 
-			// overwrite the config file
+			// overwrite the configs file
 			err = ioutil.WriteFile(viper.ConfigFileUsed(), out, 0600)
 			if err != nil {
 				return err
@@ -324,13 +324,13 @@ type GlobalConfig struct {
 	LightCacheSize int    `yaml:"light-cache-size" json:"light-cache-size"`
 }
 
-// Config represents the config file for the relayer
+// Config represents the configs file for the relayer
 type Config struct {
 	Global GlobalConfig     `yaml:"global" json:"global"`
 	Chains collactor.Chains `yaml:"chains" json:"chains"`
 	Paths  collactor.Paths  `yaml:"paths" json:"paths"`
 }
-// newDefaultGlobalConfig returns a global config with defaults set
+// newDefaultGlobalConfig returns a global configs with defaults set
 func newDefaultGlobalConfig() GlobalConfig {
 	return GlobalConfig{
 		APIListenPort:  ":5183",
@@ -359,17 +359,17 @@ func (c Config) MustYAML() []byte {
 }
 
 
-// AddChain adds an additional chain to the config
+// AddChain adds an additional chain to the configs
 func (c *Config) AddChain(chain *collactor.Chain) (err error) {
 	chn, err := c.Chains.Get(chain.ChainID)
 	if chn == nil || err == nil {
-		return fmt.Errorf("chain with ID %s already exists in config", chain.ChainID)
+		return fmt.Errorf("chain with ID %s already exists in configs", chain.ChainID)
 	}
 	c.Chains = append(c.Chains, chain)
 	return nil
 }
 
-// AddPath adds an additional path to the config
+// AddPath adds an additional path to the configs
 func (c *Config) AddPath(name string, path *collactor.Path) (err error) {
 	// Check if the path does not yet exist.
 	oldPath, err := c.Paths.Get(name)
@@ -429,7 +429,7 @@ func (c *Config) ValidatePathEnd(pe *collactor.PathEnd) error {
 		return err
 	}
 	// NOTE: this is just to do validation, the path
-	// is not written to the config file
+	// is not written to the configs file
 	if err = chain.SetPath(pe); err != nil {
 		return err
 	}

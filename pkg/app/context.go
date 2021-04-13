@@ -28,9 +28,9 @@ const (
 	flagMasterDomain   = "master_domain"
 	flagMasterPort	   = "master_port"
 	defaultMasterPort  = "80"
-	flagConfig         = "config" //config.toml
-	defaultConfigFilePath = "config.toml"
-	defaultConfigPath  = "config"
+	flagConfig         = "configs" //configs.toml
+	defaultConfigFilePath = "configs.toml"
+	defaultConfigPath  = "configs"
 	defaultDataPath    = "data"
 )
 
@@ -134,7 +134,7 @@ func configFollowMaster(master, root string) (*cfg.Config, error){
 	}
 	validatorKey := string(keyByte[1:len(keyByte)-1])
 	privStr := fmt.Sprintf(`{"type":"%s","value":"%s"}`, secp256k1.PrivKeyName, validatorKey)
-	cdc = types.MakeCodec()
+	cdc = types.GetCodec()
 	err = cdc.UnmarshalJSON([]byte(privStr), &valKey)
 	if err != nil {
 		return nil, err

@@ -164,7 +164,6 @@ func (c *Chain) CreateClients(dst *Chain) (modified bool, err error) {
 }
 
 
-
 // FindMatchingClient will determine if there exists a client with identical client and consensus states
 // to the client which would have been created. Source is the chain that would be adding a client
 // which would track the counterparty. Therefore we query source for the existing clients
@@ -259,4 +258,47 @@ func IsMatchingClient(clientStateA, clientStateB ibctmtypes.ClientState) bool {
 // identical. They are assumed to be IBC tendermint light clients.
 func IsMatchingConsensusState(consensusStateA, consensusStateB *ibctmtypes.ConsensusState) bool {
 	return reflect.DeepEqual(*consensusStateA, *consensusStateB)
+}
+
+
+
+// UpdateClients updates clients for src on dst and dst on src given the configured paths
+func (c *Chain) UpdateClients(dst *Chain) (err error) {
+	clients := &RelayMsgs{Src: []sdk.Msg{}, Dst: []sdk.Msg{}}
+
+	srcUpdateHeader, dstUpdateHeader, err := GetIBCUpdateHeaders(c, dst)
+	if err != nil {
+		return err
+	}
+
+	srcUpdateMsg, err := c.UpdateClient(dst)
+	if err != nil {
+		return err
+	}
+	dstUpdateMsg, err := dst.UpdateClient(c)
+	if err != nil {
+		return err
+	}
+
+	clients.Src = append(clients.Src, srcUpdateMsg)
+	clients.Dst = append(clients.Dst, dstUpdateMsg)
+
+	// Send msgs to both chains
+	if clients.Ready() {
+		if clients.Send(c, dst); clients.Success() {
+			c.Log(fmt.Sprintf("★ Clients updated: [%s]client(%s) {%d}->{%d} and [%s]client(%s) {%d}->{%d}",
+				c.ChainID,
+				c.PathEnd.ClientID,
+				MustGetHeight(srcUpdateHeader.TrustedHeight),
+				srcUpdateHeader.Header.Height,
+				dst.ChainID,
+				dst.PathEnd.ClientID,
+				MustGetHeight(dstUpdateHeader.TrustedHeight),
+				dstUpdateHeader.Header.Height,
+			),
+			)
+		}
+	}
+
+	return nil
 }

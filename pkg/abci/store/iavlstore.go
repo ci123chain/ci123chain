@@ -14,8 +14,8 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/logger"
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	dbm "github.com/tendermint/tm-db"
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
+	dbm "github.com/tendermint/tm-db"
 )
 
 const (

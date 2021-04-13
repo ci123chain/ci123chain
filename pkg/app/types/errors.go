@@ -23,7 +23,7 @@ func ErrNewDB(codespace sdk.CodespaceType, err error) error{
 }
 
 //func ErrInitWithCfg(codespace sdk.CodespaceType, err error) sdk.Error {
-//	return sdk.NewError(codespace, CodeInitWithCfgError,"Init with config error: %s", err.Error())
+//	return sdk.NewError(codespace, CodeInitWithCfgError,"Init with configs error: %s", err.Error())
 //}
 //
 //func ErrTestNet(codespace sdk.CodespaceType, err error) sdk.Error {

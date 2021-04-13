@@ -18,7 +18,7 @@ services:
     depends_on:
       - raftleveldb
     environment:
-      CI_CHAIN_ID: ci0
+      CI_CHAIN_ID: ibc-1
       CI_NODE_DOMAIN: localhost
       CI_STATEDB_HOST: raftleveldb_dev
       CI_STATEDB_PORT: 80
@@ -26,10 +26,11 @@ services:
       CI_HOME: /root/cid
 #      IDG_APPID: abcdefg  # 设置之后 使用 中台log 输出到redis
 #      CI_CLIHOME: /root/cli
-      CI_VALIDATOR_KEY: BpiPMqeXTNJLBg6hRoWJjsjOLSHIQRIrkQlykLQ/0AE=
-      CI_PUBKEY: Ap0lbWGAnzfqpc0D0GL081WCnWatdk2d5B21orPl30AS
+      CI_VALIDATOR_KEY: 4wttMiieaewLiRYu+y05j0uslBDOX5IA3k4TY9GtQzSdTcXyd5Y982Q3CUdh+h1XcCvtpIUb+5q6rtJ8W4SEFw==
+      CI_PUBKEY: nU3F8neWPfNkNwlHYfodV3Ar7aSFG/uauq7SfFuEhBc=
     ports:
       - 26606:26656
+      - 26557:26657
       - 1310:80
       - 1311:81
     networks:

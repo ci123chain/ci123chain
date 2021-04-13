@@ -189,12 +189,14 @@ func (iter *prefixIterator) Error() error {
 
 
 func newPrefixIterator(prefix, start, end []byte, parent Iterator) *prefixIterator {
+	v := parent.Valid()
 	return &prefixIterator{
 		prefix: prefix,
 		start:  start,
 		end:    end,
 		iter:   parent,
-		valid:  parent.Valid() && bytes.HasPrefix(parent.Key(), prefix),
+		//valid:  parent.Valid() && bytes.HasPrefix(parent.Key(), prefix),
+		valid:  v,
 	}
 }
 

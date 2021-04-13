@@ -423,6 +423,12 @@ func (rs *rootMultiStore) loadCommitStoreFromParams(key sdk.StoreKey, id CommitI
 		}
 		store = newTransientStore()
 		return
+	case sdk.StoreTypeMemory:
+		if _, ok := key.(*sdk.MemoryStoreKey); !ok {
+			return nil, fmt.Errorf("unexpected key type for a MemoryStoreKey; got: %s", key.String())
+		}
+		store = NewMemoryStore()
+		return
 	default:
 		panic(fmt.Sprintf("unrecognized store types %v", params.typ))
 	}

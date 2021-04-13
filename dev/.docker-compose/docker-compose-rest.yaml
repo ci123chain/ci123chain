@@ -6,7 +6,7 @@ services:
       hostname: nginx
     volumes:
       - ./nginx/Documents/www:/usr/share/nginx/html:ro
-      - ./nginx/config/web.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/configs/web.conf:/etc/nginx/nginx.conf:ro
     ports:
       - "8080:80"
     networks:

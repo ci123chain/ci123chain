@@ -9,7 +9,7 @@ import (
 )
 
 var homeDir = os.ExpandEnv("$HOME/.cli")
-var cdc = types.MakeCodec()
+var cdc = types.GetCodec()
 
 var rootCmd = &cobra.Command{
 	Use: 	"cli", 

@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-var cdc = types.MakeCodec()
+var cdc = types.GetCodec()
 //off line
 func SignMsgTransfer(from, to string, gas, nonce uint64, amt string, priv string, isfabric bool) ([]byte, error) {
 	a, err := strconv.ParseInt(amt, 10, 64)

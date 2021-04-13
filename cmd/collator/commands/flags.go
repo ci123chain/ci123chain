@@ -44,6 +44,7 @@ func getTimeout(cmd *cobra.Command) (time.Duration, error) {
 	return time.ParseDuration(to)
 }
 
+
 func chainsAddFlags(cmd *cobra.Command) *cobra.Command {
 	fileFlag(cmd)
 	urlFlag(cmd)
@@ -67,6 +68,22 @@ func urlFlag(cmd *cobra.Command) *cobra.Command {
 	return cmd
 }
 
+func retryFlag(cmd *cobra.Command) *cobra.Command {
+	cmd.Flags().Uint64P(flagMaxRetries, "r", 3, "maximum retries after failed message send")
+	if err := viper.BindPFlag(flagMaxRetries, cmd.Flags().Lookup(flagMaxRetries)); err != nil {
+		panic(err)
+	}
+	return cmd
+}
+
+
+func timeoutFlag(cmd *cobra.Command) *cobra.Command {
+	cmd.Flags().StringP(flagTimeout, "o", "10s", "timeout between relayer runs")
+	if err := viper.BindPFlag(flagTimeout, cmd.Flags().Lookup(flagTimeout)); err != nil {
+		panic(err)
+	}
+	return cmd
+}
 
 
 func forceFlag(cmd *cobra.Command) *cobra.Command {

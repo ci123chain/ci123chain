@@ -69,7 +69,7 @@ func chainsCmd() *cobra.Command {
 //	return chainsAddFlags(cmd)
 //}
 //func fileInputAdd(file string) (cfg *Config, err error) {
-//	// If the user passes in a file, attempt to read the chain config from that file
+//	// If the user passes in a file, attempt to read the chain configs from that file
 //	c := &collactor.Chain{}
 //	if _, err := os.Stat(file); err != nil {
 //		return nil, err
@@ -84,16 +84,16 @@ func chainsCmd() *cobra.Command {
 //		return nil, err
 //	}
 //
-//	if err = config.AddChain(c); err != nil {
+//	if err = configs.AddChain(c); err != nil {
 //		return nil, err
 //	}
 //
-//	return config, nil
+//	return configs, nil
 //}
 //
 //
 //
-//// urlInputAdd validates a chain config URL and fetches its contents
+//// urlInputAdd validates a chain configs URL and fetches its contents
 //func urlInputAdd(rawurl string) (cfg *Config, err error) {
 //	u, err := url.Parse(rawurl)
 //	if err != nil || u.Scheme == "" || u.Host == "" {
@@ -114,38 +114,38 @@ func chainsCmd() *cobra.Command {
 //		return cfg, err
 //	}
 //
-//	if err = config.AddChain(c); err != nil {
+//	if err = configs.AddChain(c); err != nil {
 //		return nil, err
 //	}
-//	return config, err
+//	return configs, err
 //}
 //
 //
 //func overWriteConfig(cfg *Config) (err error) {
-//	cfgPath := path.Join(homePath, "config", "config.yaml")
+//	cfgPath := path.Join(homePath, "configs", "configs.yaml")
 //	if _, err = os.Stat(cfgPath); err == nil {
 //		viper.SetConfigFile(cfgPath)
 //		if err = viper.ReadInConfig(); err == nil {
 //			// ensure validateConfig runs properly
-//			err = validateConfig(config)
+//			err = validateConfig(configs)
 //			if err != nil {
 //				return err
 //			}
 //
-//			// marshal the new config
+//			// marshal the new configs
 //			out, err := yaml.Marshal(cfg)
 //			if err != nil {
 //				return err
 //			}
 //
-//			// overwrite the config file
+//			// overwrite the configs file
 //			err = ioutil.WriteFile(viper.ConfigFileUsed(), out, 0600)
 //			if err != nil {
 //				return err
 //			}
 //
 //			// set the global variable
-//			config = cfg
+//			configs = cfg
 //		}
 //	}
 //	return err

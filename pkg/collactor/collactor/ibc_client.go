@@ -66,6 +66,25 @@ func (c *Chain) GetIBCUpdateHeader(dst *Chain) (*tmclient.Header, error) {
 }
 
 
+// GetIBCUpdateHeaders return the IBC TM Header which will update an on-chain
+// light client. A header for the source and destination chain is returned.
+func GetIBCUpdateHeaders(src, dst *Chain) (srcHeader, dstHeader *tmclient.Header, err error) {
+	var eg = new(errgroup.Group)
+	eg.Go(func() error {
+		srcHeader, err = src.GetIBCUpdateHeader(dst)
+		return err
+	})
+	eg.Go(func() error {
+		dstHeader, err = dst.GetIBCUpdateHeader(src)
+		return err
+	})
+	if err = eg.Wait(); err != nil {
+		return
+	}
+	return
+
+}
+
 // InjectTrustedFields injects the necessary trusted fields for a header to update a light
 // client stored on the destination chain, using the information provided by the source
 // chain.

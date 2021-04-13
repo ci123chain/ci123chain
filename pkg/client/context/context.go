@@ -59,6 +59,11 @@ func (ctx Context) WithHeight(height int64) Context {
 	return ctx
 }
 
+func (ctx Context) WithClient(client rpclient.Client) Context {
+	ctx.Client = client
+	return ctx
+}
+
 func (ctx Context) WithFrom(from sdk.AccAddress) Context {
 	ctx.FromAddr = from
 	return ctx

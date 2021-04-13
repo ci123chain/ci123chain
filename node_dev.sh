@@ -2,8 +2,8 @@
 
 
 #export CI_HOME="/Users/tanhui/Documents/work/golang/ci123chain/docker/node/test3"
-export CI_VALIDATOR_KEY="BpiPMqeXTNJLBg6hRoWJjsjOLSHIQRIrkQlykLQ/0AE="
-export CI_PUBKEY="Ap0lbWGAnzfqpc0D0GL081WCnWatdk2d5B21orPl30AS"
+export CI_VALIDATOR_KEY="4wttMiieaewLiRYu+y05j0uslBDOX5IA3k4TY9GtQzSdTcXyd5Y982Q3CUdh+h1XcCvtpIUb+5q6rtJ8W4SEFw=="
+export CI_PUBKEY="nU3F8neWPfNkNwlHYfodV3Ar7aSFG/uauq7SfFuEhBc="
 export CI_CHAIN_ID="testchain123"
 export CI_STATEDB="couchdb://admin:123rewQAQtre56@193.112.144.129:5984/test1230"
 

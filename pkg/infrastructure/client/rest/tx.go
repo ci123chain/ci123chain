@@ -21,7 +21,7 @@ func RegisterRestTxRoutes(cliCtx context.Context, r *mux.Router)  {
 	r.HandleFunc("/infrastructure/store_content", rest.MiddleHandler(cliCtx, StoreContentRequest, sdkerrors.RootCodespace)).Methods("POST")
 }
 
-var cdc = types2.MakeCodec()
+var cdc = types2.GetCodec()
 
 
 func StoreContentRequest(cliCtx context.Context, writer http.ResponseWriter, request *http.Request) {

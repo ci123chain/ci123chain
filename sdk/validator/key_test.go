@@ -15,7 +15,7 @@ func TestNewValidatorKey(t *testing.T) {
 	}
 	var valKey crypto.PubKey
 	pubStr := fmt.Sprintf(`{"types":"%s","value":"%s"}`, secp256k1.PubKeyAminoName, pubKey)
-	cdc := types.MakeCodec()
+	cdc := types.GetCodec()
 	err = cdc.UnmarshalJSON([]byte(pubStr), &valKey)
 	if err != nil {
 		fmt.Println(err)

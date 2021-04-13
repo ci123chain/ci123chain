@@ -13,6 +13,36 @@ import (
 	sdkerrors "github.com/pkg/errors"
 )
 
+
+
+// QueryClientStateABCI queries the store to get the light client state and a merkle proof.
+func QueryClientStateABCI2(
+	clientCtx context.Context, clientID string,
+) (*types.QueryClientStateResponse, error) {
+	path := "/custom/" + ibc.ModuleName + "/" + coretypes.QueryClientState
+
+	req := &clienttypes.QueryClientStateRequest{
+		ClientId: clientID,
+	}
+	key := clientCtx.Cdc.MustMarshalJSON(req)
+	value, _, err := ibcclient.QueryABCI(clientCtx, path, key, false)
+	if err != nil {
+		return nil, err
+	}
+
+	// check if client exists
+	if len(value) == 0 {
+		return nil, sdkerrors.Wrap(types.ErrClientNotFound, "clients not found")
+	}
+
+	var resp types.QueryClientStateResponse
+	err = clientCtx.Cdc.UnmarshalJSON(value, &resp)
+	//clientStatesResp, err := types.UnmarshalClientStateResp(types.IBCClientCodec, value)
+	return &resp, err
+}
+
+
+
 // QueryClientStateABCI queries the store to get the light client state and a merkle proof.
 func QueryClientStateABCI(
 	clientCtx context.Context, clientID string,
@@ -79,7 +109,7 @@ func QueryClientStatesABCI(
 			CountTotal: true,
 		},
 	}
-	key := clientCtx.Cdc.MustMarshalJSON(req)
+	key := types.IBCClientCodec.MustMarshalJSON(req)
 	value, _, err := ibcclient.QueryABCI(clientCtx, path, key, false)
 	if err != nil {
 		return nil, err
@@ -91,7 +121,7 @@ func QueryClientStatesABCI(
 	}
 
 
-	clientStatesResp, err := types.UnmarshalClientStateResp(clientCtx.Cdc, value)
+	clientStatesResp, err := types.UnmarshalClientStateResp(types.IBCClientCodec, value)
 	return &clientStatesResp, err
 }
 

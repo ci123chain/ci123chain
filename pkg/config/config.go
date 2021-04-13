@@ -16,6 +16,7 @@ var ErrConfigNotFound = errors.New("config not found")
 
 var ErrGetConfig = errors.New("config not found")
 
+
 //_____________________________________________________________________
 
 // Configuration structure for command functions that share configuration.
@@ -30,7 +31,8 @@ type GenTx struct {
 }
 
 func SaveConfig(c *cfg.Config) {
-	configFilePath := filepath.Join(c.RootDir, "config/config.toml")
+	configDir := filepath.Join(c.RootDir, "config")
+	configFilePath := filepath.Join(configDir, "config.toml")
 	c.Instrumentation.Prometheus = true
 	c.Consensus.TimeoutPropose = 5 * time.Second
 	c.Consensus.TimeoutCommit = 8 * time.Second
@@ -52,12 +54,16 @@ func CreateConfig(moniker, root string) (*cfg.Config, error) {
 }
 
 func GetConfig(root string) (*cfg.Config, error) {
-	configFilePath := filepath.Join(root, "config/config.toml")
+	configDir := filepath.Join(root, "config")
+	configFilePath := filepath.Join(configDir, "config.toml")
 	if _, err := os.Stat(configFilePath); err != nil && !os.IsExist(err) {
 		return nil, ErrConfigNotFound
 	}
+	viper.SetConfigFile(configFilePath)
+	err := viper.ReadInConfig()
 	c := new(cfg.Config)
-	return c, unmarshalWithViper(viper.GetViper(), c)
+	err = unmarshalWithViper(viper.GetViper(), c)
+	return c, err
 }
 
 func unmarshalWithViper(vp *viper.Viper, c *cfg.Config) error {

@@ -40,7 +40,7 @@ const (
 
 var (
 	DefaultPort = "80"
-	cdc = apptypes.MakeCodec()
+	cdc = apptypes.GetCodec()
 )
 func SetDefaultPort(port string) {
 	DefaultPort = port

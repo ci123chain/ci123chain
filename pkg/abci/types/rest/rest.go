@@ -122,7 +122,7 @@ func PostProcessResponseBare(w http.ResponseWriter, ctx context.Context, body in
 			res = Response{
 				Ret:     -1,
 				Data:    dataJson,
-				Message: b.Log,
+				Message: b.RawLog,
 			}
 		}
 	case sdk.QureyAppResponse:

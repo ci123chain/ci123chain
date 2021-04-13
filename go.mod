@@ -5,7 +5,7 @@ go 1.13
 require (
 	github.com/allegro/bigcache v1.2.1 // indirect
 	github.com/aristanetworks/goarista v0.0.0-20200410125653-0a3087568c00 // indirect
-	github.com/avast/retry-go v3.0.0+incompatible // indirect
+	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/bgentry/speakeasy v0.1.0
 	github.com/btcsuite/btcd v0.21.0-beta
 	github.com/btcsuite/btcutil v1.0.2
@@ -36,6 +36,7 @@ require (
 	github.com/wasmerio/go-ext-wasm v0.3.1
 	gitlab.oneitfarm.com/bifrost/cilog v0.1.10
 	golang.org/x/crypto v0.0.0-20201117144127-c1f2f97bffc9
+	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
 	google.golang.org/grpc v1.35.0
 	gopkg.in/yaml.v2 v2.3.0
 	gotest.tools v2.2.0+incompatible

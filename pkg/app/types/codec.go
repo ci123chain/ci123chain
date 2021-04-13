@@ -7,14 +7,15 @@ import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/app/module"
-	ibc "github.com/ci123chain/ci123chain/pkg/ibc/core/types"
-	i_types "github.com/ci123chain/ci123chain/pkg/infrastructure/types"
+	infratypes "github.com/ci123chain/ci123chain/pkg/infrastructure/types"
 	"github.com/ci123chain/ci123chain/pkg/mortgage"
 	"github.com/ci123chain/ci123chain/pkg/transaction"
 	"github.com/ci123chain/ci123chain/pkg/transfer"
 	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/crypto/encoding/amino"
 )
+
+var cdc *codec.Codec
 
 // attempt to make some pretty json
 func MarshalJSONIndent(cdc *amino.Codec, obj interface{}) ([]byte, error) {
@@ -31,19 +32,18 @@ func MarshalJSONIndent(cdc *amino.Codec, obj interface{}) ([]byte, error) {
 	return out.Bytes(), nil
 }
 
-func MakeCodec() *codec.Codec {
-	cdc := amino.NewCodec()
-	//cdc.RegisterInterface((*crypto.PubKey)(nil), nil)
-	//cdc.RegisterInterface((*crypto.PrivKey)(nil), nil)
-	cdc.RegisterConcrete(&CommonTx{}, "transfer/commontx", nil)
-	cdc.RegisterConcrete(&MsgEthereumTx{}, "eth/msgEthereumTx", nil)
-	sdk.RegisterCodec(cdc)
-	transaction.RegisterCodec(cdc)
-	transfer.RegisterCodec(cdc)
-	mortgage.RegisterCodec(cdc)
-	module.ModuleBasics.RegisterCodec(cdc)
-	ibc.RegisterCodec(cdc)
-	i_types.RegisterCodec(cdc)
-	cryptoAmino.RegisterAmino(cdc)
+func GetCodec() *codec.Codec {
+	if cdc == nil {
+		cdc = amino.NewCodec()
+		cdc.RegisterConcrete(&CommonTx{}, "transfer/commontx", nil)
+		cdc.RegisterConcrete(&MsgEthereumTx{}, "eth/msgEthereumTx", nil)
+		sdk.RegisterCodec(cdc)
+		transaction.RegisterCodec(cdc)
+		transfer.RegisterCodec(cdc)
+		mortgage.RegisterCodec(cdc)
+		module.ModuleBasics.RegisterCodec(cdc)
+		infratypes.RegisterCodec(cdc)
+		cryptoAmino.RegisterAmino(cdc)
+	}
 	return cdc
 }

@@ -12,7 +12,7 @@ import (
 	"github.com/gorilla/mux"
 	"net/http"
 )
-var cdc = types2.MakeCodec()
+var cdc = types2.GetCodec()
 
 func RegisterRoutes(cliCtx context.Context, r *mux.Router) {
 	RegisterQueryRoutes(cliCtx, r)

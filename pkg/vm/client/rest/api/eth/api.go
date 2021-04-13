@@ -33,7 +33,7 @@ const (
 	ChainID = 999
 )
 
-var cdc = types.MakeCodec()
+var cdc = types.GetCodec()
 
 type SendTxArgs struct {
 	From     common.Address  `json:"from"`
@@ -115,7 +115,7 @@ func NewTransaction(tx *types.MsgEthereumTx, txHash, blockHash common.Hash, bloc
 // NewAPI creates an instance of the public ETH Web3 API.
 func NewAPI(clientCtx clientcontext.Context, ks *keystore.KeyStore) *PublicEthereumAPI {
 
-	cdc := types.MakeCodec()
+	cdc := types.GetCodec()
 	epoch := big.NewInt(ChainID)
 	api := &PublicEthereumAPI{
 		ctx:          context.Background(),
@@ -470,7 +470,7 @@ func (api *PublicEthereumAPI) SendRawTransaction(data hexutil.Bytes) (common.Has
 		api.logger.Debug("eth_sendRawTransaction", "err", err)
 		return common.Hash{}, err
 	}
-	api.logger.Debug("sendRawTransaction response log", "log", res.Log)
+	api.logger.Debug("sendRawTransaction response log", "log", res.RawLog)
 
 	// Return transaction hash
 	return common.HexToHash(res.TxHash), nil
@@ -716,7 +716,7 @@ func EthBlockFromTendermint(clientCtx clientcontext.Context, block *tmtypes.Bloc
 	}
 
 	var bloomRes evmtypes.QueryBloomFilter
-	types.MakeCodec().MustUnmarshalJSON(res, &bloomRes)
+	types.GetCodec().MustUnmarshalJSON(res, &bloomRes)
 
 	bloom := bloomRes.Bloom
 

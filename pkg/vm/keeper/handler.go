@@ -144,7 +144,7 @@ func handleMsgEvmTx(ctx sdk.Context, k Keeper, msg evm.MsgEvmTx) (*sdk.Result, e
 
 	config, found := k.GetChainConfig(ctx)
 	if !found {
-		return nil, errors.New("chain config not found")
+		return nil, errors.New("chain configs not found")
 	}
 
 	executionResult, err := st.TransitionDb(ctx, config)
@@ -232,7 +232,7 @@ func handleMsgEthereumTx(ctx sdk.Context, k Keeper, msg types.MsgEthereumTx) (*s
 
 	config, found := k.GetChainConfig(ctx)
 	if !found {
-		return nil, errors.New("chain config not found")
+		return nil, errors.New("chain configs not found")
 	}
 
 	executionResult, err := st.TransitionDb(ctx, config)

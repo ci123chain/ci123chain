@@ -23,7 +23,7 @@ func NewValidatorKey() (validatorKey, pubKeyStr, address string, err error) {
 	}
 	validatorKey = string(keyByte[1:len(keyByte)-1])
 	privStr := fmt.Sprintf(`{"types":"%s","value":"%s"}`, secp256k1.PrivKeyAminoName, validatorKey)
-	cdc = types.MakeCodec()
+	cdc = types.GetCodec()
 	err = cdc.UnmarshalJSON([]byte(privStr), &valKey)
 	if err != nil {
 		return "","", "", err

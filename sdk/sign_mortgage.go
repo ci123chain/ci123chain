@@ -9,7 +9,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/mortgage"
 	types2 "github.com/ci123chain/ci123chain/pkg/mortgage/types"
 )
-var cdc = types3.MakeCodec()
+var cdc = types3.GetCodec()
 // 生成 Mortgage 消息，抵押coin
 func SignMortgage(from, to string, amount, gas uint64, denom, uniqueID string, priv []byte) ([]byte, error) {
 	tx, err := buildMortgageTx(from, to, amount, gas, denom , uniqueID)

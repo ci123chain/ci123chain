@@ -258,6 +258,12 @@ func (app *BaseApp) MountStoresIAVL(keys ...*sdk.KVStoreKey) {
 	}
 }
 
+func (app *BaseApp) MountStoreMemory(keys map[string]*sdk.MemoryStoreKey) {
+	for _, key := range keys {
+		app.MountStore(key, sdk.StoreTypeMemory)
+	}
+}
+
 // Mount stores to the provided keys in the BaseApp multistore
 func (app *BaseApp) MountStoresTransient(keys ...*sdk.TransientStoreKey) {
 	for _, key := range keys {
@@ -670,7 +676,7 @@ func (app *BaseApp) getContextForTx(mode runTxMode, txBytes []byte) (ctx sdk.Con
 }
 
 func (app *BaseApp) runMsgs(ctx sdk.Context, msgs []sdk.Msg, mode runTxMode) (sdk.Result, error){
-	idxLogs := make([]sdk.ABCIMessageLog, 0, len(msgs))
+	msgLogs := make(sdk.ABCIMessageLogs, 0, len(msgs))
 	var code      sdk.CodeType
 	var codespace sdk.CodespaceType
 	var data []byte
@@ -697,28 +703,24 @@ func (app *BaseApp) runMsgs(ctx sdk.Context, msgs []sdk.Msg, mode runTxMode) (sd
 
 		// append date and log and events
 		data = append(data, msgResult.Data...)
-		idxLog := sdk.ABCIMessageLog{MsgIndex: uint16(msgIdx), Log: msgResult.Log}
 		events = append(events, msgResult.Events...)
 
 		if !msgResult.IsOK() {
-			idxLog.Success = false
-			idxLogs = append(idxLogs, idxLog)
+
+			msgLogs = append(msgLogs, sdk.NewABCIMessageLog(uint32(msgIdx), false, msgResult.Log, events))
 
 			code = msgResult.Code
 			codespace = msgResult.Codespace
 			break
 		}
-
-		idxLog.Success = true
-		idxLogs = append(idxLogs, idxLog)
+		msgLogs = append(msgLogs, sdk.NewABCIMessageLog(uint32(msgIdx), true, msgResult.Log, events))
 	}
 
-	logJSON := codec.Cdc.MustMarshalJSON(idxLogs)
 	return sdk.Result{
 		Code: 		code,
 		Codespace: 	codespace,
 		GasUsed:   	ctx.GasMeter().GasConsumed(),
-		Log: 		strings.TrimSpace(string(logJSON)),
+		Log: 		strings.TrimSpace(msgLogs.String()),
 		Data: 		data,
 		Events: 	events,
 	}, nil

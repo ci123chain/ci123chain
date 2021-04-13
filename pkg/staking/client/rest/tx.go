@@ -26,7 +26,7 @@ func RegisterRestTxRoutes(cliCtx context.Context, r *mux.Router)  {
 	r.HandleFunc("/staking/validator/edit", rest.MiddleHandler(cliCtx, EditValidatorTX, types.DefaultCodespace)).Methods("POST")
 }
 
-var cdc = types2.MakeCodec()
+var cdc = types2.GetCodec()
 
 func CreateValidatorRequest(cliCtx context.Context, writer http.ResponseWriter, request *http.Request) {
 	broadcast, err := strconv.ParseBool(request.FormValue("broadcast"))

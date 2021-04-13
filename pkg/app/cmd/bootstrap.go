@@ -45,9 +45,9 @@ func bootstrapGenCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *c
 		Use:   "boot-gen",
 		Short: "Initialize files for bootstrap",
 		Long: `testnet will create "v" number of directories and populate each with
-necessary files (private validator, genesis, config, etc.).
+necessary files (private validator, genesis, configs, etc.).
 
-Note, strict routability for addresses is turned off in the config file.
+Note, strict routability for addresses is turned off in the configs file.
 
 Example:
 	cid boot-gen --chain-pre=xxxx --node-num=4 --output-dir=./output --validatorKey="privKey"
@@ -74,9 +74,9 @@ func bootstrapAddCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *c
 		Use:   "boot-add",
 		Short: "add a node for bootstrap",
 		Long: `testnet will add a directory into {chainID} testnet and populate each with
-necessary files (private validator, genesis, config, etc.).
+necessary files (private validator, genesis, configs, etc.).
 
-Note, strict routability for addresses is turned off in the config file.
+Note, strict routability for addresses is turned off in the configs file.
 
 Example:
 	cid boot-add --chain-pre=xxxx --output=./output
@@ -101,8 +101,8 @@ Example:
 	return cmd
 }
 
-// 结构为：/{output}/.{chainID}/node0/config/genesis.json
-//										   /config.toml
+// 结构为：/{output}/.{chainID}/node0/configs/genesis.json
+//										   /configs.toml
 //										   /node_key.json
 //										   /priv_validator_key.json
 //								  	/data
@@ -205,13 +205,13 @@ func bootstrapAddNode(c *cfg.Config, cdc *amino.Codec, appInit app.AppInit) erro
 		return err
 	}
 	cpDir := rootDir + "/" + chainPrefix + "0"
-	nodeKeyPath := filepath.Join(cpDir, "config/node_key.json")
-	privKeyPath := filepath.Join(cpDir, "config/priv_validator_key.json")
+	nodeKeyPath := filepath.Join(cpDir, "configs/node_key.json")
+	privKeyPath := filepath.Join(cpDir, "configs/priv_validator_key.json")
 	privStatePath := filepath.Join(cpDir, "data/priv_validator_state.json")
-	if err := CopyFile(nodeKeyPath, filepath.Join(c.RootDir, "config/node_key.json")); err != nil {
+	if err := CopyFile(nodeKeyPath, filepath.Join(c.RootDir, "configs/node_key.json")); err != nil {
 		return err
 	}
-	if err := CopyFile(privKeyPath, filepath.Join(c.RootDir, "config/priv_validator_key.json")); err != nil {
+	if err := CopyFile(privKeyPath, filepath.Join(c.RootDir, "configs/priv_validator_key.json")); err != nil {
 		return err
 	}
 	if err := CopyFile(privStatePath, filepath.Join(c.RootDir, "data/priv_validator_state.json")); err != nil {

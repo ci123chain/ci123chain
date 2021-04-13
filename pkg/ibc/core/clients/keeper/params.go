@@ -14,3 +14,7 @@ func (k Keeper) getAllowedClients(ctx sdk.Context) []string {
 	k.paramSpace.Get(ctx, types.KeyAllowedClients, &res)
 	return res
 }
+// SetParams sets the total set of ibc-transfer parameters.
+func (k Keeper) SetParams(ctx sdk.Context, params types.Params) {
+	k.paramSpace.SetParamSet(ctx, &params)
+}

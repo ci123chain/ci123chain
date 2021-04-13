@@ -17,7 +17,7 @@ import (
 	"net/http"
 )
 
-var cdc = types2.MakeCodec()
+var cdc = types2.GetCodec()
 // RegisterRoutes - Central function to define routes that get registered by the main application
 func RegisterRoutes(cliCtx context.Context, r *mux.Router) {
 	r.HandleFunc("/account/new", NewAccountRequestHandlerFn(cliCtx)).Methods("POST")

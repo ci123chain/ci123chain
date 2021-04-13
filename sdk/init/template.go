@@ -1,9 +1,9 @@
 package init
 
-const defaultConfigTemplate = `# This is a TOML config file.
+const defaultConfigTemplate = `# This is a TOML configs file.
 # For more information, see https://github.com/toml-lang/toml
 
-##### main base config options #####
+##### main base configs options #####
 
 # TCP or UNIX socket address of the ABCI application,
 # or the name of an ABCI application compiled in with the Tendermint binary
@@ -40,7 +40,7 @@ log_level = "{{ .BaseConfig.LogLevel }}"
 # Output format: 'plain' (colored text) or 'json'
 log_format = "{{ .BaseConfig.LogFormat }}"
 
-##### additional base config options #####
+##### additional base configs options #####
 
 # Path to the JSON file containing the initial validator set and other meta data
 genesis_file = "{{ js .BaseConfig.Genesis }}"
@@ -135,7 +135,7 @@ max_body_bytes = {{ .RPC.MaxBodyBytes }}
 max_header_bytes = {{ .RPC.MaxHeaderBytes }}
 
 # The path to a file containing certificate that is used to create the HTTPS server.
-# Migth be either absolute path or path related to tendermint's config directory.
+# Migth be either absolute path or path related to tendermint's configs directory.
 # If the certificate is signed by a certificate authority,
 # the certFile should be the concatenation of the server's certificate, any intermediates,
 # and the CA's certificate.
@@ -143,7 +143,7 @@ max_header_bytes = {{ .RPC.MaxHeaderBytes }}
 tls_cert_file = "{{ .RPC.TLSCertFile }}"
 
 # The path to a file containing matching private key that is used to create the HTTPS server.
-# Migth be either absolute path or path related to tendermint's config directory.
+# Migth be either absolute path or path related to tendermint's configs directory.
 # NOTE: both tls_cert_file and tls_key_file must be present for Tendermint to create HTTPS server. Otherwise, HTTP server is run.
 tls_key_file = "{{ .RPC.TLSKeyFile }}"
 
@@ -314,7 +314,7 @@ index_all_tags = {{ .TxIndex.IndexAllTags }}
 # Check out the documentation for the list of available metrics.
 prometheus = {{ .Instrumentation.Prometheus }}
 
-# Address to listen for Prometheus collector(s) connections
+# Address to listen for Prometheus collator(s) connections
 prometheus_listen_addr = "{{ .Instrumentation.PrometheusListenAddr }}"
 
 # Maximum number of simultaneous connections.

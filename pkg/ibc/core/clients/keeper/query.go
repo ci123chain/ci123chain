@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"fmt"
 	store2 "github.com/ci123chain/ci123chain/pkg/abci/store"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
@@ -19,7 +20,7 @@ import (
 
 func (q Keeper)ClientState(ctx sdk.Context, req abci.RequestQuery) ([]byte, error) {
 	var reqClientState types.QueryClientStateRequest
-	if err := types.IBCClientCodec.UnmarshalJSON(req.Data, &reqClientState); err != nil {
+	if err := q.cdc.UnmarshalJSON(req.Data, &reqClientState); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
@@ -38,18 +39,23 @@ func (q Keeper)ClientState(ctx sdk.Context, req abci.RequestQuery) ([]byte, erro
 		ClientState: clientState,
 		ProofHeight: proofHeight,
 	}
-	return types.IBCClientCodec.MustMarshalJSON(resp), nil
+	return q.cdc.MustMarshalJSON(resp), nil
 }
 
 
 func (q Keeper)ClientStates(ctx sdk.Context, req abci.RequestQuery) ([]byte, error) {
 	var reqClientState types.QueryClientStatesRequest
-	if err := types.IBCClientCodec.UnmarshalJSON(req.Data, &reqClientState); err != nil {
+	if err := q.cdc.UnmarshalJSON(req.Data, &reqClientState); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	clientStates := types.IdentifiedClientStates{}
 	store := store2.NewPrefixStore(ctx.KVStore(q.storeKey), host.KeyClientStorePrefix)
+
+	iter := store.Iterator(nil, nil)
+	for ; iter.Valid(); iter.Next() {
+		fmt.Println(iter.Value())
+	}
 
 	pageRes, err := pagination.Paginate(store, reqClientState.Pagination, func(key, value []byte) error {
 		keySplit := strings.Split(string(key), "/")
@@ -82,7 +88,7 @@ func (q Keeper)ClientStates(ctx sdk.Context, req abci.RequestQuery) ([]byte, err
 		ClientStates: clientStates,
 		Pagination:   pageRes,
 	}
-	return types.MustMarshalClientStateResp(types.IBCClientCodec, resp), nil
+	return types.MustMarshalClientStateResp(q.cdc, resp), nil
 }
 
 

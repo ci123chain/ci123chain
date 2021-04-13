@@ -311,7 +311,7 @@ func InitializeChannel(src, dst *Chain) (success, modified bool, err error) {
 
 
 // FindMatchingChannel will determine if there already exists a channel between source and counterparty
-// that matches the parameters set in the relayer config.
+// that matches the parameters set in the relayer configs.
 func FindMatchingChannel(source, counterparty *Chain) (string, bool) {
 	// TODO: add appropriate offset and limits, along with retries
 	channelsResp, err := source.QueryChannels(0, 1000)
@@ -341,4 +341,15 @@ func IsMatchingChannel(source, counterparty *Chain, channel *chantypes.Identifie
 		(((channel.State == chantypes.INIT || channel.State == chantypes.TRYOPEN) && channel.Counterparty.ChannelId == "") ||
 			(channel.State == chantypes.OPEN && (counterparty.PathEnd.ChannelID == "" ||
 				channel.Counterparty.ChannelId == counterparty.PathEnd.ChannelID)))
+}
+
+
+// IsConnectionFound determines if given connectionId is present in channel connectionHops list
+func IsConnectionFound(connectionHops []string, connectionID string) bool {
+	for _, id := range connectionHops {
+		if id == connectionID {
+			return true
+		}
+	}
+	return false
 }

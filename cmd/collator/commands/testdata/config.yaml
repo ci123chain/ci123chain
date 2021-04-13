@@ -1,0 +1,39 @@
+global:
+  api-listen-addr: :5183
+  timeout: 10s
+  light-cache-size: 20
+chains:
+  - key: testkey
+    chain-id: ibc-0
+    rpc-addr: http://localhost:26657
+    account-prefix: cosmos
+    gas-adjustment: 1.5
+    gas-prices: 1000000
+    trusting-period: 336h
+    keyoutput:
+      privatekey: "2b452434ac4f7cf9c5d61d62f23834f34e851fb6efdb8d4a8c6e214a8bc93d70"
+      address: "0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c"
+  - key: testkey
+    chain-id: ibc-1
+    rpc-addr: http://localhost:26557
+    account-prefix: cosmos
+    gas-adjustment: 1.5
+    gas-prices: 1000000
+    trusting-period: 336h
+    keyoutput:
+      privatekey: "2b452434ac4f7cf9c5d61d62f23834f34e851fb6efdb8d4a8c6e214a8bc93d70"
+      address: "0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c"
+paths:
+  demo:
+    src:
+      chain-id: ibc-0
+      port-id: transfer
+      order: unordered
+      version: ics20-1
+    dst:
+      chain-id: ibc-1
+      port-id: transfer
+      order: unordered
+      version: ics20-1
+    strategy:
+      type: naive

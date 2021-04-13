@@ -5,6 +5,8 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/account"
 	"github.com/ci123chain/ci123chain/pkg/auth"
 	dis_basic "github.com/ci123chain/ci123chain/pkg/distribution/module/basic"
+	ibctransfer "github.com/ci123chain/ci123chain/pkg/ibc/application/transfer"
+	ibc "github.com/ci123chain/ci123chain/pkg/ibc/core"
 	mint_basic "github.com/ci123chain/ci123chain/pkg/mint/module/basic"
 	order_basic "github.com/ci123chain/ci123chain/pkg/order/module/basic"
 	staking_basic "github.com/ci123chain/ci123chain/pkg/staking/module/basic"
@@ -23,6 +25,8 @@ var ModuleBasics = module.NewBasicManager(
 	mint_basic.AppModuleBasic{},
 	wasm_basic.AppModuleBasic{},
 	dis_basic.AppModuleBasic{},
+	ibctransfer.AppModuleBasic{},
+	ibc.AppModuleBasic{},
 )
 
 func AppGetValidator(pk crypto.PubKey, name string) types.GenesisValidator {

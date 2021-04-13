@@ -159,7 +159,7 @@ func (st StateTransition) TransitionDb(ctx sdk.Context, config ChainConfig) (*Ex
 
 	if !st.Simulate {
 		// Finalise state if not a simulated transaction
-		// TODO: change to depend on config
+		// TODO: change to depend on configs
 		if err := csdb.Finalise(true); err != nil {
 			return nil, err
 		}

@@ -25,7 +25,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/vm/evmtypes"
 )
 
-var cdc = types.MakeCodec()
+var cdc = types.GetCodec()
 
 // Backend defines the methods requided by the PublicFilterAPI backend
 type Backend interface {

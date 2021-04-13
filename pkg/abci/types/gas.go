@@ -116,7 +116,7 @@ type GasConfig struct {
 	IterNextCostFlat Gas
 }
 
-// KVGasConfig returns a default gas config for KVStores.
+// KVGasConfig returns a default gas configs for KVStores.
 func KVGasConfig() GasConfig {
 	return GasConfig{
 		HasCost:          10,
@@ -130,7 +130,7 @@ func KVGasConfig() GasConfig {
 	}
 }
 
-// TransientGasConfig returns a default gas config for TransientStores.
+// TransientGasConfig returns a default gas configs for TransientStores.
 func TransientGasConfig() GasConfig {
 	// TODO: define gasconfig for transient stores
 	return KVGasConfig()

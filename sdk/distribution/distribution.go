@@ -7,7 +7,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/distribution/types"
 )
 
-var cdc = types2.MakeCodec()
+var cdc = types2.GetCodec()
 
 //todo
 func SignFundCommunityPoolTx(from string, amount sdk.Coin, gas, nonce uint64, priv string) ([]byte, error) {

@@ -18,4 +18,5 @@ func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterConcrete(&MsgDelegate{}, "ci123chain/MsgDelegate", nil)
 	cdc.RegisterConcrete(&MsgUndelegate{}, "ci123chain/MsgUndelegate", nil)
 	cdc.RegisterConcrete(&MsgRedelegate{}, "ci123chain/MsgRedelegate", nil)
+	//cdc.RegisterConcrete(&Params{}, "ci123chain/Params", nil)
 }

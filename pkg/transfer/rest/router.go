@@ -8,7 +8,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-var cdc = types2.MakeCodec()
+var cdc = types2.GetCodec()
 func RegisterTxRoutes(cliCtx context.Context, r *mux.Router)  {
 	r.HandleFunc("/tx/query", QueryTxRequestHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/tx/transfers", rest.MiddleHandler(cliCtx, SendRequestHandlerFn, types.DefaultCodespace)).Methods("POST")

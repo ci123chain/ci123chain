@@ -7,7 +7,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/vm/moduletypes/utils"
 )
 
-var cdc = types.MakeCodec()
+var cdc = types.GetCodec()
 
 func SignUploadContractMsg(code []byte,from sdk.AccAddress, gas, nonce uint64, priv string) ([]byte, error) {
 	msg := vm.NewUploadTx(code, from)

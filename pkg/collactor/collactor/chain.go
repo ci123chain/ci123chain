@@ -1,9 +1,12 @@
 package collactor
 
 import (
+	"encoding/json"
 	"fmt"
 	retry "github.com/avast/retry-go"
+	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	types2 "github.com/ci123chain/ci123chain/pkg/app/types"
 	sdkCtx "github.com/ci123chain/ci123chain/pkg/client/context"
 	clienttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/clients/types"
 	connectiontypes "github.com/ci123chain/ci123chain/pkg/ibc/core/connection/types"
@@ -13,8 +16,10 @@ import (
 	rpchttp "github.com/tendermint/tendermint/rpc/client/http"
 	libclient "github.com/tendermint/tendermint/rpc/jsonrpc/client"
 	"golang.org/x/sync/errgroup"
+	"io/ioutil"
 	"os"
 	"path"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -42,10 +47,10 @@ type Chain struct {
 	// TODO: make these private
 	HomePath string           `yaml:"-" json:"-"`
 	PathEnd  *PathEnd         `yaml:"-" json:"-"`
-	Keybase  keys.Keyring     `yaml:"-" json:"-"`
+	//Keybase  keys.Keyring     `yaml:"-" json:"-"`
 	Client   rpcclient.Client `yaml:"-" json:"-"`
-	//Encoding params.EncodingConfig `yaml:"-" json:"-"`
-
+	cdc  *codec.Codec `yaml:"-" json:"-"`
+	KeyOutput *KeyOutput
 	address sdk.AccAddress
 	logger  log.Logger
 	timeout time.Duration
@@ -82,13 +87,10 @@ func (c Chains) Gets(chainIDs ...string) (map[string]*Chain, error) {
 	return out, nil
 }
 
-// Init initializes the pieces of a chain that aren't set when it parses a config
+// Init initializes the pieces of a chain that aren't set when it parses a configs
 // NOTE: All validation of the chain should happen here.
 func (c *Chain) Init(homePath string, timeout time.Duration, logger log.Logger, debug bool) error {
-	keybase, err := keys.New(c.ChainID, "test", keysDir(homePath, c.ChainID), nil)
-	if err != nil {
-		return err
-	}
+
 
 	client, err := newRPCClient(c.RPCAddr, timeout)
 	if err != nil {
@@ -105,9 +107,9 @@ func (c *Chain) Init(homePath string, timeout time.Duration, logger log.Logger, 
 		return fmt.Errorf("failed to parse gas prices (%s) for chain %s", c.GasPrices, c.ChainID)
 	}
 
-	//encodingConfig := c.MakeEncodingConfig()
+	c.cdc = types2.GetCodec()
 
-	c.Keybase = keybase
+	//c.KeyOutput = ko
 	c.Client = client
 	c.HomePath = homePath
 	//c.Encoding = encodingConfig
@@ -128,14 +130,22 @@ func (c *Chain) GetAddress() (sdk.AccAddress, error) {
 	if !c.address.Empty()  {
 		return c.address, nil
 	}
-
 	// Signing key for c chain
-	srcAddr, err := c.Keybase.Key(c.Key)
-	if err != nil {
-		return nil, err
+	if c.KeyOutput == nil || len(c.KeyOutput.PrivateKey) == 0{
+		var ko KeyOutput
+		keyfile, err := ioutil.ReadFile(KeysDir(c.HomePath, c.ChainID))
+		if err != nil {
+			fmt.Println("Error reading file:", err)
+			os.Exit(1)
+		}
+		// unmarshall them into the struct
+		if err := json.Unmarshal(keyfile, &ko); err != nil {
+			panic(err)
+		}
+		c.KeyOutput = &ko
 	}
-
-	return srcAddr.GetAddress(), nil
+	srcAddr := c.KeyOutput.Address
+	return sdk.HexToAddress(srcAddr), nil
 }
 
 
@@ -145,15 +155,15 @@ func (c *Chain) CLIContext(height int64) sdkCtx.Context {
 	return sdkCtx.Context{}.
 		WithChainID(c.ChainID).
 		WithFrom(addr).
-		WithHeight(height)
-		//WithCodec()
+		WithHeight(height).
+		WithCodec(c.cdc).
 		//WithJSONMarshaler(newContextualStdCodec(c.Encoding.Marshaler, c.UseSDKContext)).
 		//WithInterfaceRegistry(c.Encoding.InterfaceRegistry).
 		//WithTxConfig(c.Encoding.TxConfig).
 		//WithLegacyAmino(c.Encoding.Amino).
 		//WithInput(os.Stdin).
 		//WithNodeURI(c.RPCAddr).
-		//WithClient(c.Client).
+		WithClient(c.Client)
 		//WithAccountRetriever(authTypes.AccountRetriever{}).
 		//WithBroadcastMode(flags.BroadcastBlock).
 		//WithKeyring(c.Keybase).
@@ -172,6 +182,10 @@ func defaultChainLogger() log.Logger {
 	return log.NewTMLogger(log.NewSyncWriter(os.Stdout))
 }
 
+// KeysDir returns the path to the keys for this chain
+func KeysDir(home, chainID string) string {
+	return path.Join(home, "keys", chainID)
+}
 
 
 func newRPCClient(addr string, timeout time.Duration) (*rpchttp.HTTP, error) {
@@ -233,58 +247,27 @@ func (c *Chain) SendMsg(datagram sdk.Msg) (*sdk.TxResponse, bool, error) {
 // of that transaction will be logged. A boolean indicating if a transaction was successfully
 // sent and executed successfully is returned.
 func (c *Chain) SendMsgs(msgs []sdk.Msg) (*sdk.TxResponse, bool, error) {
-	// Instantiate the client context
+
 	ctx := c.CLIContext(0)
-
-	// Query account details
-	txf, err := tx.PrepareFactory(ctx, c.TxFactory(0))
+	nonce, err := c.QueryNonce()
 	if err != nil {
 		return nil, false, err
 	}
-
-	// If users pass gas adjustment, then calculate gas
-	_, adjusted, err := tx.CalculateGas(ctx.QueryWithData, txf, msgs...)
+	gas, err := strconv.ParseInt(c.GasPrices, 10, 64)
 	if err != nil {
 		return nil, false, err
 	}
-
-	// Set the gas amount on the transaction factory
-	txf = txf.WithGas(adjusted)
-
-	// Build the transaction builder
-	txb, err := tx.BuildUnsignedTx(txf, msgs...)
-	if err != nil {
-		return nil, false, err
+	txByte, err := types2.SignCommonTx(c.MustGetAddress(), nonce, uint64(gas), msgs, c.KeyOutput.PrivateKey, c.cdc)
+	if err != nil{
+		panic(err)
 	}
-
-	// Attach the signature to the transaction
-	err = tx.Sign(txf, c.Key, txb, false)
-	if err != nil {
-		return nil, false, err
-	}
-
-	// Generate the transaction bytes
-	txBytes, err := ctx.TxConfig.TxEncoder()(txb.GetTx())
-	if err != nil {
-		return nil, false, err
-	}
-
-	// Broadcast those bytes
-	res, err := ctx.BroadcastTx(txBytes)
-	if err != nil {
-		return nil, false, err
-	}
-
-	// transaction was executed, log the success or failure using the tx response code
-	// NOTE: error is nil, logic should use the returned error to determine if the
-	// transaction was successfully executed.
+	res, err := ctx.BroadcastSignedData(txByte)
 	if res.Code != 0 {
-		c.LogFailedTx(res, err, msgs)
-		return res, false, nil
+		c.LogFailedTx(&res, err, msgs)
+		return &res, false, nil
 	}
-
-	c.LogSuccessTx(res, msgs)
-	return res, true, nil
+	c.LogSuccessTx(&res, msgs)
+	return &res, true, nil
 }
 
 

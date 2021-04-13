@@ -8,7 +8,7 @@ import (
 const (
 	DefaultCodespace = types.DefaultParamspace
 	StoreKey 		 = types.StoreKey
-
+	ModuleName =  types.ModuleName
 	FeeCollectorName              = types.FeeCollectorName
 )
 

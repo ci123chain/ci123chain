@@ -3,6 +3,7 @@ package collactor
 import (
 	"context"
 	"fmt"
+	accountutils "github.com/ci123chain/ci123chain/pkg/account/utils"
 	chantypes "github.com/ci123chain/ci123chain/pkg/ibc/core/channel/types"
 	chanutils "github.com/ci123chain/ci123chain/pkg/ibc/core/channel/utils"
 	clienttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/clients/types"
@@ -31,7 +32,7 @@ func (c *Chain) QueryLatestHeight() (int64, error) {
 
 // QueryClientState retrevies the latest consensus state for a client in state at a given height
 func (c *Chain) QueryClientState(height int64) (*clienttypes.QueryClientStateResponse, error) {
-	return clientutils.QueryClientStateABCI(c.CLIContext(height), c.PathEnd.ClientID)
+	return clientutils.QueryClientStateABCI2(c.CLIContext(height), c.PathEnd.ClientID)
 }
 
 // QueryClients queries all the clients!
@@ -117,6 +118,12 @@ func (c *Chain) QueryUnbondingPeriod() (time.Duration, error) {
 	}
 	return params.UnbondingTime, nil
 }
+
+func (c *Chain) QueryNonce() (uint64, error) {
+	nonce, err := accountutils.QueryNonce(c.CLIContext(0), c.MustGetAddress())
+	return nonce, err
+}
+
 
 
 var emptyConnRes = conntypes.NewQueryConnectionResponse(

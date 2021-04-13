@@ -103,6 +103,7 @@ var (
 		distr.ModuleName:      nil,
 		mint.ModuleName:       {supply.Minter},
 		ibc.ModuleName: nil,
+		ibctransfer.ModuleName: nil,
 		stakingTypes.BondedPoolName: {supply.Burner, supply.Staking},
 		stakingTypes.NotBondedPoolName: {supply.Burner, supply.Staking},
 	}
@@ -127,7 +128,7 @@ type Chain struct {
 }
 
 func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer) *Chain {
-	cdc := app_types.MakeCodec()
+	cdc := app_types.GetCodec()
 	cacheDir := os.ExpandEnv(filepath.Join(viper.GetString(cli.HomeFlag) , cacheName))
 	if _, err := os.Stat(cacheDir); os.IsNotExist(err) {
 		os.MkdirAll(cacheDir, os.ModePerm)
@@ -153,22 +154,17 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 
 	accountKeeper := keeper.NewAccountKeeper(cdc, AccountStoreKey, acc_types.ProtoBaseAccount)
 
-	c.paramsKeepr = params.NewKeeper(cdc, ParamStoreKey, ParamTransStoreKey, params.DefaultCodespace)
+	c.paramsKeepr = initAppParamsKeeper(cdc, ParamStoreKey, ParamTransStoreKey)
 
 	supplyKeeper := supply.NewKeeper(cdc, SupplyStoreKey, accountKeeper, maccPerms)
 
-	authSubspace := c.paramsKeepr.Subspace(auth.DefaultCodespace)
-	c.authKeeper = auth.NewAuthKeeper(cdc, AuthStoreKey, authSubspace)
+	c.authKeeper = auth.NewAuthKeeper(cdc, AuthStoreKey, c.GetSubspace(auth.ModuleName))
 
+	stakingKeeper := staking.NewKeeper(cdc, StakingStoreKey, accountKeeper, supplyKeeper, c.GetSubspace(staking.ModuleName), cdb)
 
-	//fcKeeper := fc.NewFcKeeper(cdc, fcStoreKey, accKeeper)
+	distrKeeper := k.NewKeeper(cdc, DisrtStoreKey, supplyKeeper, accountKeeper, auth.FeeCollectorName, c.GetSubspace(distr.ModuleName), stakingKeeper, cdb)
 
-	stakingKeeper := staking.NewKeeper(cdc, StakingStoreKey, accountKeeper,supplyKeeper, c.paramsKeepr.Subspace(params.ModuleName), cdb)
-
-	distrKeeper := k.NewKeeper(cdc, DisrtStoreKey, supplyKeeper, accountKeeper, auth.FeeCollectorName, c.paramsKeepr.Subspace(distr.DefaultCodespace), stakingKeeper, cdb)
-
-	mintSubspace := c.paramsKeepr.Subspace(mint.DefaultCodeSpce)
-	mintKeeper := mint.NewKeeper(cdc, MintStoreKey, mintSubspace, stakingKeeper, supplyKeeper, auth.FeeCollectorName)
+	mintKeeper := mint.NewKeeper(cdc, MintStoreKey, c.GetSubspace(mint.ModuleName), stakingKeeper, supplyKeeper, auth.FeeCollectorName)
 
 	infrastructureKeeper := infrastructure.NewKeeper(cdc, InfrastructureStoreKey)
 	stakingKeeper.SetHooks(staking.NewMultiStakingHooks(distrKeeper.Hooks()))
@@ -187,17 +183,13 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 		IBCKeeper.ChannelKeeper, &IBCKeeper.PortKeeper,
 		supplyKeeper, scopedTransferKeeper,
 	)
-	ibcTransferModule := ibctransfer.NewAppModule(ibcTransferKeeper)
-
 
 	odb := toRedisdb(cdb)
 	orderKeeper := order.NewKeeper(odb, OrderStoreKey, accountKeeper)
 
 	homeDir := viper.GetString(cli.HomeFlag)
 	var wasmconfig wasm_types.WasmConfig
-	vmSubspace := c.paramsKeepr.Subspace(vm.DefaultCodespace)
-	vmKeeper := vm.NewKeeper(cdc, WasmStoreKey, homeDir, wasmconfig, vmSubspace, accountKeeper, stakingKeeper, cdb)
-
+	vmKeeper := vm.NewKeeper(cdc, WasmStoreKey, homeDir, wasmconfig, c.GetSubspace(vm.ModuleName), accountKeeper, stakingKeeper, cdb)
 
 	{ // setup module
 		moduleNameOrder := []string{
@@ -210,6 +202,7 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 			vm.ModuleName,
 			mint.ModuleName,
 			infrastructure.ModuleName,
+			ibc.ModuleName,
 			ibctransfer.ModuleName,
 		}
 		// 设置modules
@@ -224,7 +217,8 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 			vm_module.AppModule{Keeper: &vmKeeper},
 			mint_module.AppModule{Keeper: mintKeeper},
 			infrastructure_module.AppModule{Keeper: infrastructureKeeper},
-			ibcTransferModule,
+			ibc.NewCoreModule(&IBCKeeper),
+			ibc.NewTransferModule(ibcTransferKeeper),
 		)
 	}
 
@@ -294,7 +288,7 @@ func (c *Chain) mountStores() error {
 		CapabilityStoreKey,
 	}
 	c.MountStoresIAVL(keys...)
-
+	c.MountStoreMemory(memKeys)
 	c.MountStoresTransient(c.txIndexStore, ParamTransStoreKey)
 
 	for _, key := range keys {
@@ -305,6 +299,27 @@ func (c *Chain) mountStores() error {
 
 	return nil
 }
+
+
+// initParamsKeeper init params keeper and its subspaces
+func initAppParamsKeeper(cdc *codec.Codec, key *sdk.KVStoreKey, tkey *sdk.TransientStoreKey) params.Keeper {
+	paramsKeeper := params.NewKeeper(cdc, key, tkey, params.DefaultCodespace)
+
+	paramsKeeper.Subspace(account.ModuleName)
+	paramsKeeper.Subspace(auth.ModuleName)
+	paramsKeeper.Subspace(stakingTypes.ModuleName)
+	paramsKeeper.Subspace(mint.ModuleName)
+	paramsKeeper.Subspace(distr.ModuleName)
+	paramsKeeper.Subspace(vm.ModuleName)
+	paramsKeeper.Subspace(ibc.ModuleName)
+	paramsKeeper.Subspace(ibctransfer.ModuleName)
+	//paramsKeeper.Subspace(slashingtypes.ModuleName)
+	//paramsKeeper.Subspace(govtypes.ModuleName).WithKeyTable(govtypes.ParamKeyTable())
+	//paramsKeeper.Subspace(crisistypes.ModuleName)
+
+	return paramsKeeper
+}
+
 
 func (c *Chain) ExportAppStateJSON() (json.RawMessage, []types.GenesisValidator, error) {
 	// TODO: Implement

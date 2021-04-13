@@ -64,11 +64,10 @@ func (msg *CommonTx) GetSignBytes() []byte{
 }
 
 func (msg *CommonTx) Bytes() []byte {
-	bytes, err := MakeCodec().MarshalBinaryBare(msg)
+	bytes, err := GetCodec().MarshalBinaryBare(msg)
 	if err != nil {
 		panic(err)
 	}
-
 	return bytes
 }
 

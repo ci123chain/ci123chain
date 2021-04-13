@@ -48,13 +48,13 @@ func main()  {
 			return app.SetupContext(ctx, logINFO)
 		},
 	}
-	rootCmd.Flags().String(HomeFlag, "", "directory for config and data")
+	rootCmd.Flags().String(HomeFlag, "", "directory for configs and data")
 	rootCmd.Flags().String(flagLogLevel, "info", "Run abci app with different log level")
 	rootCmd.PersistentFlags().String("log_level", ctx.Config.LogLevel, "log level")
 
 	cmd.AddServerCommands(
 		ctx,
-		types2.MakeCodec(),
+		types2.GetCodec(),
 		rootCmd,
 		app.NewAppInit(),
 		app.ConstructAppCreator(newApp, appName),

@@ -36,9 +36,9 @@ func testnetGenCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cob
 		Use:   "gen-net",
 		Short: "Initialize files for a hmd testnet",
 		Long: `testnet will create "v" number of directories and populate each with
-necessary files (private validator, genesis, config, etc.).
+necessary files (private validator, genesis, configs, etc.).
 
-Note, strict routability for addresses is turned off in the config file.
+Note, strict routability for addresses is turned off in the configs file.
 
 Example:
 	cid gen-net --chain-id=xxxx --validators-num=4 --non-validators-num=3 --output-dir=./output
@@ -68,9 +68,9 @@ func testnetAddCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cob
 		Use:   "add-net",
 		Short: "Initialize files for a hmd testnet",
 		Long: `testnet will add a directory into {chainID} testnet and populate each with
-necessary files (private validator, genesis, config, etc.).
+necessary files (private validator, genesis, configs, etc.).
 
-Note, strict routability for addresses is turned off in the config file.
+Note, strict routability for addresses is turned off in the configs file.
 
 Example:
 	cid add-net --chain-id=xxxx --output=./output
@@ -95,8 +95,8 @@ Example:
 	return cmd
 }
 
-// 结构为：/{output}/.{chainID}/node0/config/genesis.json
-//										   /config.toml
+// 结构为：/{output}/.{chainID}/node0/configs/genesis.json
+//										   /configs.toml
 //										   /node_key.json
 //										   /priv_validator_key.json
 //								  	/data
@@ -185,7 +185,7 @@ func testnetGenWithConfig(c *cfg.Config, cdc *amino.Codec, appInit app.AppInit) 
 		//c.P2P.PersistentPeers = persistentPeers
 		c.RPC.Unsafe = true
 		config.SaveConfig(c)
-		if err := CopyFile(genFilePath, filepath.Join(c.RootDir, "config/genesis.json")); err != nil {
+		if err := CopyFile(genFilePath, filepath.Join(c.RootDir, "configs/genesis.json")); err != nil {
 			return err
 		}
 	}
@@ -222,16 +222,16 @@ func testnetAddNode(c *cfg.Config, cdc *amino.Codec, appInit app.AppInit) error{
 	if err != nil {
 		return err
 	}
-	configFilePath := filepath.Join(rootDir, "node"+ string(nodeNum) +"/cid/config/config.toml")
+	configFilePath := filepath.Join(rootDir, "node"+ string(nodeNum) +"/cid/configs/configs.toml")
 	err = os.Remove(configFilePath)
 	if err != nil{
 		return err
 	}
-	genFilePath := filepath.Join(rootDir, "node0/cid/config/genesis.json")
-	if err := CopyFile(genFilePath, filepath.Join(c.RootDir, "config/genesis.json")); err != nil {
+	genFilePath := filepath.Join(rootDir, "node0/cid/configs/genesis.json")
+	if err := CopyFile(genFilePath, filepath.Join(c.RootDir, "configs/genesis.json")); err != nil {
 		return err
 	}
-	if err := CopyFile(filepath.Join(rootDir, "node0/cid/config/config.toml"), configFilePath); err != nil {
+	if err := CopyFile(filepath.Join(rootDir, "node0/cid/configs/configs.toml"), configFilePath); err != nil {
 		return err
 	}
 	fmt.Printf("Successfully add node%d directories \n", nodeNum)
@@ -261,7 +261,7 @@ func (di dirsInfo) NodeDir() string {
 }
 
 func (di dirsInfo) ConfigDir() string {
-	return filepath.Join(di.NodeDir(), "config")
+	return filepath.Join(di.NodeDir(), "configs")
 }
 
 func (di dirsInfo) GenTxsDir() string {
