@@ -296,23 +296,16 @@ func (k *Keeper) Migrate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAddres
 	}
 
 	//todo:fix iterator
-	prefix := "s/k:" + k.storeKey.Name() + "/"
 	oldKey := types.GetContractStorePrefixKey(oldContract)
+	oldStore := NewStore(ctx.KVStore(k.storeKey), oldKey)
+	iter := oldStore.parent.RemoteIterator(oldKey, sdk.PrefixEndBytes(oldKey))
 
-	startKey := append([]byte(prefix), oldKey...)
-	endKey := EndKey(startKey)
-
-	iter, _ := k.cdb.Iterator(startKey, endKey)
 	defer iter.Close()
-
-	prefixStoreKey := types.GetContractStorePrefixKey(newContract)
-	prefixStore := NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
+	newStoreKey := types.GetContractStorePrefixKey(newContract)
+	newStore := NewStore(ctx.KVStore(k.storeKey), newStoreKey)
 
 	for iter.Valid() {
-		key := string(iter.Key())
-		realKey := strings.Split(key, string(startKey))
-		value := iter.Value()
-		prefixStore.Set([]byte(realKey[1]), value)
+		newStore.Set(iter.Key(), iter.Value())
 		iter.Next()
 	}
 
