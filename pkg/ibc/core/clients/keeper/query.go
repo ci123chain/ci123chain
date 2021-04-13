@@ -50,9 +50,12 @@ func (q Keeper)ClientStates(ctx sdk.Context, req abci.RequestQuery) ([]byte, err
 	}
 
 	clientStates := types.IdentifiedClientStates{}
-	store := store2.NewPrefixStore(ctx.KVStore(q.storeKey), host.KeyClientStorePrefix)
 
+	//store := ctx.KVStore(q.storeKey)
+	//iter := store.RemoteIterator(host.KeyClientStorePrefix, sdk.PrefixEndBytes(host.KeyClientStorePrefix))
+	store := store2.NewPrefixStore(ctx.KVStore(q.storeKey), host.KeyClientStorePrefix)
 	iter := store.Iterator(nil, nil)
+
 	for ; iter.Valid(); iter.Next() {
 		fmt.Println(iter.Value())
 	}

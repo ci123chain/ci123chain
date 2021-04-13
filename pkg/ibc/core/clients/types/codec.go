@@ -18,9 +18,11 @@ func init(){
 }
 func RegisterCodec(cdc *codec.Codec)  {
 	cdc.RegisterInterface((*exported.ClientState)(nil), &amino.InterfaceOptions{AlwaysDisambiguate: true})
-	//cdc.RegisterConcrete((*exported.ClientState)(nil), "ibc/clientstate", nil)
 	cdc.RegisterInterface((*exported.ConsensusState)(nil), nil)
+	cdc.RegisterInterface((*exported.Header)(nil), &amino.InterfaceOptions{AlwaysDisambiguate: true})
+
 	cdc.RegisterConcrete(&MsgCreateClient{}, "ibcclient/MsgCreateClient", nil)
+	cdc.RegisterConcrete(&MsgUpdateClient{}, "ibcclient/MsgUpdateClient", nil)
 
 	cdc.RegisterConcrete(&GenesisState{}, "ibcclient/GenesisState", nil)
 	cdc.RegisterConcrete(&ConsensusStateWithHeight{}, "ibcclient/ConsensusStateWithHeight", nil)
