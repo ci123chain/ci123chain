@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	order "github.com/ci123chain/ci123chain/pkg/order/types"
+	ics23 "github.com/confio/ics23/go"
+	tmcrypto "github.com/tendermint/tendermint/proto/tendermint/crypto"
 	"io"
 	"io/ioutil"
 	"os"
@@ -12,10 +14,10 @@ import (
 	"strings"
 
 	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/crypto/tmhash"
 	dbm "github.com/tendermint/tm-db"
 
-	"github.com/ci123chain/ci123chain/pkg/abci/store/internal/maps"
+	sdkmaps "github.com/ci123chain/ci123chain/pkg/abci/store/internal/maps"
+	sdkproofs "github.com/ci123chain/ci123chain/pkg/abci/store/internal/proofs"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
@@ -363,13 +365,12 @@ func (rs *rootMultiStore) Query(req abci.RequestQuery) abci.ResponseQuery {
 	}
 
 	// Restore origin path and append proof op.
-	res.ProofOps.Ops = append(res.ProofOps.Ops, NewMultiStoreProofOp(
-		[]byte(storeName),
-		NewMultiStoreProof(commitInfo.StoreInfos),
-	).ProofOp())
+	//res.ProofOps.Ops = append(res.ProofOps.Ops, NewMultiStoreProofOp(
+	//	[]byte(storeName),
+	//	NewMultiStoreProof(commitInfo.StoreInfos),
+	//).ProofOp())
 
-	// TODO: handle in another TM v0.26 update PR
-	// res.Proof = buildMultiStoreProof(res.Proof, storeName, commitInfo.StoreInfos)
+	res.ProofOps.Ops = append(res.ProofOps.Ops, commitInfo.ProofOp(storeName))
 	return res
 }
 
@@ -467,12 +468,11 @@ type commitInfo struct {
 
 // Hash returns the simple merkle root hash of the stores sorted by name.
 func (ci commitInfo) Hash() []byte {
-	// TODO: cache to ci.hash []byte
-	m := make(map[string][]byte, len(ci.StoreInfos))
-	for _, storeInfo := range ci.StoreInfos {
-		m[storeInfo.Name] = storeInfo.Hash()
+	if len(ci.StoreInfos) == 0 {
+		return nil
 	}
-	rootHash, _, _ := maps.ProofsFromMap(m)
+
+	rootHash, _, _ := sdkmaps.ProofsFromMap(ci.toMap())
 	return rootHash
 }
 
@@ -483,6 +483,48 @@ func (ci commitInfo) CommitID() CommitID {
 	}
 }
 
+
+func (ci commitInfo) toMap() map[string][]byte {
+	m := make(map[string][]byte, len(ci.StoreInfos))
+	for _, storeInfo := range ci.StoreInfos {
+		m[storeInfo.Name] = storeInfo.GetHash()
+	}
+
+	return m
+}
+
+func (ci commitInfo) ProofOp(storeName string) tmcrypto.ProofOp {
+	cmap := ci.toMap()
+	_, proofs, _ := sdkmaps.ProofsFromMap(cmap)
+
+	proof := proofs[storeName]
+	if proof == nil {
+		panic(fmt.Sprintf("ProofOp for %s but not registered store name", storeName))
+	}
+
+	// convert merkle.SimpleProof to CommitmentProof
+	existProof, err := sdkproofs.ConvertExistenceProof(proof, []byte(storeName), cmap[storeName])
+	if err != nil {
+		panic(fmt.Errorf("could not convert simple proof to existence proof: %w", err))
+	}
+
+	commitmentProof := &ics23.CommitmentProof{
+		Proof: &ics23.CommitmentProof_Exist{
+			Exist: existProof,
+		},
+	}
+
+	return NewSimpleMerkleCommitmentOp([]byte(storeName), commitmentProof).ProofOp()
+}
+
+func NewSimpleMerkleCommitmentOp(key []byte, proof *ics23.CommitmentProof) CommitmentOp {
+	return CommitmentOp{
+		Type:  ProofOpSimpleMerkleCommitment,
+		Spec:  ics23.TendermintSpec,
+		Key:   key,
+		Proof: proof,
+	}
+}
 //----------------------------------------
 // storeInfo
 
@@ -494,6 +536,10 @@ type storeInfo struct {
 	Core storeCore
 }
 
+func (si storeInfo) GetHash() []byte {
+	return si.Core.CommitID.Hash
+}
+
 type storeCore struct {
 	// StoreType StoreType
 	CommitID CommitID
@@ -501,20 +547,20 @@ type storeCore struct {
 }
 
 // Implements merkle.Hasher.
-func (si storeInfo) Hash() []byte {
-	// Doesn't write Name, since merkle.SimpleHashFromMap() will
-	// include them via the keys.
-	bz, _ := cdc.MarshalBinaryLengthPrefixed(si.Core)
-	hasher := tmhash.New()
-
-	_, err := hasher.Write(bz)
-	if err != nil {
-		// TODO: Handle with #870
-		panic(err)
-	}
-
-	return hasher.Sum(nil)
-}
+//func (si storeInfo) Hash() []byte {
+//	// Doesn't write Name, since merkle.SimpleHashFromMap() will
+//	// include them via the keys.
+//	bz, _ := cdc.MarshalBinaryLengthPrefixed(si.Core)
+//	hasher := tmhash.New()
+//
+//	_, err := hasher.Write(bz)
+//	if err != nil {
+//		// TODO: Handle with #870
+//		panic(err)
+//	}
+//
+//	return hasher.Sum(nil)
+//}
 
 //----------------------------------------
 // Misc.

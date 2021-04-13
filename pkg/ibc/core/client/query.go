@@ -5,7 +5,6 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/client/context"
 	clienttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/clients/types"
 	commitmenttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/commitment/types"
-
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/host"
 	abci "github.com/tendermint/tendermint/abci/types"
 )
@@ -48,12 +47,13 @@ func QueryTendermintProof(clientCtx context.Context, key []byte) ([]byte, []byte
 		return nil, nil, clienttypes.Height{}, err
 	}
 
+	// todo convert to proto
 	merkleProof, err := commitmenttypes.ConvertProofs(res.ProofOps)
 	if err != nil {
 		return nil, nil, clienttypes.Height{}, err
 	}
 
-	proofBz, err := clientCtx.Cdc.MarshalBinaryBare(&merkleProof)
+	proofBz, err := clientCtx.Cdc.MarshalBinaryBare(merkleProof)
 	if err != nil {
 		return nil, nil, clienttypes.Height{}, err
 	}

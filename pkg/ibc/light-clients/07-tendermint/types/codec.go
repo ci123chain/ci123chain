@@ -18,4 +18,5 @@ func RegisterCodec(cdc *codec.Codec)  {
 	cdc.RegisterConcrete(&ConsensusState{}, "ibclightclient/ConsensusState", nil)
 	cdc.RegisterConcrete(&types2.ValidatorSet{}, "ibclightclient/tendermint.ValidatorSet", nil)
 	cdc.RegisterConcrete(&Header{}, "ibclightclient/Header", nil)
+
 }

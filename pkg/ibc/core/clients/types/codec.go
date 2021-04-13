@@ -23,6 +23,7 @@ func RegisterCodec(cdc *codec.Codec)  {
 
 	cdc.RegisterConcrete(&MsgCreateClient{}, "ibcclient/MsgCreateClient", nil)
 	cdc.RegisterConcrete(&MsgUpdateClient{}, "ibcclient/MsgUpdateClient", nil)
+	cdc.RegisterConcrete(&Height{}, "ibcclient/Height", nil)
 
 	cdc.RegisterConcrete(&GenesisState{}, "ibcclient/GenesisState", nil)
 	cdc.RegisterConcrete(&ConsensusStateWithHeight{}, "ibcclient/ConsensusStateWithHeight", nil)

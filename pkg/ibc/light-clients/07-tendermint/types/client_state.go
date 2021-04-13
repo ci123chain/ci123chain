@@ -186,11 +186,6 @@ func (cs ClientState) Initialize(ctx sdk.Context, clientStore sdk.KVStore, consS
 	return nil
 }
 
-func (cs ClientState) CheckHeaderAndUpdateState(ctx sdk.Context, cdc *codec.Codec, store sdk.KVStore,
-	header exported.Header) (exported.ClientState, exported.ConsensusState, error) {
-	return nil, nil, nil
-}
-
 
 func (cs ClientState) VerifyUpgradeAndUpdateState(ctx sdk.Context,
 	cdc *codec.Codec, store sdk.KVStore,

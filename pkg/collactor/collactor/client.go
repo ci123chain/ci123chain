@@ -41,7 +41,7 @@ func (c *Chain) CreateClients(dst *Chain) (modified bool, err error) {
 
 		// Create the ClientState we want on 'c' tracking 'dst'
 		clientState := ibctmtypes.NewClientState(
-			dstUpdateHeader.GetHeader().GetChainID(),
+			dstUpdateHeader.GetHeader().ChainID,
 			ibctmtypes.NewFractionFromTm(light.DefaultTrustLevel),
 			dst.GetTrustingPeriod(),
 			ubdPeriod,
@@ -104,7 +104,7 @@ func (c *Chain) CreateClients(dst *Chain) (modified bool, err error) {
 		}
 		// Create the ClientState we want on 'dst' tracking 'c'
 		clientState := ibctmtypes.NewClientState(
-			srcUpdateHeader.GetHeader().GetChainID(),
+			srcUpdateHeader.GetHeader().ChainID,
 			ibctmtypes.NewFractionFromTm(light.DefaultTrustLevel),
 			c.GetTrustingPeriod(),
 			ubdPeriod,

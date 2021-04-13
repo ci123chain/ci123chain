@@ -231,15 +231,13 @@ func (c *Chain) GetLightSignedHeaderAtHeight(height int64) (*tmclient.Header, er
 		return nil, err
 	}
 
-	protoVal, err := tmtypes.NewValidatorSet(sh.ValidatorSet.Validators).ToProto()
+	protoVal := tmtypes.NewValidatorSet(sh.ValidatorSet.Validators)
 	if err != nil {
 		return nil, err
 	}
 
-	return &tmclient.Header{SignedHeader: sh.SignedHeader.ToProto(), ValidatorSet: protoVal}, nil
+	return &tmclient.Header{SignedHeader: sh.SignedHeader, ValidatorSet: protoVal}, nil
 }
-
-
 
 // GetLatestLightHeights returns both the src and dst latest height in the local client
 func GetLatestLightHeights(src, dst *Chain) (srch int64, dsth int64, err error) {

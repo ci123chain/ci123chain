@@ -55,6 +55,17 @@ func TestUpdateClientState(t *testing.T)  {
 	src, dst := setupClients()
 	_, err := src.CreateClients(dst)
 	require.Nil(t, err)
-	src.UpdateClients(dst)
+	err = src.UpdateClients(dst)
+	require.Nil(t, err)
 }
 
+func TestCreateOpenConnection(t *testing.T)  {
+	src, dst := setupClients()
+	_, err := src.CreateClients(dst)
+	require.Nil(t, err)
+	_, err = src.CreateOpenConnections(dst, 3, 300)
+	require.Nil(t, err)
+
+	con , err := src.QueryConnection(0)
+	require.Equal(t, con.Connection.ClientId, src.PathEnd.ClientID)
+}

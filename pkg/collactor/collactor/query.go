@@ -32,7 +32,7 @@ func (c *Chain) QueryLatestHeight() (int64, error) {
 
 // QueryClientState retrevies the latest consensus state for a client in state at a given height
 func (c *Chain) QueryClientState(height int64) (*clienttypes.QueryClientStateResponse, error) {
-	return clientutils.QueryClientStateABCI2(c.CLIContext(height), c.PathEnd.ClientID)
+	return clientutils.QueryClientStateABCI(c.CLIContext(height), c.PathEnd.ClientID)
 }
 
 // QueryClients queries all the clients!
