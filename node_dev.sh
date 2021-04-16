@@ -1,11 +1,15 @@
 #!/bin/bash
 
+docker-compose -f bootstrap-docker/single-node-db.yaml up -d
 
 #export CI_HOME="/Users/tanhui/Documents/work/golang/ci123chain/docker/node/test3"
-export CI_VALIDATOR_KEY="BpiPMqeXTNJLBg6hRoWJjsjOLSHIQRIrkQlykLQ/0AE="
-export CI_PUBKEY="Ap0lbWGAnzfqpc0D0GL081WCnWatdk2d5B21orPl30AS"
+export CI_VALIDATOR_KEY="4wttMiieaewLiRYu+y05j0uslBDOX5IA3k4TY9GtQzSdTcXyd5Y982Q3CUdh+h1XcCvtpIUb+5q6rtJ8W4SEFw=="
+export CI_PUBKEY="nU3F8neWPfNkNwlHYfodV3Ar7aSFG/uauq7SfFuEhBc="
 export CI_CHAIN_ID="testchain123"
-export CI_STATEDB="couchdb://admin:123rewQAQtre56@193.112.144.129:5984/test1230"
+export CI_STATEDB_HOST="127.0.0.1"
+export CI_STATEDB_PORT="5002"
+export CI_STATEDB_TLS="false"
+export CI_DOMAIN="localhost"
 
 
 if [ -z $CI_HOME ];
@@ -20,12 +24,12 @@ if [ ! -f $CI_HOME/config/genesis.json ]; then
     #./cid-linux init
     ./cid-linux init --home=$CI_HOME --chain_id=$CI_CHAIN_ID --validator_key=$CI_VALIDATOR_KEY
 
-    ./cid-linux add-genesis-account 0x204bCC42559Faf6DFE1485208F7951aaD800B313 10000000000 --home=$CI_HOME
+    ./cid-linux add-genesis-account 0x204bCC42559Faf6DFE1485208F7951aaD800B313 10000000000000000000000000 --home=$CI_HOME
     # a78a8a281d160847f1ed7881e5497e1a98ccd4fe6ba9ce918630f93a44e09793
-    ./cid-linux add-genesis-account 0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c 10000000000 --home=$CI_HOME
+    ./cid-linux add-genesis-account 0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c 10000000000000000000000000 --home=$CI_HOME
     # 2b452434ac4f7cf9c5d61d62f23834f34e851fb6efdb8d4a8c6e214a8bc93d70
 
-    ./cid-linux add-genesis-account 0xB6727FCbC60A03A6689AEE6E5fBC83a7FDc9beBf 10000000000 --home=$CI_HOME
+    ./cid-linux add-genesis-account 0xB6727FCbC60A03A6689AEE6E5fBC83a7FDc9beBf 10000000000000000000000000 --home=$CI_HOME
 
     ./cid-linux add-genesis-validator 0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c 8000000 $CI_PUBKEY 1 40 5 --home=$CI_HOME
 
