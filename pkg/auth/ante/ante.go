@@ -12,10 +12,10 @@ import (
 
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/supply"
+	"github.com/ci123chain/ci123chain/pkg/util"
 )
 const (
 	Price uint64 = 1
-	ChainID int64 = 999
 )
 
 //const unit = 1000
@@ -27,7 +27,7 @@ func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, sk su
 		var signer sdk.AccAddress
 		//check sign
 		if etx, ok := tx.(*types2.MsgEthereumTx); ok {
-			from, err := etx.VerifySig(big.NewInt(ChainID))
+			from, err := etx.VerifySig(big.NewInt(util.CHAINID))
 			if err != nil {
 				return newCtx, sdk.Result{}, sdkerrors.ErrorInvalidSigner, true
 			}

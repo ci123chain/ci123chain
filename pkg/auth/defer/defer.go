@@ -6,6 +6,7 @@ import (
 	types2 "github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/auth/ante"
 	"github.com/ci123chain/ci123chain/pkg/transaction"
+	"github.com/ci123chain/ci123chain/pkg/util"
 	"math/big"
 )
 
@@ -31,7 +32,7 @@ func NewDeferHandler( ak account.AccountKeeper) sdk.DeferHandler {
 		}()
 
 		if etx, ok := tx.(*types2.MsgEthereumTx); ok {
-			from, err := etx.VerifySig(big.NewInt(ante.ChainID))
+			from, err := etx.VerifySig(big.NewInt(util.CHAINID))
 			if err != nil {
 				panic(err)
 			}

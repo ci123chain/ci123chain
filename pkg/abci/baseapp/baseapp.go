@@ -786,7 +786,7 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 				newLog := fmt.Sprintf("recovered -- %v\nstack:%v\n", r, string(debug.Stack()))
 				result.GasUsed = res.GasUsed
 				result.GasWanted = res.GasWanted
-				err = abcierrors.Wrap(abcierrors.ErrInternalStack, newLog)
+				err = abcierrors.Wrap(abcierrors.ErrInternal, newLog)
 			}
 			for _, v := range all_attributes {
 				v = append(v, sdk.NewAttribute([]byte(sdk.EventTypeType), []byte(sdk.AttributeKeyInvalidTx)))
@@ -841,7 +841,7 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 		//gasUsed = result.GasUsed
 		if abort {
 			result = res
-			return result, abcierrors.Wrap(abcierrors.ErrInternalStack, anteErr.Error())
+			return result, abcierrors.Wrap(abcierrors.ErrInternal, anteErr.Error())
 		}
 
 		msCache.Write()
