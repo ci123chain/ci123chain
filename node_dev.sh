@@ -9,7 +9,7 @@ export CI_CHAIN_ID="testchain123"
 export CI_STATEDB_HOST="127.0.0.1"
 export CI_STATEDB_PORT="5002"
 export CI_STATEDB_TLS="false"
-export CI_DOMAIN="localhost"
+export CI_NODE_DOMAIN="localhost"
 
 
 if [ -z $CI_HOME ];
