@@ -362,7 +362,7 @@ func (api *PublicEthereumAPI) GetTransactionReceipt(hash common.Hash) (map[strin
 	receipt := map[string]interface{}{
 		// Consensus fields: These fields are defined by the Yellow Paper
 		"status":            status,
-		"cumulativeGasUsed": nil, // ignore until needed
+		"cumulativeGasUsed": hexutil.Uint64(tx.TxResult.GasUsed), // ignore until needed
 		"logsBloom":         data.Bloom,
 		"logs":              data.Logs,
 
