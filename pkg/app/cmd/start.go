@@ -8,6 +8,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/app"
 	hnode "github.com/ci123chain/ci123chain/pkg/node"
 	staking "github.com/ci123chain/ci123chain/pkg/staking/types"
+	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -42,6 +43,7 @@ const (
 	flagPvs            = "pvs" //priv_validator_state.json
 	flagPvk            = "pvk" //priv_validator_key.json
 	version 		   = "CiChain testTM6"
+	flagCHAINID        = "chain_id"
 )
 
 func startCmd(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Codec) *cobra.Command {
@@ -49,6 +51,11 @@ func startCmd(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Codec) *co
 		Use: "start",
 		Short: "Run the full node",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			id := viper.GetInt64(flagCHAINID)
+			if id == 0 {
+				return errors.New(fmt.Sprintf("unexpected chain_id: %v", id))
+			}
+			util.Setup(id)
 			if !viper.GetBool(flagWithTendermint) {
 				ctx.Logger.Info("Starting ABCI Without Tendermint")
 				return startStandAlone(ctx, appCreator)
@@ -77,6 +84,7 @@ func startCmd(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Codec) *co
 	cmd.Flags().String(flagCiNodeDomain, "", "node domain")
 	cmd.Flags().String(flagShardIndex, "", "index of shard")
 	cmd.Flags().String(flagMasterDomain, "", "master node")
+	cmd.Flags().Int64(flagCHAINID, 0, "chain id")
 
 	//cmd.Flags().String(flagLogLevel, "debug", "Run abci app with different log level")
 	tcmd.AddNodeFlags(cmd)

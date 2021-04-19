@@ -21,3 +21,8 @@ func NewAPI(clientCtx clientcontext.Context) *PublicNetAPI {
 func (api *PublicNetAPI) Version() string {
 	return fmt.Sprintf("%d", api.networkVersion)
 }
+
+// Listening returns an indication if the node is listening for network connections.
+func (api *PublicNetAPI) Listening() bool {
+	return true // always listening
+}

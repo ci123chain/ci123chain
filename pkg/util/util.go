@@ -12,6 +12,16 @@ import (
 	"syscall"
 )
 
+///const CHIANID int64 = 999
+
+var CHAINID int64
+
+func Setup(id int64) {
+	CHAINID = id
+}
+
+
+
 func BytesToUint64(v []byte) (uint64, error) {
 	u, err := strconv.Atoi(string(v))
 	return uint64(u), err

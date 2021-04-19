@@ -45,6 +45,7 @@ const (
 	FlagWebsocket		   = "wsport"
 	GenesisFile			   = "genesis.json"
 	PrivValidatorKey	   = "priv_validator_key.json"
+	flagCHAINID        = "chain_id"
 )
 
 type ConfigFiles struct {
@@ -59,6 +60,7 @@ func init() {
 	rpcCmd.Flags().Uint(FlagRPCReadTimeout, 10, "The RPC read timeout")
 	rpcCmd.Flags().Uint(FlagRPCWriteTimeout, 10, "The RPC write timeout")
 	rpcCmd.Flags().String(FlagWebsocket, "8546", "websocket port to listen to")
+	rpcCmd.Flags().Int64(flagCHAINID, 0, "chain_id")
 	_ = viper.BindPFlags(rpcCmd.Flags())
 }
 
@@ -66,6 +68,8 @@ var rpcCmd = &cobra.Command{
 	Use: "rest-server",
 	Short: "Start rpc server",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		id := viper.GetInt64(flagCHAINID)
+		util.Setup(id)
 		rs := NewRestServer()
 		err := rs.Start(
 			viper.GetString(FlagListenAddr),
@@ -244,9 +248,10 @@ func Handle404() http.Handler {
 }
 
 func (rs *RestServer) Start(listenAddr string, maxOpen int, readTimeout, writeTimeout uint) (err error) {
+
 	util.TrapSignal(func() {
-		err := rs.listener.Close()
-		fmt.Println("error closing listener %v", err)
+		err = rs.listener.Close()
+		return
 	})
 
 	logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", "rest-server")

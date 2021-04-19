@@ -13,6 +13,7 @@ import (
 	accounttypes "github.com/ci123chain/ci123chain/pkg/account/types"
 	"github.com/ci123chain/ci123chain/pkg/app/types"
 	clientcontext "github.com/ci123chain/ci123chain/pkg/client/context"
+	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/ci123chain/ci123chain/pkg/vm/evmtypes"
 	vmmodule "github.com/ci123chain/ci123chain/pkg/vm/moduletypes"
 	"github.com/ethereum/go-ethereum/accounts"
@@ -26,11 +27,11 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 	"math/big"
 	"os"
+	"time"
 )
 
 const (
 	DefaultRPCGasLimit = 10000000
-	ChainID = 999
 )
 
 var cdc = types.GetCodec()
@@ -88,7 +89,7 @@ type Transaction struct {
 }
 
 func NewTransaction(tx *types.MsgEthereumTx, txHash, blockHash common.Hash, blockNumber, index uint64) (*Transaction, error) {
-	from, _ := tx.VerifySig(big.NewInt(ChainID))
+	from, _ := tx.VerifySig(big.NewInt(util.CHAINID))
 	rpcTx := &Transaction{
 		From:     from,
 		Gas:      hexutil.Uint64(tx.Data.GasLimit),
@@ -116,7 +117,7 @@ func NewTransaction(tx *types.MsgEthereumTx, txHash, blockHash common.Hash, bloc
 func NewAPI(clientCtx clientcontext.Context, ks *keystore.KeyStore) *PublicEthereumAPI {
 
 	cdc := types.GetCodec()
-	epoch := big.NewInt(ChainID)
+	epoch := big.NewInt(util.CHAINID)
 	api := &PublicEthereumAPI{
 		ctx:          context.Background(),
 		clientCtx:    clientCtx.WithBlocked(false),
@@ -135,7 +136,7 @@ func (api *PublicEthereumAPI) ClientCtx() clientcontext.Context {
 
 // ChainId returns the chain's identifier in hex format
 func (api *PublicEthereumAPI) ChainId() (hexutil.Uint, error) { // nolint
-	api.logger.Debug("eth_chainId")
+	api.logger.Debug("eth_chainId", "chain_id", api.chainIDEpoch.Uint64())
 	return hexutil.Uint(uint(api.chainIDEpoch.Uint64())), nil
 }
 
@@ -219,10 +220,25 @@ func (api *PublicEthereumAPI) GetBlockByNumber(blockNum BlockNumber, fullTx bool
 		}
 		height = int64(num)
 	}
+	api.logger.Debug("height", "h", height)
 
 	resBlock, err := api.clientCtx.Client.Block(api.ctx, &height)
 	if err != nil {
-		return nil, err
+
+		retry := 0
+		for {
+			time.Sleep(time.Second * 1)
+			resBlock, err = api.clientCtx.Client.Block(api.ctx, &height)
+			if err == nil {
+				break
+			}else {
+				retry++
+				if retry == 10 {
+					return nil, err
+				}
+			}
+		}
+
 	}
 
 	var transactions []common.Hash
@@ -346,7 +362,7 @@ func (api *PublicEthereumAPI) GetTransactionReceipt(hash common.Hash) (map[strin
 	receipt := map[string]interface{}{
 		// Consensus fields: These fields are defined by the Yellow Paper
 		"status":            status,
-		"cumulativeGasUsed": nil, // ignore until needed
+		"cumulativeGasUsed": hexutil.Uint64(tx.TxResult.GasUsed), // ignore until needed
 		"logsBloom":         data.Bloom,
 		"logs":              data.Logs,
 
@@ -408,7 +424,7 @@ func (api *PublicEthereumAPI) SendTransaction(args SendTxArgs) (common.Hash, err
 		return common.Hash{}, err
 	}
 
-	chainID := big.NewInt(ChainID)
+	chainID := big.NewInt(util.CHAINID)
 	hash := tx.RLPSignBytes(chainID)
 	sig, err := api.ks.SignHash(accounts.Account{Address: args.From}, hash.Bytes())
 	if err != nil {
@@ -712,6 +728,19 @@ func EthBlockFromTendermint(clientCtx clientcontext.Context, block *tmtypes.Bloc
 
 	res, _, _, err := clientCtx.Query(fmt.Sprintf("custom/%s/%s/%d", vmmodule.ModuleName, evmtypes.QueryBloom, block.Height), nil, false)
 	if err != nil {
+		retry := 0
+		for {
+			time.Sleep(time.Second * 1)
+			res, _, _, err = clientCtx.Query(fmt.Sprintf("custom/%s/%s/%d", vmmodule.ModuleName, evmtypes.QueryBloom, block.Height), nil, false)
+			if err == nil {
+				break
+			}else {
+				retry++
+				if retry == 10 {
+					return nil, err
+				}
+			}
+		}
 		return nil, err
 	}
 
@@ -753,4 +782,20 @@ func formatBlock(
 		"uncles":           []string{},
 		"receiptsRoot":     common.Hash{},
 	}
+}
+
+
+func (api *PublicEthereumAPI) EstimateGas(args CallArgs) (hexutil.Uint64, error) {
+	api.logger.Debug("eth_estimateGas")
+	simResponse, err := api.doCall(args, big.NewInt(DefaultRPCGasLimit))
+	if err != nil {
+		return 0, err
+	}
+
+	// TODO: change 1000 buffer for more accurate buffer (eg: SDK's gasAdjusted)
+	estimatedGas := simResponse.GasUsed
+	api.logger.Debug("eth_estimateGas")
+	gas := estimatedGas + 10000000
+
+	return hexutil.Uint64(gas), nil
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/app/types"
+	"github.com/ci123chain/ci123chain/pkg/util"
 	evm "github.com/ci123chain/ci123chain/pkg/vm/evmtypes"
 	wasm "github.com/ci123chain/ci123chain/pkg/vm/wasmtypes"
 	"github.com/ethereum/go-ethereum/common"
@@ -14,8 +15,8 @@ import (
 
 const (
 	InstantiateFuncName = "init"
-	ChainID = 999
 )
+
 func NewHandler(k Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
@@ -195,7 +196,7 @@ func handleMsgEvmTx(ctx sdk.Context, k Keeper, msg evm.MsgEvmTx) (*sdk.Result, e
 func handleMsgEthereumTx(ctx sdk.Context, k Keeper, msg types.MsgEthereumTx) (*sdk.Result, error) {
 	// parse the chainID from a string to a base-10 integer
 	//todo
-	chainIDEpoch := big.NewInt(ChainID)
+	chainIDEpoch := big.NewInt(util.CHAINID)
 
 	// Verify signature and retrieve sender address
 	sender, err := msg.VerifySig(chainIDEpoch)
