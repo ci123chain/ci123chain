@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"fmt"
 	store2 "github.com/ci123chain/ci123chain/pkg/abci/store"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
@@ -51,28 +50,18 @@ func (q Keeper)ClientStates(ctx sdk.Context, req abci.RequestQuery) ([]byte, err
 
 	clientStates := types.IdentifiedClientStates{}
 
-	store := ctx.KVStore(q.storeKey)
-	iter := store.RemoteIterator(host.KeyClientStorePrefix, sdk.PrefixEndBytes(host.KeyClientStorePrefix))
-	for ; iter.Valid(); iter.Next() {
-		fmt.Println(string(iter.Key()), string(iter.Value()))
-	}
-
-	store = store2.NewPrefixStore(ctx.KVStore(q.storeKey), host.KeyClientStorePrefix)
-	iter = store.Iterator(nil, nil)
-
-
+	store := store2.NewPrefixStore(ctx.KVStore(q.storeKey), host.KeyClientStorePrefix)
+	//iter := store.RemoteIterator(nil, nil)
 
 	pageRes, err := pagination.Paginate(store, reqClientState.Pagination, func(key, value []byte) error {
 		keySplit := strings.Split(string(key), "/")
 		if keySplit[len(keySplit)-1] != "clientState" {
 			return nil
 		}
-
 		clientState, err := q.UnmarshalClientState(value)
 		if err != nil {
 			return err
 		}
-
 		clientID := keySplit[1]
 		if err := host.ClientIdentifierValidator(clientID); err != nil {
 			return err

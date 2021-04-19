@@ -20,12 +20,12 @@ func GetSDKSpecs() []*ics23.ProofSpec {
 	return sdkSpecs
 }
 
-
-// MerkleRoot defines a merkle root hash.
-// In the Cosmos SDK, the AppHash of a block header becomes the root.
-type MerkleRoot struct {
-	Hash []byte `json:"hash,omitempty"`
-}
+//
+//// MerkleRoot defines a merkle root hash.
+//// In the Cosmos SDK, the AppHash of a block header becomes the root.
+//type MerkleRoot struct {
+//	Hash []byte `json:"hash,omitempty"`
+//}
 
 // NewMerkleRoot constructs a new MerkleRoot
 func NewMerkleRoot(hash []byte) MerkleRoot {
@@ -44,13 +44,13 @@ func (mr MerkleRoot) Empty() bool {
 	return len(mr.GetHash()) == 0
 }
 
-
-// MerklePath is the path used to verify commitment proofs, which can bean
-// arbitrary structured object (defined by a commitment types).
-// MerklePath is represented from root-to-leaf
-type MerklePath struct {
-	KeyPath []string `json:"key_path,omitempty" yaml:"key_path"`
-}
+//
+//// MerklePath is the path used to verify commitment proofs, which can bean
+//// arbitrary structured object (defined by a commitment types).
+//// MerklePath is represented from root-to-leaf
+//type MerklePath struct {
+//	KeyPath []string `json:"key_path,omitempty" yaml:"key_path"`
+//}
 
 
 var _ exported.Path = (*MerklePath)(nil)
@@ -114,9 +114,9 @@ func ApplyPrefix(prefix exported.Prefix, path MerklePath) (MerklePath, error) {
 
 
 // merkle Proof implements
-type MerkleProof struct {
-	Proofs []*ics23.CommitmentProof `json:"proofs,omitempty"`
-}
+//type MerkleProof struct {
+//	Proofs []*ics23.CommitmentProof `json:"proofs,omitempty"`
+//}
 // Empty returns true if the root is empty
 func (proof *MerkleProof) Empty() bool {
 	return proof == nil || len(proof.Proofs) == 0
@@ -178,9 +178,9 @@ func (proof MerkleProof) validateVerificationArgs(specs []*ics23.ProofSpec,
 // MerklePrefix is merkle path prefixed to the key.
 // The constructed key from the Path and the key will be append(Path.KeyPath,
 // append(Path.KeyPrefix, key...))
-type MerklePrefix struct {
-	KeyPrefix []byte `json:"key_prefix,omitempty" yaml:"key_prefix"`
-}
+//type MerklePrefix struct {
+//	KeyPrefix []byte `json:"key_prefix,omitempty" yaml:"key_prefix"`
+//}
 
 var _ exported.Prefix = (*MerklePrefix)(nil)
 
@@ -191,7 +191,6 @@ func NewMerklePrefix(keyPrefix []byte) MerklePrefix {
 	}
 }
 
-func (m *MerklePrefix) String() string { return string(m.KeyPrefix) }
 
 // Bytes returns the key prefix bytes
 func (mp MerklePrefix) Bytes() []byte {

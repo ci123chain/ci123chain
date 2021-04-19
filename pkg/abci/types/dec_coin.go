@@ -2,6 +2,8 @@ package types
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
+	"regexp"
 	"sort"
 	"strings"
 )
@@ -44,6 +46,17 @@ func NewDecCoinFromDec(denom string, amount Dec) DecCoin {
 	}
 }
 
+
+var (
+	// Denominations can be 3 ~ 128 characters long and support letters, followed by either
+	// a letter, a number or a separator ('/').
+	reDnmString = `[a-zA-Z][a-zA-Z0-9/]{2,127}`
+	reDecAmt    = `[[:digit:]]+(?:\.[[:digit:]]+)?|\.[[:digit:]]+`
+	reSpc       = `[[:space:]]*`
+	reDnm       *regexp.Regexp
+	reDecCoin   *regexp.Regexp
+)
+
 // NewDecCoinFromCoin creates a new DecCoin from a Coin.
 func NewDecCoinFromCoin(coin Coin) DecCoin {
 	if err := validate(coin.Denom, coin.Amount); err != nil {
@@ -55,6 +68,32 @@ func NewDecCoinFromCoin(coin Coin) DecCoin {
 		Amount: coin.Amount.ToDec(),
 	}
 }
+
+
+// ParseDecCoin parses a decimal coin from a string, returning an error if
+// invalid. An empty string is considered invalid.
+func ParseDecCoin(coinStr string) (coin DecCoin, err error) {
+	coinStr = strings.TrimSpace(coinStr)
+
+	matches := reDecCoin.FindStringSubmatch(coinStr)
+	if matches == nil {
+		return DecCoin{}, fmt.Errorf("invalid decimal coin expression: %s", coinStr)
+	}
+
+	amountStr, denomStr := matches[1], matches[2]
+
+	amount, err := NewDecFromStr(amountStr)
+	if err != nil {
+		return DecCoin{}, errors.Wrap(err, fmt.Sprintf("failed to parse decimal coin amount: %s", amountStr))
+	}
+
+	if err := ValidateDenom(denomStr); err != nil {
+		return DecCoin{}, fmt.Errorf("invalid denom cannot contain upper case characters or spaces: %s", err)
+	}
+
+	return NewDecCoinFromDec(denomStr, amount), nil
+}
+
 
 // NewInt64DecCoin returns a new DecCoin with a denomination and amount. It will
 // panic if the amount is negative or denom is invalid.
@@ -244,7 +283,7 @@ func (coins DecCoins) TruncateDecimal() (truncatedCoins Coins, changeCoins DecCo
 	for _, coin := range coins {
 		truncated, change := coin.TruncateDecimal()
 		if !truncated.IsZero() {
-			truncatedCoins = truncatedCoins.Add(truncated)
+			truncatedCoins = truncatedCoins.Add(NewCoins(truncated))
 		}
 		if !change.IsZero() {
 			changeCoins = changeCoins.Add(change)

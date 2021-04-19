@@ -12,6 +12,7 @@ import (
 	dist_module "github.com/ci123chain/ci123chain/pkg/distribution/module"
 	"github.com/ci123chain/ci123chain/pkg/gateway/redissource"
 	"github.com/ci123chain/ci123chain/pkg/ibc"
+	porttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/port/types"
 	infrastructure_module "github.com/ci123chain/ci123chain/pkg/infrastructure/module"
 	mint_module "github.com/ci123chain/ci123chain/pkg/mint/module"
 	order_module "github.com/ci123chain/ci123chain/pkg/order/module"
@@ -20,6 +21,7 @@ import (
 	staking_module "github.com/ci123chain/ci123chain/pkg/staking/module"
 	supply_module "github.com/ci123chain/ci123chain/pkg/supply/module"
 	vm_module "github.com/ci123chain/ci123chain/pkg/vm/module"
+	tmtypes "github.com/tendermint/tendermint/proto/tendermint/types"
 	"io/ioutil"
 	"path/filepath"
 
@@ -191,6 +193,12 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 	var wasmconfig wasm_types.WasmConfig
 	vmKeeper := vm.NewKeeper(cdc, WasmStoreKey, homeDir, wasmconfig, c.GetSubspace(vm.ModuleName), accountKeeper, stakingKeeper, cdb)
 
+	ibcTransferModule := ibc.NewTransferModule(ibcTransferKeeper)
+	// Create static IBC router, add transfer route, then set and seal it
+	ibcRouter := porttypes.NewRouter()
+	ibcRouter.AddRoute(ibctransfertypes.ModuleName, ibcTransferModule)
+	IBCKeeper.SetRouter(ibcRouter)
+
 	{ // setup module
 		moduleNameOrder := []string{
 			auth_types.ModuleName,
@@ -218,10 +226,9 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 			mint_module.AppModule{Keeper: mintKeeper},
 			infrastructure_module.AppModule{Keeper: infrastructureKeeper},
 			ibc.NewCoreModule(&IBCKeeper),
-			ibc.NewTransferModule(ibcTransferKeeper),
+			ibcTransferModule,
 		)
 	}
-
 	{
 		// invoke router
 		c.Router().AddRoute(transfer.RouteKey, handler.NewHandler(accountKeeper))
@@ -243,6 +250,7 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 		c.QueryRouter().AddRoute(mint.RouteKey, mint.NewQuerier(mintKeeper))
 		c.QueryRouter().AddRoute(infrastructure.RouteKey, infrastructure.NewQuerier(infrastructureKeeper))
 		c.QueryRouter().AddRoute(ibc.RouterKey, ibc.NewQuerier(IBCKeeper))
+		c.QueryRouter().AddRoute(ibctransfertypes.RouterKey, ibc.NewTransferQuerier(ibcTransferKeeper))
 	}
 
 	c.SetAnteHandler(ante.NewAnteHandler(c.authKeeper, accountKeeper, supplyKeeper))
@@ -259,6 +267,8 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 	if err != nil {
 		cmn.Exit(err.Error())
 	}
+	ctx := c.BaseApp.NewUncachedContext(true, tmtypes.Header{})
+	capabilityKeeper.InitializeAndSeal(ctx)
 
 	return c
 }

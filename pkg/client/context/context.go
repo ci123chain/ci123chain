@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
+	codectypes "github.com/ci123chain/ci123chain/pkg/abci/codec/types"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/account/exported"
 	"github.com/ci123chain/ci123chain/pkg/account/keeper"
@@ -25,6 +26,7 @@ type Context struct {
 	Verbose 	bool
 	Height 		int64
 	Cdc 		*codec.Codec
+	InterfaceRegistry codectypes.InterfaceRegistry
 	Code 		int64
 }
 
@@ -41,6 +43,12 @@ func (ctx *Context) GetNode() (rpclient.Client, error) {
 
 func (ctx Context) WithCode (code int64) Context {
 	ctx.Code = code
+	return ctx
+}
+
+// WithInterfaceRegistry returns the context with an updated InterfaceRegistry
+func (ctx Context) WithInterfaceRegistry(interfaceRegistry codectypes.InterfaceRegistry) Context {
+	ctx.InterfaceRegistry = interfaceRegistry
 	return ctx
 }
 

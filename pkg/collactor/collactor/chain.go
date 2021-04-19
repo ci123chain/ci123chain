@@ -1,6 +1,7 @@
 package collactor
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	retry "github.com/avast/retry-go"
@@ -14,6 +15,7 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
 	rpchttp "github.com/tendermint/tendermint/rpc/client/http"
+	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	libclient "github.com/tendermint/tendermint/rpc/jsonrpc/client"
 	"golang.org/x/sync/errgroup"
 	"io/ioutil"
@@ -234,6 +236,24 @@ func (c *Chain) MustGetAddress() sdk.AccAddress {
 	return srcAddr
 }
 
+// Start the client service
+func (c *Chain) Start() error {
+	return c.Client.Start()
+}
+
+
+// Subscribe returns channel of events given a query
+func (c *Chain) Subscribe(query string) (<-chan ctypes.ResultEvent, context.CancelFunc, error) {
+	suffix, err := GenerateRandomString(8)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	subscriber := fmt.Sprintf("%s-subscriber-%s", c.ChainID, suffix)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	eventChan, err := c.Client.Subscribe(ctx, subscriber, query, 1000)
+	return eventChan, cancel, err
+}
 
 
 // SendMsg wraps the msg in a stdtx, signs and sends it

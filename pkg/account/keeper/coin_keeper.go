@@ -28,7 +28,7 @@ func (ak AccountKeeper) AddBalance(ctx sdk.Context, addr sdk.AccAddress, amount 
 	//		fmt.Sprintf("insufficient account funds: %s < %s", oldCoin, amount),
 	//	)
 	//}
-	newCoins := oldCoins.Add(amount...)
+	newCoins := oldCoins.Add(amount)
 	err := ak.SetCoin(ctx, addr, newCoins)
 	return newCoins, err
 }
@@ -78,6 +78,21 @@ func (ak AccountKeeper) SubBalance(ctx sdk.Context, addr sdk.AccAddress, amt sdk
 
 
 func (ak AccountKeeper) Transfer(ctx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, coin sdk.Coins) error {
+	if ctx.EventManager() != nil {
+		ctx.EventManager().EmitEvents(sdk.Events{
+			sdk.NewEvent(
+				types.EventTypeTransfer,
+				sdk.NewAttributeString(types.AttributeKeyRecipient, toAddr.String()),
+				sdk.NewAttributeString(types.AttributeKeySender, fromAddr.String()),
+				sdk.NewAttributeString(sdk.AttributeKeyAmount, coin.String()),
+			),
+			sdk.NewEvent(
+				sdk.EventTypeMessage,
+				sdk.NewAttributeString(types.AttributeKeySender, fromAddr.String()),
+			),
+		})
+	}
+
 	_, err := ak.SubBalance(ctx, fromAddr, coin)
 	if err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInternal, err.Error())
@@ -167,7 +182,7 @@ func (am AccountKeeper) GetAllBalances(ctx sdk.Context, addr sdk.AccAddress) sdk
 
 	balances := sdk.NewCoins()
 	am.IterateAccountBalances(ctx, addr, func(balance sdk.Coin) bool {
-		balances = balances.Add(balance)
+		balances = balances.Add(sdk.NewCoins(balance))
 		return false
 	})
 

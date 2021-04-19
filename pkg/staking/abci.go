@@ -8,7 +8,7 @@ import (
 
 func BeginBlock(ctx sdk.Context, k k.StakingKeeper) {
 	//
-	//k.TrackHistoricalInfo(ctx)
+	k.TrackHistoricalInfo(ctx)
 
 }
 

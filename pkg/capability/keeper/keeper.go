@@ -5,6 +5,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	"github.com/ci123chain/ci123chain/pkg/abci/store"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/capability/types"
 	"github.com/pkg/errors"
 	"github.com/tendermint/tendermint/libs/log"
@@ -207,12 +208,12 @@ func (k Keeper) InitializeCapability(ctx sdk.Context, index uint64, owners types
 // with the module name and no two ScopedKeeper can have the same module name.
 func (sk ScopedKeeper) NewCapability(ctx sdk.Context, name string) (*types.Capability, error) {
 	if strings.TrimSpace(name) == "" {
-		return nil, errors.New("capability name cannot be empty")
+		return nil, sdkerrors.Wrap(types.ErrInvalidCapabilityName, "capability name cannot be empty")
 	}
 	store := ctx.KVStore(sk.storeKey)
 
 	if _, ok := sk.GetCapability(ctx, name); ok {
-		return nil, errors.New(fmt.Sprintf("module: %s, name: %s", sk.module, name))
+		return nil, sdkerrors.Wrapf(types.ErrCapabilityTaken, fmt.Sprintf("module: %s, name: %s", sk.module, name))
 	}
 
 	// create new capability with the current global index
@@ -413,16 +414,16 @@ func (sk ScopedKeeper) GetOwners(ctx sdk.Context, name string) (*types.Capabilit
 // retreived from the memstore.
 func (sk ScopedKeeper) LookupModules(ctx sdk.Context, name string) ([]string, *types.Capability, error) {
 	if strings.TrimSpace(name) == "" {
-		return nil, nil, errors.New("cannot lookup modules with empty capability name")
+		return nil, nil, sdkerrors.Wrap(types.ErrInvalidCapabilityName, "cannot lookup modules with empty capability name")
 	}
 	cap, ok := sk.GetCapability(ctx, name)
 	if !ok {
-		return nil, nil, errors.Errorf("capability not found: %s", name)
+		return nil, nil, sdkerrors.Wrap(types.ErrCapabilityNotFound, name)
 	}
 
 	capOwners, ok := sk.GetOwners(ctx, name)
 	if !ok {
-		return nil, nil, errors.Errorf("owners not found for capability: %s", name)
+		return nil, nil, sdkerrors.Wrap(types.ErrCapabilityOwnersNotFound, name)
 	}
 
 	mods := make([]string, len(capOwners.Owners))

@@ -44,6 +44,16 @@ func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, paramSpace paramtypes.Subspac
 	}
 }
 
+// SetRouter sets the Router in IBC Keeper and seals it. The method panics if
+// there is an existing router that's already sealed.
+func (k *Keeper) SetRouter(rtr *porttypes.Router) {
+	if k.Router != nil && k.Router.Sealed() {
+		panic("cannot reset a sealed router")
+	}
+	k.Router = rtr
+	k.Router.Seal()
+}
+
 func (k Keeper) CreateClient(ctx sdk.Context, msg *clienttypes.MsgCreateClient) (*clienttypes.MsgCreateClientResponse, error) {
 	clientID, err := k.ClientKeeper.CreateClient(ctx, msg.ClientState, msg.ConsensusState)
 	if err != nil {

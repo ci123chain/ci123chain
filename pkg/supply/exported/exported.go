@@ -15,11 +15,11 @@ type ModuleAccountI interface {
 // SupplyI defines an inflationary supply interface for modules that handle
 // token supply.
 type SupplyI interface {
-	GetTotal() sdk.Coin
-	SetTotal(total sdk.Coin) SupplyI
+	GetTotal() sdk.Coins
+	SetTotal(total sdk.Coins) SupplyI
 
-	Inflate(amount sdk.Coin) SupplyI
-	Deflate(amount sdk.Coin) SupplyI
+	Inflate(amount sdk.Coins) SupplyI
+	Deflate(amount sdk.Coins) SupplyI
 
 	String() string
 	ValidateBasic() error

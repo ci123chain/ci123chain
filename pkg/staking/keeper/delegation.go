@@ -552,7 +552,7 @@ func (k StakingKeeper) CompleteRedelegationWithAmount(
 			i--
 
 			if !entry.InitialBalance.IsZero() {
-				balances = balances.Add(sdk.NewChainCoin(entry.InitialBalance))
+				balances = balances.Add(sdk.NewCoins(sdk.NewChainCoin(entry.InitialBalance)))
 			}
 		}
 	}
@@ -597,7 +597,7 @@ func (k StakingKeeper) CompleteUnbondingWithAmount(ctx sdk.Context, delAddr sdk.
 					return nil, err
 				}
 
-				balances = balances.Add(amt)
+				balances = balances.Add(sdk.NewCoins(amt))
 			}
 		}
 	}

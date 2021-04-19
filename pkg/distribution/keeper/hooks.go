@@ -48,7 +48,7 @@ func (h Hooks) AfterValidatorRemoved(ctx sdk.Context, _ sdk.AccAddress, valAddr 
 
 			accAddr := valAddr
 			withdrawAddr := h.k.GetDelegatorWithdrawAddr(ctx, accAddr)
-			err := h.k.SupplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, withdrawAddr, coins)
+			err := h.k.SupplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, withdrawAddr, sdk.NewCoins(coins))
 			if err != nil {
 				panic(err)
 			}

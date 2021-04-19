@@ -6,12 +6,12 @@ import (
 
 
 type GenesisState struct {
-	Supply     sdk.Coin    `json:"supply"`
+	Supply     sdk.Coins    `json:"supply"`
 }
 
 
 // NewGenesisState creates a new genesis state.
-func NewGenesisState(supply sdk.Coin) GenesisState {
+func NewGenesisState(supply sdk.Coins) GenesisState {
 	return GenesisState{supply}
 }
 

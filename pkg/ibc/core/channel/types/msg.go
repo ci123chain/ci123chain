@@ -304,6 +304,21 @@ func (m MsgAcknowledgement) Bytes() []byte {
 
 var _ sdk.Msg = &MsgRecvPacket{}
 
+// NewMsgRecvPacket constructs new MsgRecvPacket
+// nolint:interfacer
+func NewMsgRecvPacket(
+	packet Packet, proofCommitment []byte, proofHeight clienttypes.Height,
+	signer sdk.AccAddress,
+) *MsgRecvPacket {
+	return &MsgRecvPacket{
+		Packet:          packet,
+		ProofCommitment: proofCommitment,
+		ProofHeight:     proofHeight,
+		Signer:          signer.String(),
+	}
+}
+
+
 func (m MsgRecvPacket) Route() string {
 	return host.RouterKey
 }

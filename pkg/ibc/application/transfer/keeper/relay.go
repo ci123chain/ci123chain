@@ -113,7 +113,7 @@ func (k Keeper) SendTransfer(
 
 		// escrow source tokens. It fails if balance insufficient.
 		if err := k.supplyKeepr.SendCoins(
-			ctx, sender, escrowAddress, token,
+			ctx, sender, escrowAddress, sdk.NewCoins(token),
 		); err != nil {
 			return err
 		}
@@ -123,13 +123,13 @@ func (k Keeper) SendTransfer(
 
 		// transfer the coins to the module account and burn them
 		if err := k.supplyKeepr.SendCoinsFromAccountToModule(
-			ctx, sender, types.ModuleName, token,
+			ctx, sender, types.ModuleName, sdk.NewCoins(token),
 		); err != nil {
 			return err
 		}
 
 		if err := k.supplyKeepr.BurnCoins(
-			ctx, types.ModuleName, token,
+			ctx, types.ModuleName, sdk.NewCoins(token),
 		); err != nil {
 			// NOTE: should not happen as the module account was
 			// retrieved on the step above and it has enough balace
@@ -227,7 +227,7 @@ func (k Keeper) OnRecvPacket(ctx sdk.Context, packet channeltypes.Packet, data t
 
 		// unescrow tokens
 		escrowAddress := types.GetEscrowAddress(packet.GetDestPort(), packet.GetDestChannel())
-		if err := k.supplyKeepr.SendCoins(ctx, escrowAddress, receiver, token); err != nil {
+		if err := k.supplyKeepr.SendCoins(ctx, escrowAddress, receiver, sdk.NewCoins(token)); err != nil {
 			// NOTE: this error is only expected to occur given an unexpected bug or a malicious
 			// counterparty module. The bug may occur in bank or any part of the code that allows
 			// the escrow address to be drained. A malicious counterparty module could drain the
@@ -282,14 +282,14 @@ func (k Keeper) OnRecvPacket(ctx sdk.Context, packet channeltypes.Packet, data t
 
 	// mint new tokens if the source of the transfer is the same chain
 	if err := k.supplyKeepr.MintCoins(
-		ctx, types.ModuleName, voucher,
+		ctx, types.ModuleName, sdk.NewCoins(voucher),
 	); err != nil {
 		return err
 	}
 
 	// send to receiver
 	if err := k.supplyKeepr.SendCoinsFromModuleToAccount(
-		ctx, types.ModuleName, receiver, voucher,
+		ctx, types.ModuleName, receiver, sdk.NewCoins(voucher),
 	); err != nil {
 		panic(fmt.Sprintf("unable to send coins from module to account despite previously minting coins to module account: %v", err))
 	}
@@ -354,7 +354,7 @@ func (k Keeper) refundPacketToken(ctx sdk.Context, packet channeltypes.Packet, d
 	if types.SenderChainIsSource(packet.GetSourcePort(), packet.GetSourceChannel(), data.Denom) {
 		// unescrow tokens back to sender
 		escrowAddress := types.GetEscrowAddress(packet.GetSourcePort(), packet.GetSourceChannel())
-		if err := k.supplyKeepr.SendCoins(ctx, escrowAddress, sender, token); err != nil {
+		if err := k.supplyKeepr.SendCoins(ctx, escrowAddress, sender, sdk.NewCoins(token)); err != nil {
 			// NOTE: this error is only expected to occur given an unexpected bug or a malicious
 			// counterparty module. The bug may occur in bank or any part of the code that allows
 			// the escrow address to be drained. A malicious counterparty module could drain the
@@ -367,12 +367,12 @@ func (k Keeper) refundPacketToken(ctx sdk.Context, packet channeltypes.Packet, d
 
 	// mint vouchers back to sender
 	if err := k.supplyKeepr.MintCoins(
-		ctx, types.ModuleName, token,
+		ctx, types.ModuleName, sdk.NewCoins(token),
 	); err != nil {
 		return err
 	}
 
-	if err := k.supplyKeepr.SendCoinsFromModuleToAccount(ctx, types.ModuleName, sender, token); err != nil {
+	if err := k.supplyKeepr.SendCoinsFromModuleToAccount(ctx, types.ModuleName, sender, sdk.NewCoins(token)); err != nil {
 		panic(fmt.Sprintf("unable to send coins from module to account despite previously minting coins to module account: %v", err))
 	}
 

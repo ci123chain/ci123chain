@@ -8,7 +8,6 @@ import (
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/app/module"
 	infratypes "github.com/ci123chain/ci123chain/pkg/infrastructure/types"
-	"github.com/ci123chain/ci123chain/pkg/mortgage"
 	"github.com/ci123chain/ci123chain/pkg/transaction"
 	"github.com/ci123chain/ci123chain/pkg/transfer"
 	"github.com/tendermint/go-amino"
@@ -40,7 +39,6 @@ func GetCodec() *codec.Codec {
 		sdk.RegisterCodec(cdc)
 		transaction.RegisterCodec(cdc)
 		transfer.RegisterCodec(cdc)
-		mortgage.RegisterCodec(cdc)
 		module.ModuleBasics.RegisterCodec(cdc)
 		infratypes.RegisterCodec(cdc)
 		cryptoAmino.RegisterAmino(cdc)

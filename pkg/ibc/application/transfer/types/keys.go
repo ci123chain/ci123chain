@@ -7,6 +7,12 @@ import (
 )
 
 const (
+	QueryDenomTraces = "denom_traces"
+
+	)
+
+
+const (
 	// ModuleName defines the IBC transfer name
 	ModuleName = "transfer"
 

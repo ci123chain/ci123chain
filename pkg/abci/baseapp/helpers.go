@@ -4,8 +4,9 @@ import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/tendermint/tendermint/abci/server"
 	abci "github.com/tendermint/tendermint/abci/types"
-	cmn "github.com/tendermint/tendermint/libs/os"
 	"github.com/tendermint/tendermint/libs/log"
+	cmn "github.com/tendermint/tendermint/libs/os"
+	tmtypes "github.com/tendermint/tendermint/proto/tendermint/types"
 )
 
 // nolint - Mostly for testing
@@ -47,3 +48,8 @@ func RunForever(app abci.Application) {
 		}
 	})
 }
+
+func (app *BaseApp) NewUncachedContext(isCheckTx bool, header tmtypes.Header) sdk.Context {
+	return sdk.NewContext(app.cms, header, isCheckTx, app.Logger)
+}
+

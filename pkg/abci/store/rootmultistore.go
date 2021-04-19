@@ -299,7 +299,6 @@ func (rs *rootMultiStore) GetStore(key StoreKey) Store {
 // tracer, otherwise, the original KVStore will be returned.
 func (rs *rootMultiStore) GetKVStore(key StoreKey) KVStore {
 	store := rs.stores[key].(KVStore)
-
 	if rs.TracingEnabled() {
 		store = NewTraceKVStore(store, rs.traceWriter, rs.traceContext)
 	}

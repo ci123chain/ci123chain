@@ -6,8 +6,9 @@ import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/account"
 	"github.com/ci123chain/ci123chain/pkg/supply/exported"
-	types2 "github.com/ci123chain/ci123chain/pkg/supply/types"
+	types "github.com/ci123chain/ci123chain/pkg/supply/types"
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
+	"github.com/tendermint/tendermint/libs/log"
 )
 
 type Keeper struct {
@@ -15,7 +16,7 @@ type Keeper struct {
 	storeKey 	sdk.StoreKey
 	ak 			account.AccountKeeper
 
-	permAddrs 	map[string]types2.PermissionsForAddress
+	permAddrs 	map[string]types.PermissionsForAddress
 }
 
 
@@ -23,9 +24,9 @@ type Keeper struct {
 
 
 func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, ak account.AccountKeeper, maccPerms map[string][]string) Keeper {
-	permAddrs := make(map[string]types2.PermissionsForAddress)
+	permAddrs := make(map[string]types.PermissionsForAddress)
 	for name, perms := range maccPerms {
-		permAddrs[name] = types2.NewPermissionForAddress(name, perms)
+		permAddrs[name] = types.NewPermissionForAddress(name, perms)
 	}
 
 	return Keeper{
@@ -65,7 +66,7 @@ func (k Keeper) GetModuleAccountAndPermissions(ctx sdk.Context, moduleName strin
 		return macc, perms
 	}
 
-	macc := types2.NewEmptyModuleAccount(moduleName, perms...)
+	macc := types.NewEmptyModuleAccount(moduleName, perms...)
 	maccI := (k.ak.NewAccount(ctx, macc)).(exported.ModuleAccountI)
 	k.SetModuleAccount(ctx, maccI)
 	return maccI, perms
@@ -86,19 +87,19 @@ func (k Keeper) SetModuleAccount(ctx sdk.Context, macc exported.ModuleAccountI) 
 
 // SendCoinsFromAccountToModule transfers coins from an AccAddress to a ModuleAccount
 func (k Keeper) SendCoinsFromAccountToModule(ctx sdk.Context, senderAddr sdk.AccAddress,
-	recipientModule string, amt sdk.Coin) error {
+	recipientModule string, amt sdk.Coins) error {
 
 	// create the account if it doesn't yet exist
 	recipientAcc := k.GetModuleAccount(ctx, recipientModule)
 	if recipientAcc == nil {
 		panic(fmt.Sprintf("module account %s isn't able to be created", recipientModule))
 	}
-	return k.ak.Transfer(ctx, senderAddr, recipientAcc.GetAddress(), sdk.NewCoins(amt))
+	return k.ak.Transfer(ctx, senderAddr, recipientAcc.GetAddress(), amt)
 }
 
 // SendCoinsFromModuleToAccount transfers coins from a ModuleAccount to an AccAddress
 func (k Keeper) SendCoinsFromModuleToAccount(ctx sdk.Context, senderModule string,
-	recipientAddr sdk.AccAddress, amt sdk.Coin) error {
+	recipientAddr sdk.AccAddress, amt sdk.Coins) error {
 
 	senderAddr := k.GetModuleAddress(senderModule)
 	if senderAddr.Empty() {
@@ -106,7 +107,7 @@ func (k Keeper) SendCoinsFromModuleToAccount(ctx sdk.Context, senderModule strin
 	}
 
 
-	return k.ak.Transfer(ctx, senderAddr, recipientAddr, sdk.NewCoins(amt))
+	return k.ak.Transfer(ctx, senderAddr, recipientAddr, amt)
 }
 
 func (k Keeper) SendCoinsFromModuleToModule(ctx sdk.Context, senderModule, recipientModule string, amt sdk.Coin) error {
@@ -130,7 +131,7 @@ func (k Keeper) DelegateCoinsFromAccountToModule(ctx sdk.Context, senderAddr sdk
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, fmt.Sprintf("module account %s isn't able to be created", recipientModule))
 	}
 
-	if !recipientAcc.HasPermission(types2.Staking) {
+	if !recipientAcc.HasPermission(types.Staking) {
 		return sdkerrors.Wrap(sdkerrors.ErrParams, fmt.Sprintf("module account %s has no expected permission", recipientModule))
 	}
 	return k.ak.Transfer(ctx, senderAddr, recipientAcc.GetAddress(), sdk.NewCoins(amt))
@@ -148,7 +149,7 @@ func (k Keeper) UndelegateCoinsFromModuleToAccount(
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, fmt.Sprintf("module account %s isn't able to be created", recipientAddr))
 	}
 
-	if !acc.HasPermission(types2.Staking) {
+	if !acc.HasPermission(types.Staking) {
 		return sdkerrors.Wrap(sdkerrors.ErrParams, fmt.Sprintf("module account %s has no expected permission", recipientAddr))
 	}
 
@@ -164,7 +165,7 @@ func (k Keeper) UndelegateCoinsFromModuleToAccount(
 // GetSupply retrieves the Supply from store
 func (k Keeper) GetSupply(ctx sdk.Context) (supply exported.SupplyI) {
 	store := ctx.KVStore(k.storeKey)
-	b := store.Get(types2.SupplyKey)
+	b := store.Get(types.SupplyKey)
 	if b == nil {
 		panic("stored supply should not have been nil")
 	}
@@ -176,7 +177,7 @@ func (k Keeper) GetSupply(ctx sdk.Context) (supply exported.SupplyI) {
 func (k Keeper) SetSupply(ctx sdk.Context, supply exported.SupplyI) {
 	store := ctx.KVStore(k.storeKey)
 	b := k.cdc.MustMarshalBinaryLengthPrefixed(supply)
-	store.Set(types2.SupplyKey, b)
+	store.Set(types.SupplyKey, b)
 }
 
 
@@ -195,41 +196,71 @@ func (k Keeper) ValidatePermissions(macc exported.ModuleAccountI) error {
 
 // MintCoins creates new coins from thin air and adds it to the module account.
 // It will panic if the module account does not exist or is unauthorized.
-func (k Keeper) MintCoins(ctx sdk.Context, moduleName string, amt sdk.Coin) error {
+func (k Keeper) MintCoins(ctx sdk.Context, moduleName string, amt sdk.Coins) error {
 	acc := k.GetModuleAccount(ctx, moduleName)
 	if acc == nil {
 		//panic(sdkerrors.Wrapf(sdkerrors.ErrUnknownAddress, "module account %s does not exist", moduleName))
 		panic(fmt.Errorf("module account %s does not exist", moduleName))
 	}
 
-	if !acc.HasPermission(types2.Minter) {
+	if !acc.HasPermission(types.Minter) {
 		//panic(sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "module account %s does not have permissions to mint tokens", moduleName))
 		panic(fmt.Errorf( "module account %s does not have permissions to mint tokens", moduleName))
 	}
 
-	_, err := k.ak.AddBalance(ctx, acc.GetAddress(), sdk.NewCoins(amt))
+	_, err := k.ak.AddBalance(ctx, acc.GetAddress(), amt)
 	if err != nil {
 		return err
 	}
 
 	// update total supply
 	supply := k.GetSupply(ctx)
+	// todo fix inflate coins
 	supply = supply.Inflate(amt)
 
 	k.SetSupply(ctx, supply)
 
-	/*logger := k.Logger(ctx)
-	logger.Info(fmt.Sprintf("minted %s from %s module account", amt.String(), moduleName))*/
+	logger := k.Logger(ctx)
+	logger.Info(fmt.Sprintf("minted %s from %s module account", amt.String(), moduleName))
 
 	return nil
 }
 
-func (k Keeper) SendCoins(ctx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coin) error {
-	panic("implement me")
+func (k Keeper) SendCoins(ctx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins) error {
+	return k.ak.Transfer(ctx, fromAddr, toAddr, amt)
 }
 
 
 
-func (k Keeper) BurnCoins(ctx sdk.Context, moduleName string, amt sdk.Coin) error {
-	panic("implement me")
+func (k Keeper) BurnCoins(ctx sdk.Context, moduleName string, amt sdk.Coins) error {
+	acc := k.GetModuleAccount(ctx, moduleName)
+	if acc == nil {
+		panic(sdkerrors.Wrapf(sdkerrors.ErrUnknownAddress, "module account %s does not exist", moduleName))
+	}
+
+	if !acc.HasPermission(types.Minter) {
+		panic(sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "module account %s does not have permissions to mint tokens", moduleName))
+	}
+
+	_, err := k.ak.AddBalance(ctx, acc.GetAddress(), amt)
+	if err != nil {
+		return err
+	}
+
+	// update total supply
+	supply := k.GetSupply(ctx)
+	// todo fix to coins
+	supply.Inflate(amt)
+
+
+	k.SetSupply(ctx, supply)
+
+	logger := k.Logger(ctx)
+	logger.Info("burned coins from module account", "amount", amt.String(), "from", moduleName)
+	return nil
+}
+
+// Logger returns a module-specific logger.
+func (k Keeper) Logger(ctx sdk.Context) log.Logger {
+	return ctx.Logger().With("module", "x/"+types.ModuleName)
 }

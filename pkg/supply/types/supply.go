@@ -15,39 +15,39 @@ var _ exported.SupplyI = Supply{}
 
 
 type Supply struct {
-	Total  sdk.Coin    `json:"total"`   // total supply of tokens registered on the chain
+	Total  sdk.Coins    `json:"total"`   // total supply of tokens registered on the chain
 }
 
 
 // SetTotal sets the total supply.
-func (supply Supply) SetTotal(total sdk.Coin) exported.SupplyI {
+func (supply Supply) SetTotal(total sdk.Coins) exported.SupplyI {
 	supply.Total = total
 	return supply
 }
 
 // GetTotal returns the supply total.
-func (supply Supply) GetTotal() sdk.Coin {
+func (supply Supply) GetTotal() sdk.Coins {
 	return supply.Total
 }
 
 // NewSupply creates a new Supply instance
-func NewSupply(total sdk.Coin) exported.SupplyI {
+func NewSupply(total sdk.Coins) exported.SupplyI {
 	return Supply{total}
 }
 
 // DefaultSupply creates an empty Supply
 func DefaultSupply() exported.SupplyI {
-	return NewSupply(sdk.NewChainCoin(sdk.NewInt(100000000000)))
+	return NewSupply(sdk.NewCoins(sdk.NewChainCoin(sdk.NewInt(100000000000))))
 }
 
 // Inflate adds coins to the total supply
-func (supply Supply) Inflate(amount sdk.Coin) exported.SupplyI {
+func (supply Supply) Inflate(amount sdk.Coins) exported.SupplyI {
 	supply.Total = supply.Total.Add(amount)
 	return supply
 }
 
 // Deflate subtracts coins from the total supply
-func (supply Supply) Deflate(amount sdk.Coin) exported.SupplyI {
+func (supply Supply) Deflate(amount sdk.Coins) exported.SupplyI {
 	supply.Total = supply.Total.Sub(amount)
 	return supply
 }

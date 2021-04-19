@@ -107,7 +107,7 @@ func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, sk su
 
 		//存储奖励金到feeCollector Module账户
 		feeCollectorModuleAccount := sk.GetModuleAccount(ctx, auth.FeeCollectorName)
-		newFee := feeCollectorModuleAccount.GetCoins().Add(getFee)
+		newFee := feeCollectorModuleAccount.GetCoins().Add(sdk.NewCoins(getFee))
 		err = feeCollectorModuleAccount.SetCoins(newFee)
 
 		if err != nil {
@@ -172,7 +172,7 @@ func DeductFees(acc exported.Account, fee sdk.Coin, ak account.AccountKeeper, ct
 	return nil
 }
 
-func ReturnFees(acc exported.Account, restFee sdk.Coin, ak account.AccountKeeper, ctx sdk.Context) error {
+func ReturnFees(acc exported.Account, restFee sdk.Coins, ak account.AccountKeeper, ctx sdk.Context) error {
 	coin := acc.GetCoins()
 	newCoins:= coin.Add(restFee)
 

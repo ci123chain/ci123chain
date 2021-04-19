@@ -1,13 +1,13 @@
 package store
 
 import (
-	"github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	dbm "github.com/tendermint/tm-db"
 )
 
 var (
-	_ types.KVStore   = (*MemoryStore)(nil)
-	_ types.Committer = (*MemoryStore)(nil)
+	_ sdk.KVStore   = (*MemoryStore)(nil)
+	_ sdk.Committer = (*MemoryStore)(nil)
 )
 
 // Store implements an in-memory only KVStore. Entries are persisted between
@@ -21,11 +21,18 @@ func NewMemoryStore() *MemoryStore {
 		dbStoreAdapter{dbm.NewMemDB()},
 	}
 }
+// Implements Store.
+func (ts MemoryStore) GetStoreType() StoreType {
+	return sdk.StoreTypeMemory
+}
 
+func (m MemoryStore) Gas(meter GasMeter, config GasConfig) KVStore {
+	return NewGasKVStore(meter, config, m)
+}
 
-func (s MemoryStore) LastCommitID() (id types.CommitID) { return }
+func (s MemoryStore) LastCommitID() (id sdk.CommitID) { return }
 
-func (s *MemoryStore) Commit() (id types.CommitID) { return }
+func (s *MemoryStore) Commit() (id sdk.CommitID) { return }
 
 func (s *MemoryStore) SetPruning(pruning PruningStrategy) {}
 

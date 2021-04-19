@@ -127,7 +127,7 @@ func (k DistrKeeper) withdrawDelegationRewards(ctx sdk.Context, val exported.Val
 	// add coins to user account
 	if !coins.IsZero() {
 		withdrawAddr := k.GetDelegatorWithdrawAddr(ctx, del.GetDelegatorAddr())
-		err := k.SupplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, withdrawAddr, coins)
+		err := k.SupplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, withdrawAddr, sdk.NewCoins(coins))
 		if err != nil {
 			return sdk.NewEmptyCoin(), err
 		}

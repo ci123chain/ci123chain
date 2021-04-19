@@ -13,6 +13,10 @@ import (
 	connutils "github.com/ci123chain/ci123chain/pkg/ibc/core/connection/utils"
 	ibcexported "github.com/ci123chain/ci123chain/pkg/ibc/core/exported"
 	stakingutils "github.com/ci123chain/ci123chain/pkg/staking/client/utils"
+	transferutils "github.com/ci123chain/ci123chain/pkg/ibc/application/transfer/utils"
+	transfertypes "github.com/ci123chain/ci123chain/pkg/ibc/application/transfer/types"
+	"github.com/pkg/errors"
+	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	"golang.org/x/sync/errgroup"
 	"strings"
 	"time"
@@ -38,6 +42,100 @@ func (c *Chain) QueryClientState(height int64) (*clienttypes.QueryClientStateRes
 // QueryClients queries all the clients!
 func (c *Chain) QueryClients(offset, limit uint64) (*clienttypes.QueryClientStatesResponse, error) {
 	return clientutils.QueryClientStatesABCI(c.CLIContext(0), offset, limit)
+}
+
+// QueryPacketCommitment returns the packet commitment proof at a given height
+func (c *Chain) QueryPacketCommitment(
+	height int64, seq uint64) (comRes *chantypes.QueryPacketCommitmentResponse, err error) {
+	return chanutils.QueryPacketCommitment(c.CLIContext(height), c.PathEnd.PortID, c.PathEnd.ChannelID, seq, true)
+}
+
+// QueryPacketAcknowledgement returns the packet ack proof at a given height
+func (c *Chain) QueryPacketAcknowledgement(height int64,
+	seq uint64) (ackRes *chantypes.QueryPacketAcknowledgementResponse, err error) {
+	return chanutils.QueryPacketAcknowledgement(c.CLIContext(height), c.PathEnd.PortID, c.PathEnd.ChannelID, seq, true)
+}
+
+// QueryPacketCommitments returns an array of packet commitments
+func (c *Chain) QueryPacketCommitments(
+	offset, limit, height uint64) (comRes *chantypes.QueryPacketCommitmentsResponse, err error) {
+
+	return chanutils.QueryPacketCommitments(c.CLIContext(int64(int(height))), c.PathEnd.PortID, c.PathEnd.ChannelID, offset, limit)
+
+	//qc := chantypes.NewQueryClient(c.CLIContext(int64(height)))
+	//return qc.PacketCommitments(context.Background(), &chantypes.QueryPacketCommitmentsRequest{
+	//	PortId:    c.PathEnd.PortID,
+	//	ChannelId: c.PathEnd.ChannelID,
+	//	Pagination: &querytypes.PageRequest{
+	//		Offset:     offset,
+	//		Limit:      limit,
+	//		CountTotal: true,
+	//	},
+	//})
+}
+
+// QueryUnreceivedPackets returns a list of unrelayed packet commitments
+func (c *Chain) QueryUnreceivedPackets(height uint64, seqs []uint64) ([]uint64, error) {
+	res, err :=  chanutils.QueryUnreceivedPackets(c.CLIContext(int64(height)), c.PathEnd.PortID, c.PathEnd.ChannelID, seqs)
+	if err != nil {
+		return nil, err
+	}
+	return res.Sequences, nil
+	//qc := chantypes.NewQueryClient(c.CLIContext(int64(height)))
+	//res, err := qc.UnreceivedPackets(context.Background(), &chantypes.QueryUnreceivedPacketsRequest{
+	//	PortId:                    c.PathEnd.PortID,
+	//	ChannelId:                 c.PathEnd.ChannelID,
+	//	PacketCommitmentSequences: seqs,
+	//})
+	//if err != nil {
+	//	return nil, err
+	//}
+	//return res.Sequences, nil
+}
+
+
+// QueryDenomTraces returns all the denom traces from a given chain
+func (c *Chain) QueryDenomTraces(offset, limit uint64, height int64) (*transfertypes.QueryDenomTracesResponse, error) {
+	return transferutils.QueryDenomTraces(c.CLIContext(height), offset, limit)
+
+	//return transfertypes.NewQueryClient(c.CLIContext(height)).DenomTraces(context.Background(),
+	//	&transfertypes.QueryDenomTracesRequest{
+	//		Pagination: &querytypes.PageRequest{
+	//			Key:        []byte(""),
+	//			Offset:     offset,
+	//			Limit:      limit,
+	//			CountTotal: true,
+	//		},
+	//	})
+}
+
+
+// QueryPacketReceipt returns the packet receipt proof at a given height
+func (c *Chain) QueryPacketReceipt(height int64, seq uint64) (recRes *chantypes.QueryPacketReceiptResponse, err error) {
+	return chanutils.QueryPacketReceipt(c.CLIContext(height), c.PathEnd.PortID, c.PathEnd.ChannelID, seq, true)
+}
+
+
+
+// QueryTxs returns an array of transactions given a tag
+func (c *Chain) QueryTxs(height uint64, page, limit int, events []string) ([]*ctypes.ResultTx, error) {
+	if len(events) == 0 {
+		return nil, errors.New("must declare at least one event to search")
+	}
+
+	if page <= 0 {
+		return nil, errors.New("page must greater than 0")
+	}
+
+	if limit <= 0 {
+		return nil, errors.New("limit must greater than 0")
+	}
+
+	res, err := c.Client.TxSearch(context.Background(), strings.Join(events, " AND "), true, &page, &limit, "")
+	if err != nil {
+		return nil, err
+	}
+	return res.Txs, nil
 }
 
 
@@ -104,7 +202,7 @@ func (c *Chain) QueryChannel(height int64) (chanRes *chantypes.QueryChannelRespo
 
 // QueryChannels returns all the channels that are registered on a chain
 func (c *Chain) QueryChannels(offset, limit uint64) (*chantypes.QueryChannelsResponse, error) {
-	res, err := chanutils.QueryChannelsABCI(c.CLIContext(0), offset, limit)
+	res, err := chanutils.QueryChannels(c.CLIContext(0), offset, limit)
 	return res, err
 }
 

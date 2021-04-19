@@ -12,8 +12,15 @@ const (
 	flagTimeout             = "timeout"
 	flagFile                = "file"
 	flagURL                 = "url"
-	flagMaxRetries          = "max-retries"
+	flagPath                = "path"
 
+	flagMaxRetries          = "max-retries"
+	flagThresholdTime       = "time-threshold"
+	flagMaxTxSize           = "max-tx-size"
+	flagMaxMsgLength        = "max-msgs"
+
+	flagTimeoutHeightOffset = "timeout-height-offset"
+	flagTimeoutTimeOffset   = "timeout-time-offset"
 )
 
 
@@ -85,6 +92,25 @@ func timeoutFlag(cmd *cobra.Command) *cobra.Command {
 	return cmd
 }
 
+func timeoutFlags(cmd *cobra.Command) *cobra.Command {
+	cmd.Flags().Uint64P(flagTimeoutHeightOffset, "y", 0, "set timeout height offset for ")
+	cmd.Flags().DurationP(flagTimeoutTimeOffset, "c", time.Duration(0), "specify the path to relay over")
+	if err := viper.BindPFlag(flagTimeoutHeightOffset, cmd.Flags().Lookup(flagTimeoutHeightOffset)); err != nil {
+		panic(err)
+	}
+	if err := viper.BindPFlag(flagTimeoutTimeOffset, cmd.Flags().Lookup(flagTimeoutTimeOffset)); err != nil {
+		panic(err)
+	}
+	return cmd
+}
+
+func pathFlag(cmd *cobra.Command) *cobra.Command {
+	cmd.Flags().StringP(flagPath, "p", "", "specify the path to relay over")
+	if err := viper.BindPFlag(flagPath, cmd.Flags().Lookup(flagPath)); err != nil {
+		panic(err)
+	}
+	return cmd
+}
 
 func forceFlag(cmd *cobra.Command) *cobra.Command {
 	cmd.Flags().BoolP(flagForce, "f", false,
@@ -95,3 +121,25 @@ func forceFlag(cmd *cobra.Command) *cobra.Command {
 	}
 	return cmd
 }
+
+
+func updateTimeFlags(cmd *cobra.Command) *cobra.Command {
+	cmd.Flags().Duration(flagThresholdTime, 6*time.Hour, "time before to expiry time to update client")
+	if err := viper.BindPFlag(flagThresholdTime, cmd.Flags().Lookup(flagThresholdTime)); err != nil {
+		panic(err)
+	}
+	return cmd
+}
+
+func strategyFlag(cmd *cobra.Command) *cobra.Command {
+	cmd.Flags().StringP(flagMaxTxSize, "s", "2", "strategy of path to generate of the messages in a relay transaction")
+	cmd.Flags().StringP(flagMaxMsgLength, "l", "5", "maximum number of messages in a relay transaction")
+	if err := viper.BindPFlag(flagMaxTxSize, cmd.Flags().Lookup(flagMaxTxSize)); err != nil {
+		panic(err)
+	}
+	if err := viper.BindPFlag(flagMaxMsgLength, cmd.Flags().Lookup(flagMaxMsgLength)); err != nil {
+		panic(err)
+	}
+	return cmd
+}
+

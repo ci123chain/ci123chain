@@ -5,11 +5,11 @@ import (
 )
 
 // Transaction code
-const (
-	TRANSFER uint8 = 1 + iota
-	CONTRACT_DEPLOY
-	CONTRACT_CALL
-)
+//const (
+//	TRANSFER uint8 = 1 + iota
+//	CONTRACT_DEPLOY
+//	CONTRACT_CALL
+//)
 
 type Transaction interface {
 	GetSignBytes() []byte

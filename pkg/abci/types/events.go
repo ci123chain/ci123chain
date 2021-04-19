@@ -52,6 +52,7 @@ type (
 	Attribute struct {
 		Key   []byte `json:"key"`
 		Value []byte `json:"value"`
+		Index bool `json:"index"`
 	}
 
 	// Events defines a slice of Event objects
@@ -64,7 +65,7 @@ func NewEvent(ty string, attrs ...Attribute) Event {
 	e := Event{Type: ty}
 
 	for _, attr := range attrs {
-		e.Attributes = append(e.Attributes, NewAttribute(attr.Key, attr.Value).ToKVPair())
+		e.Attributes = append(e.Attributes, attr.ToKVPair())
 	}
 
 	return e
@@ -72,12 +73,17 @@ func NewEvent(ty string, attrs ...Attribute) Event {
 
 // NewAttribute returns a new types/value Attribute object.
 func NewAttribute(k, v []byte) Attribute {
-	return Attribute{k, v}
+	return Attribute{Key: k, Value: v}
 }
 
 // NewAttribute returns a new types/value Attribute object.
 func NewAttributeString(k, v string) Attribute {
-	return Attribute{[]byte(k), []byte(v)}
+	return Attribute{Key: []byte(k), Value: []byte(v)}
+}
+
+// NewAttribute returns a new types/value Attribute object.
+func NewIndexAttributeString(k, v string) Attribute {
+	return Attribute{Key: []byte(k), Value: []byte(v), Index: true}
 }
 
 
@@ -99,7 +105,7 @@ func (a Attribute) String() string {
 
 // ToKVPair converts an Attribute object into a Tendermint types/value pair.
 func (a Attribute) ToKVPair() abci.EventAttribute {
-	return abci.EventAttribute{Key: toBytes(a.Key), Value: toBytes(a.Value)}
+	return abci.EventAttribute{Key: toBytes(a.Key), Value: toBytes(a.Value), Index: a.Index}
 }
 
 // AppendAttributes adds one or more attributes to an Event.
@@ -220,7 +226,7 @@ func StringifyEvent(e abci.Event) StringEvent {
 	for _, attr := range e.Attributes {
 		res.Attributes = append(
 			res.Attributes,
-			Attribute{attr.Key, attr.Value},
+			Attribute{Key: attr.Key, Value: attr.Value},
 		)
 	}
 

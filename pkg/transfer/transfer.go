@@ -5,7 +5,7 @@ import (
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 )
 
-const RouteKey = "Transfer"
+
 
 type MsgTransfer struct {
 	FromAddress sdk.AccAddress  `json:"from"`

@@ -228,7 +228,7 @@ func (ack Acknowledgement) String() string {
 }
 // GetBytes is a helper for serialising acknowledgements
 func (ack Acknowledgement) GetBytes() []byte {
-	return ChannelCdc.MustMarshalJSON(ack)
+	return ChannelCdc.MustMarshalBinaryBare(ack)
 }
 
 // NewResultAcknowledgement returns a new instance of Acknowledgement using an Acknowledgement_Result

@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+	"github.com/ci123chain/ci123chain/pkg/collactor/collactor"
 	"github.com/spf13/cobra"
 	"strings"
 )
@@ -116,4 +117,15 @@ $ %s tx connect demo-path`,
 	}
 
 	return retryFlag(timeoutFlag(cmd))
+}
+// ensureKeysExist returns an error if a configured key for a given chain does
+// not exist.
+func ensureKeysExist(chains map[string]*collactor.Chain) error {
+	for _, v := range chains {
+		if _, err := v.GetAddress(); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

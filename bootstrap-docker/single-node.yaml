@@ -24,6 +24,7 @@ services:
       CI_STATEDB_PORT: 80
       CI_STATEDB_TLS: "false"
       CI_HOME: /root/cid
+      CI_TOKENNAME: stack1
 #      IDG_APPID: abcdefg  # 设置之后 使用 中台log 输出到redis
 #      CI_CLIHOME: /root/cli
       CI_VALIDATOR_KEY: 4wttMiieaewLiRYu+y05j0uslBDOX5IA3k4TY9GtQzSdTcXyd5Y982Q3CUdh+h1XcCvtpIUb+5q6rtJ8W4SEFw==

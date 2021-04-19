@@ -510,7 +510,7 @@ func (csdb *CommitStateDB) updateStateObject(so *stateObject) error {
 	coins := so.account.GetCoins()
 	balance := coins.AmountOf(newBalance.Denom)
 	if balance.IsZero() || !balance.Equal(newBalance.Amount) {
-		coins = coins.Add(newBalance)
+		coins = coins.Add(sdk.NewCoins(newBalance))
 	}
 
 	if err := so.account.SetCoins(coins); err != nil {

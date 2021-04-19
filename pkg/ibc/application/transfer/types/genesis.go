@@ -6,14 +6,3 @@ type GenesisState struct {
 	DenomTraces Traces `protobuf:"bytes,2,rep,name=denom_traces,json=denomTraces,proto3,castrepeated=Traces" json:"denom_traces" yaml:"denom_traces"`
 	Params      Params `protobuf:"bytes,3,opt,name=params,proto3" json:"params"`
 }
-type Traces []DenomTrace
-
-// DefaultGenesisState returns a GenesisState with "transfer" as the default PortID.
-func DefaultGenesisState() *GenesisState {
-	return &GenesisState{
-		PortId:      PortID,
-		DenomTraces: Traces{},
-		Params:      DefaultParams(),
-	}
-}
-

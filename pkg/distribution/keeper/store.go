@@ -426,7 +426,7 @@ func (k DistrKeeper) DeleteValidatorSlashEvents(ctx sdk.Context, val sdk.AccAddr
 // module account.
 func (k DistrKeeper) FundCommunityPool(ctx sdk.Context, amount sdk.Coin, sender sdk.AccAddress) error {
 
-	if err := k.SupplyKeeper.SendCoinsFromAccountToModule(ctx, sender, types.ModuleName, amount); err != nil {
+	if err := k.SupplyKeeper.SendCoinsFromAccountToModule(ctx, sender, types.ModuleName, sdk.NewCoins(amount)); err != nil {
 		return err
 	}
 	feePool := k.GetFeePool(ctx)
@@ -453,7 +453,7 @@ func (k DistrKeeper) WithdrawValidatorCommission(ctx sdk.Context, valAddr sdk.Ac
 	if !commission.IsZero() {
 		accAddr := valAddr
 		withdrawAddr := k.GetDelegatorWithdrawAddr(ctx, accAddr)
-		err := k.SupplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, withdrawAddr, commission)
+		err := k.SupplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, withdrawAddr, sdk.NewCoins(commission))
 		if err != nil {
 			return sdk.NewEmptyCoin(), err
 		}

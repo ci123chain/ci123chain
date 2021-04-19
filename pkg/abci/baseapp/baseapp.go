@@ -86,6 +86,10 @@ type BaseApp struct {
 	// flag for sealing
 	sealed bool
 
+	// indexEvents defines the set of events in the form {eventType}.{attributeKey},
+	// which informs Tendermint what to index. If empty, all events will be indexed.
+	indexEvents map[string]struct{}
+
 	// manages snapshots, i.e. dumps of app state at certain intervals
 	snapshotManager    *snapshots.Manager
 	snapshotInterval   uint64 // block interval between state sync snapshots
@@ -390,6 +394,15 @@ func (app *BaseApp) Info(req abci.RequestInfo) abci.ResponseInfo {
 func (app *BaseApp) SetOption(req abci.RequestSetOption) (res abci.ResponseSetOption) {
 	// TODO: Implement
 	return
+}
+
+
+func (app *BaseApp) setIndexEvents(ie []string) {
+	app.indexEvents = make(map[string]struct{})
+
+	for _, e := range ie {
+		app.indexEvents[e] = struct{}{}
+	}
 }
 
 // Implements ABCI

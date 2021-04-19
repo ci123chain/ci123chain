@@ -50,7 +50,74 @@ func queryChannelABCI(clientCtx context.Context, portID, channelID string, prove
 }
 
 
-func QueryChannelsABCI(clientCtx context.Context, offset, limit uint64,) (*types.QueryChannelsResponse, error) {
+
+
+// QueryPacketCommitment returns a packet commitment.
+// If prove is true, it performs an ABCI store query in order to retrieve the merkle proof. Otherwise,
+// it uses the gRPC query client.
+func QueryPacketCommitment(
+	clientCtx context.Context, portID, channelID string,
+	sequence uint64, prove bool,
+) (*types.QueryPacketCommitmentResponse, error) {
+	key := host.PacketCommitmentKey(portID, channelID, sequence)
+
+	value, proofBz, proofHeight, err := ibcclient.QueryTendermintProof(clientCtx, key)
+	if err != nil {
+		return nil, err
+	}
+
+	// check if packet commitment exists
+	if len(value) == 0 {
+		return nil, sdkerrors.Wrapf(types.ErrPacketCommitmentNotFound, "portID (%s), channelID (%s), sequence (%d)", portID, channelID, sequence)
+	}
+
+	return types.NewQueryPacketCommitmentResponse(value, proofBz, proofHeight), nil
+}
+
+
+
+
+// QueryPacketAcknowledgement returns the data about a packet acknowledgement.
+// If prove is true, it performs an ABCI store query in order to retrieve the merkle proof. Otherwise,
+// it uses the gRPC query client
+func QueryPacketAcknowledgement(clientCtx context.Context, portID, channelID string, sequence uint64, prove bool) (*types.QueryPacketAcknowledgementResponse, error) {
+	key := host.PacketAcknowledgementKey(portID, channelID, sequence)
+
+	value, proofBz, proofHeight, err := ibcclient.QueryTendermintProof(clientCtx, key)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(value) == 0 {
+		return nil, sdkerrors.Wrapf(types.ErrInvalidAcknowledgement, "portID (%s), channelID (%s), sequence (%d)", portID, channelID, sequence)
+	}
+
+	return types.NewQueryPacketAcknowledgementResponse(value, proofBz, proofHeight), nil
+}
+
+
+
+// QueryPacketReceipt returns data about a packet receipt.
+// If prove is true, it performs an ABCI store query in order to retrieve the merkle proof. Otherwise,
+// it uses the gRPC query client.
+func QueryPacketReceipt(
+	clientCtx context.Context, portID, channelID string,
+	sequence uint64, prove bool,
+) (*types.QueryPacketReceiptResponse, error) {
+	key := host.PacketReceiptKey(portID, channelID, sequence)
+
+	value, proofBz, proofHeight, err := ibcclient.QueryTendermintProof(clientCtx, key)
+	if err != nil {
+		return nil, err
+	}
+
+	return types.NewQueryPacketReceiptResponse(value != nil, proofBz, proofHeight), nil
+}
+
+// instead grpc request
+
+
+func QueryChannels(clientCtx context.Context, offset, limit uint64,) (*types.QueryChannelsResponse, error) {
 	path := "/custom/" + ibc.ModuleName + "/" + coretypes.QueryChannels
 	req := &types.QueryChannelsRequest{
 		Pagination: &pagination.PageRequest{
@@ -73,4 +140,48 @@ func QueryChannelsABCI(clientCtx context.Context, offset, limit uint64,) (*types
 
 	clientStatesResp := types.MustUnmarshalQueryChannelsResp(types.ChannelCdc, value)
 	return &clientStatesResp, nil
+}
+
+
+// QueryPacketAcknowledgement returns the data about a packet acknowledgement.
+// If prove is true, it performs an ABCI store query in order to retrieve the merkle proof. Otherwise,
+// it uses the gRPC query client
+func QueryPacketCommitments(clientCtx context.Context, portID, channelID string, offset, limit uint64) (*types.QueryPacketCommitmentsResponse, error) {
+	path := "/custom/" + ibc.ModuleName + "/" + coretypes.QueryPacketCommitments
+	req := &types.QueryPacketCommitmentsRequest{
+		PortId: portID,
+		ChannelId: channelID,
+		Pagination: &pagination.PageRequest{
+			Offset:     offset,
+			Limit:      limit,
+			CountTotal: true,
+		},
+	}
+	key := clientCtx.Cdc.MustMarshalJSON(req)
+	value, _, err := ibcclient.QueryABCI(clientCtx, path, key, false)
+	if err != nil {
+		return nil, err
+	}
+
+	var resp types.QueryPacketCommitmentsResponse
+	types.ChannelCdc.MustUnmarshalJSON(value, &resp)
+	return &resp, nil
+}
+
+func QueryUnreceivedPackets(clientCtx context.Context, portID, channelID string, seqs []uint64) (*types.QueryUnreceivedPacketsResponse, error) {
+	path := "/custom/" + ibc.ModuleName + "/" + coretypes.UnreceivedPacketd
+	req := &types.QueryUnreceivedPacketsRequest{
+		PortId: portID,
+		ChannelId: channelID,
+		PacketCommitmentSequences: seqs,
+	}
+	key := clientCtx.Cdc.MustMarshalJSON(req)
+	value, _, err := ibcclient.QueryABCI(clientCtx, path, key, false)
+	if err != nil {
+		return nil, err
+	}
+
+	var resp types.QueryUnreceivedPacketsResponse
+	types.ChannelCdc.MustUnmarshalJSON(value, &resp)
+	return &resp, nil
 }

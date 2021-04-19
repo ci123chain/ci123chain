@@ -13,3 +13,5 @@ var (
 	AttributeValueTransfer       = types.AttributeValueTransfer
 	AttributeValueCategory       = types.AttributeValueCategory
 )
+
+const RouteKey = "innertx"

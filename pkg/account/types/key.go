@@ -13,6 +13,10 @@ var (
 	GlobalAccountNumberKey = []byte("globalAccountNumber")
 
 	BalancesPrefix = []byte("balances")
+
+	EventTypeTransfer = "transfer"
+	AttributeKeyRecipient = "recipient"
+	AttributeKeySender    = "sender"
 )
 
 // AddressStoreKey turn an address to types used to get it from the account store

@@ -109,7 +109,7 @@ func QueryClientStatesABCI(
 			CountTotal: true,
 		},
 	}
-	key := types.IBCClientCodec.MustMarshalJSON(req)
+	key := clientCtx.Cdc.MustMarshalJSON(req)
 	value, _, err := ibcclient.QueryABCI(clientCtx, path, key, false)
 	if err != nil {
 		return nil, err
@@ -121,7 +121,7 @@ func QueryClientStatesABCI(
 	}
 
 
-	clientStatesResp, err := types.UnmarshalClientStateResp(types.IBCClientCodec, value)
+	clientStatesResp, err := types.UnmarshalClientStateResp(clientCtx.Cdc, value)
 	return &clientStatesResp, err
 }
 

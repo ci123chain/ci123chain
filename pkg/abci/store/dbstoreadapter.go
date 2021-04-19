@@ -46,7 +46,7 @@ func (dsa dbStoreAdapter) ReverseIterator(start, end []byte) sdk.Iterator {
 }
 
 // Implements Store.
-func (dbStoreAdapter) GetStoreType() StoreType {
+func (dsa dbStoreAdapter) GetStoreType() StoreType {
 	return sdk.StoreTypeDB
 }
 

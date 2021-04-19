@@ -57,6 +57,22 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 			res, err = k.ChannelOpenConfirm(ctx, msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 
+			// IBC packet msgs get routed to the appropriate module callback
+		case *channeltypes.MsgRecvPacket:
+			res, err := k.RecvPacket(ctx, msg)
+			return sdk.WrapServiceResult(ctx, res, err)
+
+		case *channeltypes.MsgAcknowledgement:
+			res, err := k.Acknowledgement(ctx, msg)
+			return sdk.WrapServiceResult(ctx, res, err)
+
+		case *channeltypes.MsgTimeout:
+			res, err := k.Timeout(ctx, msg)
+			return sdk.WrapServiceResult(ctx, res, err)
+
+		//case *channeltypes.MsgTimeoutOnClose:
+		//	res, err := k.TimeoutOnClose(ctx, msg)
+		//	return sdk.WrapServiceResult(ctx, res, err)
 		default:
 			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized IBC message type: %T", msg)
 		}

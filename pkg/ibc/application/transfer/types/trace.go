@@ -6,8 +6,10 @@ import (
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
+	"github.com/ci123chain/ci123chain/pkg/ibc/core/host"
 	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 	tmtypes "github.com/tendermint/tendermint/types"
+	"sort"
 	"strings"
 )
 
@@ -58,6 +60,23 @@ func (dt DenomTrace) IBCDenom() string {
 }
 
 
+// Validate performs a basic validation of the DenomTrace fields.
+func (dt DenomTrace) Validate() error {
+	// empty trace is accepted when token lives on the original chain
+	switch {
+	case dt.Path == "" && dt.BaseDenom != "":
+		return nil
+	case strings.TrimSpace(dt.BaseDenom) == "":
+		return fmt.Errorf("base denomination cannot be blank")
+	}
+
+	// NOTE: no base denomination validation
+
+	identifiers := strings.Split(dt.Path, "/")
+	return validateTraceIdentifiers(identifiers)
+}
+
+
 // ValidateIBCDenom validates that the given denomination is either:
 //
 //  - A valid base denomination (eg: 'uatom')
@@ -86,6 +105,24 @@ func ValidateIBCDenom(denom string) error {
 	return nil
 }
 
+
+func validateTraceIdentifiers(identifiers []string) error {
+	if len(identifiers) == 0 || len(identifiers)%2 != 0 {
+		return fmt.Errorf("trace info must come in pairs of port and channel identifiers '{portID}/{channelID}', got the identifiers: %s", identifiers)
+	}
+
+	// validate correctness of port and channel identifiers
+	for i := 0; i < len(identifiers); i += 2 {
+		if err := host.PortIdentifierValidator(identifiers[i]); err != nil {
+			return sdkerrors.Wrapf(err, "invalid port ID at position %d", i)
+		}
+		if err := host.ChannelIdentifierValidator(identifiers[i+1]); err != nil {
+			return sdkerrors.Wrapf(err, "invalid channel ID at position %d", i)
+		}
+	}
+	return nil
+}
+
 // ParseDenomTrace parses a string with the ibc prefix (denom trace) and the base denomination
 // into a DenomTrace type.
 //
@@ -107,4 +144,51 @@ func ParseDenomTrace(rawDenom string) DenomTrace {
 		Path:      strings.Join(denomSplit[:len(denomSplit)-1], "/"),
 		BaseDenom: denomSplit[len(denomSplit)-1],
 	}
+}
+
+
+type Traces []DenomTrace
+
+// DefaultGenesisState returns a GenesisState with "transfer" as the default PortID.
+func DefaultGenesisState() *GenesisState {
+	return &GenesisState{
+		PortId:      PortID,
+		DenomTraces: Traces{},
+		Params:      DefaultParams(),
+	}
+}
+
+
+// Validate performs a basic validation of each denomination trace info.
+func (t Traces) Validate() error {
+	seenTraces := make(map[string]bool)
+	for i, trace := range t {
+		hash := trace.Hash().String()
+		if seenTraces[hash] {
+			return fmt.Errorf("duplicated denomination trace with hash %s", trace.Hash())
+		}
+
+		if err := trace.Validate(); err != nil {
+			return sdkerrors.Wrapf(err, "failed denom trace %d validation", i)
+		}
+		seenTraces[hash] = true
+	}
+	return nil
+}
+
+var _ sort.Interface = Traces{}
+
+// Len implements sort.Interface for Traces
+func (t Traces) Len() int { return len(t) }
+
+// Less implements sort.Interface for Traces
+func (t Traces) Less(i, j int) bool { return t[i].GetFullDenomPath() < t[j].GetFullDenomPath() }
+
+// Swap implements sort.Interface for Traces
+func (t Traces) Swap(i, j int) { t[i], t[j] = t[j], t[i] }
+
+// Sort is a helper function to sort the set of denomination traces in-place
+func (t Traces) Sort() Traces {
+	sort.Sort(t)
+	return t
 }

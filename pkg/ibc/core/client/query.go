@@ -2,6 +2,7 @@ package client
 
 import (
 	"fmt"
+	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
 	clienttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/clients/types"
 	commitmenttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/commitment/types"
@@ -53,7 +54,9 @@ func QueryTendermintProof(clientCtx context.Context, key []byte) ([]byte, []byte
 		return nil, nil, clienttypes.Height{}, err
 	}
 
-	proofBz, err := clientCtx.Cdc.MarshalBinaryBare(merkleProof)
+	cdc := codec.NewProtoCodec(commitmenttypes.CommitmentInterfaceRegistry)
+	proofBz, err := cdc.MarshalBinaryBare(&merkleProof)
+
 	if err != nil {
 		return nil, nil, clienttypes.Height{}, err
 	}

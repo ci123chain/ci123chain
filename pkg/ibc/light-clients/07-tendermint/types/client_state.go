@@ -371,9 +371,11 @@ func produceVerificationArgs(
 		return commitmenttypes.MerkleProof{}, nil, sdkerrors.Wrapf(commitmenttypes.ErrInvalidPrefix, "invalid prefix type %T, expected *MerklePrefix", prefix)
 	}
 
-	if err = cdc.UnmarshalBinaryBare(proof, &merkleProof); err != nil {
+	if err =  codec.NewProtoCodec(commitmenttypes.CommitmentInterfaceRegistry).UnmarshalBinaryBare(proof, &merkleProof); err != nil {
 		return commitmenttypes.MerkleProof{}, nil, sdkerrors.Wrap(commitmenttypes.ErrInvalidProof, "failed to unmarshal proof into commitment merkle proof")
 	}
+	//if err = cdc.UnmarshalBinaryBare(proof, &merkleProof); err != nil {
+	//}
 	consensusState, err = GetConsensusState(store, cdc, height)
 	if err != nil {
 		return commitmenttypes.MerkleProof{}, nil, err

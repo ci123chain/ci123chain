@@ -5,6 +5,7 @@ import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	chantypes "github.com/ci123chain/ci123chain/pkg/ibc/core/channel/types"
 	conntypes "github.com/ci123chain/ci123chain/pkg/ibc/core/connection/types"
+	"strconv"
 	"strings"
 )
 
@@ -74,6 +75,11 @@ func (c *Chain) LogSuccessTx(res *sdk.TxResponse, msgs []sdk.Msg) {
 	c.logger.Info(fmt.Sprintf("✔ [%s]@{%d} - msg(%s) hash(%s)", c.ChainID, res.Height, getMsgAction(msgs), res.TxHash))
 }
 
+func (c *Chain) logPacketsRelayed(dst *Chain, num int) {
+	dst.Log(fmt.Sprintf("★ Relayed %d packets: [%s]port{%s}->[%s]port{%s}",
+		num, dst.ChainID, dst.PathEnd.PortID, c.ChainID, c.PathEnd.PortID))
+}
+
 func getMsgAction(msgs []sdk.Msg) string {
 	var out string
 	for i, msg := range msgs {
@@ -108,4 +114,38 @@ func (c *Chain) Print(toPrint interface{}, text, indent bool) error {
 
 	fmt.Println(string(out))
 	return nil
+}
+
+
+func (c *Chain) logTx(events map[string][]string) {
+	hash := ""
+	if len(events["tx.hash"]) > 0 {
+		hash = events["tx.hash"][0]
+	}
+	c.Log(fmt.Sprintf("• [%s]@{%d} - actions(%s) hash(%s)",
+		c.ChainID,
+		getTxEventHeight(events),
+		getTxActions(events["message.action"]),
+		hash),
+	)
+}
+
+func (c *Chain) logBlockHeader(events map[string][]string) {
+}
+
+
+func getTxEventHeight(events map[string][]string) int64 {
+	if val, ok := events["tx.height"]; ok {
+		out, _ := strconv.ParseInt(val[0], 10, 64)
+		return out
+	}
+	return -1
+}
+
+func getTxActions(act []string) string {
+	out := ""
+	for i, a := range act {
+		out += fmt.Sprintf("%d:%s,", i, a)
+	}
+	return strings.TrimSuffix(out, ",")
 }

@@ -22,10 +22,10 @@ func NewHandler(am keeper.AccountKeeper) sdk.Handler {
 }
 
 func handlerMsgTransfer(ctx sdk.Context, am keeper.AccountKeeper, msg *transfer.MsgTransfer) (*sdk.Result, error) {
+	em := ctx.EventManager()
 	if err := am.Transfer(ctx, msg.FromAddress, msg.To, msg.Amount); err != nil {
 		return nil, err
 	}
-	em := ctx.EventManager()
 	//em.EmitEvents(sdk.Events{
 	//	sdk.NewEvent(transfer.EventType,
 	//		sdk.NewAttribute([]byte(sdk.AttributeKeyMethod), []byte(transfer.AttributeValueTransfer)),

@@ -87,7 +87,7 @@ func (k MinterKeeper) AllBonded(ctx sdk.Context) sdk.Coin {
 
 // MintCoins implements an alias call to the underlying supply keeper's
 // MintCoins to be used in BeginBlocker.
-func (k MinterKeeper) MintCoins(ctx sdk.Context, newCoins sdk.Coin) error {
+func (k MinterKeeper) MintCoins(ctx sdk.Context, newCoins sdk.Coins) error {
 	/*if newCoins.Empty() {
 		// skip as no coins need to be minted
 		return nil

@@ -65,7 +65,7 @@ func Paginate(
 	}
 
 	if len(key) != 0 {
-		iterator := prefixStore.Iterator(key, nil)
+		iterator := prefixStore.RemoteIterator(key, nil)
 		defer iterator.Close()
 
 		var count uint64
@@ -92,7 +92,7 @@ func Paginate(
 		}, nil
 	}
 
-	iterator := prefixStore.Iterator(nil, nil)
+	iterator := prefixStore.RemoteIterator(nil, nil)
 	defer iterator.Close()
 
 	end := offset + limit

@@ -51,6 +51,7 @@ func (app *BaseApp) SetCMS(cms store.CommitMultiStore) {
 	app.cms = cms
 }
 
+
 func (app *BaseApp) SetInitChainer(initChainer sdk.InitChainer) {
 	if app.sealed {
 		panic("SetInitChainer() on sealed BaseApp")

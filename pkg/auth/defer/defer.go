@@ -49,7 +49,7 @@ func NewDeferHandler( ak account.AccountKeeper) sdk.DeferHandler {
 			return 
 		}
 		restfee := sdk.NewUInt64Coin(sdk.ChainCoinDenom, restgas)
-		err := ante.ReturnFees(acc, restfee, ak, ctx)
+		err := ante.ReturnFees(acc, sdk.NewCoins(restfee), ak, ctx)
 		if err != nil {
 			return
 		}

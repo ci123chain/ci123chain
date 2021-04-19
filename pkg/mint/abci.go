@@ -26,7 +26,7 @@ func BeginBlocker(ctx sdk.Context, k keeper.MinterKeeper) {
 	//mintedCoins := sdk.NewCoins(mintedCoin)
 	//fmt.Printf("mintedCoin = %v\n", mintedCoin.Amount.Uint64())
 
-	err := k.MintCoins(ctx, mintedCoin)
+	err := k.MintCoins(ctx, sdk.NewCoins(mintedCoin))
 	if err != nil {
 		panic(err)
 	}
