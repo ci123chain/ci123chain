@@ -200,26 +200,54 @@ func (c Counterparty) ValidateBasic() error {
 	return nil
 }
 
-type isAcknowledgement_Response interface {
-	isAcknowledgement_Response()
-	MarshalTo([]byte) (int, error)
-	Size() int
+type IsAcknowledgement_Response interface {
+	//isAcknowledgement_Response()
+	//MarshalTo([]byte) (int, error)
+	//Size() int
 }
 
+var _ IsAcknowledgement_Response = &Acknowledgement_Error{}
+var _ IsAcknowledgement_Response = &Acknowledgement_Result{}
 
 type Acknowledgement_Result struct {
 	Result []byte `protobuf:"bytes,21,opt,name=result,proto3,oneof" json:"result,omitempty"`
 }
+
+func (a Acknowledgement_Result) isAcknowledgement_Response() {
+	panic("implement me")
+}
+
+func (a Acknowledgement_Result) MarshalTo(bytes []byte) (int, error) {
+	panic("implement me")
+}
+
+func (a Acknowledgement_Result) Size() int {
+	panic("implement me")
+}
+
 type Acknowledgement_Error struct {
 	Error string `protobuf:"bytes,22,opt,name=error,proto3,oneof" json:"error,omitempty"`
 }
+
+func (a Acknowledgement_Error) isAcknowledgement_Response() {
+	panic("implement me")
+}
+
+func (a Acknowledgement_Error) MarshalTo(bytes []byte) (int, error) {
+	panic("implement me")
+}
+
+func (a Acknowledgement_Error) Size() int {
+	panic("implement me")
+}
+
 //
 //func (*Acknowledgement_Result) isAcknowledgement_Response() {}
 //func (*Acknowledgement_Error) isAcknowledgement_Response()  {}
 
 
 type Acknowledgement struct {
-	Response interface{}
+	Response IsAcknowledgement_Response
 }
 
 func (ack Acknowledgement) String() string {
