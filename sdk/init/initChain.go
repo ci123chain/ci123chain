@@ -28,6 +28,7 @@ import (
 	tmpro "github.com/tendermint/tendermint/proto/tendermint/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 	"regexp"
+	"strings"
 	"text/template"
 	"time"
 )
@@ -138,7 +139,10 @@ func NewInitFiles(privKey, persistentPeers string, tlsOption bool) (*InitFiles, 
 	//configs.P2P.TLSOption = tlsOption
 	var configTemplate *template.Template
 	var buffer bytes.Buffer
-	if configTemplate, err = template.New("configFileTemplate").Parse(defaultConfigTemplate); err != nil {
+	tmpl := template.New("configFileTemplate").Funcs(template.FuncMap{
+		"StringsJoin": strings.Join,
+	})
+	if configTemplate, err = tmpl.Parse(defaultConfigTemplate); err != nil {
 		panic(err)
 	}
 	if err := configTemplate.Execute(&buffer, config); err != nil {
@@ -353,7 +357,7 @@ func genesisSupplyModule(appState map[string]json.RawMessage, supplyInfo SupplyI
 		return errors.New("supply amount converts to bigInt failed")
 	}
 
-	supplyGenesisState.Supply = types.NewChainCoin(amount)
+	supplyGenesisState.Supply = []types.Coin{types.NewChainCoin(amount)}
 	genesisStateBz := cdc.MustMarshalJSON(supplyGenesisState)
 	appState[supply.ModuleName] = genesisStateBz
 	return nil
@@ -422,8 +426,8 @@ func privStrToPrivKey(privStr string) (*ed25519.PrivKey, error) {
 		//1.match length
 		priByt := []byte(privStr)
 		length := len(priByt)
-		if length != 44 {
-			return nil, errors.New(fmt.Sprintf("length of validator key does not match, expected %d, got %d", 44, length))
+		if length != 88 {
+			return nil, errors.New(fmt.Sprintf("length of validator key does not match, expected %d, got %d", 88, length))
 		}
 
 		//2.regex match
