@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	capabilitytypes "github.com/ci123chain/ci123chain/pkg/capability/types"
@@ -81,6 +82,9 @@ func (k Keeper) TimeoutPacket(
 
 	packetCommitment := types.CommitPacket(k.cdc, packet)
 
+	x1, _ := json.Marshal(commitment)
+	x2, _ := json.Marshal(packetCommitment)
+	k.Logger(ctx).Info("x1: ", x1, ";x2: ", x2)
 	// verify we sent the packet and haven't cleared it out yet
 	if !bytes.Equal(commitment, packetCommitment) {
 		return sdkerrors.Wrapf(types.ErrInvalidPacket, "packet commitment bytes are not equal: got (%v), expected (%v)", commitment, packetCommitment)

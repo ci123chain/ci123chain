@@ -1,6 +1,8 @@
 package types
 
 import (
+	"encoding/hex"
+	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
@@ -333,13 +335,36 @@ func (cs ClientState) VerifyChannelState(store sdk.KVStore,
 	if err := merkleProof.VerifyMembership(cs.ProofSpecs, consensusState.GetRoot(), path, bz); err != nil {
 		return err
 	}
-
 	return nil
 }
 
-// todo ibc
-func (cs ClientState) VerifyPacketAcknowledgement(store sdk.KVStore, cdc *codec.Codec, height exported.Height, currentTimestamp uint64, delayPeriod uint64, prefix exported.Prefix, proof []byte, portID, channelID string, sequence uint64, acknowledgement []byte) error {
-	panic("implement me")
+// VerifyPacketAcknowledgement verifies a proof of an incoming packet
+// acknowledgement at the specified port, specified channel, and specified sequence.
+func (cs ClientState) VerifyPacketAcknowledgement(store sdk.KVStore, cdc *codec.Codec, height exported.Height, currentTimestamp uint64, delayPeriod uint64,
+	prefix exported.Prefix, proof []byte, portID, channelID string, sequence uint64, acknowledgement []byte) error {
+	merkleProof, consensusState, err := produceVerificationArgs(store, cdc, cs, height, prefix, proof)
+	if err != nil {
+		return err
+	}
+
+	// check delay period has passed
+	if err := verifyDelayPeriodPassed(store, height, currentTimestamp, delayPeriod); err != nil {
+		return err
+	}
+
+	ackPath := commitmenttypes.NewMerklePath(host.PacketAcknowledgementPath(portID, channelID, sequence))
+	path, err := commitmenttypes.ApplyPrefix(prefix, ackPath)
+	if err != nil {
+		return err
+	}
+	fmt.Println("$$$VerifyPacketAcknowledgement.proofHeight$$$:", height)
+	fmt.Println("$$$acknowledgementBytes$$$:", acknowledgement)
+	fmt.Println("$$$VerifyPacketAcknowledgement.root$$$:", hex.EncodeToString(consensusState.GetRoot().GetHash()))
+	if err := merkleProof.VerifyMembership(cs.ProofSpecs, consensusState.GetRoot(), path, channeltypes.CommitAcknowledgement(acknowledgement)); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // private methods implements

@@ -342,6 +342,8 @@ func (k Keeper) WriteAcknowledgement(
 	// log that a packet acknowledgement has been written
 	k.Logger(ctx).Info("acknowledged written", "packet", fmt.Sprintf("%v", packet))
 
+	fmt.Println("$$$acknowledgement.GetBytes()$$$:", acknowledgement)
+	fmt.Println("$$$acknowledgement.String()$$$:", string(acknowledgement))
 	// emit an event that the collator can query for
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(

@@ -76,10 +76,10 @@ func TestCreateOpenChannel(t *testing.T)  {
 	_, err := src.CreateClients(dst)
 	require.Nil(t, err)
 
-	_, err = src.CreateOpenConnections(dst, 5, 300)
+	_, err = src.CreateOpenConnections(dst, 5, 30000)
 	require.Nil(t, err)
 
-	_, err = src.CreateOpenChannels(dst, 5, 300)
+	_, err = src.CreateOpenChannels(dst, 5, 30000)
 	require.Nil(t, err)
 }
 
@@ -87,9 +87,9 @@ func TestStart(t *testing.T)  {
 	src, dst := setupClients()
 	_, err := src.CreateClients(dst)
 	require.Nil(t, err)
-	_, err = src.CreateOpenConnections(dst, 5, 300)
+	_, err = src.CreateOpenConnections(dst, 5, 30000)
 	require.Nil(t, err)
-	_, err = src.CreateOpenChannels(dst, 5, 300)
+	_, err = src.CreateOpenChannels(dst, 5, 30000)
 	require.Nil(t, err)
 
 	strategy := &collactor.NaiveStrategy{}
@@ -113,11 +113,12 @@ func TestSendPacket(t *testing.T)  {
 	_, err = src.CreateOpenChannels(dst, 5, 300)
 	require.Nil(t, err)
 
-	amount := sdk.NewCoin("stack1", sdk.NewInt(10000))
+	amount := sdk.NewCoin("stack0", sdk.NewInt(10000))
 
 	dstAddr := "0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c"
 	err = src.SendTransferMsg(dst, amount, dstAddr, 100, 0)
 	require.Nil(t, err, "err should be nil")
+
 }
 
 func TestQueryCommitPacket(t *testing.T)  {

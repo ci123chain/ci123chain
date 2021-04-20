@@ -41,7 +41,7 @@ func GetDefaultLogger(lv string) Logger {
 	}
 
 	fileLogger = spliter.NewFileLogger(logDir, fname)
-	logger = logger.With("module", "main")
+	//logger = logger.With("module", "main")
 	return logger
 }
 

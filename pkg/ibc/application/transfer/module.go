@@ -82,7 +82,7 @@ func (am AppModule) OnRecvPacket(
 	packet channeltypes.Packet,
 ) (*sdk.Result, []byte, error) {
 	var data types.FungibleTokenPacketData
-	if err := types.IBCTransferCdc.UnmarshalBinaryLengthPrefixed(packet.GetData(), &data); err != nil {
+	if err := types.IBCTransferCdc.UnmarshalJSON(packet.GetData(), &data); err != nil {
 		return nil, nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet data: %s", err.Error())
 	}
 
@@ -103,7 +103,6 @@ func (am AppModule) OnRecvPacket(
 			sdk.NewAttributeString(types.AttributeKeyAckSuccess, fmt.Sprintf("%t", err != nil)),
 		),
 	)
-
 	// NOTE: acknowledgement will be written synchronously during IBC handler execution.
 	return &sdk.Result{
 		Events: ctx.EventManager().Events(),
@@ -118,11 +117,12 @@ func (am AppModule) OnAcknowledgementPacket(
 	acknowledgement []byte,
 ) (*sdk.Result, error) {
 	var ack channeltypes.Acknowledgement
-	if err := types.IBCTransferCdc.UnmarshalBinaryBare(acknowledgement, &ack); err != nil {
+	if err := channeltypes.ChannelCdc.UnmarshalJSON(acknowledgement, &ack); err != nil {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet acknowledgement: %v", err)
 	}
+
 	var data types.FungibleTokenPacketData
-	if err := types.IBCTransferCdc.UnmarshalBinaryLengthPrefixed(packet.GetData(), &data); err != nil {
+	if err := types.IBCTransferCdc.UnmarshalJSON(packet.GetData(), &data); err != nil {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet data: %s", err.Error())
 	}
 
@@ -213,7 +213,7 @@ func (am AppModule) OnChanOpenConfirm(ctx sdk.Context, portID, channelID string)
 
 func (am AppModule) OnTimeoutPacket(ctx sdk.Context, packet channeltypes.Packet) (*sdk.Result, error) {
 	var data types.FungibleTokenPacketData
-	if err := types.IBCTransferCdc.UnmarshalBinaryLengthPrefixed(packet.GetData(), &data); err != nil {
+	if err := types.IBCTransferCdc.UnmarshalJSON(packet.GetData(), &data); err != nil {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet data: %s", err.Error())
 	}
 	// refund tokens

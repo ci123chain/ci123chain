@@ -28,7 +28,6 @@ func (k Keeper)CreateClient(ctx sdk.Context, clientState exported.ClientState,
 	if consensusState != nil {
 		k.SetClientConsensusState(ctx, clientID, clientState.GetLatestHeight(), consensusState)
 	}
-
 	k.Logger(ctx).Info("client created at height", "client-id", clientID, "height", clientState.GetLatestHeight().String())
 
 	// todo  for telemetry

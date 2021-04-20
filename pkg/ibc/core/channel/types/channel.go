@@ -210,36 +210,36 @@ var _ IsAcknowledgement_Response = &Acknowledgement_Error{}
 var _ IsAcknowledgement_Response = &Acknowledgement_Result{}
 
 type Acknowledgement_Result struct {
-	Result []byte `protobuf:"bytes,21,opt,name=result,proto3,oneof" json:"result,omitempty"`
+	Result []byte `json:"result,omitempty"`
 }
 
-func (a Acknowledgement_Result) isAcknowledgement_Response() {
-	panic("implement me")
-}
-
-func (a Acknowledgement_Result) MarshalTo(bytes []byte) (int, error) {
-	panic("implement me")
-}
-
-func (a Acknowledgement_Result) Size() int {
-	panic("implement me")
-}
+//func (a Acknowledgement_Result) isAcknowledgement_Response() {
+//	panic("implement me")
+//}
+//
+//func (a Acknowledgement_Result) MarshalTo(bytes []byte) (int, error) {
+//	panic("implement me")
+//}
+//
+//func (a Acknowledgement_Result) Size() int {
+//	panic("implement me")
+//}
 
 type Acknowledgement_Error struct {
-	Error string `protobuf:"bytes,22,opt,name=error,proto3,oneof" json:"error,omitempty"`
+	Error string `json:"error,omitempty"`
 }
 
-func (a Acknowledgement_Error) isAcknowledgement_Response() {
-	panic("implement me")
-}
-
-func (a Acknowledgement_Error) MarshalTo(bytes []byte) (int, error) {
-	panic("implement me")
-}
-
-func (a Acknowledgement_Error) Size() int {
-	panic("implement me")
-}
+//func (a Acknowledgement_Error) isAcknowledgement_Response() {
+//	panic("implement me")
+//}
+//
+//func (a Acknowledgement_Error) MarshalTo(bytes []byte) (int, error) {
+//	panic("implement me")
+//}
+//
+//func (a Acknowledgement_Error) Size() int {
+//	panic("implement me")
+//}
 
 //
 //func (*Acknowledgement_Result) isAcknowledgement_Response() {}
@@ -256,7 +256,7 @@ func (ack Acknowledgement) String() string {
 }
 // GetBytes is a helper for serialising acknowledgements
 func (ack Acknowledgement) GetBytes() []byte {
-	return ChannelCdc.MustMarshalBinaryBare(ack)
+	return ChannelCdc.MustMarshalJSON(ack)
 }
 
 // NewResultAcknowledgement returns a new instance of Acknowledgement using an Acknowledgement_Result

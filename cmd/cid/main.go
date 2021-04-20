@@ -22,8 +22,10 @@ const (
 	DefaultConfDir = "$HOME/.ci123"
 	flagLogLevel = "log_level"
 	HomeFlag     = "home"
-	logDEBUG     = "main:debug,state:debug,ibc:debug,*:error"
-	logINFO      = "main:info,state:info,ibc:info,*:error"
+	//logDEBUG     = "main:debug,state:debug,ibc:debug,*:error"
+	logINFO      = "state:info,x/ibc/client:info,x/ibc/connection:info,x/ibc/channel:info,*:error"
+	logDEBUG      = "*:debug"
+	//logINFO      = "*:info"
 	logERROR     = "*:error"
 	logNONE      = "*:none"
 )
@@ -74,8 +76,7 @@ func main()  {
 
 func newApp(lg log.Logger, ldb db.DB, cdb db.DB,traceStore io.Writer) abci.Application{
 	logger.SetLogger(lg)
-	//将ibc的logger设置为ibc module.
-	return app.NewChain(lg.With("module", "ibc"), ldb, cdb, traceStore)
+	return app.NewChain(lg, ldb, cdb, traceStore)
 }
 
 func exportAppState(lg log.Logger, ldb db.DB, cdb db.DB, traceStore io.Writer) (json.RawMessage, []types.GenesisValidator, error) {

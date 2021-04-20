@@ -78,6 +78,8 @@ func (c *Chain) CreateOpenChannels(dst *Chain, maxRetries uint64, to time.Durati
 // file. The booleans return indicate if the message was successfully
 // executed and if this was the last handshake step.
 func ExecuteChannelStep(src, dst *Chain) (success, last, modified bool, err error) {
+	time.Sleep(2 * time.Second)
+
 	if _, _, err := UpdateLightClients(src, dst); err != nil {
 		return false, false, false, err
 	}
