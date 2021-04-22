@@ -4,7 +4,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	"github.com/ci123chain/ci123chain/pkg/abci/types"
 	auth_types "github.com/ci123chain/ci123chain/pkg/auth/types"
-	"github.com/ci123chain/ci123chain/pkg/params/subspace"
+	subspace "github.com/ci123chain/ci123chain/pkg/params/types"
 )
 
 type AuthKeeper struct {

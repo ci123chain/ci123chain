@@ -3,7 +3,7 @@ package types
 import (
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/exported"
-	paramtypes "github.com/ci123chain/ci123chain/pkg/params/subspace"
+	paramtypes "github.com/ci123chain/ci123chain/pkg/params/types"
 	"strings"
 )
 

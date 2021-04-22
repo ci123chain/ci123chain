@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	"github.com/ci123chain/ci123chain/pkg/abci/types"
-	"github.com/ci123chain/ci123chain/pkg/params/subspace"
+	params "github.com/ci123chain/ci123chain/pkg/params/types"
 	"github.com/tendermint/tendermint/libs/log"
 )
 
@@ -15,7 +15,6 @@ type Keeper struct {
 	tkey      types.StoreKey
 	codespace types.CodespaceType
 	spaces    map[string]*Subspace
-
 }
 
 // NewKeeper constructs a params keeper
@@ -46,7 +45,7 @@ func (k Keeper) Subspace(s string) Subspace {
 		panic("cannot use empty string for subspace")
 	}
 
-	space := subspace.NewSubspace(k.cdc, k.key, k.tkey, s)
+	space := params.NewSubspace(k.cdc, k.key, k.tkey, s)
 	k.spaces[s] = &space
 
 	return space

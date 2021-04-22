@@ -9,6 +9,7 @@ import (
 	ibc "github.com/ci123chain/ci123chain/pkg/ibc/core"
 	mint_basic "github.com/ci123chain/ci123chain/pkg/mint/module/basic"
 	order_basic "github.com/ci123chain/ci123chain/pkg/order/module/basic"
+	"github.com/ci123chain/ci123chain/pkg/slashing"
 	staking_basic "github.com/ci123chain/ci123chain/pkg/staking/module/basic"
 	supply_basic "github.com/ci123chain/ci123chain/pkg/supply/module/basic"
 	wasm_basic "github.com/ci123chain/ci123chain/pkg/vm/module/basic"
@@ -22,6 +23,7 @@ var ModuleBasics = module.NewBasicManager(
 	supply_basic.AppModuleBasic{},
 	order_basic.AppModuleBasic{},
 	staking_basic.AppModuleBasic{},
+	slashing.AppModuleBasic{},
 	mint_basic.AppModuleBasic{},
 	wasm_basic.AppModuleBasic{},
 	dis_basic.AppModuleBasic{},

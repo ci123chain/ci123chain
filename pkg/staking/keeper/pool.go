@@ -59,3 +59,27 @@ func (k StakingKeeper) BondedRatio(ctx sdk.Context) sdk.Dec {
 
 	return sdk.ZeroDec()
 }
+
+// burnBondedTokens removes coins from the bonded pool module account
+func (k StakingKeeper) burnBondedTokens(ctx sdk.Context, amt sdk.Int) error {
+	if !amt.IsPositive() {
+		// skip as no coins need to be burned
+		return nil
+	}
+
+	coins := sdk.NewCoins(sdk.NewCoin(k.BondDenom(ctx), amt))
+
+	return k.SupplyKeeper.BurnCoins(ctx, types.BondedPoolName, coins)
+}
+
+// burnNotBondedTokens removes coins from the not bonded pool module account
+func (k StakingKeeper) burnNotBondedTokens(ctx sdk.Context, amt sdk.Int) error {
+	if !amt.IsPositive() {
+		// skip as no coins need to be burned
+		return nil
+	}
+
+	coins := sdk.NewCoins(sdk.NewCoin(k.BondDenom(ctx), amt))
+
+	return k.SupplyKeeper.BurnCoins(ctx, types.NotBondedPoolName, coins)
+}

@@ -13,6 +13,11 @@ func TokensToConsensusPower(tokens Int) int64 {
 	return (tokens.Quo(PowerReduction)).Int64()
 }
 
+// TokensFromConsensusPower - convert input power to tokens
+func TokensFromConsensusPower(power int64) Int {
+	return NewInt(power).Mul(PowerReduction)
+}
+
 const (
 
 	// default bond denomination

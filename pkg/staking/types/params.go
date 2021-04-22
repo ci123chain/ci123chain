@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	params "github.com/ci123chain/ci123chain/pkg/params/subspace"
+	params "github.com/ci123chain/ci123chain/pkg/params/types"
 	"strings"
 	"time"
 )

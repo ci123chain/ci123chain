@@ -14,7 +14,7 @@ import (
 	connectiontypes "github.com/ci123chain/ci123chain/pkg/ibc/core/connection/types"
 	portkeeper "github.com/ci123chain/ci123chain/pkg/ibc/core/port/keeper"
 	porttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/port/types"
-	paramtypes "github.com/ci123chain/ci123chain/pkg/params/subspace"
+	paramtypes "github.com/ci123chain/ci123chain/pkg/params/types"
 	"github.com/pkg/errors"
 )
 

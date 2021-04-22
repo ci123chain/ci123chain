@@ -1,6 +1,6 @@
 package types
 
-import "github.com/ci123chain/ci123chain/pkg/params/subspace"
+import "github.com/ci123chain/ci123chain/pkg/params/types"
 
 const (
 	DefaultMaxMemoCharacters 	uint64 = 256
@@ -47,12 +47,12 @@ func DefaultGenesisState() GenesisState {
 	return NewGenesisState(DefaultParams())
 }
 
-func ParamKeyTable() subspace.KeyTable {
-	return subspace.NewKeyTable().RegisterParamSet(&Params{})
+func ParamKeyTable() types.KeyTable {
+	return types.NewKeyTable().RegisterParamSet(&Params{})
 }
 
-func (p *Params) ParamSetPairs() subspace.ParamSetPairs {
-	return subspace.ParamSetPairs{
+func (p *Params) ParamSetPairs() types.ParamSetPairs {
+	return types.ParamSetPairs{
 		{KeyMaxMemoCharacters, &p.MaxMemoCharacters, nil},
 		{KeyTxSizeCostPerByte, &p.TxSizeCostPerByte, nil},
 		{KeySigVerifyCostED25519,  &p.SigVerifyCostED25519, nil},

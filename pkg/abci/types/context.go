@@ -163,6 +163,8 @@ func (c Context) MultiStore() MultiStore {
 	return c.Value(contextKeyMultiStore).(MultiStore)
 }
 
+func (c Context) BlockTime() time.Time        { return c.BlockHeader().Time }
+
 func (c Context) BlockHeader() types.Header { return c.Value(contextKeyBlockHeader).(types.Header) }
 
 func (c Context) BlockHeight() int64 { return c.Value(contextKeyBlockHeight).(int64) }
@@ -331,4 +333,19 @@ func (pst *thePast) getOp(ver int64) (Op, bool) {
 		return Op{}, false
 	}
 	return pst.ops[ver-1], true
+}
+
+type ContextKey string
+
+const SdkContextKey ContextKey = "sdk-context"
+
+func WrapSDKContext(ctx Context) context.Context {
+	return context.WithValue(ctx.Context, SdkContextKey, ctx)
+}
+
+// UnwrapSDKContext retrieves a Context from a context.Context instance
+// attached with WrapSDKContext. It panics if a Context was not properly
+// attached
+func UnwrapSDKContext(ctx context.Context) Context {
+	return ctx.Value(SdkContextKey).(Context)
 }

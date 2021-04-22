@@ -328,3 +328,14 @@ func (k StakingKeeper) unbondingToUnbonded(ctx sdk.Context, validator types.Vali
 	}
 	return k.completeUnbondingValidator(ctx, validator)
 }
+
+// remove a validator from jail
+func (k StakingKeeper) unjailValidator(ctx sdk.Context, validator types.Validator) {
+	if !validator.Jailed {
+		panic(fmt.Sprintf("cannot unjail already unjailed validator, validator: %v\n", validator))
+	}
+
+	validator.Jailed = false
+	k.SetValidator(ctx, validator)
+	k.SetValidatorByPowerIndex(ctx, validator)
+}
