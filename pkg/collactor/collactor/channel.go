@@ -78,7 +78,7 @@ func (c *Chain) CreateOpenChannels(dst *Chain, maxRetries uint64, to time.Durati
 // file. The booleans return indicate if the message was successfully
 // executed and if this was the last handshake step.
 func ExecuteChannelStep(src, dst *Chain) (success, last, modified bool, err error) {
-	time.Sleep(2 * time.Second)
+	//time.Sleep(2 * time.Second)
 
 	if _, _, err := UpdateLightClients(src, dst); err != nil {
 		return false, false, false, err
@@ -96,8 +96,10 @@ func ExecuteChannelStep(src, dst *Chain) (success, last, modified bool, err erro
 	}
 
 	// Query Channel data from src and dst
-	srcChan, dstChan, err := QueryChannelPair(src, dst, int64(src.MustGetLatestLightHeight())-1,
-		int64(dst.MustGetLatestLightHeight()-1))
+	// Query Connection data from src and dst
+	srcH := int64(src.MustGetLatestLightHeight())
+	dstH := int64(dst.MustGetLatestLightHeight())
+	srcChan, dstChan, err := QueryChannelPair(src, dst, srcH, dstH)
 	if err != nil {
 		return false, false, false, err
 	}

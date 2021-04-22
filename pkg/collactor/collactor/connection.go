@@ -56,8 +56,6 @@ func (c *Chain) CreateOpenConnections(dst *Chain, maxRetries uint64, to time.Dur
 		case !success:
 			failed++
 			c.Log("retrying transaction...")
-			time.Sleep(5 * time.Second)
-
 			if failed > maxRetries {
 				return modified, fmt.Errorf("! Connection failed: [%s]client{%s}conn{%s} -> [%s]client{%s}conn{%s}",
 					c.ChainID, c.PathEnd.ClientID, c.PathEnd.ConnectionID,
@@ -75,7 +73,7 @@ func (c *Chain) CreateOpenConnections(dst *Chain, maxRetries uint64, to time.Dur
 // file. The booleans return indicate if the message was successfully
 // executed and if this was the last handshake step.
 func ExecuteConnectionStep(src, dst *Chain) (success, last, modified bool, err error) {
-	time.Sleep(2 * time.Second)
+	//time.Sleep(2 * time.Second)
 
 	if _, _, err := UpdateLightClients(src, dst); err != nil {
 		return false, false, false, err

@@ -65,12 +65,12 @@ func (c *Chain) ConnTry(
 	}
 
 	// NOTE: the proof height uses - 1 due to tendermint's delayed execution model
+	useHeight := counterparty.MustGetLatestLightHeight() - 1
 	clientState, clientStateProof, consensusStateProof, connStateProof,
-	proofHeight, err := counterparty.GenerateConnHandshakeProof(counterparty.MustGetLatestLightHeight() - 1)
+	proofHeight, err := counterparty.GenerateConnHandshakeProof(useHeight)
 	if err != nil {
 		return nil, err
 	}
-
 	// TODO: Get DelayPeriod from counterparty connection rather than using default value
 	msg := conntypes.NewMsgConnectionOpenTry(
 		c.PathEnd.ConnectionID,
@@ -124,6 +124,9 @@ func (c *Chain) ConnAck(
 		conntypes.DefaultIBCVersion,
 		c.MustGetAddress(), // 'MustGetAddress' must be called directly before calling 'NewMsg...'
 	)
+	if err := msg.ValidateBasic(); err != nil {
+		return nil, err
+	}
 
 	return []sdk.Msg{updateMsg, msg}, nil
 }
@@ -147,7 +150,9 @@ func (c *Chain) ConnConfirm(counterparty *Chain) ([]sdk.Msg, error) {
 		counterpartyConnState.ProofHeight,
 		c.MustGetAddress(), // 'MustGetAddress' must be called directly before calling 'NewMsg...'
 	)
-
+	if err := msg.ValidateBasic(); err != nil {
+		return nil, err
+	}
 	return []sdk.Msg{updateMsg, msg}, nil
 }
 
@@ -183,7 +188,8 @@ func (c *Chain) ChanTry(
 	}
 
 	// NOTE: the proof height uses - 1 due to tendermint's delayed execution model
-	counterpartyChannelRes, err := counterparty.QueryChannel(int64(counterparty.MustGetLatestLightHeight()) - 1)
+	useHeight := counterparty.MustGetLatestLightHeight() - 1
+	counterpartyChannelRes, err := counterparty.QueryChannel(int64(useHeight))
 	if err != nil {
 		return nil, err
 	}
@@ -201,6 +207,9 @@ func (c *Chain) ChanTry(
 		counterpartyChannelRes.ProofHeight,
 		c.MustGetAddress(), // 'MustGetAddress' must be called directly before calling 'NewMsg...'
 	)
+	if err := msg.ValidateBasic(); err != nil {
+		return nil, err
+	}
 	return []sdk.Msg{updateMsg, msg}, nil
 }
 
@@ -229,7 +238,9 @@ func (c *Chain) ChanAck(
 		counterpartyChannelRes.ProofHeight,
 		c.MustGetAddress(), // 'MustGetAddress' must be called directly before calling 'NewMsg...'
 	)
-
+	if err := msg.ValidateBasic(); err != nil {
+		return nil, err
+	}
 	return []sdk.Msg{updateMsg, msg}, nil
 }
 
@@ -253,7 +264,9 @@ func (c *Chain) ChanConfirm(counterparty *Chain) ([]sdk.Msg, error) {
 		counterpartyChanState.ProofHeight,
 		c.MustGetAddress(), // 'MustGetAddress' must be called directly before calling 'NewMsg...'
 	)
-
+	if err := msg.ValidateBasic(); err != nil {
+		return nil, err
+	}
 	return []sdk.Msg{updateMsg, msg}, nil
 }
 
@@ -274,6 +287,9 @@ func (c *Chain) UpdateClient(dst *Chain) (sdk.Msg, error) {
 		header,
 		c.MustGetAddress(), // 'MustGetAddress' must be called directly before calling 'NewMsg...'
 	)
+	if err := msg.ValidateBasic(); err != nil {
+		return nil, err
+	}
 	return msg, nil
 }
 
@@ -336,7 +352,9 @@ func (c *Chain) MsgRelayRecvPacket(counterparty *Chain, packet *relayMsgRecvPack
 		comRes.ProofHeight,
 		c.MustGetAddress(),
 	)
-
+	if err := msg.ValidateBasic(); err != nil {
+		return nil, err
+	}
 	return append(msgs, msg), nil
 }
 
@@ -401,7 +419,9 @@ func (c *Chain) MsgRelayTimeout(counterparty *Chain, packet *relayMsgTimeout) (m
 		recvRes.ProofHeight,
 		c.MustGetAddress(),
 	)
-
+	if err := msg.ValidateBasic(); err != nil {
+		return nil, err
+	}
 	return append(msgs, msg), nil
 }
 

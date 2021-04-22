@@ -8,6 +8,7 @@ import (
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"testing"
+	"time"
 )
 
 func TestMain(m *testing.M) {
@@ -64,7 +65,7 @@ func TestCreateOpenConnection(t *testing.T)  {
 	src, dst := setupClients()
 	_, err := src.CreateClients(dst)
 	require.Nil(t, err)
-	_, err = src.CreateOpenConnections(dst, 3, 300)
+	_, err = src.CreateOpenConnections(dst, 3, 3 * time.Second)
 	require.Nil(t, err)
 
 	con , err := src.QueryConnection(0)
@@ -76,10 +77,10 @@ func TestCreateOpenChannel(t *testing.T)  {
 	_, err := src.CreateClients(dst)
 	require.Nil(t, err)
 
-	_, err = src.CreateOpenConnections(dst, 5, 30000)
+	_, err = src.CreateOpenConnections(dst, 5, 3 * time.Second)
 	require.Nil(t, err)
 
-	_, err = src.CreateOpenChannels(dst, 5, 30000)
+	_, err = src.CreateOpenChannels(dst, 5, 3 * time.Second)
 	require.Nil(t, err)
 }
 
@@ -87,9 +88,9 @@ func TestStart(t *testing.T)  {
 	src, dst := setupClients()
 	_, err := src.CreateClients(dst)
 	require.Nil(t, err)
-	_, err = src.CreateOpenConnections(dst, 5, 30000)
+	_, err = src.CreateOpenConnections(dst, 5, 3 * time.Second)
 	require.Nil(t, err)
-	_, err = src.CreateOpenChannels(dst, 5, 30000)
+	_, err = src.CreateOpenChannels(dst, 5, 3 * time.Second)
 	require.Nil(t, err)
 
 	strategy := &collactor.NaiveStrategy{}
@@ -107,10 +108,10 @@ func TestSendPacket(t *testing.T)  {
 	_, err := src.CreateClients(dst)
 	require.Nil(t, err)
 
-	_, err = src.CreateOpenConnections(dst, 5, 300)
+	_, err = src.CreateOpenConnections(dst, 5, 3 * time.Second)
 	require.Nil(t, err)
 
-	_, err = src.CreateOpenChannels(dst, 5, 300)
+	_, err = src.CreateOpenChannels(dst, 5, 3 * time.Second)
 	require.Nil(t, err)
 
 	amount := sdk.NewCoin("stack0", sdk.NewInt(10000))
