@@ -3,6 +3,9 @@ package collactor
 import (
 	"fmt"
 	chantypes "github.com/ci123chain/ci123chain/pkg/ibc/core/channel/types"
+	clienttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/clients/types"
+	conntypes "github.com/ci123chain/ci123chain/pkg/ibc/core/connection/types"
+	"golang.org/x/sync/errgroup"
 	"gopkg.in/yaml.v2"
 )
 
@@ -154,4 +157,94 @@ func (p *Path) End(chainID string) *PathEnd {
 
 func (p *Path) String() string {
 	return fmt.Sprintf("[ ] %s ->\n %s", p.Src.String(), p.Dst.String())
+}
+
+
+// PathStatus holds the status of the primitives in the path
+type PathStatus struct {
+	Chains     bool `yaml:"chains" json:"chains"`
+	Clients    bool `yaml:"clients" json:"clients"`
+	Connection bool `yaml:"connection" json:"connection"`
+	Channel    bool `yaml:"channel" json:"channel"`
+}
+
+// PathWithStatus is used for showing the status of the path
+type PathWithStatus struct {
+	Path   *Path      `yaml:"path" json:"chains"`
+	Status PathStatus `yaml:"status" json:"status"`
+}
+
+// QueryPathStatus returns an instance of the path struct with some attached data about
+// the current status of the path
+func (p *Path) QueryPathStatus(src, dst *Chain) *PathWithStatus {
+	var (
+		err              error
+		eg               errgroup.Group
+		srch, dsth       int64
+		srcCs, dstCs     *clienttypes.QueryClientStateResponse
+		srcConn, dstConn *conntypes.QueryConnectionResponse
+		srcChan, dstChan *chantypes.QueryChannelResponse
+
+		out = &PathWithStatus{Path: p, Status: PathStatus{false, false, false, false}}
+	)
+	eg.Go(func() error {
+		srch, err = src.QueryLatestHeight()
+		return err
+	})
+	eg.Go(func() error {
+		dsth, err = dst.QueryLatestHeight()
+		return err
+	})
+	if err = eg.Wait(); err != nil {
+		return out
+	}
+	out.Status.Chains = true
+	if err = src.SetPath(p.Src); err != nil {
+		return out
+	}
+	if err = dst.SetPath(p.Dst); err != nil {
+		return out
+	}
+
+	eg.Go(func() error {
+		srcCs, err = src.QueryClientState(srch)
+		return err
+	})
+	eg.Go(func() error {
+		dstCs, err = dst.QueryClientState(dsth)
+		return err
+	})
+	if err = eg.Wait(); err != nil || srcCs == nil || dstCs == nil {
+		return out
+	}
+	out.Status.Clients = true
+
+	eg.Go(func() error {
+		srcConn, err = src.QueryConnection(srch)
+		return err
+	})
+	eg.Go(func() error {
+		dstConn, err = dst.QueryConnection(dsth)
+		return err
+	})
+	if err = eg.Wait(); err != nil || srcConn.Connection.State != conntypes.OPEN ||
+		dstConn.Connection.State != conntypes.OPEN {
+		return out
+	}
+	out.Status.Connection = true
+
+	eg.Go(func() error {
+		srcChan, err = src.QueryChannel(srch)
+		return err
+	})
+	eg.Go(func() error {
+		dstChan, err = dst.QueryChannel(dsth)
+		return err
+	})
+	if err = eg.Wait(); err != nil || srcChan.Channel.State != chantypes.OPEN ||
+		dstChan.Channel.State != chantypes.OPEN {
+		return out
+	}
+	out.Status.Channel = true
+	return out
 }

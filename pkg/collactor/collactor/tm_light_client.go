@@ -15,6 +15,8 @@ import (
 	dbm "github.com/tendermint/tm-db"
 	"golang.org/x/sync/errgroup"
 	"io/ioutil"
+	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -25,6 +27,11 @@ var (
 	logger = light.Logger(log.NewTMLogger(log.NewSyncWriter(ioutil.Discard)))
 
 	ErrDatabase = errors.New("database failure")
+
+
+	// ErrLightNotInitialized returns the canonical error for a an uninitialized light client
+	ErrLightNotInitialized = errors.New("light client is not initialized")
+
 )
 
 // NewLightDB returns a new instance of the lightclient database connection
@@ -152,7 +159,10 @@ func (c *Chain) LightClient(db dbm.DB) (*light.Client, error) {
 	)
 }
 
-
+// DeleteLightDB removes the light client database on disk, forcing re-initialization
+func (c *Chain) DeleteLightDB() error {
+	return os.RemoveAll(filepath.Join(lightDir(c.HomePath), fmt.Sprintf("%s.db", c.ChainID)))
+}
 
 // UpdateLightClient updates the tendermint light client by verifying the current
 // header against a trusted header.
@@ -185,6 +195,10 @@ func (c *Chain) UpdateLightClient() (*tmtypes.LightBlock, error) {
 	return lightBlock, nil
 }
 
+// GetLatestLightHeader returns the header to be used for client creation
+func (c *Chain) GetLatestLightHeader() (*tmclient.Header, error) {
+	return c.GetLightSignedHeaderAtHeight(0)
+}
 
 // UpdateLightClients updates the off-chain tendermint light clients concurrently.
 func UpdateLightClients(src, dst *Chain) (srcLB, dstLB *tmtypes.LightBlock, err error) {

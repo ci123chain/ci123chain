@@ -3,7 +3,10 @@ package collactor
 import (
 	"context"
 	"fmt"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	accountutils "github.com/ci123chain/ci123chain/pkg/account/utils"
+	transfertypes "github.com/ci123chain/ci123chain/pkg/ibc/application/transfer/types"
+	transferutils "github.com/ci123chain/ci123chain/pkg/ibc/application/transfer/utils"
 	chantypes "github.com/ci123chain/ci123chain/pkg/ibc/core/channel/types"
 	chanutils "github.com/ci123chain/ci123chain/pkg/ibc/core/channel/utils"
 	clienttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/clients/types"
@@ -13,8 +16,6 @@ import (
 	connutils "github.com/ci123chain/ci123chain/pkg/ibc/core/connection/utils"
 	ibcexported "github.com/ci123chain/ci123chain/pkg/ibc/core/exported"
 	stakingutils "github.com/ci123chain/ci123chain/pkg/staking/client/utils"
-	transferutils "github.com/ci123chain/ci123chain/pkg/ibc/application/transfer/utils"
-	transfertypes "github.com/ci123chain/ci123chain/pkg/ibc/application/transfer/types"
 	"github.com/pkg/errors"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	"golang.org/x/sync/errgroup"
@@ -33,6 +34,8 @@ func (c *Chain) QueryLatestHeight() (int64, error) {
 
 	return res.SyncInfo.LatestBlockHeight, nil
 }
+
+
 
 // QueryClientState retrevies the latest consensus state for a client in state at a given height
 func (c *Chain) QueryClientState(height int64) (*clienttypes.QueryClientStateResponse, error) {
@@ -270,4 +273,13 @@ func QueryConnectionPair(
 	})
 	err = eg.Wait()
 	return
+}
+
+
+// QueryBalance returns the amount of coins in the relayer account
+
+// QueryBalanceWithAddress returns the amount of coins in the relayer account with address as input
+func (c *Chain) QueryBalanceWithAddress(address sdk.AccAddress) (sdk.Coins, error) {
+	coins, err := accountutils.QueryBalance(c.CLIContext(0), address)
+	return coins, err
 }

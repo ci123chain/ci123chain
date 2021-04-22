@@ -412,6 +412,17 @@ func (c *Config) ValidatePath(p *collactor.Path) (err error) {
 	return nil
 }
 
+// DeleteChain removes a chain from the config
+func (c *Config) DeleteChain(chain string) *Config {
+	var set collactor.Chains
+	for _, ch := range c.Chains {
+		if ch.ChainID != chain {
+			set = append(set, ch)
+		}
+	}
+	c.Chains = set
+	return c
+}
 
 // ValidatePathEnd validates provided pathend and returns error for invalid identifiers
 func (c *Config) ValidatePathEnd(pe *collactor.PathEnd) error {

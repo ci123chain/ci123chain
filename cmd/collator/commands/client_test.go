@@ -23,7 +23,7 @@ func TestMain(m *testing.M) {
 }
 
 func setupClients() (*collactor.Chain, *collactor.Chain) {
-	c, src, dst, err := config.ChainsFromPath("demo")
+	c, src, dst, err := config.ChainsFromPath("demopath")
 
 	_, err = c[src].GetAddress()
 	if err != nil {

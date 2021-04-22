@@ -194,6 +194,12 @@ func (coins Coins) IsValid() bool {
 	}
 }
 
+// Empty returns true if there are no coins and false otherwise.
+func (coins Coins) Empty() bool {
+	return len(coins) == 0
+}
+
+
 // NewCoins constructs a new coin set. The provided coins will be sanitized by removing
 // zero coins and sorting the coin set. A panic will occur if the coin set is not valid.
 func NewCoins(coins ...Coin) Coins {

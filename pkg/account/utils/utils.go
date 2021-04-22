@@ -9,3 +9,8 @@ func QueryNonce(ctx context.Context, addr sdk.AccAddress) (uint64, error) {
 	nonce, _, err := ctx.GetNonceByAddress(addr, false)
 	return nonce, err
 }
+
+func QueryBalance(ctx context.Context, addr sdk.AccAddress) (sdk.Coins, error) {
+	coins, _, err := ctx.GetBalanceByAddress(addr, false)
+	return coins, err
+}

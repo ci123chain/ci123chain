@@ -1,9 +1,13 @@
 package commands
 
 import (
+	"encoding/json"
 	"fmt"
-	"github.com/ci123chain/ci123chain/pkg/collactor/helper"
+	helpers "github.com/ci123chain/ci123chain/pkg/collactor/helper"
+	tmclient "github.com/ci123chain/ci123chain/pkg/ibc/light-clients/07-tendermint/types"
+	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
+	"net/http"
 	"strings"
 )
 
@@ -56,7 +60,7 @@ $ %s l i ibc-2 --force`, appName, appName, appName)),
 			//	return err
 			//}
 
-			out, err := helper.InitLight(chain, force)
+			out, err := helpers.InitLight(chain, force)
 			if err != nil {
 				return err
 			}
@@ -71,4 +75,107 @@ $ %s l i ibc-2 --force`, appName, appName, appName)),
 	return forceFlag(cmd)
 	//return forceFlag(lightFlags(cmd))
 
+}
+
+
+// API Handlers
+
+// GetLightHeader handles the route
+func GetLightHeader(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	chain, err := config.Chains.Get(vars["chain-id"])
+	if err != nil {
+		helpers.WriteErrorResponse(http.StatusBadRequest, err, w)
+		return
+	}
+
+	var header *tmclient.Header
+	height := strings.TrimSpace(r.URL.Query().Get("height"))
+
+	if len(height) == 0 {
+		header, err = helpers.GetLightHeader(chain)
+		if err != nil {
+			helpers.WriteErrorResponse(http.StatusInternalServerError, err, w)
+			return
+		}
+	} else {
+		header, err = helpers.GetLightHeader(chain, height)
+		if err != nil {
+			helpers.WriteErrorResponse(http.StatusInternalServerError, err, w)
+			return
+		}
+	}
+	helpers.SuccessJSONResponse(http.StatusOK, header, w)
+}
+
+
+
+// GetLightHeight handles the route
+func GetLightHeight(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	chain, err := config.Chains.Get(vars["chain-id"])
+	if err != nil {
+		helpers.WriteErrorResponse(http.StatusBadRequest, err, w)
+		return
+	}
+
+	height, err := chain.GetLatestLightHeight()
+	if err != nil {
+		helpers.WriteErrorResponse(http.StatusInternalServerError, err, w)
+		return
+	}
+	helpers.SuccessJSONResponse(http.StatusOK, height, w)
+}
+
+
+type postLightRequest struct {
+	Force  bool   `json:"force"`
+	//Height int64  `json:"height"`
+	//Hash   string `json:"hash"`
+}
+
+// PostLight handles the route
+func PostLight(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	chain, err := config.Chains.Get(vars["chain-id"])
+	if err != nil {
+		helpers.WriteErrorResponse(http.StatusBadRequest, err, w)
+		return
+	}
+
+	var request postLightRequest
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		helpers.WriteErrorResponse(http.StatusBadRequest, err, w)
+		return
+	}
+
+	out, err := helpers.InitLight(chain, request.Force)
+	if err != nil {
+		helpers.WriteErrorResponse(http.StatusBadRequest, err, w)
+		return
+	}
+
+	if out == "" {
+		out = fmt.Sprintf("successfully created light client for %s", vars["chain-id"])
+	}
+	helpers.SuccessJSONResponse(http.StatusCreated, out, w)
+}
+
+
+// DeleteLight handles the route
+func DeleteLight(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	chain, err := config.Chains.Get(vars["chain-id"])
+	if err != nil {
+		helpers.WriteErrorResponse(http.StatusBadRequest, err, w)
+		return
+	}
+
+	err = chain.DeleteLightDB()
+	if err != nil {
+		helpers.WriteErrorResponse(http.StatusInternalServerError, err, w)
+		return
+	}
+
+	helpers.SuccessJSONResponse(http.StatusOK, fmt.Sprintf("Removed Light DB for %s", vars["chain-id"]), w)
 }

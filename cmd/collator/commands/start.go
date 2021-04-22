@@ -2,10 +2,8 @@ package commands
 
 import (
 	"fmt"
-	"github.com/avast/retry-go"
 	"github.com/ci123chain/ci123chain/pkg/collactor/collactor"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"golang.org/x/sync/errgroup"
 	"math"
 	"os"
@@ -59,27 +57,27 @@ $ %s start demo-path2 --max-tx-size 10`, appName, appName)),
 				return err
 			}
 
-			thresholdTime := viper.GetDuration(flagThresholdTime)
-
-			eg := new(errgroup.Group)
-			eg.Go(func() error {
-				for {
-					var timeToExpiry time.Duration
-					if err := retry.Do(func() error {
-						timeToExpiry, err = UpdateClientsFromChains(c[src], c[dst], thresholdTime)
-						if err != nil {
-							return err
-						}
-						return nil
-					}, retry.Attempts(5), retry.Delay(time.Millisecond*500), retry.LastErrorOnly(true)); err != nil {
-						return err
-					}
-					time.Sleep(timeToExpiry - thresholdTime)
-				}
-			})
-			if err = eg.Wait(); err != nil {
-				return err
-			}
+			//thresholdTime := viper.GetDuration(flagThresholdTime)
+			//
+			//eg := new(errgroup.Group)
+			//eg.Go(func() error {
+			//	for {
+			//		var timeToExpiry time.Duration
+			//		if err := retry.Do(func() error {
+			//			timeToExpiry, err = UpdateClientsFromChains(c[src], c[dst], thresholdTime)
+			//			if err != nil {
+			//				return err
+			//			}
+			//			return nil
+			//		}, retry.Attempts(5), retry.Delay(time.Millisecond*500), retry.LastErrorOnly(true)); err != nil {
+			//			return err
+			//		}
+			//		time.Sleep(timeToExpiry - thresholdTime)
+			//	}
+			//})
+			//if err = eg.Wait(); err != nil {
+			//	return err
+			//}
 
 			trapSignal(done)
 			return nil

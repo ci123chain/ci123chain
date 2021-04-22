@@ -285,7 +285,7 @@ func (c *Chain) MsgRelayRecvPacket(counterparty *Chain, packet *relayMsgRecvPack
 	var comRes *chantypes.QueryPacketCommitmentResponse
 	if err = retry.Do(func() (err error) {
 		// NOTE: the proof height uses - 1 due to tendermint's delayed execution model
-		comRes, err = counterparty.QueryPacketCommitment(int64(counterparty.MustGetLatestLightHeight())-1, packet.seq)
+		comRes, err = counterparty.QueryPacketCommitment(int64(counterparty.MustGetLatestLightHeight()), packet.seq)
 		if err != nil {
 			return err
 		}

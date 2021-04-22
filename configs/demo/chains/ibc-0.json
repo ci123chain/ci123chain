@@ -1,9 +1,9 @@
 {
-  "key": "testkey",
   "chain-id": "ibc-0",
   "rpc-addr": "http://localhost:26657",
   "account-prefix": "cosmos",
   "gas-adjustment": 1.5,
-  "gas-prices": "0.025stake",
-  "trusting-period": "336h"
+  "gas-prices": "100000",
+  "trusting-period": "336h",
+  "private-key": "2b452434ac4f7cf9c5d61d62f23834f34e851fb6efdb8d4a8c6e214a8bc93d70"
 }
