@@ -5,7 +5,6 @@ import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/account"
 	"github.com/ci123chain/ci123chain/pkg/order/types"
-	"github.com/ci123chain/ci123chain/pkg/params/subspace"
 	"github.com/ci123chain/ci123chain/pkg/redis"
 	dbm "github.com/tendermint/tm-db"
 	"time"
@@ -14,7 +13,6 @@ import (
 type OrderKeeper struct {
 	Cdb 		*redis.RedisDB//*couchdb.GoCouchDB
 	StoreKey	sdk.StoreKey
-	paramSubspace subspace.Subspace
 	AccountKeeper  account.AccountKeeper
 }
 

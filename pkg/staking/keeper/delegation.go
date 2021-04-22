@@ -707,3 +707,33 @@ func (k StakingKeeper) GetValidatorDelegations(ctx sdk.Context, valAddr sdk.AccA
 	}
 	return delegations
 }
+
+// rearranges the ValIndexKey to get the UBDKey
+func GetUBDKeyFromValIndexKey(indexKey []byte) []byte {
+	addrs := indexKey[1:] // remove prefix bytes
+	if len(addrs) != 2*sdk.AddrLen {
+		panic("unexpected key length")
+	}
+
+	valAddr := addrs[:sdk.AddrLen]
+	delAddr := addrs[sdk.AddrLen:]
+
+	return types.GetUBDKey(sdk.ToAccAddress(delAddr), sdk.ToAccAddress(valAddr))
+}
+
+// return all unbonding delegations from a particular validator
+func (k StakingKeeper) GetUnbondingDelegationsFromValidator(ctx sdk.Context, valAddr sdk.AccAddress) (ubds []types.UnbondingDelegation) {
+	store := ctx.KVStore(k.storeKey)
+
+	iterator := sdk.KVStorePrefixIterator(store, types.GetUBDsByValIndexKey(valAddr))
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		key := GetUBDKeyFromValIndexKey(iterator.Key())
+		value := store.Get(key)
+		ubd := types.MustUnmarshalUBD(k.cdc, value)
+		ubds = append(ubds, ubd)
+	}
+
+	return ubds
+}

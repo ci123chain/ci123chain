@@ -135,6 +135,17 @@ func (k StakingKeeper) RemoveValidatorTokensAndShares(ctx sdk.Context, validator
 	return validator, removedTokens
 }
 
+// Update the tokens of an existing validator, update the validators power index key
+func (k StakingKeeper) RemoveValidatorTokens(ctx sdk.Context,
+	validator types.Validator, tokensToRemove sdk.Int) types.Validator {
+	k.DeleteValidatorByPowerIndex(ctx, validator)
+	validator = validator.RemoveTokens(tokensToRemove)
+	k.SetValidator(ctx, validator)
+	k.SetValidatorByPowerIndex(ctx, validator)
+
+	return validator
+}
+
 // Delete the last validator power.
 func (k StakingKeeper) DeleteLastValidatorPower(ctx sdk.Context, operator sdk.AccAddress) {
 	store := ctx.KVStore(k.storeKey)
@@ -347,4 +358,13 @@ func (k StakingKeeper) UpdateValidatorCommission(ctx sdk.Context, validator type
 	commission.CommissionRates.Rate = newRate
 	commission.UpdateTime = blockTime
 	return commission, nil
+}
+
+func (k StakingKeeper) mustGetValidatorByConsAddr(ctx sdk.Context, consAddr sdk.AccAddress) types.Validator {
+	validator, found := k.GetValidatorByConsAddr(ctx, consAddr)
+	if !found {
+		panic(fmt.Errorf("validator with consensus-Address %s not found", consAddr))
+	}
+
+	return validator
 }

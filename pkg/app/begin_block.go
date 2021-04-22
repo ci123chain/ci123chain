@@ -10,8 +10,3 @@ func (c *Chain) BeginBlocker(ctx types.Context, req abci.RequestBeginBlock) abci
 
 	return c.mm.BeginBlocker(ctx, req)
 }
-
-func (c *Chain) Committer(ctx types.Context) abci.ResponseCommit{
-
-	return c.mm.Committer(ctx)
-}

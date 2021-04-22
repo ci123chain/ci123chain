@@ -2,7 +2,7 @@ package types
 
 import (
 	"fmt"
-	paramtypes "github.com/ci123chain/ci123chain/pkg/params/subspace"
+	paramtypes "github.com/ci123chain/ci123chain/pkg/params/types"
 )
 
 

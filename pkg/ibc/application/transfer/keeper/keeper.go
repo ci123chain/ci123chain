@@ -8,7 +8,7 @@ import (
 	capabilitytypes "github.com/ci123chain/ci123chain/pkg/capability/types"
 	"github.com/ci123chain/ci123chain/pkg/ibc/application/transfer/types"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/host"
-	paramtypes "github.com/ci123chain/ci123chain/pkg/params/subspace"
+	"github.com/ci123chain/ci123chain/pkg/params"
 	supplytypes "github.com/ci123chain/ci123chain/pkg/supply/exported"
 	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 
@@ -19,7 +19,7 @@ import (
 type Keeper struct {
 	storeKey   sdk.StoreKey
 	cdc        *codec.Codec
-	paramSpace paramtypes.Subspace
+	paramSpace params.Subspace
 
 	channelKeeper types.ChannelKeeper
 	portKeeper    types.PortKeeper
@@ -30,7 +30,7 @@ type Keeper struct {
 
 // NewKeeper creates a new IBC transfer Keeper instance
 func NewKeeper(
-	cdc *codec.Codec, key sdk.StoreKey, paramSpace paramtypes.Subspace,
+	cdc *codec.Codec, key sdk.StoreKey, paramSpace params.Subspace,
 	channelKeeper types.ChannelKeeper, portKeeper types.PortKeeper,
 	supplyKeeper types.SupplyKeeper, scopedKeeper capabilitykeeper.ScopedKeeper,
 ) Keeper {

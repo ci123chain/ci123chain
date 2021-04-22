@@ -5,6 +5,7 @@ import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	yaml "gopkg.in/yaml.v2"
 	"time"
+	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 )
 
 
@@ -14,6 +15,7 @@ type Delegation struct {
 	ValidatorAddress  sdk.AccAddress    `json:"validator_address"`
 	Shares            sdk.Dec           `json:"shares"`
 }
+
 
 // IsMature - is the current entry mature
 func (e RedelegationEntry) IsMature(currentTime time.Time) bool {
@@ -127,3 +129,19 @@ func (d DelegationResponse) String() string {
 
 // DelegationResponses is a collection of DelegationResp
 type DelegationResponses []DelegationResponse
+
+// unmarshal a unbonding delegation from a store value
+func MustUnmarshalUBD(cdc *codec.Codec, value []byte) UnbondingDelegation {
+	ubd, err := UnmarshalUBD(cdc, value)
+	if err != nil {
+		panic(err)
+	}
+
+	return ubd
+}
+
+// unmarshal a unbonding delegation from a store value
+func UnmarshalUBD(cdc *codec.Codec, value []byte) (ubd UnbondingDelegation, err error) {
+	err = cdc.UnmarshalBinaryBare(value, &ubd)
+	return ubd, err
+}

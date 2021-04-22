@@ -11,6 +11,7 @@ import (
 	cryptoAmino "github.com/tendermint/tendermint/crypto/encoding/amino"
 	"sort"
 	"time"
+	"fmt"
 )
 
 type Validator struct {
@@ -79,6 +80,21 @@ func (v Validator) IsUnbonding() bool {
 // make all future delegations invalid.
 func (v Validator) InvalidExRate() bool {
 	return v.Tokens.IsZero() && v.DelegatorShares.IsPositive()
+}
+
+// RemoveTokens removes tokens from a validator
+func (v Validator) RemoveTokens(tokens sdk.Int) Validator {
+	if tokens.IsNegative() {
+		panic(fmt.Sprintf("should not happen: trying to remove negative tokens %v", tokens))
+	}
+
+	if v.Tokens.LT(tokens) {
+		panic(fmt.Sprintf("should not happen: only have %v tokens, trying to remove %v", v.Tokens, tokens))
+	}
+
+	v.Tokens = v.Tokens.Sub(tokens)
+
+	return v
 }
 
 // AddTokensFromDel adds tokens to a validator
