@@ -45,16 +45,16 @@ func (AppModuleBasic) DefaultGenesis(validators []tmtypes.GenesisValidator) json
 // AppModule object for module implementation
 type AppModule struct {
 	AppModuleBasic
-	keeper     keeper.Keeper
-	accKeeper account.AccountKeeper
+	Keeper     keeper.Keeper
+	AccKeeper account.AccountKeeper
 }
 
 // NewAppModule creates a new AppModule Object
 func NewAppModule(k keeper.Keeper, accKeeper account.AccountKeeper) AppModule {
 	return AppModule{
 		AppModuleBasic: AppModuleBasic{},
-		keeper:         k,
-		accKeeper:     	accKeeper,
+		Keeper:         k,
+		AccKeeper:     	accKeeper,
 	}
 }
 
@@ -70,7 +70,7 @@ func (am AppModule) InitGenesis(ctx sdk.Context, bz json.RawMessage) []abci.Vali
 	if err != nil {
 		panic(fmt.Sprintf("failed to unmarshal %s genesis state: %s", types.ModuleName, err))
 	}
-	keeper.InitGenesis(ctx, am.keeper, genesisState)
+	keeper.InitGenesis(ctx, am.Keeper, genesisState)
 	return []abci.ValidatorUpdate{}
 }
 
@@ -82,10 +82,10 @@ func (am AppModule) InitGenesis(ctx sdk.Context, bz json.RawMessage) []abci.Vali
 
 // EndBlock implements app module
 func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
-	EndBlocker(ctx, am.keeper)
+	EndBlocker(ctx, am.Keeper)
 	// this begin blocker is only for testing purposes, don't import into your
 	// own chain running gravity
-	TestingEndBlocker(ctx, am.keeper)
+	TestingEndBlocker(ctx, am.Keeper)
 	return []abci.ValidatorUpdate{}
 }
 

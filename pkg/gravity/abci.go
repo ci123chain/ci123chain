@@ -175,8 +175,7 @@ func ValsetSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 
 		// SLASH UNBONDING VALIDATORS who didn't attest valset request
 		blockTime := ctx.BlockTime().Add(k.StakingKeeper.GetParams(ctx).UnbondingTime)
-		blockHeight := ctx.BlockHeight()
-		unbondingValIterator := k.StakingKeeper.ValidatorQueueIterator(ctx, blockTime, blockHeight)
+		unbondingValIterator := k.StakingKeeper.ValidatorQueueIterator(ctx, blockTime)
 		defer unbondingValIterator.Close()
 
 		// All unbonding validators

@@ -3,6 +3,9 @@ package keeper
 import (
 	"encoding/hex"
 	"fmt"
+	slashing "github.com/ci123chain/ci123chain/pkg/slashing/keeper"
+	staking "github.com/ci123chain/ci123chain/pkg/staking/keeper"
+	supply "github.com/ci123chain/ci123chain/pkg/supply/keeper"
 	"math"
 	"sort"
 	"strconv"
@@ -18,14 +21,13 @@ import (
 
 // Keeper maintains the link to storage and exposes getter/setter methods for the various parts of the state machine
 type Keeper struct {
-	StakingKeeper types.StakingKeeper
-
+	StakingKeeper staking.StakingKeeper
+	SupplyKeeper supply.Keeper
 	storeKey   sdk.StoreKey // Unexposed key to access store from sdk.Context
 	paramSpace paramtypes.Subspace
 
 	cdc            *codec.Codec // The wire codec for binary encoding/decoding.
-	bankKeeper     types.BankKeeper
-	SlashingKeeper types.SlashingKeeper
+	SlashingKeeper slashing.Keeper
 
 	AttestationHandler interface {
 		Handle(sdk.Context, types.Attestation, types.EthereumClaim) error
@@ -33,7 +35,7 @@ type Keeper struct {
 }
 
 // NewKeeper returns a new instance of the gravity keeper
-func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, paramSpace paramtypes.Subspace, stakingKeeper types.StakingKeeper, bankKeeper types.BankKeeper, slashingKeeper types.SlashingKeeper) Keeper {
+func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, paramSpace paramtypes.Subspace, stakingKeeper staking.StakingKeeper, supplyKeeper supply.Keeper, slashingKeeper slashing.Keeper) Keeper {
 	// set KeyTable if it has not already been set
 	if !paramSpace.HasKeyTable() {
 		paramSpace = paramSpace.WithKeyTable(types.ParamKeyTable())
@@ -44,12 +46,11 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, paramSpace paramtypes.Su
 		paramSpace:     paramSpace,
 		storeKey:       storeKey,
 		StakingKeeper:  stakingKeeper,
-		bankKeeper:     bankKeeper,
+		SupplyKeeper: 	supplyKeeper,
 		SlashingKeeper: slashingKeeper,
 	}
 	k.AttestationHandler = AttestationHandler{
 		keeper:     k,
-		bankKeeper: bankKeeper,
 	}
 
 	return k

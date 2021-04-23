@@ -68,6 +68,21 @@ func (k StakingKeeper) SetLastTotalPower(ctx sdk.Context, power sdk.Int) {
 	store.Set(types.LastTotalPowerKey, bz)
 }
 
+// Load the last total validator power.
+func (k StakingKeeper) GetLastTotalPower(ctx sdk.Context) sdk.Int {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.LastTotalPowerKey)
+
+	if bz == nil {
+		return sdk.ZeroInt()
+	}
+
+	ip := sdk.IntProto{}
+	k.cdc.MustUnmarshalBinaryBare(bz, &ip)
+
+	return ip.Int
+}
+
 // iterate through the validator set and perform the provided function
 func (k StakingKeeper) IterateValidators(ctx sdk.Context, fn func(index int64, validator types.Validator) (stop bool)) {
 	store := ctx.KVStore(k.storeKey)

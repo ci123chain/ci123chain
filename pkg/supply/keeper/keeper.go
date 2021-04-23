@@ -6,8 +6,9 @@ import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/account"
 	"github.com/ci123chain/ci123chain/pkg/supply/exported"
-	types "github.com/ci123chain/ci123chain/pkg/supply/types"
+	"github.com/ci123chain/ci123chain/pkg/supply/types"
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
+	"github.com/ci123chain/ci123chain/pkg/abci/store"
 	"github.com/tendermint/tendermint/libs/log"
 )
 
@@ -18,10 +19,6 @@ type Keeper struct {
 
 	permAddrs 	map[string]types.PermissionsForAddress
 }
-
-
-
-
 
 func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, ak account.AccountKeeper, maccPerms map[string][]string) Keeper {
 	permAddrs := make(map[string]types.PermissionsForAddress)
@@ -263,4 +260,20 @@ func (k Keeper) BurnCoins(ctx sdk.Context, moduleName string, amt sdk.Coins) err
 // Logger returns a module-specific logger.
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", "x/"+types.ModuleName)
+}
+
+// GetDenomMetaData retrieves the denomination metadata
+func (k Keeper) GetDenomMetaData(ctx sdk.Context, denom string) types.Metadata {
+	st := ctx.KVStore(k.storeKey)
+	st = store.NewPrefixStore(st, types.DenomMetadataKey(denom))
+
+	bz := st.Get([]byte(denom))
+	if bz == nil {
+		return types.Metadata{}
+	}
+
+	var metadata types.Metadata
+	k.cdc.MustUnmarshalBinaryBare(bz, &metadata)
+
+	return metadata
 }

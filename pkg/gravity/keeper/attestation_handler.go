@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"github.com/ci123chain/ci123chain/pkg/supply"
 
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
@@ -12,7 +13,7 @@ import (
 // AttestationHandler processes `observed` Attestations
 type AttestationHandler struct {
 	keeper     Keeper
-	bankKeeper types.BankKeeper
+	supplyKeeper supply.Keeper
 }
 
 // Handle is the entry point for Attestation processing.
@@ -32,14 +33,14 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim
 				return sdkerrors.Wrap(err, "invalid reciever address")
 			}
 
-			if err = a.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, addr, coins); err != nil {
+			if err = a.supplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, addr, coins); err != nil {
 				return sdkerrors.Wrap(err, "transfer vouchers")
 			}
 		} else {
 			// If it is not cosmos originated, mint the coins (aka vouchers)
 			coins := sdk.Coins{sdk.NewCoin(denom, claim.Amount)}
 
-			if err := a.bankKeeper.MintCoins(ctx, types.ModuleName, coins); err != nil {
+			if err := a.supplyKeeper.MintCoins(ctx, types.ModuleName, coins); err != nil {
 				return sdkerrors.Wrapf(err, "mint vouchers coins: %s", coins)
 			}
 
@@ -48,7 +49,7 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim
 				return sdkerrors.Wrap(err, "invalid reciever address")
 			}
 
-			if err = a.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, addr, coins); err != nil {
+			if err = a.supplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, addr, coins); err != nil {
 				return sdkerrors.Wrap(err, "transfer vouchers")
 			}
 		}
@@ -64,7 +65,7 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim
 		}
 
 		// Check if denom exists
-		metadata := a.keeper.bankKeeper.GetDenomMetaData(ctx, claim.CosmosDenom)
+		metadata := a.keeper.SupplyKeeper.GetDenomMetaData(ctx, claim.CosmosDenom)
 		if metadata.Base == "" {
 			return sdkerrors.Wrap(types.ErrUnknown, fmt.Sprintf("denom not found %s", claim.CosmosDenom))
 		}

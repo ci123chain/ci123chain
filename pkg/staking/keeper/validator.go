@@ -35,6 +35,41 @@ func (k StakingKeeper) GetValidator(ctx sdk.Context, addr sdk.AccAddress) (valid
 	return validator, true
 }
 
+func (k StakingKeeper) GetBondedValidatorsByPower(ctx sdk.Context) []types.Validator {
+	maxValidators := k.MaxValidators(ctx)
+	validators := make([]types.Validator, maxValidators)
+
+	iterator := k.ValidatorsPowerStoreIterator(ctx)
+	defer iterator.Close()
+
+	i := 0
+	for ; iterator.Valid() && i < int(maxValidators); iterator.Next() {
+		address := iterator.Value()
+		validator := k.mustGetValidator(ctx, sdk.ToAccAddress(address))
+
+		if validator.IsBonded() {
+			validators[i] = validator
+			i++
+		}
+	}
+
+	return validators[:i] // trim
+}
+
+func (k StakingKeeper) GetLastValidatorPower(ctx sdk.Context, operator sdk.AccAddress) (power int64) {
+	store := ctx.KVStore(k.storeKey)
+
+	bz := store.Get(types.GetLastValidatorPowerKey(operator))
+	if bz == nil {
+		return 0
+	}
+
+	intV := gogotypes.Int64Value{}
+	k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &intV)
+
+	return intV.GetValue()
+}
+
 func (k StakingKeeper) mustGetValidator(ctx sdk.Context, addr sdk.AccAddress) types.Validator {
 	validator, found := k.GetValidator(ctx, addr)
 	if !found {
