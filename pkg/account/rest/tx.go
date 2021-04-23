@@ -105,7 +105,7 @@ func QueryBalancesRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		if prove == "true" {
 			isProve = true
 		}
-		res, proof, err2 := cliCtx.GetBalanceByAddress(addr, isProve)
+		res, proof, err2 := cliCtx.GetBalanceByAddress(addr, isProve, height)
 		if err2 != nil {
 			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInternal, "query balance failed").Error())
 			return

@@ -151,7 +151,7 @@ func queryContractStateAllHandlerFn(cliCtx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		contractAddr := r.FormValue("contract_address")
 		contractAddress := sdk.HexToAddress(contractAddr)
-		qparams := keeper.NewQueryAccountParams(contractAddress)
+		qparams := keeper.NewQueryAccountParams(contractAddress, -1)
 		bz, err := cliCtx.Cdc.MarshalJSON(qparams)
 		if err != nil {
 			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInternal, "cdc marshal failed").Error())

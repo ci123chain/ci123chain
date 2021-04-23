@@ -10,6 +10,7 @@ import (
 
 func NewHandler(keeper *keeper.OrderKeeper) types.Handler {
 	return func(ctx types.Context, msg types.Msg) (*types.Result, error) {
+		ctx = ctx.WithEventManager(types.NewEventManager())
 		switch msg := msg.(type) {
 		case *order.MsgUpgrade:
 			return handlerMsgUpgrade(ctx, keeper, msg)
@@ -37,12 +38,12 @@ func handlerMsgUpgrade(ctx types.Context,k *keeper.OrderKeeper, msg *order.MsgUp
 	k.UpdateOrderBook(ctx, orderbook, &action)
 
 	em := ctx.EventManager()
-	//em.EmitEvents(types.Events{
-	//	types.NewEvent(order.EventType,
-	//		types.NewAttribute([]byte(types.AttributeKeyMethod), []byte(order.AttributeValueAddShard)),
-	//		types.NewAttribute([]byte(types.AttributeKeyModule), []byte(order.AttributeValueCategory)),
-	//		types.NewAttribute([]byte(types.AttributeKeySender), []byte(msg.FromAddress.String())),
-	//	),
-	//})
+	em.EmitEvents(types.Events{
+		types.NewEvent(order.EventType,
+			types.NewAttribute([]byte(types.AttributeKeyMethod), []byte(order.AttributeValueAddShard)),
+			types.NewAttribute([]byte(types.AttributeKeyModule), []byte(order.AttributeValueCategory)),
+			types.NewAttribute([]byte(types.AttributeKeySender), []byte(msg.FromAddress.String())),
+		),
+	})
 	return &types.Result{Events: em.Events()}, nil
 }

@@ -84,7 +84,7 @@ func CheckAccountAndBalanceFromParams(ctx context.Context, r *http.Request, w ht
 
 
 	acc, _ := helper.StrToAddress(from)
-	balance, _, err := ctx.GetBalanceByAddress(acc, false)
+	balance, _, err := ctx.GetBalanceByAddress(acc, false, "")
 	if err != nil {
 		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInternal, "get balances of from account failed").Error())
 		return false

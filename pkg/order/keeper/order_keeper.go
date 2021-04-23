@@ -161,6 +161,10 @@ func (ok *OrderKeeper) isReady(orderbook types.OrderBook, shardID string, height
 		orderbook.Current.State == types.StateDone &&
 		orderbook.Lists[nextIndex].Name == shardID {
 		return true
+	}else if orderbook.Lists[nextIndex].Height == 0 &&
+		orderbook.Current.State == types.StateDone &&
+		orderbook.Lists[nextIndex].Name == shardID {
+		return true
 	}else {
 		return false
 	}
