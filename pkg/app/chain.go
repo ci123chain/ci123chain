@@ -11,6 +11,7 @@ import (
 	capabilitykeeper "github.com/ci123chain/ci123chain/pkg/capability/keeper"
 	dist_module "github.com/ci123chain/ci123chain/pkg/distribution/module"
 	"github.com/ci123chain/ci123chain/pkg/gateway/redissource"
+	"github.com/ci123chain/ci123chain/pkg/gravity"
 	"github.com/ci123chain/ci123chain/pkg/ibc"
 	porttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/port/types"
 	infrastructure_module "github.com/ci123chain/ci123chain/pkg/infrastructure/module"
@@ -94,6 +95,7 @@ var (
 	DisrtStoreKey    = sdk.NewKVStoreKey(k.DisrtKey)
 	StakingStoreKey  = sdk.NewKVStoreKey(staking.StoreKey)
 	SlashingStoreKey  = sdk.NewKVStoreKey(slashing.StoreKey)
+	GravityStoreKey  = sdk.NewKVStoreKey(gravity.StoreKey)
 	WasmStoreKey     = sdk.NewKVStoreKey(vm.StoreKey)
 	MintStoreKey     = sdk.NewKVStoreKey(mint.StoreKey)
 	InfrastructureStoreKey = sdk.NewKVStoreKey(infrastructure.StoreKey)
@@ -168,12 +170,14 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 
 	slashingKeeper := slashing.NewKeeper(cdc, SlashingStoreKey, stakingKeeper, c.GetSubspace(slashing.ModuleName))
 
+	gravityKeeper := gravity.NewKeeper(cdc, GravityStoreKey, c.GetSubspace(gravity.ModuleName), stakingKeeper, supplyKeeper, slashingKeeper)
+
 	distrKeeper := k.NewKeeper(cdc, DisrtStoreKey, supplyKeeper, accountKeeper, auth.FeeCollectorName, c.GetSubspace(distr.ModuleName), stakingKeeper, cdb)
 
 	mintKeeper := mint.NewKeeper(cdc, MintStoreKey, c.GetSubspace(mint.ModuleName), stakingKeeper, supplyKeeper, auth.FeeCollectorName)
 
 	infrastructureKeeper := infrastructure.NewKeeper(cdc, InfrastructureStoreKey)
-	stakingKeeper.SetHooks(staking.NewMultiStakingHooks(distrKeeper.Hooks(), slashingKeeper.Hooks()))
+	stakingKeeper.SetHooks(staking.NewMultiStakingHooks(distrKeeper.Hooks(), slashingKeeper.Hooks(), gravityKeeper.Hooks()))
 	
 
 	capabilityKeeper := capabilitykeeper.NewKeeper(cdc, CapabilityStoreKey, memKeys[capabilitytypes.MemStoreKey])
@@ -213,6 +217,7 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 			order.ModuleName,
 			stakingTypes.ModuleName,
 			slashing.ModuleName,
+			gravity.ModuleName,
 			vm.ModuleName,
 			mint.ModuleName,
 			infrastructure.ModuleName,
@@ -229,6 +234,7 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 			order_module.AppModule{OrderKeeper: &orderKeeper},
 			staking_module.AppModule{StakingKeeper: stakingKeeper, AccountKeeper: accountKeeper, SupplyKeeper: supplyKeeper},
 			slashing.AppModule{Keeper: slashingKeeper, AccountKeeper: accountKeeper, StakingKeeper: stakingKeeper},
+			gravity.AppModule{Keeper: gravityKeeper, AccKeeper: accountKeeper},
 			vm_module.AppModule{Keeper: &vmKeeper},
 			mint_module.AppModule{Keeper: mintKeeper},
 			infrastructure_module.AppModule{Keeper: infrastructureKeeper},
@@ -242,6 +248,7 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 		c.Router().AddRoute(order.RouteKey, orhandler.NewHandler(&orderKeeper))
 		c.Router().AddRoute(staking.RouteKey, staking.NewHandler(stakingKeeper))
 		c.Router().AddRoute(slashing.RouteKey, slashing.NewHandler(slashingKeeper))
+		c.Router().AddRoute(gravity.RouteKey, gravity.NewHandler(gravityKeeper))
 		c.Router().AddRoute(distr.RouteKey, distr.NewHandler(distrKeeper))
 		c.Router().AddRoute(vm.RouteKey, vm.NewHandler(vmKeeper))
 		c.Router().AddRoute(infrastructure.RouteKey, infrastructure.NewHandler(infrastructureKeeper))
@@ -254,6 +261,7 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 		c.QueryRouter().AddRoute(order.RouteKey, order.NewQuerier(&orderKeeper))
 		c.QueryRouter().AddRoute(staking.RouteKey, staking.NewQuerier(stakingKeeper))
 		c.QueryRouter().AddRoute(slashing.RouteKey, slashing.NewQuerier(slashingKeeper, cdc))
+		c.QueryRouter().AddRoute(gravity.RouteKey, gravity.NewQuerier(gravityKeeper))
 		c.QueryRouter().AddRoute(account.RouteKey, account.NewQuerier(accountKeeper))
 		c.QueryRouter().AddRoute(vm.RouteKey, vm.NewQuerier(vmKeeper))
 		c.QueryRouter().AddRoute(mint.RouteKey, mint.NewQuerier(mintKeeper))
@@ -300,6 +308,7 @@ func (c *Chain) mountStores() error {
 		OrderStoreKey,
 		StakingStoreKey,
 		SlashingStoreKey,
+		GravityStoreKey,
 		WasmStoreKey,
 		MintStoreKey,
 		InfrastructureStoreKey,
@@ -328,6 +337,7 @@ func initAppParamsKeeper(cdc *codec.Codec, key *sdk.KVStoreKey, tkey *sdk.Transi
 	paramsKeeper.Subspace(auth.ModuleName)
 	paramsKeeper.Subspace(stakingTypes.ModuleName)
 	paramsKeeper.Subspace(slashing.ModuleName)
+	paramsKeeper.Subspace(gravity.ModuleName)
 	paramsKeeper.Subspace(mint.ModuleName)
 	paramsKeeper.Subspace(distr.ModuleName)
 	paramsKeeper.Subspace(vm.ModuleName)

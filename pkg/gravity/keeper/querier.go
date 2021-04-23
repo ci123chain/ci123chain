@@ -163,7 +163,7 @@ func queryValsetRequest(ctx sdk.Context, path []string, keeper Keeper) ([]byte, 
 	}
 	// TODO: replace these with the GRPC response types
 	// TODO: fix the use of module codec here
-	res, err := codec.MarshalJSONIndent(types.ModuleCdc, valset)
+	res, err := codec.MarshalJSONIndent(types.GravityCodec, valset)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
@@ -187,7 +187,7 @@ func queryAllValsetConfirms(ctx sdk.Context, nonceStr string, keeper Keeper) ([]
 	if len(confirms) == 0 {
 		return nil, nil
 	}
-	res, err := codec.MarshalJSONIndent(types.ModuleCdc, confirms)
+	res, err := codec.MarshalJSONIndent(types.GravityCodec, confirms)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
@@ -211,7 +211,7 @@ func queryAllBatchConfirms(ctx sdk.Context, nonceStr string, tokenContract strin
 	if len(confirms) == 0 {
 		return nil, nil
 	}
-	res, err := codec.MarshalJSONIndent(types.ModuleCdc, confirms)
+	res, err := codec.MarshalJSONIndent(types.GravityCodec, confirms)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
@@ -233,7 +233,7 @@ func lastValsetRequests(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 	if len(valReq) == 0 {
 		return nil, nil
 	}
-	res, err := codec.MarshalJSONIndent(types.ModuleCdc, valReq)
+	res, err := codec.MarshalJSONIndent(types.GravityCodec, valReq)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
@@ -268,7 +268,7 @@ func lastPendingValsetRequest(ctx sdk.Context, operatorAddr string, keeper Keepe
 	if len(pendingValsetReq) == 0 {
 		return nil, nil
 	}
-	res, err := codec.MarshalJSONIndent(types.ModuleCdc, pendingValsetReq)
+	res, err := codec.MarshalJSONIndent(types.GravityCodec, pendingValsetReq)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
@@ -277,7 +277,7 @@ func lastPendingValsetRequest(ctx sdk.Context, operatorAddr string, keeper Keepe
 
 func queryCurrentValset(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 	valset := keeper.GetCurrentValset(ctx)
-	res, err := codec.MarshalJSONIndent(types.ModuleCdc, valset)
+	res, err := codec.MarshalJSONIndent(types.GravityCodec, valset)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
@@ -302,7 +302,7 @@ func queryValsetConfirm(ctx sdk.Context, path []string, keeper Keeper) ([]byte, 
 	if valset == nil {
 		return nil, nil
 	}
-	res, err := codec.MarshalJSONIndent(types.ModuleCdc, *valset)
+	res, err := codec.MarshalJSONIndent(types.GravityCodec, *valset)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
@@ -334,7 +334,7 @@ func lastPendingBatchRequest(ctx sdk.Context, operatorAddr string, keeper Keeper
 	if pendingBatchReq == nil {
 		return nil, nil
 	}
-	res, err := codec.MarshalJSONIndent(types.ModuleCdc, pendingBatchReq)
+	res, err := codec.MarshalJSONIndent(types.GravityCodec, pendingBatchReq)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
@@ -353,7 +353,7 @@ func lastBatchesRequest(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 	if len(batches) == 0 {
 		return nil, nil
 	}
-	res, err := codec.MarshalJSONIndent(types.ModuleCdc, batches)
+	res, err := codec.MarshalJSONIndent(types.GravityCodec, batches)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
@@ -362,7 +362,7 @@ func lastBatchesRequest(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 
 func queryBatchFees(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 	val := types.QueryBatchFeeResponse{BatchFees: keeper.GetAllBatchFees(ctx)}
-	res, err := codec.MarshalJSONIndent(types.ModuleCdc, val)
+	res, err := codec.MarshalJSONIndent(types.GravityCodec, val)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
@@ -379,7 +379,7 @@ func lastLogicCallRequests(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 	if len(calls) == 0 {
 		return nil, nil
 	}
-	res, err := codec.MarshalJSONIndent(types.ModuleCdc, calls)
+	res, err := codec.MarshalJSONIndent(types.GravityCodec, calls)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
@@ -399,7 +399,7 @@ func queryBatch(ctx sdk.Context, nonce string, tokenContract string, keeper Keep
 	if foundBatch == nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "Can not find tx batch")
 	}
-	res, err := codec.MarshalJSONIndent(types.ModuleCdc, foundBatch)
+	res, err := codec.MarshalJSONIndent(types.GravityCodec, foundBatch)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, err.Error())
 	}
@@ -425,7 +425,7 @@ func lastPendingLogicCallRequest(ctx sdk.Context, operatorAddr string, keeper Ke
 	if pendingLogicCalls == nil {
 		return nil, nil
 	}
-	res, err := codec.MarshalJSONIndent(types.ModuleCdc, pendingLogicCalls)
+	res, err := codec.MarshalJSONIndent(types.GravityCodec, pendingLogicCalls)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
@@ -443,7 +443,7 @@ func queryLogicCall(ctx sdk.Context, invalidationId string, invalidationNonce st
 	if foundCall == nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "Can not find logic call")
 	}
-	res, err := codec.MarshalJSONIndent(types.ModuleCdc, foundCall)
+	res, err := codec.MarshalJSONIndent(types.GravityCodec, foundCall)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, err.Error())
 	}
@@ -470,7 +470,7 @@ func queryAllLogicCallConfirms(ctx sdk.Context, invalidationId string, invalidat
 	if len(confirms) == 0 {
 		return nil, nil
 	}
-	res, err := codec.MarshalJSONIndent(types.ModuleCdc, confirms)
+	res, err := codec.MarshalJSONIndent(types.GravityCodec, confirms)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
@@ -480,7 +480,7 @@ func queryAllLogicCallConfirms(ctx sdk.Context, invalidationId string, invalidat
 
 func queryGravityID(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 	gravityID := keeper.GetGravityID(ctx)
-	res, err := codec.MarshalJSONIndent(types.ModuleCdc, gravityID)
+	res, err := codec.MarshalJSONIndent(types.GravityCodec, gravityID)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	} else {
@@ -496,7 +496,7 @@ func queryDenomToERC20(ctx sdk.Context, denom string, keeper Keeper) ([]byte, er
 	var response types.QueryDenomToERC20Response
 	response.CosmosOriginated = cosmos_originated
 	response.Erc20 = erc20
-	bytes, err := codec.MarshalJSONIndent(types.ModuleCdc, response)
+	bytes, err := codec.MarshalJSONIndent(types.GravityCodec, response)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	} else {
@@ -509,7 +509,7 @@ func queryERC20ToDenom(ctx sdk.Context, ERC20 string, keeper Keeper) ([]byte, er
 	var response types.QueryERC20ToDenomResponse
 	response.CosmosOriginated = cosmos_originated
 	response.Denom = denom
-	bytes, err := codec.MarshalJSONIndent(types.ModuleCdc, response)
+	bytes, err := codec.MarshalJSONIndent(types.GravityCodec, response)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	} else {
@@ -534,7 +534,7 @@ func queryPendingSendToEth(ctx sdk.Context, senderAddr string, k Keeper) ([]byte
 			res.UnbatchedTransfers = append(res.UnbatchedTransfers, tx)
 		}
 	}
-	bytes, err := codec.MarshalJSONIndent(types.ModuleCdc, res)
+	bytes, err := codec.MarshalJSONIndent(types.GravityCodec, res)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	} else {

@@ -53,7 +53,7 @@ func (k msgServer) SetOrchestratorAddress(c context.Context, msg *types.MsgSetOr
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
-			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(msg.Type())),
+			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(msg.MsgType())),
 			sdk.NewAttribute([]byte(types.AttributeKeySetOperatorAddr), []byte(orch.String())),
 		),
 	)
@@ -81,7 +81,7 @@ func (k msgServer) ValsetConfirm(c context.Context, msg *types.MsgValsetConfirm)
 
 	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
 	validator := k.GetOrchestratorValidator(ctx, orchaddr)
-	if validator == nil {
+	if validator.Empty() {
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
 	}
 
@@ -103,7 +103,7 @@ func (k msgServer) ValsetConfirm(c context.Context, msg *types.MsgValsetConfirm)
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
-			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(msg.Type())),
+			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(msg.MsgType())),
 			sdk.NewAttribute([]byte(types.AttributeKeyValsetConfirmKey), key),
 		),
 	)
@@ -126,7 +126,7 @@ func (k msgServer) SendToEth(c context.Context, msg *types.MsgSendToEth) (*types
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
-			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(msg.Type())),
+			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(msg.MsgType())),
 			sdk.NewAttribute([]byte(types.AttributeKeyOutgoingTXID), []byte(fmt.Sprint(txID))),
 		),
 	)
@@ -153,7 +153,7 @@ func (k msgServer) RequestBatch(c context.Context, msg *types.MsgRequestBatch) (
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
-			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(msg.Type())),
+			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(msg.MsgType())),
 			sdk.NewAttribute([]byte(types.AttributeKeyBatchNonce), []byte(fmt.Sprint(batchID.BatchNonce))),
 		),
 	)
@@ -184,7 +184,7 @@ func (k msgServer) ConfirmBatch(c context.Context, msg *types.MsgConfirmBatch) (
 
 	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
 	validator := k.GetOrchestratorValidator(ctx, orchaddr)
-	if validator == nil {
+	if validator.Empty() {
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
 	}
 
@@ -207,7 +207,7 @@ func (k msgServer) ConfirmBatch(c context.Context, msg *types.MsgConfirmBatch) (
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
-			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(msg.Type())),
+			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(msg.MsgType())),
 			sdk.NewAttribute([]byte(types.AttributeKeyBatchConfirmKey), key),
 		),
 	)
@@ -242,7 +242,7 @@ func (k msgServer) ConfirmLogicCall(c context.Context, msg *types.MsgConfirmLogi
 
 	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
 	validator := k.GetOrchestratorValidator(ctx, orchaddr)
-	if validator == nil {
+	if validator.Empty() {
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
 	}
 
@@ -266,7 +266,7 @@ func (k msgServer) ConfirmLogicCall(c context.Context, msg *types.MsgConfirmLogi
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
-			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(msg.Type())),
+			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(msg.MsgType())),
 		),
 	)
 
@@ -282,7 +282,7 @@ func (k msgServer) DepositClaim(c context.Context, msg *types.MsgDepositClaim) (
 
 	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
 	validator := k.GetOrchestratorValidator(ctx, orchaddr)
-	if validator == nil {
+	if validator.Empty() {
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
 	}
 
@@ -307,7 +307,7 @@ func (k msgServer) DepositClaim(c context.Context, msg *types.MsgDepositClaim) (
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
-			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(msg.Type())),
+			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(msg.MsgType())),
 			// TODO: maybe return something better here? is this the right string representation?
 			sdk.NewAttribute([]byte(types.AttributeKeyAttestationID), types.GetAttestationKey(msg.EventNonce, msg.ClaimHash())),
 		),
@@ -325,7 +325,7 @@ func (k msgServer) WithdrawClaim(c context.Context, msg *types.MsgWithdrawClaim)
 
 	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
 	validator := k.GetOrchestratorValidator(ctx, orchaddr)
-	if validator == nil {
+	if validator.Empty() {
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
 	}
 
@@ -350,9 +350,9 @@ func (k msgServer) WithdrawClaim(c context.Context, msg *types.MsgWithdrawClaim)
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
-			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(msg.Type())),
+			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(msg.MsgType())),
 			// TODO: maybe return something better here? is this the right string representation?
-			sdk.NewAttribute([]byte(types.AttributeKeyAttestationID), types.GetAttestationKey(msg.EventNonce, msg.ClaimHash())))),
+			sdk.NewAttribute([]byte(types.AttributeKeyAttestationID), types.GetAttestationKey(msg.EventNonce, msg.ClaimHash())),
 		),
 	)
 
@@ -365,7 +365,7 @@ func (k msgServer) ERC20DeployedClaim(c context.Context, msg *types.MsgERC20Depl
 
 	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
 	validator := k.GetOrchestratorValidator(ctx, orchaddr)
-	if validator == nil {
+	if validator.Empty() {
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
 	}
 
@@ -390,7 +390,7 @@ func (k msgServer) ERC20DeployedClaim(c context.Context, msg *types.MsgERC20Depl
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
-			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(msg.Type())),
+			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(msg.MsgType())),
 			// TODO: maybe return something better here? is this the right string representation?
 			sdk.NewAttribute([]byte(types.AttributeKeyAttestationID), types.GetAttestationKey(msg.EventNonce, msg.ClaimHash())),
 		),
@@ -405,7 +405,7 @@ func (k msgServer) LogicCallExecutedClaim(c context.Context, msg *types.MsgLogic
 
 	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
 	validator := k.GetOrchestratorValidator(ctx, orchaddr)
-	if validator == nil {
+	if validator.Empty() {
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
 	}
 
@@ -430,7 +430,7 @@ func (k msgServer) LogicCallExecutedClaim(c context.Context, msg *types.MsgLogic
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
-			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(msg.Type())),
+			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(msg.MsgType())),
 			// TODO: maybe return something better here? is this the right string representation?
 			sdk.NewAttribute([]byte(types.AttributeKeyAttestationID), types.GetAttestationKey(msg.EventNonce, msg.ClaimHash())),
 		),
@@ -453,7 +453,7 @@ func (k msgServer) CancelSendToEth(c context.Context, msg *types.MsgCancelSendTo
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
-			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(msg.Type())),
+			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(msg.MsgType())),
 			sdk.NewAttribute([]byte(types.AttributeKeyOutgoingTXID), []byte(fmt.Sprint(msg.TransactionId))),
 		),
 	)
