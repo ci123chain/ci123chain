@@ -38,3 +38,19 @@ func getNodeStatus(ctx context.Context) (*ctypes.ResultStatus, error) {
 	}
 	return node.Status(ctx.Context())
 }
+
+type SyncingResponse struct {
+	Syncing bool `json:"syncing"`
+}
+
+func NodeSyncingRequestHandlerFn(ctx context.Context) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		status, err := getNodeStatus(ctx)
+		if err != nil {
+			rest.WriteErrorRes(w, types.ErrNode(types.DefaultCodespace, err).Error())
+			return
+		}
+
+		rest.PostProcessResponseBare(w, ctx, SyncingResponse{Syncing: status.SyncInfo.CatchingUp})
+	}
+}
