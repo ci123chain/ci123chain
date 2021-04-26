@@ -34,8 +34,8 @@ func SaveConfig(c *cfg.Config) {
 	configDir := filepath.Join(c.RootDir, "config")
 	configFilePath := filepath.Join(configDir, "config.toml")
 	c.Instrumentation.Prometheus = true
-	c.Consensus.TimeoutPropose = 20 * time.Second
-	c.Consensus.TimeoutCommit = 20 * time.Second
+	c.Consensus.TimeoutPropose = 5 * time.Second
+	c.Consensus.TimeoutCommit = 5 * time.Second
 	c.RPC.ListenAddress = "tcp://0.0.0.0:26657"
 	cfg.EnsureRoot(c.RootDir)
 	cfg.WriteConfigFile(configFilePath, c)
