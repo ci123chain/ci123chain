@@ -9,10 +9,6 @@ import (
 )
 
 
-type Coin struct {
-	Denom  string `json:"denom"`
-	Amount Int `json:"amount"`
-}
 
 func NewChainCoin(amount Int) Coin {
 	if err := validate(ChainCoinDenom, amount); err != nil {

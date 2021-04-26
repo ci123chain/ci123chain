@@ -754,10 +754,6 @@ func (dp DecProto) String() string {
 	return dp.Dec.String()
 }
 
-type DecProto struct {
-	Dec   Dec   `json:"dec"`
-}
-
 //___________________________________________________________________________________
 // helpers
 

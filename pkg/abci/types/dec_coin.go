@@ -8,11 +8,6 @@ import (
 	"strings"
 )
 
-type DecCoin struct {
-	Denom     string    `json:"denom"`
-	Amount    Dec       `json:"amount"`
-}
-
 // ----------------------------------------------------------------------------
 // Decimal Coin
 
