@@ -79,7 +79,10 @@ func ParseDecCoin(coinStr string) (coin DecCoin, err error) {
 	if matches == nil {
 		return DecCoin{}, fmt.Errorf("invalid decimal coin expression: %s", coinStr)
 	}
-
+	// add for default coin type
+	if len(matches) == 2 {
+		matches = append(matches, DefaultBondDenom)
+	}
 	amountStr, denomStr := matches[1], matches[2]
 
 	amount, err := NewDecFromStr(amountStr)
@@ -180,7 +183,7 @@ func (coin DecCoin) Sub(coinB DecCoin) DecCoin {
 func (coin DecCoin) TruncateDecimal() (Coin, DecCoin) {
 	truncated := coin.Amount.TruncateInt()
 	change := coin.Amount.Sub(truncated.ToDec())
-	return NewChainCoin(truncated), NewDecCoinFromDec(coin.Denom, change)
+	return NewCoin(coin.Denom, truncated), NewDecCoinFromDec(coin.Denom, change)
 }
 
 // IsPositive returns true if coin amount is positive.

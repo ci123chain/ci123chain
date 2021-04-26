@@ -109,7 +109,6 @@ func getAPICmd() *cobra.Command {
 			r.HandleFunc("/listen/{path}/{strategy}/{name}", PostRelayerListenHandler(sm)).Methods("POST")
 			r.HandleFunc("/listen/{path}/{strategy}/{name}", DeleteRelayerListenHandler(sm)).Methods("DELETE")
 
-
 			fmt.Println("listening on", config.Global.APIListenPort)
 
 			if err := http.ListenAndServe(config.Global.APIListenPort, r); err != nil {

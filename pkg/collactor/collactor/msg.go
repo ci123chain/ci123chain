@@ -9,6 +9,7 @@ import (
 	clienttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/clients/types"
 	conntypes "github.com/ci123chain/ci123chain/pkg/ibc/core/connection/types"
 	tmclient "github.com/ci123chain/ci123chain/pkg/ibc/light-clients/07-tendermint/types"
+	"github.com/pkg/errors"
 )
 
 // CreateClient creates an sdk.Msg to update the client on src with consensus state from dst
@@ -88,6 +89,7 @@ func (c *Chain) ConnTry(
 		clientState.GetLatestHeight().(clienttypes.Height),
 		c.MustGetAddress(), // 'MustGetAddress' must be called directly before calling 'NewMsg...'
 	)
+
 	if err := msg.ValidateBasic(); err != nil {
 		return nil, err
 	}
@@ -124,6 +126,7 @@ func (c *Chain) ConnAck(
 		conntypes.DefaultIBCVersion,
 		c.MustGetAddress(), // 'MustGetAddress' must be called directly before calling 'NewMsg...'
 	)
+
 	if err := msg.ValidateBasic(); err != nil {
 		return nil, err
 	}
@@ -143,13 +146,16 @@ func (c *Chain) ConnConfirm(counterparty *Chain) ([]sdk.Msg, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	if counterpartyConnState.Connection.State != conntypes.OPEN {
+		return nil, errors.New(fmt.Sprintf("counterparty connection state error, expected Open(3), Got %d", counterpartyConnState.Connection.State))
+	}
 	msg := conntypes.NewMsgConnectionOpenConfirm(
 		c.PathEnd.ConnectionID,
 		counterpartyConnState.Proof,
 		counterpartyConnState.ProofHeight,
 		c.MustGetAddress(), // 'MustGetAddress' must be called directly before calling 'NewMsg...'
 	)
+
 	if err := msg.ValidateBasic(); err != nil {
 		return nil, err
 	}
@@ -207,6 +213,7 @@ func (c *Chain) ChanTry(
 		counterpartyChannelRes.ProofHeight,
 		c.MustGetAddress(), // 'MustGetAddress' must be called directly before calling 'NewMsg...'
 	)
+
 	if err := msg.ValidateBasic(); err != nil {
 		return nil, err
 	}
@@ -238,6 +245,7 @@ func (c *Chain) ChanAck(
 		counterpartyChannelRes.ProofHeight,
 		c.MustGetAddress(), // 'MustGetAddress' must be called directly before calling 'NewMsg...'
 	)
+
 	if err := msg.ValidateBasic(); err != nil {
 		return nil, err
 	}
@@ -255,6 +263,9 @@ func (c *Chain) ChanConfirm(counterparty *Chain) ([]sdk.Msg, error) {
 	counterpartyChanState, err := counterparty.QueryChannel(int64(counterparty.MustGetLatestLightHeight()) - 1)
 	if err != nil {
 		return nil, err
+	}
+	if counterpartyChanState.Channel.State != chantypes.OPEN {
+		return nil, errors.New(fmt.Sprintf("counterparty channel state error, expected Open(3), Got %d", counterpartyChanState.Channel.State))
 	}
 
 	msg := chantypes.NewMsgChannelOpenConfirm(
@@ -290,7 +301,28 @@ func (c *Chain) UpdateClient(dst *Chain) (sdk.Msg, error) {
 	if err := msg.ValidateBasic(); err != nil {
 		return nil, err
 	}
+
 	return msg, nil
+}
+
+func (c *Chain) UpdateClient2(dst *Chain) (sdk.Msg, int64, error) {
+	header, err := dst.GetIBCUpdateHeader(c)
+	if err != nil {
+		return nil, -1, err
+	}
+
+	if err := header.ValidateBasic(); err != nil {
+		return nil, -1,err
+	}
+	msg := clienttypes.NewMsgUpdateClient(
+		c.PathEnd.ClientID,
+		header,
+		c.MustGetAddress(), // 'MustGetAddress' must be called directly before calling 'NewMsg...'
+	)
+	if err := msg.ValidateBasic(); err != nil {
+		return nil, -1, err
+	}
+	return msg, header.Height,nil
 }
 
 
@@ -301,7 +333,7 @@ func (c *Chain) MsgRelayRecvPacket(counterparty *Chain, packet *relayMsgRecvPack
 	var comRes *chantypes.QueryPacketCommitmentResponse
 	if err = retry.Do(func() (err error) {
 		// NOTE: the proof height uses - 1 due to tendermint's delayed execution model
-		comRes, err = counterparty.QueryPacketCommitment(int64(counterparty.MustGetLatestLightHeight()), packet.seq)
+		comRes, err = counterparty.QueryPacketCommitment(int64(counterparty.MustGetLatestLightHeight()) - 1, packet.seq)
 		if err != nil {
 			return err
 		}
@@ -367,7 +399,9 @@ func (c *Chain) MsgRelayTimeout(counterparty *Chain, packet *relayMsgTimeout) (m
 	if err = retry.Do(func() (err error) {
 		// NOTE: Timeouts currently only work with ORDERED channels for nwo
 		// NOTE: the proof height uses - 1 due to tendermint's delayed execution model
-		recvRes, err = counterparty.QueryPacketReceipt(int64(counterparty.MustGetLatestLightHeight())-1, packet.seq)
+		useDstHeight := counterparty.MustGetLatestLightHeight() - 1
+		recvRes, err = counterparty.QueryPacketReceipt(int64(useDstHeight), packet.seq)
+
 		if err != nil {
 			return err
 		}

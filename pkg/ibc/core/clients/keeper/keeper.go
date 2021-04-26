@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"encoding/hex"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	prefix "github.com/ci123chain/ci123chain/pkg/abci/store"
@@ -181,6 +182,9 @@ func (k Keeper) IterateClients(ctx sdk.Context, cb func(string, exported.ClientS
 
 func (k Keeper) SetClientConsensusState(ctx sdk.Context, clientID string, height exported.Height,
 	consensusState exported.ConsensusState) {
+	k.Logger(ctx).Info("update consensus state ", "Height:", height.String(),
+		"Root :", fmt.Sprintf("%X",consensusState.GetRoot().GetHash()),
+		"Root2:", hex.EncodeToString(consensusState.GetRoot().GetHash()))
 	store := k.ClientStore(ctx, clientID)
 	store.Set(host.ConsensusStateKey(height), k.MustMarshalConsensusState(consensusState))
 }

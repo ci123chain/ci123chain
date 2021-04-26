@@ -25,6 +25,9 @@ import (
 	"time"
 
 	dRest "github.com/ci123chain/ci123chain/pkg/distribution/client/rest"
+	ibctransferRest "github.com/ci123chain/ci123chain/pkg/ibc/application/transfer/client/rest"
+	ibccore "github.com/ci123chain/ci123chain/pkg/ibc/core/client/rest"
+
 	iRest "github.com/ci123chain/ci123chain/pkg/infrastructure/client/rest"
 	mRest "github.com/ci123chain/ci123chain/pkg/mint/client/rest"
 	orQuery "github.com/ci123chain/ci123chain/pkg/order"
@@ -103,7 +106,6 @@ func NewRestServer() *RestServer {
 	accountRpc.RegisterRoutes(cliCtx, r)
 	txRpc.RegisterTxRoutes(cliCtx, r)
 	// todo ibc
-	//ibc.RegisterRoutes(cliCtx, r)
 	dRest.RegisterRoutes(cliCtx, r)
 	order.RegisterTxRoutes(cliCtx, r)
 	orQuery.RegisterTxRoutes(cliCtx, r)
@@ -111,6 +113,8 @@ func NewRestServer() *RestServer {
 	wRest.RegisterRoutes(cliCtx, r)
 	mRest.RegisterRoutes(cliCtx, r)
 	iRest.RegisterRoutes(cliCtx, r)
+	ibctransferRest.RegisterRoutes(cliCtx, r)
+	ibccore.RegisterRoutes(cliCtx, r)
 
 	return &RestServer{
 		Mux: r,

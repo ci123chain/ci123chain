@@ -81,7 +81,7 @@ func (nrs *NaiveStrategy) UnrelayedSequences(src, dst *Chain) (*RelaySequences, 
 		var res *chantypes.QueryPacketCommitmentsResponse
 		if err = retry.Do(func() error {
 			// Query the packet commitment
-			res, err = src.QueryPacketCommitments(0, 1000, src.MustGetLatestLightHeight())
+			res, err = src.QueryPacketCommitments(0, 1000, 0)
 			switch {
 			case err != nil:
 				return err
@@ -107,7 +107,7 @@ func (nrs *NaiveStrategy) UnrelayedSequences(src, dst *Chain) (*RelaySequences, 
 	eg.Go(func() error {
 		var res *chantypes.QueryPacketCommitmentsResponse
 		if err = retry.Do(func() error {
-			res, err = dst.QueryPacketCommitments(0, 1000, dst.MustGetLatestLightHeight())
+			res, err = dst.QueryPacketCommitments(0, 1000, 0)
 			switch {
 			case err != nil:
 				return err
@@ -136,13 +136,13 @@ func (nrs *NaiveStrategy) UnrelayedSequences(src, dst *Chain) (*RelaySequences, 
 
 	eg.Go(func() error {
 		// Query all packets sent by src that have been received by dst
-		rs.Src, err = dst.QueryUnreceivedPackets(dst.MustGetLatestLightHeight(), srcPacketSeq)
+		rs.Src, err = dst.QueryUnreceivedPackets(0, srcPacketSeq)
 		return err
 	})
 
 	eg.Go(func() error {
 		// Query all packets sent by dst that have been received by src
-		rs.Dst, err = src.QueryUnreceivedPackets(src.MustGetLatestLightHeight(), dstPacketSeq)
+		rs.Dst, err = src.QueryUnreceivedPackets(0, dstPacketSeq)
 		return err
 	})
 
@@ -538,7 +538,7 @@ func relayPacketsFromResultTx(src, dst *Chain, res *ctypes.ResultTx) ([]relayPac
 			case !rp.timeout.IsZero() && block.GetHeight().GTE(rp.timeout):
 				timeoutPackets = append(timeoutPackets, rp.timeoutPacket())
 			// If the packet has a timeout timestamp and it has been reached, return a timeout packet
-			case rp.timeoutStamp != 0 && block.GetTime().UnixNano() >= int64(rp.timeoutStamp):
+			case rp.timeoutStamp != 0 && block.GetTime().UTC().UnixNano() >= int64(rp.timeoutStamp):
 				timeoutPackets = append(timeoutPackets, rp.timeoutPacket())
 			// If the packet matches the relay constraints relay it as a MsgReceivePacket
 			case !rp.pass:
@@ -596,7 +596,6 @@ func relayPacketsFromEventListener(src, dst *PathEnd, events map[string][]string
 					}
 					rp.timeoutStamp = timeout
 				}
-
 				// queue the packet for return
 				rlyPkts = append(rlyPkts, rp)
 			}
