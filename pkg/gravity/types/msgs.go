@@ -7,7 +7,6 @@ import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/tendermint/tendermint/crypto/tmhash"
-	proto "github.com/gogo/protobuf/proto"
 )
 
 var (
@@ -22,12 +21,6 @@ var (
 	_ sdk.Msg = &MsgDepositClaim{}
 	_ sdk.Msg = &MsgWithdrawClaim{}
 )
-
-type MsgSetOrchestratorAddress struct {
-	Validator    string `protobuf:"bytes,1,opt,name=validator,proto3" json:"validator,omitempty"`
-	Orchestrator string `protobuf:"bytes,2,opt,name=orchestrator,proto3" json:"orchestrator,omitempty"`
-	EthAddress   string `protobuf:"bytes,3,opt,name=eth_address,json=ethAddress,proto3" json:"eth_address,omitempty"`
-}
 
 // NewMsgSetOrchestratorAddress returns a new msgSetOrchestratorAddress
 func NewMsgSetOrchestratorAddress(val sdk.AccAddress, oper sdk.AccAddress, eth string) *MsgSetOrchestratorAddress {
@@ -85,16 +78,6 @@ func (msg *MsgSetOrchestratorAddress) Bytes() []byte {
 	return sdk.MustSortJSON(GravityCodec.MustMarshalJSON(msg))
 }
 
-type MsgSetOrchestratorAddressResponse struct {
-}
-
-type MsgValsetConfirm struct {
-	Nonce        uint64 `protobuf:"varint,1,opt,name=nonce,proto3" json:"nonce,omitempty"`
-	Orchestrator string `protobuf:"bytes,2,opt,name=orchestrator,proto3" json:"orchestrator,omitempty"`
-	EthAddress   string `protobuf:"bytes,3,opt,name=eth_address,json=ethAddress,proto3" json:"eth_address,omitempty"`
-	Signature    string `protobuf:"bytes,4,opt,name=signature,proto3" json:"signature,omitempty"`
-}
-
 // NewMsgValsetConfirm returns a new msgValsetConfirm
 func NewMsgValsetConfirm(nonce uint64, ethAddress string, validator sdk.AccAddress, signature string) *MsgValsetConfirm {
 	return &MsgValsetConfirm{
@@ -147,16 +130,6 @@ func (msg *MsgValsetConfirm) GetFromAddress() sdk.AccAddress {
 
 func (msg *MsgValsetConfirm) Bytes() []byte {
 	return sdk.MustSortJSON(GravityCodec.MustMarshalJSON(msg))
-}
-
-type MsgValsetConfirmResponse struct {
-}
-
-type MsgSendToEth struct {
-	Sender    string     `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
-	EthDest   string     `protobuf:"bytes,2,opt,name=eth_dest,json=ethDest,proto3" json:"eth_dest,omitempty"`
-	Amount    sdk.Coin `protobuf:"bytes,3,opt,name=amount,proto3" json:"amount"`
-	BridgeFee sdk.Coin `protobuf:"bytes,4,opt,name=bridge_fee,json=bridgeFee,proto3" json:"bridge_fee"`
 }
 
 // NewMsgSendToEth returns a new msgSendToEth
@@ -228,14 +201,6 @@ func (msg MsgSendToEth) GetFromAddress() sdk.AccAddress {
 	return acc
 }
 
-type MsgSendToEthResponse struct {
-}
-
-type MsgRequestBatch struct {
-	Sender string `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
-	Denom  string `protobuf:"bytes,2,opt,name=denom,proto3" json:"denom,omitempty"`
-}
-
 // NewMsgRequestBatch returns a new msgRequestBatch
 func NewMsgRequestBatch(orchestrator sdk.AccAddress) *MsgRequestBatch {
 	return &MsgRequestBatch{
@@ -283,17 +248,6 @@ func (msg MsgRequestBatch) GetFromAddress() sdk.AccAddress {
 	}
 
 	return acc
-}
-
-type MsgRequestBatchResponse struct {
-}
-
-type MsgConfirmBatch struct {
-	Nonce         uint64 `protobuf:"varint,1,opt,name=nonce,proto3" json:"nonce,omitempty"`
-	TokenContract string `protobuf:"bytes,2,opt,name=token_contract,json=tokenContract,proto3" json:"token_contract,omitempty"`
-	EthSigner     string `protobuf:"bytes,3,opt,name=eth_signer,json=ethSigner,proto3" json:"eth_signer,omitempty"`
-	Orchestrator  string `protobuf:"bytes,4,opt,name=orchestrator,proto3" json:"orchestrator,omitempty"`
-	Signature     string `protobuf:"bytes,5,opt,name=signature,proto3" json:"signature,omitempty"`
 }
 
 // Route should return the name of the module
@@ -345,17 +299,6 @@ func (msg MsgConfirmBatch) GetFromAddress() sdk.AccAddress {
 	}
 
 	return acc
-}
-
-type MsgConfirmBatchResponse struct {
-}
-
-type MsgConfirmLogicCall struct {
-	InvalidationId    string `protobuf:"bytes,1,opt,name=invalidation_id,json=invalidationId,proto3" json:"invalidation_id,omitempty"`
-	InvalidationNonce uint64 `protobuf:"varint,2,opt,name=invalidation_nonce,json=invalidationNonce,proto3" json:"invalidation_nonce,omitempty"`
-	EthSigner         string `protobuf:"bytes,3,opt,name=eth_signer,json=ethSigner,proto3" json:"eth_signer,omitempty"`
-	Orchestrator      string `protobuf:"bytes,4,opt,name=orchestrator,proto3" json:"orchestrator,omitempty"`
-	Signature         string `protobuf:"bytes,5,opt,name=signature,proto3" json:"signature,omitempty"`
 }
 
 // Route should return the name of the module
@@ -410,9 +353,6 @@ func (msg MsgConfirmLogicCall) GetFromAddress() sdk.AccAddress {
 	return acc
 }
 
-type MsgConfirmLogicCallResponse struct {
-}
-
 // EthereumClaim represents a claim on ethereum state
 type EthereumClaim interface {
 	// All Ethereum claims that we relay from the Gravity contract and into the module
@@ -427,7 +367,7 @@ type EthereumClaim interface {
 	GetBlockHeight() uint64
 	// the delegate address of the claimer, for MsgDepositClaim and MsgWithdrawClaim
 	// this is sent in as the sdk.AccAddress of the delegated key. it is up to the user
-	// to disambiguate this into a sdk.AccAddress
+	// to disambiguate this into a sdk.ValAddress
 	GetClaimer() sdk.AccAddress
 	// Which type of claim this is
 	GetType() ClaimType
@@ -441,20 +381,6 @@ var (
 	_ EthereumClaim = &MsgERC20DeployedClaim{}
 	_ EthereumClaim = &MsgLogicCallExecutedClaim{}
 )
-
-type MsgDepositClaim struct {
-	EventNonce     uint64                                 `protobuf:"varint,1,opt,name=event_nonce,json=eventNonce,proto3" json:"event_nonce,omitempty"`
-	BlockHeight    uint64                                 `protobuf:"varint,2,opt,name=block_height,json=blockHeight,proto3" json:"block_height,omitempty"`
-	TokenContract  string                                 `protobuf:"bytes,3,opt,name=token_contract,json=tokenContract,proto3" json:"token_contract,omitempty"`
-	Amount         sdk.Int `protobuf:"bytes,4,opt,name=amount,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"amount"`
-	EthereumSender string                                 `protobuf:"bytes,5,opt,name=ethereum_sender,json=ethereumSender,proto3" json:"ethereum_sender,omitempty"`
-	CosmosReceiver string                                 `protobuf:"bytes,6,opt,name=cosmos_receiver,json=cosmosReceiver,proto3" json:"cosmos_receiver,omitempty"`
-	Orchestrator   string                                 `protobuf:"bytes,7,opt,name=orchestrator,proto3" json:"orchestrator,omitempty"`
-}
-
-func (m *MsgDepositClaim) Reset()         { *m = MsgDepositClaim{} }
-func (m *MsgDepositClaim) String() string { return proto.CompactTextString(m) }
-func (*MsgDepositClaim) ProtoMessage()    {}
 
 // GetType returns the type of the claim
 func (e *MsgDepositClaim) GetType() ClaimType {
@@ -484,20 +410,6 @@ func (e *MsgDepositClaim) ValidateBasic() error {
 // GetSignBytes encodes the message for signing
 func (msg MsgDepositClaim) GetSignBytes() []byte {
 	return sdk.MustSortJSON(GravityCodec.MustMarshalJSON(msg))
-}
-
-func (m *MsgDepositClaim) GetEventNonce() uint64 {
-	if m != nil {
-		return m.EventNonce
-	}
-	return 0
-}
-
-func (m *MsgDepositClaim) GetBlockHeight() uint64 {
-	if m != nil {
-		return m.BlockHeight
-	}
-	return 0
 }
 
 func (msg MsgDepositClaim) GetClaimer() sdk.AccAddress {
@@ -549,21 +461,6 @@ func (b *MsgDepositClaim) ClaimHash() []byte {
 	return tmhash.Sum([]byte(path))
 }
 
-type MsgDepositClaimResponse struct {
-}
-
-type MsgWithdrawClaim struct {
-	EventNonce    uint64 `protobuf:"varint,1,opt,name=event_nonce,json=eventNonce,proto3" json:"event_nonce,omitempty"`
-	BlockHeight   uint64 `protobuf:"varint,2,opt,name=block_height,json=blockHeight,proto3" json:"block_height,omitempty"`
-	BatchNonce    uint64 `protobuf:"varint,3,opt,name=batch_nonce,json=batchNonce,proto3" json:"batch_nonce,omitempty"`
-	TokenContract string `protobuf:"bytes,4,opt,name=token_contract,json=tokenContract,proto3" json:"token_contract,omitempty"`
-	Orchestrator  string `protobuf:"bytes,5,opt,name=orchestrator,proto3" json:"orchestrator,omitempty"`
-}
-
-func (m *MsgWithdrawClaim) Reset()         { *m = MsgWithdrawClaim{} }
-func (m *MsgWithdrawClaim) String() string { return proto.CompactTextString(m) }
-func (*MsgWithdrawClaim) ProtoMessage()    {}
-
 // GetType returns the claim type
 func (e *MsgWithdrawClaim) GetType() ClaimType {
 	return CLAIM_TYPE_WITHDRAW
@@ -584,20 +481,6 @@ func (e *MsgWithdrawClaim) ValidateBasic() error {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, e.Orchestrator)
 	}
 	return nil
-}
-
-func (m *MsgWithdrawClaim) GetEventNonce() uint64 {
-	if m != nil {
-		return m.EventNonce
-	}
-	return 0
-}
-
-func (m *MsgWithdrawClaim) GetBlockHeight() uint64 {
-	if m != nil {
-		return m.BlockHeight
-	}
-	return 0
 }
 
 // Hash implements WithdrawBatch.Hash
@@ -653,27 +536,6 @@ const (
 	TypeMsgDepositClaim = "deposit_claim"
 )
 
-type MsgWithdrawClaimResponse struct {
-}
-
-// EthereumClaim implementation for MsgERC20DeployedClaim
-// ======================================================
-
-type MsgERC20DeployedClaim struct {
-	EventNonce    uint64 `protobuf:"varint,1,opt,name=event_nonce,json=eventNonce,proto3" json:"event_nonce,omitempty"`
-	BlockHeight   uint64 `protobuf:"varint,2,opt,name=block_height,json=blockHeight,proto3" json:"block_height,omitempty"`
-	CosmosDenom   string `protobuf:"bytes,3,opt,name=cosmos_denom,json=cosmosDenom,proto3" json:"cosmos_denom,omitempty"`
-	TokenContract string `protobuf:"bytes,4,opt,name=token_contract,json=tokenContract,proto3" json:"token_contract,omitempty"`
-	Name          string `protobuf:"bytes,5,opt,name=name,proto3" json:"name,omitempty"`
-	Symbol        string `protobuf:"bytes,6,opt,name=symbol,proto3" json:"symbol,omitempty"`
-	Decimals      uint64 `protobuf:"varint,7,opt,name=decimals,proto3" json:"decimals,omitempty"`
-	Orchestrator  string `protobuf:"bytes,8,opt,name=orchestrator,proto3" json:"orchestrator,omitempty"`
-}
-
-func (m *MsgERC20DeployedClaim) Reset()         { *m = MsgERC20DeployedClaim{} }
-func (m *MsgERC20DeployedClaim) String() string { return proto.CompactTextString(m) }
-func (*MsgERC20DeployedClaim) ProtoMessage()    {}
-
 // GetType returns the type of the claim
 func (e *MsgERC20DeployedClaim) GetType() ClaimType {
 	return CLAIM_TYPE_ERC20_DEPLOYED
@@ -696,20 +558,6 @@ func (e *MsgERC20DeployedClaim) ValidateBasic() error {
 // GetSignBytes encodes the message for signing
 func (msg MsgERC20DeployedClaim) GetSignBytes() []byte {
 	return sdk.MustSortJSON(GravityCodec.MustMarshalJSON(msg))
-}
-
-func (m *MsgERC20DeployedClaim) GetEventNonce() uint64 {
-	if m != nil {
-		return m.EventNonce
-	}
-	return 0
-}
-
-func (m *MsgERC20DeployedClaim) GetBlockHeight() uint64 {
-	if m != nil {
-		return m.BlockHeight
-	}
-	return 0
 }
 
 func (msg MsgERC20DeployedClaim) GetClaimer() sdk.AccAddress {
@@ -757,25 +605,6 @@ func (msg MsgERC20DeployedClaim) GetFromAddress() sdk.AccAddress {
 	return acc
 }
 
-type MsgERC20DeployedClaimResponse struct {
-}
-
-// EthereumClaim implementation for MsgLogicCallExecutedClaim
-// ======================================================
-
-type MsgLogicCallExecutedClaim struct {
-	EventNonce        uint64 `protobuf:"varint,1,opt,name=event_nonce,json=eventNonce,proto3" json:"event_nonce,omitempty"`
-	BlockHeight       uint64 `protobuf:"varint,2,opt,name=block_height,json=blockHeight,proto3" json:"block_height,omitempty"`
-	InvalidationId    []byte `protobuf:"bytes,3,opt,name=invalidation_id,json=invalidationId,proto3" json:"invalidation_id,omitempty"`
-	InvalidationNonce uint64 `protobuf:"varint,4,opt,name=invalidation_nonce,json=invalidationNonce,proto3" json:"invalidation_nonce,omitempty"`
-	Orchestrator      string `protobuf:"bytes,5,opt,name=orchestrator,proto3" json:"orchestrator,omitempty"`
-}
-
-func (m *MsgLogicCallExecutedClaim) Reset()         { *m = MsgLogicCallExecutedClaim{} }
-func (m *MsgLogicCallExecutedClaim) String() string { return proto.CompactTextString(m) }
-func (*MsgLogicCallExecutedClaim) ProtoMessage()    {}
-
-
 // GetType returns the type of the claim
 func (e *MsgLogicCallExecutedClaim) GetType() ClaimType {
 	return CLAIM_TYPE_LOGIC_CALL_EXECUTED
@@ -790,20 +619,6 @@ func (e *MsgLogicCallExecutedClaim) ValidateBasic() error {
 		return fmt.Errorf("nonce == 0")
 	}
 	return nil
-}
-
-func (m *MsgLogicCallExecutedClaim) GetEventNonce() uint64 {
-	if m != nil {
-		return m.EventNonce
-	}
-	return 0
-}
-
-func (m *MsgLogicCallExecutedClaim) GetBlockHeight() uint64 {
-	if m != nil {
-		return m.BlockHeight
-	}
-	return 0
 }
 
 // GetSignBytes encodes the message for signing
@@ -856,15 +671,6 @@ func (msg MsgLogicCallExecutedClaim) GetFromAddress() sdk.AccAddress {
 	return acc
 }
 
-type MsgLogicCallExecutedClaimResponse struct {
-}
-
-
-type MsgCancelSendToEth struct {
-	TransactionId uint64 `protobuf:"varint,1,opt,name=transaction_id,json=transactionId,proto3" json:"transaction_id,omitempty"`
-	Sender        string `protobuf:"bytes,2,opt,name=sender,proto3" json:"sender,omitempty"`
-}
-
 // NewMsgCancelSendToEth returns a new msgSetOrchestratorAddress
 func NewMsgCancelSendToEth(val sdk.AccAddress, id uint64) *MsgCancelSendToEth {
 	return &MsgCancelSendToEth{
@@ -912,7 +718,4 @@ func (msg MsgCancelSendToEth) GetFromAddress() sdk.AccAddress {
 	}
 
 	return acc
-}
-
-type MsgCancelSendToEthResponse struct {
 }
