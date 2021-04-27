@@ -1,9 +1,9 @@
 package gravity
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/module"
-	"encoding/json"
 	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"

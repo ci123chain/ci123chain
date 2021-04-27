@@ -3,6 +3,7 @@ module github.com/ci123chain/ci123chain
 go 1.13
 
 require (
+	github.com/DataDog/zstd v1.4.5 // indirect
 	github.com/allegro/bigcache v1.2.1 // indirect
 	github.com/aristanetworks/goarista v0.0.0-20200410125653-0a3087568c00 // indirect
 	github.com/armon/go-metrics v0.3.6
@@ -13,25 +14,34 @@ require (
 	github.com/cespare/cp v1.1.1 // indirect
 	github.com/ci123chain/wasm-util v1.0.1
 	github.com/confio/ics23/go v0.6.3
-	github.com/cosmos/cosmos-sdk v0.42.4
+	github.com/cosmos/go-bip39 v1.0.0 // indirect
 	github.com/cosmos/iavl v0.15.3
 	github.com/deckarep/golang-set v1.7.1 // indirect
+	github.com/dgraph-io/ristretto v0.0.3 // indirect
+	github.com/dgryski/go-farm v0.0.0-20200201041132-a6ae2369ad13 // indirect
 	github.com/ethereum/go-ethereum v1.9.21
 	github.com/go-redis/redis/v8 v8.6.0
 	github.com/gogo/protobuf v1.3.3
 	github.com/golang/protobuf v1.5.1
+	github.com/golang/snappy v0.0.2 // indirect
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/websocket v1.4.2
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
+	github.com/magiconair/properties v1.8.4 // indirect
 	github.com/mattn/go-isatty v0.0.12
+	github.com/pelletier/go-toml v1.8.0 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/pretty66/gosdk v1.0.3
 	github.com/prometheus/client_golang v1.8.0
 	github.com/prometheus/common v0.15.0
 	github.com/rjeczalik/notify v0.9.2 // indirect
+	github.com/spf13/afero v1.3.4 // indirect
+	github.com/spf13/cast v1.3.1 // indirect
 	github.com/spf13/cobra v1.1.1
+	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.7.1
+	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/stretchr/testify v1.7.0
 	github.com/tanhuiya/fabric-crypto v0.0.0-20191114090500-ee2b23759e39
 	github.com/tendermint/go-amino v0.16.0
