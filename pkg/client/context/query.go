@@ -6,15 +6,14 @@ import (
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/pkg/errors"
 	abci "github.com/tendermint/tendermint/abci/types"
+	"github.com/tendermint/tendermint/proto/tendermint/crypto"
 	"strings"
-
-	"github.com/tendermint/tendermint/crypto/merkle"
 
 	"github.com/tendermint/tendermint/libs/bytes"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
 )
 
-func (ctx Context) Query(path string, key bytes.HexBytes, isProve bool) ([]byte, int64, *merkle.Proof, error) {
+func (ctx Context) Query(path string, key bytes.HexBytes, isProve bool) ([]byte, int64, *crypto.ProofOps, error) {
 	var res []byte
 	var height int64
 	node, err := ctx.GetNode()

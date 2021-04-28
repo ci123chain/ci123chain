@@ -31,6 +31,8 @@ import (
 	"github.com/tendermint/tendermint/proto/tendermint/types"
 )
 
+
+const FlagNodeList   = "node-list"
 // Key to store the header in the DB itself.
 // Use the db directly instead of a store to avoid
 // conflicts with handlers writing to the store
@@ -63,6 +65,8 @@ type BaseApp struct {
 	router 		sdk.Router
 
 	txDecoder   sdk.TxDecoder // unmarshal []byte into sdk.Tx
+
+	//getShards   sdk.GetShards // get multi shards
 
 	anteHandler sdk.AnteHandler // ante handler for fee and auth
 	deferHandler sdk.DeferHandler // defer handler for fee and auth
@@ -232,6 +236,7 @@ func NewBaseApp(name string, logger log.Logger, ldb dbm.DB, cdb dbm.DB, cacheDir
 		Logger:      logger,
 		name:        name,
 		cms:         store.NewCommitMultiStore(ldb, cdb, cacheDir),
+		db: cdb,
 		//cms:         store.NewBaseMultiStore(db),
 		queryRouter: NewQueryRouter(),
 		router: 	 sdk.NewRouter(),
@@ -305,6 +310,10 @@ func (app *BaseApp) LoadVersion(version int64, mainKey sdk.StoreKey) error {
 		return err
 	}
 	return app.initFromStore(mainKey)
+}
+
+func (app *BaseApp) SetInitialVersion(version int64) error {
+	return app.cms.SetInitialVersion(version)
 }
 
 // the last CommitID of the multistore
@@ -408,6 +417,13 @@ func (app *BaseApp) setIndexEvents(ie []string) {
 // Implements ABCI
 // InitChain runs the initialization logic directly on the CommitMultiStore and commits it.
 func (app *BaseApp) InitChain(req abci.RequestInitChain) (res abci.ResponseInitChain) {
+
+	if req.InitialHeight > 1 {
+		if err := app.SetInitialVersion(req.InitialHeight); err != nil {
+			panic(err)
+		}
+	}
+
 	// Initialize the deliver state and check state with ChainID and run initChain
 	app.setDeliverState(types.Header{ChainID: req.ChainId})
 	app.setCheckState(types.Header{ChainID: req.ChainId})
@@ -572,6 +588,12 @@ func handleQueryCustom(app *BaseApp, path []string, req abci.RequestQuery) (res 
 
 	// Cache wrap the commit-multistore for safety.
 	ctx := sdk.NewContext(app.cms, app.checkState.ctx.BlockHeader(), true, app.Logger)
+
+	//bz, err := app.getShards(app.db)
+	//if err != nil {
+	//	return abcierrors.QueryResult(err)
+	//}
+	//ctx = ctx.WithShards(bz)
 
 	// Passes the rest of the path as an argument to the querier.
 	// For example, in the path "custom/gov/proposal/test", the gov querier gets []string{"proposal", "test"} as the path

@@ -3,10 +3,9 @@ package types
 
 import (
 	"context"
+	"github.com/golang/protobuf/proto"
 	"sync"
 	"time"
-
-	"github.com/golang/protobuf/proto"
 
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/log"
@@ -157,6 +156,7 @@ const (
 	contextKeyTxIndex
 	contextKeyGasLimit
 	contextKeyNonce
+	contextKeyShards
 )
 
 func (c Context) MultiStore() MultiStore {
@@ -174,6 +174,8 @@ func (c Context) ConsensusParams() *abci.ConsensusParams {
 func (c Context) ChainID() string { return c.Value(contextKeyChainID).(string) }
 
 func (c Context) TxBytes() []byte { return c.Value(contextKeyTxBytes).([]byte) }
+
+func (c Context) Shards() []byte { return c.Value(contextKeyShards).([]byte) }
 
 func (c Context) Logger() log.Logger { return c.Value(contextKeyLogger).(log.Logger) }
 
@@ -238,6 +240,8 @@ func (c Context) WithEventManager(em *EventManager) Context {
 func (c Context) WithChainID(chainID string) Context { return c.withValue(contextKeyChainID, chainID) }
 
 func (c Context) WithTxBytes(txBytes []byte) Context { return c.withValue(contextKeyTxBytes, txBytes) }
+
+func (c Context) WithShards(shards []byte) Context { return c.withValue(contextKeyShards, shards) }
 
 func (c Context) WithLogger(logger log.Logger) Context { return c.withValue(contextKeyLogger, logger) }
 

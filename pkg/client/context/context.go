@@ -6,15 +6,22 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	codectypes "github.com/ci123chain/ci123chain/pkg/abci/codec/types"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/account/exported"
 	"github.com/ci123chain/ci123chain/pkg/account/keeper"
 	"github.com/ci123chain/ci123chain/pkg/account/types"
 	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
 	"github.com/ci123chain/ci123chain/pkg/transaction"
 	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/pkg/errors"
-	"github.com/tendermint/tendermint/crypto/merkle"
+	"github.com/tendermint/tendermint/proto/tendermint/crypto"
 	rpclient "github.com/tendermint/tendermint/rpc/client"
+	"io/ioutil"
+	"net/http"
+	"net/url"
+	"strings"
 )
+
+const DefaultShardPort = ":8545"
 
 type Context struct {
 	HomeDir 	string
@@ -90,7 +97,60 @@ func (ctx *Context) GetBlocked() (bool) {
 	return ctx.Blocked
 }
 
-func (ctx *Context) GetBalanceByAddress(addr sdk.AccAddress, isProve bool, height string) (sdk.Coins, *merkle.Proof, error) {
+func (ctx *Context) GetHistoryBalance(addr sdk.AccAddress, isProve bool, height string) (sdk.Coins, *crypto.ProofOps, error, []byte) {
+	var h int64
+	if height == "" {
+		h = -1
+	}else {
+		var err error
+		h, err = util.CheckInt64(height)
+		if err != nil {
+			return sdk.NewCoins(), nil, err, nil
+		}
+		if h <=0 {
+			return sdk.NewCoins(), nil, errors.New(fmt.Sprintf("unexpected height: %v", height)), nil
+		}
+	}
+	qparams := keeper.NewQueryAccountParams(addr, h)
+	bz, err := ctx.Cdc.MarshalJSON(qparams)
+	if err != nil {
+		return sdk.NewCoins(), nil , err, nil
+	}
+	res, _, _, err := ctx.Query("/custom/" + types.ModuleName + "/" + types.QueryHistoryAccount, bz, isProve)
+	if res == nil{
+		return sdk.NewCoins(), nil, errors.New("The account does not exist"), nil
+	}
+	if err != nil {
+		return sdk.NewCoins(), nil, err, nil
+	}
+	var result util.HistoryAccount
+	err2 := ctx.Cdc.UnmarshalBinaryLengthPrefixed(res, &result)
+	if err2 != nil {
+		return sdk.NewCoins(), nil, err2, nil
+	}
+
+	var acc exported.Account
+	err2 = ctx.Cdc.UnmarshalBinaryLengthPrefixed(result.Account, &acc)
+	if err2 != nil {
+		return sdk.NewCoins(), nil, err2, nil
+	}
+
+	if result.Proof == nil && result.Shard != "" {
+		var params = make(map[string]string, 0)
+		params["address"] = addr.String()
+		params["height"] = height
+		params["prove"] = "true"
+		res, err := sendRequest(result.Shard+DefaultShardPort, params)
+		if err != nil {
+			return nil, nil, err, nil
+		}
+		return nil, nil, nil, res
+	}
+	fmt.Println(result.Coins)
+	return acc.GetCoins(), result.Proof, nil, nil
+}
+
+func (ctx *Context) GetBalanceByAddress(addr sdk.AccAddress, isProve bool, height string) (sdk.Coins, *crypto.ProofOps, error) {
 	var h int64
 	if height == "" {
 		h = -1
@@ -116,40 +176,41 @@ func (ctx *Context) GetBalanceByAddress(addr sdk.AccAddress, isProve bool, heigh
 	if err != nil {
 		return sdk.NewCoins(), nil, err
 	}
-	//var acc exported.Account
-	//err2 := ctx.Cdc.UnmarshalBinaryLengthPrefixed(res, &acc)
-	//if err2 != nil {
-	//	return sdk.NewCoins(), nil, err2
-	//}
-	//balance := acc.GetCoins()
-
-	var balance sdk.Coins
-	err2 := ctx.Cdc.UnmarshalBinaryLengthPrefixed(res, &balance)
+	var acc exported.Account
+	err2 := ctx.Cdc.UnmarshalBinaryLengthPrefixed(res, &acc)
 	if err2 != nil {
 		return sdk.NewCoins(), nil, err2
 	}
+	balance := acc.GetCoins()
+
 	return balance, proof, nil
 }
 
-func (ctx *Context) GetNonceByAddress(addr sdk.AccAddress, isProve bool) (uint64, *merkle.Proof, error) {
+func (ctx *Context) GetNonceByAddress(addr sdk.AccAddress, isProve bool) (uint64, *crypto.ProofOps, error) {
 	qparams := keeper.NewQueryAccountParams(addr, 0)
 	bz, err := ctx.Cdc.MarshalJSON(qparams)
 	if err != nil {
 		return 0, nil , err
 	}
-	res, _, proof, err := ctx.Query("/custom/" + types.ModuleName + "/" + types.QueryAccountNonce, bz, isProve)
+	res, _, proof, err := ctx.Query("/custom/" + types.ModuleName + "/" + types.QueryAccount, bz, isProve)
 	if res == nil{
 		return 0, nil, errors.New("The account does not exist")
 	}
 	if err != nil {
 		return 0, nil, err
 	}
-	var nonce uint64
-	err2 := ctx.Cdc.UnmarshalBinaryLengthPrefixed(res, &nonce)
+	//var nonce uint64
+	//err2 := ctx.Cdc.UnmarshalBinaryLengthPrefixed(res, &nonce)
+	//if err2 != nil {
+	//	return 0, nil, err2
+	//}
+
+	var acc exported.Account
+	err2 := ctx.Cdc.UnmarshalBinaryLengthPrefixed(res, &acc)
 	if err2 != nil {
 		return 0, nil, err2
 	}
-	//nonce := acc.GetSequence()
+	nonce := acc.GetSequence()
 	return nonce, proof, nil
 }
 
@@ -267,5 +328,41 @@ func (ctx *Context) broadcastTxSync(tx []byte) (sdk.TxResponse, error) {
 	}
 
 	return sdk.NewResponseFormatBroadcastTx(res), nil
+}
+
+
+func sendRequest(host string, RequestParams map[string]string) ([]byte, error) {
+	cli := &http.Client{
+		Transport:&http.Transport{DisableKeepAlives:true},
+	}
+	reqUrl := "http://" + host + "/bank/history/balance"
+	data := url.Values{}
+	for k, v := range RequestParams {
+		data.Set(k, v)
+	}
+
+	req2, err := http.NewRequest("POST", reqUrl, strings.NewReader(data.Encode()))
+
+	if err != nil {
+		return nil, err
+	}
+	req2.Body = ioutil.NopCloser(strings.NewReader(data.Encode()))
+	defer req2.Body.Close()
+	//not use one connection
+	req2.Close = true
+
+	// set request content types
+	req2.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	// request
+	rep2, err := cli.Do(req2)
+	if err != nil {
+		return nil, err
+	}
+	b, err := ioutil.ReadAll(rep2.Body)
+	if err != nil {
+		return nil, err
+	}
+	defer rep2.Body.Close()
+	return b, nil
 }
 

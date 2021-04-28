@@ -2,10 +2,11 @@ package store
 
 import (
 	"fmt"
+	"math/rand"
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	cmn "github.com/tendermint/tendermint/libs/common"
+	cmn "github.com/tendermint/tendermint/libs/rand"
 	dbm "github.com/tendermint/tm-db"
 )
 
@@ -308,7 +309,7 @@ const (
 )
 
 func randInt(n int) int {
-	return cmn.RandInt() % n
+	return rand.Int() % n
 }
 
 // useful for replaying a error case if we find one
@@ -377,7 +378,7 @@ func assertIterateDomain(t *testing.T, st KVStore, expectedN int) {
 func assertIterateDomainCheck(t *testing.T, st KVStore, mem dbm.DB, r []keyRange) {
 	// iterate over each and check they match the other
 	itr := st.Iterator(nil, nil)
-	itr2 := mem.Iterator(nil, nil) // ground truth
+	itr2, _ := mem.Iterator(nil, nil) // ground truth
 
 	krc := newKeyRangeCounter(r)
 	i := 0
@@ -407,7 +408,7 @@ func assertIterateDomainCheck(t *testing.T, st KVStore, mem dbm.DB, r []keyRange
 func assertIterateDomainCompare(t *testing.T, st KVStore, mem dbm.DB) {
 	// iterate over each and check they match the other
 	itr := st.Iterator(nil, nil)
-	itr2 := mem.Iterator(nil, nil) // ground truth
+	itr2, _ := mem.Iterator(nil, nil) // ground truth
 	checkIterators(t, itr, itr2)
 	checkIterators(t, itr2, itr)
 }

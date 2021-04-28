@@ -6,6 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	tcrypto "github.com/tendermint/tendermint/proto/tendermint/crypto"
 	"os"
 	"os/signal"
 	"sort"
@@ -125,5 +126,21 @@ func search(h Heights, i int64) int64 {
 		}else {
 			return search(h[:len(h)/2-1], i)
 		}
+	}
+}
+
+type HistoryAccount struct {
+	Shard   string       `json:"shard"`
+	Coins   types.Coins  `json:"coins"`
+	Account  []byte  `json:"account"`
+	Proof   *tcrypto.ProofOps `json:"proof"`
+}
+
+func NewHistoryAccount(s string, c types.Coins, acc []byte, p *tcrypto.ProofOps) HistoryAccount{
+	return HistoryAccount{
+		Shard: s,
+		Coins: c,
+		Account: acc,
+		Proof: p,
 	}
 }

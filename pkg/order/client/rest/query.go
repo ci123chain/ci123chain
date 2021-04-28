@@ -71,7 +71,7 @@ func QueryShardStatesRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		if prove == "true" {
 			isProve = true
 		}
-		res, _, proof, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryState, nil, isProve)
+		res, _, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryState, nil, isProve)
 		if err != nil {
 			rest.WriteErrorRes(writer, err.Error())
 			return
@@ -87,7 +87,7 @@ func QueryShardStatesRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			return
 		}
 		value := shardState
-		resp := rest.BuildQueryRes(height, isProve, value, proof)
+		resp := rest.BuildQueryRes(height, isProve, value, nil)
 		rest.PostProcessResponseBare(writer, cliCtx, resp)
 	}
 }

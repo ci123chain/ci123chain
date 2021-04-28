@@ -11,7 +11,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/client/helper"
 	"github.com/ci123chain/ci123chain/pkg/util"
-	"github.com/tendermint/tendermint/crypto/merkle"
+	"github.com/tendermint/tendermint/proto/tendermint/crypto"
 	"github.com/tendermint/tendermint/types"
 	"net/http"
 	"net/url"
@@ -50,10 +50,10 @@ type Response struct {
 type QueryRes struct {
 	Value interface{}   `json:"value"`
 	Height int64		`json:"height,omitempty"`
-	Proof *merkle.Proof	`json:"proof,omitempty"`
+	Proof *crypto.ProofOps	`json:"proof,omitempty"`
 }
 
-func BuildQueryRes(height string, isProve bool, value interface{}, proof *merkle.Proof) QueryRes {
+func BuildQueryRes(height string, isProve bool, value interface{}, proof *crypto.ProofOps) QueryRes {
 	resp := QueryRes{
 		Value: value,
 	}

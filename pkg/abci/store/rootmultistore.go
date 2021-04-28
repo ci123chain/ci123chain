@@ -173,6 +173,13 @@ func (rs *rootMultiStore) WithTracer(w io.Writer) MultiStore {
 	return rs
 }
 
+//implement CommitMultiStore
+func (rs *rootMultiStore) SetInitialVersion(version int64) error {
+	//
+	rs.lastCommitID.Version = version - 1
+	return nil
+}
+
 // WithTracingContext updates the tracing context for the MultiStore by merging
 // the given context with the existing context by key. Any existing keys will
 // be overwritten. It is implied that the caller should update the context when

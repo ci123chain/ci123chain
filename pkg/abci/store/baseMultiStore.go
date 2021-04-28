@@ -109,6 +109,14 @@ func (bs *baseMultiStore) LoadVersion(ver int64) error {
 	return err
 }
 
+///implement CommitMultiStore
+func (bs *baseMultiStore) SetInitialVersion(version int64) error {
+	//
+	return nil
+}
+
+
+
 func (bs *baseMultiStore) LastCommitID() CommitID {
 	return bs.lastCommitID
 }

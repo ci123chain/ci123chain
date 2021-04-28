@@ -75,6 +75,8 @@ const (
 	flagShardIndex = "shardIndex"
 	cacheName      = "cache"
 	heightKey      = "s/k:order/OrderBook"
+	FlagPruning        = "pruning"
+
 )
 
 var (
@@ -136,7 +138,10 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 		os.MkdirAll(cacheDir, os.ModePerm)
 		os.Chmod(cacheDir, os.ModePerm)
 	}
-	app := baseapp.NewBaseApp("ci123", logger, ldb, cdb, cacheDir, app_types.DefaultTxDecoder(cdc))
+
+	pruning := viper.GetString(FlagPruning)
+
+	app := baseapp.NewBaseApp("ci123", logger, ldb, cdb, cacheDir, app_types.DefaultTxDecoder(cdc), baseapp.SetPruning(pruning))
 	cache := filepath.Join(cacheDir, cacheName)
 	if _, err := os.Stat(cache); !os.IsNotExist(err) {
 		//cache exist, check latest version

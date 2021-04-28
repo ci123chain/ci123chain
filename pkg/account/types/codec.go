@@ -22,4 +22,5 @@ func RegisterCodec(cdc *codec.Codec)  {
 	cdc.RegisterConcrete(&util.HeightUpdate{}, "ci123chain/HeightUpdate", nil)
 	cdc.RegisterConcrete(&util.Heights{}, "ci123chain/Heights", nil)
 	cdc.RegisterConcrete(&types.Coins{}, "ci123chain/Coins", nil)
+	cdc.RegisterConcrete(&util.HistoryAccount{}, "ci123chain/HistoryAccount", nil)
 }
