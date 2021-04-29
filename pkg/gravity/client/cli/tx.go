@@ -3,6 +3,7 @@ package cli
 import (
 	"crypto/ecdsa"
 	"encoding/hex"
+	"github.com/ci123chain/ci123chain/pkg/gravity/types"
 	"log"
 
 	"github.com/ci123chain/ci123chain/pkg/abci/types/errors"
@@ -48,4 +49,30 @@ func CmdUnsafeETHAddr() *cobra.Command {
 			return nil
 		},
 	}
+}
+
+func CmdSetOrchestratorAddress() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "set-orchestrator-address [validator-address] [orchestrator-address] [ethereum-address]",
+		Short: "Allows validators to delegate their voting responsibilities to a given key.",
+		Args:  cobra.ExactArgs(3),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+			msg := types.MsgSetOrchestratorAddress{
+				Validator:    args[0],
+				Orchestrator: args[1],
+				EthAddress:   args[2],
+			}
+			if err := msg.ValidateBasic(); err != nil {
+				return err
+			}
+			// Send it
+			return tx.GenerateOrBroadcastTxCLI(cliCtx, cmd.Flags(), &msg)
+		},
+	}
+	flags.AddTxFlagsToCmd(cmd)
+	return cmd
 }

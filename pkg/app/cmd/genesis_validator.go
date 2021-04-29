@@ -1,12 +1,14 @@
 package cmd
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	"github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/app"
 	distr "github.com/ci123chain/ci123chain/pkg/distribution/types"
+	gravity "github.com/ci123chain/ci123chain/pkg/gravity/types"
 	staking "github.com/ci123chain/ci123chain/pkg/staking/types"
 	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/spf13/cobra"
@@ -103,6 +105,24 @@ func AddGenesisValidatorCmd(ctx *app.Context, cdc *codec.Codec) *cobra.Command {
 			distrGenesisStateBz := cdc.MustMarshalJSON(distributionGenesisState)
 			appState[distr.ModuleName] = distrGenesisStateBz
 
+			// gravity
+			var gravityGenesisState gravity.GenesisState
+			if _, ok := appState[gravity.ModuleName]; !ok{
+				return errors.New("unexpected genesisState of staking")
+			} else {
+				json.Unmarshal(appState[gravity.ModuleName], &gravityGenesisState)
+			}
+
+			msgSetOrchestratorAddress := &gravity.MsgSetOrchestratorAddress{
+				Validator: addr.String(),
+				Orchestrator: addr.String(),
+				EthAddress: addr.String(),
+			}
+
+			gravityGenesisState.DelegateKeys = append(gravityGenesisState.DelegateKeys, msgSetOrchestratorAddress)
+			gravityGenesisStateBz, _ := json.Marshal(gravityGenesisState)
+			appState[gravity.ModuleName] = gravityGenesisStateBz
+			//
 			appStateJSON, err := cdc.MarshalJSON(appState)
 			if err != nil {
 				return err
