@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/pkg/errors"
@@ -14,19 +15,19 @@ import (
 )
 
 
-const (
-	flagPassword = "password"
-	flagSilent   = "silent"
-	flagMnemonic = "mnemonic"
-	flagHDWPath  = "hdw_path"
-)
+//const (
+//	flagPassword = "password"
+//	flagSilent   = "silent"
+//	flagMnemonic = "mnemonic"
+//	flagHDWPath  = "hdw_path"
+//)
 
 func init()  {
 	rootCmd.AddCommand(newAccountCmd)
-	newAccountCmd.Flags().String(flagPassword, "", "passphrase")
-	newAccountCmd.Flags().Bool(flagSilent, false, "silent output")
-	newAccountCmd.Flags().String(flagMnemonic, "", "mnemonic string")
-	newAccountCmd.Flags().String(flagHDWPath, "m/44'/60'/0'/0/0", "HD Wallet path")
+	newAccountCmd.Flags().String(util.FlagPassword, "", "passphrase")
+	newAccountCmd.Flags().Bool(util.FlagSilent, false, "silent output")
+	newAccountCmd.Flags().String(util.FlagMnemonic, "", "mnemonic string")
+	newAccountCmd.Flags().String(util.FlagHDWPath, "m/44'/60'/0'/0/0", "HD Wallet path")
 }
 
 var newAccountCmd = &cobra.Command{
@@ -36,10 +37,10 @@ var newAccountCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		viper.BindPFlags(cmd.Flags())
 
-		dir := viper.GetString(helper.FlagHomeDir)
+		dir := viper.GetString(util.FlagHomeDir)
 		ks := keystore.NewKeyStore(dir, keystore.StandardScryptN, keystore.StandardScryptP)
-		mnemonic := viper.GetString(flagMnemonic)
-		hdPath := viper.GetString(flagHDWPath)
+		mnemonic := viper.GetString(util.FlagMnemonic)
+		hdPath := viper.GetString(util.FlagHDWPath)
 		password, err := helper.GetPasswordFromStd()
 
 		if err != nil {
@@ -68,7 +69,7 @@ func createAccountWithPassword(ks *keystore.KeyStore, password string) (*account
 		return nil, err
 	}
 
-	if !viper.GetBool(flagSilent) {
+	if !viper.GetBool(util.FlagSilent) {
 		fmt.Println("\n**Important** do not lose your passphrase.")
 		fmt.Println("It is the only way to recover your account")
 		fmt.Println("You should export this account and store it in a secure location")

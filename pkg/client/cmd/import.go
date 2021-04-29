@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/client/helper"
+	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -11,15 +12,15 @@ import (
 	"github.com/spf13/viper"
 )
 
-const (
-	flagPrivate = "private"
-)
+//const (
+//	flagPrivate = "private"
+//)
 
 func init() {
 	rootCmd.AddCommand(importCmd)
-	importCmd.Flags().String(flagPrivate, "", "private_key")
-	importCmd.Flags().String(flagMnemonic, "", "mnemonic string")
-	importCmd.Flags().String(flagHDWPath, "m/44'/60'/0'/0/0", "HD Wallet path")
+	importCmd.Flags().String(util.FlagPrivate, "", "private_key")
+	importCmd.Flags().String(util.FlagMnemonic, "", "mnemonic string")
+	importCmd.Flags().String(util.FlagHDWPath, "m/44'/60'/0'/0/0", "HD Wallet path")
 }
 
 var importCmd = &cobra.Command{
@@ -29,11 +30,11 @@ var importCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		viper.BindPFlags(cmd.Flags())
 
-		dir := viper.GetString(helper.FlagHomeDir)
+		dir := viper.GetString(util.FlagHomeDir)
 		ks := keystore.NewKeyStore(dir, keystore.StandardScryptN, keystore.StandardScryptP)
-		privateKey := viper.GetString(flagPrivate)
-		mnemonic := viper.GetString(flagMnemonic)
-		hdPath := viper.GetString(flagHDWPath)
+		privateKey := viper.GetString(util.FlagPrivate)
+		mnemonic := viper.GetString(util.FlagMnemonic)
+		hdPath := viper.GetString(util.FlagHDWPath)
 		password, err := helper.GetPasswordFromStd()
 
 		if err != nil {

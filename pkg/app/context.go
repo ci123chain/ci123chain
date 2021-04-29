@@ -10,12 +10,12 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/config"
 	"github.com/ci123chain/ci123chain/pkg/logger"
 	"github.com/ci123chain/ci123chain/pkg/node"
+	"github.com/ci123chain/ci123chain/pkg/util"
 	val "github.com/ci123chain/ci123chain/pkg/validator"
 	"github.com/spf13/viper"
 	"github.com/tendermint/go-amino"
 	cfg "github.com/tendermint/tendermint/config"
 	"github.com/tendermint/tendermint/crypto/ed25519"
-	"github.com/tendermint/tendermint/libs/cli"
 	"github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/libs/rand"
 	"io/ioutil"
@@ -24,15 +24,15 @@ import (
 	"path/filepath"
 )
 
-const (
-	flagMasterDomain   = "master_domain"
-	flagMasterPort	   = "master_port"
-	defaultMasterPort  = "80"
-	flagConfig         = "config" //config.toml
-	defaultConfigFilePath = "config.toml"
-	defaultConfigPath  = "config"
-	defaultDataPath    = "data"
-)
+//const (
+//	flagMasterDomain   = "master_domain"
+//	flagMasterPort	   = "master_port"
+//	defaultMasterPort  = "80"
+//	flagConfig         = "config" //config.toml
+//	defaultConfigFilePath = "config.toml"
+//	defaultConfigPath  = "config"
+//	defaultDataPath    = "data"
+//)
 
 type Context struct {
 	Config *cfg.Config
@@ -52,10 +52,10 @@ func NewContext(config *cfg.Config, logger log.Logger) *Context {
 }
 
 func SetupContext(ctx *Context, level string) error {
-	root := viper.GetString(cli.HomeFlag)
+	root := viper.GetString(util.HomeFlag)
 	c, err := config.GetConfig(root)
 	if err == config.ErrConfigNotFound {
-		master := viper.GetString(flagMasterDomain)
+		master := viper.GetString(util.FlagMasterDomain)
 		if len(master) != 0 {
 			if os.Getenv("IDG_APPID") == "" {
 				return errors.New("Can't use master domain in normal environment")
@@ -65,12 +65,12 @@ func SetupContext(ctx *Context, level string) error {
 				return err
 			}
 		} else {
-			configEnv := viper.GetString(flagConfig)
+			configEnv := viper.GetString(util.FlagConfig)
 			if len(configEnv) != 0 {
-				os.MkdirAll(filepath.Join(root, defaultConfigPath), os.ModePerm)
-				os.MkdirAll(filepath.Join(root, defaultDataPath), os.ModePerm)
+				os.MkdirAll(filepath.Join(root, util.DefaultConfigPath), os.ModePerm)
+				os.MkdirAll(filepath.Join(root, util.DefaultDataPath), os.ModePerm)
 				configBytes, _ := base64.StdEncoding.DecodeString(configEnv)
-				ioutil.WriteFile(filepath.Join(root, defaultConfigPath, defaultConfigFilePath), configBytes, os.ModePerm)
+				ioutil.WriteFile(filepath.Join(root, util.DefaultConfigPath, util.DefaultConfigFilePath), configBytes, os.ModePerm)
 				viper.ReadInConfig()
 				c, err = config.GetConfig(root)
 				if err != nil {
@@ -96,9 +96,9 @@ func SetupContext(ctx *Context, level string) error {
 }
 
 func configFollowMaster(master, root string) (*cfg.Config, error){
-	port := viper.GetString(flagMasterPort)
+	port := viper.GetString(util.FlagMasterPort)
 	if len(port) == 0 {
-		port = defaultMasterPort
+		port = util.DefaultMasterPort
 	}
 	resp, err := http.Get("http://"+ master + ":" + port + "/exportConfig")
 	if err != nil {

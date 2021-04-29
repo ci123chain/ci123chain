@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/client"
-	"github.com/ci123chain/ci123chain/pkg/client/helper"
 	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -11,8 +10,8 @@ import (
 
 func init()  {
 	rootCmd.AddCommand(nonceCmd)
-	nonceCmd.Flags().String(helper.FlagAddress, "", "address")
-	util.CheckRequiredFlag(nonceCmd, helper.FlagAddress)
+	nonceCmd.Flags().String(util.FlagAddress, "", "address")
+	util.CheckRequiredFlag(nonceCmd, util.FlagAddress)
 }
 
 var nonceCmd = &cobra.Command{

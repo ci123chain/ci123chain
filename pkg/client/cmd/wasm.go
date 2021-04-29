@@ -8,7 +8,6 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/client"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
-	"github.com/ci123chain/ci123chain/pkg/client/helper"
 	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/ci123chain/ci123chain/pkg/vm/moduletypes/utils"
 	sdk "github.com/ci123chain/ci123chain/sdk/wasm"
@@ -23,23 +22,23 @@ import (
 func init() {
 	rootCmd.AddCommand(wasmCmd)
 
-	wasmCmd.Flags().String(helper.FlagAddress, "", "the address of your account")
-	wasmCmd.Flags().String(helper.FlagGas, "", "expected gas of transaction")
-	wasmCmd.Flags().String(helper.FlagPrivateKey, "", "the privateKey of account")
-	wasmCmd.Flags().String(helper.FlagFunds, "", "funds of contract")
-	wasmCmd.Flags().String(helper.FlagArgs, "", "args of call contract")
-	wasmCmd.Flags().String(helper.FlagFile, "", "the path of contract file")
-	wasmCmd.Flags().String(helper.FlagHash, "", "hash of contract code")
-	wasmCmd.Flags().String(helper.FlagName, "", "name of contract")
-	wasmCmd.Flags().String(helper.FlagVersion, "", "version of contract")
-	wasmCmd.Flags().String(helper.FlagAuthor, "", "author of contract")
-	wasmCmd.Flags().String(helper.FlagEmail, "", "email of contract author")
-	wasmCmd.Flags().String(helper.FlagDescribe, "", "describe of contract")
-	wasmCmd.Flags().String(helper.FlagContractAddress, "", "address of contract account")
+	wasmCmd.Flags().String(util.FlagAddress, "", "the address of your account")
+	wasmCmd.Flags().String(util.FlagGas, "", "expected gas of transaction")
+	wasmCmd.Flags().String(util.FlagPrivateKey, "", "the privateKey of account")
+	wasmCmd.Flags().String(util.FlagFunds, "", "funds of contract")
+	wasmCmd.Flags().String(util.FlagArgs, "", "args of call contract")
+	wasmCmd.Flags().String(util.FlagFile, "", "the path of contract file")
+	wasmCmd.Flags().String(util.FlagHash, "", "hash of contract code")
+	wasmCmd.Flags().String(util.FlagName, "", "name of contract")
+	wasmCmd.Flags().String(util.FlagVersion, "", "version of contract")
+	wasmCmd.Flags().String(util.FlagAuthor, "", "author of contract")
+	wasmCmd.Flags().String(util.FlagEmail, "", "email of contract author")
+	wasmCmd.Flags().String(util.FlagDescribe, "", "describe of contract")
+	wasmCmd.Flags().String(util.FlagContractAddress, "", "address of contract account")
 
-	util.CheckRequiredFlag(wasmCmd, helper.FlagGas)
-	util.CheckRequiredFlag(wasmCmd, helper.FlagPrivateKey)
-	util.CheckRequiredFlag(wasmCmd, helper.FlagAddress)
+	util.CheckRequiredFlag(wasmCmd, util.FlagGas)
+	util.CheckRequiredFlag(wasmCmd, util.FlagPrivateKey)
+	util.CheckRequiredFlag(wasmCmd, util.FlagAddress)
 }
 
 var wasmCmd = &cobra.Command{
@@ -73,7 +72,7 @@ func uploadContract() error {
 	if err != nil {
 		return err
 	}
-	fpath := viper.GetString(helper.FlagFile)
+	fpath := viper.GetString(util.FlagFile)
 	fext := path.Ext(fpath)
 	if fext != ".wasm" {
 		return errors.New("unexpected file")
@@ -104,17 +103,17 @@ func initContract() error {
 	if err != nil {
 		return err
 	}
-	fpath := viper.GetString(helper.FlagFile)
+	fpath := viper.GetString(util.FlagFile)
 	fext := path.Ext(fpath)
 	if fext != ".wasm" {
 		return errors.New("unexpected file")
 	}
-	codeHash := viper.GetString(helper.FlagCodeHash)
-	name := viper.GetString(helper.FlagName)
-	version := viper.GetString(helper.FlagVersion)
-	author := viper.GetString(helper.FlagAuthor)
-	email := viper.GetString(helper.FlagEmail)
-	describe := viper.GetString(helper.FlagDescribe)
+	codeHash := viper.GetString(util.FlagCodeHash)
+	name := viper.GetString(util.FlagName)
+	version := viper.GetString(util.FlagVersion)
+	author := viper.GetString(util.FlagAuthor)
+	email := viper.GetString(util.FlagEmail)
+	describe := viper.GetString(util.FlagDescribe)
 
 	hash, err := hex.DecodeString(strings.ToLower(codeHash))
 	if err != nil {
@@ -141,7 +140,7 @@ func executeContract() error {
 	if err != nil {
 		return err
 	}
-	contractAddr := viper.GetString(helper.FlagContractAddress)
+	contractAddr := viper.GetString(util.FlagContractAddress)
 	addrs := types.HexToAddress(contractAddr)
 	contractAddress := addrs
 	tx, err := sdk.SignExecuteContractMsg(from, gas, nonce, key, contractAddress, args)
@@ -162,18 +161,18 @@ func migrateContract() error {
 	if err != nil {
 		return err
 	}
-	fpath := viper.GetString(helper.FlagFile)
+	fpath := viper.GetString(util.FlagFile)
 	fext := path.Ext(fpath)
 	if fext != ".wasm" {
 		return errors.New("unexpected file")
 	}
-	codeHash := viper.GetString(helper.FlagCodeHash)
-	name := viper.GetString(helper.FlagName)
-	version := viper.GetString(helper.FlagVersion)
-	author := viper.GetString(helper.FlagAuthor)
-	email := viper.GetString(helper.FlagEmail)
-	describe := viper.GetString(helper.FlagDescribe)
-	contract := viper.GetString(helper.FlagContractAddress)
+	codeHash := viper.GetString(util.FlagCodeHash)
+	name := viper.GetString(util.FlagName)
+	version := viper.GetString(util.FlagVersion)
+	author := viper.GetString(util.FlagAuthor)
+	email := viper.GetString(util.FlagEmail)
+	describe := viper.GetString(util.FlagDescribe)
+	contract := viper.GetString(util.FlagContractAddress)
 	contractAddr := types.HexToAddress(contract)
 	hash, err := hex.DecodeString(strings.ToLower(codeHash))
 	if err != nil {
@@ -192,23 +191,23 @@ func migrateContract() error {
 }
 
 func GetArgs(ctx context.Context) (types.AccAddress, uint64, uint64, string, utils.CallData,  error) {
-	addrs := viper.GetString(helper.FlagAddress)
+	addrs := viper.GetString(util.FlagAddress)
 	address := types.HexToAddress(addrs)
 
 	nonce, _, err := ctx.GetNonceByAddress(address, false)
 	if err != nil {
 		return types.AccAddress{}, 0, 0, "", utils.CallData{}, err
 	}
-	gas := viper.GetString(helper.FlagGas)
+	gas := viper.GetString(util.FlagGas)
 	Gas, err := strconv.ParseUint(gas, 10, 64)
 	if err != nil {
 		return types.AccAddress{}, 0, 0, "", utils.CallData{}, err
 	}
-	key := viper.GetString(helper.FlagPrivateKey)
+	key := viper.GetString(util.FlagPrivateKey)
 	if key == "" {
 		return types.AccAddress{}, 0, 0, "", utils.CallData{}, errors.New("privateKey can not be empty")
 	}
-	Msg := viper.GetString(helper.FlagArgs)
+	Msg := viper.GetString(util.FlagArgs)
 	var params utils.CallData
 	if Msg == "" {
 		return types.AccAddress{}, 0, 0, "", utils.CallData{}, errors.New("calldata can not be empty")

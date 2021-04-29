@@ -7,7 +7,6 @@ const RouteKey  = "accounts"
 const StoreKey  = "accounts"
 const QueryAccount  = "queryAccount"
 const QueryAccountNonce = "queryAccountNonce"
-const QueryHistoryAccount = "historyAccount"
 var (
 	// AddressStoreKeyPrefix prefix for account-by-address store
 	AddressStoreKeyPrefix = []byte{0x01}

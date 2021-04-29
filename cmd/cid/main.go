@@ -6,6 +6,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/app/cmd"
 	types2 "github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/logger"
+	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -17,18 +18,18 @@ import (
 	"os"
 )
 
-const (
-	appName = "ci123"
-	DefaultConfDir = "$HOME/.ci123"
-	flagLogLevel = "log_level"
-	HomeFlag     = "home"
-	//logDEBUG     = "main:debug,state:debug,ibc:debug,*:error"
-	logINFO      = "state:info,x/ibc/client:info,x/ibc/connection:info,x/ibc/channel:info,*:error"
-	logDEBUG      = "*:debug"
-	//logINFO      = "*:info"
-	logERROR     = "*:error"
-	logNONE      = "*:none"
-)
+//const (
+//	appName = "ci123"
+//	DefaultConfDir = "$HOME/.ci123"
+//	flagLogLevel = "log_level"
+//	HomeFlag     = "home"
+//	//logDEBUG     = "main:debug,state:debug,ibc:debug,*:error"
+//	logINFO      = "state:info,x/ibc/client:info,x/ibc/connection:info,x/ibc/channel:info,*:error"
+//	logDEBUG      = "*:debug"
+//	//logINFO      = "*:info"
+//	logERROR     = "*:error"
+//	logNONE      = "*:none"
+//)
 
 func main()  {
 	cobra.EnableCommandSorting = false
@@ -37,39 +38,39 @@ func main()  {
 		Use: 	 "ci123",
 		Short:  "ci123 node",
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			switch viper.GetString(flagLogLevel) {
+			switch viper.GetString(util.FlagLogLevel) {
 			case "debug":
-				return app.SetupContext(ctx, logDEBUG)
+				return app.SetupContext(ctx, util.LogDEBUG)
 			case "info":
-				return app.SetupContext(ctx, logINFO)
+				return app.SetupContext(ctx, util.LogINFO)
 			case "error":
-				return app.SetupContext(ctx, logERROR)
+				return app.SetupContext(ctx, util.LogERROR)
 			case "none":
-				return app.SetupContext(ctx, logNONE)
+				return app.SetupContext(ctx, util.LogNONE)
 			}
-			return app.SetupContext(ctx, logINFO)
+			return app.SetupContext(ctx, util.LogINFO)
 		},
 	}
-	rootCmd.Flags().String(HomeFlag, "", "directory for configs and data")
-	rootCmd.Flags().String(flagLogLevel, "info", "Run abci app with different log level")
-	rootCmd.PersistentFlags().String("log_level", ctx.Config.LogLevel, "log level")
-	rootCmd.Flags().String(app.FlagPruning, "syncable", "Pruning strategy: syncable, nothing, everything")
+	rootCmd.Flags().String(util.HomeFlag, "", "directory for configs and data")
+	//rootCmd.Flags().String(util.FlagLogLevel, "info", "Run abci app with different log level")
+	rootCmd.PersistentFlags().String(util.FlagLogLevel, ctx.Config.LogLevel, "log level")
+	rootCmd.Flags().String(util.FlagPruning, "syncable", "Pruning strategy: syncable, nothing, everything")
 
 	cmd.AddServerCommands(
 		ctx,
 		types2.GetCodec(),
 		rootCmd,
 		app.NewAppInit(),
-		app.ConstructAppCreator(newApp, appName),
-		app.ConstructAppExporter(exportAppState, appName),
+		app.ConstructAppCreator(newApp, util.AppName),
+		app.ConstructAppExporter(exportAppState, util.AppName),
 		)
 	viper.SetEnvPrefix("CI")
 	viper.BindPFlags(rootCmd.Flags())
 	viper.BindPFlags(rootCmd.PersistentFlags())
 	viper.AutomaticEnv()
-	rootDir := os.ExpandEnv(DefaultConfDir)
-	if len(viper.GetString(HomeFlag)) > 0 {
-		rootDir = os.ExpandEnv(viper.GetString(HomeFlag))
+	rootDir := os.ExpandEnv(util.DefaultConfDir)
+	if len(viper.GetString(util.HomeFlag)) > 0 {
+		rootDir = os.ExpandEnv(viper.GetString(util.HomeFlag))
 	}
 	exector := cli.PrepareBaseCmd(rootCmd, "CI", rootDir)
 	exector.Execute()

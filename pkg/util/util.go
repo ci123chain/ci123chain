@@ -15,7 +15,6 @@ import (
 	"syscall"
 )
 
-///const CHIANID int64 = 999
 
 var CHAINID int64
 
@@ -131,15 +130,13 @@ func search(h Heights, i int64) int64 {
 
 type HistoryAccount struct {
 	Shard   string       `json:"shard"`
-	Coins   types.Coins  `json:"coins"`
 	Account  []byte  `json:"account"`
 	Proof   *tcrypto.ProofOps `json:"proof"`
 }
 
-func NewHistoryAccount(s string, c types.Coins, acc []byte, p *tcrypto.ProofOps) HistoryAccount{
+func NewHistoryAccount(s string, acc []byte, p *tcrypto.ProofOps) HistoryAccount{
 	return HistoryAccount{
 		Shard: s,
-		Coins: c,
 		Account: acc,
 		Proof: p,
 	}

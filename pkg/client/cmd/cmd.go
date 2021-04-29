@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"github.com/ci123chain/ci123chain/pkg/app/types"
-	"github.com/ci123chain/ci123chain/pkg/client/helper"
+	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"os"
@@ -23,11 +23,11 @@ func Execute()  {
 }
 
 func init()  {
-	rootCmd.PersistentFlags().StringP(helper.FlagHomeDir, "", homeDir, "directory for keystore")
-	rootCmd.PersistentFlags().BoolP(helper.FlagVerbose, "v", false, "enable verbose output")
-	rootCmd.PersistentFlags().String(helper.FlagNode, "tcp://localhost:26657", "<host>:<port> to tendermint rpc interface for this chain")
-	rootCmd.PersistentFlags().StringP(helper.FlagPassword, "p", "", "password for signing tx")
-	rootCmd.PersistentFlags().Int64(helper.FlagHeight, 0, "Use a special height to query state at (this can error if node is pruning state)")
+	rootCmd.PersistentFlags().StringP(util.FlagHomeDir, "", homeDir, "directory for keystore")
+	rootCmd.PersistentFlags().BoolP(util.FlagVerbose, "v", false, "enable verbose output")
+	rootCmd.PersistentFlags().String(util.FlagNode, "tcp://localhost:26657", "<host>:<port> to tendermint rpc interface for this chain")
+	rootCmd.PersistentFlags().StringP(util.FlagPassword, "p", "", "password for signing tx")
+	rootCmd.PersistentFlags().Int64(util.FlagHeight, 0, "Use a special height to query state at (this can error if node is pruning state)")
 	viper.SetEnvPrefix("CI")
 	_ = viper.BindPFlags(rootCmd.Flags())
 	_ = viper.BindPFlags(rootCmd.PersistentFlags())

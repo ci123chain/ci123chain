@@ -53,6 +53,7 @@ import (
 	supply_types "github.com/ci123chain/ci123chain/pkg/supply/types"
 	"github.com/ci123chain/ci123chain/pkg/transfer"
 	"github.com/ci123chain/ci123chain/pkg/transfer/handler"
+	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/ci123chain/ci123chain/pkg/vm"
 	wasm_types "github.com/ci123chain/ci123chain/pkg/vm/wasmtypes"
 	"github.com/spf13/viper"
@@ -67,17 +68,17 @@ import (
 	"os"
 )
 
-const (
-	flagAddress    = "address"
-	flagName       = "name"
-	flagClientHome = "home-client"
-	flagNodeDomain = "node_domain"
-	flagShardIndex = "shardIndex"
-	cacheName      = "cache"
-	heightKey      = "s/k:order/OrderBook"
-	FlagPruning        = "pruning"
-
-)
+//const (
+//	flagAddress    = "address"
+//	flagName       = "name"
+//	flagClientHome = "home-client"
+//	flagNodeDomain = "node_domain"
+//	flagShardIndex = "shardIndex"
+//	cacheName      = "cache"
+//	heightKey      = "s/k:order/OrderBook"
+//	FlagPruning        = "pruning"
+//
+//)
 
 var (
 	// default home directories for expected binaries
@@ -133,16 +134,16 @@ type Chain struct {
 
 func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer) *Chain {
 	cdc := app_types.GetCodec()
-	cacheDir := os.ExpandEnv(filepath.Join(viper.GetString(cli.HomeFlag) , cacheName))
+	cacheDir := os.ExpandEnv(filepath.Join(viper.GetString(util.HomeFlag) , util.CacheName))
 	if _, err := os.Stat(cacheDir); os.IsNotExist(err) {
 		os.MkdirAll(cacheDir, os.ModePerm)
 		os.Chmod(cacheDir, os.ModePerm)
 	}
 
-	pruning := viper.GetString(FlagPruning)
+	pruning := viper.GetString(util.FlagPruning)
 
 	app := baseapp.NewBaseApp("ci123", logger, ldb, cdb, cacheDir, app_types.DefaultTxDecoder(cdc), baseapp.SetPruning(pruning))
-	cache := filepath.Join(cacheDir, cacheName)
+	cache := filepath.Join(cacheDir, util.CacheName)
 	if _, err := os.Stat(cache); !os.IsNotExist(err) {
 		//cache exist, check latest version
 		err := handleCache(cdb, cache, cdc, app)
@@ -391,7 +392,7 @@ func toRedisdb(cdb tmdb.DB) *redis.RedisDB {
 			cmn.Exit(err.Error())
 		}
 	}
-	nodeList = append(nodeList, viper.GetString(flagNodeDomain))
+	nodeList = append(nodeList, viper.GetString(util.FlagCiNodeDomain))
 	nodeListBytes, _ = json.Marshal(nodeList)
 	odb.Set([]byte(redissource.FlagNodeList), nodeListBytes)
 
@@ -411,7 +412,7 @@ func handleCache(cdb tmdb.DB, cache string, cdc *codec.Codec, app *baseapp.BaseA
 
 	var orderBook ordertypes.OrderBook
 	for _, v := range cacheMap {
-		if string(v.Key) == heightKey {
+		if string(v.Key) == util.HeightKey {
 			cdc.UnmarshalJSON(v.Value, &orderBook)
 			break
 		}

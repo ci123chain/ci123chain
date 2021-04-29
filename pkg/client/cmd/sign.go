@@ -23,14 +23,14 @@ import (
 
 func init()  {
 	rootCmd.AddCommand(signCmd)
-	signCmd.Flags().String(flagTo, "", "Address sending to")
-	signCmd.Flags().Uint(flagAmount, 0, "Amount tbe spent")
-	signCmd.Flags().Uint(flagGas, 0, "gas for tx")
-	signCmd.Flags().String(helper.FlagAddress, "", "Address to sign with")
-	signCmd.Flags().String(flagPassword, "", "passphrase")
-	signCmd.Flags().String(flagDenom, "", "coin denom")
-	util.CheckRequiredFlag(signCmd, flagAmount)
-	util.CheckRequiredFlag(signCmd, flagGas)
+	signCmd.Flags().String(util.FlagTo, "", "Address sending to")
+	signCmd.Flags().Uint(util.FlagAmount, 0, "Amount tbe spent")
+	signCmd.Flags().Uint(util.FlagGas, 0, "gas for tx")
+	signCmd.Flags().String(util.FlagAddress, "", "Address to sign with")
+	signCmd.Flags().String(util.FlagPassword, "", "passphrase")
+	signCmd.Flags().String(util.FlagCoinName, "", "coin denom")
+	util.CheckRequiredFlag(signCmd, util.FlagAmount)
+	util.CheckRequiredFlag(signCmd, util.FlagGas)
 }
 
 const isFabric = false
@@ -44,23 +44,23 @@ var signCmd = &cobra.Command{
 			panic(err)
 		}
 
-		from := sdk.HexToAddress(viper.GetString(flagFrom))
-		tos, err := helper.ParseAddrs(viper.GetString(flagTo))
+		from := sdk.HexToAddress(viper.GetString(util.FlagFrom))
+		tos, err := helper.ParseAddrs(viper.GetString(util.FlagTo))
 		if err != nil {
 			return sdkerrors.Wrap(sdkerrors.ErrParams, "invalid to address")
 		}
 		if len(tos) == 0 {
 			return sdkerrors.Wrap(sdkerrors.ErrParams, "invalid to address")
 		}
-		d := viper.GetString(flagDenom)
+		d := viper.GetString(util.FlagCoinName)
 		if d == "" {
 			return sdkerrors.Wrap(sdkerrors.ErrParams, "invalid denom")
 		}
 
-		gas := uint64((viper.GetInt(flagGas)))
-		amount := uint64(viper.GetInt(flagAmount))
-		privKey := viper.GetString(flagKey)
-		isFabric := viper.GetBool(flagIsFabric)
+		gas := uint64((viper.GetInt(util.FlagGas)))
+		amount := uint64(viper.GetInt(util.FlagAmount))
+		privKey := viper.GetString(util.FlagKey)
+		isFabric := viper.GetBool(util.FlagIsFabric)
 
 		coin := sdk.NewUInt64Coin(d, amount)
 		msg := transfer2.NewMsgTransfer(from, tos[0], sdk.NewCoins(coin), isFabric)
@@ -96,7 +96,7 @@ func getSignedDataWithTx(ctx context.Context, tx transaction.Transaction, passwo
 }
 
 func getDefaultKeystore() *keystore.KeyStore {
-	dir := viper.GetString(helper.FlagHomeDir)
+	dir := viper.GetString(util.FlagHomeDir)
 	ks := keystore.NewKeyStore(dir, keystore.StandardScryptN, keystore.StandardScryptP)
 	return ks
 }

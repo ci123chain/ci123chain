@@ -2,19 +2,18 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/client"
-	"github.com/ci123chain/ci123chain/pkg/client/helper"
 	"github.com/ci123chain/ci123chain/pkg/util"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 func init()  {
 	rootCmd.AddCommand(balanceCmd)
-	balanceCmd.Flags().String(helper.FlagAddress,"", "address")
+	balanceCmd.Flags().String(util.FlagAddress,"", "address")
 
-	util.CheckRequiredFlag(balanceCmd, helper.FlagAddress)
+	util.CheckRequiredFlag(balanceCmd, util.FlagAddress)
 }
 
 var balanceCmd = &cobra.Command{
@@ -30,9 +29,9 @@ var balanceCmd = &cobra.Command{
 		if err != nil {
 			return  err
 		}
-		address := viper.GetString(helper.FlagAddress)
+		address := viper.GetString(util.FlagAddress)
 		addr := sdk.HexToAddress(address)
-		v, _, err, _ := ctx.GetBalanceByAddress(addr, false, "")
+		v, _, err := ctx.GetBalanceByAddress(addr, false, "")
 		if err != nil {
 			return err
 		}

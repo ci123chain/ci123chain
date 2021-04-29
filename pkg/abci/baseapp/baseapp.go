@@ -32,7 +32,7 @@ import (
 )
 
 
-const FlagNodeList   = "node-list"
+//const FlagNodeList   = "node-list"
 // Key to store the header in the DB itself.
 // Use the db directly instead of a store to avoid
 // conflicts with handlers writing to the store
@@ -588,12 +588,6 @@ func handleQueryCustom(app *BaseApp, path []string, req abci.RequestQuery) (res 
 
 	// Cache wrap the commit-multistore for safety.
 	ctx := sdk.NewContext(app.cms, app.checkState.ctx.BlockHeader(), true, app.Logger)
-
-	//bz, err := app.getShards(app.db)
-	//if err != nil {
-	//	return abcierrors.QueryResult(err)
-	//}
-	//ctx = ctx.WithShards(bz)
 
 	// Passes the rest of the path as an argument to the querier.
 	// For example, in the path "custom/gov/proposal/test", the gov querier gets []string{"proposal", "test"} as the path

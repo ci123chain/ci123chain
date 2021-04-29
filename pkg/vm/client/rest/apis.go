@@ -2,7 +2,7 @@ package rest
 
 import (
 	clientcontext "github.com/ci123chain/ci123chain/pkg/client/context"
-	"github.com/ci123chain/ci123chain/pkg/client/helper"
+	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/ci123chain/ci123chain/pkg/vm/client/rest/api/eth"
 	"github.com/ci123chain/ci123chain/pkg/vm/client/rest/api/eth/filters"
 	"github.com/ci123chain/ci123chain/pkg/vm/client/rest/api/net"
@@ -64,7 +64,7 @@ func GetAPIs(clientCtx clientcontext.Context) []rpc.API {
 }
 
 func getDefaultKeystore() *keystore.KeyStore {
-	dir := viper.GetString(helper.FlagHomeDir)
+	dir := viper.GetString(util.FlagHomeDir)
 	ks := keystore.NewKeyStore(dir, keystore.StandardScryptN, keystore.StandardScryptP)
 	return ks
 }

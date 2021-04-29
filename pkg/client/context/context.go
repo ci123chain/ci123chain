@@ -15,13 +15,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/tendermint/tendermint/proto/tendermint/crypto"
 	rpclient "github.com/tendermint/tendermint/rpc/client"
-	"io/ioutil"
-	"net/http"
-	"net/url"
-	"strings"
 )
 
-const DefaultShardPort = ":8545"
 
 type Context struct {
 	HomeDir 	string
@@ -96,7 +91,7 @@ func (ctx *Context) GetFromAddresses() (sdk.AccAddress) {
 func (ctx *Context) GetBlocked() (bool) {
 	return ctx.Blocked
 }
-
+/*
 func (ctx *Context) GetHistoryBalance(addr sdk.AccAddress, isProve bool, height string) (sdk.Coins, *crypto.ProofOps, error, []byte) {
 	var h int64
 	if height == "" {
@@ -135,20 +130,9 @@ func (ctx *Context) GetHistoryBalance(addr sdk.AccAddress, isProve bool, height 
 		return sdk.NewCoins(), nil, err2, nil
 	}
 
-	if result.Proof == nil && result.Shard != "" {
-		var params = make(map[string]string, 0)
-		params["address"] = addr.String()
-		params["height"] = height
-		params["prove"] = "true"
-		res, err := sendRequest(result.Shard+DefaultShardPort, params)
-		if err != nil {
-			return nil, nil, err, nil
-		}
-		return nil, nil, nil, res
-	}
-	fmt.Println(result.Coins)
 	return acc.GetCoins(), result.Proof, nil, nil
 }
+ */
 
 func (ctx *Context) GetBalanceByAddress(addr sdk.AccAddress, isProve bool, height string) (sdk.Coins, *crypto.ProofOps, error) {
 	var h int64
@@ -169,25 +153,30 @@ func (ctx *Context) GetBalanceByAddress(addr sdk.AccAddress, isProve bool, heigh
 	if err != nil {
 		return sdk.NewCoins(), nil , err
 	}
-	res, _, proof, err := ctx.Query("/custom/" + types.ModuleName + "/" + types.QueryAccount, bz, isProve)
-	if res == nil{
-		return sdk.NewCoins(), nil, errors.New("The account does not exist")
-	}
+	res, _, _, err := ctx.Query("/custom/" + types.ModuleName + "/" + types.QueryAccount, bz, isProve)
 	if err != nil {
 		return sdk.NewCoins(), nil, err
 	}
-	var acc exported.Account
-	err2 := ctx.Cdc.UnmarshalBinaryLengthPrefixed(res, &acc)
+	if res == nil{
+		return sdk.NewCoins(), nil, errors.New("The account does not exist")
+	}
+	var result util.HistoryAccount
+	err2 := ctx.Cdc.UnmarshalBinaryLengthPrefixed(res, &result)
 	if err2 != nil {
 		return sdk.NewCoins(), nil, err2
 	}
-	balance := acc.GetCoins()
 
-	return balance, proof, nil
+	var acc exported.Account
+	err2 = ctx.Cdc.UnmarshalBinaryLengthPrefixed(result.Account, &acc)
+	if err2 != nil {
+		return sdk.NewCoins(), nil, err2
+	}
+
+	return acc.GetCoins(), result.Proof, nil
 }
 
 func (ctx *Context) GetNonceByAddress(addr sdk.AccAddress, isProve bool) (uint64, *crypto.ProofOps, error) {
-	qparams := keeper.NewQueryAccountParams(addr, 0)
+	qparams := keeper.NewQueryAccountParams(addr, -1)
 	bz, err := ctx.Cdc.MarshalJSON(qparams)
 	if err != nil {
 		return 0, nil , err
@@ -199,14 +188,15 @@ func (ctx *Context) GetNonceByAddress(addr sdk.AccAddress, isProve bool) (uint64
 	if err != nil {
 		return 0, nil, err
 	}
-	//var nonce uint64
-	//err2 := ctx.Cdc.UnmarshalBinaryLengthPrefixed(res, &nonce)
-	//if err2 != nil {
-	//	return 0, nil, err2
-	//}
+
+	var result util.HistoryAccount
+	err2 := ctx.Cdc.UnmarshalBinaryLengthPrefixed(res, &result)
+	if err2 != nil {
+		return 0, nil, err2
+	}
 
 	var acc exported.Account
-	err2 := ctx.Cdc.UnmarshalBinaryLengthPrefixed(res, &acc)
+	err2 = ctx.Cdc.UnmarshalBinaryLengthPrefixed(result.Account, &acc)
 	if err2 != nil {
 		return 0, nil, err2
 	}
@@ -330,39 +320,4 @@ func (ctx *Context) broadcastTxSync(tx []byte) (sdk.TxResponse, error) {
 	return sdk.NewResponseFormatBroadcastTx(res), nil
 }
 
-
-func sendRequest(host string, RequestParams map[string]string) ([]byte, error) {
-	cli := &http.Client{
-		Transport:&http.Transport{DisableKeepAlives:true},
-	}
-	reqUrl := "http://" + host + "/bank/history/balance"
-	data := url.Values{}
-	for k, v := range RequestParams {
-		data.Set(k, v)
-	}
-
-	req2, err := http.NewRequest("POST", reqUrl, strings.NewReader(data.Encode()))
-
-	if err != nil {
-		return nil, err
-	}
-	req2.Body = ioutil.NopCloser(strings.NewReader(data.Encode()))
-	defer req2.Body.Close()
-	//not use one connection
-	req2.Close = true
-
-	// set request content types
-	req2.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	// request
-	rep2, err := cli.Do(req2)
-	if err != nil {
-		return nil, err
-	}
-	b, err := ioutil.ReadAll(rep2.Body)
-	if err != nil {
-		return nil, err
-	}
-	defer rep2.Body.Close()
-	return b, nil
-}
 

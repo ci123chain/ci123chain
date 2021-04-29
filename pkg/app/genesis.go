@@ -8,6 +8,7 @@ import (
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/app/module"
 	"github.com/ci123chain/ci123chain/pkg/app/types"
+	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/viper"
 	tmabci "github.com/tendermint/tendermint/abci/types"
@@ -31,7 +32,7 @@ func AppGenStateJSON(validators []tmtypes.GenesisValidator) (json.RawMessage, er
 type GenesisState map[string]json.RawMessage
 
 func (c *Chain) InitChainer (ctx sdk.Context, req tmabci.RequestInitChain) tmabci.ResponseInitChain {
-	index := viper.GetString(flagShardIndex)
+	index := viper.GetString(util.FlagShardIndex)
 	if len(index) != 0 && index != FIRSTSHARD {
 		return tmabci.ResponseInitChain{}
 	} else {

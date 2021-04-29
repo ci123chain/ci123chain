@@ -2,14 +2,15 @@ package cmd
 
 import (
 	"encoding/base64"
-	///"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	abcitypes "github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/app"
 	"github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/node"
+	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/ci123chain/ci123chain/pkg/validator"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -17,33 +18,30 @@ import (
 	cfg "github.com/tendermint/tendermint/config"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/ed25519"
-	tmcli "github.com/tendermint/tendermint/libs/cli"
 	cmn "github.com/tendermint/tendermint/libs/os"
 	tmpro "github.com/tendermint/tendermint/proto/tendermint/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 	"net"
 	"regexp"
 	"time"
-	//"regexp"
-	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 )
 
-var (
-	FlagName = "name"
-	FlagClientHome = "home-client"
-	FlagOWK = "owk"
-)
-
-var (
-	FlagOverwrite = "overwrite"
-	FlagWithTxs = "with-txs"
-	FlagIP = "ip"
-	FlagChainID = "chain_id"
-	FlagStateDB = "statedb"
-	//FlagDBName = "dbname"
-	FlagWithValidator = "validator_key"
-	FlagCoinName = "denom"
-)
+//var (
+//	FlagName = "name"
+//	//FlagClientHome = "home-client"
+//	//FlagOWK = "owk"
+//)
+//
+//var (
+//	FlagOverwrite = "overwrite"
+//	//FlagWithTxs = "with-txs"
+//	//FlagIP = "ip"
+//	FlagChainID = "chain_id"
+//	FlagStateDB = "statedb"
+//	//FlagDBName = "dbname"
+//	FlagWithValidator = "validator_key"
+//	FlagCoinName = "denom"
+//)
 
 
 type GenesisTx struct{
@@ -122,23 +120,23 @@ func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Com
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 
-			fmt.Println("validator_key:", viper.GetString(FlagWithValidator))
-			fmt.Println("home:", viper.GetString(tmcli.HomeFlag))
-			fmt.Println("chainid:", viper.GetString(FlagChainID))
+			fmt.Println("validator_key:", viper.GetString(util.FlagValidatorKey))
+			fmt.Println("home:", viper.GetString(util.HomeFlag))
+			fmt.Println("chainid:", viper.GetString(util.FlagChainID))
 
-			denom := viper.GetString(FlagCoinName)
+			denom := viper.GetString(util.FlagCoinName)
 			if denom != "" {
-				abcitypes.SetCoinDenom(viper.GetString(FlagCoinName))
+				abcitypes.SetCoinDenom(viper.GetString(util.FlagCoinName))
 			}
 
 			ctxConfig := ctx.Config
-			ctxConfig.SetRoot(viper.GetString(tmcli.HomeFlag))
+			ctxConfig.SetRoot(viper.GetString(util.HomeFlag))
 
 			initConfig := InitConfig{
-				ChainID: viper.GetString(FlagChainID),
+				ChainID: viper.GetString(util.FlagChainID),
 				//viper.GetBool(FlagWithTxs),
 				//filepath.Join(configs.RootDir, "configs", "gentx"),
-				Overwrite: viper.GetBool(FlagOverwrite),
+				Overwrite: viper.GetBool(util.FlagOverwrite),
 				//tmtime.Now(),
 			}
 			if initConfig.ChainID == "" {
@@ -170,15 +168,15 @@ func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Com
 		},
 	}
 
-	cmd.Flags().BoolP(FlagOverwrite, "o", false, "overwrite the genesis.json file")
-	cmd.Flags().String(FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")
+	cmd.Flags().BoolP(util.FlagOverwrite, "o", false, "overwrite the genesis.json file")
+	cmd.Flags().String(util.FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")
 	//cmd.Flags().Bool(FlagWithTxs, false, "apply existing genesis transactions from [--home]/configs/gentx/")
 	//cmd.Flags().AddFlagSet(appInit.FlagsAppGenState)
 	//cmd.Flags().AddFlagSet(appInit.FlagsAppGenTx) // need to add this flagset for when no GenTx's provided
 	//cmd.AddCommand(GenTxCmd(ctx, cdc, appInit))
-	cmd.Flags().String(FlagStateDB, "couchdb://couchdb-service:5984/ci123", "fetch new shard from db")
-	cmd.Flags().String(FlagWithValidator, "", "the validator key")
-	cmd.Flags().String(FlagCoinName, "stake",  "coin name")
+	//cmd.Flags().String(util.FlagStateDB, "couchdb://couchdb-service:5984/ci123", "fetch new shard from db")
+	cmd.Flags().String(util.FlagValidatorKey, "", "the validator key")
+	cmd.Flags().String(util.FlagCoinName, "stake",  "coin name")
 	return cmd
 }
 //
@@ -353,7 +351,7 @@ func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initCo
 	var validatorKey ed25519.PrivKey
 	var privStr string
 	nodeKey, err := node.LoadNodeKey(c.NodeKeyFile())
-	privBz := viper.GetString(FlagWithValidator)
+	privBz := viper.GetString(util.FlagValidatorKey)
 	if len(privBz) > 0 {
 		//1.match length
 		//priByt := []byte(privBz)
@@ -406,7 +404,7 @@ func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initCo
 		return
 	}
 
-	val := appInit.GetValidator(nodeKey.PubKey(), viper.GetString(FlagName))
+	val := appInit.GetValidator(nodeKey.PubKey(), viper.GetString(util.FlagName))
 	validators := []tmtypes.GenesisValidator{val}
 
 

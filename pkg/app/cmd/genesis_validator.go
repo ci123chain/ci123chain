@@ -11,7 +11,6 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/tendermint/tendermint/libs/cli"
 	"strconv"
 	"time"
 )
@@ -25,7 +24,7 @@ func AddGenesisValidatorCmd(ctx *app.Context, cdc *codec.Codec) *cobra.Command {
 		Args: cobra.ExactArgs(6),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			config := ctx.Config
-			config.SetRoot(viper.GetString(cli.HomeFlag))
+			config.SetRoot(viper.GetString(util.HomeFlag))
 
 			addr := ParseAccAddress(args[0])
 

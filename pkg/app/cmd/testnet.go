@@ -7,6 +7,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/app"
 	"github.com/ci123chain/ci123chain/pkg/config"
 	"github.com/ci123chain/ci123chain/pkg/node"
+	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/ci123chain/ci123chain/pkg/validator"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -21,7 +22,6 @@ import (
 	"os"
 	"path/filepath"
 )
-const nodeDirPerm = 0700
 var (
 	nodeDirPrefix  = "node-dir-prefix"
 	nValidators    = "validators-num"
@@ -303,7 +303,7 @@ func getValidator(cdc *amino.Codec, c *cfg.Config, appInit app.AppInit) (*types.
 		return  nil, nil, err
 	}
 
-	validator := appInit.GetValidator(nodeKey.PubKey(), viper.GetString(FlagName))
+	validator := appInit.GetValidator(nodeKey.PubKey(), viper.GetString(util.FlagName))
 	validators = append(validators, validator)
 	appState, err := appInit.AppGenState(validators)
 

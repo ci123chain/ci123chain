@@ -3,7 +3,6 @@ package rest
 import (
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	abcitype "github.com/ci123chain/ci123chain/pkg/abci/types"
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
@@ -22,7 +21,6 @@ var cdc = types2.GetCodec()
 // RegisterRoutes - Central function to define routes that get registered by the main application
 func RegisterRoutes(cliCtx context.Context, r *mux.Router) {
 	r.HandleFunc("/account/new", NewAccountRequestHandlerFn(cliCtx)).Methods("POST")
-	r.HandleFunc("/bank/history/balance", QueryHistoryBalancesRequestHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/bank/balance", QueryBalancesRequestHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/account/nonce", QueryNonceRequestHandleFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/node/new_validator", CreateNewValidatorKey(cliCtx)).Methods("POST")
@@ -107,68 +105,16 @@ func QueryBalancesRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		if prove == "true" {
 			isProve = true
 		}
-		res, proof, err2, result := cliCtx.GetHistoryBalance(addr, isProve, height)
+		res, proof, err2 := cliCtx.GetBalanceByAddress(addr, isProve, height)
 		if err2 != nil {
-			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInternal, "query balance failed").Error())
+			rest.WriteErrorRes(w, err2.Error())
 			return
-		}
-		if result != nil {
-			w.Header().Set("Content-Type", "application/json")
-			_, _ = w.Write(result)
 		}
 		value := BalanceData{BalanceList:res}
 		resp := rest.BuildQueryRes(height, isProve, value, proof)
 		rest.PostProcessResponseBare(w, cliCtx, resp)
 	}
 }
-
-
-func QueryHistoryBalancesRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
-	return func(w http.ResponseWriter, request *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-
-		address := request.FormValue("address")
-		height := request.FormValue("height")
-		prove := request.FormValue("prove")
-		checkErr := util.CheckStringLength(42, 100, address)
-		if checkErr != nil {
-			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid address").Error())
-			return
-		}
-		if !rest.CheckHeightAndProve(w, height, prove, sdkerrors.RootCodespace) {
-			return
-		}
-
-		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, request, height)
-		if !ok || err != nil {
-			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInvalidHeight, "parse hetight faield").Error())
-			return
-		}
-		addr, err2 := helper.StrToAddress(address)
-		if err2 != nil {
-			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid address").Error())
-			return
-		}
-		//params := types.NewQueryBalanceParams(addr)
-		isProve := false
-		if prove == "true" {
-			isProve = true
-		}
-		res, proof, err2, result := cliCtx.GetHistoryBalance(addr, isProve, height)
-		if err2 != nil {
-			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("query balance failed: %v", err2)).Error())
-			return
-		}
-		if result != nil {
-			w.Header().Set("Content-Type", "application/json")
-			_, _ = w.Write(result)
-		}
-		value := BalanceData{BalanceList:res}
-		resp := rest.BuildQueryRes(height, isProve, value, proof)
-		rest.PostProcessResponseBare(w, cliCtx, resp)
-	}
-}
-
 
 func QueryNonceRequestHandleFn(cliCtx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

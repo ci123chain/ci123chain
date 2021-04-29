@@ -13,27 +13,27 @@ import (
 	"github.com/spf13/viper"
 )
 
-const (
-	flagFrom    = "from"
-	flagTo 		= "to"
-	flagAmount  = "amount"
-	flagGas 	= "gas"
-	flagKey		= "privKey"
-	flagIsFabric= "isFabric"
-	flagDenom   = "denom"
-)
+//const (
+//	flagFrom    = "from"
+//	flagTo 		= "to"
+//	flagAmount  = "amount"
+//	flagGas 	= "gas"
+//	flagKey		= "privKey"
+//	flagIsFabric= "isFabric"
+//	flagDenom   = "denom"
+//)
 
 func init()  {
 	rootCmd.AddCommand(transferCmd)
-	transferCmd.Flags().String(flagTo, "", "Address sending to")
-	transferCmd.Flags().Uint(flagAmount, 0, "Amount tbe spent")
-	transferCmd.Flags().Uint(flagGas, 0, "gas for tx")
-	transferCmd.Flags().String(helper.FlagAddress, "", "Address to sign with")
-	transferCmd.Flags().String(flagPassword, "", "passphrase")
-	transferCmd.Flags().String(flagDenom, "", "coin denom")
+	transferCmd.Flags().String(util.FlagTo, "", "Address sending to")
+	transferCmd.Flags().Uint(util.FlagAmount, 0, "Amount tbe spent")
+	transferCmd.Flags().Uint(util.FlagGas, 0, "gas for tx")
+	transferCmd.Flags().String(util.FlagAddress, "", "Address to sign with")
+	transferCmd.Flags().String(util.FlagPassword, "", "passphrase")
+	transferCmd.Flags().String(util.FlagCoinName, "", "coin denom")
 
-	util.CheckRequiredFlag(transferCmd, flagAmount)
-	util.CheckRequiredFlag(transferCmd, flagGas)
+	util.CheckRequiredFlag(transferCmd, util.FlagAmount)
+	util.CheckRequiredFlag(transferCmd, util.FlagGas)
 }
 
 var transferCmd = &cobra.Command{
@@ -49,23 +49,23 @@ var transferCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		from := sdk.HexToAddress(viper.GetString(flagFrom))
-		tos, err := helper.ParseAddrs(viper.GetString(flagTo))
+		from := sdk.HexToAddress(viper.GetString(util.FlagFrom))
+		tos, err := helper.ParseAddrs(viper.GetString(util.FlagTo))
 		if err != nil {
 			return sdkerrors.Wrap(sdkerrors.ErrParams, "invalid to address")
 		}
 		if len(tos) == 0 {
 			return sdkerrors.Wrap(sdkerrors.ErrParams, "invalid to address")
 		}
-		d := viper.GetString(flagDenom)
+		d := viper.GetString(util.FlagCoinName)
 		if d == "" {
 			return sdkerrors.Wrap(sdkerrors.ErrParams, "invalid denom")
 		}
 
-		gas := uint64((viper.GetInt(flagGas)))
-		amount := uint64(viper.GetInt(flagAmount))
-		privKey := viper.GetString(flagKey)
-		isFabric := viper.GetBool(flagIsFabric)
+		gas := uint64((viper.GetInt(util.FlagGas)))
+		amount := uint64(viper.GetInt(util.FlagAmount))
+		privKey := viper.GetString(util.FlagKey)
+		isFabric := viper.GetBool(util.FlagIsFabric)
 
 		coin := sdk.NewUInt64Coin(d, amount)
 		msg := transfer2.NewMsgTransfer(from, tos[0], sdk.NewCoins(coin), isFabric)

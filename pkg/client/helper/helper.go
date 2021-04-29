@@ -12,38 +12,40 @@ import (
 	"github.com/spf13/viper"
 	"os"
 	"strings"
+
+	"github.com/ci123chain/ci123chain/pkg/util"
 )
 
-const (
-	MinPassLength = 4
-
-	FlagBlocked = "blocked"
-	FlagHeight = "height"
-	FlagHomeDir = "clihome"
-	FlagVerbose = "verbose"
-	FlagNode = "node"
-	FlagAddress = "address"
-	FlagPassword = "password"
-	//FlagWithCrypto 	   = "cryptosuit"
-
-	FlagFile = "file"
-	FlagGas = "gas"
-	FlagPrivateKey = "privateKey"
-	//FlagMsg = "msg"
-	FlagArgs = "args"
-	FlagName = "name"
-	FlagCodeHash = "codeHash"
-	FlagVersion = "version"
-	FlagAuthor = "author"
-	FlagEmail = "email"
-	FlagDescribe = "describe"
-	FlagHash = "codeHash"
-	FlagFunds = "funds"
-	FlagContractAddress = "contractAddress"
-)
+//const (
+//	MinPassLength = 4
+//
+//	FlagBlocked = "blocked"
+//	FlagHeight = "height"
+//	FlagHomeDir = "clihome"
+//	FlagVerbose = "verbose"
+//	FlagNode = "node"
+//	FlagAddress = "address"
+//	FlagPassword = "password"
+//	//FlagWithCrypto 	   = "cryptosuit"
+//
+//	FlagFile = "file"
+//	FlagGas = "gas"
+//	FlagPrivateKey = "privateKey"
+//	//FlagMsg = "msg"
+//	FlagArgs = "args"
+//	FlagName = "name"
+//	FlagCodeHash = "codeHash"
+//	FlagVersion = "version"
+//	FlagAuthor = "author"
+//	FlagEmail = "email"
+//	FlagDescribe = "describe"
+//	FlagHash = "codeHash"
+//	FlagFunds = "funds"
+//	FlagContractAddress = "contractAddress"
+//)
 
 func GetPassphrase(addr sdk.AccAddress) (string, error) {
-	pass := viper.GetString(FlagPassword)
+	pass := viper.GetString(util.FlagPassword)
 	if pass == "" {
 		return getPassphraseFromStdin(addr)
 	}
@@ -104,8 +106,8 @@ func GetPassword(prompt string, buf *bufio.Reader) (pass string, err error) {
 	if err != nil {
 		return "", err
 	}
-	if len(pass) < MinPassLength {
-		return "", fmt.Errorf("Password must be at least %d characters", MinPassLength)
+	if len(pass) < util.MinPassLength {
+		return "", fmt.Errorf("Password must be at least %d characters", util.MinPassLength)
 	}
 	return pass, nil
 }

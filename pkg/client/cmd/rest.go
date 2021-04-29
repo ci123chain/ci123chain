@@ -7,7 +7,6 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/client"
 	"github.com/ci123chain/ci123chain/pkg/client/cmd/rpc"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
-	"github.com/ci123chain/ci123chain/pkg/client/helper"
 	txRpc "github.com/ci123chain/ci123chain/pkg/transfer/rest"
 	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/spf13/cobra"
@@ -37,16 +36,16 @@ import (
 	ltypes "github.com/tendermint/tendermint/rpc/jsonrpc/types"
 )
 
-const (
-	FlagListenAddr         = "laddr"
-	FlagMaxOpenConnections = "max-open"
-	FlagRPCReadTimeout     = "read-timeout"
-	FlagRPCWriteTimeout    = "write-timeout"
-	FlagWebsocket		   = "wsport"
-	GenesisFile			   = "genesis.json"
-	PrivValidatorKey	   = "priv_validator_key.json"
-	flagETHChainID         = "eth_chain_id"
-)
+//const (
+//	FlagListenAddr         = "laddr"
+//	FlagMaxOpenConnections = "max-open"
+//	FlagRPCReadTimeout     = "read-timeout"
+//	FlagRPCWriteTimeout    = "write-timeout"
+//	FlagWebsocket		   = "wsport"
+//	GenesisFile			   = "genesis.json"
+//	PrivValidatorKey	   = "priv_validator_key.json"
+//	flagETHChainID         = "eth_chain_id"
+//)
 
 type ConfigFiles struct {
 	GenesisFile []byte `json:"genesis_file"`
@@ -55,12 +54,12 @@ type ConfigFiles struct {
 
 func init() {
 	rootCmd.AddCommand(rpcCmd)
-	rpcCmd.Flags().String(FlagListenAddr, "tcp://0.0.0.0:1317", "The address for the server to listen on")
-	rpcCmd.Flags().Uint(FlagMaxOpenConnections, 1000, "The number of maximum open connections")
-	rpcCmd.Flags().Uint(FlagRPCReadTimeout, 10, "The RPC read timeout")
-	rpcCmd.Flags().Uint(FlagRPCWriteTimeout, 10, "The RPC write timeout")
-	rpcCmd.Flags().String(FlagWebsocket, "8546", "websocket port to listen to")
-	rpcCmd.Flags().Int64(flagETHChainID, 1, "eth_chain_id")
+	rpcCmd.Flags().String(util.FlagListenAddr, "tcp://0.0.0.0:1317", "The address for the server to listen on")
+	rpcCmd.Flags().Uint(util.FlagMaxOpenConnections, 1000, "The number of maximum open connections")
+	rpcCmd.Flags().Uint(util.FlagRPCReadTimeout, 10, "The RPC read timeout")
+	rpcCmd.Flags().Uint(util.FlagRPCWriteTimeout, 10, "The RPC write timeout")
+	rpcCmd.Flags().String(util.FlagWebsocket, "8546", "websocket port to listen to")
+	rpcCmd.Flags().Int64(util.FlagETHChainID, 1, "eth_chain_id")
 	_ = viper.BindPFlags(rpcCmd.Flags())
 }
 
@@ -68,14 +67,14 @@ var rpcCmd = &cobra.Command{
 	Use: "rest-server",
 	Short: "Start rpc server",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		id := viper.GetInt64(flagETHChainID)
+		id := viper.GetInt64(util.FlagETHChainID)
 		util.Setup(id)
 		rs := NewRestServer()
 		err := rs.Start(
-			viper.GetString(FlagListenAddr),
-			viper.GetInt(FlagMaxOpenConnections),
-			uint(viper.GetInt(FlagRPCReadTimeout)),
-			uint(viper.GetInt(FlagRPCWriteTimeout)),
+			viper.GetString(util.FlagListenAddr),
+			viper.GetInt(util.FlagMaxOpenConnections),
+			uint(viper.GetInt(util.FlagRPCReadTimeout)),
+			uint(viper.GetInt(util.FlagRPCWriteTimeout)),
 			)
 		return err
 	},
@@ -155,7 +154,7 @@ func Handle404() http.Handler {
 		arr := strings.SplitAfter(nodeUri, CorePrefix)
 		arr = arr[1:]
 		newPath := strings.Join(arr, "")
-		dest := viper.GetString(helper.FlagNode)
+		dest := viper.GetString(util.FlagNode)
 		dest = strings.ReplaceAll(dest, "tcp", "http")
 
 		_ = req.ParseForm()
@@ -272,7 +271,7 @@ func HealthCheckHandler(ctx context.Context) http.HandlerFunc  {
 	return func(w http.ResponseWriter, req *http.Request) {
 		cli := &http.Client{}
 
-		dest := viper.GetString(helper.FlagNode)
+		dest := viper.GetString(util.FlagNode)
 		dest = strings.ReplaceAll(dest, "tcp", "http")
 
 		_ = req.ParseForm()
@@ -362,12 +361,12 @@ func ExportConfigHandler(ctx context.Context) http.HandlerFunc  {
 		viper.SetEnvPrefix("CI")
 		_ = viper.BindEnv("HOME")
 		root := viper.GetString("HOME")
-		gen, err := ioutil.ReadFile(filepath.Join(root, "configs", GenesisFile))
+		gen, err := ioutil.ReadFile(filepath.Join(root, "configs", util.GenesisFile))
 		if err != nil {
 			_, _ = w.Write([]byte(err.Error()))
 			return
 		}
-		pv, err := ioutil.ReadFile(filepath.Join(root, "configs", PrivValidatorKey))
+		pv, err := ioutil.ReadFile(filepath.Join(root, "configs", util.PrivValidatorKey))
 		if err != nil {
 			_, _ = w.Write([]byte(err.Error()))
 			return

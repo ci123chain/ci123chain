@@ -20,9 +20,9 @@ const (
 
 func init()  {
 	rootCmd.AddCommand(exportCmd)
-	exportCmd.Flags().String(flagPassword, "", "passphrase")
-	exportCmd.Flags().String(helper.FlagAddress, "", "Address to export")
-	util.CheckRequiredFlag(exportCmd, helper.FlagAddress)
+	exportCmd.Flags().String(util.FlagPassword, "", "passphrase")
+	exportCmd.Flags().String(util.FlagAddress, "", "Address to export")
+	util.CheckRequiredFlag(exportCmd, util.FlagAddress)
 }
 
 
@@ -33,9 +33,9 @@ var exportCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		viper.BindPFlags(cmd.Flags())
 
-		dir := viper.GetString(helper.FlagHomeDir)
-		addr := viper.GetString(helper.FlagAddress)
-		password := viper.GetString(flagPassword)
+		dir := viper.GetString(util.FlagHomeDir)
+		addr := viper.GetString(util.FlagAddress)
+		password := viper.GetString(util.FlagPassword)
 
 		if len(password) < 1 {
 			var err error

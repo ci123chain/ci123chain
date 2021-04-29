@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/ci123chain/ci123chain/pkg/client/lite/proxy"
+	"github.com/ci123chain/ci123chain/pkg/util"
 	cmn "github.com/tendermint/tendermint/libs/os"
 	rpcclient "github.com/tendermint/tendermint/rpc/client/http"
 )
@@ -39,12 +40,12 @@ var (
 )
 
 func init() {
-	LiteCmd.Flags().StringVar(&listenAddr, "laddr", "tcp://localhost:8888", "Serve the proxy on the given address")
-	LiteCmd.Flags().StringVar(&nodeAddr, "node", "tcp://localhost:26657", "Connect to a Tendermint node at this address")
-	LiteCmd.Flags().StringVar(&chainID, "chain-id", "tendermint", "Specify the Tendermint chain ID")
-	LiteCmd.Flags().StringVar(&home, "home-dir", ".tendermint-lite", "Specify the home directory")
-	LiteCmd.Flags().IntVar(&maxOpenConnections, "max-open-connections", 900, "Maximum number of simultaneous connections (including WebSocket).")
-	LiteCmd.Flags().IntVar(&cacheSize, "cache-size", 10, "Specify the memory trust store cache size")
+	LiteCmd.Flags().StringVar(&listenAddr, util.FlagListenAddr, "tcp://localhost:8888", "Serve the proxy on the given address")
+	LiteCmd.Flags().StringVar(&nodeAddr, util.FlagNode, "tcp://localhost:26657", "Connect to a Tendermint node at this address")
+	LiteCmd.Flags().StringVar(&chainID, util.FlagChainID, "tendermint", "Specify the Tendermint chain ID")
+	LiteCmd.Flags().StringVar(&home, util.FlagLiteHomeDir, ".tendermint-lite", "Specify the home directory")
+	LiteCmd.Flags().IntVar(&maxOpenConnections, util.FlagMaxOpenConnections, 900, "Maximum number of simultaneous connections (including WebSocket).")
+	LiteCmd.Flags().IntVar(&cacheSize, util.CacheSize, 10, "Specify the memory trust store cache size")
 }
 
 func EnsureAddrHasSchemeOrDefaultToTCP(addr string) (string, error) {
