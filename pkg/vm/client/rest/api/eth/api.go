@@ -282,23 +282,11 @@ func (api *PublicEthereumAPI) GetTransactionCount(address common.Address, blockN
 	if err != nil {
 		return nil, err
 	}
-	//var acc exported.Account
-	//err2 := cdc.UnmarshalBinaryLengthPrefixed(res, &acc)
-	//if err2 != nil {
-	//	return nil, err2
-	//}
-	var result util.HistoryAccount
-	err2 := cdc.UnmarshalBinaryLengthPrefixed(res, &result)
-	if err2 != nil {
-		return nil, err2
-	}
-
 	var acc exported.Account
-	err2 = cdc.UnmarshalBinaryLengthPrefixed(result.Account, &acc)
+	err2 := cdc.UnmarshalBinaryLengthPrefixed(res, &acc)
 	if err2 != nil {
 		return nil, err2
 	}
-
 	nonce := acc.GetSequence()
 	n := hexutil.Uint64(nonce)
 	return &n, nil
@@ -560,19 +548,8 @@ func (api *PublicEthereumAPI) GetBalance(address common.Address, blockNum BlockN
 	if err != nil {
 		return nil, err
 	}
-	//var acc exported.Account
-	//err2 := cdc.UnmarshalBinaryLengthPrefixed(res, &acc)
-	//if err2 != nil {
-	//	return nil, err2
-	//}
-	var result util.HistoryAccount
-	err2 := cdc.UnmarshalBinaryLengthPrefixed(res, &result)
-	if err2 != nil {
-		return nil, err2
-	}
-
 	var acc exported.Account
-	err2 = cdc.UnmarshalBinaryLengthPrefixed(result.Account, &acc)
+	err2 := cdc.UnmarshalBinaryLengthPrefixed(res, &acc)
 	if err2 != nil {
 		return nil, err2
 	}

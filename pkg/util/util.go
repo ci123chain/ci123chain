@@ -6,7 +6,6 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	tcrypto "github.com/tendermint/tendermint/proto/tendermint/crypto"
 	"os"
 	"os/signal"
 	"sort"
@@ -15,6 +14,16 @@ import (
 	"syscall"
 )
 
+const (
+	ProofQueryPrefix = "s/k:accounts/"
+
+	ShardDefaultProto = "tcp://"
+	ShardDefaultPort = ":26657"
+
+
+	//enviromnet
+	CICHAINID = "CICHAINID"
+)
 
 var CHAINID int64
 
@@ -128,16 +137,16 @@ func search(h Heights, i int64) int64 {
 	}
 }
 
-type HistoryAccount struct {
-	Shard   string       `json:"shard"`
-	Account  []byte  `json:"account"`
-	Proof   *tcrypto.ProofOps `json:"proof"`
-}
-
-func NewHistoryAccount(s string, acc []byte, p *tcrypto.ProofOps) HistoryAccount{
-	return HistoryAccount{
-		Shard: s,
-		Account: acc,
-		Proof: p,
-	}
-}
+//type HistoryAccount struct {
+//	Shard   string       `json:"shard"`
+//	Account  []byte  `json:"account"`
+//	Proof   *tcrypto.ProofOps `json:"proof"`
+//}
+//
+//func NewHistoryAccount(s string, acc []byte, p *tcrypto.ProofOps) HistoryAccount{
+//	return HistoryAccount{
+//		Shard: s,
+//		Account: acc,
+//		Proof: p,
+//	}
+//}

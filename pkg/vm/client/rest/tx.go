@@ -12,7 +12,6 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/account/types"
 	types2 "github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
-	"github.com/ci123chain/ci123chain/pkg/util"
 	evm "github.com/ci123chain/ci123chain/pkg/vm/evmtypes"
 	"github.com/ci123chain/ci123chain/pkg/vm/keeper"
 	vmmodule "github.com/ci123chain/ci123chain/pkg/vm/moduletypes"
@@ -172,15 +171,9 @@ func executeContractHandler(cliCtx context.Context,w http.ResponseWriter, r *htt
 		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInternal, "contract account does not exist").Error())
 		return
 	}
-	var result util.HistoryAccount
-	err2 := cliCtx.Cdc.UnmarshalBinaryLengthPrefixed(queryRes, &result)
-	if err2 != nil {
-		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("unmarshal query response to account failed:%v", err2.Error())).Error())
-		return
-	}
 
 	var acc exported.Account
-	err2 = cliCtx.Cdc.UnmarshalBinaryLengthPrefixed(result.Account, &acc)
+	err2 := cliCtx.Cdc.UnmarshalBinaryLengthPrefixed(queryRes, &acc)
 	if err2 != nil {
 		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("cdc unmarshal faield: %v", err2)).Error())
 		return

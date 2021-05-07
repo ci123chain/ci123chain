@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	order "github.com/ci123chain/ci123chain/pkg/order/types"
+	"github.com/ci123chain/ci123chain/pkg/util"
 	ics23 "github.com/confio/ics23/go"
 	tmcrypto "github.com/tendermint/tendermint/proto/tendermint/crypto"
 	"io"
@@ -11,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"sort"
 	"strings"
 
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -21,6 +23,7 @@ import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
+	acctypes "github.com/ci123chain/ci123chain/pkg/account/types"
 )
 
 const (
@@ -220,31 +223,61 @@ func (rs *rootMultiStore) Commit() CommitID {
 	var commitInfo commitInfo
 	var cacheMap []CacheMap
 
+	cacheName, cacheMap := checkCache(rs)
+
 	version := rs.lastCommitID.Version + 1
-	// check cache
-	cacheName := filepath.Join(rs.cacheDir, CacheName)
-	if _, err := os.Stat(cacheName); os.IsNotExist(err) {
-		for _, store := range rs.stores {
-			if reflect.TypeOf(store).Elem() == reflect.TypeOf(iavlStore{}){
-				s := store.(*iavlStore).Parent().(*baseKVStore).GetCache()
-				for k, v := range s{
-					cacheMap = append(cacheMap, CacheMap{
-						Key:   []byte(k),
-						Value: v,
-					})
-				}
-			}
-		}
-		cache, err := json.Marshal(cacheMap)
-		if err != nil {
-			panic(err)
-		}
-		err = ioutil.WriteFile(cacheName, cache, os.ModePerm)
-		if err != nil {
-			panic(err)
-		}
-		//stores = rs.stores
-	}
+	//// check cache
+	//cacheName := filepath.Join(rs.cacheDir, CacheName)
+	//if _, err := os.Stat(cacheName); os.IsNotExist(err) {
+	//	for _, store := range rs.stores {
+	//		if reflect.TypeOf(store).Elem() == reflect.TypeOf(iavlStore{}){
+	//			s := store.(*iavlStore).Parent().(*baseKVStore).GetCache()
+	//			for k, v := range s{
+	//				if strings.Contains(k, "accounts") {
+	//					key := []byte(k)
+	//					addr := sdk.ToAccAddress(key[len(k)-20:])
+	//					var heights util.Heights
+	//					b := store.(*iavlStore).Parent().(*baseKVStore).Get(acctypes.HeightsUpdateKey(addr))
+	//					if b != nil {
+	//						err = acctypes.ModuleCdc.UnmarshalBinaryLengthPrefixed(b, &heights)
+	//						if  err != nil {
+	//							panic(err)
+	//						}
+	//						sort.Sort(heights)
+	//						if heights[len(heights)-1] < version{
+	//							heights = append(heights, version)
+	//						}
+	//					}else {
+	//						heights = make(util.Heights, 0)
+	//						heights = append(heights, version)
+	//					}
+	//					bz, _ := acctypes.ModuleCdc.MarshalBinaryLengthPrefixed(heights)
+	//					cacheMap = append(cacheMap, CacheMap{
+	//						Key:   []byte("s/k:"+"accounts" + "/" + string(acctypes.HeightsUpdateKey(addr))),
+	//						Value: bz,
+	//					})
+	//					cacheMap = append(cacheMap, CacheMap{
+	//						Key:   []byte("s/k:"+"accounts" + "/" + string(acctypes.HeightUpdateKey(addr, version))),
+	//						Value: []byte(os.Getenv("CICHAINID")),
+	//					})
+	//				}
+	//				cacheMap = append(cacheMap, CacheMap{
+	//					Key:   []byte(k),
+	//					Value: v,
+	//				})
+	//			}
+	//		}
+	//	}
+	//	cache, err := json.Marshal(cacheMap)
+	//	if err != nil {
+	//		panic(err)
+	//	}
+	//	err = ioutil.WriteFile(cacheName, cache, os.ModePerm)
+	//	if err != nil {
+	//		panic(err)
+	//	}
+	//	//stores = rs.stores
+	//}
 	// commitLocalStores
 	commitInfo = rs.commitStores(version, rs.stores)
 
@@ -261,13 +294,14 @@ func (rs *rootMultiStore) Commit() CommitID {
 	os.Remove(cacheName)
 
 	//done
-	var orderBook order.OrderBook
-	cdb := dbm.NewPrefixDB(rs.cdb, []byte("s/k:"+order.StoreKey+"/"))
-	orderBytes, _ := cdb.Get([]byte(order.OrderBookKey))
-	order.ModuleCdc.UnmarshalJSON(orderBytes, &orderBook)
-	orderBook.Current.State = order.StateDone
-	orderBytes, _ = order.ModuleCdc.MarshalJSON(orderBook)
-	cdb.Set([]byte(order.OrderBookKey), orderBytes)
+	storeOrderBook(rs)
+	//var orderBook order.OrderBook
+	//cdb := dbm.NewPrefixDB(rs.cdb, []byte("s/k:"+order.StoreKey+"/"))
+	//orderBytes, _ := cdb.Get([]byte(order.OrderBookKey))
+	//order.ModuleCdc.UnmarshalJSON(orderBytes, &orderBook)
+	//orderBook.Current.State = order.StateDone
+	//orderBytes, _ = order.ModuleCdc.MarshalJSON(orderBook)
+	//cdb.Set([]byte(order.OrderBookKey), orderBytes)
 
 	// Prepare for next version.
 	commitID := CommitID{
@@ -655,4 +689,70 @@ func setCommitInfo(batch dbm.Batch, version int64, cInfo commitInfo) {
 type CacheMap struct {
 	Key		 []byte `json:"key"`
 	Value    []byte `json:"value"`
+}
+
+func checkCache(rs *rootMultiStore) (string, []CacheMap) {
+	version := rs.lastCommitID.Version + 1
+	var cacheMap []CacheMap
+	cacheName := filepath.Join(rs.cacheDir, CacheName)
+	if _, err := os.Stat(cacheName); os.IsNotExist(err) {
+		for _, store := range rs.stores {
+			if reflect.TypeOf(store).Elem() == reflect.TypeOf(iavlStore{}){
+				s := store.(*iavlStore).Parent().(*baseKVStore).GetCache()
+				for k, v := range s{
+					if strings.Contains(k, "accounts") {
+						key := []byte(k)
+						addr := sdk.ToAccAddress(key[len(k)-20:])
+						var heights util.Heights
+						b := store.(*iavlStore).Parent().(*baseKVStore).Get(acctypes.HeightsUpdateKey(addr))
+						if b != nil {
+							err = acctypes.ModuleCdc.UnmarshalBinaryLengthPrefixed(b, &heights)
+							if  err != nil {
+								panic(err)
+							}
+							sort.Sort(heights)
+							if heights[len(heights)-1] < version{
+								heights = append(heights, version)
+							}
+						}else {
+							heights = make(util.Heights, 0)
+							heights = append(heights, version)
+						}
+						bz, _ := acctypes.ModuleCdc.MarshalBinaryLengthPrefixed(heights)
+						cacheMap = append(cacheMap, CacheMap{
+							Key:   []byte(util.ProofQueryPrefix + string(acctypes.HeightsUpdateKey(addr))),
+							Value: bz,
+						})
+						cacheMap = append(cacheMap, CacheMap{
+							Key:   []byte(util.ProofQueryPrefix + string(acctypes.HeightUpdateKey(addr, version))),
+							Value: []byte(os.Getenv(util.CICHAINID)),
+						})
+					}
+					cacheMap = append(cacheMap, CacheMap{
+						Key:   []byte(k),
+						Value: v,
+					})
+				}
+			}
+		}
+		cache, err := json.Marshal(cacheMap)
+		if err != nil {
+			panic(err)
+		}
+		err = ioutil.WriteFile(cacheName, cache, os.ModePerm)
+		if err != nil {
+			panic(err)
+		}
+	}
+	return cacheName, cacheMap
+}
+
+func storeOrderBook(rs *rootMultiStore) {
+	var orderBook order.OrderBook
+	cdb := dbm.NewPrefixDB(rs.cdb, []byte("s/k:"+order.StoreKey+"/"))
+	orderBytes, _ := cdb.Get([]byte(order.OrderBookKey))
+	order.ModuleCdc.UnmarshalJSON(orderBytes, &orderBook)
+	orderBook.Current.State = order.StateDone
+	orderBytes, _ = order.ModuleCdc.MarshalJSON(orderBook)
+	cdb.Set([]byte(order.OrderBookKey), orderBytes)
 }

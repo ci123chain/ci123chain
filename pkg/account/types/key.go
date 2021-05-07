@@ -38,3 +38,12 @@ func HeightUpdateKey(addr types.AccAddress, height int64) []byte {
 func HeightsUpdateKey(addr types.AccAddress) []byte {
 	return append(HeightsUpdateKeyPrefix, addr.Bytes()...)
 }
+
+//func PrefixHeightsUpdateKey(addr types.AccAddress) []byte {
+//	var a =  append(AddressStoreKeyPrefix, addr.Bytes()...)
+//	return append(HeightsUpdateKeyPrefix, a...)
+//}
+//
+//func GetPrefixHeightsUpdateKey(key []byte) []byte {
+//	return append(HeightsUpdateKeyPrefix, key...)
+//}

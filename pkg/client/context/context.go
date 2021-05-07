@@ -91,48 +91,6 @@ func (ctx *Context) GetFromAddresses() (sdk.AccAddress) {
 func (ctx *Context) GetBlocked() (bool) {
 	return ctx.Blocked
 }
-/*
-func (ctx *Context) GetHistoryBalance(addr sdk.AccAddress, isProve bool, height string) (sdk.Coins, *crypto.ProofOps, error, []byte) {
-	var h int64
-	if height == "" {
-		h = -1
-	}else {
-		var err error
-		h, err = util.CheckInt64(height)
-		if err != nil {
-			return sdk.NewCoins(), nil, err, nil
-		}
-		if h <=0 {
-			return sdk.NewCoins(), nil, errors.New(fmt.Sprintf("unexpected height: %v", height)), nil
-		}
-	}
-	qparams := keeper.NewQueryAccountParams(addr, h)
-	bz, err := ctx.Cdc.MarshalJSON(qparams)
-	if err != nil {
-		return sdk.NewCoins(), nil , err, nil
-	}
-	res, _, _, err := ctx.Query("/custom/" + types.ModuleName + "/" + types.QueryHistoryAccount, bz, isProve)
-	if res == nil{
-		return sdk.NewCoins(), nil, errors.New("The account does not exist"), nil
-	}
-	if err != nil {
-		return sdk.NewCoins(), nil, err, nil
-	}
-	var result util.HistoryAccount
-	err2 := ctx.Cdc.UnmarshalBinaryLengthPrefixed(res, &result)
-	if err2 != nil {
-		return sdk.NewCoins(), nil, err2, nil
-	}
-
-	var acc exported.Account
-	err2 = ctx.Cdc.UnmarshalBinaryLengthPrefixed(result.Account, &acc)
-	if err2 != nil {
-		return sdk.NewCoins(), nil, err2, nil
-	}
-
-	return acc.GetCoins(), result.Proof, nil, nil
-}
- */
 
 func (ctx *Context) GetBalanceByAddress(addr sdk.AccAddress, isProve bool, height string) (sdk.Coins, *crypto.ProofOps, error) {
 	var h int64
@@ -160,19 +118,14 @@ func (ctx *Context) GetBalanceByAddress(addr sdk.AccAddress, isProve bool, heigh
 	if res == nil{
 		return sdk.NewCoins(), nil, errors.New("The account does not exist")
 	}
-	var result util.HistoryAccount
-	err2 := ctx.Cdc.UnmarshalBinaryLengthPrefixed(res, &result)
-	if err2 != nil {
-		return sdk.NewCoins(), nil, err2
-	}
 
 	var acc exported.Account
-	err2 = ctx.Cdc.UnmarshalBinaryLengthPrefixed(result.Account, &acc)
+	err2 := ctx.Cdc.UnmarshalBinaryLengthPrefixed(res, &acc)
 	if err2 != nil {
 		return sdk.NewCoins(), nil, err2
 	}
 
-	return acc.GetCoins(), result.Proof, nil
+	return acc.GetCoins(), nil, nil
 }
 
 func (ctx *Context) GetNonceByAddress(addr sdk.AccAddress, isProve bool) (uint64, *crypto.ProofOps, error) {
@@ -189,14 +142,8 @@ func (ctx *Context) GetNonceByAddress(addr sdk.AccAddress, isProve bool) (uint64
 		return 0, nil, err
 	}
 
-	var result util.HistoryAccount
-	err2 := ctx.Cdc.UnmarshalBinaryLengthPrefixed(res, &result)
-	if err2 != nil {
-		return 0, nil, err2
-	}
-
 	var acc exported.Account
-	err2 = ctx.Cdc.UnmarshalBinaryLengthPrefixed(result.Account, &acc)
+	err2 := ctx.Cdc.UnmarshalBinaryLengthPrefixed(res, &acc)
 	if err2 != nil {
 		return 0, nil, err2
 	}
