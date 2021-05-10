@@ -5,8 +5,6 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/account/exported"
 	acc_types "github.com/ci123chain/ci123chain/pkg/account/types"
-	"github.com/ci123chain/ci123chain/pkg/util"
-	"sort"
 )
 
 type AccountKeeper struct {
@@ -51,66 +49,66 @@ func (ak AccountKeeper) SetAccount(ctx types.Context, acc exported.Account) {
 	}
 	store.Set(acc_types.AddressStoreKey(addr), bz)
 
-	coins := acc.GetCoins()
-	chain_id := ctx.ChainID()
-	update := util.HeightUpdate{
-		Shard: chain_id,
-		Coins: coins,
-	}
-	h := ctx.BlockHeight()
-	v, err := ak.cdc.MarshalBinaryLengthPrefixed(update)
-	if err != nil {
-		panic(err)
-	}
-
-	var heights util.Heights
-	b := store.Get(acc_types.HeightsUpdateKey(addr))
-	if b == nil {
-		heights = make(util.Heights, 0)
-		heights = append(heights, h)
-	}else {
-		err := ak.cdc.UnmarshalBinaryLengthPrefixed(b, &heights)
-		if err != nil {
-			panic(err)
-		}
-		sort.Sort(heights)
-		if heights[len(heights)-1] < h{
-			heights = append(heights, h)
-		}
-	}
-	hbz, err := ak.cdc.MarshalBinaryLengthPrefixed(heights)
-	if err != nil {
-		panic(err)
-	}
-
-	store.Set(acc_types.HeightUpdateKey(addr, h), v)
-	store.Set(acc_types.HeightsUpdateKey(addr), hbz)
+	//coins := acc.GetCoins()
+	//chain_id := ctx.ChainID()
+	//update := util.HeightUpdate{
+	//	Shard: chain_id,
+	//	Coins: coins,
+	//}
+	//h := ctx.BlockHeight()
+	//v, err := ak.cdc.MarshalBinaryLengthPrefixed(update)
+	//if err != nil {
+	//	panic(err)
+	//}
+	//
+	//var heights util.Heights
+	//b := store.Get(acc_types.HeightsUpdateKey(addr))
+	//if b == nil {
+	//	heights = make(util.Heights, 0)
+	//	heights = append(heights, h)
+	//}else {
+	//	err := ak.cdc.UnmarshalBinaryLengthPrefixed(b, &heights)
+	//	if err != nil {
+	//		panic(err)
+	//	}
+	//	sort.Sort(heights)
+	//	if heights[len(heights)-1] < h{
+	//		heights = append(heights, h)
+	//	}
+	//}
+	//hbz, err := ak.cdc.MarshalBinaryLengthPrefixed(heights)
+	//if err != nil {
+	//	panic(err)
+	//}
+	//
+	//store.Set(acc_types.HeightUpdateKey(addr, h), v)
+	//store.Set(acc_types.HeightsUpdateKey(addr), hbz)
 }
 
-func SearchHeight(ctx types.Context, ak AccountKeeper, acc exported.Account, i int64) int64 {
-	addr := acc.GetAddress()
-	store := ctx.KVStore(ak.key)
-	var heights util.Heights
-	b := store.Get(acc_types.HeightsUpdateKey(addr))
-	err := ak.cdc.UnmarshalBinaryLengthPrefixed(b, &heights)
-	if err != nil {
-		return -3
-	}else {
-		return heights.Search(i)
-	}
-}
+//func SearchHeight(ctx types.Context, ak AccountKeeper, acc exported.Account, i int64) int64 {
+//	addr := acc.GetAddress()
+//	store := ctx.KVStore(ak.key)
+//	var heights util.Heights
+//	b := store.Get(acc_types.HeightsUpdateKey(addr))
+//	err := ak.cdc.UnmarshalBinaryLengthPrefixed(b, &heights)
+//	if err != nil {
+//		return -3
+//	}else {
+//		return heights.Search(i)
+//	}
+//}
 
-func GetHistoryBalance(ctx types.Context, ak AccountKeeper, acc exported.Account, i int64) util.HeightUpdate {
-	addr := acc.GetAddress()
-	store := ctx.KVStore(ak.key)
-	var update util.HeightUpdate
-	b := store.Get(acc_types.HeightUpdateKey(addr, i))
-	err := ak.cdc.UnmarshalBinaryLengthPrefixed(b, & update)
-	if err != nil {
-		panic(err)
-	}
-	return update
-}
+//func GetHistoryBalance(ctx types.Context, ak AccountKeeper, acc exported.Account, i int64) util.HeightUpdate {
+//	addr := acc.GetAddress()
+//	store := ctx.KVStore(ak.key)
+//	var update util.HeightUpdate
+//	b := store.Get(acc_types.HeightUpdateKey(addr, i))
+//	err := ak.cdc.UnmarshalBinaryLengthPrefixed(b, & update)
+//	if err != nil {
+//		panic(err)
+//	}
+//	return update
+//}
 
 func (ak AccountKeeper) GetAccount(ctx types.Context, addr types.AccAddress) exported.Account {
 	store := ctx.KVStore(ak.key)

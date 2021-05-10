@@ -28,6 +28,13 @@ func QueryTx(cliCtx context.Context, hashHexStr string) (sdk.TxResponse, error) 
 	if err != nil {
 		return sdk.TxResponse{}, types.ErrQueryTx(types.DefaultCodespace, err.Error())
 	}
+	if resTx.TxResult.Code != 1 {
+		return sdk.TxResponse{
+			TxHash:      hashHexStr,
+			Code:       resTx.TxResult.Code,
+			Info:       resTx.TxResult.Log,
+		}, nil
+	}
 
 	resBlocks, err := getBlocksForTxResults(cliCtx, []*ctypes.ResultTx{resTx})
 	if err != nil {

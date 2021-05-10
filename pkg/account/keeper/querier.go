@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"errors"
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
@@ -42,19 +41,19 @@ func queryAccount(ctx sdk.Context, req abci.RequestQuery, k AccountKeeper) ([]by
 	if acc == nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("get account faield"))
 	}
-	if accountParams.Height != -1 && accountParams.Height > 0 {
-		i := SearchHeight(ctx, k, acc, accountParams.Height)
-		if i != -3 {
-			r := GetHistoryBalance(ctx, k, acc, i)
-			by := types.ModuleCdc.MustMarshalBinaryLengthPrefixed(r.Coins)
-			return by, nil
-		}else if i ==-2 {
-			return nil, errors.New(fmt.Sprintf("unexpected height: %v", accountParams.Height))
-		}else if i ==-3 {
-			return nil, errors.New("codec unmarshal failed")
-		}
-	}
-	by := types.ModuleCdc.MustMarshalBinaryLengthPrefixed(acc.GetCoins())
+	//if accountParams.Height != -1 && accountParams.Height > 0 {
+	//	i := SearchHeight(ctx, k, acc, accountParams.Height)
+	//	if i != -3 {
+	//		r := GetHistoryBalance(ctx, k, acc, i)
+	//		by := types.ModuleCdc.MustMarshalBinaryLengthPrefixed(r.Coins)
+	//		return by, nil
+	//	}else if i ==-2 {
+	//		return nil, errors.New(fmt.Sprintf("unexpected height: %v", accountParams.Height))
+	//	}else if i ==-3 {
+	//		return nil, errors.New("codec unmarshal failed")
+	//	}
+	//}
+	by := types.ModuleCdc.MustMarshalBinaryLengthPrefixed(acc)
 	return by, nil
 }
 

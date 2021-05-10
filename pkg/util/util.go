@@ -2,13 +2,11 @@ package util
 
 import (
 	"fmt"
-	"github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"os"
 	"os/signal"
-	"sort"
 	"strconv"
 	"strings"
 	"syscall"
@@ -84,46 +82,46 @@ func TrapSignal(cleanupFunc func()) {
 }
 
 ///account history.
-type HeightUpdate struct {
-	Shard   string       `json:"shard"`
-	Coins   types.Coins  `json:"coins"`
-}
-
-type Heights []int64
-
-func (h Heights) Len() int { return len(h) }
-
-func (h Heights) Swap(i, j int) { h[i], h[j] = h[j], h[i] }
-
-func (h Heights) Less(i, j int) bool { return h[i] < h[j] }
-
-func (h Heights) Search(i int64) int64 {
-	return search(h, i)
-}
-
-func search(h Heights, i int64) int64 {
-	sort.Sort(h)
-	if len(h) ==1  {
-		if h[len(h)-1] <= i {
-			return h[len(h)-1]
-		}
-	}
-	if h[0] > i {
-		return -2
-	}
-	if h[len(h)-1] <= i {
-		return h[len(h)-1]
-	}else {
-		if h[len(h)/2 - 1] == i {
-			return i
-		}else if h[len(h)/2 -1] < i {
-			if h[len(h)/2] > i {
-				return h[len(h)/2-1]
-			}else {
-				return search(h[len(h)/2:], i)
-			}
-		}else {
-			return search(h[:len(h)/2-1], i)
-		}
-	}
-}
+//type HeightUpdate struct {
+//	Shard   string       `json:"shard"`
+//	Coins   types.Coins  `json:"coins"`
+//}
+//
+//type Heights []int64
+//
+//func (h Heights) Len() int { return len(h) }
+//
+//func (h Heights) Swap(i, j int) { h[i], h[j] = h[j], h[i] }
+//
+//func (h Heights) Less(i, j int) bool { return h[i] < h[j] }
+//
+//func (h Heights) Search(i int64) int64 {
+//	return search(h, i)
+//}
+//
+//func search(h Heights, i int64) int64 {
+//	sort.Sort(h)
+//	if len(h) ==1  {
+//		if h[len(h)-1] <= i {
+//			return h[len(h)-1]
+//		}
+//	}
+//	if h[0] > i {
+//		return -2
+//	}
+//	if h[len(h)-1] <= i {
+//		return h[len(h)-1]
+//	}else {
+//		if h[len(h)/2 - 1] == i {
+//			return i
+//		}else if h[len(h)/2 -1] < i {
+//			if h[len(h)/2] > i {
+//				return h[len(h)/2-1]
+//			}else {
+//				return search(h[len(h)/2:], i)
+//			}
+//		}else {
+//			return search(h[:len(h)/2-1], i)
+//		}
+//	}
+//}

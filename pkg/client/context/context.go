@@ -6,6 +6,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	codectypes "github.com/ci123chain/ci123chain/pkg/abci/codec/types"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/account/exported"
 	"github.com/ci123chain/ci123chain/pkg/account/keeper"
 	"github.com/ci123chain/ci123chain/pkg/account/types"
 	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
@@ -116,18 +117,18 @@ func (ctx *Context) GetBalanceByAddress(addr sdk.AccAddress, isProve bool, heigh
 	if err != nil {
 		return sdk.NewCoins(), nil, err
 	}
-	//var acc exported.Account
-	//err2 := ctx.Cdc.UnmarshalBinaryLengthPrefixed(res, &acc)
-	//if err2 != nil {
-	//	return sdk.NewCoins(), nil, err2
-	//}
-	//balance := acc.GetCoins()
-
-	var balance sdk.Coins
-	err2 := ctx.Cdc.UnmarshalBinaryLengthPrefixed(res, &balance)
+	var acc exported.Account
+	err2 := ctx.Cdc.UnmarshalBinaryLengthPrefixed(res, &acc)
 	if err2 != nil {
 		return sdk.NewCoins(), nil, err2
 	}
+	balance := acc.GetCoins()
+
+	//var balance sdk.Coins
+	//err2 := ctx.Cdc.UnmarshalBinaryLengthPrefixed(res, &balance)
+	//if err2 != nil {
+	//	return sdk.NewCoins(), nil, err2
+	//}
 	return balance, proof, nil
 }
 
@@ -137,19 +138,24 @@ func (ctx *Context) GetNonceByAddress(addr sdk.AccAddress, isProve bool) (uint64
 	if err != nil {
 		return 0, nil , err
 	}
-	res, _, proof, err := ctx.Query("/custom/" + types.ModuleName + "/" + types.QueryAccountNonce, bz, isProve)
+	res, _, proof, err := ctx.Query("/custom/" + types.ModuleName + "/" + types.QueryAccount, bz, isProve)
 	if res == nil{
 		return 0, nil, errors.New("The account does not exist")
 	}
 	if err != nil {
 		return 0, nil, err
 	}
-	var nonce uint64
-	err2 := ctx.Cdc.UnmarshalBinaryLengthPrefixed(res, &nonce)
+	//var nonce uint64
+	//err2 := ctx.Cdc.UnmarshalBinaryLengthPrefixed(res, &nonce)
+	//if err2 != nil {
+	//	return 0, nil, err2
+	//}
+	var acc exported.Account
+	err2 := ctx.Cdc.UnmarshalBinaryLengthPrefixed(res, &acc)
 	if err2 != nil {
 		return 0, nil, err2
 	}
-	//nonce := acc.GetSequence()
+	nonce := acc.GetSequence()
 	return nonce, proof, nil
 }
 
