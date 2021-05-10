@@ -3,6 +3,7 @@ package module
 import (
 	"encoding/json"
 	"github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/abci/types/module"
 	"github.com/ci123chain/ci123chain/pkg/supply"
 	"github.com/ci123chain/ci123chain/pkg/supply/module/basic"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -31,4 +32,7 @@ func (am AppModule) BeginBlocker(ctx types.Context, _ abci.RequestBeginBlock) {}
 
 func (am AppModule) EndBlock(_ types.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
 	return nil
+}
+
+func (am AppModule) RegisterServices(cfg module.Configurator) {
 }

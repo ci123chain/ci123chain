@@ -4,11 +4,14 @@ import (
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/module"
 	"encoding/json"
+	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
+	codectypes "github.com/ci123chain/ci123chain/pkg/abci/codec/types"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/account"
+	client "github.com/ci123chain/ci123chain/pkg/client/context"
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/ci123chain/ci123chain/pkg/gravity/keeper"
@@ -33,6 +36,11 @@ func (AppModuleBasic) RegisterCodec(codec *codec.Codec) {
 	types.RegisterCodec(codec)
 }
 
+func (AppModuleBasic) RegisterInterfaces(registry codectypes.InterfaceRegistry) {
+	return
+}
+
+func (am AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *runtime.ServeMux) {}
 
 // DefaultGenesis implements app module basic
 func (AppModuleBasic) DefaultGenesis(validators []tmtypes.GenesisValidator) json.RawMessage {
@@ -93,4 +101,7 @@ func (m AppModule) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) {
 }
 
 func (m AppModule) Committer(ctx sdk.Context) {
+}
+
+func (am AppModule) RegisterServices(cfg module.Configurator) {
 }

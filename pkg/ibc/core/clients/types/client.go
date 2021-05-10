@@ -1,24 +1,41 @@
 package types
 
 import (
+	"fmt"
+	codectypes "github.com/ci123chain/ci123chain/pkg/abci/codec/types"
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/exported"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/host"
+	"github.com/gogo/protobuf/proto"
 	"math"
 	"strings"
 )
-type IdentifiedClientState struct {
-	// client identifier
-	ClientId string `json:"client_id,omitempty" yaml:"client_id"`
-	// client state
-	ClientState exported.ClientState `json:"client_state,omitempty" yaml:"client_state"`
-}
+
+var (
+	_ codectypes.UnpackInterfacesMessage = IdentifiedClientState{}
+	_ codectypes.UnpackInterfacesMessage = ConsensusStateWithHeight{}
+)
 
 func NewIdentifiedClientState(clientID string, clientState exported.ClientState) IdentifiedClientState {
+	msg, ok := clientState.(proto.Message)
+	if !ok {
+		panic(fmt.Errorf("cannot proto marshal %T", clientState))
+	}
+
+	anyClientState, err := codectypes.NewAnyWithValue(msg)
+	if err != nil {
+		panic(err)
+	}
 	return IdentifiedClientState{
-		ClientState: clientState,
+		ClientState: anyClientState,
 		ClientId: clientID,
 	}
+}
+
+
+// UnpackInterfaces implements UnpackInterfacesMesssage.UnpackInterfaces
+func (ics IdentifiedClientState) UnpackInterfaces(unpacker codectypes.AnyUnpacker) error {
+	return unpacker.UnpackAny(ics.ClientState, new(exported.ClientState))
 }
 
 
@@ -45,4 +62,27 @@ func ValidateClientType(clientType string) error {
 	}
 
 	return nil
+}
+
+// NewConsensusStateWithHeight creates a new ConsensusStateWithHeight instance
+func NewConsensusStateWithHeight(height Height, consensusState exported.ConsensusState) ConsensusStateWithHeight {
+	msg, ok := consensusState.(proto.Message)
+	if !ok {
+		panic(fmt.Errorf("cannot proto marshal %T", consensusState))
+	}
+
+	anyConsensusState, err := codectypes.NewAnyWithValue(msg)
+	if err != nil {
+		panic(err)
+	}
+
+	return ConsensusStateWithHeight{
+		Height:         height,
+		ConsensusState: anyConsensusState,
+	}
+}
+
+// UnpackInterfaces implements UnpackInterfacesMesssage.UnpackInterfaces
+func (cswh ConsensusStateWithHeight) UnpackInterfaces(unpacker codectypes.AnyUnpacker) error {
+	return unpacker.UnpackAny(cswh.ConsensusState, new(exported.ConsensusState))
 }

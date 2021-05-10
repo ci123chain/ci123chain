@@ -4,15 +4,18 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
+	codectypes "github.com/ci123chain/ci123chain/pkg/abci/codec/types"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/module"
 	capabilitytypes "github.com/ci123chain/ci123chain/pkg/capability/types"
+	client "github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/ibc/application/transfer/keeper"
 	"github.com/ci123chain/ci123chain/pkg/ibc/application/transfer/types"
 	channeltypes "github.com/ci123chain/ci123chain/pkg/ibc/core/channel/types"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/host"
 	porttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/port/types"
+	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	abci "github.com/tendermint/tendermint/abci/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 	"math"
@@ -48,6 +51,12 @@ func (am AppModuleBasic) Name() string {
 func (am AppModuleBasic) RegisterCodec(codec *codec.Codec) {
 	types.RegisterCodec(codec)
 }
+
+func (am AppModuleBasic) RegisterInterfaces(registry codectypes.InterfaceRegistry) {
+	return
+}
+
+func (am AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *runtime.ServeMux) {}
 
 func (am AppModuleBasic) DefaultGenesis(validators []tmtypes.GenesisValidator) json.RawMessage {
 	res, _ := json.Marshal(types.DefaultGenesisState())
@@ -272,4 +281,7 @@ func ValidateTransferChannelParams(
 		return sdkerrors.Wrapf(types.ErrInvalidVersion, "got %s, expected %s", version, types.Version)
 	}
 	return nil
+}
+
+func (am AppModule) RegisterServices(cfg module.Configurator) {
 }

@@ -16,12 +16,12 @@ func ZeroHeight() Height {
 	return Height{}
 }
 
-type Height struct {
-	// the revision that the client is currently on
-	RevisionNumber uint64 `json:"revision_number,omitempty" yaml:"revision_number"`
-	// the height within the given revision
-	RevisionHeight uint64 `json:"revision_height,omitempty" yaml:"revision_height"`
-}
+//type Height struct {
+//	// the revision that the client is currently on
+//	RevisionNumber uint64 `json:"revision_number,omitempty" yaml:"revision_number"`
+//	// the height within the given revision
+//	RevisionHeight uint64 `json:"revision_height,omitempty" yaml:"revision_height"`
+//}
 
 
 // NewHeight is a constructor for the IBC height types

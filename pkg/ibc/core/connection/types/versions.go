@@ -22,14 +22,14 @@ var (
 		DefaultIBCVersionIdentifier: false,
 	}
 )
-// Version defines the versioning scheme used to negotiate the IBC verison in
-// the connection handshake.
-type Version struct {
-	// unique version identifier
-	Identifier string `protobuf:"bytes,1,opt,name=identifier,proto3" json:"identifier,omitempty"`
-	// list of features compatible with the specified identifier
-	Features []string `protobuf:"bytes,2,rep,name=features,proto3" json:"features,omitempty"`
-}
+//// Version defines the versioning scheme used to negotiate the IBC verison in
+//// the connection handshake.
+//type Version struct {
+//	// unique version identifier
+//	Identifier string `protobuf:"bytes,1,opt,name=identifier,proto3" json:"identifier,omitempty"`
+//	// list of features compatible with the specified identifier
+//	Features []string `protobuf:"bytes,2,rep,name=features,proto3" json:"features,omitempty"`
+//}
 
 
 var _ exported.Version = &Version{}

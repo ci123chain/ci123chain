@@ -2,14 +2,14 @@ package utils
 
 import (
 	"github.com/ci123chain/ci123chain/pkg/abci/types/pagination"
-	"github.com/ci123chain/ci123chain/pkg/ibc/core/clients/types"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
+	ibc "github.com/ci123chain/ci123chain/pkg/ibc"
+	ibcclient "github.com/ci123chain/ci123chain/pkg/ibc/core/client"
+	"github.com/ci123chain/ci123chain/pkg/ibc/core/clients/types"
+	clienttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/clients/types"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/exported"
 	host "github.com/ci123chain/ci123chain/pkg/ibc/core/host"
-	ibcclient "github.com/ci123chain/ci123chain/pkg/ibc/core/client"
-	ibc "github.com/ci123chain/ci123chain/pkg/ibc"
 	coretypes "github.com/ci123chain/ci123chain/pkg/ibc/core/types"
-	clienttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/clients/types"
 	sdkerrors "github.com/pkg/errors"
 )
 
@@ -65,7 +65,12 @@ func QueryClientStateABCI(
 		return nil, err
 	}
 
-	clientStateRes := types.NewQueryClientStateResponse(clientState, proofBz, proofHeight)
+	anyClientState, err := types.PackClientState(clientState)
+	if err != nil {
+		return nil, err
+	}
+
+	clientStateRes := types.NewQueryClientStateResponse(anyClientState, proofBz, proofHeight)
 	return clientStateRes, nil
 }
 
@@ -91,7 +96,12 @@ func QueryConsensusStateABCI(
 		return nil, err
 	}
 
-	return types.NewQueryConsensusStateResponse(cs, proofBz, proofHeight), nil
+	anyConsensusState, err := types.PackConsensusState(cs)
+	if err != nil {
+		return nil, err
+	}
+
+	return types.NewQueryConsensusStateResponse(anyConsensusState, proofBz, proofHeight), nil
 }
 
 

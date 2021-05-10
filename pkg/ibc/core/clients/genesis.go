@@ -5,6 +5,7 @@ import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/clients/keeper"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/clients/types"
+	"github.com/ci123chain/ci123chain/pkg/ibc/core/exported"
 )
 
 // InitGenesis initializes the ibc client submodule's state from a provided genesis
@@ -19,9 +20,12 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, gs types.GenesisState) {
 	//}
 
 	for _, client := range gs.Clients {
-		cs := client.ClientState
+		cs, ok := client.ClientState.GetCachedValue().(exported.ClientState)
+		if !ok {
+			panic("invalid client state")
+		}
 
-		if !gs.Params.IsAllowedClient(client.ClientState.ClientType()) {
+		if !gs.Params.IsAllowedClient(cs.ClientType()) {
 			panic(fmt.Sprintf("client state type %s is not registered on the allowlist", cs.ClientType()))
 		}
 
@@ -30,7 +34,10 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, gs types.GenesisState) {
 
 	for _, cs := range gs.ClientsConsensus {
 		for _, consState := range cs.ConsensusStates {
-			consensusState := consState.ConsensusState
+			consensusState, ok := consState.ConsensusState.GetCachedValue().(exported.ConsensusState)
+			if !ok {
+				panic(fmt.Sprintf("invalid consensus state with client ID %s at height %s", cs.ClientId, consState.Height))
+			}
 			k.SetClientConsensusState(ctx, cs.ClientId, consState.Height, consensusState)
 		}
 	}

@@ -3,6 +3,7 @@ package module
 import (
 	"encoding/json"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/abci/types/module"
 	ak "github.com/ci123chain/ci123chain/pkg/account/keeper"
 	"github.com/ci123chain/ci123chain/pkg/staking"
 	k "github.com/ci123chain/ci123chain/pkg/staking/keeper"
@@ -39,4 +40,7 @@ func (am AppModule) Committer(ctx sdk.Context) {
 
 func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
 	return staking.EndBlock(ctx, am.StakingKeeper)
+}
+
+func (am AppModule) RegisterServices(cfg module.Configurator) {
 }

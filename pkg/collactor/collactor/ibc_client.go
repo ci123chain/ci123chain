@@ -98,7 +98,10 @@ func (c *Chain) InjectTrustedFields(dst *Chain, header *tmclient.Header) (*tmcli
 	if err != nil {
 		return nil, err
 	}
-	cs := counterpartyClientRes.ClientState
+	cs, err := clienttypes.UnpackClientState(counterpartyClientRes.ClientState)
+	if err != nil {
+		return nil, err
+	}
 
 	// inject TrustedHeight as latest height stored on counterparty client
 	h.TrustedHeight = cs.GetLatestHeight().(clienttypes.Height)

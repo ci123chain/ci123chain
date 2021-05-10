@@ -3,12 +3,15 @@ package slashing
 import (
 	"encoding/json"
 	staking "github.com/ci123chain/ci123chain/pkg/staking/keeper"
+	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	abci "github.com/tendermint/tendermint/abci/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
+	codectypes "github.com/ci123chain/ci123chain/pkg/abci/codec/types"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/module"
+	client "github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/slashing/keeper"
 	"github.com/ci123chain/ci123chain/pkg/slashing/types"
 )
@@ -40,6 +43,11 @@ func (AppModuleBasic) RegisterCodec(codec *codec.Codec) {
 	types.RegisterCodec(codec)
 }
 
+func (AppModuleBasic) RegisterInterfaces(registry codectypes.InterfaceRegistry) {
+	return
+}
+
+func (am AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *runtime.ServeMux) {}
 
 //____________________________________________________________________________
 
@@ -92,4 +100,7 @@ func (am AppModule) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) {
 // updates.
 func (AppModule) EndBlock(_ sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
 	return []abci.ValidatorUpdate{}
+}
+
+func (am AppModule) RegisterServices(cfg module.Configurator) {
 }

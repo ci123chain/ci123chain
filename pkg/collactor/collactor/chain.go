@@ -53,6 +53,7 @@ type Chain struct {
 	//Keybase  keys.Keyring     `yaml:"-" json:"-"`
 	Client   rpcclient.Client `yaml:"-" json:"-"`
 	cdc  *codec.Codec `yaml:"-" json:"-"`
+	Encoding types2.EncodingConfig `yaml:"-" json:"-"`
 	//KeyOutput *helper.KeyOutput
 	address sdk.AccAddress
 	logger  log.Logger
@@ -111,6 +112,7 @@ func (c *Chain) Init(homePath string, timeout time.Duration, logger log.Logger, 
 	}
 
 	c.cdc = types2.GetCodec()
+	c.Encoding = *types2.GetEncodingConfig()
 
 	//c.KeyOutput = ko
 	c.Client = client
@@ -151,7 +153,7 @@ func (c *Chain) CLIContext(height int64) sdkCtx.Context {
 		WithHeight(height).
 		WithCodec(c.cdc).
 		//WithJSONMarshaler(newContextualStdCodec(c.Encoding.Marshaler, c.UseSDKContext)).
-		//WithInterfaceRegistry(c.Encoding.InterfaceRegistry).
+		WithInterfaceRegistry(c.Encoding.InterfaceRegistry).
 		//WithTxConfig(c.Encoding.TxConfig).
 		//WithLegacyAmino(c.Encoding.Amino).
 		//WithInput(os.Stdin).
@@ -348,7 +350,10 @@ func (c *Chain) GenerateConnHandshakeProof(height uint64) (clientState ibcexport
 		return nil, nil, nil, nil, clienttypes.Height{}, err
 	}
 
-	clientState = clientStateRes.ClientState
+	clientState, err = clienttypes.UnpackClientState(clientStateRes.ClientState)
+	if err != nil {
+		return nil, nil, nil, nil, clienttypes.Height{}, err
+	}
 
 	eg.Go(func() error {
 		consensusStateRes, err = c.QueryClientConsensusState(int64(height), clientState.GetLatestHeight())

@@ -17,7 +17,7 @@ import (
 )
 
 
-func (q Keeper)ClientState(ctx sdk.Context, req abci.RequestQuery) ([]byte, error) {
+func (q Keeper)ClientStateRest(ctx sdk.Context, req abci.RequestQuery) ([]byte, error) {
 	var reqClientState types.QueryClientStateRequest
 	if err := q.cdc.UnmarshalJSON(req.Data, &reqClientState); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
@@ -34,15 +34,20 @@ func (q Keeper)ClientState(ctx sdk.Context, req abci.RequestQuery) ([]byte, erro
 			sdkerrors.Wrap(types.ErrClientNotFound, reqClientState.ClientId).Error(),
 		)	}
 	proofHeight := types.GetSelfHeight(ctx)
+	any, err := types.PackClientState(clientState)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
 	resp := types.QueryClientStateResponse{
-		ClientState: clientState,
+		ClientState: any,
 		ProofHeight: proofHeight,
 	}
 	return q.cdc.MustMarshalJSON(resp), nil
 }
 
 
-func (q Keeper)ClientStates(ctx sdk.Context, req abci.RequestQuery) ([]byte, error) {
+func (q Keeper)ClientStatesRest(ctx sdk.Context, req abci.RequestQuery) ([]byte, error) {
 	var reqClientState types.QueryClientStatesRequest
 	if err := q.cdc.UnmarshalJSON(req.Data, &reqClientState); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
@@ -87,7 +92,7 @@ func (q Keeper)ClientStates(ctx sdk.Context, req abci.RequestQuery) ([]byte, err
 
 
 // ConsensusState implements the Query/ConsensusState method
-func (q Keeper) ConsensusState(ctx sdk.Context,  req abci.RequestQuery ) ([]byte, error) {
+func (q Keeper) ConsensusStateRest(ctx sdk.Context,  req abci.RequestQuery ) ([]byte, error) {
 	var reqConsensusState types.QueryConsensusStateRequest
 	if err := types.IBCClientCodec.UnmarshalJSON(req.Data, &reqConsensusState); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
@@ -118,8 +123,14 @@ func (q Keeper) ConsensusState(ctx sdk.Context,  req abci.RequestQuery ) ([]byte
 	}
 
 	proofHeight := types.GetSelfHeight(ctx)
+
+	any, err := types.PackConsensusState(consensusState)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
 	resp := types.QueryConsensusStateResponse{
-		ConsensusState: consensusState,
+		ConsensusState: any,
 		ProofHeight:    proofHeight,
 	}
 	return types.IBCClientCodec.MustMarshalJSON(resp), nil

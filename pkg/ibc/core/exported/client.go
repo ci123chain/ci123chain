@@ -4,6 +4,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	ics23 "github.com/confio/ics23/go"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/gogo/protobuf/proto"
 )
 
 const (
@@ -18,6 +19,7 @@ const (
 )
 
 type ClientState interface {
+	proto.Message
 	ClientType() string
 	GetLatestHeight() Height
 	IsFrozen() bool
@@ -135,6 +137,7 @@ type ClientState interface {
 }
 
 type ConsensusState interface {
+	proto.Message
 	ClientType() string
 	GetRoot() Root
 	GetTimestamp() uint64

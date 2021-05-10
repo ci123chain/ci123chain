@@ -2,7 +2,7 @@ package module
 
 import (
 	"github.com/ci123chain/ci123chain/pkg/abci/types/module"
-	"github.com/ci123chain/ci123chain/pkg/account"
+	account "github.com/ci123chain/ci123chain/pkg/account/module"
 	"github.com/ci123chain/ci123chain/pkg/auth"
 	dis_basic "github.com/ci123chain/ci123chain/pkg/distribution/module/basic"
 	"github.com/ci123chain/ci123chain/pkg/gravity"

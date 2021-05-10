@@ -10,15 +10,19 @@ import (
 	"time"
 )
 
-// ConsensusState defines the consensus state from Tendermint.
-type ConsensusState struct {
-	// timestamp that corresponds to the block height in which the ConsensusState
-	// was stored.
-	Timestamp time.Time 						`json:"timestamp"`
-	// commitment root (i.e app hash)
-	Root               commitmenttypes.MerkleRoot  	`json:"root"`
-	NextValidatorsHash tmbytes.HexBytes 			`json:"next_validators_hash,omitempty" yaml:"next_validators_hash"`
-}
+////ConsensusState defines the consensus state from Tendermint.
+//type ConsensusState struct {
+//	// timestamp that corresponds to the block height in which the ConsensusState
+//	// was stored.
+//	Timestamp time.Time 						`json:"timestamp"`
+//	// commitment root (i.e app hash)
+//	Root               commitmenttypes.MerkleRoot  	`json:"root"`
+//	NextValidatorsHash tmbytes.HexBytes 			`json:"next_validators_hash,omitempty" yaml:"next_validators_hash"`
+//}
+//
+//func (cs *ConsensusState) Reset()         { *cs = ConsensusState{} }
+//func (cs *ConsensusState) String() string { return proto.CompactTextString(cs) }
+//func (*ConsensusState) ProtoMessage()    {}
 
 // NewConsensusState creates a new ConsensusState instance.
 func NewConsensusState(

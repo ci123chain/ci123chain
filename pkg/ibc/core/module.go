@@ -1,14 +1,21 @@
 package core
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
+	codectypes "github.com/ci123chain/ci123chain/pkg/abci/codec/types"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/module"
+	client "github.com/ci123chain/ci123chain/pkg/client/context"
+	channeltypes "github.com/ci123chain/ci123chain/pkg/ibc/core/channel/types"
+	clienttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/clients/types"
+	connectiontypes "github.com/ci123chain/ci123chain/pkg/ibc/core/connection/types"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/host"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/keeper"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/types"
+	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	abci "github.com/tendermint/tendermint/abci/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 )
@@ -29,6 +36,15 @@ func NewAppModule(keeper *keeper.Keeper) AppModule {
 
 func (b AppModuleBasic) RegisterCodec(codec *codec.Codec) {
 	types.RegisterCodec(codec)
+}
+
+func (b AppModuleBasic) RegisterInterfaces(registry codectypes.InterfaceRegistry) {}
+
+// RegisterGRPCGatewayRoutes registers the gRPC Gateway routes for the ibc module.
+func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *runtime.ServeMux) {
+	clienttypes.RegisterQueryHandlerClient(context.Background(), mux, clienttypes.NewQueryClient(clientCtx))
+	connectiontypes.RegisterQueryHandlerClient(context.Background(), mux, connectiontypes.NewQueryClient(clientCtx))
+	channeltypes.RegisterQueryHandlerClient(context.Background(), mux, channeltypes.NewQueryClient(clientCtx))
 }
 
 // Name returns the ibc module's name.
@@ -72,4 +88,9 @@ func (m AppModule) Committer(ctx sdk.Context) {
 
 func (m AppModule) EndBlock(ctx sdk.Context, req abci.RequestEndBlock) []abci.ValidatorUpdate {
 	return nil
+}
+
+// RegisterServices registers module services.
+func (am AppModule) RegisterServices(cfg module.Configurator) {
+	types.RegisterQueryService(cfg.QueryServer(), am.keeper)
 }

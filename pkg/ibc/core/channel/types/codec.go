@@ -12,7 +12,8 @@ func init()  {
 }
 
 func RegisterCodec(cdc *codec.Codec)  {
-	cdc.RegisterInterface((*IsAcknowledgement_Response)(nil), nil)
+	//cdc.RegisterInterface((*IsAcknowledgement_Response)(nil), nil)
+	cdc.RegisterInterface((*isAcknowledgement_Response)(nil), nil)
 	//
 	cdc.RegisterConcrete(&Acknowledgement{}, "ibcChannel/Acknowledgement", nil)
 	cdc.RegisterConcrete(&Acknowledgement_Error{}, "ibcChannel/AcknowledgementError", nil)

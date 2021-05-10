@@ -21,43 +21,47 @@ import (
 var _ exported.ClientState = (*ClientState)(nil)
 
 
-// ClientState from Tendermint tracks the current validator set, latest height,
-// and a possible frozen height.
-type ClientState struct {
-	ChainId    string   `json:"chain_id,omitempty"`
-	TrustLevel Fraction `json:"trust_level" yaml:"trust_level"`
-	// duration of the period since the LastestTimestamp during which the
-	// submitted headers are valid for upgrade
-	TrustingPeriod time.Duration `json:"trusting_period" yaml:"trusting_period"`
-	// duration of the staking unbonding period
-	UnbondingPeriod time.Duration `json:"unbonding_period" yaml:"unbonding_period"`
-	// defines how much new (untrusted) header's Time can drift into the future.
-	MaxClockDrift time.Duration `json:"max_clock_drift" yaml:"max_clock_drift"`
-	// Block height when the client was frozen due to a misbehaviour
-	FrozenHeight clienttypes.Height `json:"frozen_height" yaml:"frozen_height"`
-	// Latest height the client was updated to
-	LatestHeight clienttypes.Height `json:"latest_height" yaml:"latest_height"`
-	// Proof specifications used in verifying counterparty state
-	ProofSpecs []*ics23.ProofSpec `json:"proof_specs,omitempty" yaml:"proof_specs"`
-	// Path at which next upgraded client will be committed.
-	// Each element corresponds to the key for a single CommitmentProof in the chained proof.
-	// NOTE: ClientState must stored under `{upgradePath}/{upgradeHeight}/clientState`
-	// ConsensusState must be stored under `{upgradepath}/{upgradeHeight}/consensusState`
-	// For SDK chains using the default upgrade module, upgrade_path should be []string{"upgrade", "upgradedIBCState"}`
-	UpgradePath []string `json:"upgrade_path,omitempty" yaml:"upgrade_path"`
-	// This flag, when set to true, will allow governance to recover a client
-	// which has expired
-	AllowUpdateAfterExpiry bool `json:"allow_update_after_expiry,omitempty" yaml:"allow_update_after_expiry"`
-	// This flag, when set to true, will allow governance to unfreeze a client
-	// whose chain has experienced a misbehaviour event
-	AllowUpdateAfterMisbehaviour bool `json:"allow_update_after_misbehaviour,omitempty" yaml:"allow_update_after_misbehaviour"`
-}
-
-// Fraction defines the protobuf message types for tmmath.Fraction that only supports positive values.
-type Fraction struct {
-	Numerator   uint64 `json:"numerator,omitempty"`
-	Denominator uint64 `json:"denominator,omitempty"`
-}
+//// ClientState from Tendermint tracks the current validator set, latest height,
+//// and a possible frozen height.
+//type ClientState struct {
+//	ChainId    string   `json:"chain_id,omitempty"`
+//	TrustLevel Fraction `json:"trust_level" yaml:"trust_level"`
+//	// duration of the period since the LastestTimestamp during which the
+//	// submitted headers are valid for upgrade
+//	TrustingPeriod time.Duration `json:"trusting_period" yaml:"trusting_period"`
+//	// duration of the staking unbonding period
+//	UnbondingPeriod time.Duration `json:"unbonding_period" yaml:"unbonding_period"`
+//	// defines how much new (untrusted) header's Time can drift into the future.
+//	MaxClockDrift time.Duration `json:"max_clock_drift" yaml:"max_clock_drift"`
+//	// Block height when the client was frozen due to a misbehaviour
+//	FrozenHeight clienttypes.Height `json:"frozen_height" yaml:"frozen_height"`
+//	// Latest height the client was updated to
+//	LatestHeight clienttypes.Height `json:"latest_height" yaml:"latest_height"`
+//	// Proof specifications used in verifying counterparty state
+//	ProofSpecs []*ics23.ProofSpec `json:"proof_specs,omitempty" yaml:"proof_specs"`
+//	// Path at which next upgraded client will be committed.
+//	// Each element corresponds to the key for a single CommitmentProof in the chained proof.
+//	// NOTE: ClientState must stored under `{upgradePath}/{upgradeHeight}/clientState`
+//	// ConsensusState must be stored under `{upgradepath}/{upgradeHeight}/consensusState`
+//	// For SDK chains using the default upgrade module, upgrade_path should be []string{"upgrade", "upgradedIBCState"}`
+//	UpgradePath []string `json:"upgrade_path,omitempty" yaml:"upgrade_path"`
+//	// This flag, when set to true, will allow governance to recover a client
+//	// which has expired
+//	AllowUpdateAfterExpiry bool `json:"allow_update_after_expiry,omitempty" yaml:"allow_update_after_expiry"`
+//	// This flag, when set to true, will allow governance to unfreeze a client
+//	// whose chain has experienced a misbehaviour event
+//	AllowUpdateAfterMisbehaviour bool `json:"allow_update_after_misbehaviour,omitempty" yaml:"allow_update_after_misbehaviour"`
+//}
+//
+//func (m *ClientState) Reset()         { *m = ClientState{} }
+//func (m *ClientState) String() string { return proto.CompactTextString(m) }
+//func (*ClientState) ProtoMessage()    {}
+//
+//// Fraction defines the protobuf message types for tmmath.Fraction that only supports positive values.
+//type Fraction struct {
+//	Numerator   uint64 `json:"numerator,omitempty"`
+//	Denominator uint64 `json:"denominator,omitempty"`
+//}
 
 
 // NewClientState creates a new ClientState instance
