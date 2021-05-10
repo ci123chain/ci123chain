@@ -3,12 +3,13 @@ package main
 import (
 	"github.com/ci123chain/ci123chain/gravity-bridge/orchestrator/cosmos_gravity"
 	"github.com/ci123chain/ci123chain/gravity-bridge/orchestrator/gravity_utils"
+	"github.com/ci123chain/ci123chain/pkg/logger"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/tendermint/tendermint/libs/log"
 	"github.com/umbracle/go-web3/jsonrpc"
+	"time"
 )
 
-func getBlockNumberWithRetry(logger log.Logger, client *jsonrpc.Client) uint64 {
+func getBlockNumberWithRetry(client *jsonrpc.Client) uint64 {
 	for {
 		getBlockNumber := gravity_utils.Exec(func() interface{} {
 			blockNumber, err := client.Eth().BlockNumber()
@@ -18,35 +19,66 @@ func getBlockNumberWithRetry(logger log.Logger, client *jsonrpc.Client) uint64 {
 			return blockNumber
 		}).Await()
 
+		lg := logger.GetLogger()
 		blockNumber, ok := getBlockNumber.(uint64)
 		if ok {
 			return blockNumber
 		} else {
-			logger.Info("Retry to get eth_block_number")
+			lg.Info("Retry to get eth_block_number")
+			gravity_utils.Exec(func() interface{} {
+				time.Sleep(RETRY_TIME)
+				return nil
+			}).Await()
 		}
 	}
 }
 
-func getLastEventNonceWithRetry(logger log.Logger, ourCosmosAddress common.Address, contact cosmos_gravity.Contact) uint64 {
+func getLastEventNonceWithRetry(ourCosmosAddress common.Address, contact cosmos_gravity.Contact) uint64 {
 	for {
 		getCosmosLatestEventNonce := gravity_utils.Exec(func() interface{} {
-			nonce, err := getLastEventNonce(logger, ourCosmosAddress, contact)
+			nonce, err := cosmos_gravity.GetLastEventNonce(ourCosmosAddress, contact)
 			if err != nil {
 				return err
 			}
 			return nonce
 		}).Await()
 
+		lg := logger.GetLogger()
 		nonce, ok := getCosmosLatestEventNonce.(uint64)
 		if ok {
 			return nonce
 		} else {
-			logger.Info("Retry to get cosmos_latest_event_nonce")
+			lg.Info("Retry to get cosmos_latest_event_nonce")
+			gravity_utils.Exec(func() interface{} {
+				time.Sleep(RETRY_TIME)
+				return nil
+			}).Await()
 		}
 	}
 }
 
-func getLastEventNonce(logger log.Logger, ourCosmosAddress common.Address, contact cosmos_gravity.Contact) (uint64, error) {
-	//QueryLastEventNonceByAddrRequest
-	return 0, nil
+func getNetVersionWithRetry(client *jsonrpc.Client) uint64 {
+	for {
+		getNetVersion := gravity_utils.Exec(func() interface{} {
+			netVersion, err := client.Net().Version()
+			if err != nil {
+				return err
+			}
+			return netVersion
+		}).Await()
+
+		lg := logger.GetLogger()
+		version, ok := getNetVersion.(uint64)
+		if ok {
+			return version
+		} else {
+			lg.Info("Retry to get eth net_version")
+			gravity_utils.Exec(func() interface{} {
+				time.Sleep(RETRY_TIME)
+				return nil
+			}).Await()
+		}
+	}
 }
+
+

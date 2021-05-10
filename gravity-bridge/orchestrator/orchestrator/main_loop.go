@@ -6,11 +6,11 @@ import (
 	"github.com/ci123chain/ci123chain/gravity-bridge/orchestrator/cosmos_gravity"
 	"github.com/ci123chain/ci123chain/gravity-bridge/orchestrator/ethereum_gravity"
 	"github.com/ci123chain/ci123chain/gravity-bridge/orchestrator/gravity_utils"
-	types "github.com/ci123chain/ci123chain/gravity-bridge/orchestrator/gravity_utils/types"
+	"github.com/ci123chain/ci123chain/gravity-bridge/orchestrator/gravity_utils/types"
 	"github.com/ci123chain/ci123chain/gravity-bridge/orchestrator/relayer"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/logger"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/tendermint/tendermint/libs/log"
 	"github.com/umbracle/go-web3/jsonrpc"
 	"time"
 )
@@ -22,7 +22,7 @@ const (
 	DELAY = 5 * time.Second
 )
 
-func orchestratorMainLoop(logger log.Logger, cosmosKey, ethKey, cosmosRpc, ethRpc, denom, contractAddr string) {
+func orchestratorMainLoop(cosmosKey, ethKey, cosmosRpc, ethRpc, denom, contractAddr string) {
 	var fee = sdk.Coin{
 		Denom:  denom,
 		Amount: sdk.NewInt(feeAmount),
@@ -46,29 +46,30 @@ func orchestratorMainLoop(logger log.Logger, cosmosKey, ethKey, cosmosRpc, ethRp
 	contact := cosmos_gravity.NewContact(cosmosRpc)
 
 	gravity_utils.Exec(func() interface{} {
-		eth_oracle_main_loop(logger, cosmosPrivKey, contact, contractAddr, client, fee)
+		eth_oracle_main_loop(cosmosPrivKey, contact, contractAddr, client, fee)
 		return nil
 	}).Await()
 
 	gravity_utils.Exec(func() interface{} {
-		eth_signer_main_loop(logger, ethPrivKey, cosmosPrivKey, contact, contractAddr, client, fee)
+		eth_signer_main_loop(ethPrivKey, cosmosPrivKey, contact, contractAddr, client, fee)
 		return nil
 	}).Await()
 
 	gravity_utils.Exec(func() interface{} {
-		relayer.Relayer_main_loop(logger, ethPrivKey, contact, contractAddr, client)
+		relayer.Relayer_main_loop(ethPrivKey, contact, contractAddr, client)
 		return nil
 	}).Await()
 }
 
-func eth_oracle_main_loop(logger log.Logger, cosmosPrivKey *ecdsa.PrivateKey, contact cosmos_gravity.Contact, contractAddr string, client *jsonrpc.Client, fee sdk.Coin) {
+func eth_oracle_main_loop(cosmosPrivKey *ecdsa.PrivateKey, contact cosmos_gravity.Contact, contractAddr string, client *jsonrpc.Client, fee sdk.Coin) {
 	ourCosmosAddress := crypto.PubkeyToAddress(cosmosPrivKey.PublicKey)
 
 	latestCheckedBlock := gravity_utils.Exec(func() interface{} {
-		return getLastCheckedBlock(logger, contact, contractAddr, ourCosmosAddress, client)
+		return getLastCheckedBlock(contact, contractAddr, ourCosmosAddress, client)
 	}).Await().(uint64)
 
-	logger.Info("Oracle resync complete, Oracle now operational")
+	lg := logger.GetLogger()
+	lg.Info("Oracle resync complete, Oracle now operational")
 
 	for {
 		loopStart := time.Now()
@@ -90,7 +91,7 @@ func eth_oracle_main_loop(logger log.Logger, cosmosPrivKey *ecdsa.PrivateKey, co
 
 		latestEthBlock, ok := getLatestEthBlock.(uint64)
 		if !ok {
-			logger.Error("Could not reach Ethereum rpc!")
+			lg.Error("Could not reach Ethereum rpc!")
 			gravity_utils.Exec(func() interface{} {
 				time.Sleep(DELAY)
 				return nil
@@ -100,7 +101,7 @@ func eth_oracle_main_loop(logger log.Logger, cosmosPrivKey *ecdsa.PrivateKey, co
 
 		latestCosmosBlock, ok := getLatestCosmosBlock.(cosmos_gravity.ChainStatus)
 		if !ok {
-			logger.Error("Could not reach Cosmos rpc!")
+			lg.Error("Could not reach Cosmos rpc!")
 			gravity_utils.Exec(func() interface{} {
 				time.Sleep(DELAY)
 				return nil
@@ -110,16 +111,16 @@ func eth_oracle_main_loop(logger log.Logger, cosmosPrivKey *ecdsa.PrivateKey, co
 
 		switch latestCosmosBlock.Status {
 			case cosmos_gravity.MOVING:
-				logger.Info(fmt.Sprintf("Latest Eth block: %d,\n Latest Cosmos block: %d", latestEthBlock, latestCosmosBlock))
+				lg.Info(fmt.Sprintf("Latest Eth block: %d,\n Latest Cosmos block: %d", latestEthBlock, latestCosmosBlock))
 			case cosmos_gravity.SYNCING:
-				logger.Error(fmt.Sprintf("Cosmos node syncing, Eth signer paused"))
+				lg.Error(fmt.Sprintf("Cosmos node syncing, Eth signer paused"))
 				gravity_utils.Exec(func() interface{} {
 					time.Sleep(DELAY)
 					return nil
 				}).Await()
 				continue
 			case cosmos_gravity.WAITING_TO_START:
-				logger.Error(fmt.Sprintf("Cosmos node syncing waiting for chain start, Eth signer paused"))
+				lg.Error(fmt.Sprintf("Cosmos node syncing waiting for chain start, Eth signer paused"))
 				gravity_utils.Exec(func() interface{} {
 					time.Sleep(DELAY)
 					return nil
@@ -137,7 +138,7 @@ func eth_oracle_main_loop(logger log.Logger, cosmosPrivKey *ecdsa.PrivateKey, co
 
 		_, ok = getLatestCheckedBlock.(uint64)
 		if !ok {
-			logger.Error(fmt.Sprintf("Failed to get events for block range, Check your Eth node and Cosmos RPC, error: %s", getLatestCheckedBlock.(error).Error()))
+			lg.Error(fmt.Sprintf("Failed to get events for block range, Check your Eth node and Cosmos RPC, error: %s", getLatestCheckedBlock.(error).Error()))
 		} else {
 			latestCheckedBlock = getLatestCheckedBlock.(uint64)
 		}
@@ -152,7 +153,7 @@ func eth_oracle_main_loop(logger log.Logger, cosmosPrivKey *ecdsa.PrivateKey, co
 	}
 }
 
-func eth_signer_main_loop(logger log.Logger, ethPrivKey, cosmosPrivKey *ecdsa.PrivateKey, contact cosmos_gravity.Contact, contractAddr string, client *jsonrpc.Client, fee sdk.Coin) {
+func eth_signer_main_loop(ethPrivKey, cosmosPrivKey *ecdsa.PrivateKey, contact cosmos_gravity.Contact, contractAddr string, client *jsonrpc.Client, fee sdk.Coin) {
 	ourCosmosAddress := crypto.PubkeyToAddress(cosmosPrivKey.PublicKey)
 	ourEthereumAddress := crypto.PubkeyToAddress(ethPrivKey.PublicKey)
 	getGravityId := gravity_utils.Exec(func() interface{} {
@@ -163,9 +164,11 @@ func eth_signer_main_loop(logger log.Logger, ethPrivKey, cosmosPrivKey *ecdsa.Pr
 		return gravityIdBz
 	}).Await()
 
+	lg := logger.GetLogger()
+
 	gravityIdBz, ok := getGravityId.([]byte)
 	if !ok {
-		logger.Error("Failed to get GravityID, check your Eth node")
+		lg.Error("Failed to get GravityID, check your Eth node")
 		return
 	}
 
@@ -191,7 +194,7 @@ func eth_signer_main_loop(logger log.Logger, ethPrivKey, cosmosPrivKey *ecdsa.Pr
 
 		latestEthBlock, ok := getLatestEthBlock.(uint64)
 		if !ok {
-			logger.Error("Could not reach Ethereum rpc!")
+			lg.Error("Could not reach Ethereum rpc!")
 			gravity_utils.Exec(func() interface{} {
 				time.Sleep(DELAY)
 				return nil
@@ -201,7 +204,7 @@ func eth_signer_main_loop(logger log.Logger, ethPrivKey, cosmosPrivKey *ecdsa.Pr
 
 		latestCosmosBlock, ok := getLatestCosmosBlock.(cosmos_gravity.ChainStatus)
 		if !ok {
-			logger.Error("Could not reach Cosmos rpc!")
+			lg.Error("Could not reach Cosmos rpc!")
 			gravity_utils.Exec(func() interface{} {
 				time.Sleep(DELAY)
 				return nil
@@ -211,16 +214,16 @@ func eth_signer_main_loop(logger log.Logger, ethPrivKey, cosmosPrivKey *ecdsa.Pr
 
 		switch latestCosmosBlock.Status {
 		case cosmos_gravity.MOVING:
-			logger.Info(fmt.Sprintf("Latest Eth block: %d,\n Latest Cosmos block: %d", latestEthBlock, latestCosmosBlock))
+			lg.Info(fmt.Sprintf("Latest Eth block: %d,\n Latest Cosmos block: %d", latestEthBlock, latestCosmosBlock))
 		case cosmos_gravity.SYNCING:
-			logger.Error(fmt.Sprintf("Cosmos node syncing, Eth signer paused"))
+			lg.Error(fmt.Sprintf("Cosmos node syncing, Eth signer paused"))
 			gravity_utils.Exec(func() interface{} {
 				time.Sleep(DELAY)
 				return nil
 			}).Await()
 			continue
 		case cosmos_gravity.WAITING_TO_START:
-			logger.Error(fmt.Sprintf("Cosmos node syncing waiting for chain start, Eth signer paused"))
+			lg.Error(fmt.Sprintf("Cosmos node syncing waiting for chain start, Eth signer paused"))
 			gravity_utils.Exec(func() interface{} {
 				time.Sleep(DELAY)
 				return nil
@@ -238,13 +241,13 @@ func eth_signer_main_loop(logger log.Logger, ethPrivKey, cosmosPrivKey *ecdsa.Pr
 
 		oldestUnsignedValsets, ok := getOldestUnsignedValsets.([]*types.ValSet)
 		if !ok {
-			logger.Error(fmt.Sprintf("Failed to get unsigned valsets, check your Cosmos RPC, error: %s", getOldestUnsignedValsets.(error).Error()))
+			lg.Error(fmt.Sprintf("Failed to get unsigned valsets, check your Cosmos RPC, error: %s", getOldestUnsignedValsets.(error).Error()))
 		}
 
 		if len(oldestUnsignedValsets) == 0 {
-			logger.Info("No validator sets to sign, node is caught up!")
+			lg.Info("No validator sets to sign, node is caught up!")
 		} else {
-			logger.Info(fmt.Sprintf("Sending %d valset confirms starting with %d", len(oldestUnsignedValsets), oldestUnsignedValsets[0].Nonce))
+			lg.Info(fmt.Sprintf("Sending %d valset confirms starting with %d", len(oldestUnsignedValsets), oldestUnsignedValsets[0].Nonce))
 			res := gravity_utils.Exec(func() interface{} {
 				txResponse, err := cosmos_gravity.SendValsetConfirms(contact, ethPrivKey, fee, oldestUnsignedValsets, cosmosPrivKey, gravityId)
 				if err != nil {
@@ -252,7 +255,7 @@ func eth_signer_main_loop(logger log.Logger, ethPrivKey, cosmosPrivKey *ecdsa.Pr
 				}
 				return txResponse
 			}).Await()
-			logger.Info(fmt.Sprintf("Valset confirm result is %v", res))
+			lg.Info(fmt.Sprintf("Valset confirm result is %v", res))
 		}
 
 		elapsed := time.Since(loopStart)

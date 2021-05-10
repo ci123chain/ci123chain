@@ -46,9 +46,9 @@ func main()  {
 			}
 			denom := viper.GetString(flagFeesDenom)
 			loggerLv := viper.GetString(flagLogLevel)
-			lg := logger.GetDefaultLogger(loggerLv)
+			logger.GetDefaultLogger(loggerLv)
 			gravity_utils.Exec(func() interface{} {
-				orchestratorMainLoop(lg, cosmosKey, ethKey, cosmosRpc, ethRpc, denom, contractAddr)
+				orchestratorMainLoop(cosmosKey, ethKey, cosmosRpc, ethRpc, denom, contractAddr)
 				return nil
 			}).Await()
 			select {}

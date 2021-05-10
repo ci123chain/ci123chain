@@ -7,11 +7,22 @@ import (
 )
 
 func SendValsetConfirms(contact Contact,
-	ethPrivateKey *ecdsa.PrivateKey,
+	ethPrivKey *ecdsa.PrivateKey,
 	fee sdk.Coin,
 	valsets []*types.ValSet,
 	cosmosPrivateKey *ecdsa.PrivateKey,
 	gravityId string) (sdk.TxResponse, error) {
+
+	return sdk.TxResponse{}, nil
+}
+
+func SendEthereumClaims(contact Contact,
+	cosmosPrivKey *ecdsa.PrivateKey,
+	deposits []types.SendToCosmosEvent,
+	withdraws []types.TransactionBatchExecutedEvent,
+	erc20Deploys []types.Erc20DeployedEvent,
+	logicCalls []types.LogicCallExecutedEvent,
+	fee sdk.Coin) (sdk.TxResponse, error) {
 
 	return sdk.TxResponse{}, nil
 }

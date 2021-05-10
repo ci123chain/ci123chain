@@ -6,29 +6,31 @@ import (
 	"github.com/ci123chain/ci123chain/gravity-bridge/orchestrator/ethereum_gravity"
 	"github.com/ci123chain/ci123chain/gravity-bridge/orchestrator/gravity_utils"
 	"github.com/ci123chain/ci123chain/gravity-bridge/orchestrator/gravity_utils/types"
+	"github.com/ci123chain/ci123chain/pkg/logger"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/tendermint/tendermint/libs/log"
 	"github.com/umbracle/go-web3/jsonrpc"
 	"time"
 )
 
 const LOOP_SPEED = 17 * time.Second
 
-func Relayer_main_loop(logger log.Logger, ethPrivKey *ecdsa.PrivateKey, contact cosmos_gravity.Contact, contractAddr string, client *jsonrpc.Client) {
+func Relayer_main_loop(ethPrivKey *ecdsa.PrivateKey, contact cosmos_gravity.Contact, contractAddr string, client *jsonrpc.Client) {
 	for {
 		loopStart := time.Now()
 		ourEthereumAddress := crypto.PubkeyToAddress(ethPrivKey.PublicKey)
 		getValSet := gravity_utils.Exec(func() interface{} {
-			currentValSet, err := findLatestValset(logger, contact, contractAddr, client, ourEthereumAddress)
+			currentValSet, err := findLatestValset(contact, contractAddr, client, ourEthereumAddress)
 			if err != nil {
 				return err
 			}
 			return currentValSet
 		}).Await()
 
+		lg := logger.GetLogger()
+
 		currentValset, ok := getValSet.(types.ValSet)
 		if !ok {
-			logger.Error("Could not get current valset! ", getValSet.(error).Error())
+			lg.Error("Could not get current valset! ", getValSet.(error).Error())
 			continue
 		}
 
@@ -42,7 +44,7 @@ func Relayer_main_loop(logger log.Logger, ethPrivKey *ecdsa.PrivateKey, contact 
 
 		gravityIdBz, ok := getGravityId.([]byte)
 		if !ok {
-			logger.Error("Failed to get GravityID, check your Eth node")
+			lg.Error("Failed to get GravityID, check your Eth node")
 			return
 		}
 
@@ -50,19 +52,19 @@ func Relayer_main_loop(logger log.Logger, ethPrivKey *ecdsa.PrivateKey, contact 
 
 		//relayValsets
 		gravity_utils.Exec(func() interface{} {
-			relayValsets(logger, currentValset, ethPrivKey, client, contact, contractAddr, gravityId, LOOP_SPEED)
+			relayValsets(currentValset, ethPrivKey, client, contact, contractAddr, gravityId, LOOP_SPEED)
 			return nil
 		}).Await()
 
 		//relayBatches
 		gravity_utils.Exec(func() interface{} {
-			relayBatches(logger, currentValset, ethPrivKey, client, contact, contractAddr, gravityId, LOOP_SPEED)
+			relayBatches(currentValset, ethPrivKey, client, contact, contractAddr, gravityId, LOOP_SPEED)
 			return nil
 		}).Await()
 
 		//relayLogicCalls
 		gravity_utils.Exec(func() interface{} {
-			relayLogicCalls(logger, currentValset, ethPrivKey, client, contact, contractAddr, gravityId, LOOP_SPEED)
+			relayLogicCalls(currentValset, ethPrivKey, client, contact, contractAddr, gravityId, LOOP_SPEED)
 			return nil
 		}).Await()
 
