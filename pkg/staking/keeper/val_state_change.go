@@ -5,9 +5,11 @@ import (
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/staking/types"
+	"github.com/ci123chain/ci123chain/pkg/util"
 	gogotypes "github.com/gogo/protobuf/types"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
 	"sort"
+	"strings"
 )
 
 func (k StakingKeeper) jailValidator(ctx sdk.Context, validator types.Validator) {
@@ -101,6 +103,12 @@ func (k StakingKeeper) ApplyAndReturnValidatorSetUpdates(ctx sdk.Context) (updat
 
 		// everything that is iterated in this loop is becoming or already a
 		// part of the bonded validator set
+
+		realKey := iterator.Key()
+		if strings.Contains(string(realKey), util.HistorySuffix) {
+			continue
+		}
+
 
 		valAddr := sdk.ToAccAddress(iterator.Value())
 		validator := k.mustGetValidator(ctx, valAddr)
@@ -302,6 +310,9 @@ func (k StakingKeeper) getLastValidatorsByAddr(ctx sdk.Context) validatorsByAddr
 	defer iterator.Close()
 	for ; iterator.Valid(); iterator.Next() {
 		realKey := iterator.Key()
+		if strings.Contains(string(realKey), util.HistorySuffix) {
+			continue
+		}
 		var valAddr [sdk.AddrLen]byte
 		copy(valAddr[:], realKey[len(realKey) - sdk.AddrLen:])
 		powerBytes := iterator.Value()

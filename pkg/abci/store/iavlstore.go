@@ -1,13 +1,17 @@
 package store
 
 import (
+	"context"
 	"fmt"
+	"github.com/ci123chain/ci123chain/pkg/util"
 	ics23 "github.com/confio/ics23/go"
 	"github.com/cosmos/iavl"
 	"github.com/pkg/errors"
 	tmcrypto "github.com/tendermint/tendermint/proto/tendermint/crypto"
 	"io"
+	"os"
 	"reflect"
+	"sort"
 	"sync"
 
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
@@ -16,6 +20,10 @@ import (
 
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	dbm "github.com/tendermint/tm-db"
+
+	acctypes "github.com/ci123chain/ci123chain/pkg/account/types"
+	rpcclient "github.com/tendermint/tendermint/rpc/client"
+	"github.com/tendermint/tendermint/rpc/client/http"
 )
 
 const (
@@ -32,9 +40,9 @@ func LoadIAVLStore(ldb, cdb dbm.DB, id CommitID, pruning sdk.PruningStrategy, ke
 	if err != nil {
 		return nil, err
 	}
-	iavl := newIAVLStore(cdb, tree, int64(0), int64(0), key)
-	iavl.SetPruning(pruning)
-	return iavl, nil
+	iv := newIAVLStore(cdb, tree, int64(0), int64(0), key)
+	iv.SetPruning(pruning)
+	return iv, nil
 }
 
 //----------------------------------------
@@ -47,7 +55,7 @@ var _ Queryable = (*iavlStore)(nil)
 type iavlStore struct {
 
 	// The underlying tree.
-	tree *iavl.MutableTree
+	tree Tree
 
 	// How many old versions we hold onto.
 	// A value of 0 means keep no recent states.
@@ -66,18 +74,22 @@ type iavlStore struct {
 
 	key   sdk.StoreKey
 	lg logger.Logger
+
+	CurrentHeight int64
+	RootTree Tree
 }
 
 // CONTRACT: tree should be fully loaded.
 // nolint: unparam
 func newIAVLStore(db dbm.DB, tree *iavl.MutableTree, numRecent int64, storeEvery int64, key sdk.StoreKey) *iavlStore {
-	logger := logger.GetLogger()
+	lg := logger.GetLogger()
 	st := &iavlStore{
 		tree:       tree,
+		RootTree:   tree,
 		numRecent:  numRecent,
 		storeEvery: storeEvery,
 		parent: 	NewBaseKVStore(dbStoreAdapter{db}, storeEvery, numRecent, key),
-		lg:         logger,
+		lg:         lg,
 		key:        key,
 	}
 	return st
@@ -161,13 +173,44 @@ func (st *iavlStore) Set(key, value []byte) {
 
 // Implements KVStore.
 func (st *iavlStore) Get(key []byte) (value []byte) {
-	value = st.parent.(KVStore).Get(key)
+
+	var heightsUpdate util.HeightsUpdates
+	b :=  st.Parent().(*baseKVStore).Get([]byte(string(key) + util.HistorySuffix))
+	if b == nil {
+		value = st.parent.(KVStore).Get(key)
+		return value
+	}
+	_ = acctypes.ModuleCdc.UnmarshalBinaryLengthPrefixed(b, &heightsUpdate)
+	sort.Sort(heightsUpdate)
+	if heightsUpdate[len(heightsUpdate)-1].Height < st.CurrentHeight {
+		value = st.parent.(KVStore).Get(key)
+		return value
+	}
+	h := heightsUpdate.Search(st.CurrentHeight)
+	if h.Height < 0 {
+		value = st.parent.(KVStore).Get(key)
+		return value
+	}
+	if h.Shard != os.Getenv(util.CICHAINID) {
+		req := abci.RequestQuery{
+			Data:                 key,
+			Path:                 fmt.Sprintf("/store/%v/key", st.key.Name()),
+			Height:               st.CurrentHeight,
+			Prove:                false,
+		}
+		res := sendRequest(context.Background(), util.ShardDefaultProto + h.Shard + util.ShardDefaultPort, req)
+		return res.Value
+	}
+	t, _ := st.RootTree.GetImmutable(h.Height)
+	_, value = t.Get(key)
+
 	return
 }
 
 // Implements KVStore.
 func (st *iavlStore) Has(key []byte) (exists bool) {
-	return st.parent.(KVStore).Has(key)
+	//return st.parent.(KVStore).Has(key)
+	return st.tree.Has(key)
 }
 
 // Implements KVStore.
@@ -215,27 +258,75 @@ func (st *iavlStore) RemoteIterator(start, end []byte) Iterator {
 
 // Implements KVStore.
 func (st *iavlStore) Iterator(start, end []byte) Iterator {
-	return newIAVLIterator(st.tree.ImmutableTree, start, end, true)
+	var iTree *iavl.ImmutableTree
+	switch tree := st.tree.(type) {
+	case *immutableTree:
+		iTree = tree.ImmutableTree
+	case *iavl.MutableTree:
+		iTree = tree.ImmutableTree
+	}
+	return newIAVLIterator(iTree, start, end, true)
 }
 
 // Implements KVStore.
 func (st *iavlStore) ReverseIterator(start, end []byte) Iterator {
-	return newIAVLIterator(st.tree.ImmutableTree, start, end, false)
+	var iTree *iavl.ImmutableTree
+	switch tree := st.tree.(type) {
+	case *immutableTree:
+		iTree = tree.ImmutableTree
+	case *iavl.MutableTree:
+		iTree = tree.ImmutableTree
+	}
+	return newIAVLIterator(iTree, start, end, false)
 }
 
 // Handle gatest the latest height, if height is 0
-func getHeight(tree *iavl.MutableTree, req abci.RequestQuery) int64 {
+func getHeight(tree Tree, req abci.RequestQuery) int64 {
 	height := req.Height
 	if height == 0 {
 		latest := tree.Version()
-		//if tree.VersionExists(latest - 1) {
-		//	height = latest - 1
-		//} else {
-		//	height = latest
-		//}
-		height = latest
+		if tree.VersionExists(latest - 1) {
+			height = latest - 1
+		} else {
+			height = latest
+		}
+		//height = latest
 	}
 	return height
+}
+
+// GetImmutable returns a reference to a new store backed by an immutable IAVL
+// tree at a specific version (height) without any pruning options. This should
+// be used for querying and iteration only. If the version does not exist or has
+// been pruned, an empty immutable IAVL tree will be used.
+// Any mutable operations executed will result in a panic.
+func (st *iavlStore) GetImmutable(version int64) (*iavlStore, error) {
+	if !st.VersionExists(version) {
+		return &iavlStore{tree: &immutableTree{&iavl.ImmutableTree{}},
+			CurrentHeight: version,
+			RootTree: st.tree,
+			numRecent: st.numRecent,
+			storeEvery: st.storeEvery,
+			parent: st.parent,
+			key: st.key,
+			lg: st.lg,}, nil
+	}
+
+	iTree, err := st.tree.GetImmutable(version)
+	if err != nil {
+		return nil, err
+	}
+
+	return &iavlStore{
+		tree: &immutableTree{iTree},
+		CurrentHeight: version,
+		RootTree: st.tree,
+		numRecent: st.numRecent,
+		storeEvery: st.storeEvery,
+		parent: st.parent,
+		key: st.key,
+		lg: st.lg,
+	}, nil
 }
 
 // Query implements ABCI interface, allows queries
@@ -249,6 +340,24 @@ func (st *iavlStore) Query(req abci.RequestQuery) (res abci.ResponseQuery) {
 	if len(req.Data) == 0 {
 		msg := "Query cannot be zero length"
 		return sdkerrors.QueryResult(sdkerrors.Wrap(sdkerrors.ErrParams, msg))
+	}
+
+	b := st.Parent().(*baseKVStore).Get([]byte((string(req.Data)+util.HistorySuffix)))
+	var heights util.HeightsUpdates
+	err := acctypes.ModuleCdc.UnmarshalBinaryLengthPrefixed(b, &heights)
+	if err != nil {
+		return sdkerrors.QueryResult(err)
+	}
+	update := heights.Search(req.Height)
+	if update.Height == -1 {
+		return sdkerrors.QueryResult(errors.New(fmt.Sprintf("no result found with height %v", req.Height)))
+	}
+	if update.Shard != os.Getenv(util.CICHAINID) {
+		//ctx := sdk.NewContext(app.cms, app.checkState.ctx.BlockHeader(), true, app.Logger)
+		req.Path = fmt.Sprintf("/store/%v%v", st.key.Name(), req.Path)
+		result := sendRequest(context.Background(), util.ShardDefaultProto+update.Shard+util.ShardDefaultPort, req)
+		result.Info = update.Shard
+		return result
 	}
 
 	tree := st.tree
@@ -306,6 +415,22 @@ func (st *iavlStore) Query(req abci.RequestQuery) (res abci.ResponseQuery) {
 	}
 
 	return
+}
+
+func sendRequest(ctx context.Context, host string, req abci.RequestQuery) abci.ResponseQuery {
+	rpc, err := http.New(host, "/websocket")
+	if err != nil {
+		return sdkerrors.QueryResult(err)
+	}
+	opts := rpcclient.ABCIQueryOptions{
+		Height: req.Height,
+		Prove:  req.Prove,
+	}
+	res, err := rpc.ABCIQueryWithOptions(ctx, req.Path, req.Data, opts)
+	if err != nil {
+		return sdkerrors.QueryResult(err)
+	}
+	return res.Response
 }
 // Takes a MutableTree, a key, and a flag for creating existence or absence proof and returns the
 // appropriate merkle.Proof. Since this must be called after querying for the value, this function should never error

@@ -16,11 +16,11 @@ func TestQueryHistory(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	height := int64(200)
+	height := int64(3)
 	addr := sdk.HexToAddress("0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c")
 	key := types.AddressStoreKey(addr)
 	req := abci.RequestQuery{
-		Path:   fmt.Sprintf("store/%s/%s/key", "0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c", "accounts"),
+		Path:   fmt.Sprintf("store/%s/key", "accounts"),
 		Height: height,
 		Data:   key,
 		Prove:  true,

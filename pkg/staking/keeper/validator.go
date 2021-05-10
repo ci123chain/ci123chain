@@ -5,7 +5,9 @@ import (
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/staking/types"
+	"github.com/ci123chain/ci123chain/pkg/util"
 	gogotypes "github.com/gogo/protobuf/types"
+	"strings"
 	"time"
 )
 
@@ -23,7 +25,8 @@ func newCachedValidator(val types.Validator, marshalled string) cachedValidator 
 
 func (k StakingKeeper) GetValidator(ctx sdk.Context, addr sdk.AccAddress) (validator types.Validator, found bool) {
 	store := ctx.KVStore(k.storeKey)
-	value := store.Get(types.GetValidatorKey(addr))
+	key := types.GetValidatorKey(addr)
+	value := store.Get(key)
 	if value == nil {
 		return validator, false
 	}
@@ -295,6 +298,9 @@ func (k StakingKeeper) GetLastValidators(ctx sdk.Context) (validators []types.Va
 
 		// sanity check
 		realKey := iterator.Key()
+		if strings.Contains(string(realKey), util.HistorySuffix) {
+			continue
+		}
 		//_, ok := iterator.(*couchdb.CouchIterator)
 		//if ok {
 		//	realKey = sdk.GetRealKey(iterator.Key())

@@ -62,6 +62,10 @@ type MultiStore interface { //nolint
 	// call CacheMultiStore.Write().
 	CacheMultiStore() CacheMultiStore
 
+	// CacheMultiStoreWithVersion branches the underlying MultiStore where
+	// each stored is loaded at a specific version (height).
+	CacheMultiStoreWithVersion(version int64) (CacheMultiStore, error)
+
 	// Convenience for fetching substores.
 	GetStore(StoreKey) Store
 	GetKVStore(StoreKey) KVStore

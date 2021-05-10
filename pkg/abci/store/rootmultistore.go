@@ -347,6 +347,31 @@ func (rs *rootMultiStore) GetKVStore(key StoreKey) KVStore {
 	return store
 }
 
+func (rs *rootMultiStore) CacheMultiStoreWithVersion(version int64) (CacheMultiStore, error) {
+	cachedStores := make(map[sdk.StoreKey]sdk.CacheWrapper)
+	for key, store := range rs.stores {
+		switch store.GetStoreType() {
+		case sdk.StoreTypeIAVL:
+			// If the store is wrapped with an inter-block cache, we must first unwrap
+			// it to get the underlying IAVL store.
+			store = rs.GetCommitKVStore(key)
+
+			// Attempt to lazy-load an already saved IAVL store version. If the
+			// version does not exist or is pruned, an error should be returned.
+			iavlStore, err := store.(*iavlStore).GetImmutable(version)
+			if err != nil {
+				return nil, err
+			}
+
+			cachedStores[key] = iavlStore
+
+		default:
+			cachedStores[key] = store
+		}
+	}
+	return NewStore(rs.ldb, cachedStores, rs.keysByName, rs.traceWriter, rs.traceContext), nil
+}
+
 // Implements MultiStore
 
 // getStoreByName will first convert the original name to
@@ -401,6 +426,9 @@ func (rs *rootMultiStore) Query(req abci.RequestQuery) abci.ResponseQuery {
 
 	commitInfo, errMsg := getCommitInfo(dbStoreAdapter{rs.ldb}, res.Height)
 	if errMsg != nil {
+		if res.Info != os.Getenv(util.CICHAINID) {
+			return res
+		}
 		return sdkerrors.QueryResult(errMsg)
 	}
 
@@ -700,34 +728,66 @@ func checkCache(rs *rootMultiStore) (string, []CacheMap) {
 			if reflect.TypeOf(store).Elem() == reflect.TypeOf(iavlStore{}){
 				s := store.(*iavlStore).Parent().(*baseKVStore).GetCache()
 				for k, v := range s{
-					if strings.Contains(k, "accounts") {
-						key := []byte(k)
-						addr := sdk.ToAccAddress(key[len(k)-20:])
-						var heights util.Heights
-						b := store.(*iavlStore).Parent().(*baseKVStore).Get(acctypes.HeightsUpdateKey(addr))
-						if b != nil {
-							err = acctypes.ModuleCdc.UnmarshalBinaryLengthPrefixed(b, &heights)
-							if  err != nil {
-								panic(err)
+
+					//if strings.Contains(k, "accounts") {
+					//	var heights util.HeightsUpdates
+					//	keys := strings.Split(k, util.ProofQueryPrefix)
+					//	b := store.(*iavlStore).Parent().(*baseKVStore).Get([]byte(keys[1]+util.HistorySuffix))
+					//	if b != nil {
+					//		err = acctypes.ModuleCdc.UnmarshalBinaryLengthPrefixed(b, &heights)
+					//		if  err != nil {
+					//			panic(err)
+					//		}
+					//		sort.Sort(heights)
+					//		if heights[len(heights)-1].Height < version{
+					//			heights = append(heights, util.HeightsUpdate{Height:version, Shard: os.Getenv(util.CICHAINID)})
+					//		}
+					//	}else {
+					//		heights = make(util.HeightsUpdates, 0)
+					//		heights = append(heights, util.HeightsUpdate{Height:version, Shard: os.Getenv(util.CICHAINID)})
+					//	}
+					//	bz, _ := acctypes.ModuleCdc.MarshalBinaryLengthPrefixed(heights)
+					//	cacheMap = append(cacheMap, CacheMap{
+					//		Key:   []byte(k+util.HistorySuffix),
+					//		Value: bz,
+					//	})
+					//}
+
+					var heights util.HeightsUpdates
+					keys := strings.Split(k, "/")
+					var key string
+					if len(keys) > 3 {
+						for i, value := range keys[2:] {
+							if i == 0 {
+								key = value
+							}else {
+								key = key + "/" + value
 							}
-							sort.Sort(heights)
-							if heights[len(heights)-1] < version{
-								heights = append(heights, version)
-							}
-						}else {
-							heights = make(util.Heights, 0)
-							heights = append(heights, version)
 						}
-						bz, _ := acctypes.ModuleCdc.MarshalBinaryLengthPrefixed(heights)
-						cacheMap = append(cacheMap, CacheMap{
-							Key:   []byte(util.ProofQueryPrefix + string(acctypes.HeightsUpdateKey(addr))),
-							Value: bz,
-						})
-						cacheMap = append(cacheMap, CacheMap{
-							Key:   []byte(util.ProofQueryPrefix + string(acctypes.HeightUpdateKey(addr, version))),
-							Value: []byte(os.Getenv(util.CICHAINID)),
-						})
+					}else {
+						key = keys[2]
 					}
+					b := store.(*iavlStore).Parent().(*baseKVStore).Get([]byte(key+util.HistorySuffix))
+					if b != nil {
+						err = acctypes.ModuleCdc.UnmarshalBinaryLengthPrefixed(b, &heights)
+						if  err != nil {
+							panic(err)
+						}
+						sort.Sort(heights)
+						if heights[len(heights)-1].Height < version{
+							heights = append(heights, util.HeightsUpdate{Height:version, Shard: os.Getenv(util.CICHAINID)})
+						}
+					}else {
+						heights = make(util.HeightsUpdates, 0)
+						heights = append(heights, util.HeightsUpdate{Height:version, Shard: os.Getenv(util.CICHAINID)})
+					}
+					bz, _ := acctypes.ModuleCdc.MarshalBinaryLengthPrefixed(heights)
+					cacheMap = append(cacheMap, CacheMap{
+						Key:   []byte(k+util.HistorySuffix),
+						Value: bz,
+					})
+
+
 					cacheMap = append(cacheMap, CacheMap{
 						Key:   []byte(k),
 						Value: v,

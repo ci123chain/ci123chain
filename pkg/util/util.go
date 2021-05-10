@@ -23,6 +23,8 @@ const (
 
 	//enviromnet
 	CICHAINID = "CICHAINID"
+
+	HistorySuffix = "HistoryInfo"
 )
 
 var CHAINID int64
@@ -136,6 +138,54 @@ func search(h Heights, i int64) int64 {
 		}
 	}
 }
+
+type HeightsUpdate struct {
+	Height int64   `json:"height"`
+	Shard  string  `json:"shard"`
+}
+
+type HeightsUpdates []HeightsUpdate
+
+func (h HeightsUpdates) Len() int { return len(h) }
+
+func (h HeightsUpdates) Swap(i, j int) { h[i], h[j] = h[j], h[i] }
+
+func (h HeightsUpdates) Less(i, j int) bool { return h[i].Height< h[j].Height }
+
+func (h HeightsUpdates) Search(i int64) HeightsUpdate {
+	return searchHeight(h, i)
+}
+
+func searchHeight(h HeightsUpdates, i int64) HeightsUpdate {
+	sort.Sort(h)
+	if len(h) ==1  {
+		if h[len(h)-1].Height <= i {
+			return h[len(h)-1]
+		}
+	}
+	if h[0].Height > i {
+		return HeightsUpdate{
+			Height: -1,
+			Shard:  "",
+		}
+	}
+	if h[len(h)-1].Height <= i {
+		return h[len(h)-1]
+	}else {
+		if h[len(h)/2 - 1].Height == i {
+			return h[len(h)/2 -1]
+		}else if h[len(h)/2 -1].Height < i {
+			if h[len(h)/2].Height > i {
+				return h[len(h)/2-1]
+			}else {
+				return searchHeight(h[len(h)/2:], i)
+			}
+		}else {
+			return searchHeight(h[:len(h)/2-1], i)
+		}
+	}
+}
+
 
 //type HistoryAccount struct {
 //	Shard   string       `json:"shard"`

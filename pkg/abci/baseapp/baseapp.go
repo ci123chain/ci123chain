@@ -5,9 +5,7 @@ import (
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/store"
 	"github.com/ci123chain/ci123chain/pkg/transfer"
-	"github.com/ci123chain/ci123chain/pkg/util"
 	"io"
-	"os"
 	"runtime/debug"
 	"strings"
 
@@ -23,7 +21,6 @@ import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/abci/version"
-	acctypes "github.com/ci123chain/ci123chain/pkg/account/types"
 	distypes "github.com/ci123chain/ci123chain/pkg/distribution/types"
 	iftypes "github.com/ci123chain/ci123chain/pkg/infrastructure/types"
 	ordertypes "github.com/ci123chain/ci123chain/pkg/order/types"
@@ -32,8 +29,6 @@ import (
 	staktypes "github.com/ci123chain/ci123chain/pkg/staking/types"
 	wasmtypes "github.com/ci123chain/ci123chain/pkg/vm/wasmtypes"
 	"github.com/tendermint/tendermint/proto/tendermint/types"
-	rpcclient "github.com/tendermint/tendermint/rpc/client"
-	"github.com/tendermint/tendermint/rpc/client/http"
 )
 
 
@@ -548,64 +543,64 @@ func handleQueryApp(app *BaseApp, path []string, req abci.RequestQuery) (res abc
 func handleQueryStore(app *BaseApp, path []string, req abci.RequestQuery) (res abci.ResponseQuery) {
 
 	// Cache wrap the commit-multistore for safety.
-	ctx := sdk.NewContext(app.cms, app.checkState.ctx.BlockHeader(), true, app.Logger)
-	var address = sdk.HexToAddress(path[1])
-	var key = acctypes.HeightsUpdateKey(address)
-
-	var heights util.Heights
-	b, err := app.db.Get([]byte(util.ProofQueryPrefix + string(key)))
-	if err != nil {
-		return abcierrors.QueryResult(err)
-	}
-	if b == nil {
-		return abcierrors.QueryResult(errors.New(fmt.Sprintf("no result found with height %v", req.Height)))
-	}
-	err = acctypes.ModuleCdc.UnmarshalBinaryLengthPrefixed(b, &heights)
-	if err != nil {
-		abcierrors.QueryResult(err)
-	}
-	h := heights.Search(req.Height)
-	if h < 1 {
-		return abcierrors.QueryResult(errors.New(fmt.Sprintf("no result found with height %v", req.Height)))
-	}
-
-	b, err = app.db.Get([]byte(util.ProofQueryPrefix + string(acctypes.HeightUpdateKey(address, h))))
-	if err != nil {
-		return abcierrors.QueryResult(err)
-	}
-	if b == nil {
-		return abcierrors.QueryResult(errors.New(fmt.Sprintf("no result found with height %v", req.Height)))
-	}
-	chainID := os.Getenv(util.CICHAINID)
-	if string(b) != chainID {
-		by := sendRequest(ctx, util.ShardDefaultProto + string(b) + util.ShardDefaultPort, req)
-		return by
-	}
+	//ctx := sdk.NewContext(app.cms, app.checkState.ctx.BlockHeader(), true, app.Logger)
+	//var address = sdk.HexToAddress(path[1])
+	//var key = acctypes.HeightsUpdateKey(address)
+	//
+	//var heights util.Heights
+	//b, err := app.db.Get([]byte(util.ProofQueryPrefix + string(key)))
+	//if err != nil {
+	//	return abcierrors.QueryResult(err)
+	//}
+	//if b == nil {
+	//	return abcierrors.QueryResult(errors.New(fmt.Sprintf("no result found with height %v", req.Height)))
+	//}
+	//err = acctypes.ModuleCdc.UnmarshalBinaryLengthPrefixed(b, &heights)
+	//if err != nil {
+	//	abcierrors.QueryResult(err)
+	//}
+	//h := heights.Search(req.Height)
+	//if h < 1 {
+	//	return abcierrors.QueryResult(errors.New(fmt.Sprintf("no result found with height %v", req.Height)))
+	//}
+	//
+	//b, err = app.db.Get([]byte(util.ProofQueryPrefix + string(acctypes.HeightUpdateKey(address, h))))
+	//if err != nil {
+	//	return abcierrors.QueryResult(err)
+	//}
+	//if b == nil {
+	//	return abcierrors.QueryResult(errors.New(fmt.Sprintf("no result found with height %v", req.Height)))
+	//}
+	//chainID := os.Getenv(util.CICHAINID)
+	//if string(b) != chainID {
+	//	by := sendRequest(ctx, util.ShardDefaultProto + string(b) + util.ShardDefaultPort, req)
+	//	return by
+	//}
 	// "/store" prefix for store queries
 	queryable, ok := app.cms.(sdk.Queryable)
 	if !ok {
 		msg := "multistore doesn't support queries"
 		return abcierrors.QueryResult(errors.New(msg))
 	}
-	req.Path = "/" + strings.Join(path[2:], "/")
+	req.Path = "/" + strings.Join(path[1:], "/")
 	return queryable.Query(req)
 }
 
-func sendRequest(ctx sdk.Context, host string, req abci.RequestQuery) abci.ResponseQuery {
-	rpc, err := http.New(host, "/websocket")
-	if err != nil {
-		return abcierrors.QueryResult(err)
-	}
-	opts := rpcclient.ABCIQueryOptions{
-		Height: req.Height,
-		Prove:  req.Prove,
-	}
-	res, err := rpc.ABCIQueryWithOptions(ctx, req.Path, req.Data, opts)
-	if err != nil {
-		return abcierrors.QueryResult(err)
-	}
-	return res.Response
-}
+//func sendRequest(ctx sdk.Context, host string, req abci.RequestQuery) abci.ResponseQuery {
+//	rpc, err := http.New(host, "/websocket")
+//	if err != nil {
+//		return abcierrors.QueryResult(err)
+//	}
+//	opts := rpcclient.ABCIQueryOptions{
+//		Height: req.Height,
+//		Prove:  req.Prove,
+//	}
+//	res, err := rpc.ABCIQueryWithOptions(ctx, req.Path, req.Data, opts)
+//	if err != nil {
+//		return abcierrors.QueryResult(err)
+//	}
+//	return res.Response
+//}
 
 // nolint: unparam
 func handleQueryP2P(app *BaseApp, path []string, req abci.RequestQuery) (res abci.ResponseQuery) {
@@ -644,7 +639,11 @@ func handleQueryCustom(app *BaseApp, path []string, req abci.RequestQuery) (res 
 	}
 
 	// Cache wrap the commit-multistore for safety.
-	ctx := sdk.NewContext(app.cms, app.checkState.ctx.BlockHeader(), true, app.Logger)
+	//ctx := sdk.NewContext(app.cms, app.checkState.ctx.BlockHeader(), true, app.Logger)
+	ctx, err := app.createQueryContext(req.Height, req.Prove)
+	if err != nil {
+		return sdkerrors.QueryResult(err)
+	}
 
 	// Passes the rest of the path as an argument to the querier.
 	// For example, in the path "custom/gov/proposal/test", the gov querier gets []string{"proposal", "test"} as the path
@@ -997,6 +996,55 @@ func (app *BaseApp) Commit() (res abci.ResponseCommit) {
 		Data: commitID.Hash,
 	}
 }
+
+// createQueryContext creates a new sdk.Context for a query, taking as args
+// the block height and whether the query needs a proof or not.
+func (app *BaseApp) createQueryContext(height int64, prove bool) (sdk.Context, error) {
+	if err := checkNegativeHeight(height); err != nil {
+		return sdk.Context{}, err
+	}
+
+	// when a client did not provide a query height, manually inject the latest
+	if height == 0 {
+		height = app.LastBlockHeight()
+	}
+
+	if height <= 1 && prove {
+		return sdk.Context{},
+			sdkerrors.Wrap(
+				sdkerrors.ErrInvalidRequest,
+				"cannot query with proof when height <= 1; please provide a valid height",
+			)
+	}
+
+	cacheMS, err := app.cms.CacheMultiStoreWithVersion(height)
+	if err != nil {
+		return sdk.Context{},
+			sdkerrors.Wrapf(
+				sdkerrors.ErrInvalidRequest,
+				"failed to load state at height %d; %s (latest height: %d)", height, err, app.LastBlockHeight(),
+			)
+	}
+
+	// branch the commit-multistore for safety
+	ctx := sdk.NewContext(
+		cacheMS, app.checkState.ctx.BlockHeader(), true, app.Logger,
+	)
+
+	return ctx, nil
+}
+
+func checkNegativeHeight(height int64) error {
+	if height < 0 {
+		// Reject invalid heights.
+		return sdkerrors.Wrap(
+			sdkerrors.ErrInvalidRequest,
+			"cannot query with height < 0; please provide a valid height",
+		)
+	}
+	return nil
+}
+
 
 func validateBasicTxMsgs(msgs []sdk.Msg, signer sdk.AccAddress) error {
 	if msgs == nil || len(msgs) == 0 {

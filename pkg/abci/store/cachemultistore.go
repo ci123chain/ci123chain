@@ -4,6 +4,7 @@ import (
 	"io"
 
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	dbm "github.com/tendermint/tm-db"
 )
 
 //----------------------------------------
@@ -21,6 +22,65 @@ type cacheMultiStore struct {
 
 	traceWriter  io.Writer
 	traceContext TraceContext
+
+	//listeners map[sdk.StoreKey][]types.WriteListener
+}
+
+// NewFromKVStore creates a new Store object from a mapping of store keys to
+// CacheWrapper objects and a KVStore as the database. Each CacheWrapper store
+// is a branched store.
+func NewFromKVStore(
+	store sdk.KVStore, stores map[sdk.StoreKey]sdk.CacheWrapper,
+	keys map[string]sdk.StoreKey, traceWriter io.Writer, traceContext sdk.TraceContext,
+	//listeners map[sdk.StoreKey][]sdk.WriteListener,
+) CacheMultiStore {
+	cms := cacheMultiStore{
+		ldb:           NewCacheKVStore(store),
+		stores:       make(map[sdk.StoreKey]sdk.CacheWrap, len(stores)),
+		keysByName:         keys,
+		traceWriter:  traceWriter,
+		traceContext: traceContext,
+		//listeners:    listeners,
+	}
+
+	for key, store := range stores {
+		var cacheWrapped sdk.CacheWrap
+		if cms.TracingEnabled() {
+			cacheWrapped = store.CacheWrapWithTrace(cms.traceWriter, cms.traceContext)
+		} else {
+			cacheWrapped = store.CacheWrap()
+		}
+		//if cms.ListeningEnabled(key) {
+		//	cms.stores[key] = cacheWrapped.CacheWrapWithListeners(key, cms.listeners[key])
+		//} else {
+		//	cms.stores[key] = cacheWrapped
+		//}
+		cms.stores[key] = cacheWrapped
+	}
+
+	return cms
+}
+
+// NewStore creates a new Store object from a mapping of store keys to
+// CacheWrapper objects. Each CacheWrapper store is a branched store.
+func NewStore(
+	db dbm.DB, stores map[sdk.StoreKey]sdk.CacheWrapper, keys map[string]sdk.StoreKey,
+	traceWriter io.Writer, traceContext sdk.TraceContext, //listeners map[sdk.StoreKey][]sdk.WriteListener,
+) CacheMultiStore {
+
+	return NewFromKVStore(dbStoreAdapter{DB: db}, stores, keys, traceWriter, traceContext)
+}
+
+func (cms cacheMultiStore) CacheMultiStoreWithVersion(version int64) (sdk.CacheMultiStore, error) {
+	panic("cannot branch cached multi-store with a version")
+}
+
+// ListeningEnabled returns if listening is enabled for a specific KVStore
+func (cms cacheMultiStore) ListeningEnabled(key sdk.StoreKey) bool {
+	//if ls, ok := cms.listeners[key]; ok {
+	//	return len(ls) != 0
+	//}
+	return false
 }
 
 var _ CacheMultiStore = cacheMultiStore{}
