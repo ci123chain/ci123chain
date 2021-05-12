@@ -8,6 +8,11 @@ import (
 type CodeType = sdk.CodeType
 const (
 	DefaultCodespace sdk.CodespaceType = "evm"
+
+	CodeCheckParamsError	CodeType = 1701
+
+	CodeComputeGas          CodeType = 1702
+	CodeInvalidState        CodeType = 1703
 )
 //
 //const (
@@ -38,12 +43,16 @@ const (
 //	return sdk.NewError(codespce, CodeInvalidAddress, msg)
 //}
 //
-func ErrComputeGas(codespce sdk.CodespaceType, msg string) error {
-	return sdkerrors.Wrap(sdkerrors.ErrInternal, msg)
+func ErrComputeGas(desc string) error {
+	return  sdkerrors.Register(string(DefaultCodespace), uint32(CodeComputeGas), desc)
 }
 //
-func ErrInvalidState(codespce sdk.CodespaceType, msg string) error {
-	return sdkerrors.Wrap(sdkerrors.ErrInternal, msg)
+func ErrInvalidState(desc string) error {
+	return  sdkerrors.Register(string(DefaultCodespace), uint32(CodeInvalidState), desc)
+}
+
+func ErrInvalidParams(desc string) error {
+	return  sdkerrors.Register(string(DefaultCodespace), uint32(CodeCheckParamsError), desc)
 }
 //
 //func ErrChainConfigNotFound(codespce sdk.CodespaceType, msg string) sdk.Error {

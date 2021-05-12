@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"time"
 )
 
@@ -149,19 +148,19 @@ func (m *Description) GetDetails() string {
 
 func (m Description) EnsureLength() (Description, error) {
 	if len(m.Moniker) > MaxMonikerLength {
-		return m, sdkerrors.Wrap(ErrInvalidRequest, fmt.Sprintf("invalid moniker length; got: %d, max: %d", len(m.Moniker), MaxMonikerLength))
+		return m, ErrInvalidMoniker(fmt.Sprintf("invalid moniker length; got: %d, max: %d", len(m.Moniker), MaxMonikerLength))
 	}
 	if len(m.Identity) > MaxIdentityLength {
-		return m, sdkerrors.Wrap(ErrInvalidRequest, fmt.Sprintf("invalid identity length; got: %d, max: %d", len(m.Identity), MaxIdentityLength))
+		return m, ErrInvalidIdentity(fmt.Sprintf("invalid identity length; got: %d, max: %d", len(m.Identity), MaxIdentityLength))
 	}
 	if len(m.Website) > MaxWebsiteLength {
-		return m, sdkerrors.Wrap(ErrInvalidRequest, fmt.Sprintf("invalid website length; got: %d, max: %d", len(m.Website), MaxWebsiteLength))
+		return m, ErrInvalidWebsite(fmt.Sprintf("invalid website length; got: %d, max: %d", len(m.Website), MaxWebsiteLength))
 	}
 	if len(m.SecurityContact) > MaxSecurityContactLength {
-		return m, sdkerrors.Wrap(ErrInvalidRequest, fmt.Sprintf("invalid security contact length; got: %d, max: %d", len(m.SecurityContact), MaxSecurityContactLength))
+		return m, ErrInvalidSecurityContact(fmt.Sprintf("invalid security contact length; got: %d, max: %d", len(m.SecurityContact), MaxSecurityContactLength))
 	}
 	if len(m.Details) > MaxDetailsLength {
-		return m, sdkerrors.Wrap(ErrInvalidRequest, fmt.Sprintf("invalid details length; got: %d, max: %d", len(m.Details), MaxDetailsLength))
+		return m, ErrInvalidDetails(fmt.Sprintf("invalid details length; got: %d, max: %d", len(m.Details), MaxDetailsLength))
 	}
 	return m, nil
 }

@@ -3,7 +3,6 @@ package types
 import (
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	sdkerrrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 )
 
 type MsgEditValidator struct {
@@ -27,18 +26,18 @@ func NewMsgEditValidator(from sdk.AccAddress, desc Description, commissionRate *
 
 func (tx *MsgEditValidator) ValidateBasic() error {
 	if tx.ValidatorAddress.Empty() {
-		return sdkerrrors.Wrap(sdkerrrors.ErrInvalidAddress, "empty validator address")
+		return ErrInvalidParam( "empty validator address")
 	}
 	if tx.MinSelfDelegation != nil && tx.MinSelfDelegation.IsPositive() {
-		return sdkerrrors.Wrap(sdkerrrors.ErrParams, "invalid minSelfDelegation")
+		return ErrInvalidParam( "invalid minSelfDelegation")
 	}
 	if tx.CommissionRate != nil {
 		if tx.CommissionRate.GT(sdk.OneDec()) || tx.CommissionRate.IsNegative() {
-			return sdkerrrors.Wrap(sdkerrrors.ErrParams, "commission rate must be between 0 and 1 (inclusive)")
+			return ErrInvalidParam(  "commission rate must be between 0 and 1 (inclusive)")
 		}
 	}
 	if !tx.ValidatorAddress.Equals(tx.FromAddress) {
-		return sdkerrrors.Wrap(sdkerrrors.ErrInvalidAddress, fmt.Sprintf("expected %s, got %s", tx.FromAddress, tx.ValidatorAddress))
+		return ErrInvalidParam(  fmt.Sprintf("expected %s, got %s", tx.FromAddress, tx.ValidatorAddress))
 	}
 	return nil
 }

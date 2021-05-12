@@ -28,7 +28,7 @@ func QueryTx(cliCtx context.Context, hashHexStr string) (sdk.TxResponse, error) 
 	if err != nil {
 		return sdk.TxResponse{}, types.ErrQueryTx(types.DefaultCodespace, err.Error())
 	}
-	if resTx.TxResult.Code != 1 {
+	if resTx.TxResult.Code == 204 {
 		return sdk.TxResponse{
 			TxHash:      hashHexStr,
 			Code:       resTx.TxResult.Code,

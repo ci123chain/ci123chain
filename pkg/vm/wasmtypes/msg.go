@@ -5,7 +5,6 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/vm/moduletypes/utils"
 
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 )
 
 type MsgUploadContract struct {
@@ -23,11 +22,11 @@ func NewMsgUploadContract(code []byte, from sdk.AccAddress) *MsgUploadContract {
 //TODO
 func (msg *MsgUploadContract) ValidateBasic() error {
 	if msg.Code == nil {
-		return sdkerrors.Wrap(sdkerrors.ErrParams, "empty code")
+		return ErrInvalidParams("empty code")
 	}
 
 	if msg.FromAddress.Empty() {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "empty from address")
+		return ErrInvalidParams( "empty from address")
 	}
 
 	return nil
@@ -84,11 +83,11 @@ func NewMsgInstantiateContract(codeHash []byte, from sdk.AccAddress, name, versi
 //TODO
 func (msg *MsgInstantiateContract) ValidateBasic() error {
 	if len(msg.CodeHash) == 0 {
-		return sdkerrors.Wrap(sdkerrors.ErrParams, "invalid code_hash")
+		return ErrInvalidParams( "invalid code_hash")
 	}
 
 	if msg.FromAddress.Empty() {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "empty from address")
+		return ErrInvalidParams( "empty from address")
 	}
 
 	return nil
@@ -132,15 +131,15 @@ func NewMsgExecuteContract(from sdk.AccAddress, contractAddress sdk.AccAddress, 
 //TODO
 func (msg *MsgExecuteContract) ValidateBasic() error {
 	if msg.Contract.Empty() {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "empty contract address")
+		return ErrInvalidParams("empty contract address")
 	}
 
 	if msg.FromAddress.Empty() {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "empty from address")
+		return ErrInvalidParams( "empty from address")
 	}
 
 	if msg.Args.Method == "" {
-		return sdkerrors.Wrap(sdkerrors.ErrParams, "invalid args")
+		return ErrInvalidParams("invalid args")
 	}
 	return nil
 }
@@ -195,15 +194,15 @@ func NewMsgMigrateContract(codeHash []byte, from sdk.AccAddress, name, version, 
 
 func (msg *MsgMigrateContract) ValidateBasic() error {
 	if len(msg.CodeHash) == 0 {
-		return sdkerrors.Wrap(sdkerrors.ErrParams, "empty code_hash")
+		return ErrInvalidParams( "empty code_hash")
 	}
 
 	if msg.FromAddress.Empty() {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "empty from address")
+		return ErrInvalidParams("empty from address")
 	}
 
 	if msg.Contract.Empty() {
-		return sdkerrors.Wrap(sdkerrors.ErrParams, "empty contract")
+		return ErrInvalidParams("empty contract")
 	}
 	return nil
 }

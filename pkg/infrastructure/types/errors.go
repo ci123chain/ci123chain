@@ -1,29 +1,28 @@
 package types
-//
-//import (
-//	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-//)
-//
-//type CodeType = sdk.CodeType
-//
-//const (
-//	DefaultCodespace  sdk.CodespaceType = "infrastructure"
-//
-//	CodeCheckParamsError	CodeType = 101
-//)
-//
-//func ErrCheckParams(codespace sdk.CodespaceType, str string) sdk.Error {
-//	return sdk.NewError(codespace, CodeCheckParamsError, "param invalid: %s", str)
-//}
-//
-//func ErrCdcUnmarshalFailed(codespace sdk.CodespaceType, err error) sdk.Error {
-//	return sdk.NewError(codespace, CodeCheckParamsError, err.Error())
-//}
-//
-//func ErrMarshalFailed(codespace sdk.CodespaceType, err error) sdk.Error {
-//	return sdk.NewError(codespace, CodeCheckParamsError, err.Error())
-//}
-//
-//func ErrGetInvalidResponse(codespace sdk.CodespaceType, err error) sdk.Error {
-//	return sdk.NewError(codespace, CodeCheckParamsError, err.Error())
-//}
+
+import (
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
+)
+
+type CodeType = sdk.CodeType
+
+const (
+	DefaultCodespace  sdk.CodespaceType = "infrastructure"
+
+	CodeInvalidEndPoint	CodeType = 1901
+	CodeCdcMarshalFailed CodeType = 1902
+	CodeGetContentFailed CodeType = 1903
+)
+
+func ErrInvalidEndPoint(desc string) error {
+	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeInvalidEndPoint), desc)
+}
+
+func ErrCdcMarshaFailed(desc string) error {
+	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeCdcMarshalFailed), desc)
+}
+
+func ErrGetContentFailed(desc string) error {
+	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeGetContentFailed), desc)
+}

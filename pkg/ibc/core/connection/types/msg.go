@@ -1,13 +1,12 @@
 package types
 
 import (
+	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	clienttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/clients/types"
 	commitmenttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/commitment/types"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/exported"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/host"
-	"github.com/pkg/errors"
 )
 
 var _ sdk.Msg = &MsgConnectionOpenInit{}
@@ -61,21 +60,21 @@ func (msg MsgConnectionOpenInit) Type() string {
 // ValidateBasic implements sdk.Msg.
 func (msg MsgConnectionOpenInit) ValidateBasic() error {
 	if err := host.ClientIdentifierValidator(msg.ClientId); err != nil {
-		return sdkerrors.Wrap(err, "invalid client ID")
+		return ErrInvalidParam( "invalid client ID")
 	}
 	if msg.Counterparty.ConnectionId != "" {
-		return sdkerrors.Wrap(ErrInvalidCounterparty, "counterparty connection identifier must be empty")
+		return ErrInvalidParam(  "counterparty connection identifier must be empty")
 	}
 
 	// NOTE: Version can be nil on MsgConnectionOpenInit
 	if msg.Version != nil {
 		if err := ValidateVersion(msg.Version); err != nil {
-			return sdkerrors.Wrap(err, "basic validation of the provided version failed")
+			return ErrInvalidParam( "basic validation of the provided version failed")
 		}
 	}
 	_ = sdk.HexToAddress(msg.Signer)
 	if err := msg.Counterparty.ValidateBasic(); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "string could not be parsed as address: %v", err)
+		return ErrInvalidParam(  err.Error())
 	}
 	return nil
 }
@@ -141,44 +140,44 @@ func (msg MsgConnectionOpenTry) ValidateBasic() error {
 	// an empty connection identifier indicates that a connection identifier should be generated
 	if msg.PreviousConnectionId != "" {
 		if !IsValidConnectionID(msg.PreviousConnectionId) {
-			return sdkerrors.Wrap(ErrInvalidConnectionIdentifier, "invalid previous connection ID")
+			return ErrInvalidParam( "invalid previous connection ID")
 		}
 	}
 	if err := host.ClientIdentifierValidator(msg.ClientId); err != nil {
-		return errors.Wrap(err, "invalid client ID")
+		return ErrInvalidParam( "invalid client ID")
 	}
 	// counterparty validate basic allows empty counterparty connection identifiers
 	if err := host.ConnectionIdentifierValidator(msg.Counterparty.ConnectionId); err != nil {
-		return sdkerrors.Wrap(err, "invalid counterparty connection ID")
+		return ErrInvalidParam( "invalid counterparty connection ID")
 	}
 	if msg.ClientState == nil {
-		return sdkerrors.Wrap(clienttypes.ErrInvalidClient, "counterparty client is nil")
+		return ErrInvalidParam(  "counterparty client is nil")
 	}
 	if err := msg.ClientState.Validate(); err != nil {
-		return sdkerrors.Wrap(err, "counterparty client is invalid")
+		return ErrInvalidParam( "counterparty client is invalid")
 	}
 	if len(msg.CounterpartyVersions) == 0 {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidVersion, "empty counterparty versions")
+		return ErrInvalidParam( "empty counterparty versions")
 	}
 	for i, version := range msg.CounterpartyVersions {
 		if err := ValidateVersion(version); err != nil {
-			return sdkerrors.Wrapf(err, "basic validation failed on version with index %d", i)
+			return ErrInvalidParam( fmt.Sprintf("basic validation failed on version with index %d", i))
 		}
 	}
 	if len(msg.ProofInit) == 0 {
-		return sdkerrors.Wrap(commitmenttypes.ErrInvalidProof, "cannot submit an empty proof init")
+		return ErrInvalidParam( "cannot submit an empty proof init")
 	}
 	if len(msg.ProofClient) == 0 {
-		return sdkerrors.Wrap(commitmenttypes.ErrInvalidProof, "cannot submit empty proof client")
+		return ErrInvalidParam( "cannot submit empty proof client")
 	}
 	if len(msg.ProofConsensus) == 0 {
-		return sdkerrors.Wrap(commitmenttypes.ErrInvalidProof, "cannot submit an empty proof of consensus state")
+		return ErrInvalidParam( "cannot submit an empty proof of consensus state")
 	}
 	if msg.ProofHeight.IsZero() {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidHeight, "proof height must be non-zero")
+		return ErrInvalidParam( "proof height must be non-zero")
 	}
 	if msg.ConsensusHeight.IsZero() {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidHeight, "consensus height must be non-zero")
+		return ErrInvalidParam( "consensus height must be non-zero")
 	}
 
 	return msg.Counterparty.ValidateBasic()
@@ -244,31 +243,31 @@ func (msg MsgConnectionOpenAck) ValidateBasic() error {
 		return ErrInvalidConnectionIdentifier
 	}
 	if err := host.ConnectionIdentifierValidator(msg.CounterpartyConnectionId); err != nil {
-		return sdkerrors.Wrap(err, "invalid counterparty connection ID")
+		return ErrInvalidParam( "invalid counterparty connection ID")
 	}
 	if err := ValidateVersion(msg.Version); err != nil {
 		return err
 	}
 	if msg.ClientState == nil {
-		return sdkerrors.Wrap(clienttypes.ErrInvalidClient, "counterparty client is nil")
+		return ErrInvalidParam( "counterparty client is nil")
 	}
 	if err := msg.ClientState.Validate(); err != nil {
-		return sdkerrors.Wrap(err, "counterparty client is invalid")
+		return ErrInvalidParam( "counterparty client is invalid")
 	}
 	if len(msg.ProofTry) == 0 {
-		return sdkerrors.Wrap(commitmenttypes.ErrInvalidProof, "cannot submit an empty proof try")
+		return ErrInvalidParam( "cannot submit an empty proof try")
 	}
 	if len(msg.ProofClient) == 0 {
-		return sdkerrors.Wrap(commitmenttypes.ErrInvalidProof, "cannot submit empty proof client")
+		return ErrInvalidParam( "cannot submit empty proof client")
 	}
 	if len(msg.ProofConsensus) == 0 {
-		return sdkerrors.Wrap(commitmenttypes.ErrInvalidProof, "cannot submit an empty proof of consensus state")
+		return ErrInvalidParam(  "cannot submit an empty proof of consensus state")
 	}
 	if msg.ProofHeight.IsZero() {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidHeight, "proof height must be non-zero")
+		return ErrInvalidParam( "proof height must be non-zero")
 	}
 	if msg.ConsensusHeight.IsZero() {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidHeight, "consensus height must be non-zero")
+		return ErrInvalidParam(  "consensus height must be non-zero")
 	}
 
 	return nil
@@ -322,10 +321,10 @@ func (msg MsgConnectionOpenConfirm) ValidateBasic() error {
 		return ErrInvalidConnectionIdentifier
 	}
 	if len(msg.ProofAck) == 0 {
-		return sdkerrors.Wrap(commitmenttypes.ErrInvalidProof, "cannot submit an empty proof ack")
+		return ErrInvalidParam( "cannot submit an empty proof ack")
 	}
 	if msg.ProofHeight.IsZero() {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidHeight, "proof height must be non-zero")
+		return ErrInvalidParam( "proof height must be non-zero")
 	}
 	//_, err := sdk.AccAddressFromBech32(msg.Signer)
 	//if err != nil {

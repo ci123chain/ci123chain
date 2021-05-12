@@ -6,7 +6,6 @@ import (
 
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 
-	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	ethcmn "github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 )
@@ -124,16 +123,16 @@ func (msg MsgEvmTx) GetFromAddress() sdk.AccAddress {
 // checks of a Transaction. If returns an error if validation fails.
 func (msg MsgEvmTx) ValidateBasic() error {
 	if msg.Data.Price.Cmp(big.NewInt(0)) == 0 {
-		return sdkerrors.Wrap(sdkerrors.ErrParams, "invalid price")
+		return ErrInvalidParams("invalid price")
 	}
 
 	if msg.Data.Price.Sign() == -1 {
-		return sdkerrors.Wrap(sdkerrors.ErrParams, "invalid sig")
+		return ErrInvalidParams("invalid sig")
 	}
 
 	// Amount can be 0
 	if msg.Data.Amount.Sign() == -1 {
-		return sdkerrors.Wrap(sdkerrors.ErrParams, "invalid amount")
+		return ErrInvalidParams("invalid amount")
 	}
 
 	return nil

@@ -3,7 +3,6 @@ package keeper
 import (
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/account/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 )
@@ -26,7 +25,7 @@ func NewQuerier(k AccountKeeper) sdk.Querier {
 		case types.QueryAccountNonce:
 			return queryAccountNonce(ctx, req, k)
 		default:
-			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "unknown query endpoint")
+			return nil, types.ErrInvalidEndPoint(fmt.Sprintf("unexpected path: %v", path[0]))
 		}
 	}
 }
@@ -35,24 +34,12 @@ func queryAccount(ctx sdk.Context, req abci.RequestQuery, k AccountKeeper) ([]by
 	var accountParams QueryAccountParams
 	err := types.ModuleCdc.UnmarshalJSON(req.Data, &accountParams)
 	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("cdc marshal failed: %v", err.Error()))
+		return nil, types.ErrCdcUnmarshalFailed(fmt.Sprintf("cdc marshal failed: %v", err.Error()))
 	}
 	acc := k.GetAccount(ctx, accountParams.AccountAddress)
 	if acc == nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("get account faield"))
+		return nil, types.ErrAccountNotExisted(fmt.Sprintf("the account not found with address: %v", accountParams.AccountAddress.String()))
 	}
-	//if accountParams.Height != -1 && accountParams.Height > 0 {
-	//	i := SearchHeight(ctx, k, acc, accountParams.Height)
-	//	if i != -3 {
-	//		r := GetHistoryBalance(ctx, k, acc, i)
-	//		by := types.ModuleCdc.MustMarshalBinaryLengthPrefixed(r.Coins)
-	//		return by, nil
-	//	}else if i ==-2 {
-	//		return nil, errors.New(fmt.Sprintf("unexpected height: %v", accountParams.Height))
-	//	}else if i ==-3 {
-	//		return nil, errors.New("codec unmarshal failed")
-	//	}
-	//}
 	by := types.ModuleCdc.MustMarshalBinaryLengthPrefixed(acc)
 	return by, nil
 }
@@ -61,11 +48,11 @@ func queryAccountNonce(ctx sdk.Context, req abci.RequestQuery, k AccountKeeper) 
 	var accountParams QueryAccountParams
 	err := types.ModuleCdc.UnmarshalJSON(req.Data, &accountParams)
 	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("cdc marshal failed: %v", err.Error()))
+		return nil, types.ErrCdcUnmarshalFailed(fmt.Sprintf("cdc marshal failed: %v", err.Error()))
 	}
 	acc := k.GetAccount(ctx, accountParams.AccountAddress)
 	if acc == nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("get account faield"))
+		return nil, types.ErrAccountNotExisted(fmt.Sprintf("the account not found with address: %v", accountParams.AccountAddress.String()))
 	}
 	by := types.ModuleCdc.MustMarshalBinaryLengthPrefixed(acc.GetSequence())
 	return by, nil

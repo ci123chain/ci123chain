@@ -105,7 +105,7 @@ func queryValidatorCommission(ctx sdk.Context, req abci.RequestQuery, k DistrKee
 	var params types.QueryValidatorCommissionParams
 	err := k.cdc.UnmarshalJSON(req.Data, &params)
 	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("cdc marshal failed: %v", err.Error()))
+		return nil, types.ErrInternalCdcMarshal( fmt.Sprintf("cdc marshal failed: %v", err.Error()))
 	}
 	commission := k.GetValidatorAccumulatedCommission(ctx, params.ValidatorAddress)
 	res := types.DistributionCdc.MustMarshalJSON(commission)
@@ -116,7 +116,7 @@ func queryDelegationRewards(ctx sdk.Context, req abci.RequestQuery, k DistrKeepe
 	var params types.QueryDelegationRewardsParams
 	err := k.cdc.UnmarshalJSON(req.Data, &params)
 	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("cdc marshal failed: %v", err.Error()))
+		return nil, types.ErrInternalCdcMarshal(fmt.Sprintf("cdc marshal failed: %v", err.Error()))
 	}
 
 	// cache-wrap context as to not persist state changes during querying
@@ -124,12 +124,12 @@ func queryDelegationRewards(ctx sdk.Context, req abci.RequestQuery, k DistrKeepe
 
 	val := k.StakingKeeper.Validator(ctx, params.ValidatorAddress)
 	if val == nil {
-		return nil, types.ErrNoValidatorExist(types.DefaultCodespace, params.ValidatorAddress.String())
+		return nil, types.ErrNoValidatorExist(fmt.Sprintf("%v not exist", params.ValidatorAddress.String()))
 	}
 
 	del := k.StakingKeeper.Delegation(ctx, params.DelegatorAddress, params.ValidatorAddress)
 	if del == nil {
-		return nil, types.ErrNoDelegationExist(types.DefaultCodespace, params.ValidatorAddress.String(), params.DelegatorAddress.String())
+		return nil, types.ErrNoDelegationExist(fmt.Sprintf("%v has no delegation with %v",  params.ValidatorAddress.String(), params.DelegatorAddress.String()))
 	}
 
 	endingPeriod := k.incrementValidatorPeriod(ctx, val)
@@ -143,7 +143,7 @@ func queryDelegatorAccountInfo(ctx sdk.Context, req abci.RequestQuery, k DistrKe
 
 	err := k.cdc.UnmarshalJSON(req.Data, &params)
 	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("cdc marshal failed: %v", err.Error()))
+		return nil, types.ErrInternalCdcMarshal(fmt.Sprintf("cdc marshal failed: %v", err.Error()))
 	}
 
 	ctx, _ = ctx.CacheContext()

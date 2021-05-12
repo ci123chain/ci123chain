@@ -172,7 +172,7 @@ func (cs ClientState) Validate() error {
 	// UpgradePath may be empty, but if it isn't, each key must be non-empty
 	for i, k := range cs.UpgradePath {
 		if strings.TrimSpace(k) == "" {
-			return sdkerrors.Wrapf(clienttypes.ErrInvalidClient, "key in upgrade path at index %d cannot be empty", i)
+			return sdkerrors.Wrapf(clienttypes.ErrInvalidClient(""), "key in upgrade path at index %d cannot be empty", i)
 		}
 	}
 
@@ -216,11 +216,11 @@ func (cs ClientState) VerifyClientState(
 		return err
 	}
 	if clientState == nil {
-		return sdkerrors.Wrap(clienttypes.ErrInvalidClient, "client state cannot be empty")
+		return sdkerrors.Wrap(clienttypes.ErrInvalidClient(""), "client state cannot be empty")
 	}
 	_, ok := clientState.(*ClientState)
 	if !ok {
-		return sdkerrors.Wrapf(clienttypes.ErrInvalidClient, "invalid client type %T, expected %T", clientState, &ClientState{})
+		return sdkerrors.Wrapf(clienttypes.ErrInvalidClient(""), "invalid client type %T, expected %T", clientState, &ClientState{})
 	}
 
 	bz, err := cdc.MarshalBinaryBare(clientState)

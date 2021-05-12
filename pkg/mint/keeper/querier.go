@@ -1,8 +1,8 @@
 package keeper
 
 import (
+	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/mint/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 )
@@ -18,7 +18,7 @@ func NewQuerier(k MinterKeeper) sdk.Querier {
 		case types.QueryParameters:
 			return QueryParams(ctx, k)
 		default:
-			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "unknown query endpoint")
+			return nil, types.ErrInvalidEndPoint(fmt.Sprintf("invlaid path: %v", path[0]))
 		}
 	}
 }

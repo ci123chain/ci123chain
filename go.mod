@@ -42,4 +42,4 @@ require (
 	gotest.tools v2.2.0+incompatible
 )
 
-replace github.com/tendermint/tendermint => github.com/ci123chain/tendermint v0.32.7-rc31
+replace github.com/tendermint/tendermint => github.com/ci123chain/tendermint v0.32.7-rc33

@@ -2,8 +2,8 @@ package keeper
 
 import (
 	"encoding/json"
+	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/order/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 )
@@ -14,7 +14,7 @@ func NewQuerier(orderKeeper *OrderKeeper) sdk.Querier {
 		case types.QueryState:
 			return queryState(ctx, orderKeeper)
 		default:
-			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "unknown query endpoint")
+			return nil, types.ErrInvalidEndPoint(fmt.Sprintf("invalid path:", path[0]))
 		}
 	}
 }
@@ -22,8 +22,11 @@ func NewQuerier(orderKeeper *OrderKeeper) sdk.Querier {
 func queryState(ctx sdk.Context, k *OrderKeeper) ([]byte, error) {
 	order, err := k.GetOrderBook(ctx)
 	if err != nil {
-		panic(err)
+		return nil, types.ErrGetOrderBookFailed(err.Error())
 	}
 	obytes, err := json.Marshal(order)
+	if err != nil {
+		return nil, types.ErrFailedMarshal(err.Error())
+	}
 	return obytes, nil
 }

@@ -1,7 +1,6 @@
 package types
 
 import (
-	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 )
@@ -14,11 +13,25 @@ const (
 	//
 	//CodeBadMarshal  						CodeType = 301
 
-	CodeBadAddress  						CodeType = 302
+	//CodeBadAddress  						CodeType = 302
 
-	CodeEmptyDelegationStartingInfo 		CodeType = 303
+	CodeEmptyDelegationStartingInfo 		CodeType = 1403
 
-	CodeInternalServerError 				CodeType = 304
+	CodeNoValidatorExist                    CodeType = 1404
+
+	CodeCdcMarshalFailed                    CodeType = 1405
+
+	CodeNoDelegationExist                   CodeType = 1406
+
+	CodeSetWithdrawAddressFailed            CodeType = 1407
+
+	CodeNoValidatorDistInfo                 CodeType = 1408
+
+	CodeNoDelegationDistInfo                CodeType = 1409
+
+	CodeNoValidatorCommission               CodeType = 1410
+
+	//CodeInternalServerError 				CodeType = 304
 
 	//CodeInvalidCoin  						CodeType   = 305
 	//CodeInvalidAddress 						CodeType  = 306
@@ -26,14 +39,21 @@ const (
 	//CodeInvalidGas    						CodeType   = 308
 	//CodeInvalidPrivateKey 					CodeType = 309
 	//CodeErrSignTx   						CodeType    = 310
-	CodeErrSetWithdrawAddrDisabled  		CodeType = 311
-	CodeErrNoValidatorDistInfo      		CodeType = 312
-	CodeErrEmptyDelegationDistInfo          CodeType = 313
-	CodeErrNoValidatorCommission            CodeType = 314
+	//CodeErrSetWithdrawAddrDisabled  		CodeType = 311
+	//CodeErrNoValidatorDistInfo      		CodeType = 312
+	//CodeErrEmptyDelegationDistInfo          CodeType = 313
+	//CodeErrNoValidatorCommission            CodeType = 314
 	//CodeErrWithdrawAddressInfoMismatch      CodeType = 315
 	//CodeErrErrHandleTxFailed                CodeType = 316
 	//CodeErrInvalidSignature                 CodeType = 317
+
+	CodeErrInvalidParams                    CodeType = 1411
 )
+
+
+func ErrInvalidParams(desc string) error {
+	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeErrInvalidParams), desc)
+}
 
 
 //func ErrBadHeight(codespace sdk.CodespaceType, err error) sdk.Error {
@@ -48,16 +68,20 @@ const (
 //	return sdk.NewError(codespace, CodeBadAddress, "param address invalid: %s", err.Error())
 //}
 
-func ErrEmptyDelegationStartingInfo(codespace sdk.CodespaceType) error {
-	return sdkerrors.Wrap(sdkerrors.ErrInternal, "empty delegation starting info")
+func ErrEmptyDelegationStartingInfo(desc string) error {
+	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeEmptyDelegationStartingInfo), desc)
 }
 
-func ErrNoValidatorExist(codespace sdk.CodespaceType, valAddr string) error {
-	return sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("validator %s not exist", valAddr))
+func ErrNoValidatorExist(desc string) error {
+	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeNoValidatorExist), desc)
 }
 
-func ErrNoDelegationExist(codespace sdk.CodespaceType, valAddr, delAddr string) error {
-	return sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("Delegatin between %s and %s not exist", valAddr, delAddr))
+func ErrInternalCdcMarshal(desc string) error {
+	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeCdcMarshalFailed), desc)
+}
+
+func ErrNoDelegationExist(desc string) error {
+	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeNoDelegationExist), desc)
 }
 
 //func ErrInternalServer(codespace sdk.CodespaceType) sdk.Error {
@@ -92,20 +116,20 @@ func ErrNoDelegationExist(codespace sdk.CodespaceType, valAddr, delAddr string) 
 //	return sdk.NewError(codespace, CodeErrSignTx, err.Error())
 //}
 
-func ErrSetWithdrawAddrDisabled(codespace sdk.CodespaceType) error {
-	return sdkerrors.Wrap(sdkerrors.ErrInternal, "set withdraw address disabled")
+func ErrSetWithdrawAddrDisabled(desc string) error {
+	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeSetWithdrawAddressFailed), desc)
 }
 
-func ErrNoValidatorDistInfo(codespace sdk.CodespaceType) error {
-	return sdkerrors.Wrap(sdkerrors.ErrInternal, "no validator distribution info")
+func ErrNoValidatorDistInfo(desc string) error {
+	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeNoValidatorDistInfo), desc)
 }
 
-func ErrEmptyDelegationDistInfo(codespace sdk.CodespaceType) error {
-	return sdkerrors.Wrap(sdkerrors.ErrInternal, "no delegation distribution info")
+func ErrEmptyDelegationDistInfo(desc string) error {
+	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeNoDelegationDistInfo), desc)
 }
 
-func ErrNoValidatorCommission(codespace sdk.CodespaceType) error {
-	return sdkerrors.Wrap(sdkerrors.ErrInternal, "no validator commission")
+func ErrNoValidatorCommission(desc string) error {
+	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeNoValidatorCommission), desc)
 }
 
 //func ErrWithdrawAddressInfoMismatch(codespace sdk.CodespaceType, expectedAddr, gotAddr sdk.AccAddress) sdk.Error {

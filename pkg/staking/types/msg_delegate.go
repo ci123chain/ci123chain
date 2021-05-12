@@ -3,7 +3,6 @@ package types
 import (
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/types"
-	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 )
 
 type MsgDelegate struct {
@@ -26,16 +25,16 @@ func NewMsgDelegate(from types.AccAddress, delegatorAddr types.AccAddress, valid
 
 func (msg *MsgDelegate) ValidateBasic() error {
 	if msg.DelegatorAddress.Empty() {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "empty delegator address")
+		return ErrInvalidParam("empty delegator address")
 	}
 	if msg.ValidatorAddress.Empty() {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "empty validator address")
+		return ErrInvalidParam( "empty validator address")
 	}
 	if !msg.Amount.Amount.IsPositive() {
-		return sdkerrors.Wrap(sdkerrors.ErrParams, "amount should be positive")
+		return ErrInvalidParam( "amount should be positive")
 	}
 	if !msg.FromAddress.Equal(msg.DelegatorAddress) {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, fmt.Sprintf("expected %s, got %s", msg.FromAddress.String(), msg.DelegatorAddress.String()))
+		return ErrInvalidParam(  fmt.Sprintf("expected %s, got %s", msg.FromAddress.String(), msg.DelegatorAddress.String()))
 	}
 	return nil
 }

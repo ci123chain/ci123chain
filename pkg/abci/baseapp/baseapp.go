@@ -792,16 +792,16 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 			switch rType := r.(type) {
 			case sdk.ErrorOutOfGas:
 				res := app.deferHandler(ctx, tx, true, mode == runTxModeSimulate)
-				newLog := fmt.Sprintf("out of gas in location -- %v", rType.Descriptor)
+				s := fmt.Sprintf("out of gas in location -- %v", rType.Descriptor)
 				result.GasUsed = res.GasUsed
 				result.GasWanted = res.GasWanted
-				err = abcierrors.Wrap(abcierrors.ErrOutOfGas, newLog)
+				err = abcierrors.ErrRuxTxOutOfGas(s)
 			default:
 				res := app.deferHandler(ctx, tx, false, mode == runTxModeSimulate)
-				newLog := fmt.Sprintf("recovered -- %v\nstack:%v\n", r, string(debug.Stack()))
+				s := fmt.Sprintf("recovered -- %v\nstack:%v\n", r, string(debug.Stack()))
 				result.GasUsed = res.GasUsed
 				result.GasWanted = res.GasWanted
-				err = abcierrors.Wrap(abcierrors.ErrInternal, newLog)
+				err = abcierrors.ErrRecoverInRunTx(s)
 			}
 			for _, v := range all_attributes {
 				v = append(v, sdk.NewAttribute([]byte(sdk.EventTypeType), []byte(sdk.AttributeKeyInvalidTx)))

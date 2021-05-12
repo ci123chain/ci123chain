@@ -154,10 +154,39 @@ var (
 	//ErrResponse
 	ErrResponse = Register(RootCodespace, 43, "invalid response")
 
+	ErrAccountNotExist = Register(RootCodespace, 47, "account not exist")
+
+	ErrInsufficientMempoolFess = Register(RootCodespace, 51, "insufficient mempool fess")
+
+	ErrAccountSetCoinFailed = Register(RootCodespace, 52, "set account coin failed")
+
+	ErrModuleAccountSetCoinFailed = Register(RootCodespace, 53, "module account set coin failed")
+
 	// ErrPanic is only set when we recover from a panic, so we know to
 	// redact potentially sensitive system info
 	ErrPanic = Register(UndefinedCodespace, 111222, "panic")
 )
+
+func ErrRuxTxOutOfGas(desc string) error {
+	return Register(RootCodespace, 10101, desc)
+}
+
+func ErrRecoverInRunTx(desc string) error {
+	return Register(RootCodespace, 10102, desc)
+}
+
+func ErrModuleAccountNotExisted(desc string) error {
+	return Register(RootCodespace, 10103, desc)
+}
+
+
+func ErrModuleAccountHasNoPermission(desc string) error {
+	return Register(RootCodespace, 10104, desc)
+}
+
+func ErrInvalidParam(desc string) error {
+	return Register(RootCodespace, 10105, desc)
+}
 
 // Register returns an error instance that should be used as the base for
 // creating error instances during runtime.
