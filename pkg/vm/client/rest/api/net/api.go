@@ -3,6 +3,7 @@ package net
 import (
 	"fmt"
 	clientcontext "github.com/ci123chain/ci123chain/pkg/client/context"
+	"github.com/ci123chain/ci123chain/pkg/util"
 )
 
 // PublicNetAPI is the eth_ prefixed set of APIs in the Web3 JSON-RPC spec.
@@ -13,7 +14,7 @@ type PublicNetAPI struct {
 // NewAPI creates an instance of the public Net Web3 API.
 func NewAPI(clientCtx clientcontext.Context) *PublicNetAPI {
 	return &PublicNetAPI{
-		networkVersion: 999,
+		networkVersion: uint64(util.CHAINID),
 	}
 }
 

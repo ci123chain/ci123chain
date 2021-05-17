@@ -8,7 +8,7 @@ export CI_STATEDB_HOST="127.0.0.1"
 export CI_STATEDB_PORT=5002
 export CI_STATEDB_TLS="false"
 export CI_TOKENNAME="stack0"
-export CI_HOME="testdata/.ci123"
+export CI_HOME="scripts/testdata/ibc0"
 
 rm -rf $CI_HOME
 
