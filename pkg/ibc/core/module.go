@@ -38,7 +38,9 @@ func (b AppModuleBasic) RegisterCodec(codec *codec.Codec) {
 	types.RegisterCodec(codec)
 }
 
-func (b AppModuleBasic) RegisterInterfaces(registry codectypes.InterfaceRegistry) {}
+func (b AppModuleBasic) RegisterInterfaces(registry codectypes.InterfaceRegistry) {
+	types.RegisterInterfaces(registry)
+}
 
 // RegisterGRPCGatewayRoutes registers the gRPC Gateway routes for the ibc module.
 func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *runtime.ServeMux) {

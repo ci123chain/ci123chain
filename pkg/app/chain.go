@@ -194,12 +194,12 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 	scopedTransferKeeper := capabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
 	// Create IBC Keeper
 	IBCKeeper := ibckeeper.NewKeeper(
-		cdc, IBCStoreKey, c.GetSubspace(ibchost.ModuleName), stakingKeeper, scopedIBCKeeper,
+		appCodec, IBCStoreKey, c.GetSubspace(ibchost.ModuleName), stakingKeeper, scopedIBCKeeper,
 	)
 
 	// Create Transfer Keepers
 	ibcTransferKeeper := ibctransferkeeper.NewKeeper(
-		cdc, IbcTransferStoreKey, c.GetSubspace(ibctransfertypes.ModuleName),
+		appCodec, IbcTransferStoreKey, c.GetSubspace(ibctransfertypes.ModuleName),
 		IBCKeeper.ChannelKeeper, &IBCKeeper.PortKeeper,
 		supplyKeeper, scopedTransferKeeper,
 	)

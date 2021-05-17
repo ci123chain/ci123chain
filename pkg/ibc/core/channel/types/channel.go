@@ -1,6 +1,7 @@
 package types
 
 import (
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/exported"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/host"
 	sdkerrors "github.com/pkg/errors"
@@ -255,7 +256,7 @@ var _ isAcknowledgement_Response = &Acknowledgement_Result{}
 //}
 // GetBytes is a helper for serialising acknowledgements
 func (ack Acknowledgement) GetBytes() []byte {
-	return ChannelCdc.MustMarshalJSON(ack)
+	return sdk.MustSortJSON(SubModuleCdc.MustMarshalJSON(&ack))
 }
 
 // NewResultAcknowledgement returns a new instance of Acknowledgement using an Acknowledgement_Result

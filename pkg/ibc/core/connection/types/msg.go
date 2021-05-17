@@ -7,6 +7,7 @@ import (
 	commitmenttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/commitment/types"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/exported"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/host"
+	cosmosSdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
 )
 
@@ -14,6 +15,13 @@ var _ sdk.Msg = &MsgConnectionOpenInit{}
 var _ sdk.Msg = &MsgConnectionOpenTry{}
 var _ sdk.Msg = &MsgConnectionOpenAck{}
 var _ sdk.Msg = &MsgConnectionOpenConfirm{}
+
+var (
+	_ cosmosSdk.Msg = &MsgConnectionOpenInit{}
+	_ cosmosSdk.Msg = &MsgConnectionOpenTry{}
+	_ cosmosSdk.Msg = &MsgConnectionOpenAck{}
+	_ cosmosSdk.Msg = &MsgConnectionOpenConfirm{}
+)
 
 func (msg MsgConnectionOpenInit) MsgType() string {
 	return "connection_open_init"
@@ -34,7 +42,7 @@ func (msg MsgConnectionOpenInit) Bytes() []byte {
 func NewMsgConnectionOpenInit(
 	clientID, counterpartyClientID string,
 	counterpartyPrefix commitmenttypes.MerklePrefix,
-	version *Version, delayPeriod uint64, signer sdk.AccAddress,
+	version *Version, delayPeriod uint64, signer string,
 ) *MsgConnectionOpenInit {
 	// counterparty must have the same delay period
 	counterparty := NewCounterparty(counterpartyClientID, "", counterpartyPrefix)
@@ -43,7 +51,7 @@ func NewMsgConnectionOpenInit(
 		Counterparty: counterparty,
 		Version:      version,
 		DelayPeriod:  delayPeriod,
-		Signer:       signer.String(),
+		Signer:       signer,
 	}
 }
 
@@ -87,9 +95,8 @@ func (msg MsgConnectionOpenInit) GetSignBytes() []byte {
 }
 
 // GetSigners implements sdk.Msg
-func (msg MsgConnectionOpenInit) GetSigners() []sdk.AccAddress {
-	accAddr := sdk.HexToAddress(msg.Signer)
-	return []sdk.AccAddress{accAddr}
+func (msg MsgConnectionOpenInit) GetSigners() []cosmosSdk.AccAddress {
+	return []cosmosSdk.AccAddress{sdk.HexToAddress(msg.Signer).Bytes()}
 }
 
 
@@ -104,13 +111,14 @@ func NewMsgConnectionOpenTry(
 	counterpartyPrefix commitmenttypes.MerklePrefix,
 	counterpartyVersions []*Version, delayPeriod uint64,
 	proofInit, proofClient, proofConsensus []byte,
-	proofHeight, consensusHeight clienttypes.Height, signer sdk.AccAddress,
+	proofHeight, consensusHeight clienttypes.Height, signer string,
 ) *MsgConnectionOpenTry {
 	counterparty := NewCounterparty(counterpartyClientID, counterpartyConnectionID, counterpartyPrefix)
+	csAny, _ := clienttypes.PackClientState(counterpartyClient)
 	return &MsgConnectionOpenTry{
 		PreviousConnectionId: previousConnectionID,
 		ClientId:             clientID,
-		ClientState:          counterpartyClient,
+		ClientState:          csAny,
 		Counterparty:         counterparty,
 		CounterpartyVersions: counterpartyVersions,
 		DelayPeriod:          delayPeriod,
@@ -119,7 +127,7 @@ func NewMsgConnectionOpenTry(
 		ProofConsensus:       proofConsensus,
 		ProofHeight:          proofHeight,
 		ConsensusHeight:      consensusHeight,
-		Signer:               signer.String(),
+		Signer:               signer,
 	}
 }
 
@@ -154,7 +162,11 @@ func (msg MsgConnectionOpenTry) ValidateBasic() error {
 	if msg.ClientState == nil {
 		return sdkerrors.Wrap(clienttypes.ErrInvalidClient, "counterparty client is nil")
 	}
-	if err := msg.ClientState.Validate(); err != nil {
+	clientState, err := clienttypes.UnpackClientState(msg.ClientState)
+	if err != nil {
+		return sdkerrors.Wrapf(clienttypes.ErrInvalidClient, "unpack err: %v", err)
+	}
+	if err := clientState.Validate(); err != nil {
 		return sdkerrors.Wrap(err, "counterparty client is invalid")
 	}
 	if len(msg.CounterpartyVersions) == 0 {
@@ -185,9 +197,8 @@ func (msg MsgConnectionOpenTry) ValidateBasic() error {
 }
 
 // GetSigners implements sdk.Msg
-func (msg MsgConnectionOpenTry) GetSigners() []sdk.AccAddress {
-	accAddr := sdk.HexToAddress(msg.Signer)
-	return []sdk.AccAddress{accAddr}
+func (msg MsgConnectionOpenTry) GetSigners() []cosmosSdk.AccAddress {
+	return []cosmosSdk.AccAddress{sdk.HexToAddress(msg.Signer).Bytes()}
 }
 
 
@@ -201,6 +212,10 @@ func (msg MsgConnectionOpenTry) Bytes() []byte {
 	panic("IBC messages do not support amino")
 }
 
+func (msg MsgConnectionOpenTry) GetSignBytes() []byte {
+	panic("IBC messages do not support amino")
+}
+
 
 // ------------MsgConnectionOpenAck
 
@@ -211,19 +226,20 @@ func NewMsgConnectionOpenAck(
 	proofTry, proofClient, proofConsensus []byte,
 	proofHeight, consensusHeight clienttypes.Height,
 	version *Version,
-	signer sdk.AccAddress,
+	signer string,
 ) *MsgConnectionOpenAck {
+	csAny, _ := clienttypes.PackClientState(counterpartyClient)
 	return &MsgConnectionOpenAck{
 		ConnectionId:             connectionID,
 		CounterpartyConnectionId: counterpartyConnectionID,
-		ClientState:              counterpartyClient,
+		ClientState:              csAny,
 		ProofTry:                 proofTry,
 		ProofClient:              proofClient,
 		ProofConsensus:           proofConsensus,
 		ProofHeight:              proofHeight,
 		ConsensusHeight:          consensusHeight,
 		Version:                  version,
-		Signer:                   signer.String(),
+		Signer:                   signer,
 	}
 }
 
@@ -252,7 +268,11 @@ func (msg MsgConnectionOpenAck) ValidateBasic() error {
 	if msg.ClientState == nil {
 		return sdkerrors.Wrap(clienttypes.ErrInvalidClient, "counterparty client is nil")
 	}
-	if err := msg.ClientState.Validate(); err != nil {
+	clientState, err := clienttypes.UnpackClientState(msg.ClientState)
+	if err != nil {
+		return sdkerrors.Wrapf(clienttypes.ErrInvalidClient, "unpack err: %v", err)
+	}
+	if err := clientState.Validate(); err != nil {
 		return sdkerrors.Wrap(err, "counterparty client is invalid")
 	}
 	if len(msg.ProofTry) == 0 {
@@ -279,15 +299,16 @@ func (m MsgConnectionOpenAck) GetFromAddress() sdk.AccAddress {
 }
 
 // GetSigners implements sdk.Msg
-func (msg MsgConnectionOpenAck) GetSigners() []sdk.AccAddress {
-	accAddr := sdk.HexToAddress(msg.Signer)
-	return []sdk.AccAddress{accAddr}
+func (msg MsgConnectionOpenAck) GetSigners() []cosmosSdk.AccAddress {
+	return []cosmosSdk.AccAddress{sdk.HexToAddress(msg.Signer).Bytes()}
 }
-
 func (m MsgConnectionOpenAck) Bytes() []byte {
 	panic("IBC messages do not support amino")
 }
 
+func (m MsgConnectionOpenAck) GetSignBytes() []byte {
+	panic("IBC messages do not support amino")
+}
 
 // ------------MsgConnectionOpenConfirm
 
@@ -295,13 +316,13 @@ func (m MsgConnectionOpenAck) Bytes() []byte {
 //nolint:interfacer
 func NewMsgConnectionOpenConfirm(
 	connectionID string, proofAck []byte, proofHeight clienttypes.Height,
-	signer sdk.AccAddress,
+	signer string,
 ) *MsgConnectionOpenConfirm {
 	return &MsgConnectionOpenConfirm{
 		ConnectionId: connectionID,
 		ProofAck:     proofAck,
 		ProofHeight:  proofHeight,
-		Signer:       signer.String(),
+		Signer:       signer,
 	}
 }
 
@@ -342,7 +363,10 @@ func (m MsgConnectionOpenConfirm) Bytes() []byte {
 	panic("IBC messages do not support amino")
 }
 // GetSigners implements sdk.Msg
-func (msg MsgConnectionOpenConfirm) GetSigners() []sdk.AccAddress {
-	accAddr := sdk.HexToAddress(msg.Signer)
-	return []sdk.AccAddress{accAddr}
+func (msg MsgConnectionOpenConfirm) GetSigners() []cosmosSdk.AccAddress {
+	return []cosmosSdk.AccAddress{sdk.HexToAddress(msg.Signer).Bytes()}
+}
+
+func (m MsgConnectionOpenConfirm) GetSignBytes() []byte {
+	panic("IBC messages do not support amino")
 }

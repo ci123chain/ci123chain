@@ -62,7 +62,7 @@ func ibcTransferHandler(cliCtx context.Context, writer http.ResponseWriter, req 
 		sourcePort,
 		sourceChannel,
 		coin,
-		from, // 'MustGetAddress' must be called directly before calling 'NewMsg...'
+		from.String(), // 'MustGetAddress' must be called directly before calling 'NewMsg...'
 		receiver,
 		clienttypes.NewHeight(DefaultVersion, uint64(timeoutHeight)),
 		uint64(timeoutTimestamp),

@@ -53,7 +53,7 @@ func (am AppModuleBasic) RegisterCodec(codec *codec.Codec) {
 }
 
 func (am AppModuleBasic) RegisterInterfaces(registry codectypes.InterfaceRegistry) {
-	return
+	types.RegisterInterfaces(registry)
 }
 
 func (am AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *runtime.ServeMux) {}
@@ -91,7 +91,7 @@ func (am AppModule) OnRecvPacket(
 	packet channeltypes.Packet,
 ) (*sdk.Result, []byte, error) {
 	var data types.FungibleTokenPacketData
-	if err := types.IBCTransferCdc.UnmarshalJSON(packet.GetData(), &data); err != nil {
+	if err := types.ModuleCdc.UnmarshalJSON(packet.GetData(), &data); err != nil {
 		return nil, nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet data: %s", err.Error())
 	}
 
@@ -126,12 +126,12 @@ func (am AppModule) OnAcknowledgementPacket(
 	acknowledgement []byte,
 ) (*sdk.Result, error) {
 	var ack channeltypes.Acknowledgement
-	if err := channeltypes.ChannelCdc.UnmarshalJSON(acknowledgement, &ack); err != nil {
+	if err := types.ModuleCdc.UnmarshalJSON(acknowledgement, &ack); err != nil {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet acknowledgement: %v", err)
 	}
 
 	var data types.FungibleTokenPacketData
-	if err := types.IBCTransferCdc.UnmarshalJSON(packet.GetData(), &data); err != nil {
+	if err := types.ModuleCdc.UnmarshalJSON(packet.GetData(), &data); err != nil {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet data: %s", err.Error())
 	}
 
@@ -222,7 +222,7 @@ func (am AppModule) OnChanOpenConfirm(ctx sdk.Context, portID, channelID string)
 
 func (am AppModule) OnTimeoutPacket(ctx sdk.Context, packet channeltypes.Packet) (*sdk.Result, error) {
 	var data types.FungibleTokenPacketData
-	if err := types.IBCTransferCdc.UnmarshalJSON(packet.GetData(), &data); err != nil {
+	if err := types.ModuleCdc.UnmarshalJSON(packet.GetData(), &data); err != nil {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet data: %s", err.Error())
 	}
 	// refund tokens

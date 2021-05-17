@@ -19,7 +19,7 @@ import (
 
 func (q Keeper)ClientStateRest(ctx sdk.Context, req abci.RequestQuery) ([]byte, error) {
 	var reqClientState types.QueryClientStateRequest
-	if err := q.cdc.UnmarshalJSON(req.Data, &reqClientState); err != nil {
+	if err := types.IBCClientCodec.UnmarshalJSON(req.Data, &reqClientState); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
@@ -43,13 +43,13 @@ func (q Keeper)ClientStateRest(ctx sdk.Context, req abci.RequestQuery) ([]byte, 
 		ClientState: any,
 		ProofHeight: proofHeight,
 	}
-	return q.cdc.MustMarshalJSON(resp), nil
+	return types.IBCClientCodec.MustMarshalJSON(resp), nil
 }
 
 
 func (q Keeper)ClientStatesRest(ctx sdk.Context, req abci.RequestQuery) ([]byte, error) {
 	var reqClientState types.QueryClientStatesRequest
-	if err := q.cdc.UnmarshalJSON(req.Data, &reqClientState); err != nil {
+	if err := types.IBCClientCodec.UnmarshalJSON(req.Data, &reqClientState); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
@@ -87,7 +87,7 @@ func (q Keeper)ClientStatesRest(ctx sdk.Context, req abci.RequestQuery) ([]byte,
 		ClientStates: clientStates,
 		Pagination:   pageRes,
 	}
-	return types.MustMarshalClientStateResp(q.cdc, resp), nil
+	return q.cdc.MarshalBinaryBare(&resp)
 }
 
 

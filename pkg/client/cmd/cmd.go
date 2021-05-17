@@ -10,6 +10,7 @@ import (
 
 var homeDir = os.ExpandEnv("$HOME/.client")
 var cdc = types.GetCodec()
+var encoding = types.GetEncodingConfig()
 
 var rootCmd = &cobra.Command{
 	Use: 	"client",

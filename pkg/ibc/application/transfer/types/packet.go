@@ -1,6 +1,7 @@
 package types
 
 import (
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/pkg/errors"
 	"strings"
@@ -40,9 +41,5 @@ func (ftpd FungibleTokenPacketData) ValidateBasic() error {
 
 // GetBytes is a helper for serialising
 func (ftpd FungibleTokenPacketData) GetBytes() []byte {
-	bytes, err := IBCTransferCdc.MarshalJSON(ftpd)
-	if err != nil {
-		panic(err)
-	}
-	return bytes
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&ftpd))
 }

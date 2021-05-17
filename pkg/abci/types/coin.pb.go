@@ -194,13 +194,13 @@ func (m *DecProto) XXX_DiscardUnknown() {
 var xxx_messageInfo_DecProto proto.InternalMessageInfo
 
 func init() {
-	proto.RegisterType((*Coin)(nil), "cosmos.base.v1beta1.Coin")
-	proto.RegisterType((*DecCoin)(nil), "cosmos.base.v1beta1.DecCoin")
-	proto.RegisterType((*IntProto)(nil), "cosmos.base.v1beta1.IntProto")
-	proto.RegisterType((*DecProto)(nil), "cosmos.base.v1beta1.DecProto")
+	proto.RegisterType((*Coin)(nil), "weelink.base.v1beta1.Coin")
+	proto.RegisterType((*DecCoin)(nil), "weelink.base.v1beta1.DecCoin")
+	proto.RegisterType((*IntProto)(nil), "weelink.base.v1beta1.IntProto")
+	proto.RegisterType((*DecProto)(nil), "weelink.base.v1beta1.DecProto")
 }
 
-func init() { proto.RegisterFile("cosmos/base/v1beta1/coin.proto", fileDescriptor_189a96714eafc2df) }
+func init() { proto.RegisterFile("weelink/base/v1beta1/coin.proto", fileDescriptor_189a96714eafc2df) }
 
 var fileDescriptor_189a96714eafc2df = []byte{
 	// 261 bytes of a gzipped FileDescriptorProto

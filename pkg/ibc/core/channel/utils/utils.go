@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/pagination"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/ibc"
@@ -42,7 +43,8 @@ func queryChannelABCI(clientCtx context.Context, portID, channelID string, prove
 	}
 
 	var channel types.Channel
-	if err := clientCtx.Cdc.UnmarshalBinaryBare(value, &channel); err != nil {
+	cdc := codec.NewProtoCodec(clientCtx.InterfaceRegistry)
+	if err := cdc.UnmarshalBinaryBare(value, &channel); err != nil {
 		return nil, err
 	}
 

@@ -65,11 +65,11 @@ func (qcsr QueryConsensusStateResponse) UnpackInterfaces(unpacker codectypes.Any
 
 // UnpackInterfaces implements UnpackInterfacesMesssage.UnpackInterfaces
 func (qcsr QueryClientStatesResponse) UnpackInterfaces(unpacker codectypes.AnyUnpacker) error {
-	//for _, cs := range qcsr.ClientStates {
-	//	if err := cs.UnpackInterfaces(unpacker); err != nil {
-	//		return err
-	//	}
-	//}
+	for _, cs := range qcsr.ClientStates {
+		if err := cs.UnpackInterfaces(unpacker); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 

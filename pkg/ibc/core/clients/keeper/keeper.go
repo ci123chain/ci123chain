@@ -22,13 +22,13 @@ import (
 // state information
 type Keeper struct {
 	storeKey      sdk.StoreKey
-	cdc           *codec.Codec
+	cdc           codec.BinaryMarshaler
 	paramSpace    paramtypes.Subspace
 	stakingKeeper types.StakingKeeper
 }
 
 
-func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, paramSpace paramtypes.Subspace, sk types.StakingKeeper) Keeper {
+func NewKeeper(cdc codec.BinaryMarshaler, key sdk.StoreKey, paramSpace paramtypes.Subspace, sk types.StakingKeeper) Keeper {
 	if !paramSpace.HasKeyTable() {
 		paramSpace = paramSpace.WithKeyTable(types.ParamKeyTable())
 	}

@@ -3,6 +3,7 @@ package types
 import (
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	codectypes "github.com/ci123chain/ci123chain/pkg/abci/codec/types"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/exported"
 	"github.com/gogo/protobuf/proto"
@@ -12,14 +13,14 @@ import (
 
 var IBCClientCodec *codec.Codec
 
-func init(){
+func init() {
 	IBCClientCodec = codec.New()
 	RegisterCodec(IBCClientCodec)
 	codec.RegisterCrypto(IBCClientCodec)
 
 	IBCClientCodec.Seal()
 }
-func RegisterCodec(cdc *codec.Codec)  {
+func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterInterface((*exported.ClientState)(nil), &amino.InterfaceOptions{AlwaysDisambiguate: true})
 	cdc.RegisterInterface((*exported.ConsensusState)(nil), nil)
 	cdc.RegisterInterface((*exported.Header)(nil), &amino.InterfaceOptions{AlwaysDisambiguate: true})
@@ -36,6 +37,55 @@ func RegisterCodec(cdc *codec.Codec)  {
 	cdc.RegisterConcrete(&QueryClientStateResponse{}, "ibcclient/QueryClientStateResponse", nil)
 	cdc.RegisterConcrete(&QueryClientStatesResponse{}, "ibcclient/QueryClientStatesResponse", nil)
 
+}
+
+
+func SetBinary(registry codectypes.InterfaceRegistry) {
+	SubModuleCdc = codec.NewProtoCodec(registry)
+}
+
+var (
+	// SubModuleCdc references the global x/ibc/core/03-connection module codec. Note, the codec should
+	// ONLY be used in certain instances of tests and for JSON encoding.
+	//
+	// The actual codec used for serialization should be provided to x/ibc/core/03-connection and
+	// defined at the application level.
+	//var Marshaler codec.Marshaler
+	SubModuleCdc = codec.NewProtoCodec(codectypes.NewInterfaceRegistry())
+)
+
+// RegisterInterfaces registers the client interfaces to protobuf Any.
+func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
+	registry.RegisterInterface(
+		"ibc.core.client.v1.ClientState",
+		(*exported.ClientState)(nil),
+	)
+	registry.RegisterInterface(
+		"ibc.core.client.v1.ConsensusState",
+		(*exported.ConsensusState)(nil),
+	)
+	registry.RegisterInterface(
+		"ibc.core.client.v1.Header",
+		(*exported.Header)(nil),
+	)
+	registry.RegisterInterface(
+		"ibc.core.client.v1.Height",
+		(*exported.Height)(nil),
+		&Height{},
+	)
+	////registry.RegisterInterface(
+	////	"ibc.core.client.v1.Misbehaviour",
+	////	(*exported.Misbehaviour)(nil),
+	////)
+	registry.RegisterImplementations(
+		(*sdk.Msg)(nil),
+		&MsgCreateClient{},
+		&MsgUpdateClient{},
+		//&MsgUpgradeClient{},
+		//&MsgSubmitMisbehaviour{},
+	)
+
+	//msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
 }
 
 // PackClientState constructs a new Any packed with the given client state value. It returns
@@ -63,11 +113,12 @@ func UnpackClientState(any *codectypes.Any) (exported.ClientState, error) {
 	}
 
 	clientState, ok := any.GetCachedValue().(exported.ClientState)
-	if !ok {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrUnpackAny, "cannot unpack Any into ClientState %T", any)
+	if ok {
+		return clientState, nil
 	}
+	err := SubModuleCdc.UnpackAny(any, &clientState)
 
-	return clientState, nil
+	return clientState, err
 }
 
 // PackConsensusState constructs a new Any packed with the given consensus state value. It returns
@@ -105,11 +156,13 @@ func UnpackConsensusState(any *codectypes.Any) (exported.ConsensusState, error) 
 	}
 
 	consensusState, ok := any.GetCachedValue().(exported.ConsensusState)
-	if !ok {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrUnpackAny, "cannot unpack Any into ConsensusState %T", any)
+	if ok {
+		return consensusState, nil
 	}
 
-	return consensusState, nil
+	err := codectypes.AminoUnpacker{Cdc: IBCClientCodec}.UnpackAny(any, &consensusState)
+
+	return consensusState, err
 }
 
 // PackHeader constructs a new Any packed with the given header value. It returns
@@ -137,10 +190,11 @@ func UnpackHeader(any *codectypes.Any) (exported.Header, error) {
 	}
 
 	header, ok := any.GetCachedValue().(exported.Header)
-	if !ok {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrUnpackAny, "cannot unpack Any into Header %T", any)
+	if ok {
+		return header, nil
 	}
 
-	return header, nil
-}
+	err := codectypes.AminoUnpacker{Cdc: IBCClientCodec}.UnpackAny(any, &header)
 
+	return header, err
+}

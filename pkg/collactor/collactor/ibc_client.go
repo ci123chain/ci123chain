@@ -39,10 +39,13 @@ func (c *Chain) GetIBCCreateClientHeader() (*tmclient.Header, error) {
 		return nil, err
 	}
 
-	protoVal := tmtypes.NewValidatorSet(lightBlock.ValidatorSet.Validators)
+	protoVal, err := tmtypes.NewValidatorSet(lightBlock.ValidatorSet.Validators).ToProto()
+	if err != nil {
+		return nil, err
+	}
 
 	return &tmclient.Header{
-		SignedHeader: lightBlock.SignedHeader,
+		SignedHeader: lightBlock.SignedHeader.ToProto(),
 		ValidatorSet: protoVal,
 	}, nil
 }

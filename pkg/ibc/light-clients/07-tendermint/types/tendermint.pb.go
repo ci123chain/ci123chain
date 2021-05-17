@@ -14,6 +14,7 @@ import (
 	_ "github.com/golang/protobuf/ptypes/duration"
 	_ "github.com/golang/protobuf/ptypes/timestamp"
 	github_com_tendermint_tendermint_libs_bytes "github.com/tendermint/tendermint/libs/bytes"
+	types2 "github.com/tendermint/tendermint/proto/tendermint/types"
 	io "io"
 	math "math"
 	math_bits "math/bits"
@@ -181,78 +182,78 @@ var xxx_messageInfo_ConsensusState proto.InternalMessageInfo
 //
 //var xxx_messageInfo_Misbehaviour proto.InternalMessageInfo
 
-//// Header defines the Tendermint client consensus Header.
-//// It encapsulates all the information necessary to update from a trusted
-//// Tendermint ConsensusState. The inclusion of TrustedHeight and
-//// TrustedValidators allows this update to process correctly, so long as the
-//// ConsensusState for the TrustedHeight exists, this removes race conditions
-//// among relayers The SignedHeader and ValidatorSet are the new untrusted update
-//// fields for the client. The TrustedHeight is the height of a stored
-//// ConsensusState on the client that will be used to verify the new untrusted
-//// header. The Trusted ConsensusState must be within the unbonding period of
-//// current time in order to correctly verify, and the TrustedValidators must
-//// hash to TrustedConsensusState.NextValidatorsHash since that is the last
-//// trusted validator set at the TrustedHeight.
-//type Header struct {
-//	*types2.SignedHeader `protobuf:"bytes,1,opt,name=signed_header,json=signedHeader,proto3,embedded=signed_header" json:"signed_header,omitempty" yaml:"signed_header"`
-//	ValidatorSet         *types2.ValidatorSet `protobuf:"bytes,2,opt,name=validator_set,json=validatorSet,proto3" json:"validator_set,omitempty" yaml:"validator_set"`
-//	TrustedHeight        types.Height         `protobuf:"bytes,3,opt,name=trusted_height,json=trustedHeight,proto3" json:"trusted_height" yaml:"trusted_height"`
-//	TrustedValidators    *types2.ValidatorSet `protobuf:"bytes,4,opt,name=trusted_validators,json=trustedValidators,proto3" json:"trusted_validators,omitempty" yaml:"trusted_validators"`
-//}
-//
-//func (m *Header) Reset()         { *m = Header{} }
-//func (m *Header) String() string { return proto.CompactTextString(m) }
-//func (*Header) ProtoMessage()    {}
-//func (*Header) Descriptor() ([]byte, []int) {
-//	return fileDescriptor_c6d6cf2b288949be, []int{3}
-//}
-//func (m *Header) XXX_Unmarshal(b []byte) error {
-//	return m.Unmarshal(b)
-//}
-//func (m *Header) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-//	if deterministic {
-//		return xxx_messageInfo_Header.Marshal(b, m, deterministic)
-//	} else {
-//		b = b[:cap(b)]
-//		n, err := m.MarshalToSizedBuffer(b)
-//		if err != nil {
-//			return nil, err
-//		}
-//		return b[:n], nil
-//	}
-//}
-//func (m *Header) XXX_Merge(src proto.Message) {
-//	xxx_messageInfo_Header.Merge(m, src)
-//}
-//func (m *Header) XXX_Size() int {
-//	return m.Size()
-//}
-//func (m *Header) XXX_DiscardUnknown() {
-//	xxx_messageInfo_Header.DiscardUnknown(m)
-//}
-//
-//var xxx_messageInfo_Header proto.InternalMessageInfo
-//
-//func (m *Header) GetValidatorSet() *types2.ValidatorSet {
-//	if m != nil {
-//		return m.ValidatorSet
-//	}
-//	return nil
-//}
-//
-//func (m *Header) GetTrustedHeight() types.Height {
-//	if m != nil {
-//		return m.TrustedHeight
-//	}
-//	return types.Height{}
-//}
-//
-//func (m *Header) GetTrustedValidators() *types2.ValidatorSet {
-//	if m != nil {
-//		return m.TrustedValidators
-//	}
-//	return nil
-//}
+// Header defines the Tendermint client consensus Header.
+// It encapsulates all the information necessary to update from a trusted
+// Tendermint ConsensusState. The inclusion of TrustedHeight and
+// TrustedValidators allows this update to process correctly, so long as the
+// ConsensusState for the TrustedHeight exists, this removes race conditions
+// among relayers The SignedHeader and ValidatorSet are the new untrusted update
+// fields for the client. The TrustedHeight is the height of a stored
+// ConsensusState on the client that will be used to verify the new untrusted
+// header. The Trusted ConsensusState must be within the unbonding period of
+// current time in order to correctly verify, and the TrustedValidators must
+// hash to TrustedConsensusState.NextValidatorsHash since that is the last
+// trusted validator set at the TrustedHeight.
+type Header struct {
+	*types2.SignedHeader `protobuf:"bytes,1,opt,name=signed_header,json=signedHeader,proto3,embedded=signed_header" json:"signed_header,omitempty" yaml:"signed_header"`
+	ValidatorSet         *types2.ValidatorSet `protobuf:"bytes,2,opt,name=validator_set,json=validatorSet,proto3" json:"validator_set,omitempty" yaml:"validator_set"`
+	TrustedHeight        types.Height         `protobuf:"bytes,3,opt,name=trusted_height,json=trustedHeight,proto3" json:"trusted_height" yaml:"trusted_height"`
+	TrustedValidators    *types2.ValidatorSet `protobuf:"bytes,4,opt,name=trusted_validators,json=trustedValidators,proto3" json:"trusted_validators,omitempty" yaml:"trusted_validators"`
+}
+
+func (m *Header) Reset()         { *m = Header{} }
+func (m *Header) String() string { return proto.CompactTextString(m) }
+func (*Header) ProtoMessage()    {}
+func (*Header) Descriptor() ([]byte, []int) {
+	return fileDescriptor_c6d6cf2b288949be, []int{3}
+}
+func (m *Header) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *Header) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_Header.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *Header) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Header.Merge(m, src)
+}
+func (m *Header) XXX_Size() int {
+	return m.Size()
+}
+func (m *Header) XXX_DiscardUnknown() {
+	xxx_messageInfo_Header.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Header proto.InternalMessageInfo
+
+func (m *Header) GetValidatorSet() *types2.ValidatorSet {
+	if m != nil {
+		return m.ValidatorSet
+	}
+	return nil
+}
+
+func (m *Header) GetTrustedHeight() types.Height {
+	if m != nil {
+		return m.TrustedHeight
+	}
+	return types.Height{}
+}
+
+func (m *Header) GetTrustedValidators() *types2.ValidatorSet {
+	if m != nil {
+		return m.TrustedValidators
+	}
+	return nil
+}
 
 // Fraction defines the protobuf message type for tmmath.Fraction that only supports positive values.
 type Fraction struct {
@@ -311,7 +312,7 @@ func init() {
 	proto.RegisterType((*ClientState)(nil), "ibc.lightclients.tendermint.v1.ClientState")
 	proto.RegisterType((*ConsensusState)(nil), "ibc.lightclients.tendermint.v1.ConsensusState")
 	//proto.RegisterType((*Misbehaviour)(nil), "ibc.lightclients.tendermint.v1.Misbehaviour")
-	//proto.RegisterType((*Header)(nil), "ibc.lightclients.tendermint.v1.Header")
+	proto.RegisterType((*Header)(nil), "ibc.lightclients.tendermint.v1.Header")
 	proto.RegisterType((*Fraction)(nil), "ibc.lightclients.tendermint.v1.Fraction")
 }
 
@@ -620,74 +621,74 @@ func (m *ConsensusState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 //	return len(dAtA) - i, nil
 //}
 
-//func (m *Header) Marshal() (dAtA []byte, err error) {
-//	size := m.Size()
-//	dAtA = make([]byte, size)
-//	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-//	if err != nil {
-//		return nil, err
-//	}
-//	return dAtA[:n], nil
-//}
-//
-//func (m *Header) MarshalTo(dAtA []byte) (int, error) {
-//	size := m.Size()
-//	return m.MarshalToSizedBuffer(dAtA[:size])
-//}
-//
-//func (m *Header) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-//	i := len(dAtA)
-//	_ = i
-//	var l int
-//	_ = l
-//	if m.TrustedValidators != nil {
-//		{
-//			size, err := m.TrustedValidators.MarshalToSizedBuffer(dAtA[:i])
-//			if err != nil {
-//				return 0, err
-//			}
-//			i -= size
-//			i = encodeVarintTendermint(dAtA, i, uint64(size))
-//		}
-//		i--
-//		dAtA[i] = 0x22
-//	}
-//	{
-//		size, err := m.TrustedHeight.MarshalToSizedBuffer(dAtA[:i])
-//		if err != nil {
-//			return 0, err
-//		}
-//		i -= size
-//		i = encodeVarintTendermint(dAtA, i, uint64(size))
-//	}
-//	i--
-//	dAtA[i] = 0x1a
-//	if m.ValidatorSet != nil {
-//		{
-//			size, err := m.ValidatorSet.MarshalToSizedBuffer(dAtA[:i])
-//			if err != nil {
-//				return 0, err
-//			}
-//			i -= size
-//			i = encodeVarintTendermint(dAtA, i, uint64(size))
-//		}
-//		i--
-//		dAtA[i] = 0x12
-//	}
-//	if m.SignedHeader != nil {
-//		{
-//			size, err := m.SignedHeader.MarshalToSizedBuffer(dAtA[:i])
-//			if err != nil {
-//				return 0, err
-//			}
-//			i -= size
-//			i = encodeVarintTendermint(dAtA, i, uint64(size))
-//		}
-//		i--
-//		dAtA[i] = 0xa
-//	}
-//	return len(dAtA) - i, nil
-//}
+func (m *Header) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *Header) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *Header) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.TrustedValidators != nil {
+		{
+			size, err := m.TrustedValidators.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintTendermint(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x22
+	}
+	{
+		size, err := m.TrustedHeight.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarintTendermint(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x1a
+	if m.ValidatorSet != nil {
+		{
+			size, err := m.ValidatorSet.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintTendermint(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x12
+	}
+	if m.SignedHeader != nil {
+		{
+			size, err := m.SignedHeader.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintTendermint(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
 
 func (m *Fraction) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
@@ -814,28 +815,28 @@ func (m *ConsensusState) Size() (n int) {
 //	return n
 //}
 
-//func (m *Header) Size() (n int) {
-//	if m == nil {
-//		return 0
-//	}
-//	var l int
-//	_ = l
-//	if m.SignedHeader != nil {
-//		l = m.SignedHeader.Size()
-//		n += 1 + l + sovTendermint(uint64(l))
-//	}
-//	if m.ValidatorSet != nil {
-//		l = m.ValidatorSet.Size()
-//		n += 1 + l + sovTendermint(uint64(l))
-//	}
-//	l = m.TrustedHeight.Size()
-//	n += 1 + l + sovTendermint(uint64(l))
-//	if m.TrustedValidators != nil {
-//		l = m.TrustedValidators.Size()
-//		n += 1 + l + sovTendermint(uint64(l))
-//	}
-//	return n
-//}
+func (m *Header) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.SignedHeader != nil {
+		l = m.SignedHeader.Size()
+		n += 1 + l + sovTendermint(uint64(l))
+	}
+	if m.ValidatorSet != nil {
+		l = m.ValidatorSet.Size()
+		n += 1 + l + sovTendermint(uint64(l))
+	}
+	l = m.TrustedHeight.Size()
+	n += 1 + l + sovTendermint(uint64(l))
+	if m.TrustedValidators != nil {
+		l = m.TrustedValidators.Size()
+		n += 1 + l + sovTendermint(uint64(l))
+	}
+	return n
+}
 
 func (m *Fraction) Size() (n int) {
 	if m == nil {
@@ -1548,197 +1549,197 @@ func (m *ConsensusState) Unmarshal(dAtA []byte) error {
 //	}
 //	return nil
 //}
-//func (m *Header) Unmarshal(dAtA []byte) error {
-//	l := len(dAtA)
-//	iNdEx := 0
-//	for iNdEx < l {
-//		preIndex := iNdEx
-//		var wire uint64
-//		for shift := uint(0); ; shift += 7 {
-//			if shift >= 64 {
-//				return ErrIntOverflowTendermint
-//			}
-//			if iNdEx >= l {
-//				return io.ErrUnexpectedEOF
-//			}
-//			b := dAtA[iNdEx]
-//			iNdEx++
-//			wire |= uint64(b&0x7F) << shift
-//			if b < 0x80 {
-//				break
-//			}
-//		}
-//		fieldNum := int32(wire >> 3)
-//		wireType := int(wire & 0x7)
-//		if wireType == 4 {
-//			return fmt.Errorf("proto: Header: wiretype end group for non-group")
-//		}
-//		if fieldNum <= 0 {
-//			return fmt.Errorf("proto: Header: illegal tag %d (wire type %d)", fieldNum, wire)
-//		}
-//		switch fieldNum {
-//		case 1:
-//			if wireType != 2 {
-//				return fmt.Errorf("proto: wrong wireType = %d for field SignedHeader", wireType)
-//			}
-//			var msglen int
-//			for shift := uint(0); ; shift += 7 {
-//				if shift >= 64 {
-//					return ErrIntOverflowTendermint
-//				}
-//				if iNdEx >= l {
-//					return io.ErrUnexpectedEOF
-//				}
-//				b := dAtA[iNdEx]
-//				iNdEx++
-//				msglen |= int(b&0x7F) << shift
-//				if b < 0x80 {
-//					break
-//				}
-//			}
-//			if msglen < 0 {
-//				return ErrInvalidLengthTendermint
-//			}
-//			postIndex := iNdEx + msglen
-//			if postIndex < 0 {
-//				return ErrInvalidLengthTendermint
-//			}
-//			if postIndex > l {
-//				return io.ErrUnexpectedEOF
-//			}
-//			if m.SignedHeader == nil {
-//				m.SignedHeader = &types2.SignedHeader{}
-//			}
-//			if err := m.SignedHeader.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-//				return err
-//			}
-//			iNdEx = postIndex
-//		case 2:
-//			if wireType != 2 {
-//				return fmt.Errorf("proto: wrong wireType = %d for field ValidatorSet", wireType)
-//			}
-//			var msglen int
-//			for shift := uint(0); ; shift += 7 {
-//				if shift >= 64 {
-//					return ErrIntOverflowTendermint
-//				}
-//				if iNdEx >= l {
-//					return io.ErrUnexpectedEOF
-//				}
-//				b := dAtA[iNdEx]
-//				iNdEx++
-//				msglen |= int(b&0x7F) << shift
-//				if b < 0x80 {
-//					break
-//				}
-//			}
-//			if msglen < 0 {
-//				return ErrInvalidLengthTendermint
-//			}
-//			postIndex := iNdEx + msglen
-//			if postIndex < 0 {
-//				return ErrInvalidLengthTendermint
-//			}
-//			if postIndex > l {
-//				return io.ErrUnexpectedEOF
-//			}
-//			if m.ValidatorSet == nil {
-//				m.ValidatorSet = &types2.ValidatorSet{}
-//			}
-//			if err := m.ValidatorSet.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-//				return err
-//			}
-//			iNdEx = postIndex
-//		case 3:
-//			if wireType != 2 {
-//				return fmt.Errorf("proto: wrong wireType = %d for field TrustedHeight", wireType)
-//			}
-//			var msglen int
-//			for shift := uint(0); ; shift += 7 {
-//				if shift >= 64 {
-//					return ErrIntOverflowTendermint
-//				}
-//				if iNdEx >= l {
-//					return io.ErrUnexpectedEOF
-//				}
-//				b := dAtA[iNdEx]
-//				iNdEx++
-//				msglen |= int(b&0x7F) << shift
-//				if b < 0x80 {
-//					break
-//				}
-//			}
-//			if msglen < 0 {
-//				return ErrInvalidLengthTendermint
-//			}
-//			postIndex := iNdEx + msglen
-//			if postIndex < 0 {
-//				return ErrInvalidLengthTendermint
-//			}
-//			if postIndex > l {
-//				return io.ErrUnexpectedEOF
-//			}
-//			if err := m.TrustedHeight.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-//				return err
-//			}
-//			iNdEx = postIndex
-//		case 4:
-//			if wireType != 2 {
-//				return fmt.Errorf("proto: wrong wireType = %d for field TrustedValidators", wireType)
-//			}
-//			var msglen int
-//			for shift := uint(0); ; shift += 7 {
-//				if shift >= 64 {
-//					return ErrIntOverflowTendermint
-//				}
-//				if iNdEx >= l {
-//					return io.ErrUnexpectedEOF
-//				}
-//				b := dAtA[iNdEx]
-//				iNdEx++
-//				msglen |= int(b&0x7F) << shift
-//				if b < 0x80 {
-//					break
-//				}
-//			}
-//			if msglen < 0 {
-//				return ErrInvalidLengthTendermint
-//			}
-//			postIndex := iNdEx + msglen
-//			if postIndex < 0 {
-//				return ErrInvalidLengthTendermint
-//			}
-//			if postIndex > l {
-//				return io.ErrUnexpectedEOF
-//			}
-//			if m.TrustedValidators == nil {
-//				m.TrustedValidators = &types2.ValidatorSet{}
-//			}
-//			if err := m.TrustedValidators.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-//				return err
-//			}
-//			iNdEx = postIndex
-//		default:
-//			iNdEx = preIndex
-//			skippy, err := skipTendermint(dAtA[iNdEx:])
-//			if err != nil {
-//				return err
-//			}
-//			if (skippy < 0) || (iNdEx+skippy) < 0 {
-//				return ErrInvalidLengthTendermint
-//			}
-//			if (iNdEx + skippy) > l {
-//				return io.ErrUnexpectedEOF
-//			}
-//			iNdEx += skippy
-//		}
-//	}
-//
-//	if iNdEx > l {
-//		return io.ErrUnexpectedEOF
-//	}
-//	return nil
-//}
+func (m *Header) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTendermint
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Header: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Header: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SignedHeader", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTendermint
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTendermint
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTendermint
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.SignedHeader == nil {
+				m.SignedHeader = &types2.SignedHeader{}
+			}
+			if err := m.SignedHeader.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ValidatorSet", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTendermint
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTendermint
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTendermint
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.ValidatorSet == nil {
+				m.ValidatorSet = &types2.ValidatorSet{}
+			}
+			if err := m.ValidatorSet.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field TrustedHeight", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTendermint
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTendermint
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTendermint
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.TrustedHeight.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field TrustedValidators", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTendermint
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTendermint
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTendermint
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.TrustedValidators == nil {
+				m.TrustedValidators = &types2.ValidatorSet{}
+			}
+			if err := m.TrustedValidators.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTendermint(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTendermint
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
 func (m *Fraction) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0

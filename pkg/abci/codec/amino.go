@@ -23,6 +23,10 @@ func (cdc *LegacyAmino) Seal() {
 	cdc.Amino.Seal()
 }
 
+func GetLegacyAminoByCodec(codec *Codec) *LegacyAmino{
+	return &LegacyAmino{Amino:codec}
+}
+
 func NewLegacyAmino() *LegacyAmino {
 	return &LegacyAmino{amino.NewCodec()}
 }

@@ -198,9 +198,10 @@ type addChainRequest struct {
 	//Key            string `json:"key"`
 	RPCAddr        string `json:"rpc-addr"`
 	AccountPrefix  string `json:"account-prefix"`
-	//GasAdjustment  string `json:"gas-adjustment"`
+	GasAdjustment  string `json:"gas-adjustment"`
 	GasPrices      string `json:"gas-prices"`
 	TrustingPeriod string `json:"trusting-period"`
+	ChainType      string `json:"chain-type"`
 	// required: false
 	//FilePath string `json:"file"`
 	// required: false
@@ -293,15 +294,19 @@ func addChainByRequest(request addChainRequest, chainID string) (cfg *Config, er
 		return nil, err
 	}
 
-	//if c, err = c.Update("gas-adjustment", request.GasAdjustment); err != nil {
-	//	return nil, err
-	//}
+	if c, err = c.Update("gas-adjustment", request.GasAdjustment); err != nil {
+		return nil, err
+	}
 
 	if c, err = c.Update("gas-prices", request.GasPrices); err != nil {
 		return nil, err
 	}
 
 	if c, err = c.Update("trusting-period", request.TrustingPeriod); err != nil {
+		return nil, err
+	}
+
+	if c, err = c.Update("chain-type", request.ChainType); err != nil {
 		return nil, err
 	}
 

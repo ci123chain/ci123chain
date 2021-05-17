@@ -194,7 +194,7 @@ func (cs ClientState) Initialize(ctx sdk.Context, clientStore sdk.KVStore, consS
 
 
 func (cs ClientState) VerifyUpgradeAndUpdateState(ctx sdk.Context,
-	cdc *codec.Codec, store sdk.KVStore,
+	cdc codec.BinaryMarshaler, store sdk.KVStore,
 	newClient exported.ClientState, proofUpgradeClient,
 	proofUpgradeConsState []byte) (exported.ClientState, exported.ConsensusState, error) {
 	return nil, nil, nil
@@ -203,7 +203,7 @@ func (cs ClientState) VerifyUpgradeAndUpdateState(ctx sdk.Context,
 
 func (cs ClientState) VerifyClientState(
 	store sdk.KVStore,
-	cdc *codec.Codec,
+	cdc codec.BinaryMarshaler,
 	height exported.Height,
 	prefix exported.Prefix,
 	counterpartyClientIdentifier string,
@@ -227,7 +227,7 @@ func (cs ClientState) VerifyClientState(
 		return sdkerrors.Wrapf(clienttypes.ErrInvalidClient, "invalid client type %T, expected %T", clientState, &ClientState{})
 	}
 
-	bz, err := cdc.MarshalBinaryBare(clientState)
+	bz, err := cdc.MarshalInterface(clientState)
 	if err != nil {
 		return err
 	}
@@ -239,7 +239,7 @@ func (cs ClientState) VerifyClientState(
 // specified connection end stored on the target machine.
 func (cs ClientState) VerifyConnectionState(
 	store sdk.KVStore,
-	cdc *codec.Codec,
+	cdc codec.BinaryMarshaler,
 	height exported.Height,
 	prefix exported.Prefix,
 	proof []byte,
@@ -277,7 +277,7 @@ func (cs ClientState) VerifyConnectionState(
 
 func (cs ClientState) VerifyClientConsensusState(
 	store sdk.KVStore,
-	cdc *codec.Codec,
+	cdc codec.BinaryMarshaler,
 	height exported.Height,
 	counterpartyClientIdentifier string,
 	consensusHeight exported.Height, // todo ?
@@ -301,7 +301,7 @@ func (cs ClientState) VerifyClientConsensusState(
 	if !ok {
 		return sdkerrors.Wrapf(clienttypes.ErrInvalidConsensus, "invalid consensus type %T, expected %T", consensusState, &ConsensusState{})
 	}
-	bz, err := cdc.MarshalBinaryBare(consensusState)
+	bz, err := cdc.MarshalInterface(consensusState)
 	if err != nil {
 		return err
 	}
@@ -314,7 +314,7 @@ func (cs ClientState) VerifyClientConsensusState(
 
 
 func (cs ClientState) VerifyChannelState(store sdk.KVStore,
-	cdc *codec.Codec, height exported.Height,
+	cdc codec.BinaryMarshaler, height exported.Height,
 	prefix exported.Prefix, proof []byte,
 	portID, channelID string, channel exported.ChannelI) error {
 	merkleProof, consensusState, err := produceVerificationArgs(store, cdc, cs, height, prefix, proof)
@@ -344,7 +344,7 @@ func (cs ClientState) VerifyChannelState(store sdk.KVStore,
 
 // VerifyPacketAcknowledgement verifies a proof of an incoming packet
 // acknowledgement at the specified port, specified channel, and specified sequence.
-func (cs ClientState) VerifyPacketAcknowledgement(store sdk.KVStore, cdc *codec.Codec, height exported.Height, currentTimestamp uint64, delayPeriod uint64,
+func (cs ClientState) VerifyPacketAcknowledgement(store sdk.KVStore, cdc codec.BinaryMarshaler, height exported.Height, currentTimestamp uint64, delayPeriod uint64,
 	prefix exported.Prefix, proof []byte, portID, channelID string, sequence uint64, acknowledgement []byte) error {
 	merkleProof, consensusState, err := produceVerificationArgs(store, cdc, cs, height, prefix, proof)
 	if err != nil {
@@ -378,7 +378,7 @@ func (cs ClientState) VerifyPacketAcknowledgement(store sdk.KVStore, cdc *codec.
 // merkle proof, the consensus state and an error if one occurred.
 func produceVerificationArgs(
 	store sdk.KVStore,
-	cdc *codec.Codec,
+	cdc codec.BinaryMarshaler,
 	cs ClientState,
 	height exported.Height,
 	prefix exported.Prefix,
@@ -414,7 +414,7 @@ func produceVerificationArgs(
 }
 
 
-func (cs ClientState) VerifyPacketCommitment(store sdk.KVStore, cdc *codec.Codec, height exported.Height, currentTimestamp uint64, delayPeriod uint64, prefix exported.Prefix, proof []byte, portID, channelID string, sequence uint64, commitmentBytes []byte) error {
+func (cs ClientState) VerifyPacketCommitment(store sdk.KVStore, cdc codec.BinaryMarshaler, height exported.Height, currentTimestamp uint64, delayPeriod uint64, prefix exported.Prefix, proof []byte, portID, channelID string, sequence uint64, commitmentBytes []byte) error {
 	merkleProof, consensusState, err := produceVerificationArgs(store, cdc, cs, height, prefix, proof)
 	if err != nil {
 		return err
@@ -438,7 +438,7 @@ func (cs ClientState) VerifyPacketCommitment(store sdk.KVStore, cdc *codec.Codec
 	return nil
 }
 
-func (cs ClientState) VerifyPacketReceiptAbsence(store sdk.KVStore, cdc *codec.Codec, height exported.Height, currentTimestamp uint64, delayPeriod uint64, prefix exported.Prefix, proof []byte, portID, channelID string, sequence uint64) error {
+func (cs ClientState) VerifyPacketReceiptAbsence(store sdk.KVStore, cdc codec.BinaryMarshaler, height exported.Height, currentTimestamp uint64, delayPeriod uint64, prefix exported.Prefix, proof []byte, portID, channelID string, sequence uint64) error {
 	merkleProof, consensusState, err := produceVerificationArgs(store, cdc, cs, height, prefix, proof)
 	if err != nil {
 		return err
@@ -462,7 +462,7 @@ func (cs ClientState) VerifyPacketReceiptAbsence(store sdk.KVStore, cdc *codec.C
 	return nil
 }
 
-func (cs ClientState) VerifyNextSequenceRecv(store sdk.KVStore, cdc *codec.Codec, height exported.Height, currentTimestamp uint64, delayPeriod uint64, prefix exported.Prefix, proof []byte, portID, channelID string, nextSequenceRecv uint64) error {
+func (cs ClientState) VerifyNextSequenceRecv(store sdk.KVStore, cdc codec.BinaryMarshaler, height exported.Height, currentTimestamp uint64, delayPeriod uint64, prefix exported.Prefix, proof []byte, portID, channelID string, nextSequenceRecv uint64) error {
 	merkleProof, consensusState, err := produceVerificationArgs(store, cdc, cs, height, prefix, proof)
 	if err != nil {
 		return err

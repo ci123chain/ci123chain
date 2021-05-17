@@ -1,5 +1,7 @@
 package types
 
+import "github.com/gogo/protobuf/proto"
+
 type Msg interface {
 	Route() string
 	MsgType() string
@@ -23,3 +25,8 @@ type Tx interface {
 
 // TxDecoder unmarshals transfer bytes
 type TxDecoder func(txBytes []byte) (Tx, error)
+
+type PbMsg interface {
+	proto.Message
+	Msg
+}

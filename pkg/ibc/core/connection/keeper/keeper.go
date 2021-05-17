@@ -15,12 +15,12 @@ import (
 
 type Keeper struct {
 	storeKey	sdk.StoreKey
-	cdc 		*codec.Codec
+	cdc 		codec.BinaryMarshaler
 	clientKeeper types.ClientKeeper
 }
 
 
-func NewKeeper(cdc *codec.Codec, key store.StoreKey, ck types.ClientKeeper) Keeper {
+func NewKeeper(cdc codec.BinaryMarshaler, key store.StoreKey, ck types.ClientKeeper) Keeper {
 	return Keeper{
 		storeKey: key,
 		cdc: cdc,
