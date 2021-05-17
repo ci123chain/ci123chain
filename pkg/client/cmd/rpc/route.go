@@ -13,4 +13,3 @@ func RegisterRoutes(cliCtx context.Context, r *mux.Router)  {
 	r.HandleFunc("/validatorsets/latest", LatestValidatorSetRequestHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc("/validatorsets/{height}", ValidatorSetRequestHandlerFn(cliCtx)).Methods("GET")
 }
-

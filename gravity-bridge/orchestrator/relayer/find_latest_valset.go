@@ -67,7 +67,7 @@ func findLatestValset(contact cosmos_gravity.Contact, contractAddr string, clien
 		if currentBlock == 0 {
 			break
 		}
-		lg.Info("About to submit a Valset or Batch looking back into the history to find the last Valset Update, on block ", currentBlock)
+		lg.Info(fmt.Sprintf("About to submit a Valset or Batch looking back into the history to find the last Valset Update, on block %d", currentBlock))
 
 		var endSearch uint64
 		if currentBlock < BLOCKS_TO_SEARCH {

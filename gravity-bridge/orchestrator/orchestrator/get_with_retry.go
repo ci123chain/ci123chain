@@ -36,7 +36,7 @@ func getBlockNumberWithRetry(client *jsonrpc.Client) uint64 {
 func getLastEventNonceWithRetry(ourCosmosAddress common.Address, contact cosmos_gravity.Contact) uint64 {
 	for {
 		getCosmosLatestEventNonce := gravity_utils.Exec(func() interface{} {
-			nonce, err := cosmos_gravity.GetLastEventNonce(ourCosmosAddress, contact)
+			nonce, err := cosmos_gravity.GetLastEventNonce(contact, ourCosmosAddress)
 			if err != nil {
 				return err
 			}

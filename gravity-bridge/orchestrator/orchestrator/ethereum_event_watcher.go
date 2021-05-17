@@ -137,7 +137,7 @@ func CheckForEvents(client *jsonrpc.Client,
 		// multi event block again. In theory we only send all events for every block and that will pass of fail
 		// atomicly but lets not take that risk.
 		lastEventNonce := gravity_utils.Exec(func() interface{} {
-			nonce, err := cosmos_gravity.GetLastEventNonce(ourCosmosAddress, contact)
+			nonce, err := cosmos_gravity.GetLastEventNonce(contact, ourCosmosAddress)
 			if err != nil {
 				return err
 			}
@@ -182,7 +182,7 @@ func CheckForEvents(client *jsonrpc.Client,
 			lg.Info(fmt.Sprintf("Claims response: %v", res))
 
 			newEventNonce := gravity_utils.Exec(func() interface{} {
-				nonce, err := cosmos_gravity.GetLastEventNonce(ourCosmosAddress, contact)
+				nonce, err := cosmos_gravity.GetLastEventNonce(contact, ourCosmosAddress)
 				if err != nil {
 					return err
 				}
@@ -214,7 +214,7 @@ func getBlockDelay(client *jsonrpc.Client) uint64 {
 		return 6
 	// Rinkeby, Goerli, Dev, our own Gravity Ethereum testnet, Kotti and Cichain respectively
 	// all non-pow chains
-	case 4, 5, 2018, 15, 6, 404900:
+	case 4, 5, 2018, 15, 6, 444900:
 		return 0
 	// assume the safe option (POW) where we don't know
 	default:

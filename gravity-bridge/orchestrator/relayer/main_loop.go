@@ -28,7 +28,7 @@ func Relayer_main_loop(ethPrivKey *ecdsa.PrivateKey, contact cosmos_gravity.Cont
 
 		lg := logger.GetLogger()
 
-		currentValset, ok := getValSet.(types.ValSet)
+		currentValset, ok := getValSet.(*types.ValSet)
 		if !ok {
 			lg.Error("Could not get current valset! ", getValSet.(error).Error())
 			continue
@@ -52,21 +52,21 @@ func Relayer_main_loop(ethPrivKey *ecdsa.PrivateKey, contact cosmos_gravity.Cont
 
 		//relayValsets
 		gravity_utils.Exec(func() interface{} {
-			relayValsets(currentValset, ethPrivKey, client, contact, contractAddr, gravityId, LOOP_SPEED)
+			relayValsets(*currentValset, ethPrivKey, client, contact, contractAddr, gravityId, LOOP_SPEED)
 			return nil
 		}).Await()
 
 		//relayBatches
 		gravity_utils.Exec(func() interface{} {
-			relayBatches(currentValset, ethPrivKey, client, contact, contractAddr, gravityId, LOOP_SPEED)
+			relayBatches(*currentValset, ethPrivKey, client, contact, contractAddr, gravityId, LOOP_SPEED)
 			return nil
 		}).Await()
 
 		//relayLogicCalls
-		gravity_utils.Exec(func() interface{} {
-			relayLogicCalls(currentValset, ethPrivKey, client, contact, contractAddr, gravityId, LOOP_SPEED)
-			return nil
-		}).Await()
+		//gravity_utils.Exec(func() interface{} {
+		//	relayLogicCalls(currentValset, ethPrivKey, client, contact, contractAddr, gravityId, LOOP_SPEED)
+		//	return nil
+		//}).Await()
 
 		elapsed := time.Since(loopStart)
 		if elapsed < LOOP_SPEED {

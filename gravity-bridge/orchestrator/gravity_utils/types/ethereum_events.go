@@ -2,6 +2,7 @@ package types
 
 import (
 	"bytes"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/logger"
@@ -28,9 +29,11 @@ func ValSetUpdatedEventFromLog(log *web3.Log) (ValSetUpdatedEvent, error) {
 		return ValSetUpdatedEvent{}, err
 	}
 
+	nonceB, err := hex.DecodeString(string(nonceBz[2:]))
 	x := new(big.Int)
-	nonceBig := x.SetBytes(nonceBz)
-	maxU64 := x.SetUint64(math.MaxUint64)
+	y := new(big.Int)
+	nonceBig := x.SetBytes(nonceB)
+	maxU64 := y.SetUint64(math.MaxUint64)
 	if nonceBig.Cmp(maxU64) > 0 {
 		return ValSetUpdatedEvent{}, errors.New("Nonce overflow, probably incorrect parsing")
 	}
@@ -72,7 +75,7 @@ func ValSetUpdatedEventFromLog(log *web3.Log) (ValSetUpdatedEvent, error) {
 		power := powerBig.Uint64()
 		validators = append(validators, ValSetMember{
 			Power:      power,
-			EthAddress: ethAddress,
+			EthAddress: &ethAddress,
 		})
 	}
 
@@ -131,14 +134,15 @@ func TransactionBatchExecutedEventFromLog(log *web3.Log) (TransactionBatchExecut
 	if err != nil {
 		return TransactionBatchExecutedEvent{}, err
 	}
-	batchNonce := x.SetBytes(batchNonceBz)
+	nonceB, err := hex.DecodeString(string(batchNonceBz[2:]))
+	batchNonce := x.SetBytes(nonceB)
 
 	var erc20Bz []byte
 	erc20Bz, err = log.Topics[2].MarshalText()
 	if err != nil {
 		return TransactionBatchExecutedEvent{}, err
 	}
-	erc20 := common.BytesToAddress(erc20Bz[12:32])
+	erc20 := common.BytesToAddress(erc20Bz[14:34])
 
 	eventNonce := x.SetBytes(log.Data)
 	blockHeight := log.BlockNumber
@@ -201,22 +205,22 @@ func SendToCosmosEventFromLog(log *web3.Log) (SendToCosmosEvent, error) {
 	if err != nil {
 		return SendToCosmosEvent{}, err
 	}
-	erc20 := common.BytesToAddress(erc20Bz[12:32])
+	erc20 := common.BytesToAddress(erc20Bz[14:34])
 
 	senderBz, err := log.Topics[2].MarshalText()
 	if err != nil {
 		return SendToCosmosEvent{}, err
 	}
-	sender := common.BytesToAddress(senderBz[12:32])
+	sender := common.BytesToAddress(senderBz[14:34])
 
 	destinationBz, err := log.Topics[3].MarshalText()
 	if err != nil {
 		return SendToCosmosEvent{}, err
 	}
-	destination := common.BytesToAddress(destinationBz[12:32])
+	destination := common.BytesToAddress(destinationBz[14:34])
 
-	amount := x.SetBytes(log.Data[:32])
-	eventNonce := x.SetBytes(log.Data[32:])
+	amount := x.SetBytes(log.Data[2:34])
+	eventNonce := x.SetBytes(log.Data[34:])
 	blockHeight := log.BlockNumber
 	if blockHeight == 0 {
 		return SendToCosmosEvent{}, errors.New("Log does not have block number, we only search logs already in blocks?")
@@ -278,7 +282,7 @@ func Erc20DeployedEventFromLog(log *web3.Log) (Erc20DeployedEvent, error) {
 	if err != nil {
 		return Erc20DeployedEvent{}, err
 	}
-	erc20 := common.BytesToAddress(erc20Bz[12:32])
+	erc20 := common.BytesToAddress(erc20Bz[14:34])
 
 	x := new(big.Int)
 	maxU8 := x.SetUint64(math.MaxUint8)
@@ -385,7 +389,7 @@ type LogicCallExecutedEvent struct {
 
 //unimplemented!
 func LogicCallExecutedEventFromLog(log *web3.Log) (LogicCallExecutedEvent, error) {
-	//todo
+	//unimplemented!
 	blockHeight := log.BlockNumber
 	if blockHeight == 0 {
 		return LogicCallExecutedEvent{}, errors.New("Log does not have block number, we only search logs already in blocks?")

@@ -63,6 +63,6 @@ func main()  {
 	rootCmd.Flags().String(flagFeesDenom, "stake", "The Cosmos Denom in which to pay Cosmos chain fees")
 	rootCmd.Flags().String(flagContractAddr, "", "The Ethereum contract address for Gravity, this is temporary")
 
+	viper.BindPFlags(rootCmd.Flags())
 	rootCmd.Execute()
 }
-

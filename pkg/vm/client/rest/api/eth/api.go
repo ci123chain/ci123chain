@@ -450,9 +450,6 @@ func (api *PublicEthereumAPI) SendTransaction(args SendTxArgs) (common.Hash, err
 		v.Add(v, chainIDMul)
 	}
 
-	if len(sig) != 65 {
-		return common.Hash{}, fmt.Errorf("wrong size for signature: got %d, want 65", len(sig))
-	}
 	tx.Data.V = v
 	tx.Data.R = r
 	tx.Data.S = s

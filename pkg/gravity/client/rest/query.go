@@ -28,7 +28,7 @@ func getValsetRequestHandler(cliCtx context.Context, storeName string) http.Hand
 
 		var out types.Valset
 		cliCtx.Cdc.MustUnmarshalJSON(res, &out)
-		rest.PostProcessResponseBare(w, cliCtx.WithHeight(height), res)
+		rest.PostProcessResponseBare(w, cliCtx.WithHeight(height), out)
 	}
 }
 
@@ -49,6 +49,7 @@ func batchByNonceHandler(cliCtx context.Context, storeName string) http.HandlerF
 			return
 		}
 
+		//todo
 		var out types.OutgoingTxBatch
 		cliCtx.Cdc.MustUnmarshalJSON(res, &out)
 		rest.PostProcessResponseBare(w, cliCtx.WithHeight(height), res)
@@ -69,6 +70,9 @@ func lastBatchesHandler(cliCtx context.Context, storeName string) http.HandlerFu
 			return
 		}
 
+		//todo
+		var out types.OutgoingTxBatch
+		cliCtx.Cdc.MustUnmarshalJSON(res, &out)
 		rest.PostProcessResponseBare(w, cliCtx.WithHeight(height), res)
 	}
 }
@@ -89,6 +93,9 @@ func allValsetConfirmsHandler(cliCtx context.Context, storeName string) http.Han
 			return
 		}
 
+		//todo
+		var out types.OutgoingTxBatch
+		cliCtx.Cdc.MustUnmarshalJSON(res, &out)
 		rest.PostProcessResponseBare(w, cliCtx.WithHeight(height), res)
 	}
 }
@@ -110,6 +117,9 @@ func allBatchConfirmsHandler(cliCtx context.Context, storeName string) http.Hand
 			return
 		}
 
+		//todo
+		var out types.OutgoingTxBatch
+		cliCtx.Cdc.MustUnmarshalJSON(res, &out)
 		rest.PostProcessResponseBare(w, cliCtx.WithHeight(height), res)
 	}
 }
@@ -126,7 +136,9 @@ func lastValsetRequestsHandler(cliCtx context.Context, storeName string) http.Ha
 			return
 		}
 
-		rest.PostProcessResponseBare(w, cliCtx.WithHeight(height), res)
+		var out []types.Valset
+		cliCtx.Cdc.MustUnmarshalJSON(res, &out)
+		rest.PostProcessResponseBare(w, cliCtx.WithHeight(height), out)
 	}
 }
 
@@ -145,9 +157,9 @@ func lastValsetRequestsByAddressHandler(cliCtx context.Context, storeName string
 			return
 		}
 
-		var out types.Valset
+		var out []types.Valset
 		cliCtx.Cdc.MustUnmarshalJSON(res, &out)
-		rest.PostProcessResponseBare(w, cliCtx.WithHeight(height), res)
+		rest.PostProcessResponseBare(w, cliCtx.WithHeight(height), out)
 	}
 }
 
@@ -168,6 +180,34 @@ func lastBatchesByAddressHandler(cliCtx context.Context, storeName string) http.
 
 		var out types.OutgoingTxBatch
 		cliCtx.Cdc.MustUnmarshalJSON(res, &out)
+		rest.PostProcessResponseBare(w, cliCtx.WithHeight(height), res)
+	}
+}
+
+func lastEventNonceByAddressHandler(cliCtx context.Context, storeName string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		operatorAddr := vars[bech32ValidatorAddress]
+
+		res, height, _, err := cliCtx.Query(fmt.Sprintf("custom/%s/lastEventNonce/%s", storeName, operatorAddr), nil, false)
+		if err != nil {
+			rest.WriteErrorRes(w, err.Error())
+			return
+		}
+
+		out := types.UInt64FromBytes(res)
+		rest.PostProcessResponseBare(w, cliCtx.WithHeight(height), out)
+	}
+}
+
+func lastLogicCallHandler(cliCtx context.Context, storeName string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		res, height, _, err := cliCtx.Query(fmt.Sprintf("custom/%s/lastLogicCalls", storeName), nil, false)
+		if err != nil {
+			rest.WriteErrorRes(w, err.Error())
+			return
+		}
+
 		rest.PostProcessResponseBare(w, cliCtx.WithHeight(height), res)
 	}
 }

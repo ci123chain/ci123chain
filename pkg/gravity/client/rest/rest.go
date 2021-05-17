@@ -65,4 +65,11 @@ func RegisterRoutes(cliCtx context.Context, r *mux.Router, storeName string) {
 	r.HandleFunc(fmt.Sprintf("/%s/denom_to_erc20/{%s}", storeName, denom), denomToERC20Handler(cliCtx, storeName)).Methods("GET")
 	// This handler lets you retrieve the denom corresponding to a given ERC20 contract
 	r.HandleFunc(fmt.Sprintf("/%s/erc20_to_denom/{%s}", storeName, tokenAddress), ERC20ToDenomHandler(cliCtx, storeName)).Methods("GET")
+
+	// Event
+	r.HandleFunc(fmt.Sprintf("/%s/last_event_nonce/{%s}", storeName, bech32ValidatorAddress), lastEventNonceByAddressHandler(cliCtx, storeName)).Methods("GET")
+
+	// LogicCall
+	r.HandleFunc(fmt.Sprintf("/%s/outgoing_logic_calls", storeName), lastLogicCallHandler(cliCtx, storeName)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/%s/logicCall_confirm/{%s}/{%s}", storeName, nonce, tokenAddress), allBatchConfirmsHandler(cliCtx, storeName)).Methods("GET")
 }

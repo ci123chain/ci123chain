@@ -89,6 +89,9 @@ const (
 
 	// Query pending transactions
 	QueryPendingSendToEth = "PendingSendToEth"
+
+	// Query last event nonce
+	QueryLastEventNonce = "lastEventNonce"
 )
 
 // NewQuerier is the module level router for state queries
@@ -144,6 +147,10 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 		// Pending transactions
 		case QueryPendingSendToEth:
 			return queryPendingSendToEth(ctx, path[1], keeper)
+
+		// Event
+		case QueryLastEventNonce:
+			return queryLastEventNonce(ctx, path[1], keeper)
 
 		default:
 			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unknown %s query endpoint", types.ModuleName)
@@ -540,4 +547,15 @@ func queryPendingSendToEth(ctx sdk.Context, senderAddr string, k Keeper) ([]byte
 	} else {
 		return bytes, nil
 	}
+}
+
+func queryLastEventNonce(ctx sdk.Context, address string, k Keeper) ([]byte, error) {
+	addr := sdk.HexToAddress(address)
+	validator := k.GetOrchestratorValidator(ctx, addr)
+	if validator.Empty() {
+		return nil, sdkerrors.Wrap(types.ErrUnknown, "address")
+	}
+	lastEventNonce := k.GetLastEventNonceByValidator(ctx, validator)
+	x := types.UInt64Bytes(lastEventNonce)
+	return x, nil
 }

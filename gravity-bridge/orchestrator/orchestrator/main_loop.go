@@ -45,17 +45,17 @@ func orchestratorMainLoop(cosmosKey, ethKey, cosmosRpc, ethRpc, denom, contractA
 
 	contact := cosmos_gravity.NewContact(cosmosRpc)
 
-	gravity_utils.Exec(func() interface{} {
+	go gravity_utils.Exec(func() interface{} {
 		eth_oracle_main_loop(cosmosPrivKey, contact, contractAddr, client, fee)
 		return nil
 	}).Await()
 
-	gravity_utils.Exec(func() interface{} {
+	go gravity_utils.Exec(func() interface{} {
 		eth_signer_main_loop(ethPrivKey, cosmosPrivKey, contact, contractAddr, client, fee)
 		return nil
 	}).Await()
 
-	gravity_utils.Exec(func() interface{} {
+	go gravity_utils.Exec(func() interface{} {
 		relayer.Relayer_main_loop(ethPrivKey, contact, contractAddr, client)
 		return nil
 	}).Await()
@@ -111,7 +111,7 @@ func eth_oracle_main_loop(cosmosPrivKey *ecdsa.PrivateKey, contact cosmos_gravit
 
 		switch latestCosmosBlock.Status {
 			case cosmos_gravity.MOVING:
-				lg.Info(fmt.Sprintf("Latest Eth block: %d,\n Latest Cosmos block: %d", latestEthBlock, latestCosmosBlock))
+				lg.Info(fmt.Sprintf("Latest Eth block: %d, Latest Cosmos block: %d", latestEthBlock, latestCosmosBlock.BlockHeight))
 			case cosmos_gravity.SYNCING:
 				lg.Error(fmt.Sprintf("Cosmos node syncing, Eth signer paused"))
 				gravity_utils.Exec(func() interface{} {
@@ -214,7 +214,7 @@ func eth_signer_main_loop(ethPrivKey, cosmosPrivKey *ecdsa.PrivateKey, contact c
 
 		switch latestCosmosBlock.Status {
 		case cosmos_gravity.MOVING:
-			lg.Info(fmt.Sprintf("Latest Eth block: %d,\n Latest Cosmos block: %d", latestEthBlock, latestCosmosBlock))
+			lg.Info(fmt.Sprintf("Latest Eth block: %d, Latest Cosmos block: %d", latestEthBlock, latestCosmosBlock.BlockHeight))
 		case cosmos_gravity.SYNCING:
 			lg.Error(fmt.Sprintf("Cosmos node syncing, Eth signer paused"))
 			gravity_utils.Exec(func() interface{} {
@@ -239,7 +239,7 @@ func eth_signer_main_loop(ethPrivKey, cosmosPrivKey *ecdsa.PrivateKey, contact c
 			return valsets
 		}).Await()
 
-		oldestUnsignedValsets, ok := getOldestUnsignedValsets.([]*types.ValSet)
+		oldestUnsignedValsets, ok := getOldestUnsignedValsets.([]types.ValSet)
 		if !ok {
 			lg.Error(fmt.Sprintf("Failed to get unsigned valsets, check your Cosmos RPC, error: %s", getOldestUnsignedValsets.(error).Error()))
 		}
@@ -255,7 +255,7 @@ func eth_signer_main_loop(ethPrivKey, cosmosPrivKey *ecdsa.PrivateKey, contact c
 				}
 				return txResponse
 			}).Await()
-			lg.Info(fmt.Sprintf("Valset confirm result is %v", res))
+			lg.Info(fmt.Sprintf("Valset confirm result is %v", res.(sdk.TxResponse)))
 		}
 
 		elapsed := time.Since(loopStart)

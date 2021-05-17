@@ -20,7 +20,6 @@ func (ctx Context) Query(path string, key bytes.HexBytes, isProve bool) ([]byte,
 	node, err := ctx.GetNode()
 	if err != nil {
 		return res, height, nil, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("get node failed:%v", err.Error()))
-
 	}
 
 	opt := rpcclient.ABCIQueryOptions{

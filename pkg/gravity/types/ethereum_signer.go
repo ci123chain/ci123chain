@@ -2,7 +2,6 @@ package types
 
 import (
 	"crypto/ecdsa"
-
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ethereum/go-ethereum/crypto"
 )
@@ -45,7 +44,6 @@ func ValidateEthereumSignature(hash []byte, signature []byte, ethAddress string)
 	}
 
 	protectedHash := crypto.Keccak256Hash(append([]uint8(signaturePrefix), hash...))
-
 	pubkey, err := crypto.SigToPub(protectedHash.Bytes(), signature)
 	if err != nil {
 		return sdkerrors.Wrap(err, "signature to public key")

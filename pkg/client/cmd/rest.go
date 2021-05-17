@@ -8,6 +8,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/client/cmd/rpc"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/client/helper"
+	gravity "github.com/ci123chain/ci123chain/pkg/gravity/types"
 	txRpc "github.com/ci123chain/ci123chain/pkg/transfer/rest"
 	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/spf13/cobra"
@@ -31,6 +32,7 @@ import (
 	order "github.com/ci123chain/ci123chain/pkg/order/rest"
 	sRest "github.com/ci123chain/ci123chain/pkg/staking/client/rest"
 	wRest "github.com/ci123chain/ci123chain/pkg/vm/client/rest"
+	gRest "github.com/ci123chain/ci123chain/pkg/gravity/client/rest"
 	"github.com/gorilla/mux"
 
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
@@ -111,6 +113,7 @@ func NewRestServer() *RestServer {
 	wRest.RegisterRoutes(cliCtx, r)
 	mRest.RegisterRoutes(cliCtx, r)
 	iRest.RegisterRoutes(cliCtx, r)
+	gRest.RegisterRoutes(cliCtx, r, gravity.StoreKey)
 
 	return &RestServer{
 		Mux: r,

@@ -73,7 +73,6 @@ func (k msgServer) ValsetConfirm(c context.Context, msg *types.MsgValsetConfirm)
 
 	gravityID := k.GetGravityID(ctx)
 	checkpoint := valset.GetCheckpoint(gravityID)
-
 	sigBytes, err := hex.DecodeString(msg.Signature)
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "signature decoding")
