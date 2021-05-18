@@ -10,6 +10,7 @@ chains:
     gas-prices: 1000000
     trusting-period: 336h
     private-key: 2b452434ac4f7cf9c5d61d62f23834f34e851fb6efdb8d4a8c6e214a8bc93d70
+    chain-type: weelink
   - chain-id: ibc1
     rpc-addr: http://localhost:26557
     account-prefix: cosmos
@@ -17,6 +18,7 @@ chains:
     gas-prices: 1000000
     trusting-period: 336h
     private-key: 2b452434ac4f7cf9c5d61d62f23834f34e851fb6efdb8d4a8c6e214a8bc93d70
+    chain-type: weelink
 paths:
   demopath:
     src:
