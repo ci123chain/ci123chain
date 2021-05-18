@@ -1,7 +1,17 @@
 package collactor
 
 import (
+	"context"
 	"encoding/hex"
+	"fmt"
+	retry "github.com/avast/retry-go"
+	"github.com/ci123chain/ci123chain/pkg/abci/codec"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	types2 "github.com/ci123chain/ci123chain/pkg/app/types"
+	sdkCtx "github.com/ci123chain/ci123chain/pkg/client/context"
+	clienttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/clients/types"
+	connectiontypes "github.com/ci123chain/ci123chain/pkg/ibc/core/connection/types"
+	ibcexported "github.com/ci123chain/ci123chain/pkg/ibc/core/exported"
 	cosmosSdkCtx "github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	tx "github.com/cosmos/cosmos-sdk/client/tx"
@@ -13,17 +23,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authTypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-
-	"context"
-	"fmt"
-	retry "github.com/avast/retry-go"
-	"github.com/ci123chain/ci123chain/pkg/abci/codec"
-	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	types2 "github.com/ci123chain/ci123chain/pkg/app/types"
-	sdkCtx "github.com/ci123chain/ci123chain/pkg/client/context"
-	clienttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/clients/types"
-	connectiontypes "github.com/ci123chain/ci123chain/pkg/ibc/core/connection/types"
-	ibcexported "github.com/ci123chain/ci123chain/pkg/ibc/core/exported"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/pkg/errors"
 	"github.com/tendermint/tendermint/libs/log"
@@ -150,7 +149,7 @@ func (c *Chain) Init(homePath string, timeout time.Duration, logger log.Logger, 
 	c.faucetAddrs = make(map[string]time.Time)
 
 	if c.logger == nil {
-		c.logger = defaultChainLogger()
+		c.logger = DefaultChainLogger()
 	}
 
 	return nil
@@ -317,7 +316,7 @@ func keysDir(home, chainID string) string {
 	return path.Join(home, "keys", chainID)
 }
 
-func defaultChainLogger() log.Logger {
+func DefaultChainLogger() log.Logger {
 	return log.NewTMLogger(log.NewSyncWriter(os.Stdout))
 }
 
@@ -332,7 +331,6 @@ func newRPCClient(addr string, timeout time.Duration) (*rpchttp.HTTP, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	httpClient.Timeout = timeout
 	rpcClient, err := rpchttp.NewWithClient(addr, "/websocket", httpClient)
 	if err != nil {
@@ -378,6 +376,10 @@ func (c *Chain) Start() error {
 	return c.Client.Start()
 }
 
+func (c *Chain) HealthCheck() error {
+	_, err := c.Client.Health(context.Background())
+	return err
+}
 
 // Subscribe returns channel of events given a query
 func (c *Chain) Subscribe(query string) (<-chan ctypes.ResultEvent, context.CancelFunc, error) {

@@ -9,39 +9,9 @@ import (
 	"github.com/spf13/cobra"
 	"net/http"
 	"runtime"
-	"sync"
 )
 
 
-// Service represents a relayer listen service
-// TODO: sync services to disk so that they can survive restart
-type Service struct {
-	Name   string `json:"name"`
-	Path   string `json:"path"`
-	Src    string `json:"src"`
-	//SrcKey string `json:"src-key"`
-	Dst    string `json:"dst"`
-	//DstKey string `json:"dst-key"`
-
-	doneFunc func()
-}
-
-// NewService returns a new instance of Service
-func NewService(name, path string, src, dst *collactor.Chain, doneFunc func()) *Service {
-	return &Service{name, path, src.ChainID, dst.ChainID,  doneFunc}
-}
-
-// ServicesManager represents the manager of the various services the relayer is running
-type ServicesManager struct {
-	Services map[string]*Service
-
-	sync.Mutex
-}
-
-// NewServicesManager returns a new instance of a services manager
-func NewServicesManager() *ServicesManager {
-	return &ServicesManager{Services: make(map[string]*Service)}
-}
 
 func getAPICmd() *cobra.Command {
 	apiCmd := &cobra.Command{
@@ -200,8 +170,11 @@ func PostRelayerListenHandler(sm *ServicesManager) func(w http.ResponseWriter, r
 			return
 		}
 		sm.Lock()
-		sm.Services[vars["name"]] = NewService(vars["name"], vars["path"], c[src], c[dst], done)
+		s := NewService(vars["name"], vars["path"], c[src], c[dst], strategyType, done)
+		sm.Services[vars["name"]] = s
 		sm.Unlock()
+
+		go s.HealthCheck()
 
 		helpers.SuccessJSONResponse(http.StatusOK, "relayer start successful", w)
 
@@ -226,6 +199,7 @@ func DeleteRelayerListenHandler(sm *ServicesManager) func(w http.ResponseWriter,
 			return
 		}
 		service.doneFunc()
+		service.Delete()
 		sm.Lock()
 		delete(sm.Services,vars["name"])
 		sm.Unlock()
