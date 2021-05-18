@@ -12,7 +12,11 @@ func init()  {
 }
 
 func RegisterCodec(cdc *codec.Codec)  {
+	cdc.RegisterInterface((*IsAcknowledgement_Response)(nil), nil)
+	//
 	cdc.RegisterConcrete(&Acknowledgement{}, "ibcChannel/Acknowledgement", nil)
+	cdc.RegisterConcrete(&Acknowledgement_Error{}, "ibcChannel/AcknowledgementError", nil)
+	cdc.RegisterConcrete(&Acknowledgement_Result{}, "ibcChannel/AcknowledgementResult", nil)
 	cdc.RegisterConcrete(&MsgChannelOpenInit{}, "ibcChannel/MsgChannelOpenInit", nil)
 	cdc.RegisterConcrete(&MsgChannelOpenTry{}, "ibcChannel/MsgChannelOpenTry", nil)
 	cdc.RegisterConcrete(&MsgChannelOpenAck{}, "ibcChannel/MsgChannelOpenAck", nil)

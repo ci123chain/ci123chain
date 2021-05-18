@@ -1,10 +1,15 @@
 package commands
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/collactor/collactor"
+	helpers "github.com/ci123chain/ci123chain/pkg/collactor/helper"
+	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
+	"net/http"
 	"strings"
+	"time"
 )
 
 // transactionCmd returns a parent transaction command handler, where all child
@@ -59,11 +64,6 @@ $ %s tx connect demo-path`,
 			appName, appName, appName,
 		)),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c, src, dst, err := config.ChainsFromPath(args[0])
-			if err != nil {
-				return err
-			}
-
 			to, err := getTimeout(cmd)
 			if err != nil {
 				return err
@@ -74,44 +74,7 @@ $ %s tx connect demo-path`,
 				return err
 			}
 
-			// ensure that keys exist
-			if _, err = c[src].GetAddress(); err != nil {
-				return err
-			}
-			if _, err = c[dst].GetAddress(); err != nil {
-				return err
-			}
-
-			// create clients if they aren't already created
-			modified, err := c[src].CreateClients(c[dst])
-			if modified {
-				if err := overWriteConfig(config); err != nil {
-					return err
-				}
-			}
-
-			if err != nil {
-				return err
-			}
-
-			// create connection if it isn't already created
-			modified, err = c[src].CreateOpenConnections(c[dst], retries, to)
-			if modified {
-				if err := overWriteConfig(config); err != nil {
-					return err
-				}
-			}
-			if err != nil {
-				return err
-			}
-
-			// create channel if it isn't already created
-			modified, err = c[src].CreateOpenChannels(c[dst], 3, to)
-			if modified {
-				if err := overWriteConfig(config); err != nil {
-					return err
-				}
-			}
+			err = linkChain(args[0], to, retries)
 			return err
 		},
 	}
@@ -127,5 +90,79 @@ func ensureKeysExist(chains map[string]*collactor.Chain) error {
 		}
 	}
 
+	return nil
+}
+
+type linkRequest struct {
+	Timeout  time.Duration 	`json:"timeout"`
+	Maxretry uint64 		`json:"max-retry"`
+}
+
+// DeleteLight handles the route
+func PostLinkChain(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	var linkReq linkRequest
+	err := json.NewDecoder(r.Body).Decode(&linkReq)
+	if err != nil {
+		helpers.WriteErrorResponse(http.StatusInternalServerError, err, w)
+		return
+	}
+	err = linkChain(vars["path"], linkReq.Timeout, linkReq.Maxretry)
+	if err != nil {
+		helpers.WriteErrorResponse(http.StatusInternalServerError, err, w)
+		return
+	}
+
+	helpers.SuccessJSONResponse(http.StatusOK, fmt.Sprintf("Linked chains for path %s", vars["path"]), w)
+}
+
+func linkChain(paths string, timeout time.Duration, retries uint64) error {
+	_, err := config.Paths.Get(paths)
+	if err != nil {
+		return err
+	}
+
+	c, src, dst, err := config.ChainsFromPath(paths)
+	if err != nil {
+		return err
+	}
+
+	// ensure that keys exist
+	if _, err = c[src].GetAddress(); err != nil {
+		return err
+	}
+	if _, err = c[dst].GetAddress(); err != nil {
+		return err
+	}
+
+	// create clients if they aren't already created
+	modified, err := c[src].CreateClients(c[dst])
+	if modified {
+		if err := overWriteConfig(config); err != nil {
+			return err
+		}
+	}
+	if err != nil {
+		return err
+	}
+
+	// create connection if it isn't already created
+	modified, err = c[src].CreateOpenConnections(c[dst], retries, timeout)
+	if modified {
+		if err := overWriteConfig(config); err != nil {
+			return err
+		}
+	}
+	if err != nil {
+		return err
+	}
+
+	// create channel if it isn't already created
+	modified, err = c[src].CreateOpenChannels(c[dst], retries, timeout)
+	if modified {
+		if err := overWriteConfig(config); err != nil {
+			return err
+		}
+	}
 	return nil
 }

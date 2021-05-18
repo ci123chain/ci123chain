@@ -4,18 +4,18 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/order/keeper"
 	order "github.com/ci123chain/ci123chain/pkg/order/types"
-	"github.com/pkg/errors"
 	"reflect"
 )
 
 func NewHandler(keeper *keeper.OrderKeeper) types.Handler {
 	return func(ctx types.Context, msg types.Msg) (*types.Result, error) {
+		ctx = ctx.WithEventManager(types.NewEventManager())
 		switch msg := msg.(type) {
 		case *order.MsgUpgrade:
 			return handlerMsgUpgrade(ctx, keeper, msg)
 		default:
 			errMsg := "Unrecognized msg type: " + reflect.TypeOf(msg).Name()
-			return nil, errors.New(errMsg)
+			return nil, order.ErrInvalidEndPoint(errMsg)
 		}
 	}
 }
@@ -37,12 +37,12 @@ func handlerMsgUpgrade(ctx types.Context,k *keeper.OrderKeeper, msg *order.MsgUp
 	k.UpdateOrderBook(ctx, orderbook, &action)
 
 	em := ctx.EventManager()
-	//em.EmitEvents(types.Events{
-	//	types.NewEvent(order.EventType,
-	//		types.NewAttribute([]byte(types.AttributeKeyMethod), []byte(order.AttributeValueAddShard)),
-	//		types.NewAttribute([]byte(types.AttributeKeyModule), []byte(order.AttributeValueCategory)),
-	//		types.NewAttribute([]byte(types.AttributeKeySender), []byte(msg.FromAddress.String())),
-	//	),
-	//})
+	em.EmitEvents(types.Events{
+		types.NewEvent(order.EventType,
+			types.NewAttribute([]byte(types.AttributeKeyMethod), []byte(order.AttributeValueAddShard)),
+			types.NewAttribute([]byte(types.AttributeKeyModule), []byte(order.AttributeValueCategory)),
+			types.NewAttribute([]byte(types.AttributeKeySender), []byte(msg.FromAddress.String())),
+		),
+	})
 	return &types.Result{Events: em.Events()}, nil
 }

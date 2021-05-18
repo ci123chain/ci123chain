@@ -40,7 +40,7 @@ func (ftpd FungibleTokenPacketData) ValidateBasic() error {
 
 // GetBytes is a helper for serialising
 func (ftpd FungibleTokenPacketData) GetBytes() []byte {
-	bytes, err := IBCTransferCdc.MarshalBinaryLengthPrefixed(ftpd)
+	bytes, err := IBCTransferCdc.MarshalJSON(ftpd)
 	if err != nil {
 		panic(err)
 	}

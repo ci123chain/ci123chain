@@ -2,7 +2,6 @@ package collactor
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	retry "github.com/avast/retry-go"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
@@ -12,13 +11,14 @@ import (
 	clienttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/clients/types"
 	connectiontypes "github.com/ci123chain/ci123chain/pkg/ibc/core/connection/types"
 	ibcexported "github.com/ci123chain/ci123chain/pkg/ibc/core/exported"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/pkg/errors"
 	"github.com/tendermint/tendermint/libs/log"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
 	rpchttp "github.com/tendermint/tendermint/rpc/client/http"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	libclient "github.com/tendermint/tendermint/rpc/jsonrpc/client"
 	"golang.org/x/sync/errgroup"
-	"io/ioutil"
 	"os"
 	"path"
 	"strconv"
@@ -38,13 +38,14 @@ var (
 
 // Chain represents the necessary data for connecting to and indentifying a chain and its counterparites
 type Chain struct {
-	Key            string  `yaml:"key" json:"key"`
+	//Key            string  `yaml:"key" json:"key"`
 	ChainID        string  `yaml:"chain-id" json:"chain-id"`
 	RPCAddr        string  `yaml:"rpc-addr" json:"rpc-addr"`
 	AccountPrefix  string  `yaml:"account-prefix" json:"account-prefix"`
-	GasAdjustment  float64 `yaml:"gas-adjustment" json:"gas-adjustment"`
+	//GasAdjustment  float64 `yaml:"gas-adjustment" json:"gas-adjustment"`
 	GasPrices      string  `yaml:"gas-prices" json:"gas-prices"`
 	TrustingPeriod string  `yaml:"trusting-period" json:"trusting-period"`
+	PrivateKey     string  `yaml:"private-key" json:"private-key"`
 
 	// TODO: make these private
 	HomePath string           `yaml:"-" json:"-"`
@@ -52,7 +53,7 @@ type Chain struct {
 	//Keybase  keys.Keyring     `yaml:"-" json:"-"`
 	Client   rpcclient.Client `yaml:"-" json:"-"`
 	cdc  *codec.Codec `yaml:"-" json:"-"`
-	KeyOutput *KeyOutput
+	//KeyOutput *helper.KeyOutput
 	address sdk.AccAddress
 	logger  log.Logger
 	timeout time.Duration
@@ -132,22 +133,12 @@ func (c *Chain) GetAddress() (sdk.AccAddress, error) {
 	if !c.address.Empty()  {
 		return c.address, nil
 	}
-	// Signing key for c chain
-	if c.KeyOutput == nil || len(c.KeyOutput.PrivateKey) == 0{
-		var ko KeyOutput
-		keyfile, err := ioutil.ReadFile(KeysDir(c.HomePath, c.ChainID))
-		if err != nil {
-			fmt.Println("Error reading file:", err)
-			os.Exit(1)
-		}
-		// unmarshall them into the struct
-		if err := json.Unmarshal(keyfile, &ko); err != nil {
-			panic(err)
-		}
-		c.KeyOutput = &ko
+	privateKey, err := crypto.HexToECDSA(c.PrivateKey)
+	if err != nil {
+		return sdk.AccAddress{}, errors.Errorf("error format privateKey: %s", c.PrivateKey)
 	}
-	srcAddr := c.KeyOutput.Address
-	return sdk.HexToAddress(srcAddr), nil
+	address := crypto.PubkeyToAddress(privateKey.PublicKey)
+	return sdk.ToAccAddress(address[:]), nil
 }
 
 
@@ -277,7 +268,7 @@ func (c *Chain) SendMsgs(msgs []sdk.Msg) (*sdk.TxResponse, bool, error) {
 	if err != nil {
 		return nil, false, err
 	}
-	txByte, err := types2.SignCommonTx(c.MustGetAddress(), nonce, uint64(gas), msgs, c.KeyOutput.PrivateKey, c.cdc)
+	txByte, err := types2.SignCommonTx(c.MustGetAddress(), nonce, uint64(gas), msgs, c.PrivateKey, c.cdc)
 	if err != nil{
 		panic(err)
 	}
@@ -375,4 +366,45 @@ func (c *Chain) GenerateConnHandshakeProof(height uint64) (clientState ibcexport
 	return clientState, clientStateRes.Proof, consensusStateRes.Proof, connectionStateRes.Proof,
 		connectionStateRes.ProofHeight, nil
 
+}
+
+// Update returns a new chain with updated values
+func (c *Chain) Update(key, value string) (out *Chain, err error) {
+	out = c
+	switch key {
+	case "private-key":
+		out.PrivateKey = value
+	//case "key":
+	//	out.Key = value
+	case "chain-id":
+		out.ChainID = value
+	case "rpc-addr":
+		if _, err = rpchttp.New(value, "/websocket"); err != nil {
+			return
+		}
+		out.RPCAddr = value
+	//case "gas-adjustment":
+	//	adj, err := strconv.ParseFloat(value, 64)
+	//	if err != nil {
+	//		return nil, err
+	//	}
+	//	out.GasAdjustment = adj
+	case "gas-prices":
+		//_, err = sdk.ParseDecCoins(value)
+		//_, err = sdk.ParseDecCoin(value)
+		//if err != nil {
+		//	return nil, err
+		//}
+		out.GasPrices = value
+	case "account-prefix":
+		out.AccountPrefix = value
+	case "trusting-period":
+		if _, err = time.ParseDuration(value); err != nil {
+			return
+		}
+		out.TrustingPeriod = value
+	default:
+		return out, fmt.Errorf("key %s not found", key)
+	}
+	return out, err
 }

@@ -3,12 +3,12 @@ package keeper
 import (
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
+	"github.com/ci123chain/ci123chain/pkg/abci/store"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/account"
 	"github.com/ci123chain/ci123chain/pkg/supply/exported"
 	"github.com/ci123chain/ci123chain/pkg/supply/types"
-	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
-	"github.com/ci123chain/ci123chain/pkg/abci/store"
 	"github.com/tendermint/tendermint/libs/log"
 )
 
@@ -111,11 +111,11 @@ func (k Keeper) SendCoinsFromModuleToModule(ctx sdk.Context, senderModule, recip
 
 	senderAddr := k.GetModuleAddress(senderModule)
 	if senderAddr.Empty() {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, fmt.Sprintf("module account %s does not exist", senderModule))
+		return sdkerrors.ErrModuleAccountNotExisted(fmt.Sprintf("%v not exist", senderModule))
 	}
 	recipientAcc := k.GetModuleAccount(ctx, recipientModule)
 	if recipientAcc == nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, fmt.Sprintf("module account %s isn't able to be created", recipientModule))
+		return sdkerrors.ErrModuleAccountNotExisted(fmt.Sprintf("%v not exist", recipientModule))
 	}
 	return k.ak.Transfer(ctx, senderAddr, recipientAcc.GetAddress(), sdk.NewCoins(amt))
 }
@@ -125,11 +125,11 @@ func (k Keeper) DelegateCoinsFromAccountToModule(ctx sdk.Context, senderAddr sdk
 
 	recipientAcc := k.GetModuleAccount(ctx, recipientModule)
 	if recipientAcc == nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, fmt.Sprintf("module account %s isn't able to be created", recipientModule))
+		return sdkerrors.ErrModuleAccountNotExisted(fmt.Sprintf("%v not exist", recipientModule))
 	}
 
 	if !recipientAcc.HasPermission(types.Staking) {
-		return sdkerrors.Wrap(sdkerrors.ErrParams, fmt.Sprintf("module account %s has no expected permission", recipientModule))
+		return sdkerrors.ErrModuleAccountHasNoPermission(fmt.Sprintf("%v has no staking permission", recipientModule))
 	}
 	return k.ak.Transfer(ctx, senderAddr, recipientAcc.GetAddress(), sdk.NewCoins(amt))
 }

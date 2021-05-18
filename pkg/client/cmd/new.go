@@ -26,7 +26,7 @@ func init()  {
 	newAccountCmd.Flags().String(flagPassword, "", "passphrase")
 	newAccountCmd.Flags().Bool(flagSilent, false, "silent output")
 	newAccountCmd.Flags().String(flagMnemonic, "", "mnemonic string")
-	newAccountCmd.Flags().String(flagHDWPath, "", "HD Wallet path")
+	newAccountCmd.Flags().String(flagHDWPath, "m/44'/60'/0'/0/0", "HD Wallet path")
 }
 
 var newAccountCmd = &cobra.Command{

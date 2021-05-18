@@ -2,7 +2,6 @@ package types
 
 import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/exported"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/host"
 )
@@ -47,16 +46,17 @@ func (msg MsgCreateClient) MsgType() string {
 
 func (msg MsgCreateClient) ValidateBasic() error {
 	if err := msg.ClientState.Validate(); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "string could not be parsed as address: %v", err)
+
+		return ErrInvalidClient(err.Error())
 	}
 	if msg.ClientState.ClientType() == exported.Localhost {
-		return sdkerrors.Wrap(ErrInvalidClient, "localhost client can only be created on chain initialization")
+		return ErrInvalidClient("localhost client can only be created on chain initialization")
 	}
 	if msg.ClientState.ClientType() != msg.ConsensusState.ClientType() {
-		return sdkerrors.Wrap(ErrInvalidClientType, "client type for client state and consensus state do not match")
+		return ErrInvalidClient("client type for client state and consensus state do not match")
 	}
 	if err := ValidateClientType(msg.ClientState.ClientType()); err != nil {
-		return sdkerrors.Wrap(err, "client type does not meet naming constraints")
+		return ErrInvalidClient("client type does not meet naming constraints")
 	}
 	return msg.ConsensusState.ValidateBasic()
 }
@@ -96,10 +96,10 @@ func (m MsgUpdateClient) MsgType() string {
 func (msg MsgUpdateClient) ValidateBasic() error {
 
 	if err := msg.Header.ValidateBasic(); err != nil {
-		return err
+		return ErrInvalidParam(err.Error())
 	}
 	if msg.ClientId == exported.Localhost {
-		return sdkerrors.Wrap(ErrInvalidClient, "localhost client is only updated on ABCI BeginBlock")
+		return ErrInvalidClient("localhost client is only updated on ABCI BeginBlock")
 	}
 	return host.ClientIdentifierValidator(msg.ClientId)
 }

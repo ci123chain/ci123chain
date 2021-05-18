@@ -11,6 +11,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/account/types"
 	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
 	"github.com/ci123chain/ci123chain/pkg/transaction"
+	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/pkg/errors"
 	"github.com/tendermint/tendermint/crypto/merkle"
 	rpclient "github.com/tendermint/tendermint/rpc/client"
@@ -90,8 +91,21 @@ func (ctx *Context) GetBlocked() (bool) {
 	return ctx.Blocked
 }
 
-func (ctx *Context) GetBalanceByAddress(addr sdk.AccAddress, isProve bool) (sdk.Coins, *merkle.Proof, error) {
-	qparams := keeper.NewQueryAccountParams(addr)
+func (ctx *Context) GetBalanceByAddress(addr sdk.AccAddress, isProve bool, height string) (sdk.Coins, *merkle.Proof, error) {
+	var h int64
+	if height == "" {
+		h = -1
+	}else {
+		var err error
+		h, err = util.CheckInt64(height)
+		if err != nil {
+			return sdk.NewCoins(), nil, err
+		}
+		if h <=0 {
+			return sdk.NewCoins(), nil, errors.New(fmt.Sprintf("unexpected height: %v", height))
+		}
+	}
+	qparams := keeper.NewQueryAccountParams(addr, h)
 	bz, err := ctx.Cdc.MarshalJSON(qparams)
 	if err != nil {
 		return sdk.NewCoins(), nil , err
@@ -109,11 +123,17 @@ func (ctx *Context) GetBalanceByAddress(addr sdk.AccAddress, isProve bool) (sdk.
 		return sdk.NewCoins(), nil, err2
 	}
 	balance := acc.GetCoins()
+
+	//var balance sdk.Coins
+	//err2 := ctx.Cdc.UnmarshalBinaryLengthPrefixed(res, &balance)
+	//if err2 != nil {
+	//	return sdk.NewCoins(), nil, err2
+	//}
 	return balance, proof, nil
 }
 
 func (ctx *Context) GetNonceByAddress(addr sdk.AccAddress, isProve bool) (uint64, *merkle.Proof, error) {
-	qparams := keeper.NewQueryAccountParams(addr)
+	qparams := keeper.NewQueryAccountParams(addr, 0)
 	bz, err := ctx.Cdc.MarshalJSON(qparams)
 	if err != nil {
 		return 0, nil , err
@@ -125,6 +145,11 @@ func (ctx *Context) GetNonceByAddress(addr sdk.AccAddress, isProve bool) (uint64
 	if err != nil {
 		return 0, nil, err
 	}
+	//var nonce uint64
+	//err2 := ctx.Cdc.UnmarshalBinaryLengthPrefixed(res, &nonce)
+	//if err2 != nil {
+	//	return 0, nil, err2
+	//}
 	var acc exported.Account
 	err2 := ctx.Cdc.UnmarshalBinaryLengthPrefixed(res, &acc)
 	if err2 != nil {

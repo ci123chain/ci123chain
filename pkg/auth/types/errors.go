@@ -9,9 +9,9 @@ import (
 type CodeType = sdk.CodeType
 const (
 	DefaultCodespace 				sdk.CodespaceType = "auth"
-	CodeTxValidateBasicError       	CodeType = 501
+	CodeTxValidateBasicError       	CodeType = 1001
 )
 
 func ErrTxValidateBasic(codespace sdk.CodespaceType, err error) error {
-	return sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("validate basic eror: %v", err.Error()))
+	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeTxValidateBasicError), fmt.Sprintf("validate basic eror: %v", err.Error()))
 }

@@ -45,7 +45,7 @@ func (ak AccountKeeper) SetCoin(ctx sdk.Context, addr sdk.AccAddress, amt sdk.Co
 
 	err := acc.SetCoins(amt)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	ak.SetAccount(ctx, acc)
@@ -64,11 +64,11 @@ func (ak AccountKeeper) SubBalance(ctx sdk.Context, addr sdk.AccAddress, amt sdk
 		oldCoins = acc.GetCoins()
 		spendableCoins = acc.SpendableCoins(ctx.BlockHeader().Time)
 	} else {
-		return sdk.NewCoins(), sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, fmt.Sprintf("account not exist %s", addr.Hex()))
+		return sdk.NewCoins(), types.ErrAccountNotExisted(fmt.Sprintf("account not exist %s", addr.Hex()))
 	}
 	_, hasNeg := spendableCoins.SafeSub(amt)
 	if hasNeg {
-		return amt, sdkerrors.Wrap(sdkerrors.ErrInsufficientFunds, fmt.Sprintf("insufficient accounts funds; %s < %s", spendableCoins, amt))
+		return amt, types.ErrInsufficientFunds(fmt.Sprintf("insufficient accounts funds; %s < %s", spendableCoins, amt))
 	}
 
 	newCoin := oldCoins.Sub(amt)
@@ -95,12 +95,12 @@ func (ak AccountKeeper) Transfer(ctx sdk.Context, fromAddr sdk.AccAddress, toAdd
 
 	_, err := ak.SubBalance(ctx, fromAddr, coin)
 	if err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInternal, err.Error())
+		return err
 	}
 
 	_, err = ak.AddBalance(ctx, toAddr, coin)
 	if err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInternal, err.Error())
+		return err
 	}
 
 	return nil

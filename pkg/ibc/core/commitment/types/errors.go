@@ -8,7 +8,7 @@ const SubModuleName string = "commitment"
 
 // IBC connection sentinel errors
 var (
-	ErrInvalidProof       = sdkerrors.Register(SubModuleName, 2, "invalid proof")
-	ErrInvalidPrefix      = sdkerrors.Register(SubModuleName, 3, "invalid prefix")
-	ErrInvalidMerkleProof = sdkerrors.Register(SubModuleName, 4, "invalid merkle proof")
+	ErrInvalidProof       = sdkerrors.Register(SubModuleName, 2072, "invalid proof")
+	ErrInvalidPrefix      = sdkerrors.Register(SubModuleName, 2073, "invalid prefix")
+	ErrInvalidMerkleProof = sdkerrors.Register(SubModuleName, 2074, "invalid merkle proof")
 )

@@ -3,6 +3,7 @@ package rest
 import (
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	abcitype "github.com/ci123chain/ci123chain/pkg/abci/types"
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
@@ -55,11 +56,11 @@ func NewAccountRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 
 		key, err := crypto.GenerateKey()
 		if err != nil {
-			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrResponse, "generate key failed").Error())
+			rest.WriteErrorRes(w, "generate key failed")
 			return
 		}
 		if key == nil {
-			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrResponse, "generate empty key").Error())
+			rest.WriteErrorRes(w, "generate empty key")
 			return
 		}
 
@@ -83,7 +84,7 @@ func QueryBalancesRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		prove := request.FormValue("prove")
 		checkErr := util.CheckStringLength(42, 100, address)
 		if checkErr != nil {
-			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid address").Error())
+			rest.WriteErrorRes(w, fmt.Sprintf("invalid address: %v", address))
 			return
 		}
 		if !rest.CheckHeightAndProve(w, height, prove, sdkerrors.RootCodespace) {
@@ -92,12 +93,12 @@ func QueryBalancesRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 
 		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, request, height)
 		if !ok || err != nil {
-			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInvalidHeight, "parse hetight faield").Error())
+			rest.WriteErrorRes(w, "parse height failed")
 			return
 		}
 		addr, err2 := helper.StrToAddress(address)
 		if err2 != nil {
-			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid address").Error())
+			rest.WriteErrorRes(w, fmt.Sprintf("invalid address: %v", address))
 			return
 		}
 		//params := types.NewQueryBalanceParams(addr)
@@ -105,9 +106,9 @@ func QueryBalancesRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 		if prove == "true" {
 			isProve = true
 		}
-		res, proof, err2 := cliCtx.GetBalanceByAddress(addr, isProve)
+		res, proof, err2 := cliCtx.GetBalanceByAddress(addr, isProve, height)
 		if err2 != nil {
-			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInternal, "query balance failed").Error())
+			rest.WriteErrorRes(w, err2.Error())
 			return
 		}
 		value := BalanceData{BalanceList:res}
@@ -125,7 +126,7 @@ func QueryNonceRequestHandleFn(cliCtx context.Context) http.HandlerFunc {
 		prove := r.FormValue("prove")
 		checkErr := util.CheckStringLength(42, 100, address)
 		if checkErr != nil {
-			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid address").Error())
+			rest.WriteErrorRes(w, fmt.Sprintf("invalid address: %v", address))
 			return
 		}
 		if !rest.CheckHeightAndProve(w, height, prove, sdkerrors.RootCodespace) {
@@ -134,12 +135,12 @@ func QueryNonceRequestHandleFn(cliCtx context.Context) http.HandlerFunc {
 
 		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r, "")
 		if !ok || err != nil {
-			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInvalidHeight, "prase height failed").Error())
+			rest.WriteErrorRes(w, "parse height failed")
 			return
 		}
 		addrBytes, err2 := helper.ParseAddrs(address)
 		if len(addrBytes) < 1 || err2 != nil {
-			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid address").Error())
+			rest.WriteErrorRes(w, fmt.Sprintf("invalid address: %v", address))
 			return
 		}
 		isProve := false
@@ -148,7 +149,7 @@ func QueryNonceRequestHandleFn(cliCtx context.Context) http.HandlerFunc {
 		}
 		res, proof, err2 := cliCtx.GetNonceByAddress(addrBytes[0], isProve)
 		if err2 != nil {
-			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrResponse, "get nonce failed").Error())
+			rest.WriteErrorRes(w, err2.Error())
 			return
 		}
 		value := NonceData{Nonce:res}
@@ -165,7 +166,7 @@ func CreateNewValidatorKey(cliCtx context.Context) http.HandlerFunc {
 		cdc := amino.NewCodec()
 		keyByte, err := cdc.MarshalJSON(validatorKey)
 		if err != nil {
-			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInternal, "cdc marshal failed").Error())
+			rest.WriteErrorRes(w, "cdc marshal validatorKey failed")
 		}
 		resp := Key{ValidatorKey:string(keyByte[1:len(keyByte)-1])}
 		rest.PostProcessResponseBare(w, cliCtx, resp)
@@ -179,36 +180,36 @@ func MultiMsgsRequest(cliCtx context.Context, w http.ResponseWriter, r *http.Req
 	var msgs_str []string
 	err := json.Unmarshal([]byte(msg_str), &msgs_str)
 	if err != nil {
-		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error()).Error())
+		rest.WriteErrorRes(w, err.Error())
 		return
 	}
 	privKey, from, nonce, gas, err := rest.GetNecessaryParams(cliCtx, r, cdc, true)
 	if err != nil {
-		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrParams, err.Error()).Error())
+		rest.WriteErrorRes(w, err.Error())
 		return
 	}
 	for _, v := range msgs_str{
 		var msg abcitype.Msg
 		msg_byte, err := hex.DecodeString(v)
 		if err != nil {
-			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrParams, err.Error()).Error())
+			rest.WriteErrorRes(w, err.Error())
 			return
 		}
 		err = cdc.UnmarshalBinaryLengthPrefixed(msg_byte, &msg)
 		if err != nil {
-			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInternal, err.Error()).Error())
+			rest.WriteErrorRes(w, err.Error())
 			return
 		}
 		msgs = append(msgs, msg)
 	}
 	txByte, err := types2.SignCommonTx(from, nonce, gas, msgs, privKey, cdc)
 	if err != nil {
-		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInternal, err.Error()).Error())
+		rest.WriteErrorRes(w, err.Error())
 		return
 	}
 	res, err := cliCtx.BroadcastSignedTx(txByte)
 	if err != nil {
-		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInternal, err.Error()).Error())
+		rest.WriteErrorRes(w, err.Error())
 		return
 	}
 	rest.PostProcessResponseBare(w, cliCtx, res)

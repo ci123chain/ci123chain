@@ -28,7 +28,7 @@ func QueryTxRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 
 		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(writer, cliCtx, request, "")
 		if !ok || err != nil {
-			rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, "get clictx failed").Error())
+			rest.WriteErrorRes(writer, "get clictx failed")
 			return
 		}
 
@@ -38,7 +38,7 @@ func QueryTxRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			return
 		}
 		if resp.Empty() {
-			rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrNotFound, fmt.Sprintf("no tx found with hash %s", hashHexStr)).Error())
+			rest.WriteErrorRes(writer,  fmt.Sprintf("no tx found with hash %s", hashHexStr))
 		}
 		rest.PostProcessResponseBare(writer, cliCtx, resp)
 	}
@@ -49,13 +49,13 @@ func QueryTxsWithHeight(cliCtx context.Context) http.HandlerFunc {
 		heightStr := request.FormValue("heights")
 		cliCtx, ok, err := rest.ParseQueryHeightOrReturnBadRequest(writer, cliCtx, request, "")
 		if !ok || err != nil {
-			rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, "get clictx failed").Error())
+			rest.WriteErrorRes(writer, "get clictx failed")
 			return
 		}
 		var heights sdk.Heights
 		Err := json.Unmarshal([]byte(heightStr), &heights)
 		if Err != nil {
-			rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid height").Error())
+			rest.WriteErrorRes(writer, fmt.Sprintf("invalid heights %v", heightStr))
 			return
 		}
 

@@ -3,7 +3,6 @@ package rest
 import (
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
 	types2 "github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/client"
@@ -23,7 +22,7 @@ func checkDelegatorAddressVar(w http.ResponseWriter, r *http.Request) (string, b
 	address := r.FormValue("delegator_address")
 	checkErr := util.CheckStringLength(42, 100, address)
 	if checkErr != nil {
-		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrParams, fmt.Sprintf("invalidf delegator_address: %v", address)).Error())
+		rest.WriteErrorRes(w, fmt.Sprintf("invalidf delegator_address: %v", address))
 		return "", false
 	}
 	return address, true
@@ -33,7 +32,7 @@ func checkValidatorAddressVar(w http.ResponseWriter, r *http.Request) (string, b
 	address := r.FormValue("validator_address")
 	checkErr := util.CheckStringLength(42, 100, address)
 	if checkErr != nil {
-		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrParams, fmt.Sprintf("invalidf validator_address: %v", address)).Error())
+		rest.WriteErrorRes(w,  fmt.Sprintf("invalidf validator_address: %v", address))
 		return "", false
 	}
 	return address, true
@@ -43,7 +42,7 @@ func checkAccountAddressVar(w http.ResponseWriter, r *http.Request) (string, boo
 	address := r.FormValue("account_address")
 	checkErr := util.CheckStringLength(42, 100, address)
 	if checkErr != nil {
-		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrParams, fmt.Sprintf("invalidf account_address: %v", address)).Error())
+		rest.WriteErrorRes(w, fmt.Sprintf("invalidf account_address: %v", address))
 		return "", false
 	}
 	return address, true

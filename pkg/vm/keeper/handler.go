@@ -110,8 +110,7 @@ func handleMsgMigrateContract(ctx sdk.Context, k Keeper, msg wasm.MsgMigrateCont
 // handleMsgEvmTx handles an Ethereum specific tx
 func handleMsgEvmTx(ctx sdk.Context, k Keeper, msg evm.MsgEvmTx) (*sdk.Result, error) {
 	// parse the chainID from a string to a base-10 integer
-	//todo
-	chainIDEpoch := big.NewInt(123)
+	chainIDEpoch := big.NewInt(util.CHAINID)
 
 	// Verify signature and retrieve sender address
 	sender := common.BytesToAddress(msg.GetFromAddress().Bytes())
@@ -195,7 +194,6 @@ func handleMsgEvmTx(ctx sdk.Context, k Keeper, msg evm.MsgEvmTx) (*sdk.Result, e
 
 func handleMsgEthereumTx(ctx sdk.Context, k Keeper, msg types.MsgEthereumTx) (*sdk.Result, error) {
 	// parse the chainID from a string to a base-10 integer
-	//todo
 	chainIDEpoch := big.NewInt(util.CHAINID)
 
 	// Verify signature and retrieve sender address

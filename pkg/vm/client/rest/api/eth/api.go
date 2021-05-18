@@ -270,7 +270,7 @@ func (api *PublicEthereumAPI) GetTransactionCount(address common.Address, blockN
 	// Get nonce (sequence) from account
 	from := sdk.AccAddress{address}
 
-	qparams := keeper.NewQueryAccountParams(from)
+	qparams := keeper.NewQueryAccountParams(from, -1)
 	bz, err := cdc.MarshalJSON(qparams)
 	if err != nil {
 		return nil, err
@@ -534,7 +534,7 @@ func (api *PublicEthereumAPI) GetBalance(address common.Address, blockNum BlockN
 	api.logger.Debug("eth_getBalance", "address", address, "block number", blockNum)
 	clientCtx := api.clientCtx.WithHeight(blockNum.Int64())
 
-	qparams := keeper.NewQueryAccountParams(sdk.AccAddress{address})
+	qparams := keeper.NewQueryAccountParams(sdk.AccAddress{address}, -1)
 	bz, err := cdc.MarshalJSON(qparams)
 	if err != nil {
 		return nil, err

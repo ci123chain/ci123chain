@@ -570,7 +570,6 @@ func relayPacketsFromEventListener(src, dst *PathEnd, events map[string][]string
 			if dst.PortID == srcPort[i] && dst.ChannelID == srcChan[i] &&
 				src.PortID == dstPort[i] && src.ChannelID == dstChan[i] {
 				rp := &relayMsgRecvPacket{packetData: []byte(pd)}
-
 				// next, get and parse the sequence
 				if sval, ok := events[fmt.Sprintf("%s.%s", spTag, seqTag)]; ok {
 					seq, err := strconv.ParseUint(sval[i], 10, 64)
@@ -615,6 +614,7 @@ func relayPacketsFromEventListener(src, dst *PathEnd, events map[string][]string
 			// NOTE: Src and Dst are not switched here
 			if src.PortID == srcPort[i] && src.ChannelID == srcChan[i] &&
 				dst.PortID == dstPort[i] && dst.ChannelID == dstChan[i] {
+
 				rp := &relayMsgPacketAck{packetData: []byte(pd)}
 
 				// first get the ack

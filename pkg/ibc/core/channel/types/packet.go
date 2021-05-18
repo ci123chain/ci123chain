@@ -2,6 +2,7 @@ package types
 
 import (
 	"crypto/sha256"
+	"encoding/json"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
@@ -126,6 +127,11 @@ func (p Packet) ValidateBasic() error {
 		return sdkerrors.Wrap(ErrInvalidPacket, "packet data bytes cannot be empty")
 	}
 	return nil
+}
+
+func (p Packet) String() string {
+	res, _ := json.Marshal(p)
+	return string(res)
 }
 
 // CommitAcknowledgement returns the hash of commitment bytes

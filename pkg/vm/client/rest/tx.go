@@ -155,7 +155,7 @@ func executeContractHandler(cliCtx context.Context,w http.ResponseWriter, r *htt
 
 	contractAddr := r.FormValue("contract_address")
 	contractAddress := sdk.HexToAddress(contractAddr)
-	qparams := keeper2.NewQueryAccountParams(contractAddress)
+	qparams := keeper2.NewQueryAccountParams(contractAddress, -1)
 	bz, err := cliCtx.Cdc.MarshalJSON(qparams)
 	if err != nil {
 		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrParams, err.Error()).Error())

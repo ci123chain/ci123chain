@@ -32,31 +32,31 @@ func StoreContentRequest(cliCtx context.Context, writer http.ResponseWriter, req
 	}
 	privKey, from, nonce, gas, err := rest.GetNecessaryParams(cliCtx, request, cdc, broadcast)
 	if err != nil {
-		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, err.Error()).Error())
+		rest.WriteErrorRes(writer, err.Error())
 		return
 	}
 
 	//verify account exists
 	err = checkAccountExist(cliCtx, from)
 	if err != nil {
-		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, err.Error()).Error())
+		rest.WriteErrorRes(writer, err.Error())
 		return
 	}
 	key_str := request.FormValue("key")
 	content_str := request.FormValue("content")
 	if key_str == ""{
-		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "key cant not be empty").Error())
+		rest.WriteErrorRes(writer, "key cant not be empty")
 		return
 	}
 	if content_str == ""{
-		rest.WriteErrorRes(writer,sdkerrors.Wrap(sdkerrors.ErrParams, "conten can not be empty").Error())
+		rest.WriteErrorRes(writer,"conten can not be empty")
 		return
 	}
 	//key, err := hex.DecodeString(key_str)
 	//content, err := hex.DecodeString(content_str)
 	value, err := json.Marshal(types.NewStoredContent(key_str, content_str))
 	if err != nil {
-		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error()).Error())
+		rest.WriteErrorRes(writer, err.Error())
 		return
 	}
 	msg := infrastructure.NewStoreContentMsg(from, key_str, value)
@@ -68,12 +68,12 @@ func StoreContentRequest(cliCtx context.Context, writer http.ResponseWriter, req
 
 	txByte, err := types2.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
 	if err != nil {
-		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, "sign tx failed").Error())
+		rest.WriteErrorRes(writer, err.Error())
 		return
 	}
 	res, err := cliCtx.BroadcastSignedTx(txByte)
 	if err != nil {
-		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, "broadcast tx failed").Error())
+		rest.WriteErrorRes(writer, err.Error())
 		return
 	}
 	rest.PostProcessResponseBare(writer, cliCtx, res)
