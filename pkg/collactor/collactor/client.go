@@ -41,7 +41,7 @@ func (c *Chain) CreateClients(dst *Chain) (modified bool, err error) {
 
 		// Create the ClientState we want on 'c' tracking 'dst'
 		clientState := ibctmtypes.NewClientState(
-			dstUpdateHeader.GetHeader().ChainID,
+			dstUpdateHeader.GetHeader().Header.ChainID,
 			ibctmtypes.NewFractionFromTm(light.DefaultTrustLevel),
 			dst.GetTrustingPeriod(),
 			ubdPeriod,
@@ -104,7 +104,7 @@ func (c *Chain) CreateClients(dst *Chain) (modified bool, err error) {
 		}
 		// Create the ClientState we want on 'dst' tracking 'c'
 		clientState := ibctmtypes.NewClientState(
-			srcUpdateHeader.GetHeader().ChainID,
+			srcUpdateHeader.GetHeader().Header.ChainID,
 			ibctmtypes.NewFractionFromTm(light.DefaultTrustLevel),
 			c.GetTrustingPeriod(),
 			ubdPeriod,
@@ -182,11 +182,8 @@ func FindMatchingClient(source, counterparty *Chain, clientState *ibctmtypes.Cli
 
 	for _, identifiedClientState := range clientsResp.ClientStates {
 		// unpack any into ibc tendermint client state
-		clientStateExported := identifiedClientState.ClientState
-
-		// cast from interface to concrete type
-		existingClientState, ok := clientStateExported.(*ibctmtypes.ClientState)
-		if !ok {
+		existingClientState, err := CastClientStateToTMType(identifiedClientState.ClientState)
+		if err != nil {
 			return "", false
 		}
 
@@ -216,7 +213,13 @@ func FindMatchingClient(source, counterparty *Chain, clientState *ibctmtypes.Cli
 				continue
 			}
 
-			exportedConsState := consensusStateResp.ConsensusState
+			exportedConsState, err := clienttypes.UnpackConsensusState(consensusStateResp.ConsensusState)
+			if err != nil {
+				if source.debug {
+					source.Log(fmt.Sprintf("Error: failed to consensus state on chain %s: %v", counterparty.PathEnd.ChainID, err))
+				}
+				continue
+			}
 			existingConsensusState, ok := exportedConsState.(*ibctmtypes.ConsensusState)
 			if !ok {
 				if source.debug {
@@ -318,16 +321,15 @@ func AutoUpdateClient(src, dst *Chain, thresholdTime time.Duration) (time.Durati
 	}
 
 	// unpack any into ibc tendermint client state
-	clientStateExported := clientStateRes.ClientState
+	//clientStateExported := clientStateRes.ClientState
 	//if err != nil {
 	//	return 0, err
 	//}
 
 	// cast from interface to concrete type
-	clientState, ok := clientStateExported.(*ibctmtypes.ClientState)
-	if !ok {
-		return 0, fmt.Errorf("error when casting exported clientstate with clientID %s on chain: %s",
-			src.PathEnd.ClientID, src.PathEnd.ChainID)
+	clientState, err := CastClientStateToTMType(clientStateRes.ClientState)
+	if err != nil {
+		return 0, err
 	}
 
 	if clientState.TrustingPeriod <= thresholdTime {
@@ -342,10 +344,10 @@ func AutoUpdateClient(src, dst *Chain, thresholdTime time.Duration) (time.Durati
 		return 0, err
 	}
 
-	exportedConsState := consensusStateResp.ConsensusState
-	//if err != nil {
-	//	return 0, err
-	//}
+	exportedConsState, err := clienttypes.UnpackConsensusState(consensusStateResp.ConsensusState)
+	if err != nil {
+		return 0, err
+	}
 
 	consensusState, ok := exportedConsState.(*ibctmtypes.ConsensusState)
 	if !ok {

@@ -3,6 +3,7 @@ package types
 import (
 	"bytes"
 	"encoding/hex"
+	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	types2 "github.com/ci123chain/ci123chain/pkg/abci/types"
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
@@ -124,14 +125,19 @@ func SignCommonTx(from types2.AccAddress, nonce, gas uint64, msgs []types2.Msg, 
 func DefaultTxDecoder(cdc *codec.Codec) types2.TxDecoder {
 	return func(txBytes []byte) (types2.Tx, error) {
 		var transfer *CommonTx
-		err := cdc.UnmarshalBinaryBare(txBytes, &transfer)
+		err := codec.GetLegacyAminoByCodec(cdc).UnmarshalBinaryBare(txBytes, &transfer)
 		if err != nil {
-			var ethTx *MsgEthereumTx
-			err := cdc.UnmarshalBinaryBare(txBytes, &ethTx)
+			var pbTx PbTx
+			err = GetEncodingConfig().Marshaler.UnmarshalBinaryBare(txBytes, &pbTx)
 			if err != nil {
-				return nil, sdkerrors.ErrTxDecode
+				var ethTx *MsgEthereumTx
+				err := cdc.UnmarshalBinaryBare(txBytes, &ethTx)
+				if err != nil {
+					return nil, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("decode msg failed: %v", err.Error()))
+				}
+				return ethTx, nil
 			}
-			return ethTx, nil
+			return &pbTx, nil
 		}
 		return transfer, nil
 	}

@@ -7,7 +7,7 @@ import (
 // IBC client sentinel errors
 var (
 	ErrClientExists                           = sdkerrors.Register(SubModuleName, 2042, "light client already exists")
-	//ErrInvalidClient                          = sdkerrors.Register(SubModuleName, 3, "light client is invalid")
+	ErrInvalidClient                          = sdkerrors.Register(SubModuleName, 3, "light client is invalid")
 	ErrClientNotFound                         = sdkerrors.Register(SubModuleName, 2044, "light client not found")
 	ErrClientFrozen                           = sdkerrors.Register(SubModuleName, 2045, "light client is frozen due to misbehaviour")
 	ErrInvalidClientMetadata                  = sdkerrors.Register(SubModuleName, 2046, "invalid client metadata")
@@ -31,10 +31,10 @@ var (
 	ErrInvalidUpdateClientProposal            = sdkerrors.Register(SubModuleName, 2064, "invalid update client proposal")
 	ErrInvalidUpgradeClient                   = sdkerrors.Register(SubModuleName, 2065, "invalid client upgrade")
 )
-
-func ErrInvalidClient(desc string) error {
-	return sdkerrors.Register(SubModuleName, 2066, desc)
-}
+//
+//func ErrInvalidClient(desc string) error {
+//	return sdkerrors.Register(SubModuleName, 2066, desc)
+//}
 
 func ErrInvalidParam(desc string) error {
 	return sdkerrors.Register(SubModuleName, 2067, desc)

@@ -96,6 +96,7 @@ func allValsetConfirmsHandler(cliCtx context.Context, storeName string) http.Han
 		//todo
 		var out types.OutgoingTxBatch
 		cliCtx.Cdc.MustUnmarshalJSON(res, &out)
+
 		rest.PostProcessResponseBare(w, cliCtx.WithHeight(height), res)
 	}
 }

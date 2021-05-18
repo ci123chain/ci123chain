@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
+	"github.com/ci123chain/ci123chain/pkg/abci/codec/types"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/app/module"
@@ -44,4 +45,32 @@ func GetCodec() *codec.Codec {
 		cryptoAmino.RegisterAmino(cdc)
 	}
 	return cdc
+}
+
+var encodingConfig *EncodingConfig
+
+type EncodingConfig struct {
+	InterfaceRegistry types.InterfaceRegistry
+	Marshaler         codec.Marshaler
+	//TxConfig          client.TxConfig
+	Amino             *codec.Codec
+}
+
+func GetEncodingConfig() *EncodingConfig{
+	if encodingConfig == nil {
+		cdc := GetCodec()
+		interfaceRegistry :=  types.NewInterfaceRegistry()
+		marshaler := codec.NewProtoCodec(interfaceRegistry)
+
+		encodingConfig = &EncodingConfig{
+			InterfaceRegistry: interfaceRegistry,
+			Marshaler:         marshaler,
+			//TxConfig:          tx.NewTxConfig(marshaler, tx.DefaultSignModes),
+			Amino:             cdc,
+		}
+		sdk.RegisterInterfaces(encodingConfig.InterfaceRegistry)
+		module.ModuleBasics.RegisterInterfaces(encodingConfig.InterfaceRegistry)
+	}
+
+	return encodingConfig
 }

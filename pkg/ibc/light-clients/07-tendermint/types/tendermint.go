@@ -6,19 +6,20 @@ import (
 	clienttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/clients/types"
 	commitmenttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/commitment/types"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/exported"
-	//types2 "github.com/tendermint/tendermint/proto/tendermint/types"
+	types2 "github.com/tendermint/tendermint/proto/tendermint/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 	//types2 "github.com/tendermint/tendermint/proto/tendermint/types"
 	"time"
 )
 var _ exported.Header = &Header{}
 
-type Header struct {
-	*tmtypes.SignedHeader `json:"signed_header,omitempty" yaml:"signed_header"`
-	ValidatorSet         *tmtypes.ValidatorSet `json:"validator_set,omitempty" yaml:"validator_set"`
-	TrustedHeight        clienttypes.Height         `json:"trusted_height" yaml:"trusted_height"`
-	TrustedValidators    *tmtypes.ValidatorSet `json:"trusted_validators,omitempty" yaml:"trusted_validators"`
-}
+//type Header struct {
+//	*tmtypes.SignedHeader `json:"signed_header,omitempty" yaml:"signed_header"`
+//	ValidatorSet         *tmtypes.ValidatorSet `json:"validator_set,omitempty" yaml:"validator_set"`
+//	TrustedHeight        clienttypes.Height         `json:"trusted_height" yaml:"trusted_height"`
+//	TrustedValidators    *tmtypes.ValidatorSet `json:"trusted_validators,omitempty" yaml:"trusted_validators"`
+//}
+//
 
 // ConsensusState returns the updated consensus state associated with the header
 func (h Header) ConsensusState() *ConsensusState {
@@ -29,7 +30,7 @@ func (h Header) ConsensusState() *ConsensusState {
 	}
 }
 
-func (h Header) GetHeader() *tmtypes.SignedHeader{
+func (h Header) GetHeader() *types2.SignedHeader{
 	return h.SignedHeader
 }
 
@@ -49,7 +50,10 @@ func (h Header) ValidateBasic() error {
 	if h.Header == nil {
 		return sdkerrors.Wrap(clienttypes.ErrInvalidHeader, "tendermint header cannot be nil")
 	}
-	tmSignedHeader:= h.SignedHeader
+	tmSignedHeader, err := tmtypes.SignedHeaderFromProto(h.SignedHeader)
+	if err != nil {
+		return sdkerrors.Wrap(err, "header is not a tendermint header")
+	}
 	if err := tmSignedHeader.ValidateBasic(h.Header.ChainID); err != nil {
 		return sdkerrors.Wrap(err, "header failed basic validation")
 	}
@@ -64,7 +68,10 @@ func (h Header) ValidateBasic() error {
 	if h.ValidatorSet == nil {
 		return sdkerrors.Wrap(clienttypes.ErrInvalidHeader, "validator set is nil")
 	}
-	tmValset := h.ValidatorSet
+	tmValset, err := tmtypes.ValidatorSetFromProto(h.ValidatorSet)
+	if err != nil {
+		return sdkerrors.Wrap(err, "validator set is not tendermint validator set")
+	}
 	if !bytes.Equal(h.Header.ValidatorsHash, tmValset.Hash()) {
 		return sdkerrors.Wrap(clienttypes.ErrInvalidHeader, "validator set does not match hash")
 	}

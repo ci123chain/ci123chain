@@ -37,45 +37,45 @@ func NewQuerier(k Keeper) sdk.Querier {
 
 // ClientState implements the IBC QueryServer interface
 func clientState(c sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
-	resp, err := keeper.ClientKeeper.ClientState(c, req)
+	resp, err := keeper.ClientKeeper.ClientStateRest(c, req)
 	return resp, err
 }
 
 // ClientState implements the IBC QueryServer interface
 func clientStates(c sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
-	resp, err := keeper.ClientKeeper.ClientStates(c, req)
+	resp, err := keeper.ClientKeeper.ClientStatesRest(c, req)
 	return resp, err
 }
 
 // ClientState implements the IBC QueryServer interface
 func consensusState(c sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
-	resp, err := keeper.ClientKeeper.ConsensusState(c, req)
+	resp, err := keeper.ClientKeeper.ConsensusStateRest(c, req)
 	return resp, err
 }
 
 // ClientStates implements the IBC QueryServer interface
 func connections(c sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
-	resp, err := keeper.ConnectionKeeper.Connections(c, req)
+	resp, err := keeper.ConnectionKeeper.ConnectionsRest(c, req)
 	return resp, err
 }
 
 // ClientStates implements the IBC QueryServer interface
 func channels(c sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
-	resp, err := keeper.ChannelKeeper.Channels(c, req)
+	resp, err := keeper.ChannelKeeper.ChannelsRest(c, req)
 	return resp, err
 }
 
 func packetCommitment(c sdk.Context, req abci.RequestQuery, keeper Keeper)  ([]byte, error) {
-	resp, err := keeper.ChannelKeeper.PacketCommitment(c, req)
+	resp, err := keeper.ChannelKeeper.PacketCommitmentRest(c, req)
 	return resp, err
 }
 
 func packetCommitments(c sdk.Context, req abci.RequestQuery, keeper Keeper)  ([]byte, error) {
-	resp, err := keeper.ChannelKeeper.PacketCommitments(c, req)
+	resp, err := keeper.ChannelKeeper.PacketCommitmentsRest(c, req)
 	return resp, err
 }
 
 // UnreceivedPackets implements the IBC QueryServer interface
 func unreceivedPackets(c sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
-	return keeper.ChannelKeeper.UnreceivedPackets(c, req)
+	return keeper.ChannelKeeper.UnreceivedPacketsRest(c, req)
 }

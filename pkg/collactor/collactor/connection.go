@@ -55,6 +55,7 @@ func (c *Chain) CreateOpenConnections(dst *Chain, maxRetries uint64, to time.Dur
 		// increment the failures counter and exit if we used all retry attempts
 		case !success:
 			failed++
+			time.Sleep(5 * time.Second)
 			c.Log("retrying transaction...")
 			if failed > maxRetries {
 				return modified, fmt.Errorf("! Connection failed: [%s]client{%s}conn{%s} -> [%s]client{%s}conn{%s}",

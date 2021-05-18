@@ -3,8 +3,11 @@ package module
 import (
 	"encoding/json"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
+	codectypes "github.com/ci123chain/ci123chain/pkg/abci/codec/types"
 	"github.com/ci123chain/ci123chain/pkg/abci/types"
+	client "github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/order"
+	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	abci "github.com/tendermint/tendermint/abci/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 )
@@ -21,6 +24,9 @@ type AppModuleGenesis interface {
 type AppModuleBasic interface {
 	Name() string
 	RegisterCodec(codec *codec.Codec)
+	RegisterInterfaces(codectypes.InterfaceRegistry)
+
+	RegisterGRPCGatewayRoutes(client.Context, *runtime.ServeMux)
 
 	// 默认的 genesis 配置
 	DefaultGenesis(validators []tmtypes.GenesisValidator) json.RawMessage
@@ -44,6 +50,20 @@ func (bm BasicManager) RegisterCodec(cdc *codec.Codec)  {
 	}
 }
 
+// RegisterInterfaces registers all module interface types
+func (bm BasicManager) RegisterInterfaces(registry codectypes.InterfaceRegistry) {
+	for _, m := range bm {
+		m.RegisterInterfaces(registry)
+	}
+}
+
+// RegisterGRPCGatewayRoutes registers all module rest routes
+func (bm BasicManager) RegisterGRPCGatewayRoutes(clientCtx client.Context, rtr *runtime.ServeMux) {
+	for _, b := range bm {
+		b.RegisterGRPCGatewayRoutes(clientCtx, rtr)
+	}
+}
+
 func (bm BasicManager) DefaultGenesis(validators []tmtypes.GenesisValidator) map[string]json.RawMessage {
 	genesis := make(map[string]json.RawMessage)
 	for _, b := range bm {
@@ -58,6 +78,9 @@ func (bm BasicManager) DefaultGenesis(validators []tmtypes.GenesisValidator) map
 
 type AppModule interface {
 	AppModuleGenesis
+
+	// RegisterServices allows a module to register services
+	RegisterServices(Configurator)
 }
 
 type AppManager struct {
@@ -134,4 +157,11 @@ func (am AppManager) EndBlocker(ctx types.Context, req abci.RequestEndBlock) abc
 		}
 	}
 	return abci.ResponseEndBlock{ValidatorUpdates:validatorUpdates, Events: ctx.EventManager().ABCIEvents()}
+}
+
+// RegisterServices registers all module services
+func (am *AppManager) RegisterServices(cfg Configurator) {
+	for _, module := range am.Modules {
+		module.RegisterServices(cfg)
+	}
 }

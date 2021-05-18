@@ -3,7 +3,9 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	grpctypes "github.com/ci123chain/ci123chain/pkg/abci/types/grpc"
 	accountRpc "github.com/ci123chain/ci123chain/pkg/account/rest"
+	"github.com/ci123chain/ci123chain/pkg/app/module"
 	"github.com/ci123chain/ci123chain/pkg/client"
 	"github.com/ci123chain/ci123chain/pkg/client/cmd/rpc"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
@@ -11,6 +13,8 @@ import (
 	gravity "github.com/ci123chain/ci123chain/pkg/gravity/types"
 	txRpc "github.com/ci123chain/ci123chain/pkg/transfer/rest"
 	"github.com/ci123chain/ci123chain/pkg/util"
+	"github.com/gogo/gateway"
+	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/libs/log"
@@ -26,6 +30,9 @@ import (
 	"time"
 
 	dRest "github.com/ci123chain/ci123chain/pkg/distribution/client/rest"
+	ibctransferRest "github.com/ci123chain/ci123chain/pkg/ibc/application/transfer/client/rest"
+	ibccore "github.com/ci123chain/ci123chain/pkg/ibc/core/client/rest"
+
 	iRest "github.com/ci123chain/ci123chain/pkg/infrastructure/client/rest"
 	mRest "github.com/ci123chain/ci123chain/pkg/mint/client/rest"
 	orQuery "github.com/ci123chain/ci123chain/pkg/order"
@@ -86,6 +93,7 @@ var rpcCmd = &cobra.Command{
 // RestServer represents the Light Client Rest server
 type RestServer struct {
 	Mux     *mux.Router
+	GRPCGatewayRouter *runtime.ServeMux
 	CliCtx  context.Context
 	listener net.Listener
 }
@@ -105,7 +113,6 @@ func NewRestServer() *RestServer {
 	accountRpc.RegisterRoutes(cliCtx, r)
 	txRpc.RegisterTxRoutes(cliCtx, r)
 	// todo ibc
-	//ibc.RegisterRoutes(cliCtx, r)
 	dRest.RegisterRoutes(cliCtx, r)
 	order.RegisterTxRoutes(cliCtx, r)
 	orQuery.RegisterTxRoutes(cliCtx, r)
@@ -115,9 +122,51 @@ func NewRestServer() *RestServer {
 	iRest.RegisterRoutes(cliCtx, r)
 	gRest.RegisterRoutes(cliCtx, r, gravity.StoreKey)
 
+
+	ibctransferRest.RegisterRoutes(cliCtx, r)
+	ibccore.RegisterRoutes(cliCtx, r)
+
+	// The default JSON marshaller used by the gRPC-Gateway is unable to marshal non-nullable non-scalar fields.
+	// Using the gogo/gateway package with the gRPC-Gateway WithMarshaler option fixes the scalar field marshalling issue.
+	marshalerOption := &gateway.JSONPb{
+		EmitDefaults: true,
+		Indent:       "  ",
+		OrigName:     true,
+		AnyResolver:  cliCtx.InterfaceRegistry,
+	}
+
+	grpcRoute := runtime.NewServeMux(
+		// Custom marshaler option is required for gogo proto
+		runtime.WithMarshalerOption(runtime.MIMEWildcard, marshalerOption),
+
+		// This is necessary to get error details properly
+		// marshalled in unary requests.
+		runtime.WithProtoErrorHandler(runtime.DefaultHTTPProtoErrorHandler),
+
+		// Custom header matcher for mapping request headers to
+		// GRPC metadata
+		runtime.WithIncomingHeaderMatcher(CustomGRPCHeaderMatcher),
+	)
+	module.ModuleBasics.RegisterGRPCGatewayRoutes(cliCtx, grpcRoute)
+
 	return &RestServer{
 		Mux: r,
+		GRPCGatewayRouter: grpcRoute,
 		CliCtx: cliCtx,
+	}
+}
+
+// CustomGRPCHeaderMatcher for mapping request headers to
+// GRPC metadata.
+// HTTP headers that start with 'Grpc-Metadata-' are automatically mapped to
+// gRPC metadata after removing prefix 'Grpc-Metadata-'. We can use this
+// CustomGRPCHeaderMatcher if headers don't start with `Grpc-Metadata-`
+func CustomGRPCHeaderMatcher(key string) (string, bool) {
+	switch strings.ToLower(key) {
+	case grpctypes.GRPCBlockHeightHeader:
+		return grpctypes.GRPCBlockHeightHeader, true
+	default:
+		return runtime.DefaultHeaderMatcher(key)
 	}
 }
 
@@ -264,11 +313,17 @@ func (rs *RestServer) Start(listenAddr string, maxOpen int, readTimeout, writeTi
 	cfg.ReadTimeout = time.Duration(readTimeout) * time.Second
 	cfg.WriteTimeout = time.Duration(writeTimeout) * time.Second
 
+	rs.registerGRPCGatewayRoutes()
+
 	rs.listener, err = rpcserver.Listen(listenAddr, cfg)
 	if err != nil {
 		return
 	}
 	return rpcserver.Serve(rs.listener, rs.Mux, logger,cfg)
+}
+
+func (rs *RestServer) registerGRPCGatewayRoutes() {
+	rs.Mux.PathPrefix("/").Handler(rs.GRPCGatewayRouter)
 }
 
 func HealthCheckHandler(ctx context.Context) http.HandlerFunc  {

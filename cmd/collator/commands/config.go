@@ -334,7 +334,7 @@ type Config struct {
 func newDefaultGlobalConfig() GlobalConfig {
 	return GlobalConfig{
 		APIListenPort:  ":5183",
-		Timeout:        "10s",
+		Timeout:        "60s",
 		LightCacheSize: 20,
 	}
 }

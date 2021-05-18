@@ -1,8 +1,8 @@
 package rpc
 
 import (
-	"encoding/json"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
+	types2 "github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/client/types"
 	"github.com/gorilla/mux"
@@ -38,7 +38,7 @@ func getBlock(clientCtx context.Context, height *int64) ([]byte, error) {
 		return nil, err
 	}
 
-	return json.Marshal(res)
+	return types2.GetCodec().MarshalJSON(res)
 }
 
 // get the current blockchain height

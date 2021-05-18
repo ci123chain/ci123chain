@@ -5,6 +5,7 @@ import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	clienttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/clients/types"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/host"
+	cosmosSdk "github.com/cosmos/cosmos-sdk/types"
 	"strings"
 )
 
@@ -14,18 +15,19 @@ const (
 )
 
 var _ sdk.Msg = &MsgTransfer{}
+var _ cosmosSdk.Msg = &MsgTransfer{}
 // NewMsgTransfer creates a new MsgTransfer instance
 //nolint:interfacer
 func NewMsgTransfer(
 	sourcePort, sourceChannel string,
-	token sdk.Coin, sender sdk.AccAddress, receiver string,
+	token sdk.Coin, sender string, receiver string,
 	timeoutHeight clienttypes.Height, timeoutTimestamp uint64,
 ) *MsgTransfer {
 	return &MsgTransfer{
 		SourcePort:       sourcePort,
 		SourceChannel:    sourceChannel,
 		Token:            token,
-		Sender:           sender.String(),
+		Sender:           sender,
 		Receiver:         receiver,
 		TimeoutHeight:    timeoutHeight,
 		TimeoutTimestamp: timeoutTimestamp,
@@ -75,4 +77,16 @@ func (t MsgTransfer) Bytes() []byte {
 		panic(err)
 	}
 	return bytes
+}
+
+func (t MsgTransfer) GetSignBytes() []byte {
+	return sdk.MustSortJSON(IBCTransferCdc.MustMarshalJSON(&t))
+}
+
+func (t MsgTransfer) GetSigners() []cosmosSdk.AccAddress {
+	return []cosmosSdk.AccAddress{sdk.HexToAddress(t.Sender).Bytes()}
+}
+
+func (t MsgTransfer) Type() string {
+	return "channel_open_init"
 }

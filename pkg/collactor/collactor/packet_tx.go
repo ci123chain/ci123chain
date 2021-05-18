@@ -23,13 +23,13 @@ func (c *Chain) SendTransferMsg(dst *Chain, amount sdk.Coin, dstAddr string, toH
 	switch {
 	case toHeightOffset > 0 && toTimeOffset > 0:
 		timeoutHeight = uint64(h.Header.Height) + toHeightOffset
-		timeoutTimestamp = uint64(time.Now().Add(toTimeOffset).UnixNano())
+		timeoutTimestamp = uint64(time.Now().UTC().Add(toTimeOffset).UnixNano())
 	case toHeightOffset > 0:
 		timeoutHeight = uint64(h.Header.Height) + toHeightOffset
 		timeoutTimestamp = 0
 	case toTimeOffset > 0:
 		timeoutHeight = 0
-		timeoutTimestamp = uint64(time.Now().Add(toTimeOffset).UnixNano())
+		timeoutTimestamp = uint64(time.Now().UTC().Add(toTimeOffset).UnixNano())
 	case toHeightOffset == 0 && toTimeOffset == 0:
 		timeoutHeight = uint64(h.Header.Height + 1000)
 		timeoutTimestamp = 0

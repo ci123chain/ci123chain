@@ -3,6 +3,7 @@ package module
 import (
 	"encoding/json"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/abci/types/module"
 	"github.com/ci123chain/ci123chain/pkg/mint"
 	"github.com/ci123chain/ci123chain/pkg/mint/keeper"
 	"github.com/ci123chain/ci123chain/pkg/mint/module/basic"
@@ -44,4 +45,7 @@ func (am AppModule) BeginBlocker(ctx sdk.Context, _ abci.RequestBeginBlock) {
 func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
 	mint.EndBlocker(ctx, am.Keeper)
 	return nil
+}
+
+func (am AppModule) RegisterServices(cfg module.Configurator) {
 }

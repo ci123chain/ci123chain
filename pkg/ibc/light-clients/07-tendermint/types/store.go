@@ -23,7 +23,7 @@ func SetProcessedTime(clientStore sdk.KVStore, height exported.Height, timeNs ui
 	clientStore.Set(key, val)
 }
 
-func GetConsensusState(store sdk.KVStore, cdc *codec.Codec, height exported.Height) (*ConsensusState, error) {
+func GetConsensusState(store sdk.KVStore, cdc codec.BinaryMarshaler, height exported.Height) (*ConsensusState, error) {
 	bz := store.Get(host.ConsensusStateKey(height))
 	if bz == nil {
 		return nil, sdkerrors.Wrapf(

@@ -440,10 +440,11 @@ func (k Keeper) RecvPacket(
 	}
 
 	// check if packet timeouted by comparing it with the latest timestamp of the chain
-	if packet.GetTimeoutTimestamp() != 0 && uint64(ctx.BlockHeader().Time.UnixNano()) >= packet.GetTimeoutTimestamp() {
+	if packet.GetTimeoutTimestamp() != 0 && uint64(ctx.BlockHeader().Time.UTC().UnixNano()) >= packet.GetTimeoutTimestamp() {
 		return errors.Wrapf(
 			types.ErrPacketTimeout,
-			"block timestamp >= packet timeout timestamp (%s >= %s)", ctx.BlockHeader().Time, time.Unix(0, int64(packet.GetTimeoutTimestamp())),
+			"block timestamp >= packet timeout timestamp (%s >= %s) (%d > %d)",
+			ctx.BlockHeader().Time.UTC(), time.Unix(0, int64(packet.GetTimeoutTimestamp())).UTC(), ctx.BlockHeader().Time.UTC().UnixNano(), packet.GetTimeoutTimestamp(),
 		)
 	}
 

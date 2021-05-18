@@ -443,7 +443,7 @@ func validate(denom string, amount Int) error {
 	return nil
 }
 
-// ParseCoinNormalized parses and normalize a cli input for one coin type, returning errors if invalid or on an empty string
+// ParseCoinNormalized parses and normalize a client input for one coin type, returning errors if invalid or on an empty string
 // as well.
 // Expected format: "{amount}{denomination}"
 func ParseCoinNormalized(coinStr string) (coin Coin, err error) {

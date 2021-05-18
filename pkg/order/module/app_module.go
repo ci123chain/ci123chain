@@ -3,6 +3,7 @@ package module
 import (
 	"encoding/json"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/abci/types/module"
 	"github.com/ci123chain/ci123chain/pkg/order/keeper"
 	"github.com/ci123chain/ci123chain/pkg/order/module/basic"
 	"github.com/ci123chain/ci123chain/pkg/order/types"
@@ -48,4 +49,7 @@ func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.Va
 		}
 	}
 	return nil
+}
+
+func (am AppModule) RegisterServices(cfg module.Configurator) {
 }

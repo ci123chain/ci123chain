@@ -4,6 +4,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	ics23 "github.com/confio/ics23/go"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/gogo/protobuf/proto"
 )
 
 const (
@@ -18,6 +19,7 @@ const (
 )
 
 type ClientState interface {
+	proto.Message
 	ClientType() string
 	GetLatestHeight() Height
 	IsFrozen() bool
@@ -27,10 +29,10 @@ type ClientState interface {
 
 	Initialize(ctx sdk.Context, store sdk.KVStore, cs ConsensusState) error
 
-	CheckHeaderAndUpdateState(sdk.Context, *codec.Codec, sdk.KVStore, Header) (ClientState, ConsensusState, error)
+	CheckHeaderAndUpdateState(sdk.Context, codec.BinaryMarshaler, sdk.KVStore, Header) (ClientState, ConsensusState, error)
 	VerifyUpgradeAndUpdateState(
 		ctx sdk.Context,
-		cdc *codec.Codec,
+		cdc codec.BinaryMarshaler,
 		store sdk.KVStore,
 		newClient ClientState,
 		proofUpgradeClient,
@@ -42,7 +44,7 @@ type ClientState interface {
 
 	VerifyClientState(
 		store sdk.KVStore,
-		cdc *codec.Codec,
+		cdc codec.BinaryMarshaler,
 		height Height,
 		prefix Prefix,
 		counterpartyClientIdentifier string,
@@ -52,7 +54,7 @@ type ClientState interface {
 
 	VerifyClientConsensusState(
 		store sdk.KVStore,
-		cdc *codec.Codec,
+		cdc codec.BinaryMarshaler,
 		height Height,
 		counterpartyClientIdentifier string,
 		consensusHeight Height,
@@ -63,7 +65,7 @@ type ClientState interface {
 
 	VerifyConnectionState(
 		store sdk.KVStore,
-		cdc *codec.Codec,
+		cdc codec.BinaryMarshaler,
 		height Height,
 		prefix Prefix,
 		proof []byte,
@@ -73,7 +75,7 @@ type ClientState interface {
 
 	VerifyChannelState(
 		store sdk.KVStore,
-		cdc *codec.Codec,
+		cdc codec.BinaryMarshaler,
 		height Height,
 		prefix Prefix,
 		proof []byte,
@@ -83,7 +85,7 @@ type ClientState interface {
 	) error
 	VerifyPacketCommitment(
 		store sdk.KVStore,
-		cdc *codec.Codec,
+		cdc codec.BinaryMarshaler,
 		height Height,
 		currentTimestamp uint64,
 		delayPeriod uint64,
@@ -96,7 +98,7 @@ type ClientState interface {
 	) error
 	VerifyPacketAcknowledgement(
 		store sdk.KVStore,
-		cdc *codec.Codec,
+		cdc codec.BinaryMarshaler,
 		height Height,
 		currentTimestamp uint64,
 		delayPeriod uint64,
@@ -110,7 +112,7 @@ type ClientState interface {
 
 	VerifyPacketReceiptAbsence(
 		store sdk.KVStore,
-		cdc *codec.Codec,
+		cdc codec.BinaryMarshaler,
 		height Height,
 		currentTimestamp uint64,
 		delayPeriod uint64,
@@ -122,7 +124,7 @@ type ClientState interface {
 	) error
 	VerifyNextSequenceRecv(
 		store sdk.KVStore,
-		cdc *codec.Codec,
+		cdc codec.BinaryMarshaler,
 		height Height,
 		currentTimestamp uint64,
 		delayPeriod uint64,
@@ -135,6 +137,7 @@ type ClientState interface {
 }
 
 type ConsensusState interface {
+	proto.Message
 	ClientType() string
 	GetRoot() Root
 	GetTimestamp() uint64
@@ -143,6 +146,7 @@ type ConsensusState interface {
 
 // Header is the consensus state update information
 type Header interface {
+	proto.Message
 	ClientType() string
 	GetHeight() Height
 	ValidateBasic() error

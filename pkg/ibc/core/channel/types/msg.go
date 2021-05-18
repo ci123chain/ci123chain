@@ -5,6 +5,17 @@ import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	clienttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/clients/types"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/host"
+	cosmosSdk "github.com/cosmos/cosmos-sdk/types"
+)
+
+var (
+	_ cosmosSdk.Msg = &MsgChannelOpenInit{}
+	_ cosmosSdk.Msg = &MsgChannelOpenTry{}
+	_ cosmosSdk.Msg = &MsgChannelOpenAck{}
+	_ cosmosSdk.Msg = &MsgChannelOpenConfirm{}
+	_ cosmosSdk.Msg = &MsgAcknowledgement{}
+	_ cosmosSdk.Msg = &MsgRecvPacket{}
+	_ cosmosSdk.Msg = &MsgTimeout{}
 )
 
 var _ sdk.Msg = &MsgChannelOpenInit{}
@@ -13,14 +24,14 @@ var _ sdk.Msg = &MsgChannelOpenInit{}
 // nolint:interfacer
 func NewMsgChannelOpenInit(
 	portID, version string, channelOrder Order, connectionHops []string,
-	counterpartyPortID string, signer sdk.AccAddress,
+	counterpartyPortID string, signer string,
 ) *MsgChannelOpenInit {
 	counterparty := NewCounterparty(counterpartyPortID, "")
 	channel := NewChannel(INIT, channelOrder, counterparty, connectionHops, version)
 	return &MsgChannelOpenInit{
 		PortId:  portID,
 		Channel: channel,
-		Signer:  signer.String(),
+		Signer:  signer,
 	}
 }
 func (m MsgChannelOpenInit) Route() string {
@@ -59,6 +70,18 @@ func (m MsgChannelOpenInit) Bytes() []byte {
 	return ChannelCdc.MustMarshalBinaryLengthPrefixed(m)
 }
 
+func (m MsgChannelOpenInit) GetSignBytes() []byte {
+	panic("IBC messages do not support amino")
+}
+
+func (m MsgChannelOpenInit) GetSigners() []cosmosSdk.AccAddress {
+	return []cosmosSdk.AccAddress{sdk.HexToAddress(m.Signer).Bytes()}
+}
+
+func (m MsgChannelOpenInit) Type() string {
+	return "channel_open_init"
+}
+
 // -----------MsgChannelOpenTry
 var _ sdk.Msg = &MsgChannelOpenTry{}
 
@@ -67,7 +90,7 @@ var _ sdk.Msg = &MsgChannelOpenTry{}
 func NewMsgChannelOpenTry(
 	portID, previousChannelID, version string, channelOrder Order, connectionHops []string,
 	counterpartyPortID, counterpartyChannelID, counterpartyVersion string,
-	proofInit []byte, proofHeight clienttypes.Height, signer sdk.AccAddress,
+	proofInit []byte, proofHeight clienttypes.Height, signer string,
 ) *MsgChannelOpenTry {
 	counterparty := NewCounterparty(counterpartyPortID, counterpartyChannelID)
 	channel := NewChannel(TRYOPEN, channelOrder, counterparty, connectionHops, version)
@@ -78,7 +101,7 @@ func NewMsgChannelOpenTry(
 		CounterpartyVersion: counterpartyVersion,
 		ProofInit:           proofInit,
 		ProofHeight:         proofHeight,
-		Signer:              signer.String(),
+		Signer:              signer,
 	}
 }
 
@@ -132,13 +155,25 @@ func (m MsgChannelOpenTry) Bytes() []byte {
 	return ChannelCdc.MustMarshalBinaryLengthPrefixed(m)
 }
 
+func (m MsgChannelOpenTry) GetSignBytes() []byte {
+	panic("IBC messages do not support amino")
+}
+
+func (m MsgChannelOpenTry) GetSigners() []cosmosSdk.AccAddress {
+	return []cosmosSdk.AccAddress{sdk.HexToAddress(m.Signer).Bytes()}
+}
+
+func (m MsgChannelOpenTry) Type() string {
+	return "channel_open_try"
+}
+
 // -----------MsgChannelOpenAck
 var _ sdk.Msg = &MsgChannelOpenAck{}
 // NewMsgChannelOpenAck creates a new MsgChannelOpenAck instance
 // nolint:interfacer
 func NewMsgChannelOpenAck(
 	portID, channelID, counterpartyChannelID string, cpv string, proofTry []byte, proofHeight clienttypes.Height,
-	signer sdk.AccAddress,
+	signer string,
 ) *MsgChannelOpenAck {
 	return &MsgChannelOpenAck{
 		PortId:                portID,
@@ -147,7 +182,7 @@ func NewMsgChannelOpenAck(
 		CounterpartyVersion:   cpv,
 		ProofTry:              proofTry,
 		ProofHeight:           proofHeight,
-		Signer:                signer.String(),
+		Signer:                signer,
 	}
 }
 
@@ -191,6 +226,18 @@ func (m MsgChannelOpenAck) Bytes() []byte {
 
 }
 
+func (m MsgChannelOpenAck) GetSignBytes() []byte {
+	panic("IBC messages do not support amino")
+}
+
+func (m MsgChannelOpenAck) GetSigners() []cosmosSdk.AccAddress {
+	return []cosmosSdk.AccAddress{sdk.HexToAddress(m.Signer).Bytes()}
+}
+
+func (m MsgChannelOpenAck) Type() string {
+	return "channel_open_ack"
+}
+
 // -----------MsgChannelOpenConfirm
 var _ sdk.Msg = &MsgChannelOpenConfirm{}
 
@@ -198,14 +245,14 @@ var _ sdk.Msg = &MsgChannelOpenConfirm{}
 // nolint:interfacer
 func NewMsgChannelOpenConfirm(
 	portID, channelID string, proofAck []byte, proofHeight clienttypes.Height,
-	signer sdk.AccAddress,
+	signer string,
 ) *MsgChannelOpenConfirm {
 	return &MsgChannelOpenConfirm{
 		PortId:      portID,
 		ChannelId:   channelID,
 		ProofAck:    proofAck,
 		ProofHeight: proofHeight,
-		Signer:      signer.String(),
+		Signer:      signer,
 	}
 }
 
@@ -245,7 +292,17 @@ func (m MsgChannelOpenConfirm) Bytes() []byte {
 	return ChannelCdc.MustMarshalBinaryLengthPrefixed(m)
 }
 
+func (m MsgChannelOpenConfirm) GetSignBytes() []byte {
+	panic("IBC messages do not support amino")
+}
 
+func (m MsgChannelOpenConfirm) GetSigners() []cosmosSdk.AccAddress {
+	return []cosmosSdk.AccAddress{sdk.HexToAddress(m.Signer).Bytes()}
+}
+
+func (m MsgChannelOpenConfirm) Type() string {
+	return "channel_open_confirm"
+}
 
 var _ sdk.Msg = &MsgAcknowledgement{}
 
@@ -255,14 +312,14 @@ func NewMsgAcknowledgement(
 	packet Packet,
 	ack, proofAcked []byte,
 	proofHeight clienttypes.Height,
-	signer sdk.AccAddress,
+	signer string,
 ) *MsgAcknowledgement {
 	return &MsgAcknowledgement{
 		Packet:          packet,
 		Acknowledgement: ack,
 		ProofAcked:      proofAcked,
 		ProofHeight:     proofHeight,
-		Signer:          signer.String(),
+		Signer:          signer,
 	}
 }
 
@@ -300,6 +357,17 @@ func (m MsgAcknowledgement) Bytes() []byte {
 	return ChannelCdc.MustMarshalBinaryLengthPrefixed(m)
 }
 
+func (m MsgAcknowledgement) GetSignBytes() []byte {
+	panic("IBC messages do not support amino")
+}
+
+func (m MsgAcknowledgement) GetSigners() []cosmosSdk.AccAddress {
+	return []cosmosSdk.AccAddress{sdk.HexToAddress(m.Signer).Bytes()}
+}
+
+func (m MsgAcknowledgement) Type() string {
+	return "acknowledge_packet"
+}
 
 var _ sdk.Msg = &MsgRecvPacket{}
 
@@ -307,13 +375,13 @@ var _ sdk.Msg = &MsgRecvPacket{}
 // nolint:interfacer
 func NewMsgRecvPacket(
 	packet Packet, proofCommitment []byte, proofHeight clienttypes.Height,
-	signer sdk.AccAddress,
+	signer string,
 ) *MsgRecvPacket {
 	return &MsgRecvPacket{
 		Packet:          packet,
 		ProofCommitment: proofCommitment,
 		ProofHeight:     proofHeight,
-		Signer:          signer.String(),
+		Signer:          signer,
 	}
 }
 
@@ -348,7 +416,17 @@ func (m MsgRecvPacket) Bytes() []byte {
 	return ChannelCdc.MustMarshalBinaryLengthPrefixed(m)
 }
 
+func (m MsgRecvPacket) GetSignBytes() []byte {
+	panic("IBC messages do not support amino")
+}
 
+func (m MsgRecvPacket) GetSigners() []cosmosSdk.AccAddress {
+	return []cosmosSdk.AccAddress{sdk.HexToAddress(m.Signer).Bytes()}
+}
+
+func (m MsgRecvPacket) Type() string {
+	return "receive_packet"
+}
 
 var _ sdk.Msg = &MsgTimeout{}
 
@@ -356,14 +434,14 @@ var _ sdk.Msg = &MsgTimeout{}
 // nolint:interfacer
 func NewMsgTimeout(
 	packet Packet, nextSequenceRecv uint64, proofUnreceived []byte,
-	proofHeight clienttypes.Height, signer sdk.AccAddress,
+	proofHeight clienttypes.Height, signer string,
 ) *MsgTimeout {
 	return &MsgTimeout{
 		Packet:           packet,
 		NextSequenceRecv: nextSequenceRecv,
 		ProofUnreceived:  proofUnreceived,
 		ProofHeight:      proofHeight,
-		Signer:           signer.String(),
+		Signer:           signer,
 	}
 }
 
@@ -401,6 +479,17 @@ func (m MsgTimeout) Bytes() []byte {
 	return ChannelCdc.MustMarshalBinaryLengthPrefixed(m)
 }
 
+func (m MsgTimeout) GetSignBytes() []byte {
+	panic("IBC messages do not support amino")
+}
+
+func (m MsgTimeout) GetSigners() []cosmosSdk.AccAddress {
+	return []cosmosSdk.AccAddress{sdk.HexToAddress(m.Signer).Bytes()}
+}
+
+func (m MsgTimeout) Type() string {
+	return "timeout_packet"
+}
 
 // NewQueryPacketCommitmentResponse creates a new QueryPacketCommitmentResponse instance
 func NewQueryPacketCommitmentResponse(

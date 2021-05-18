@@ -14,7 +14,7 @@ import (
 	"strings"
 )
 
-func (q Keeper) Channels(ctx sdk.Context, r abci.RequestQuery) ([]byte, error) {
+func (q Keeper) ChannelsRest(ctx sdk.Context, r abci.RequestQuery) ([]byte, error) {
 	req, err := types.UnmarshalQueryChannelRequest(types.ChannelCdc, r.Data)
 	if err != nil {
 		return nil, err
@@ -53,7 +53,7 @@ func (q Keeper) Channels(ctx sdk.Context, r abci.RequestQuery) ([]byte, error) {
 }
 
 // PacketCommitment implements the Query/PacketCommitment gRPC method
-func (q Keeper) PacketCommitment(ctx sdk.Context, req abci.RequestQuery) ([]byte, error) {
+func (q Keeper) PacketCommitmentRest(ctx sdk.Context, req abci.RequestQuery) ([]byte, error) {
 	var reqPacketCommitment types.QueryPacketCommitmentRequest
 	if err := types.ChannelCdc.UnmarshalJSON(req.Data, &reqPacketCommitment); err != nil {
 		return nil, err
@@ -79,7 +79,7 @@ func (q Keeper) PacketCommitment(ctx sdk.Context, req abci.RequestQuery) ([]byte
 
 
 // PacketCommitments implements the Query/PacketCommitments gRPC method
-func (q Keeper) PacketCommitments(ctx sdk.Context, requst abci.RequestQuery) ([]byte, error) {
+func (q Keeper) PacketCommitmentsRest(ctx sdk.Context, requst abci.RequestQuery) ([]byte, error) {
 	var req types.QueryPacketCommitmentsRequest
 	if err := types.ChannelCdc.UnmarshalJSON(requst.Data, &req); err != nil {
 		return nil, err
@@ -135,7 +135,7 @@ func (q Keeper) PacketCommitments(ctx sdk.Context, requst abci.RequestQuery) ([]
 // commitments is correct and will not function properly if the list
 // is not up to date. Ideally the query height should equal the latest height
 // on the counterparty's client which represents this chain.
-func (q Keeper) UnreceivedPackets(ctx sdk.Context, requst abci.RequestQuery) ([]byte, error) {
+func (q Keeper) UnreceivedPacketsRest(ctx sdk.Context, requst abci.RequestQuery) ([]byte, error) {
 	var req types.QueryUnreceivedPacketsRequest
 	if err := types.ChannelCdc.UnmarshalJSON(requst.Data, &req); err != nil {
 		return nil, err

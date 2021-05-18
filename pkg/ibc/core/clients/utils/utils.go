@@ -1,15 +1,16 @@
 package utils
 
 import (
+	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/pagination"
-	"github.com/ci123chain/ci123chain/pkg/ibc/core/clients/types"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
+	ibc "github.com/ci123chain/ci123chain/pkg/ibc"
+	ibcclient "github.com/ci123chain/ci123chain/pkg/ibc/core/client"
+	"github.com/ci123chain/ci123chain/pkg/ibc/core/clients/types"
+	clienttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/clients/types"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/exported"
 	host "github.com/ci123chain/ci123chain/pkg/ibc/core/host"
-	ibcclient "github.com/ci123chain/ci123chain/pkg/ibc/core/client"
-	ibc "github.com/ci123chain/ci123chain/pkg/ibc"
 	coretypes "github.com/ci123chain/ci123chain/pkg/ibc/core/types"
-	clienttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/clients/types"
 	sdkerrors "github.com/pkg/errors"
 )
 
@@ -59,13 +60,18 @@ func QueryClientStateABCI(
 		return nil, sdkerrors.Wrap(types.ErrClientNotFound, clientID)
 	}
 
-
-	clientState, err := types.UnmarshalClientState(clientCtx.Cdc, value)
+	cdc := codec.NewProtoCodec(clientCtx.InterfaceRegistry)
+	clientState, err := types.UnmarshalClientState(cdc, value)
 	if err != nil {
 		return nil, err
 	}
 
-	clientStateRes := types.NewQueryClientStateResponse(clientState, proofBz, proofHeight)
+	anyClientState, err := types.PackClientState(clientState)
+	if err != nil {
+		return nil, err
+	}
+
+	clientStateRes := types.NewQueryClientStateResponse(anyClientState, proofBz, proofHeight)
 	return clientStateRes, nil
 }
 
@@ -85,13 +91,19 @@ func QueryConsensusStateABCI(
 	if len(value) == 0 {
 		return nil, sdkerrors.Wrap(types.ErrConsensusStateNotFound, clientID)
 	}
+	cdc := codec.NewProtoCodec(clientCtx.InterfaceRegistry)
 
-	cs, err := types.UnmarshalConsensusState(clientCtx.Cdc, value)
+	cs, err := types.UnmarshalConsensusState(cdc, value)
 	if err != nil {
 		return nil, err
 	}
 
-	return types.NewQueryConsensusStateResponse(cs, proofBz, proofHeight), nil
+	anyConsensusState, err := types.PackConsensusState(cs)
+	if err != nil {
+		return nil, err
+	}
+
+	return types.NewQueryConsensusStateResponse(anyConsensusState, proofBz, proofHeight), nil
 }
 
 
@@ -109,7 +121,11 @@ func QueryClientStatesABCI(
 			CountTotal: true,
 		},
 	}
-	key := clientCtx.Cdc.MustMarshalJSON(req)
+	//cdc := codec.NewProtoCodec(clientCtx.InterfaceRegistry)
+	key, err := types.IBCClientCodec.MarshalJSON(&req)
+	if err != nil {
+		return nil, err
+	}
 	value, _, err := ibcclient.QueryABCI(clientCtx, path, key, false)
 	if err != nil {
 		return nil, err
@@ -120,8 +136,10 @@ func QueryClientStatesABCI(
 		return nil, sdkerrors.Wrap(types.ErrClientNotFound, "clients not found")
 	}
 
+	var clientStatesResp types.QueryClientStatesResponse
+	err = types.SubModuleCdc.UnmarshalBinaryBare(value, &clientStatesResp)
 
-	clientStatesResp, err := types.UnmarshalClientStateResp(clientCtx.Cdc, value)
+	_, err = types.SubModuleCdc.MarshalJSON(&clientStatesResp)
 	return &clientStatesResp, err
 }
 

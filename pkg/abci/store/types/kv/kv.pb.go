@@ -120,11 +120,11 @@ func (m *Pair) GetValue() []byte {
 }
 
 func init() {
-	proto.RegisterType((*Pairs)(nil), "cosmos.base.kv.v1beta1.Pairs")
-	proto.RegisterType((*Pair)(nil), "cosmos.base.kv.v1beta1.Pair")
+	proto.RegisterType((*Pairs)(nil), "weelink.base.kv.v1beta1.Pairs")
+	proto.RegisterType((*Pair)(nil), "weelink.base.kv.v1beta1.Pair")
 }
 
-func init() { proto.RegisterFile("cosmos/base/kv/v1beta1/kv.proto", fileDescriptor_a44e87fe7182bb73) }
+func init() { proto.RegisterFile("weelink/base/kv/v1beta1/kv.proto", fileDescriptor_a44e87fe7182bb73) }
 
 var fileDescriptor_a44e87fe7182bb73 = []byte{
 	// 221 bytes of a gzipped FileDescriptorProto

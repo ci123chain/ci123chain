@@ -13,7 +13,7 @@ import (
 )
 
 // Connections implements the Query/Connections gRPC method
-func (q Keeper) Connections(ctx sdk.Context, r abci.RequestQuery) ([]byte, error) {
+func (q Keeper) ConnectionsRest(ctx sdk.Context, r abci.RequestQuery) ([]byte, error) {
 
 	req, err := types.UnmarshalConnectionRequest(types.IBCConnectionCodec, r.Data)
 	if err != nil {

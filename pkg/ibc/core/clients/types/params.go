@@ -17,10 +17,10 @@ var (
 )
 
 
-type Params struct {
-	// allowed_clients defines the list of allowed client state types.
-	AllowedClients []string `json:"allowed_clients,omitempty" yaml:"allowed_clients"`
-}
+//type Params struct {
+//	// allowed_clients defines the list of allowed client state types.
+//	AllowedClients []string `json:"allowed_clients,omitempty" yaml:"allowed_clients"`
+//}
 
 // ParamKeyTable types declaration for parameters
 func ParamKeyTable() paramtypes.KeyTable {

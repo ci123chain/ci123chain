@@ -19,7 +19,7 @@ func NewClientContextFromViper(cdc *codec.Codec) (context.Context, error) {
 	var rpc client.Client
 	var err error
 	if nodeURI != "" {
-		rpc, err = http.New(nodeURI, "/websocket")
+		rpc, err = http.NewWithTimeout(nodeURI, "/websocket", 60)
 		if err != nil {
 			os.Exit(1)
 		}

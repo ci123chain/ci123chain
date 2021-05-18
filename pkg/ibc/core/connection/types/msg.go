@@ -1,18 +1,27 @@
 package types
 
 import (
-	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	clienttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/clients/types"
 	commitmenttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/commitment/types"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/exported"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/host"
+	cosmosSdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/pkg/errors"
 )
 
 var _ sdk.Msg = &MsgConnectionOpenInit{}
 var _ sdk.Msg = &MsgConnectionOpenTry{}
 var _ sdk.Msg = &MsgConnectionOpenAck{}
 var _ sdk.Msg = &MsgConnectionOpenConfirm{}
+
+var (
+	_ cosmosSdk.Msg = &MsgConnectionOpenInit{}
+	_ cosmosSdk.Msg = &MsgConnectionOpenTry{}
+	_ cosmosSdk.Msg = &MsgConnectionOpenAck{}
+	_ cosmosSdk.Msg = &MsgConnectionOpenConfirm{}
+)
 
 func (msg MsgConnectionOpenInit) MsgType() string {
 	return "connection_open_init"
@@ -33,7 +42,7 @@ func (msg MsgConnectionOpenInit) Bytes() []byte {
 func NewMsgConnectionOpenInit(
 	clientID, counterpartyClientID string,
 	counterpartyPrefix commitmenttypes.MerklePrefix,
-	version *Version, delayPeriod uint64, signer sdk.AccAddress,
+	version *Version, delayPeriod uint64, signer string,
 ) *MsgConnectionOpenInit {
 	// counterparty must have the same delay period
 	counterparty := NewCounterparty(counterpartyClientID, "", counterpartyPrefix)
@@ -42,7 +51,7 @@ func NewMsgConnectionOpenInit(
 		Counterparty: counterparty,
 		Version:      version,
 		DelayPeriod:  delayPeriod,
-		Signer:       signer.String(),
+		Signer:       signer,
 	}
 }
 
@@ -60,21 +69,21 @@ func (msg MsgConnectionOpenInit) Type() string {
 // ValidateBasic implements sdk.Msg.
 func (msg MsgConnectionOpenInit) ValidateBasic() error {
 	if err := host.ClientIdentifierValidator(msg.ClientId); err != nil {
-		return ErrInvalidParam( "invalid client ID")
+		return sdkerrors.Wrap(err, "invalid client ID")
 	}
 	if msg.Counterparty.ConnectionId != "" {
-		return ErrInvalidParam(  "counterparty connection identifier must be empty")
+		return sdkerrors.Wrap(ErrInvalidCounterparty, "counterparty connection identifier must be empty")
 	}
 
 	// NOTE: Version can be nil on MsgConnectionOpenInit
 	if msg.Version != nil {
 		if err := ValidateVersion(msg.Version); err != nil {
-			return ErrInvalidParam( "basic validation of the provided version failed")
+			return sdkerrors.Wrap(err, "basic validation of the provided version failed")
 		}
 	}
 	_ = sdk.HexToAddress(msg.Signer)
 	if err := msg.Counterparty.ValidateBasic(); err != nil {
-		return ErrInvalidParam(  err.Error())
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "string could not be parsed as address: %v", err)
 	}
 	return nil
 }
@@ -86,9 +95,8 @@ func (msg MsgConnectionOpenInit) GetSignBytes() []byte {
 }
 
 // GetSigners implements sdk.Msg
-func (msg MsgConnectionOpenInit) GetSigners() []sdk.AccAddress {
-	accAddr := sdk.HexToAddress(msg.Signer)
-	return []sdk.AccAddress{accAddr}
+func (msg MsgConnectionOpenInit) GetSigners() []cosmosSdk.AccAddress {
+	return []cosmosSdk.AccAddress{sdk.HexToAddress(msg.Signer).Bytes()}
 }
 
 
@@ -103,13 +111,14 @@ func NewMsgConnectionOpenTry(
 	counterpartyPrefix commitmenttypes.MerklePrefix,
 	counterpartyVersions []*Version, delayPeriod uint64,
 	proofInit, proofClient, proofConsensus []byte,
-	proofHeight, consensusHeight clienttypes.Height, signer sdk.AccAddress,
+	proofHeight, consensusHeight clienttypes.Height, signer string,
 ) *MsgConnectionOpenTry {
 	counterparty := NewCounterparty(counterpartyClientID, counterpartyConnectionID, counterpartyPrefix)
+	csAny, _ := clienttypes.PackClientState(counterpartyClient)
 	return &MsgConnectionOpenTry{
 		PreviousConnectionId: previousConnectionID,
 		ClientId:             clientID,
-		ClientState:          counterpartyClient,
+		ClientState:          csAny,
 		Counterparty:         counterparty,
 		CounterpartyVersions: counterpartyVersions,
 		DelayPeriod:          delayPeriod,
@@ -118,7 +127,7 @@ func NewMsgConnectionOpenTry(
 		ProofConsensus:       proofConsensus,
 		ProofHeight:          proofHeight,
 		ConsensusHeight:      consensusHeight,
-		Signer:               signer.String(),
+		Signer:               signer,
 	}
 }
 
@@ -140,53 +149,56 @@ func (msg MsgConnectionOpenTry) ValidateBasic() error {
 	// an empty connection identifier indicates that a connection identifier should be generated
 	if msg.PreviousConnectionId != "" {
 		if !IsValidConnectionID(msg.PreviousConnectionId) {
-			return ErrInvalidParam( "invalid previous connection ID")
+			return sdkerrors.Wrap(ErrInvalidConnectionIdentifier, "invalid previous connection ID")
 		}
 	}
 	if err := host.ClientIdentifierValidator(msg.ClientId); err != nil {
-		return ErrInvalidParam( "invalid client ID")
+		return errors.Wrap(err, "invalid client ID")
 	}
 	// counterparty validate basic allows empty counterparty connection identifiers
 	if err := host.ConnectionIdentifierValidator(msg.Counterparty.ConnectionId); err != nil {
-		return ErrInvalidParam( "invalid counterparty connection ID")
+		return sdkerrors.Wrap(err, "invalid counterparty connection ID")
 	}
 	if msg.ClientState == nil {
-		return ErrInvalidParam(  "counterparty client is nil")
+		return sdkerrors.Wrap(clienttypes.ErrInvalidClient, "counterparty client is nil")
 	}
-	if err := msg.ClientState.Validate(); err != nil {
-		return ErrInvalidParam( "counterparty client is invalid")
+	clientState, err := clienttypes.UnpackClientState(msg.ClientState)
+	if err != nil {
+		return sdkerrors.Wrapf(clienttypes.ErrInvalidClient, "unpack err: %v", err)
+	}
+	if err := clientState.Validate(); err != nil {
+		return sdkerrors.Wrap(err, "counterparty client is invalid")
 	}
 	if len(msg.CounterpartyVersions) == 0 {
-		return ErrInvalidParam( "empty counterparty versions")
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidVersion, "empty counterparty versions")
 	}
 	for i, version := range msg.CounterpartyVersions {
 		if err := ValidateVersion(version); err != nil {
-			return ErrInvalidParam( fmt.Sprintf("basic validation failed on version with index %d", i))
+			return sdkerrors.Wrapf(err, "basic validation failed on version with index %d", i)
 		}
 	}
 	if len(msg.ProofInit) == 0 {
-		return ErrInvalidParam( "cannot submit an empty proof init")
+		return sdkerrors.Wrap(commitmenttypes.ErrInvalidProof, "cannot submit an empty proof init")
 	}
 	if len(msg.ProofClient) == 0 {
-		return ErrInvalidParam( "cannot submit empty proof client")
+		return sdkerrors.Wrap(commitmenttypes.ErrInvalidProof, "cannot submit empty proof client")
 	}
 	if len(msg.ProofConsensus) == 0 {
-		return ErrInvalidParam( "cannot submit an empty proof of consensus state")
+		return sdkerrors.Wrap(commitmenttypes.ErrInvalidProof, "cannot submit an empty proof of consensus state")
 	}
 	if msg.ProofHeight.IsZero() {
-		return ErrInvalidParam( "proof height must be non-zero")
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidHeight, "proof height must be non-zero")
 	}
 	if msg.ConsensusHeight.IsZero() {
-		return ErrInvalidParam( "consensus height must be non-zero")
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidHeight, "consensus height must be non-zero")
 	}
 
 	return msg.Counterparty.ValidateBasic()
 }
 
 // GetSigners implements sdk.Msg
-func (msg MsgConnectionOpenTry) GetSigners() []sdk.AccAddress {
-	accAddr := sdk.HexToAddress(msg.Signer)
-	return []sdk.AccAddress{accAddr}
+func (msg MsgConnectionOpenTry) GetSigners() []cosmosSdk.AccAddress {
+	return []cosmosSdk.AccAddress{sdk.HexToAddress(msg.Signer).Bytes()}
 }
 
 
@@ -200,6 +212,10 @@ func (msg MsgConnectionOpenTry) Bytes() []byte {
 	panic("IBC messages do not support amino")
 }
 
+func (msg MsgConnectionOpenTry) GetSignBytes() []byte {
+	panic("IBC messages do not support amino")
+}
+
 
 // ------------MsgConnectionOpenAck
 
@@ -210,19 +226,20 @@ func NewMsgConnectionOpenAck(
 	proofTry, proofClient, proofConsensus []byte,
 	proofHeight, consensusHeight clienttypes.Height,
 	version *Version,
-	signer sdk.AccAddress,
+	signer string,
 ) *MsgConnectionOpenAck {
+	csAny, _ := clienttypes.PackClientState(counterpartyClient)
 	return &MsgConnectionOpenAck{
 		ConnectionId:             connectionID,
 		CounterpartyConnectionId: counterpartyConnectionID,
-		ClientState:              counterpartyClient,
+		ClientState:              csAny,
 		ProofTry:                 proofTry,
 		ProofClient:              proofClient,
 		ProofConsensus:           proofConsensus,
 		ProofHeight:              proofHeight,
 		ConsensusHeight:          consensusHeight,
 		Version:                  version,
-		Signer:                   signer.String(),
+		Signer:                   signer,
 	}
 }
 
@@ -243,31 +260,35 @@ func (msg MsgConnectionOpenAck) ValidateBasic() error {
 		return ErrInvalidConnectionIdentifier
 	}
 	if err := host.ConnectionIdentifierValidator(msg.CounterpartyConnectionId); err != nil {
-		return ErrInvalidParam( "invalid counterparty connection ID")
+		return sdkerrors.Wrap(err, "invalid counterparty connection ID")
 	}
 	if err := ValidateVersion(msg.Version); err != nil {
 		return err
 	}
 	if msg.ClientState == nil {
-		return ErrInvalidParam( "counterparty client is nil")
+		return sdkerrors.Wrap(clienttypes.ErrInvalidClient, "counterparty client is nil")
 	}
-	if err := msg.ClientState.Validate(); err != nil {
-		return ErrInvalidParam( "counterparty client is invalid")
+	clientState, err := clienttypes.UnpackClientState(msg.ClientState)
+	if err != nil {
+		return sdkerrors.Wrapf(clienttypes.ErrInvalidClient, "unpack err: %v", err)
+	}
+	if err := clientState.Validate(); err != nil {
+		return sdkerrors.Wrap(err, "counterparty client is invalid")
 	}
 	if len(msg.ProofTry) == 0 {
-		return ErrInvalidParam( "cannot submit an empty proof try")
+		return sdkerrors.Wrap(commitmenttypes.ErrInvalidProof, "cannot submit an empty proof try")
 	}
 	if len(msg.ProofClient) == 0 {
-		return ErrInvalidParam( "cannot submit empty proof client")
+		return sdkerrors.Wrap(commitmenttypes.ErrInvalidProof, "cannot submit empty proof client")
 	}
 	if len(msg.ProofConsensus) == 0 {
-		return ErrInvalidParam(  "cannot submit an empty proof of consensus state")
+		return sdkerrors.Wrap(commitmenttypes.ErrInvalidProof, "cannot submit an empty proof of consensus state")
 	}
 	if msg.ProofHeight.IsZero() {
-		return ErrInvalidParam( "proof height must be non-zero")
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidHeight, "proof height must be non-zero")
 	}
 	if msg.ConsensusHeight.IsZero() {
-		return ErrInvalidParam(  "consensus height must be non-zero")
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidHeight, "consensus height must be non-zero")
 	}
 
 	return nil
@@ -278,15 +299,16 @@ func (m MsgConnectionOpenAck) GetFromAddress() sdk.AccAddress {
 }
 
 // GetSigners implements sdk.Msg
-func (msg MsgConnectionOpenAck) GetSigners() []sdk.AccAddress {
-	accAddr := sdk.HexToAddress(msg.Signer)
-	return []sdk.AccAddress{accAddr}
+func (msg MsgConnectionOpenAck) GetSigners() []cosmosSdk.AccAddress {
+	return []cosmosSdk.AccAddress{sdk.HexToAddress(msg.Signer).Bytes()}
 }
-
 func (m MsgConnectionOpenAck) Bytes() []byte {
 	panic("IBC messages do not support amino")
 }
 
+func (m MsgConnectionOpenAck) GetSignBytes() []byte {
+	panic("IBC messages do not support amino")
+}
 
 // ------------MsgConnectionOpenConfirm
 
@@ -294,13 +316,13 @@ func (m MsgConnectionOpenAck) Bytes() []byte {
 //nolint:interfacer
 func NewMsgConnectionOpenConfirm(
 	connectionID string, proofAck []byte, proofHeight clienttypes.Height,
-	signer sdk.AccAddress,
+	signer string,
 ) *MsgConnectionOpenConfirm {
 	return &MsgConnectionOpenConfirm{
 		ConnectionId: connectionID,
 		ProofAck:     proofAck,
 		ProofHeight:  proofHeight,
-		Signer:       signer.String(),
+		Signer:       signer,
 	}
 }
 
@@ -321,10 +343,10 @@ func (msg MsgConnectionOpenConfirm) ValidateBasic() error {
 		return ErrInvalidConnectionIdentifier
 	}
 	if len(msg.ProofAck) == 0 {
-		return ErrInvalidParam( "cannot submit an empty proof ack")
+		return sdkerrors.Wrap(commitmenttypes.ErrInvalidProof, "cannot submit an empty proof ack")
 	}
 	if msg.ProofHeight.IsZero() {
-		return ErrInvalidParam( "proof height must be non-zero")
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidHeight, "proof height must be non-zero")
 	}
 	//_, err := sdk.AccAddressFromBech32(msg.Signer)
 	//if err != nil {
@@ -341,7 +363,10 @@ func (m MsgConnectionOpenConfirm) Bytes() []byte {
 	panic("IBC messages do not support amino")
 }
 // GetSigners implements sdk.Msg
-func (msg MsgConnectionOpenConfirm) GetSigners() []sdk.AccAddress {
-	accAddr := sdk.HexToAddress(msg.Signer)
-	return []sdk.AccAddress{accAddr}
+func (msg MsgConnectionOpenConfirm) GetSigners() []cosmosSdk.AccAddress {
+	return []cosmosSdk.AccAddress{sdk.HexToAddress(msg.Signer).Bytes()}
+}
+
+func (m MsgConnectionOpenConfirm) GetSignBytes() []byte {
+	panic("IBC messages do not support amino")
 }

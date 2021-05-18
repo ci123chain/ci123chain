@@ -4,10 +4,14 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/store"
+	"github.com/ci123chain/ci123chain/pkg/telemetry"
 	"github.com/ci123chain/ci123chain/pkg/transfer"
+	"google.golang.org/grpc/codes"
+	grpcstatus "google.golang.org/grpc/status"
 	"io"
 	"runtime/debug"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 
@@ -61,6 +65,9 @@ type BaseApp struct {
 	queryRouter QueryRouter          // router for redirecting query calls
 	//handler     sdk.Handler
 	router 		sdk.Router
+
+	grpcQueryRouter   *GRPCQueryRouter     // router for redirecting gRPC query calls
+	msgServiceRouter  *MsgServiceRouter    // router for redirecting Msg service messages
 
 	txDecoder   sdk.TxDecoder // unmarshal []byte into sdk.Tx
 
@@ -235,6 +242,8 @@ func NewBaseApp(name string, logger log.Logger, ldb dbm.DB, cdb dbm.DB, cacheDir
 		//cms:         store.NewBaseMultiStore(db),
 		queryRouter: NewQueryRouter(),
 		router: 	 sdk.NewRouter(),
+		grpcQueryRouter:  NewGRPCQueryRouter(),
+		msgServiceRouter: NewMsgServiceRouter(),
 		txDecoder:   txDecoder,
 	}
 
@@ -316,6 +325,12 @@ func (app *BaseApp) LastCommitID() sdk.CommitID {
 func (app *BaseApp) LastBlockHeight() int64 {
 	return app.cms.LastCommitID().Version
 }
+
+// GRPCQueryRouter returns the GRPCQueryRouter of a BaseApp.
+func (app *BaseApp) GRPCQueryRouter() *GRPCQueryRouter { return app.grpcQueryRouter }
+
+// MsgServiceRouter returns the MsgServiceRouter of a BaseApp.
+func (app *BaseApp) MsgServiceRouter() *MsgServiceRouter { return app.msgServiceRouter }
 
 // SetHandler sets tx handler
 //func (app *BaseApp) SetHandler(h sdk.Handler) {
@@ -451,6 +466,26 @@ func splitPath(requestPath string) (path []string) {
 // Implements ABCI.
 // Delegates to CommitMultiStore if it implements Queryable
 func (app *BaseApp) Query(req abci.RequestQuery) (res abci.ResponseQuery) {
+	defer telemetry.MeasureSince(time.Now(), "abci", "query")
+
+	// Add panic recovery for all queries.
+	defer func() {
+		if r := recover(); r != nil {
+			res = sdkerrors.QueryResult(sdkerrors.Wrapf(sdkerrors.ErrPanic, "%v", r))
+		}
+	}()
+
+	// when a client did not provide a query height, manually inject the latest
+	if req.Height == 0 {
+		req.Height = app.LastBlockHeight()
+	}
+
+	// handle gRPC routes first rather than calling splitPath because '/' characters
+	// are used as part of gRPC paths
+	if grpcHandler := app.grpcQueryRouter.Route(req.Path); grpcHandler != nil {
+		return app.handleQueryGRPC(grpcHandler, req)
+	}
+
 	path := splitPath(req.Path)
 	if len(path) == 0 {
 		msg := "no query path provided"
@@ -470,6 +505,90 @@ func (app *BaseApp) Query(req abci.RequestQuery) (res abci.ResponseQuery) {
 
 	msg := "unknown query path"
 	return sdkerrors.QueryResult(sdkerrors.Wrap(sdkerrors.ErrParams, msg))
+}
+
+func (app *BaseApp) handleQueryGRPC(handler GRPCQueryHandler, req abci.RequestQuery) abci.ResponseQuery {
+	ctx, err := app.createQueryContext(req.Height, req.Prove)
+	if err != nil {
+		return sdkerrors.QueryResult(err)
+	}
+
+	res, err := handler(ctx, req)
+	if err != nil {
+		res = sdkerrors.QueryResult(gRPCErrorToSDKError(err))
+		res.Height = req.Height
+		return res
+	}
+
+	return res
+}
+
+// createQueryContext creates a new sdk.Context for a query, taking as args
+// the block height and whether the query needs a proof or not.
+func (app *BaseApp) createQueryContext(height int64, prove bool) (sdk.Context, error) {
+	if err := checkNegativeHeight(height); err != nil {
+		return sdk.Context{}, err
+	}
+
+	// when a client did not provide a query height, manually inject the latest
+	if height == 0 {
+		height = app.LastBlockHeight()
+	}
+
+	if height <= 1 && prove {
+		return sdk.Context{},
+			sdkerrors.Wrap(
+				sdkerrors.ErrInvalidRequest,
+				"cannot query with proof when height <= 1; please provide a valid height",
+			)
+	}
+
+	cacheMS := app.cms.CacheMultiStore()
+	//if err != nil {
+	//	return sdk.Context{},
+	//		sdkerrors.Wrapf(
+	//			sdkerrors.ErrInvalidRequest,
+	//			"failed to load state at height %d; %s (latest height: %d)", height, err, app.LastBlockHeight(),
+	//		)
+	//}
+
+	// branch the commit-multistore for safety
+	ctx := sdk.NewContext(
+		cacheMS, app.checkState.ctx.BlockHeader(), true, app.Logger,
+	)
+
+	return ctx, nil
+}
+
+func checkNegativeHeight(height int64) error {
+	if height < 0 {
+		// Reject invalid heights.
+		return sdkerrors.Wrap(
+			sdkerrors.ErrInvalidRequest,
+			"cannot query with height < 0; please provide a valid height",
+		)
+	}
+	return nil
+}
+
+func gRPCErrorToSDKError(err error) error {
+	status, ok := grpcstatus.FromError(err)
+	if !ok {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, err.Error())
+	}
+
+	switch status.Code() {
+	case codes.NotFound:
+		return sdkerrors.Wrap(sdkerrors.ErrKeyNotFound, err.Error())
+	case codes.InvalidArgument:
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, err.Error())
+	case codes.FailedPrecondition:
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, err.Error())
+	case codes.Unauthenticated:
+		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, err.Error())
+	default:
+		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, err.Error())
+	}
 }
 
 func handleQueryApp(app *BaseApp, path []string, req abci.RequestQuery) (res abci.ResponseQuery) {

@@ -141,7 +141,7 @@ func (rp relayMsgRecvPacket) Msg(src, dst *Chain) (sdk.Msg, error) {
 		packet,
 		rp.dstComRes.Proof,
 		rp.dstComRes.ProofHeight,
-		src.MustGetAddress(),
+		src.MustGetAddressString(),
 	)
 	return msg, nil
 }
@@ -232,7 +232,7 @@ func (rp *relayMsgPacketAck) Msg(src, dst *Chain) (sdk.Msg, error) {
 		rp.ack,
 		rp.dstComRes.Proof,
 		rp.dstComRes.ProofHeight,
-		src.MustGetAddress(),
+		src.MustGetAddressString(),
 	)
 	return msg, nil
 }

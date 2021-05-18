@@ -1,0 +1,71 @@
+package account
+
+import (
+	"encoding/json"
+	"github.com/ci123chain/ci123chain/pkg/abci/codec"
+	codectypes "github.com/ci123chain/ci123chain/pkg/abci/codec/types"
+	"github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/abci/types/module"
+	acc "github.com/ci123chain/ci123chain/pkg/account"
+	"github.com/ci123chain/ci123chain/pkg/account/keeper"
+	acc_types "github.com/ci123chain/ci123chain/pkg/account/types"
+	client "github.com/ci123chain/ci123chain/pkg/client/context"
+	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	abci "github.com/tendermint/tendermint/abci/types"
+	tmtypes "github.com/tendermint/tendermint/types"
+)
+
+var (
+	_ module.AppModule = AppModule{}
+)
+
+type AppModule struct {
+	AppModuleBasic
+
+	AccountKeeper	keeper.AccountKeeper
+}
+
+func (am AppModule) EndBlock(ctx types.Context, req abci.RequestEndBlock) []abci.ValidatorUpdate {
+	return nil
+}
+
+func (am AppModule) BeginBlocker(ctx types.Context, req abci.RequestBeginBlock) {
+	//do you want to do
+}
+
+func (am AppModule) InitGenesis(ctx types.Context, data json.RawMessage) []abci.ValidatorUpdate  {
+	var genesisState acc_types.GenesisState
+	acc.ModuleCdc.MustUnmarshalJSON(data, &genesisState)
+	acc.InitGenesis(ctx, acc.ModuleCdc, am.AccountKeeper, genesisState)
+	return nil
+}
+
+
+type AppModuleBasic struct {
+}
+
+func (am AppModuleBasic) RegisterCodec(codec *codec.Codec) {
+	acc_types.RegisterCodec(codec)
+}
+
+func (am AppModuleBasic) RegisterInterfaces(registry codectypes.InterfaceRegistry) {
+	return
+}
+
+func (am AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *runtime.ServeMux) {}
+
+func (am AppModuleBasic) DefaultGenesis(_ []tmtypes.GenesisValidator) json.RawMessage {
+	return acc.ModuleCdc.MustMarshalJSON(acc.GenesisState{})
+}
+
+func (am AppModuleBasic) Name() string {
+	return acc.ModuleName
+}
+
+func (am AppModule) Committer(ctx types.Context) {
+
+}
+
+
+func (am AppModule) RegisterServices(cfg module.Configurator) {
+}

@@ -9,6 +9,7 @@ import (
 	clienttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/clients/types"
 	conntypes "github.com/ci123chain/ci123chain/pkg/ibc/core/connection/types"
 	tmclient "github.com/ci123chain/ci123chain/pkg/ibc/light-clients/07-tendermint/types"
+	"github.com/pkg/errors"
 )
 
 // CreateClient creates an sdk.Msg to update the client on src with consensus state from dst
@@ -21,11 +22,14 @@ func (c *Chain) CreateClient(
 		panic(err)
 	}
 
-	msg := clienttypes.NewMsgCreateClient(
+	msg, err := clienttypes.NewMsgCreateClient(
 		clientState,
 		dstHeader.ConsensusState(),
-		c.MustGetAddress(), // 'MustGetAddress' must be called directly before calling 'NewMsg...'
+		c.MustGetAddressString(), // 'MustGetAddress' must be called directly before calling 'NewMsg...'
 	)
+	if err != nil {
+		panic(err)
+	}
 
 	if err := msg.ValidateBasic(); err != nil {
 		panic(err)
@@ -48,7 +52,7 @@ func (c *Chain) ConnInit(counterparty *Chain) ([]sdk.Msg, error) {
 		defaultChainPrefix,
 		version,
 		defaultDelayPeriod,
-		c.MustGetAddress(), // 'MustGetAddress' must be called directly before calling 'NewMsg...'
+		c.MustGetAddressString(), // 'MustGetAddress' must be called directly before calling 'NewMsg...'
 	)
 
 	return []sdk.Msg{updateMsg, msg}, nil
@@ -86,8 +90,9 @@ func (c *Chain) ConnTry(
 		consensusStateProof,
 		proofHeight,
 		clientState.GetLatestHeight().(clienttypes.Height),
-		c.MustGetAddress(), // 'MustGetAddress' must be called directly before calling 'NewMsg...'
+		c.MustGetAddressString(), // 'MustGetAddress' must be called directly before calling 'NewMsg...'
 	)
+
 	if err := msg.ValidateBasic(); err != nil {
 		return nil, err
 	}
@@ -122,8 +127,9 @@ func (c *Chain) ConnAck(
 		proofHeight,
 		clientState.GetLatestHeight().(clienttypes.Height),
 		conntypes.DefaultIBCVersion,
-		c.MustGetAddress(), // 'MustGetAddress' must be called directly before calling 'NewMsg...'
+		c.MustGetAddressString(), // 'MustGetAddress' must be called directly before calling 'NewMsg...'
 	)
+
 	if err := msg.ValidateBasic(); err != nil {
 		return nil, err
 	}
@@ -143,13 +149,16 @@ func (c *Chain) ConnConfirm(counterparty *Chain) ([]sdk.Msg, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	if counterpartyConnState.Connection.State != conntypes.OPEN {
+		return nil, errors.New(fmt.Sprintf("counterparty connection state error, expected Open(3), Got %d", counterpartyConnState.Connection.State))
+	}
 	msg := conntypes.NewMsgConnectionOpenConfirm(
 		c.PathEnd.ConnectionID,
 		counterpartyConnState.Proof,
 		counterpartyConnState.ProofHeight,
-		c.MustGetAddress(), // 'MustGetAddress' must be called directly before calling 'NewMsg...'
+		c.MustGetAddressString(), // 'MustGetAddress' must be called directly before calling 'NewMsg...'
 	)
+
 	if err := msg.ValidateBasic(); err != nil {
 		return nil, err
 	}
@@ -170,7 +179,7 @@ func (c *Chain) ChanInit(counterparty *Chain) ([]sdk.Msg, error) {
 		c.PathEnd.GetOrder(),
 		[]string{c.PathEnd.ConnectionID},
 		counterparty.PathEnd.PortID,
-		c.MustGetAddress(), // 'MustGetAddress' must be called directly before calling 'NewMsg...'
+		c.MustGetAddressString(), // 'MustGetAddress' must be called directly before calling 'NewMsg...'
 	)
 	if err := msg.ValidateBasic(); err != nil {
 		return nil, err
@@ -205,8 +214,9 @@ func (c *Chain) ChanTry(
 		counterpartyChannelRes.Channel.Version,
 		counterpartyChannelRes.Proof,
 		counterpartyChannelRes.ProofHeight,
-		c.MustGetAddress(), // 'MustGetAddress' must be called directly before calling 'NewMsg...'
+		c.MustGetAddressString(), // 'MustGetAddress' must be called directly before calling 'NewMsg...'
 	)
+
 	if err := msg.ValidateBasic(); err != nil {
 		return nil, err
 	}
@@ -236,8 +246,9 @@ func (c *Chain) ChanAck(
 		counterpartyChannelRes.Channel.Version,
 		counterpartyChannelRes.Proof,
 		counterpartyChannelRes.ProofHeight,
-		c.MustGetAddress(), // 'MustGetAddress' must be called directly before calling 'NewMsg...'
+		c.MustGetAddressString(), // 'MustGetAddress' must be called directly before calling 'NewMsg...'
 	)
+
 	if err := msg.ValidateBasic(); err != nil {
 		return nil, err
 	}
@@ -256,13 +267,16 @@ func (c *Chain) ChanConfirm(counterparty *Chain) ([]sdk.Msg, error) {
 	if err != nil {
 		return nil, err
 	}
+	if counterpartyChanState.Channel.State != chantypes.OPEN {
+		return nil, errors.New(fmt.Sprintf("counterparty channel state error, expected Open(3), Got %d", counterpartyChanState.Channel.State))
+	}
 
 	msg := chantypes.NewMsgChannelOpenConfirm(
 		c.PathEnd.PortID,
 		c.PathEnd.ChannelID,
 		counterpartyChanState.Proof,
 		counterpartyChanState.ProofHeight,
-		c.MustGetAddress(), // 'MustGetAddress' must be called directly before calling 'NewMsg...'
+		c.MustGetAddressString(), // 'MustGetAddress' must be called directly before calling 'NewMsg...'
 	)
 	if err := msg.ValidateBasic(); err != nil {
 		return nil, err
@@ -282,15 +296,42 @@ func (c *Chain) UpdateClient(dst *Chain) (sdk.Msg, error) {
 	if err := header.ValidateBasic(); err != nil {
 		return nil, err
 	}
-	msg := clienttypes.NewMsgUpdateClient(
+	msg, err := clienttypes.NewMsgUpdateClient(
 		c.PathEnd.ClientID,
 		header,
-		c.MustGetAddress(), // 'MustGetAddress' must be called directly before calling 'NewMsg...'
+		c.MustGetAddressString(), // 'MustGetAddress' must be called directly before calling 'NewMsg...'
 	)
+	if err != nil {
+		return nil, err
+	}
 	if err := msg.ValidateBasic(); err != nil {
 		return nil, err
 	}
+
 	return msg, nil
+}
+
+func (c *Chain) UpdateClient2(dst *Chain) (sdk.Msg, int64, error) {
+	header, err := dst.GetIBCUpdateHeader(c)
+	if err != nil {
+		return nil, -1, err
+	}
+
+	if err := header.ValidateBasic(); err != nil {
+		return nil, -1,err
+	}
+	msg, err := clienttypes.NewMsgUpdateClient(
+		c.PathEnd.ClientID,
+		header,
+		c.MustGetAddressString(), // 'MustGetAddress' must be called directly before calling 'NewMsg...'
+	)
+	if err != nil {
+		return nil, -1, err
+	}
+	if err := msg.ValidateBasic(); err != nil {
+		return nil, -1, err
+	}
+	return msg, header.Header.Height,nil
 }
 
 
@@ -301,7 +342,7 @@ func (c *Chain) MsgRelayRecvPacket(counterparty *Chain, packet *relayMsgRecvPack
 	var comRes *chantypes.QueryPacketCommitmentResponse
 	if err = retry.Do(func() (err error) {
 		// NOTE: the proof height uses - 1 due to tendermint's delayed execution model
-		comRes, err = counterparty.QueryPacketCommitment(int64(counterparty.MustGetLatestLightHeight()), packet.seq)
+		comRes, err = counterparty.QueryPacketCommitment(int64(counterparty.MustGetLatestLightHeight()) - 1, packet.seq)
 		if err != nil {
 			return err
 		}
@@ -350,7 +391,7 @@ func (c *Chain) MsgRelayRecvPacket(counterparty *Chain, packet *relayMsgRecvPack
 		),
 		comRes.Proof,
 		comRes.ProofHeight,
-		c.MustGetAddress(),
+		c.MustGetAddressString(),
 	)
 	if err := msg.ValidateBasic(); err != nil {
 		return nil, err
@@ -367,7 +408,9 @@ func (c *Chain) MsgRelayTimeout(counterparty *Chain, packet *relayMsgTimeout) (m
 	if err = retry.Do(func() (err error) {
 		// NOTE: Timeouts currently only work with ORDERED channels for nwo
 		// NOTE: the proof height uses - 1 due to tendermint's delayed execution model
-		recvRes, err = counterparty.QueryPacketReceipt(int64(counterparty.MustGetLatestLightHeight())-1, packet.seq)
+		useDstHeight := counterparty.MustGetLatestLightHeight() - 1
+		recvRes, err = counterparty.QueryPacketReceipt(int64(useDstHeight), packet.seq)
+
 		if err != nil {
 			return err
 		}
@@ -417,7 +460,7 @@ func (c *Chain) MsgRelayTimeout(counterparty *Chain, packet *relayMsgTimeout) (m
 		packet.seq,
 		recvRes.Proof,
 		recvRes.ProofHeight,
-		c.MustGetAddress(),
+		c.MustGetAddressString(),
 	)
 	if err := msg.ValidateBasic(); err != nil {
 		return nil, err
@@ -435,7 +478,7 @@ func (c *Chain) MsgTransfer(dst *PathEnd, amount sdk.Coin, dstAddr string,
 		c.PathEnd.PortID,
 		c.PathEnd.ChannelID,
 		amount,
-		c.MustGetAddress(), // 'MustGetAddress' must be called directly before calling 'NewMsg...'
+		c.MustGetAddressString(), // 'MustGetAddress' must be called directly before calling 'NewMsg...'
 		dstAddr,
 		clienttypes.NewHeight(version, timeoutHeight),
 		timeoutTimestamp,

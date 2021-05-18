@@ -1,6 +1,19 @@
 package collactor
 
 import (
+	"encoding/hex"
+	cosmosSdkCtx "github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
+	tx "github.com/cosmos/cosmos-sdk/client/tx"
+	cosmosCrypto "github.com/cosmos/cosmos-sdk/crypto"
+	keys "github.com/cosmos/cosmos-sdk/crypto/keyring"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	"github.com/cosmos/cosmos-sdk/simapp/params"
+	cosmosSdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/bech32"
+	"github.com/cosmos/cosmos-sdk/types/tx/signing"
+	authTypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+
 	"context"
 	"fmt"
 	retry "github.com/avast/retry-go"
@@ -23,6 +36,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -42,17 +56,20 @@ type Chain struct {
 	ChainID        string  `yaml:"chain-id" json:"chain-id"`
 	RPCAddr        string  `yaml:"rpc-addr" json:"rpc-addr"`
 	AccountPrefix  string  `yaml:"account-prefix" json:"account-prefix"`
-	//GasAdjustment  float64 `yaml:"gas-adjustment" json:"gas-adjustment"`
+	GasAdjustment  float64 `yaml:"gas-adjustment" json:"gas-adjustment"`
 	GasPrices      string  `yaml:"gas-prices" json:"gas-prices"`
 	TrustingPeriod string  `yaml:"trusting-period" json:"trusting-period"`
 	PrivateKey     string  `yaml:"private-key" json:"private-key"`
+	ChainType      string  `yaml:"chain-type" json:"chain-type"`
 
 	// TODO: make these private
 	HomePath string           `yaml:"-" json:"-"`
 	PathEnd  *PathEnd         `yaml:"-" json:"-"`
-	//Keybase  keys.Keyring     `yaml:"-" json:"-"`
+	Keybase  keys.Keyring     `yaml:"-" json:"-"`
 	Client   rpcclient.Client `yaml:"-" json:"-"`
 	cdc  *codec.Codec `yaml:"-" json:"-"`
+	Encoding types2.EncodingConfig `yaml:"-" json:"-"`
+	CosmosEncoding params.EncodingConfig `yaml:"-" json:"-"`
 	//KeyOutput *helper.KeyOutput
 	address sdk.AccAddress
 	logger  log.Logger
@@ -93,6 +110,10 @@ func (c Chains) Gets(chainIDs ...string) (map[string]*Chain, error) {
 // Init initializes the pieces of a chain that aren't set when it parses a configs
 // NOTE: All validation of the chain should happen here.
 func (c *Chain) Init(homePath string, timeout time.Duration, logger log.Logger, debug bool) error {
+	keybase, err := keys.New(c.ChainID, "test", keysDir(homePath, c.ChainID), nil)
+	if err != nil {
+		return err
+	}
 
 
 	client, err := newRPCClient(c.RPCAddr, timeout)
@@ -111,6 +132,13 @@ func (c *Chain) Init(homePath string, timeout time.Duration, logger log.Logger, 
 	}
 
 	c.cdc = types2.GetCodec()
+	c.Encoding = *types2.GetEncodingConfig()
+	c.CosmosEncoding = c.MakeCosmosEncodingConfig()
+	c.Keybase = keybase
+	err = c.ImportKey()
+	if err != nil {
+		return fmt.Errorf("failed to parse private key for chain %s by err: %s", c.ChainID, err.Error())
+	}
 
 	//c.KeyOutput = ko
 	c.Client = client
@@ -128,19 +156,80 @@ func (c *Chain) Init(homePath string, timeout time.Duration, logger log.Logger, 
 	return nil
 }
 
-// GetAddress returns the sdk.AccAddress associated with the configred key
-func (c *Chain) GetAddress() (sdk.AccAddress, error) {
-	if !c.address.Empty()  {
-		return c.address, nil
+func (c *Chain) ImportKey() error{
+	if c.ChainType == ChainTypeWeelink {
+		return nil
 	}
-	privateKey, err := crypto.HexToECDSA(c.PrivateKey)
+	if c.KeyExists(c.PrivateKey) {
+		return nil
+	}
+	privKey, err := hex.DecodeString(c.PrivateKey)
 	if err != nil {
-		return sdk.AccAddress{}, errors.Errorf("error format privateKey: %s", c.PrivateKey)
+		return err
 	}
-	address := crypto.PubkeyToAddress(privateKey.PublicKey)
-	return sdk.ToAccAddress(address[:]), nil
+	private:=secp256k1.PrivKey{Key: privKey}
+	//todo: passphrase需要改
+	s := cosmosCrypto.EncryptArmorPrivKey(&private, "","")
+	err = c.Keybase.ImportPrivKey(c.PrivateKey, s, "")
+	return err
 }
 
+// KeyExists returns true if there is a specified key in chain's keybase
+func (c *Chain) KeyExists(name string) bool {
+	k, err := c.Keybase.Key(name)
+	if err != nil {
+		return false
+	}
+
+	return k.GetName() == name
+}
+
+// GetAddress returns the sdk.AccAddress associated with the configred key
+func (c *Chain) GetAddress() (sdk.AccAddress, error) {
+	switch c.ChainType {
+	case ChainTypeWeelink:
+		if !c.address.Empty()  {
+			return c.address, nil
+		}
+		privateKey, err := crypto.HexToECDSA(c.PrivateKey)
+		if err != nil {
+			return sdk.AccAddress{}, errors.Errorf("error format privateKey: %s", c.PrivateKey)
+		}
+		address := crypto.PubkeyToAddress(privateKey.PublicKey)
+		return sdk.ToAccAddress(address[:]), nil
+	case ChainTypeCosmos:
+		srcAddr, err := c.Keybase.Key(c.PrivateKey)
+		if err != nil {
+			return sdk.AccAddress{}, err
+		}
+		return sdk.ToAccAddress(srcAddr.GetAddress()[:]), nil
+	default:
+		return sdk.AccAddress{}, errors.New("unknow chain type")
+	}
+}
+
+func (c *Chain) GetAddressString() (string, error) {
+	address, err :=  c.GetAddress()
+	if err != nil {
+		return "",  err
+	}
+	switch c.ChainType {
+	case ChainTypeWeelink:
+		return address.Hex(), nil
+	case ChainTypeCosmos:
+		return bech32.ConvertAndEncode("cosmos", address.Address.Bytes())
+	default:
+		return "", errors.New("unknow chain type")
+	}
+}
+
+func (c *Chain) MustGetAddressString() string {
+	address, err := c.GetAddressString()
+	if err != nil {
+		panic(err)
+	}
+	return address
+}
 
 // CLIContext returns an instance of client.Context derived from Chain
 func (c *Chain) CLIContext(height int64) sdkCtx.Context {
@@ -151,7 +240,7 @@ func (c *Chain) CLIContext(height int64) sdkCtx.Context {
 		WithHeight(height).
 		WithCodec(c.cdc).
 		//WithJSONMarshaler(newContextualStdCodec(c.Encoding.Marshaler, c.UseSDKContext)).
-		//WithInterfaceRegistry(c.Encoding.InterfaceRegistry).
+		WithInterfaceRegistry(c.Encoding.InterfaceRegistry).
 		//WithTxConfig(c.Encoding.TxConfig).
 		//WithLegacyAmino(c.Encoding.Amino).
 		//WithInput(os.Stdin).
@@ -169,7 +258,64 @@ func (c *Chain) CLIContext(height int64) sdkCtx.Context {
 		//WithHeight(height)
 }
 
+// CLIContext returns an instance of client.Context derived from Chain
+func (c *Chain) CLICosmosContext(height int64) cosmosSdkCtx.Context {
+	return cosmosSdkCtx.Context{}.
+		WithChainID(c.ChainID).
+		WithJSONMarshaler(newContextualStdCodec(c.CosmosEncoding.Marshaler, c.UseSDKContext)).
+		WithInterfaceRegistry(c.CosmosEncoding.InterfaceRegistry).
+		WithTxConfig(c.CosmosEncoding.TxConfig).
+		WithLegacyAmino(c.CosmosEncoding.Amino).
+		WithInput(os.Stdin).
+		WithNodeURI(c.RPCAddr).
+		WithClient(c.Client).
+		WithAccountRetriever(authTypes.AccountRetriever{}).
+		WithBroadcastMode(flags.BroadcastBlock).
+		WithKeyring(c.Keybase).
+		WithOutputFormat("json").
+		WithFrom(c.PrivateKey).
+		WithFromName(c.PrivateKey).
+		WithFromAddress(c.MustGetAddress().Bytes()).
+		WithSkipConfirmation(true).
+		WithNodeURI(c.RPCAddr).
+		WithHeight(height)
+}
 
+// TxFactory returns an instance of tx.Factory derived from
+func (c *Chain) TxFactory(height int64) tx.Factory {
+	ctx := c.CLICosmosContext(height)
+	return tx.Factory{}.
+		WithAccountRetriever(ctx.AccountRetriever).
+		WithChainID(c.ChainID).
+		WithTxConfig(ctx.TxConfig).
+		WithGasAdjustment(c.GasAdjustment).
+		WithGasPrices(c.GasPrices).
+		WithKeybase(c.Keybase).
+		WithSignMode(signing.SignMode_SIGN_MODE_DIRECT)
+}
+
+var sdkContextMutex sync.Mutex
+
+func (c *Chain) UseSDKContext() func() {
+	// Ensure we're the only one using the global context,
+	// lock context to begin function
+	sdkContextMutex.Lock()
+
+	// Mutate the sdkConf
+	sdkConf := cosmosSdk.GetConfig()
+	sdkConf.SetBech32PrefixForAccount(c.AccountPrefix, c.AccountPrefix+"pub")
+	sdkConf.SetBech32PrefixForValidator(c.AccountPrefix+"valoper", c.AccountPrefix+"valoperpub")
+	sdkConf.SetBech32PrefixForConsensusNode(c.AccountPrefix+"valcons", c.AccountPrefix+"valconspub")
+
+	// Return the unlock function, caller must lock and ensure that lock is released
+	// before any other function needs to use c.UseSDKContext
+	return sdkContextMutex.Unlock
+}
+
+// KeysDir returns the path to the keys for this chain
+func keysDir(home, chainID string) string {
+	return path.Join(home, "keys", chainID)
+}
 
 func defaultChainLogger() log.Logger {
 	return log.NewTMLogger(log.NewSyncWriter(os.Stdout))
@@ -259,26 +405,144 @@ func (c *Chain) SendMsg(datagram sdk.Msg) (*sdk.TxResponse, bool, error) {
 // sent and executed successfully is returned.
 func (c *Chain) SendMsgs(msgs []sdk.Msg) (*sdk.TxResponse, bool, error) {
 
-	ctx := c.CLIContext(0)
-	nonce, err := c.QueryNonce()
-	if err != nil {
-		return nil, false, err
+	switch c.ChainType {
+	case ChainTypeWeelink:
+		ctx := c.CLIContext(0)
+
+		pbMsgs := []sdk.PbMsg{}
+		for _, v := range msgs {
+			pdMsg := v.(sdk.PbMsg)
+			pbMsgs = append(pbMsgs, pdMsg)
+		}
+
+		nonce, err := c.QueryNonce()
+		if err != nil {
+			return nil, false, err
+		}
+		gas, err := strconv.ParseInt(c.GasPrices, 10, 64)
+		if err != nil {
+			return nil, false, err
+		}
+		txByte, err := types2.SignPbTx(c.MustGetAddress(), nonce, uint64(gas), pbMsgs, c.PrivateKey, c.Encoding.Marshaler)
+		if err != nil{
+			panic(err)
+		}
+		res, err := ctx.BroadcastSignedData(txByte)
+		if res.Code != 0 {
+			c.LogFailedTx(&res, err, msgs)
+			return &res, false, nil
+		}
+		c.LogSuccessTx(&res, msgs)
+		return &res, true, nil
+	case ChainTypeCosmos:
+		ctx := c.CLICosmosContext(0)
+
+		cosmosMsgs := []cosmosSdk.Msg{}
+		for _, v := range msgs {
+			cosmosMsg := v.(cosmosSdk.Msg)
+			cosmosMsgs = append(cosmosMsgs, cosmosMsg)
+		}
+
+		// Query account details
+		txf, err := tx.PrepareFactory(ctx, c.TxFactory(0))
+		if err != nil {
+			return nil, false, err
+		}
+
+		// If users pass gas adjustment, then calculate gas
+		_, adjusted, err := tx.CalculateGas(ctx.QueryWithData, txf, cosmosMsgs...)
+		if err != nil {
+			return nil, false, err
+		}
+
+		// Set the gas amount on the transaction factory
+		txf = txf.WithGas(adjusted)
+
+		// Build the transaction builder
+		txb, err := tx.BuildUnsignedTx(txf, cosmosMsgs...)
+		if err != nil {
+			return nil, false, err
+		}
+
+		// Attach the signature to the transaction
+		err = tx.Sign(txf, c.PrivateKey, txb, false)
+		if err != nil {
+			return nil, false, err
+		}
+
+		// Generate the transaction bytes
+		txBytes, err := ctx.TxConfig.TxEncoder()(txb.GetTx())
+		if err != nil {
+			return nil, false, err
+		}
+
+		// Broadcast those bytes
+		cosmosRes, err := ctx.BroadcastTx(txBytes)
+		if err != nil {
+			return nil, false, err
+		}
+
+		var tx sdk.Tx
+		err = c.CosmosEncoding.InterfaceRegistry.UnpackAny(cosmosRes.Tx, &tx)
+		if err != nil{
+			return nil, false, err
+		}
+
+		var logs sdk.ABCIMessageLogs
+		for _, v := range cosmosRes.Logs {
+			events := sdk.StringEvents{}
+			for _, e := range v.Events {
+				attributes := []sdk.Attribute{}
+				for _, a := range e.Attributes {
+					attributes = append(attributes, sdk.Attribute{
+						Key:   []byte(a.Key),
+						Value: []byte(a.Value),
+						Index: false,
+					})
+				}
+				events =append(events, sdk.StringEvent{
+					Type:       e.Type,
+					Attributes: attributes,
+				})
+			}
+			logs = append(logs, sdk.ABCIMessageLog{
+				MsgIndex: v.MsgIndex,
+				Success:  false,
+				Log:      v.Log,
+				Events:   events,
+			})
+		}
+
+		res := &sdk.TxResponse{
+			Height:     cosmosRes.Height,
+			TxHash:     cosmosRes.TxHash,
+			//Index:      cosmosRes.in,
+			Code:       cosmosRes.Code,
+			//FormatData: cosmosRes.a,
+			Data:       cosmosRes.Data,
+			RawLog:     cosmosRes.RawLog,
+			Logs:       logs,
+			Info:       cosmosRes.Info,
+			GasWanted:  cosmosRes.GasWanted,
+			GasUsed:    cosmosRes.GasUsed,
+			Events:     nil,
+			Codespace:  cosmosRes.Codespace,
+			Tx:         tx,
+			Timestamp:  cosmosRes.Timestamp,
+		}
+		// transaction was executed, log the success or failure using the tx response code
+		// NOTE: error is nil, logic should use the returned error to determine if the
+		// transaction was successfully executed.
+		if res.Code != 0 {
+			c.LogFailedTx(res, err, msgs)
+			return res, false, nil
+		}
+
+		c.LogSuccessTx(res, msgs)
+		return res, true, nil
+	default:
+		return nil, false, errors.New("unknow chain type")
 	}
-	gas, err := strconv.ParseInt(c.GasPrices, 10, 64)
-	if err != nil {
-		return nil, false, err
-	}
-	txByte, err := types2.SignCommonTx(c.MustGetAddress(), nonce, uint64(gas), msgs, c.PrivateKey, c.cdc)
-	if err != nil{
-		panic(err)
-	}
-	res, err := ctx.BroadcastSignedData(txByte)
-	if res.Code != 0 {
-		c.LogFailedTx(&res, err, msgs)
-		return &res, false, nil
-	}
-	c.LogSuccessTx(&res, msgs)
-	return &res, true, nil
 }
 
 
@@ -348,7 +612,10 @@ func (c *Chain) GenerateConnHandshakeProof(height uint64) (clientState ibcexport
 		return nil, nil, nil, nil, clienttypes.Height{}, err
 	}
 
-	clientState = clientStateRes.ClientState
+	clientState, err = clienttypes.UnpackClientState(clientStateRes.ClientState)
+	if err != nil {
+		return nil, nil, nil, nil, clienttypes.Height{}, err
+	}
 
 	eg.Go(func() error {
 		consensusStateRes, err = c.QueryClientConsensusState(int64(height), clientState.GetLatestHeight())
@@ -383,12 +650,16 @@ func (c *Chain) Update(key, value string) (out *Chain, err error) {
 			return
 		}
 		out.RPCAddr = value
-	//case "gas-adjustment":
-	//	adj, err := strconv.ParseFloat(value, 64)
-	//	if err != nil {
-	//		return nil, err
-	//	}
-	//	out.GasAdjustment = adj
+	case "gas-adjustment":
+		if value == "" {
+			out.GasAdjustment = 1
+		} else {
+			adj, err := strconv.ParseFloat(value, 64)
+			if err != nil {
+				return nil, err
+			}
+			out.GasAdjustment = adj
+		}
 	case "gas-prices":
 		//_, err = sdk.ParseDecCoins(value)
 		//_, err = sdk.ParseDecCoin(value)
@@ -403,8 +674,18 @@ func (c *Chain) Update(key, value string) (out *Chain, err error) {
 			return
 		}
 		out.TrustingPeriod = value
+	case "chain-type":
+		if value == "" {
+			value = ChainTypeWeelink
+		}
+		out.ChainType = value
 	default:
 		return out, fmt.Errorf("key %s not found", key)
 	}
 	return out, err
 }
+
+const (
+	ChainTypeWeelink = "weelink"
+	ChainTypeCosmos  = "cosmos"
+)

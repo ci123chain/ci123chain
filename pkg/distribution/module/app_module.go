@@ -3,6 +3,7 @@ package module
 import (
 	"encoding/json"
 	"github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/abci/types/module"
 	"github.com/ci123chain/ci123chain/pkg/account"
 	"github.com/ci123chain/ci123chain/pkg/distribution"
 	"github.com/ci123chain/ci123chain/pkg/distribution/module/basic"
@@ -37,4 +38,7 @@ func (am AppModule) InitGenesis(ctx types.Context, data json.RawMessage) []abci.
 }
 func (am AppModule) Committer(ctx types.Context) {
 
+}
+
+func (am AppModule) RegisterServices(cfg module.Configurator) {
 }

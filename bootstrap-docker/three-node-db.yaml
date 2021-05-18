@@ -1,0 +1,20 @@
+version: "3"
+services:
+  raftleveldb1:
+    image: harbor.oneitfarm.com/itfarm-test/sal20000ad4588ae210303eaeipha2i4:0.0.1
+    hostname: raftleveldb_dev1
+    container_name: raftleveldb_dev1
+    ports:
+      - 5001:80
+  raftleveldb2:
+    image: harbor.oneitfarm.com/itfarm-test/sal20000ad4588ae210303eaeipha2i4:0.0.1
+    hostname: raftleveldb_dev2
+    container_name: raftleveldb_dev2
+    ports:
+      - 5002:80
+  raftleveldb3:
+    image: harbor.oneitfarm.com/itfarm-test/sal20000ad4588ae210303eaeipha2i4:0.0.1
+    hostname: raftleveldb_dev3
+    container_name: raftleveldb_dev3
+    ports:
+      - 5003:80
