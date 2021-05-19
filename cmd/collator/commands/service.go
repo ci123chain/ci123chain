@@ -8,6 +8,9 @@ import (
 	"time"
 )
 
+const StatusConnected = "Connected"
+const StatusUnConnected = "UnConnected"
+
 // Service represents a relayer listen service
 // TODO: sync services to disk so that they can survive restart
 type Service struct {
@@ -16,6 +19,7 @@ type Service struct {
 	Src    string `json:"src"`
 	//SrcKey string `json:"src-key"`
 	Dst    string `json:"dst"`
+	Status string `json:"status"`
 	//DstKey string `json:"dst-key"`
 	shouldRestart bool
 	strategyType  collactor.Strategy
@@ -27,10 +31,12 @@ type Service struct {
 
 // NewService returns a new instance of Service
 func NewService(name, path string, src, dst *collactor.Chain, strategyType collactor.Strategy, doneFunc func()) *Service {
-	s := &Service{Name: name,
+	s := &Service{
+		Name: name,
 		Path: path,
 		Src: src.ChainID,
 		Dst: dst.ChainID,
+		Status: StatusUnConnected,
 		shouldRestart: false,
 		strategyType: strategyType,
 		doneFunc: doneFunc,
@@ -75,8 +81,10 @@ func (s *Service) HealthCheck() {
 				// 有节点健康检查失败
 				s.doneFunc()
 				s.shouldRestart = true
+				s.Status = StatusUnConnected
 				continue
 			}
+			s.Status = StatusConnected
 			// 健康检查正常 && shouldRestart = true
 			if s.shouldRestart {
 				s.shouldRestart = false
