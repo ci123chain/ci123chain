@@ -750,11 +750,11 @@ func (app *BaseApp) CheckTx(req abci.RequestCheckTx) abci.ResponseCheckTx {
 
 	tx, err := app.txDecoder(req.Tx)
 	if err != nil {
-		return abcierrors.ResponseCheckTx(err, 0, 0, false)
+		return abcierrors.ResponseCheckTx(err, 0, 0, false, nil)
 	} else {
 		res, err := app.runTx(runTxModeCheck, req.Tx, tx)
 		if err != nil {
-			return abcierrors.ResponseCheckTx(err, res.GasWanted, res.GasUsed, false)
+			return abcierrors.ResponseCheckTx(err, res.GasWanted, res.GasUsed, false, res.Events.ToABCIEvents())
 		}
 		result = res
 	}
@@ -775,12 +775,12 @@ func (app *BaseApp) DeliverTx(req abci.RequestDeliverTx) abci.ResponseDeliverTx 
 
 	tx, err := app.txDecoder(req.Tx)
 	if err != nil {
-		return abcierrors.ResponseDeliverTx(err, 0, 0, false)
+		return abcierrors.ResponseDeliverTx(err, 0, 0, false, nil)
 	} else {
 		var err error
 		result, err = app.runTx(runTxModeDeliver, req.Tx, tx)
 		if err != nil {
-			return abcierrors.ResponseDeliverTx(err, result.GasWanted, result.GasUsed, false)
+			return abcierrors.ResponseDeliverTx(err, result.GasWanted, result.GasUsed, false, result.Events.ToABCIEvents())
 		}
 	}
 
@@ -911,22 +911,23 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 			switch rType := r.(type) {
 			case sdk.ErrorOutOfGas:
 				res := app.deferHandler(ctx, tx, true, mode == runTxModeSimulate)
-				s := fmt.Sprintf("out of gas in location -- %v", rType.Descriptor)
+				_ = fmt.Sprintf("out of gas in location -- %v", rType.Descriptor)
 				result.GasUsed = res.GasUsed
 				result.GasWanted = res.GasWanted
-				err = abcierrors.ErrRuxTxOutOfGas(s)
+				err = abcierrors.ErrRuxTxOutOfGas
 			default:
 				res := app.deferHandler(ctx, tx, false, mode == runTxModeSimulate)
-				s := fmt.Sprintf("recovered -- %v\nstack:%v\n", r, string(debug.Stack()))
+				_ = fmt.Sprintf("recovered -- %v\nstack:%v\n", r, string(debug.Stack()))
 				result.GasUsed = res.GasUsed
 				result.GasWanted = res.GasWanted
-				err = abcierrors.ErrRecoverInRunTx(s)
+				err = abcierrors.ErrRecoverInRunTx
 			}
 			for _, v := range all_attributes {
 				v = append(v, sdk.NewAttribute([]byte(sdk.EventTypeType), []byte(sdk.AttributeKeyInvalidTx)))
 				event := sdk.NewEvent(sdk.AttributeKeyTx, v...)
 				result.Events = append(result.Events, event)
 			}
+			fmt.Println(result.Events)
 		} else {
 			res := app.deferHandler(ctx, tx, false, mode == runTxModeSimulate)
 			result.GasUsed = res.GasUsed
@@ -949,6 +950,7 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 			return sdk.Result{}, err
 		}
 	}
+	all_attributes = allMsgAttributes(msgs)
 
 	// Execute the ante handler if one is defined.
 	if app.anteHandler != nil {
@@ -988,7 +990,7 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 	// Create a new context based off of the existing context with a cache wrapped
 	// multi-store in case message processing fails.
 
-	all_attributes = allMsgAttributes(msgs)
+	//all_attributes = allMsgAttributes(msgs)
 
 	runMsgCtx, msCache := app.cacheTxContext(ctx, txBytes)
 	result, err = app.runMsgs(runMsgCtx, msgs, mode)

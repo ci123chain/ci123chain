@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/vm/evmtypes"
@@ -31,7 +30,7 @@ func NewQuerier(k Keeper) sdk.Querier {
 		case evmtypes.QueryCode:
 			return queryCode(ctx, path, k)
 		default:
-			return nil, types.ErrInvalidEndPoint(fmt.Sprintf("invalid path: %v", path[0]))
+			return nil, types.ErrInvalidEndPoint
 		}
 	}
 }
@@ -43,7 +42,7 @@ func queryContractInfo(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte
 
 	err := types.WasmCodec.UnmarshalJSON(req.Data, &params)
 	if err != nil {
-		return nil,types.ErrCdcUnMarshalFailed(fmt.Sprintf("cdc unmarshal failed: %v", err.Error()))
+		return nil,types.ErrCdcUnMarshalFailed
 	}
 
 	contractInfo := k.GetContractInfo(ctx, params.ContractAddress)
@@ -61,7 +60,7 @@ func queryCodeInfo(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, er
 	var params types.CodeInfoParams
 	err := types.WasmCodec.UnmarshalJSON(req.Data, &params)
 	if err != nil {
-		return nil, types.ErrCdcUnMarshalFailed(fmt.Sprintf("cdc unmarshal failed: %v", err.Error()))
+		return nil, types.ErrCdcUnMarshalFailed
 	}
 
 	codeInfo := k.GetCodeInfo(ctx, params.Hash)
@@ -77,16 +76,16 @@ func queryContractState(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byt
 	var params types.ContractStateParam
 	err := types.WasmCodec.UnmarshalJSON(req.Data, &params)
 	if err != nil {
-		return nil, types.ErrCdcUnMarshalFailed( fmt.Sprintf("cdc unmarshal failed: %v", err.Error()))
+		return nil, types.ErrCdcUnMarshalFailed
 	}
 	//query
 	args, err := types.CallData2Input(params.QueryMessage)
 	if err != nil {
-		return nil, types.ErrInvalidParams( fmt.Sprintf("invalid params: %v", err.Error()))
+		return nil, types.ErrInvalidParams
 	}
 	contractState, err := k.Query(ctx, params.ContractAddress, params.InvokerAddress, args)
 	if err != nil {
-		return nil, types.ErrQueryFailed( fmt.Sprintf("query failed: %v", err.Error()))
+		return nil, types.ErrQueryFailed
 	}
 	res := types.WasmCodec.MustMarshalJSON(contractState)
 
@@ -97,11 +96,11 @@ func queryAccountContractList(ctx sdk.Context, req abci.RequestQuery, k Keeper) 
 	var params types.ContractListParams
 	err := types.WasmCodec.UnmarshalJSON(req.Data, &params)
 	if err != nil {
-		return nil, types.ErrCdcUnMarshalFailed( fmt.Sprintf("cdc unmarshal failed: %v", err.Error()))
+		return nil, types.ErrCdcUnMarshalFailed
 	}
 	account := k.AccountKeeper.GetAccount(ctx, params.AccountAddress)
 	if account == nil {
-		return nil, types.ErrInvalidParams(fmt.Sprintf("invalid account: %v", params.AccountAddress))
+		return nil, types.ErrInvalidParams
 	}
 	var contractList []string
 	ccstore := ctx.KVStore(k.storeKey)
@@ -111,7 +110,7 @@ func queryAccountContractList(ctx sdk.Context, req abci.RequestQuery, k Keeper) 
 	}
 	err = json.Unmarshal(contractListBytes, &contractList)
 	if err != nil{
-		return nil, types.ErrJsonUnmarshalFailed(err.Error())
+		return nil, types.ErrJsonUnmarshalFailed
 	}
 	list := types.NewContractListResponse(contractList)
 	res := types.WasmCodec.MustMarshalBinaryBare(list)
@@ -122,7 +121,7 @@ func queryContractExist(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byt
 	var params types.ContractExistParams
 	err := types.WasmCodec.UnmarshalJSON(req.Data, &params)
 	if err != nil {
-		return nil, types.ErrCdcUnMarshalFailed( fmt.Sprintf("cdc unmarshal failed: %v", err.Error()))
+		return nil, types.ErrCdcUnMarshalFailed
 	}
 	store := ctx.KVStore(k.storeKey)
 	byCode := store.Get(params.WasmCodeHash)
@@ -135,18 +134,18 @@ func queryContractExist(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byt
 func queryBlockBloom(ctx sdk.Context, path []string, k Keeper) ([]byte, error) {
 	num, err := strconv.ParseInt(path[1], 10, 64)
 	if err != nil {
-		return nil, types.ErrCdcUnMarshalFailed(fmt.Sprintf("could not unmarshal block height: %w", err))
+		return nil, types.ErrCdcUnMarshalFailed
 	}
 
 	bloom, found := k.GetBlockBloom(ctx.WithBlockHeight(num), num)
 	if !found {
-		return nil, types.ErrGetBlockBloomFailed( fmt.Sprintf("block bloom not found for height %d", num))
+		return nil, types.ErrGetBlockBloomFailed
 	}
 
 	res := evmtypes.QueryBloomFilter{Bloom: bloom}
 	bz, err := codec.MarshalJSONIndent(k.cdc, res)
 	if err != nil {
-		return nil, types.ErrCdcMarshalFailed( fmt.Sprintf("cdc marshal failed: %v", err.Error()))
+		return nil, types.ErrCdcMarshalFailed
 	}
 
 	return bz, nil
@@ -158,7 +157,7 @@ func queryCode(ctx sdk.Context, path []string, keeper Keeper) ([]byte, error) {
 	res := evmtypes.QueryResCode{Code: code}
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, res)
 	if err != nil {
-		return nil, types.ErrCdcUnMarshalFailed(fmt.Sprintf("cdc marshal failed: %v", err.Error()))
+		return nil, types.ErrCdcUnMarshalFailed
 	}
 
 	return bz, nil

@@ -25,9 +25,18 @@ var (
 	ErrPacketReceived            = sdkerrors.Register(SubModuleName, 2028, "packet already received")
 	ErrAcknowledgementExists     = sdkerrors.Register(SubModuleName, 2029, "acknowledgement for packet already exists")
 	ErrInvalidChannelIdentifier  = sdkerrors.Register(SubModuleName, 2030, "invalid channel identifier")
+	ErrInvalidParam             = sdkerrors.Register(SubModuleName, 2031, "invalid params")
+	ErrChannelState             = sdkerrors.Register(SubModuleName, 2032, "invalid channel state")
+	ErrInvalidChannelPortID      = sdkerrors.Register(SubModuleName, 2033, "invalid channel port ID")
+	ErrInvalidChannelID          = sdkerrors.Register(SubModuleName, 2034, "invalid channel ID")
+	ErrEmptyProofInit            = sdkerrors.Register(SubModuleName, 2035, "empty proof init")
+	ErrInvalidProof        = sdkerrors.Register(SubModuleName, 2036, "invalid proof")
+	ErrInvalidSigner             = sdkerrors.Register(SubModuleName, 2037, "invalid signer")
+	ErrInvalidAck                = sdkerrors.Register(SubModuleName, 2038, "invalid ack")
+	ErrInvalidSequenceRecv        = sdkerrors.Register(SubModuleName, 2039, "invalid sequence recv")
 )
 
 
-func ErrInvalidParam(desc string) error {
-	return sdkerrors.Register(SubModuleName, 2031, desc)
-}
+//func ErrInvalidParam(desc string) error {
+//	return sdkerrors.Register(SubModuleName, 2031, desc)
+//}

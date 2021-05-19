@@ -12,11 +12,14 @@ const (
 
 	CodeInvalidEndPoint                    CodeType = 1801
 )
+var (
+	ErrInvalidEndPoint = sdkerrors.Register(string(DefaultCodespace), uint32(CodeInvalidEndPoint), "invalid endpoint")
+)
 //
 //func ErrFailedMarshal(codespace sdk.CodespaceType, detailStr string) sdk.Error {
 //	return sdk.NewError(codespace, CodeBadMarshal, "Marshal Error: %s", detailStr)
 //}
 
-func ErrInvalidEndPoint(desc string) error {
-	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeInvalidEndPoint), desc)
-}
+//func ErrInvalidEndPoint(desc string) error {
+//	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeInvalidEndPoint), desc)
+//}

@@ -1,7 +1,6 @@
 package types
 //
 import (
-	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 )
@@ -23,6 +22,10 @@ const (
 	//CodeParseParamsError       		CodeType = 612
 	//CodeGenValidatorErr             CodeType = 613
 	//CodeGenAccountErr               CodeType = 614
+)
+var (
+	ErrGetBlockFailed = sdkerrors.Register(string(DefaultCodespace), 601, "get block failed")
+	ErrGetStatusFailed = sdkerrors.Register(string(DefaultCodespace), 602, "get status failed")
 )
 //
 //func ErrNewClientCtx(codespace sdk.CodespaceType, err error) sdk.Error {
@@ -65,9 +68,9 @@ const (
 //	return sdk.NewError(codespace, CodePhrasesNotMatchError,"Phrases not match Error: %s", err.Error())
 //}
 //
-func ErrNode(codespace sdk.CodespaceType, err error) error {
-	return sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("get node failed: %v", err))
-}
+//func ErrNode(codespace sdk.CodespaceType, err error) error {
+//	return sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("get node failed: %v", err))
+//}
 //
 //func ErrGenValidatorKey(codespace sdk.CodespaceType, err error) sdk.Error {
 //	return sdk.NewError(codespace, CodeGenValidatorErr,"Gen Validator Key Error: %s", err.Error())

@@ -1,7 +1,6 @@
 package types
 
 import (
-	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	clienttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/clients/types"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/host"
@@ -44,20 +43,21 @@ func (m MsgChannelOpenInit) MsgType() string {
 
 func (msg MsgChannelOpenInit) ValidateBasic() error {
 	if err := host.PortIdentifierValidator(msg.PortId); err != nil {
-		return ErrInvalidParam("invalid port ID")
+		return ErrInvalidParam
 	}
 	if msg.Channel.State != INIT {
-		return ErrInvalidParam(fmt.Sprintf(
-			"channel state must be INIT in MsgChannelOpenInit. expected: %s, got: %s",
-			INIT, msg.Channel.State,
-		))
+		//return ErrInvalidParam(fmt.Sprintf(
+		//	"channel state must be INIT in MsgChannelOpenInit. expected: %s, got: %s",
+		//	INIT, msg.Channel.State,
+		//))
+		return ErrChannelState
 	}
 	if msg.Channel.Counterparty.ChannelId != "" {
-		return ErrInvalidParam( "counterparty channel identifier must be empty")
+		return ErrInvalidParam
 	}
 	_, err := sdk.AccAddressFromBech32(msg.Signer)
 	if err != nil {
-		return ErrInvalidParam(fmt.Sprintf("invalid signer: %v", msg.Signer))
+		return ErrInvalidParam
 	}
 	return msg.Channel.ValidateBasic()
 }
@@ -116,33 +116,34 @@ func (m MsgChannelOpenTry) MsgType() string {
 
 func (msg MsgChannelOpenTry) ValidateBasic() error {
 	if err := host.PortIdentifierValidator(msg.PortId); err != nil {
-		return ErrInvalidParam("invalid port ID")
+		return ErrInvalidChannelPortID
 	}
 	if msg.PreviousChannelId != "" {
 		if !IsValidChannelID(msg.PreviousChannelId) {
-			return ErrInvalidParam( "invalid previous channel ID")
+			return ErrInvalidChannelID
 		}
 	}
 	if len(msg.ProofInit) == 0 {
-		return ErrInvalidParam( "cannot submit an empty proof init")
+		return ErrEmptyProofInit
 	}
 	if msg.ProofHeight.IsZero() {
-		return ErrInvalidParam("proof height must be non-zero")
+		return ErrInvalidProof
 	}
 	if msg.Channel.State != TRYOPEN {
-		return ErrInvalidParam(fmt.Sprintf(
-			"channel state must be TRYOPEN in MsgChannelOpenTry. expected: %s, got: %s",
-			TRYOPEN, msg.Channel.State,
-		))
+		//return ErrInvalidParam(fmt.Sprintf(
+		//	"channel state must be TRYOPEN in MsgChannelOpenTry. expected: %s, got: %s",
+		//	TRYOPEN, msg.Channel.State,
+		//))
+		return ErrChannelState
 	}
 	// counterparty validate basic allows empty counterparty channel identifiers
 	if err := host.ChannelIdentifierValidator(msg.Channel.Counterparty.ChannelId); err != nil {
-		return ErrInvalidParam("invalid counterparty channel ID")
+		return ErrInvalidChannelID
 	}
 
 	_, err := sdk.AccAddressFromBech32(msg.Signer)
 	if err != nil {
-		return ErrInvalidParam(fmt.Sprintf("invalid signer: %v", msg.Signer))
+		return ErrInvalidSigner
 	}
 	return msg.Channel.ValidateBasic()
 }
@@ -196,23 +197,23 @@ func (m MsgChannelOpenAck) MsgType() string {
 
 func (msg MsgChannelOpenAck) ValidateBasic() error {
 	if err := host.PortIdentifierValidator(msg.PortId); err != nil {
-		return ErrInvalidParam("invalid port ID")
+		return ErrInvalidChannelPortID
 	}
 	if !IsValidChannelID(msg.ChannelId) {
 		return ErrInvalidChannelIdentifier
 	}
 	if err := host.ChannelIdentifierValidator(msg.CounterpartyChannelId); err != nil {
-		return ErrInvalidParam( "invalid counterparty channel ID")
+		return ErrInvalidChannelID
 	}
 	if len(msg.ProofTry) == 0 {
-		return ErrInvalidParam( "cannot submit an empty proof try")
+		return ErrInvalidProof
 	}
 	if msg.ProofHeight.IsZero() {
-		return ErrInvalidParam("proof height must be non-zero")
+		return ErrInvalidProof
 	}
 	_, err := sdk.AccAddressFromBech32(msg.Signer)
 	if err != nil {
-		return ErrInvalidParam(fmt.Sprintf("invalid signer: %v", msg.Signer))
+		return ErrInvalidSigner
 	}
 	return nil
 }
@@ -266,20 +267,20 @@ func (m MsgChannelOpenConfirm) MsgType() string {
 
 func (msg MsgChannelOpenConfirm) ValidateBasic() error {
 	if err := host.PortIdentifierValidator(msg.PortId); err != nil {
-		return ErrInvalidParam( "invalid port ID")
+		return ErrInvalidChannelPortID
 	}
 	if !IsValidChannelID(msg.ChannelId) {
 		return ErrInvalidChannelIdentifier
 	}
 	if len(msg.ProofAck) == 0 {
-		return ErrInvalidParam( "cannot submit an empty proof ack")
+		return ErrInvalidProof
 	}
 	if msg.ProofHeight.IsZero() {
-		return ErrInvalidParam( "proof height must be non-zero")
+		return ErrInvalidProof
 	}
 	_, err := sdk.AccAddressFromBech32(msg.Signer)
 	if err != nil {
-		return ErrInvalidParam(fmt.Sprintf("invalid signer: %v", msg.Signer))
+		return ErrInvalidSigner
 	}
 	return nil
 }
@@ -334,17 +335,17 @@ func (m MsgAcknowledgement) MsgType() string {
 
 func (msg MsgAcknowledgement) ValidateBasic() error {
 	if len(msg.ProofAcked) == 0 {
-		return ErrInvalidParam("cannot submit an empty proof")
+		return ErrInvalidProof
 	}
 	if msg.ProofHeight.IsZero() {
-		return ErrInvalidParam( "proof height must be non-zero")
+		return ErrInvalidProof
 	}
 	if len(msg.Acknowledgement) == 0 {
-		return ErrInvalidParam( "ack bytes cannot be empty")
+		return ErrInvalidAck
 	}
 	_, err := sdk.AccAddressFromBech32(msg.Signer)
 	if err != nil {
-		return ErrInvalidParam(fmt.Sprintf("invalid signer: %v", msg.Signer))
+		return ErrInvalidSigner
 	}
 	return msg.Packet.ValidateBasic()
 }
@@ -396,14 +397,14 @@ func (m MsgRecvPacket) MsgType() string {
 
 func (msg MsgRecvPacket) ValidateBasic() error {
 	if len(msg.ProofCommitment) == 0 {
-		return ErrInvalidParam( "cannot submit an empty proof")
+		return ErrInvalidProof
 	}
 	if msg.ProofHeight.IsZero() {
-		return ErrInvalidParam( "proof height must be non-zero")
+		return ErrInvalidProof
 	}
 	_, err := sdk.AccAddressFromBech32(msg.Signer)
 	if err != nil {
-		return ErrInvalidParam(fmt.Sprintf("invalid signer: %v", msg.Signer))
+		return ErrInvalidSigner
 	}
 	return msg.Packet.ValidateBasic()
 }
@@ -456,17 +457,17 @@ func (m MsgTimeout) MsgType() string {
 
 func (msg MsgTimeout) ValidateBasic() error {
 	if len(msg.ProofUnreceived) == 0 {
-		return ErrInvalidParam( "cannot submit an empty unreceived proof")
+		return ErrInvalidProof
 	}
 	if msg.ProofHeight.IsZero() {
-		return ErrInvalidParam("proof height must be non-zero")
+		return ErrInvalidProof
 	}
 	if msg.NextSequenceRecv == 0 {
-		return ErrInvalidParam( "next sequence receive cannot be 0")
+		return ErrInvalidSequenceRecv
 	}
 	_, err := sdk.AccAddressFromBech32(msg.Signer)
 	if err != nil {
-		return ErrInvalidParam(fmt.Sprintf("invalid signer: %v", msg.Signer))
+		return ErrInvalidSigner
 	}
 	return msg.Packet.ValidateBasic()
 }

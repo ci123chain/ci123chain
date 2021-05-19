@@ -26,21 +26,31 @@ const (
 	CodeGetBlockBloomFailed     CodeType = 1760
 )
 
-func ErrInvalidParams(desc string) error {
-	return  sdkerrors.Register(string(DefaultCodespace), uint32(CodeCheckParamsError), desc)
-}
+var (
+	ErrInvalidParams = sdkerrors.Register(string(DefaultCodespace), uint32(CodeCheckParamsError), "invalid params")
+	ErrInvalidEndPoint = sdkerrors.Register(string(DefaultCodespace), uint32(CodeInvalidEndPoint), "invalid endpoint")
+	ErrCdcUnMarshalFailed = sdkerrors.Register(string(DefaultCodespace), uint32(CodeCdcUnMarshalFailed), "cdc marshal failed")
+	ErrQueryFailed = sdkerrors.Register(string(DefaultCodespace), uint32(CodeQueryFailed), "query failed")
+	ErrJsonUnmarshalFailed = sdkerrors.Register(string(DefaultCodespace), uint32(CodeJsonUnmarshalFailed), "json marshal failed")
+	ErrCdcMarshalFailed = sdkerrors.Register(string(DefaultCodespace), uint32(CodeCdcMarshalFailed), "cdc marshal failed")
+	ErrGetBlockBloomFailed = sdkerrors.Register(string(DefaultCodespace), uint32(CodeGetBlockBloomFailed), "get block bloom failed")
+)
 
-func ErrInvalidEndPoint(desc string) error {
-	return  sdkerrors.Register(string(DefaultCodespace), uint32(CodeInvalidEndPoint), desc)
-}
+//func ErrInvalidParams(desc string) error {
+//	return  sdkerrors.Register(string(DefaultCodespace), uint32(CodeCheckParamsError), desc)
+//}
+//
+//func ErrInvalidEndPoint(desc string) error {
+//	return  sdkerrors.Register(string(DefaultCodespace), uint32(CodeInvalidEndPoint), desc)
+//}
 
 //func ErrQueryCodeInfo(desc string) error {
 //	return  sdkerrors.Register(string(DefaultCodespace), uint32(CodeQueryCodeInfoFailed), desc)
 //}
 //
-func ErrCdcUnMarshalFailed(desc string) error {
-	return  sdkerrors.Register(string(DefaultCodespace), uint32(CodeCdcUnMarshalFailed), desc)
-}
+//func ErrCdcUnMarshalFailed(desc string) error {
+//	return  sdkerrors.Register(string(DefaultCodespace), uint32(CodeCdcUnMarshalFailed), desc)
+//}
 
 //func ErrUploadFailed(codespce sdk.CodespaceType, err error) sdk.Error {
 //	return sdk.NewError(codespce, CodeHandleMsgFailedError, "upload failed: %s", err.Error())
@@ -66,21 +76,21 @@ func ErrCdcUnMarshalFailed(desc string) error {
 //	return sdk.NewError(codespce, CodeHandleMsgFailedError, "execute failed: %s", err.Error())
 //}
 
-func ErrQueryFailed(desc string) error {
-	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeQueryFailed), desc)
-}
-
-func ErrJsonUnmarshalFailed(desc string) error {
-	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeJsonUnmarshalFailed), desc)
-}
-
-func ErrCdcMarshalFailed(desc string) error {
-	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeCdcMarshalFailed), desc)
-}
-
-func ErrGetBlockBloomFailed(desc string) error {
-	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeGetBlockBloomFailed), desc)
-}
+//func ErrQueryFailed(desc string) error {
+//	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeQueryFailed), desc)
+//}
+//
+//func ErrJsonUnmarshalFailed(desc string) error {
+//	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeJsonUnmarshalFailed), desc)
+//}
+//
+//func ErrCdcMarshalFailed(desc string) error {
+//	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeCdcMarshalFailed), desc)
+//}
+//
+//func ErrGetBlockBloomFailed(desc string) error {
+//	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeGetBlockBloomFailed), desc)
+//}
 
 //func ErrSetNewAccountSequence(codespce sdk.CodespaceType, err error) sdk.Error {
 //	return sdk.NewError(codespce, CodeSetSequenceFailedError, "set sequence of account failed: %s", err.Error())

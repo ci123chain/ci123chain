@@ -15,14 +15,20 @@ const (
 	CodeGetContentFailed CodeType = 1903
 )
 
-func ErrInvalidEndPoint(desc string) error {
-	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeInvalidEndPoint), desc)
-}
+var (
+	ErrInvalidEndPoint = sdkerrors.Register(string(DefaultCodespace), uint32(CodeInvalidEndPoint), "invalid endpoint")
+	ErrCdcMarshaFailed = sdkerrors.Register(string(DefaultCodespace), uint32(CodeCdcMarshalFailed), "cdc marshal failed")
+	ErrGetContentFailed = sdkerrors.Register(string(DefaultCodespace), uint32(CodeGetContentFailed), "get content failed")
+)
 
-func ErrCdcMarshaFailed(desc string) error {
-	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeCdcMarshalFailed), desc)
-}
-
-func ErrGetContentFailed(desc string) error {
-	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeGetContentFailed), desc)
-}
+//func ErrInvalidEndPoint(desc string) error {
+////	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeInvalidEndPoint), desc)
+////}
+////
+////func ErrCdcMarshaFailed(desc string) error {
+////	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeCdcMarshalFailed), desc)
+////}
+////
+////func ErrGetContentFailed(desc string) error {
+////	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeGetContentFailed), desc)
+////}

@@ -36,6 +36,6 @@ var (
 //	return sdkerrors.Register(SubModuleName, 2066, desc)
 //}
 
-func ErrInvalidParam(desc string) error {
-	return sdkerrors.Register(SubModuleName, 2067, desc)
-}
+//func ErrInvalidParam(desc string) error {
+//	return sdkerrors.Register(SubModuleName, 2067, desc)
+//}

@@ -17,6 +17,6 @@ var (
 	ErrVersionNegotiationFailed      = sdkerrors.Register(SubModuleName, 2090, "connection version negotiation failed")
 	ErrInvalidConnectionIdentifier   = sdkerrors.Register(SubModuleName, 2091, "invalid connection identifier")
 )
-func ErrInvalidParam(desc string) error {
-	return sdkerrors.Register(SubModuleName, 2092, desc)
-}
+//func ErrInvalidParam(desc string) error {
+//	return sdkerrors.Register(SubModuleName, 2092, desc)
+//}

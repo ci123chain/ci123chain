@@ -151,7 +151,7 @@ func toBytes(i interface{}) []byte {
 // Common event types and attribute keys
 var (
 	EventTypeMessage = "message"
-	EventTypeType = "types"
+	EventTypeType = "type"
 	//EventTypeInvalidTx = "invalid_tx"
 	//EventTypeValidTx = "valid_tx"
 	EventTypeMultiMsg = "multi_msg"
@@ -171,7 +171,7 @@ type (
 	// StringAttribute defines en Event object wrapper where all the attributes
 	// contain types/value pairs that are strings instead of raw bytes.
 	StringEvent struct {
-		Type       string      `json:"types,omitempty"`
+		Type       string      `json:"type,omitempty"`
 		Attributes []Attribute `json:"attributes,omitempty"`
 	}
 

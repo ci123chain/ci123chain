@@ -440,7 +440,7 @@ func (k DistrKeeper) WithdrawValidatorCommission(ctx sdk.Context, valAddr sdk.Ac
 	// fetch validator accumulated commission
 	accumCommission := k.GetValidatorAccumulatedCommission(ctx, valAddr)
 	if accumCommission.Commission.IsZero() {
-		return sdk.NewEmptyCoin(), types.ErrNoValidatorCommission(fmt.Sprintf("%v has zero commission", valAddr.String()))
+		return sdk.NewEmptyCoin(), types.ErrNoValidatorCommission
 	}
 
 	commission, remainder := accumCommission.Commission.TruncateDecimal()
@@ -474,12 +474,12 @@ func (k DistrKeeper) WithdrawValidatorCommission(ctx sdk.Context, valAddr sdk.Ac
 func (k DistrKeeper) WithdrawDelegationRewards(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.AccAddress) (sdk.Coin, error) {
 	val := k.StakingKeeper.Validator(ctx, valAddr)
 	if val == nil {
-		return sdk.NewEmptyCoin(), types.ErrNoValidatorExist(fmt.Sprintf("no validator found with %v", valAddr.String()))
+		return sdk.NewEmptyCoin(), types.ErrNoValidatorExist
 	}
 
 	del := k.StakingKeeper.Delegation(ctx, delAddr, valAddr)
 	if del == nil {
-		return sdk.NewEmptyCoin(), types.ErrNoDelegationExist(fmt.Sprintf("%v has no delegation with %v", delAddr.String(), valAddr.String()))
+		return sdk.NewEmptyCoin(), types.ErrNoDelegationExist
 	}
 
 	// withdraw rewards
@@ -508,7 +508,7 @@ func (k DistrKeeper) SetWithdrawAddr(ctx sdk.Context, delegatorAddr sdk.AccAddre
 	}*/
 
 	if !k.GetWithdrawAddrEnabled(ctx) {
-		return types.ErrSetWithdrawAddrDisabled(fmt.Sprintf("%v not allowed to set withdraw address", delegatorAddr.String()))
+		return types.ErrSetWithdrawAddrDisabled
 	}
 
 	k.SetDelegatorWithdrawAddr(ctx, delegatorAddr, withdrawAddr)

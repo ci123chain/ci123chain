@@ -1,7 +1,6 @@
 package types
 
 import (
-	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 )
 
@@ -37,13 +36,13 @@ func (msg *MsgFundCommunityPool) Bytes() []byte{
 // ValidateBasic performs basic MsgFundCommunityPool message validation.
 func (msg *MsgFundCommunityPool) ValidateBasic() error {
 	if !msg.Amount.IsValid() {
-		return ErrInvalidParams( "invalid amount")
+		return ErrInvalidParams
 	}
 	if msg.Depositor.Empty() {
-		return ErrInvalidParams( fmt.Sprintf("empty depositor addresss"))
+		return ErrInvalidParams
 	}
 	if !msg.FromAddress.Equal(msg.Depositor) {
-		return ErrInvalidParams( fmt.Sprintf("expected %s, got %s", msg.FromAddress.String(), msg.Depositor.String()))
+		return ErrInvalidParams
 	}
 
 	return nil
@@ -71,17 +70,17 @@ func (msg *MsgSetWithdrawAddress) MsgType() string { return "set_withdraw_addres
 
 func (msg *MsgSetWithdrawAddress) ValidateBasic() error {
 	if msg.DelegatorAddress.Empty() {
-		return ErrInvalidParams("empty delegator address")
+		return ErrInvalidParams
 	}
 	if msg.WithdrawAddress.Empty() {
-		return ErrInvalidParams( "empty withdraw address")
+		return ErrInvalidParams
 	}
 	if msg.FromAddress.Empty() {
-		return ErrInvalidParams( "empty from address")
+		return ErrInvalidParams
 	}
 	//keep delegator address and from address the same.
 	if !msg.FromAddress.Equal(msg.DelegatorAddress) {
-		return ErrInvalidParams( fmt.Sprintf("expected %s, got %s", msg.FromAddress.String(), msg.DelegatorAddress.String()))
+		return ErrInvalidParams
 	}
 	return nil
 }
@@ -117,16 +116,16 @@ func (msg *MsgWithdrawDelegatorReward) MsgType() string { return "withdraw_deleg
 
 func (msg *MsgWithdrawDelegatorReward) ValidateBasic() error {
 	if msg.ValidatorAddress.Empty() {
-		return ErrInvalidParams( "empty validator address")
+		return ErrInvalidParams
 	}
 	if msg.DelegatorAddress.Empty() {
-		return ErrInvalidParams( "empty delegator address")
+		return ErrInvalidParams
 	}
 	if msg.FromAddress.Empty() {
-		return ErrInvalidParams( "empty from address")
+		return ErrInvalidParams
 	}
 	if !msg.FromAddress.Equal(msg.DelegatorAddress) {
-		return ErrInvalidParams( fmt.Sprintf("expected %s, got %s", msg.FromAddress.String(), msg.DelegatorAddress.String()))
+		return ErrInvalidParams
 	}
 
 	return nil
@@ -161,13 +160,13 @@ func (msg *MsgWithdrawValidatorCommission) MsgType() string { return "withdraw_v
 
 func (msg *MsgWithdrawValidatorCommission) ValidateBasic() error {
 	if msg.ValidatorAddress.Empty() {
-		return ErrInvalidParams( "empty validator address")
+		return ErrInvalidParams
 	}
 	if msg.FromAddress.Empty() {
-		return ErrInvalidParams("empty from address")
+		return ErrInvalidParams
 	}
 	if !msg.FromAddress.Equal(msg.ValidatorAddress) {
-		return ErrInvalidParams( fmt.Sprintf("expected %s, got %s", msg.FromAddress.String(), msg.ValidatorAddress.String()))
+		return ErrInvalidParams
 	}
 
 	return nil

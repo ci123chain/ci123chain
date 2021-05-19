@@ -1,7 +1,6 @@
 package types
 
 import (
-	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 )
@@ -11,7 +10,10 @@ const (
 	DefaultCodespace 				sdk.CodespaceType = "auth"
 	CodeTxValidateBasicError       	CodeType = 1001
 )
+var (
+	ErrTxValidateBasic = sdkerrors.Register(string(DefaultCodespace), uint32(CodeTxValidateBasicError), "tx validate basic failed")
+)
 
-func ErrTxValidateBasic(codespace sdk.CodespaceType, err error) error {
-	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeTxValidateBasicError), fmt.Sprintf("validate basic eror: %v", err.Error()))
-}
+//func ErrTxValidateBasic(codespace sdk.CodespaceType, err error) error {
+//	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeTxValidateBasicError), fmt.Sprintf("validate basic eror: %v", err.Error()))
+//}

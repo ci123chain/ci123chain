@@ -33,6 +33,7 @@ const (
 	CodeInvalidParam     CodeType = 1604
 
 	CodeInternalOperationFailed CodeType = 1605
+	Code
 
 	CodeModuleAccountNotExisted CodeType = 1606
 )
@@ -64,6 +65,18 @@ var (
 	ErrBadRedelegationDst = sdkerrors.Register(StakingCodespace, 1630, "redelegation destination validator not found")
 	ErrCdcMarshal = sdkerrors.Register(StakingCodespace, 1631, "codec marshal failed")
 	ErrCdcUnmarshal = sdkerrors.Register(StakingCodespace, 1632, "codec unmarshal failed")
+
+	ErrNoExpectedValidator = sdkerrors.Register(StakingCodespace, uint32(CodeInvalidValidator),  "no expected validator found")
+	ErrInvalidTxType = sdkerrors.Register(StakingCodespace, uint32(CodeInvalidTxType), "invalid tx type")
+	ErrInvalidPublicKey = sdkerrors.Register(StakingCodespace, uint32(CodeInvalidPublicKey), "invalid publickey")
+	ErrPubkeyHasBonded = sdkerrors.Register(StakingCodespace, uint32(1634), "pubkey has bonded with one account")
+	ErrInvalidMoniker = sdkerrors.Register(StakingCodespace, uint32(CodeInvalidParam), "invalid moniker")
+	ErrInvalidIdentity = sdkerrors.Register(StakingCodespace, uint32(1635), "invalid identity")
+	ErrInvalidWebsite = sdkerrors.Register(StakingCodespace, uint32(1636), "invalid website")
+	ErrInvalidSecurityContact = sdkerrors.Register(StakingCodespace, uint32(1637), "invalid security contact")
+	ErrInvalidDetails = sdkerrors.Register(StakingCodespace, uint32(1638), "invalid details")
+	ErrSetValidatorFailed = sdkerrors.Register(StakingCodespace, uint32(CodeInternalOperationFailed), "set validator failed")
+	ErrInvalidParam = sdkerrors.Register(StakingCodespace, uint32(1639), "invalid params")
 )
 
 //func Wrapf(err error, format string, args ...interface{}) error {
@@ -191,9 +204,9 @@ var (
 //	return sdk.NewError(codespace, CodeDelegateFailed, "Delegate fail: %s", err.Error())
 //}
 
-func ErrNoExpectedValidator(desc string) error {
-	return sdkerrors.Register(StakingCodespace, uint32(CodeInvalidValidator),  desc)
-}
+//func ErrNoExpectedValidator(desc string) error {
+//	return sdkerrors.Register(StakingCodespace, uint32(CodeInvalidValidator),  desc)
+//}
 //
 //func ErrBondedDenomDiff(codespace sdk.CodespaceType, err error) sdk.Error {
 //	return sdk.NewError(codespace, CodeUnexpectedDeom, "unexpected denom: %s", err.Error())
@@ -228,43 +241,43 @@ func ErrNoExpectedValidator(desc string) error {
 //	return sdk.NewError(codespace, CodeEmptyPublicKey, msg)
 //}
 
-func ErrInvalidTxType(desc string) error {
-	return sdkerrors.Register(StakingCodespace, uint32(CodeInvalidTxType), desc)
-}
+//func ErrInvalidTxType(desc string) error {
+//	return sdkerrors.Register(StakingCodespace, uint32(CodeInvalidTxType), desc)
+//}
 
-func ErrInvalidPublicKey(desc string) error {
-	return sdkerrors.Register(StakingCodespace, uint32(CodeInvalidPublicKey), desc)
-}
+//func ErrInvalidPublicKey(desc string) error {
+//	return sdkerrors.Register(StakingCodespace, uint32(CodeInvalidPublicKey), desc)
+//}
 
-func ErrPubkeyHasBonded(desc string) error {
-	return sdkerrors.Register(StakingCodespace, uint32(CodeInvalidPublicKey), desc)
-}
+//func ErrPubkeyHasBonded(desc string) error {
+//	return sdkerrors.Register(StakingCodespace, uint32(CodeInvalidPublicKey), desc)
+//}
 
-func ErrInvalidMoniker(desc string) error {
-	return sdkerrors.Register(StakingCodespace, uint32(CodeInvalidParam), desc)
-}
+//func ErrInvalidMoniker(desc string) error {
+//	return sdkerrors.Register(StakingCodespace, uint32(CodeInvalidParam), desc)
+//}
 
-func ErrInvalidIdentity(desc string) error {
-	return sdkerrors.Register(StakingCodespace, uint32(CodeInvalidParam), desc)
-}
+//func ErrInvalidIdentity(desc string) error {
+//	return sdkerrors.Register(StakingCodespace, uint32(CodeInvalidParam), desc)
+//}
 
-func ErrInvalidWebsite(desc string) error {
-	return sdkerrors.Register(StakingCodespace, uint32(CodeInvalidParam), desc)
-}
+//func ErrInvalidWebsite(desc string) error {
+//	return sdkerrors.Register(StakingCodespace, uint32(CodeInvalidParam), desc)
+//}
 
-func ErrInvalidSecurityContact(desc string) error {
-	return sdkerrors.Register(StakingCodespace, uint32(CodeInvalidParam), desc)
-}
+//func ErrInvalidSecurityContact(desc string) error {
+//	return sdkerrors.Register(StakingCodespace, uint32(CodeInvalidParam), desc)
+//}
 
-func ErrInvalidDetails(desc string) error {
-	return sdkerrors.Register(StakingCodespace, uint32(CodeInvalidParam), desc)
-}
+//func ErrInvalidDetails(desc string) error {
+//	return sdkerrors.Register(StakingCodespace, uint32(CodeInvalidParam), desc)
+//}
 
 
-func ErrSetValidatorFailed(desc string) error {
-	return sdkerrors.Register(StakingCodespace, uint32(CodeInternalOperationFailed), desc)
-}
+//func ErrSetValidatorFailed(desc string) error {
+//	return sdkerrors.Register(StakingCodespace, uint32(CodeInternalOperationFailed), desc)
+//}
 
-func ErrInvalidParam(desc string) error {
-	return sdkerrors.Register(StakingCodespace, uint32(CodeInvalidParam), desc)
-}
+//func ErrInvalidParam(desc string) error {
+//	return sdkerrors.Register(StakingCodespace, uint32(CodeInvalidParam), desc)
+//}

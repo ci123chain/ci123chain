@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"fmt"
 	prefix "github.com/ci123chain/ci123chain/pkg/abci/store"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
@@ -64,11 +63,11 @@ func (ak AccountKeeper) SubBalance(ctx sdk.Context, addr sdk.AccAddress, amt sdk
 		oldCoins = acc.GetCoins()
 		spendableCoins = acc.SpendableCoins(ctx.BlockHeader().Time)
 	} else {
-		return sdk.NewCoins(), types.ErrAccountNotExisted(fmt.Sprintf("account not exist %s", addr.Hex()))
+		return sdk.NewCoins(), types.ErrAccountNotExisted
 	}
 	_, hasNeg := spendableCoins.SafeSub(amt)
 	if hasNeg {
-		return amt, types.ErrInsufficientFunds(fmt.Sprintf("insufficient accounts funds; %s < %s", spendableCoins, amt))
+		return amt, types.ErrInsufficientFunds
 	}
 
 	newCoin := oldCoins.Sub(amt)

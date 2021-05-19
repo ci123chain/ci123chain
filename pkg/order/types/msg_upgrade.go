@@ -26,13 +26,13 @@ func (msg *MsgUpgrade) MsgType() string { return "upgrade"}
 
 func (msg *MsgUpgrade) ValidateBasic() error {
 	if len(msg.Type) == 0 {
-		return ErrCheckParams( "invalid type of msg")
+		return ErrCheckParams
 	}
 	if msg.Height < 0 {
-		return ErrCheckParams("height should be positive")
+		return ErrCheckParams
 	}
 	if len(msg.Name) == 0 {
-		return ErrCheckParams("invalid name of msg")
+		return ErrCheckParams
 	}
 	return nil
 }

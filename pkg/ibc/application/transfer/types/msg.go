@@ -1,7 +1,6 @@
 package types
 
 import (
-	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	clienttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/clients/types"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/host"
@@ -45,24 +44,24 @@ func (MsgTransfer) MsgType() string {
 
 func (msg MsgTransfer) ValidateBasic() error {
 	if err := host.PortIdentifierValidator(msg.SourcePort); err != nil {
-		return ErrInvalidParam("invalid source port ID")
+		return ErrInvalidPortID
 	}
 	if err := host.ChannelIdentifierValidator(msg.SourceChannel); err != nil {
-		return ErrInvalidParam( "invalid source channel ID")
+		return ErrInvalidChannelID
 	}
 	if !msg.Token.IsValid() {
-		return ErrInvalidParam( fmt.Sprintf("invalid token:%v",msg.Token.String()))
+		return ErrInvalidToken
 	}
 	if !msg.Token.IsPositive() {
-		return ErrInvalidParam( fmt.Sprintf("invalid token:%v",msg.Token.String()))
+		return ErrInvalidToken
 	}
 	// NOTE: sender format must be validated as it is required by the GetSigners function.
 	_, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
-		return ErrInvalidParam( fmt.Sprintf("invalid sender: %v", msg.Sender))
+		return ErrInvalidSender
 	}
 	if strings.TrimSpace(msg.Receiver) == "" {
-		return ErrInvalidParam( "missing recipient address")
+		return ErrInvalidReceiver
 	}
 	return ValidateIBCDenom(msg.Token.Denom)
 }

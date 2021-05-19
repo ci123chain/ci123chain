@@ -1,7 +1,6 @@
 package ante
 
 import (
-	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/account"
 	"github.com/ci123chain/ci123chain/pkg/account/exported"
@@ -50,7 +49,7 @@ func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, sk su
 		txNonce := tx.GetNonce()
 		if txNonce != accountSequence {
 			newCtx := ctx.WithGasMeter(sdk.NewGasMeter(0))
-			return newCtx, sdk.Result{}, sdkerrors.ErrInvalidParam(fmt.Sprintf("expected %v, got %v", accountSequence, txNonce)), true
+			return newCtx, sdk.Result{}, sdkerrors.ErrInvalidParam, true
 		}
 
 		params := authKeeper.GetParams(ctx)

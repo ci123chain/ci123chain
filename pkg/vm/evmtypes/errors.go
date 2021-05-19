@@ -14,6 +14,12 @@ const (
 	CodeComputeGas          CodeType = 1702
 	CodeInvalidState        CodeType = 1703
 )
+
+var (
+	ErrComputeGas = sdkerrors.Register(string(DefaultCodespace), uint32(CodeComputeGas), "invalid intrinsic gas for transaction")
+	ErrInvalidState = sdkerrors.Register(string(DefaultCodespace), uint32(CodeInvalidState), "invalid vm state")
+	ErrInvalidParams = sdkerrors.Register(string(DefaultCodespace), uint32(CodeCheckParamsError), "invalid params")
+)
 //
 //const (
 //	CodeCheckParamsError	CodeType = 60
@@ -43,17 +49,17 @@ const (
 //	return sdk.NewError(codespce, CodeInvalidAddress, msg)
 //}
 //
-func ErrComputeGas(desc string) error {
-	return  sdkerrors.Register(string(DefaultCodespace), uint32(CodeComputeGas), desc)
-}
+//func ErrComputeGas(desc string) error {
+//	return  sdkerrors.Register(string(DefaultCodespace), uint32(CodeComputeGas), desc)
+//}
+////
+//func ErrInvalidState(desc string) error {
+//	return  sdkerrors.Register(string(DefaultCodespace), uint32(CodeInvalidState), desc)
+//}
 //
-func ErrInvalidState(desc string) error {
-	return  sdkerrors.Register(string(DefaultCodespace), uint32(CodeInvalidState), desc)
-}
-
-func ErrInvalidParams(desc string) error {
-	return  sdkerrors.Register(string(DefaultCodespace), uint32(CodeCheckParamsError), desc)
-}
+//func ErrInvalidParams(desc string) error {
+//	return  sdkerrors.Register(string(DefaultCodespace), uint32(CodeCheckParamsError), desc)
+//}
 //
 //func ErrChainConfigNotFound(codespce sdk.CodespaceType, msg string) sdk.Error {
 //	return sdk.NewError(codespce, CodeErrChainConfigNotFound, msg)

@@ -16,17 +16,17 @@ import (
 func QueryTx(cliCtx context.Context, hashHexStr string) (sdk.TxResponse, error) {
 	hash, err := hex.DecodeString(hashHexStr)
 	if err != nil {
-		return sdk.TxResponse{}, types.ErrQueryTx(types.DefaultCodespace, err.Error())
+		return sdk.TxResponse{}, types.ErrInvalidTxHash
 	}
 
 	node, err := cliCtx.GetNode()
 	if err != nil {
-		return sdk.TxResponse{}, types.ErrQueryTx(types.DefaultCodespace, err.Error())
+		return sdk.TxResponse{}, types.ErrGetNodeFailed
 	}
 
 	resTx, err := node.Tx(cliCtx.Context(), hash, true)
 	if err != nil {
-		return sdk.TxResponse{}, types.ErrQueryTx(types.DefaultCodespace, err.Error())
+		return sdk.TxResponse{}, types.ErrQueryTx
 	}
 	if resTx.TxResult.Code == 204 {
 		return sdk.TxResponse{
@@ -38,11 +38,11 @@ func QueryTx(cliCtx context.Context, hashHexStr string) (sdk.TxResponse, error) 
 
 	resBlocks, err := getBlocksForTxResults(cliCtx, []*ctypes.ResultTx{resTx})
 	if err != nil {
-		return sdk.TxResponse{}, types.ErrQueryTx(types.DefaultCodespace, err.Error())
+		return sdk.TxResponse{}, types.ErrGetBlockFailed
 	}
 	out, err := formatTxResult(cliCtx.Cdc, resTx, resBlocks[resTx.Height])
 	if err != nil {
-		return out, types.ErrQueryTx(types.DefaultCodespace, err.Error())
+		return out, types.ErrQueryTx
 	}
 
 	return out, nil
