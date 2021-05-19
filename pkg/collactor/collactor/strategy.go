@@ -51,6 +51,7 @@ func (p *Path) GetStrategy() (Strategy, error) {
 // RunStrategy runs a given strategy
 func RunStrategy(src, dst *Chain, strategy Strategy) (func(), error) {
 	doneChan := make(chan struct{})
+	errChan := make(chan error)
 
 	// Fetch latest headers for each chain and store them in sync headers
 	_, _, err := UpdateLightClients(src, dst)
@@ -59,10 +60,15 @@ func RunStrategy(src, dst *Chain, strategy Strategy) (func(), error) {
 	}
 
 	// Next start the goroutine that listens to each chain for block and tx events
-	go relayerListenLoop(src, dst, doneChan, strategy)
+	go relayerListenLoop(src, dst, doneChan, strategy, errChan)
+	select {
+	case err := <- errChan:
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	// Fetch any unrelayed sequences depending on the channel order
-
 	sp, err := strategy.UnrelayedSequences(src, dst)
 	if err != nil {
 		return nil, err
@@ -78,7 +84,7 @@ func RunStrategy(src, dst *Chain, strategy Strategy) (func(), error) {
 
 
 
-func relayerListenLoop(src, dst *Chain, doneChan chan struct{}, strategy Strategy) {
+func relayerListenLoop(src, dst *Chain, doneChan chan struct{}, strategy Strategy, errChan chan error) {
 	var (
 		srcTxEvents, srcBlockEvents, dstTxEvents, dstBlockEvents <-chan ctypes.ResultEvent
 		srcTxCancel, srcBlockCancel, dstTxCancel, dstBlockCancel context.CancelFunc
@@ -89,6 +95,7 @@ func relayerListenLoop(src, dst *Chain, doneChan chan struct{}, strategy Strateg
 	if err = src.Start(); err != nil {
 		if err != tmservice.ErrAlreadyStarted {
 			src.Error(err)
+			errChan <- err
 			return
 		}
 	}
@@ -96,6 +103,7 @@ func relayerListenLoop(src, dst *Chain, doneChan chan struct{}, strategy Strateg
 	// Subscibe to txEvents from the source chain
 	if srcTxEvents, srcTxCancel, err = src.Subscribe(txEvents); err != nil {
 		src.Error(err)
+		errChan <- err
 		return
 	}
 	defer srcTxCancel()
@@ -104,6 +112,7 @@ func relayerListenLoop(src, dst *Chain, doneChan chan struct{}, strategy Strateg
 	// Subscibe to blockEvents from the source chain
 	if srcBlockEvents, srcBlockCancel, err = src.Subscribe(blEvents); err != nil {
 		src.Error(err)
+		errChan <- err
 		return
 	}
 	defer srcBlockCancel()
@@ -113,6 +122,7 @@ func relayerListenLoop(src, dst *Chain, doneChan chan struct{}, strategy Strateg
 	if err = dst.Start(); err != nil {
 		if err != tmservice.ErrAlreadyStarted {
 			dst.Error(err)
+			errChan <- err
 			return
 		}
 	}
@@ -120,6 +130,7 @@ func relayerListenLoop(src, dst *Chain, doneChan chan struct{}, strategy Strateg
 	// Subscibe to txEvents from the destination chain
 	if dstTxEvents, dstTxCancel, err = dst.Subscribe(txEvents); err != nil {
 		dst.Error(err)
+		errChan <- err
 		return
 	}
 	defer dstTxCancel()
@@ -128,10 +139,14 @@ func relayerListenLoop(src, dst *Chain, doneChan chan struct{}, strategy Strateg
 	// Subscibe to blockEvents from the destination chain
 	if dstBlockEvents, dstBlockCancel, err = dst.Subscribe(blEvents); err != nil {
 		src.Error(err)
+		errChan <- err
 		return
 	}
 	defer dstBlockCancel()
 	dst.Log(fmt.Sprintf("- listening to block events from %s...", dst.ChainID))
+
+	close(errChan)
+	//okChan <- struct{}{}
 
 	// Listen to channels and take appropriate action
 	for {
@@ -163,4 +178,5 @@ func relayerListenLoop(src, dst *Chain, doneChan chan struct{}, strategy Strateg
 			return
 		}
 	}
+
 }

@@ -25,6 +25,7 @@ var (
 	ErrPacketReceived            = sdkerrors.Register(SubModuleName, 2028, "packet already received")
 	ErrAcknowledgementExists     = sdkerrors.Register(SubModuleName, 2029, "acknowledgement for packet already exists")
 	ErrInvalidChannelIdentifier  = sdkerrors.Register(SubModuleName, 2030, "invalid channel identifier")
+
 	ErrInvalidParam             = sdkerrors.Register(SubModuleName, 2031, "invalid params")
 	ErrChannelState             = sdkerrors.Register(SubModuleName, 2032, "invalid channel state")
 	ErrInvalidChannelPortID      = sdkerrors.Register(SubModuleName, 2033, "invalid channel port ID")
@@ -37,6 +38,8 @@ var (
 )
 
 
+//
 //func ErrInvalidParam(desc string) error {
-//	return sdkerrors.Register(SubModuleName, 2031, desc)
+//	return sdkerrors.Wrapf(ErrInvalidParam2, desc)
 //}
+
