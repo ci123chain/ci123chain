@@ -1,7 +1,6 @@
 package types
 
 import (
-	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/types"
 )
 
@@ -25,16 +24,16 @@ func NewMsgUndelegate(from types.AccAddress, delegatorAddr, validatorAddr types.
 
 func (msg *MsgUndelegate) ValidateBasic() error {
 	if msg.DelegatorAddress.Empty() {
-		return ErrInvalidParam(  "emtpy delegator address")
+		return ErrInvalidParam
 	}
 	if msg.ValidatorAddress.Empty() {
-		return ErrInvalidParam( "emtpy validator address")
+		return ErrInvalidParam
 	}
 	if !msg.Amount.Amount.IsPositive() {
-		return ErrInvalidParam( "amount can not be negative")
+		return ErrInvalidParam
 	}
 	if !msg.FromAddress.Equal(msg.DelegatorAddress) {
-		return ErrInvalidParam(  fmt.Sprintf("expected %s, got %s", msg.FromAddress.String(), msg.DelegatorAddress.String()))
+		return ErrInvalidParam
 	}
 	return nil
 }

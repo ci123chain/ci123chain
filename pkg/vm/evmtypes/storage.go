@@ -14,9 +14,9 @@ type Storage []State
 // Validate performs a basic validation of the Storage fields.
 func (s Storage) Validate() error {
 	seenStorage := make(map[string]bool)
-	for i, state := range s {
+	for _, state := range s {
 		if seenStorage[state.Key.String()] {
-			return ErrInvalidState(fmt.Sprintf("duplicate state key %d", i))
+			return ErrInvalidState
 		}
 
 		if err := state.Validate(); err != nil {
@@ -55,7 +55,7 @@ type State struct {
 // Validate performs a basic validation of the State fields.
 func (s State) Validate() error {
 	if bytes.Equal(s.Key.Bytes(), ethcmn.Hash{}.Bytes()) {
-		return ErrInvalidState("state key hash cannot be empty")
+		return ErrInvalidState
 	}
 	// NOTE: state value can be empty
 	return nil

@@ -111,7 +111,7 @@ func (k DistrKeeper) calculateDelegationRewards(ctx sdk.Context, val exported.Va
 func (k DistrKeeper) withdrawDelegationRewards(ctx sdk.Context, val exported.ValidatorI, del exported.DelegationI) (sdk.Coin, error) {
 
 	if !k.HasDelegatorStartingInfo(ctx, val.GetOperator(), del.GetDelegatorAddr()) {
-		return sdk.Coin{}, types.ErrEmptyDelegationStartingInfo(fmt.Sprintf("%v has no delegator starting info with validtor %v", val.GetOperator().String(), del.GetDelegatorAddr().String()))
+		return sdk.Coin{}, types.ErrEmptyDelegationStartingInfo
 	}
 
 	// end current period and calculate rewards

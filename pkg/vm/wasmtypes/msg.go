@@ -22,11 +22,11 @@ func NewMsgUploadContract(code []byte, from sdk.AccAddress) *MsgUploadContract {
 //TODO
 func (msg *MsgUploadContract) ValidateBasic() error {
 	if msg.Code == nil {
-		return ErrInvalidParams("empty code")
+		return ErrInvalidParams
 	}
 
 	if msg.FromAddress.Empty() {
-		return ErrInvalidParams( "empty from address")
+		return ErrInvalidParams
 	}
 
 	return nil
@@ -83,11 +83,11 @@ func NewMsgInstantiateContract(codeHash []byte, from sdk.AccAddress, name, versi
 //TODO
 func (msg *MsgInstantiateContract) ValidateBasic() error {
 	if len(msg.CodeHash) == 0 {
-		return ErrInvalidParams( "invalid code_hash")
+		return ErrInvalidParams
 	}
 
 	if msg.FromAddress.Empty() {
-		return ErrInvalidParams( "empty from address")
+		return ErrInvalidParams
 	}
 
 	return nil
@@ -131,15 +131,15 @@ func NewMsgExecuteContract(from sdk.AccAddress, contractAddress sdk.AccAddress, 
 //TODO
 func (msg *MsgExecuteContract) ValidateBasic() error {
 	if msg.Contract.Empty() {
-		return ErrInvalidParams("empty contract address")
+		return ErrInvalidParams
 	}
 
 	if msg.FromAddress.Empty() {
-		return ErrInvalidParams( "empty from address")
+		return ErrInvalidParams
 	}
 
 	if msg.Args.Method == "" {
-		return ErrInvalidParams("invalid args")
+		return ErrInvalidParams
 	}
 	return nil
 }
@@ -194,15 +194,15 @@ func NewMsgMigrateContract(codeHash []byte, from sdk.AccAddress, name, version, 
 
 func (msg *MsgMigrateContract) ValidateBasic() error {
 	if len(msg.CodeHash) == 0 {
-		return ErrInvalidParams( "empty code_hash")
+		return ErrInvalidParams
 	}
 
 	if msg.FromAddress.Empty() {
-		return ErrInvalidParams("empty from address")
+		return ErrInvalidParams
 	}
 
 	if msg.Contract.Empty() {
-		return ErrInvalidParams("empty contract")
+		return ErrInvalidParams
 	}
 	return nil
 }

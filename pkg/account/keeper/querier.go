@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/account/types"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -25,7 +24,7 @@ func NewQuerier(k AccountKeeper) sdk.Querier {
 		case types.QueryAccountNonce:
 			return queryAccountNonce(ctx, req, k)
 		default:
-			return nil, types.ErrInvalidEndPoint(fmt.Sprintf("unexpected path: %v", path[0]))
+			return nil, types.ErrInvalidEndPoint
 		}
 	}
 }
@@ -34,11 +33,11 @@ func queryAccount(ctx sdk.Context, req abci.RequestQuery, k AccountKeeper) ([]by
 	var accountParams QueryAccountParams
 	err := types.ModuleCdc.UnmarshalJSON(req.Data, &accountParams)
 	if err != nil {
-		return nil, types.ErrCdcUnmarshalFailed(fmt.Sprintf("cdc marshal failed: %v", err.Error()))
+		return nil, types.ErrCdcUnmarshalFailed
 	}
 	acc := k.GetAccount(ctx, accountParams.AccountAddress)
 	if acc == nil {
-		return nil, types.ErrAccountNotExisted(fmt.Sprintf("the account not found with address: %v", accountParams.AccountAddress.String()))
+		return nil, types.ErrAccountNotExisted
 	}
 	by := types.ModuleCdc.MustMarshalBinaryLengthPrefixed(acc)
 	return by, nil
@@ -48,11 +47,11 @@ func queryAccountNonce(ctx sdk.Context, req abci.RequestQuery, k AccountKeeper) 
 	var accountParams QueryAccountParams
 	err := types.ModuleCdc.UnmarshalJSON(req.Data, &accountParams)
 	if err != nil {
-		return nil, types.ErrCdcUnmarshalFailed(fmt.Sprintf("cdc marshal failed: %v", err.Error()))
+		return nil, types.ErrCdcUnmarshalFailed
 	}
 	acc := k.GetAccount(ctx, accountParams.AccountAddress)
 	if acc == nil {
-		return nil, types.ErrAccountNotExisted(fmt.Sprintf("the account not found with address: %v", accountParams.AccountAddress.String()))
+		return nil, types.ErrAccountNotExisted
 	}
 	by := types.ModuleCdc.MustMarshalBinaryLengthPrefixed(acc.GetSequence())
 	return by, nil

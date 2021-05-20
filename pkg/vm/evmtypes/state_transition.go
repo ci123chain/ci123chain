@@ -70,7 +70,7 @@ func (st StateTransition) TransitionDb(ctx sdk.Context, config ChainConfig) (*Ex
 
 	cost, err := core.IntrinsicGas(st.Payload, contractCreation, true, false)
 	if err != nil {
-		return nil, ErrComputeGas("invalid intrinsic gas for transaction")
+		return nil, ErrComputeGas
 	}
 
 	// This gas limit the the transaction gas limit with intrinsic gas subtracted

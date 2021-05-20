@@ -16,26 +16,35 @@ const (
 	CodeCdcUnmarshalFailed     CodeType = 1106
 )
 
-func ErrAccountNotExisted(desc string) error {
-	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeAccountNotExisted), desc)
-}
+var (
+	ErrAccountNotExisted = sdkerrors.Register(string(DefaultCodespace), uint32(CodeAccountNotExisted), "account not exist")
+	ErrInsufficientFunds = sdkerrors.Register(string(DefaultCodespace), uint32(CodeInsufficientFunds), "insufficient funds")
+	ErrInvalidParam = sdkerrors.Register(string(DefaultCodespace), uint32(CodeInvalidParam), "invalid params")
+	ErrInvalidEndPoint = sdkerrors.Register(string(DefaultCodespace), uint32(CodeInvalidEndPoint), "invalid endpoint")
+	ErrCdcMarshalFailed = sdkerrors.Register(string(DefaultCodespace), uint32(CodeCdcMarshalFailed), "cdc marshal failed")
+	ErrCdcUnmarshalFailed = sdkerrors.Register(string(DefaultCodespace), uint32(CodeCdcUnmarshalFailed), "cdc unmarshal failed")
+)
 
-func ErrInsufficientFunds(desc string) error {
-	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeInsufficientFunds), desc)
-}
+//func ErrAccountNotExisted(desc string) error {
+//	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeAccountNotExisted), desc)
+//}
 
-func ErrInvalidParam (desc string) error {
-	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeInvalidParam), desc)
-}
+//func ErrInsufficientFunds(desc string) error {
+//	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeInsufficientFunds), desc)
+//}
 
-func ErrInvalidEndPoint(desc string) error {
-	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeInvalidEndPoint), desc)
-}
+//func ErrInvalidParam (desc string) error {
+//	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeInvalidParam), desc)
+//}
 
-func ErrCdcMarshalFailed(desc string) error {
-	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeCdcMarshalFailed), desc)
-}
+//func ErrInvalidEndPoint(desc string) error {
+//	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeInvalidEndPoint), desc)
+//}
 
-func ErrCdcUnmarshalFailed(desc string) error {
-	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeCdcUnmarshalFailed), desc)
-}
+//func ErrCdcMarshalFailed(desc string) error {
+//	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeCdcMarshalFailed), desc)
+//}
+//
+//func ErrCdcUnmarshalFailed(desc string) error {
+//	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeCdcUnmarshalFailed), desc)
+//}

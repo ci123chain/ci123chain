@@ -4,7 +4,6 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/order/keeper"
 	order "github.com/ci123chain/ci123chain/pkg/order/types"
-	"reflect"
 )
 
 func NewHandler(keeper *keeper.OrderKeeper) types.Handler {
@@ -14,8 +13,8 @@ func NewHandler(keeper *keeper.OrderKeeper) types.Handler {
 		case *order.MsgUpgrade:
 			return handlerMsgUpgrade(ctx, keeper, msg)
 		default:
-			errMsg := "Unrecognized msg type: " + reflect.TypeOf(msg).Name()
-			return nil, order.ErrInvalidEndPoint(errMsg)
+			//errMsg := "Unrecognized msg type: " + reflect.TypeOf(msg).Name()
+			return nil, order.ErrInvalidEndPoint
 		}
 	}
 }

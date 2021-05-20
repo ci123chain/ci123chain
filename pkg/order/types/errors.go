@@ -14,23 +14,30 @@ const (
 	CodeGetOrderBookFailed         CodeType = 1505
 )
 
+var (
+	ErrCheckParams = sdkerrors.Register(string(DefaultCodespace), uint32(CodeCheckParamsError), "invalid params")
+	ErrFailedMarshal = sdkerrors.Register(string(DefaultCodespace), uint32(CodeBadMarshal), "marshal failed")
+	ErrInvalidEndPoint = sdkerrors.Register(string(DefaultCodespace), uint32(CodeInvalidEndPoint), "invalid endpoint")
+	ErrGetOrderBookFailed = sdkerrors.Register(string(DefaultCodespace), uint32(CodeGetOrderBookFailed), "get order book failed")
+)
 
-func ErrCheckParams(desc string) error {
-	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeCheckParamsError), desc)
-}
 
-func ErrFailedMarshal(desc string) error {
-	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeCheckParamsError), desc)
-}
-
-func ErrQueryTx(desc string) error {
-	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeCheckParamsError), desc)
-}
-
-func ErrInvalidEndPoint(desc string) error {
-	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeInvalidEndPoint), desc)
-}
-
-func ErrGetOrderBookFailed(desc string) error {
-	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeGetOrderBookFailed), desc)
-}
+//func ErrCheckParams(desc string) error {
+//	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeCheckParamsError), desc)
+//}
+//
+//func ErrFailedMarshal(desc string) error {
+//	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeCheckParamsError), desc)
+//}
+//
+//func ErrQueryTx(desc string) error {
+//	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeCheckParamsError), desc)
+//}
+//
+//func ErrInvalidEndPoint(desc string) error {
+//	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeInvalidEndPoint), desc)
+//}
+//
+//func ErrGetOrderBookFailed(desc string) error {
+//	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeGetOrderBookFailed), desc)
+//}

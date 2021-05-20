@@ -51,9 +51,20 @@ const (
 )
 
 
-func ErrInvalidParams(desc string) error {
-	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeErrInvalidParams), desc)
-}
+var (
+	ErrInvalidParams = sdkerrors.Register(string(DefaultCodespace), uint32(CodeErrInvalidParams), "invalid params")
+	ErrEmptyDelegationStartingInfo = sdkerrors.Register(string(DefaultCodespace), uint32(CodeEmptyDelegationStartingInfo), "empty delegation starting info")
+
+	ErrNoValidatorExist = sdkerrors.Register(string(DefaultCodespace), uint32(CodeNoValidatorExist), "no validator exist")
+	ErrInternalCdcMarshal = sdkerrors.Register(string(DefaultCodespace), uint32(CodeCdcMarshalFailed), "cdc marshal failed")
+	ErrNoDelegationExist = sdkerrors.Register(string(DefaultCodespace), uint32(CodeNoDelegationExist), "no delegation exist")
+	ErrSetWithdrawAddrDisabled = sdkerrors.Register(string(DefaultCodespace), uint32(CodeSetWithdrawAddressFailed), "set withdraw addresss disabled")
+	ErrNoValidatorCommission = sdkerrors.Register(string(DefaultCodespace), uint32(CodeNoValidatorCommission), "the validator has no commission now")
+)
+
+//func ErrInvalidParams(desc string) error {
+//	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeErrInvalidParams), desc)
+//}
 
 
 //func ErrBadHeight(codespace sdk.CodespaceType, err error) sdk.Error {
@@ -68,21 +79,21 @@ func ErrInvalidParams(desc string) error {
 //	return sdk.NewError(codespace, CodeBadAddress, "param address invalid: %s", err.Error())
 //}
 
-func ErrEmptyDelegationStartingInfo(desc string) error {
-	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeEmptyDelegationStartingInfo), desc)
-}
+//func ErrEmptyDelegationStartingInfo(desc string) error {
+//	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeEmptyDelegationStartingInfo), desc)
+//}
 
-func ErrNoValidatorExist(desc string) error {
-	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeNoValidatorExist), desc)
-}
+//func ErrNoValidatorExist(desc string) error {
+//	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeNoValidatorExist), desc)
+//}
 
-func ErrInternalCdcMarshal(desc string) error {
-	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeCdcMarshalFailed), desc)
-}
+//func ErrInternalCdcMarshal(desc string) error {
+//	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeCdcMarshalFailed), desc)
+//}
 
-func ErrNoDelegationExist(desc string) error {
-	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeNoDelegationExist), desc)
-}
+//func ErrNoDelegationExist(desc string) error {
+//	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeNoDelegationExist), desc)
+//}
 
 //func ErrInternalServer(codespace sdk.CodespaceType) sdk.Error {
 //	return sdk.NewError(codespace, CodeInternalServerError, fmt.Sprintf("got information failed"))
@@ -116,21 +127,21 @@ func ErrNoDelegationExist(desc string) error {
 //	return sdk.NewError(codespace, CodeErrSignTx, err.Error())
 //}
 
-func ErrSetWithdrawAddrDisabled(desc string) error {
-	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeSetWithdrawAddressFailed), desc)
-}
+//func ErrSetWithdrawAddrDisabled(desc string) error {
+//	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeSetWithdrawAddressFailed), desc)
+//}
 
-func ErrNoValidatorDistInfo(desc string) error {
-	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeNoValidatorDistInfo), desc)
-}
+//func ErrNoValidatorDistInfo(desc string) error {
+//	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeNoValidatorDistInfo), desc)
+//}
+//
+//func ErrEmptyDelegationDistInfo(desc string) error {
+//	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeNoDelegationDistInfo), desc)
+//}
 
-func ErrEmptyDelegationDistInfo(desc string) error {
-	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeNoDelegationDistInfo), desc)
-}
-
-func ErrNoValidatorCommission(desc string) error {
-	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeNoValidatorCommission), desc)
-}
+//func ErrNoValidatorCommission(desc string) error {
+//	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeNoValidatorCommission), desc)
+//}
 
 //func ErrWithdrawAddressInfoMismatch(codespace sdk.CodespaceType, expectedAddr, gotAddr sdk.AccAddress) sdk.Error {
 //	return sdk.NewError(codespace, CodeErrWithdrawAddressInfoMismatch, fmt.Sprintf("account address mismatch, expected %s, got %s", expectedAddr.String(), gotAddr.String()))

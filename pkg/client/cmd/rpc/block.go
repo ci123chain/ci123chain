@@ -15,7 +15,7 @@ func LatestBlockRequestHandlerFn(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		output, err := getBlock(ctx, nil)
 		if err != nil {
-			rest.WriteErrorRes(w, types.ErrNode(types.DefaultCodespace, err).Error())
+			rest.WriteErrorRes(w, types.ErrGetBlockFailed.Error())
 			return
 		}
 

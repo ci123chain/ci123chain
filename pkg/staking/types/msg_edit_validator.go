@@ -1,7 +1,6 @@
 package types
 
 import (
-	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 )
 
@@ -26,18 +25,18 @@ func NewMsgEditValidator(from sdk.AccAddress, desc Description, commissionRate *
 
 func (tx *MsgEditValidator) ValidateBasic() error {
 	if tx.ValidatorAddress.Empty() {
-		return ErrInvalidParam( "empty validator address")
+		return ErrInvalidParam
 	}
 	if tx.MinSelfDelegation != nil && tx.MinSelfDelegation.IsPositive() {
-		return ErrInvalidParam( "invalid minSelfDelegation")
+		return ErrInvalidParam
 	}
 	if tx.CommissionRate != nil {
 		if tx.CommissionRate.GT(sdk.OneDec()) || tx.CommissionRate.IsNegative() {
-			return ErrInvalidParam(  "commission rate must be between 0 and 1 (inclusive)")
+			return ErrInvalidParam
 		}
 	}
 	if !tx.ValidatorAddress.Equals(tx.FromAddress) {
-		return ErrInvalidParam(  fmt.Sprintf("expected %s, got %s", tx.FromAddress, tx.ValidatorAddress))
+		return ErrInvalidParam
 	}
 	return nil
 }

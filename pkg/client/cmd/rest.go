@@ -170,7 +170,7 @@ func CustomGRPCHeaderMatcher(key string) (string, bool) {
 	}
 }
 
-const CorePrefix = "/collactor"
+const CorePrefix = "/core"
 
 type HeightParams struct {
 	Height   string   `json:"height"`
@@ -244,7 +244,6 @@ func Handle404() http.Handler {
 			http.Error(w, rep.Status, rep.StatusCode)
 			return
 		}
-
 		resBody, err := ioutil.ReadAll(rep.Body)
 		var resultResponse client.Response
 		if err != nil {
@@ -275,7 +274,7 @@ func Handle404() http.Handler {
 					resultResponse = client.Response{
 						Ret:     1,
 						Data:    nil,
-						Message: tmResponse.Error.Error(),
+						Message: tmResponse.Error.Message,
 					}
 				}
 			}else {
@@ -313,7 +312,7 @@ func (rs *RestServer) Start(listenAddr string, maxOpen int, readTimeout, writeTi
 	cfg.ReadTimeout = time.Duration(readTimeout) * time.Second
 	cfg.WriteTimeout = time.Duration(writeTimeout) * time.Second
 
-	rs.registerGRPCGatewayRoutes()
+	//rs.registerGRPCGatewayRoutes()
 
 	rs.listener, err = rpcserver.Listen(listenAddr, cfg)
 	if err != nil {
