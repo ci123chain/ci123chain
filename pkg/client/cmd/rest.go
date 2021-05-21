@@ -109,6 +109,7 @@ func NewRestServer() *RestServer {
 	r.HandleFunc("/healthcheck", HealthCheckHandler(cliCtx)).Methods("GET")
 	r.HandleFunc("/exportLog", ExportLogHandler(cliCtx)).Methods("GET")
 	r.HandleFunc("/exportConfig", ExportConfigHandler(cliCtx)).Methods("GET")
+	r.HandleFunc("/exportEnv", ExportEnv(cliCtx)).Methods("POST")
 	rpc.RegisterRoutes(cliCtx, r)
 	accountRpc.RegisterRoutes(cliCtx, r)
 	txRpc.RegisterTxRoutes(cliCtx, r)
@@ -449,3 +450,26 @@ func ExportConfigHandler(ctx context.Context) http.HandlerFunc  {
 	}
 }
 
+func ExportEnv(ctx context.Context) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+
+		var ks []string
+		keys := req.FormValue("keys")
+		err := json.Unmarshal([]byte(keys), &ks)
+		if err != nil {
+			_, _ = w.Write([]byte(err.Error()))
+			return
+		}
+		var res = make(map[string]interface{}, 0)
+		for _, v := range ks {
+			value := os.Getenv(v)
+			res[v] = value
+		}
+		bytes, err := json.Marshal(res)
+		if err != nil {
+			_, _ = w.Write([]byte(err.Error()))
+			return
+		}
+		_, _ = w.Write(bytes)
+	}
+}
