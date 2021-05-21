@@ -79,7 +79,10 @@ func RunStrategy(src, dst *Chain, strategy Strategy) (func(), error) {
 	}
 
 	// Return a function to stop the relayer goroutine
-	return func() { doneChan <- struct{}{} }, nil
+	return func() {
+		//src.Log("doneChan Invoked !!!")
+		doneChan <- struct{}{}
+	}, nil
 }
 
 

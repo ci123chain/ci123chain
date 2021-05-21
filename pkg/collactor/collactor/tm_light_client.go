@@ -14,7 +14,6 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 	"golang.org/x/sync/errgroup"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"time"
@@ -24,10 +23,10 @@ func lightError(err error) error { return fmt.Errorf("light client: %w", err) }
 
 
 var (
-	logger = light.Logger(log.NewTMLogger(log.NewSyncWriter(ioutil.Discard)))
+	//logger = light.Logger(log.NewTMLogger(log.NewSyncWriter(ioutil.Discard)))
+	logger = light.Logger(log.NewNopLogger())
 
 	ErrDatabase = errors.New("database failure")
-
 
 	// ErrLightNotInitialized returns the canonical error for a an uninitialized light client
 	ErrLightNotInitialized = errors.New("light client is not initialized")
