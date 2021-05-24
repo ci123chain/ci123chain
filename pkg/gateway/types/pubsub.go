@@ -146,6 +146,14 @@ func (r *PubSubRoom)Receive(c *websocket.Conn) {
 				_ = c.Close()
 				continue
 			}
+		}else if len(r.backends) == 0 {
+			res := SendMessage{
+				Time:    time.Now().Format(time.RFC3339),
+				Content: fmt.Sprintf("there has no backends in server pool"),
+			}
+			_ = c.WriteJSON(res)
+			_ = c.Close()
+			continue
 		}
 		_ = json.Unmarshal(data, &m)
 		topic := m.Content.GetTopic()
