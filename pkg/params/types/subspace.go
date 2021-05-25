@@ -231,8 +231,10 @@ func (s Subspace) SetParamSet(ctx sdk.Context, ps ParamSet) {
 		// so this method will not be called frequently
 		v := reflect.Indirect(reflect.ValueOf(pair.Value)).Interface()
 
-		if err := pair.ValidatorFn(v); err != nil {
-			panic(fmt.Sprintf("value from ParamSetPair is invalid: %s", err))
+		if pair.ValidatorFn != nil {
+			if err := pair.ValidatorFn(v); err != nil {
+				panic(fmt.Sprintf("value from ParamSetPair is invalid: %s", err))
+			}
 		}
 
 		s.Set(ctx, pair.Key, v)
