@@ -10,6 +10,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/gateway/logger"
 	"github.com/ci123chain/ci123chain/pkg/gateway/redissource"
 	"github.com/ci123chain/ci123chain/pkg/gateway/types"
+	"github.com/pretty66/gosdk/cienv"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"net/http"
@@ -25,6 +26,7 @@ const (
 	flagCiStateDBHost  = "statedb_host"
 	flagCiStateDBPort  = "statedb_port"
 	flagCiStateDBTls   = "statedb_tls"
+	AppID			   = "hedlzgp1u48kjf50xtcvwdklminbqe9a"
 )
 
 var serverPool *ServerPool
@@ -110,6 +112,7 @@ func Start() {
 	http.HandleFunc("/healthcheck", healthCheckHandlerFn)
 	http.Handle("/", timeoutHandler)
 	http.HandleFunc("/pubsub", PubSubHandle)
+	http.HandleFunc("/getAppkeyChannel", appKeyChannelHandlerFn)
 
 	// start health checking
 	go healthCheck()
@@ -164,6 +167,22 @@ func healthCheckHandlerFn(w http.ResponseWriter, _ *http.Request) {
 		Data:  "all backends health or no backends now",
 	}
 	resultByte, _ := json.Marshal(resultResponse)
+	w.Header().Set("Content-Type", "application/json")
+	_, _ = w.Write(resultByte)
+}
+
+func appKeyChannelHandlerFn(w http.ResponseWriter, r *http.Request) {
+	params := r.URL.Query()
+	res := map[string]interface{}{
+		"appid":   AppID,
+		"appkey":  params.Get("appkey"),
+		"channel": params.Get("channel"),
+		"site": map[string]interface{}{
+			"cluster_id": cienv.GetEnv("IDG_SITEUID"),
+			"site_id":    cienv.GetEnv("IDG_CLUSTERUID"),
+		},
+	}
+	resultByte, _ := json.Marshal(res)
 	w.Header().Set("Content-Type", "application/json")
 	_, _ = w.Write(resultByte)
 }
