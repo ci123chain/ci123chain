@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/store"
+	types2 "github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/telemetry"
 	"github.com/ci123chain/ci123chain/pkg/transfer"
 	"google.golang.org/grpc/codes"
@@ -1141,6 +1142,9 @@ func allMsgAttributes(msgs []sdk.Msg) [][]sdk.Attribute {
 		case *iftypes.MsgStoreContent:
 			operation = "store_content"
 			module = iftypes.ModuleName
+		case *types2.MsgEthereumTx:
+			operation = "eth_transaction"
+			module = types2.RouterKey
 		}
 
 		attrs = sdk.NewAttributes(attrs,
