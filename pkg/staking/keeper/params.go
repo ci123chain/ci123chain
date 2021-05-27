@@ -7,28 +7,28 @@ import (
 )
 
 func (k StakingKeeper) UnbondingTime(ctx sdk.Context) (unbondingTime time.Duration) {
-	k.paramstore.Get(ctx, types.KeyUnbondingTime, &unbondingTime)
-	return
+	//k.paramstore.Get(ctx, types.KeyUnbondingTime, &unbondingTime)
+	return types.DefaultUnbondingTime
 }
 
 func (k StakingKeeper) MaxValidators(ctx sdk.Context) (maxValidators uint32) {
-	k.paramstore.Get(ctx, types.KeyMaxValidators, &maxValidators)
-	return
+	//k.paramstore.Get(ctx, types.KeyMaxValidators, &maxValidators)
+	return types.DefaultMaxValidators
 }
 
 func (k StakingKeeper) MaxEntries(ctx sdk.Context) (maxEntries uint32) {
-	k.paramstore.Get(ctx, types.KeyMaxEntries, &maxEntries)
-	return
+	//k.paramstore.Get(ctx, types.KeyMaxEntries, &maxEntries)
+	return types.DefaultMaxEntries
 }
 
 func (k StakingKeeper) HistoricalEntries(ctx sdk.Context) (HisEntries uint32) {
-	k.paramstore.Get(ctx, types.KeyHistoricalEntries, &HisEntries)
-	return
+	//k.paramstore.Get(ctx, types.KeyHistoricalEntries, &HisEntries)
+	return types.DefaultHistoricalEntries
 }
 
 func (k StakingKeeper) BondDenom(ctx sdk.Context) (bondDenom string) {
-	k.paramstore.Get(ctx, types.KeyBondDenom, &bondDenom)
-	return
+	//k.paramstore.Get(ctx, types.KeyBondDenom, &bondDenom)
+	return sdk.ChainCoinDenom
 }
 
 func (k StakingKeeper) GetParams(ctx sdk.Context) types.Params {
