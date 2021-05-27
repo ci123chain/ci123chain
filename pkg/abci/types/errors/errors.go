@@ -16,7 +16,7 @@ const UndefinedCodespace = "undefined"
 
 var (
 	// errInternal should never be exposed, but we reserve this code for non-specified errors
-	errInternal = Register(UndefinedCodespace, 1, "internal")
+	//errInternal = Register(UndefinedCodespace, 1, "internal")
 
 	// ErrTxDecode is returned if we cannot parse a transaction
 	ErrTxDecode = Register(RootCodespace, 2, "tx parse error")
@@ -161,6 +161,8 @@ var (
 	ErrAccountSetCoinFailed = Register(RootCodespace, 52, "set account coin failed")
 
 	ErrModuleAccountSetCoinFailed = Register(RootCodespace, 53, "module account set coin failed")
+
+	errInternal = Register(UndefinedCodespace, 54, "internal")
 
 	ErrRuxTxOutOfGas = Register(RootCodespace, 10101, "tx out of gas")
 

@@ -113,11 +113,15 @@ func NewResponseResultTx(res *ctypes.ResultTx, tx Tx, timestamp string) TxRespon
 	}
 
 	parsedLogs, _ := ParseABCILogs(res.TxResult.Log)
+	var code = res.TxResult.Code
+	if code == 0 {
+		code = 1
+	}
 
 	return TxResponse{
 		TxHash:    res.Hash.String(),
 		Height:    res.Height,
-		Code:      res.TxResult.Code,
+		Code:      code,
 		Index:     res.Index,
 		FormatData: string(res.TxResult.Data),
 		Data:      strings.ToUpper(hex.EncodeToString(res.TxResult.Data)),
