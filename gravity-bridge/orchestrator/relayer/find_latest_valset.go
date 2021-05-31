@@ -94,7 +94,7 @@ func findLatestValset(contact cosmos_gravity.Contact, contractAddr string, clien
 			allValSetEvents[i], allValSetEvents[j] = allValSetEvents[j], allValSetEvents[i]
 		}
 
-		lg.Info(fmt.Sprintf("Found events: %v", allValSetEvents))
+		lg.Info(fmt.Sprintf("Found events"))
 
 		ethValSet := new(types.ValSet)
 		if len(allValSetEvents) != 0 {
@@ -175,7 +175,7 @@ func checkIfValsetsDiffer(cosmosValset, ethereumValset *types.ValSet) bool {
 	}
 
 	for i := 0; i < len(cValSet); i++ {
-		if cValSet[i] != eValSet[i] {
+		if cValSet[i].EthAddress.String() != eValSet[i].EthAddress.String() || cValSet[i].Power != eValSet[i].Power {
 			return false
 		}
 	}

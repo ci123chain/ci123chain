@@ -49,10 +49,9 @@ func batchByNonceHandler(cliCtx context.Context, storeName string) http.HandlerF
 			return
 		}
 
-		//todo
-		var out types.OutgoingTxBatch
+		var out *types.OutgoingTxBatch
 		cliCtx.Cdc.MustUnmarshalJSON(res, &out)
-		rest.PostProcessResponseBare(w, cliCtx.WithHeight(height), res)
+		rest.PostProcessResponseBare(w, cliCtx.WithHeight(height), out)
 	}
 }
 
@@ -70,10 +69,9 @@ func lastBatchesHandler(cliCtx context.Context, storeName string) http.HandlerFu
 			return
 		}
 
-		//todo
-		var out types.OutgoingTxBatch
+		var out []*types.OutgoingTxBatch
 		cliCtx.Cdc.MustUnmarshalJSON(res, &out)
-		rest.PostProcessResponseBare(w, cliCtx.WithHeight(height), res)
+		rest.PostProcessResponseBare(w, cliCtx.WithHeight(height), out)
 	}
 }
 
@@ -93,10 +91,9 @@ func allValsetConfirmsHandler(cliCtx context.Context, storeName string) http.Han
 			return
 		}
 
-		//todo
-		var out types.OutgoingTxBatch
+		var out []*types.MsgValsetConfirm
 		cliCtx.Cdc.MustUnmarshalJSON(res, &out)
-		rest.PostProcessResponseBare(w, cliCtx.WithHeight(height), res)
+		rest.PostProcessResponseBare(w, cliCtx.WithHeight(height), out)
 	}
 }
 
@@ -117,10 +114,9 @@ func allBatchConfirmsHandler(cliCtx context.Context, storeName string) http.Hand
 			return
 		}
 
-		//todo
-		var out types.OutgoingTxBatch
+		var out []types.MsgConfirmBatch
 		cliCtx.Cdc.MustUnmarshalJSON(res, &out)
-		rest.PostProcessResponseBare(w, cliCtx.WithHeight(height), res)
+		rest.PostProcessResponseBare(w, cliCtx.WithHeight(height), out)
 	}
 }
 

@@ -6,10 +6,12 @@ import (
 	"errors"
 	"fmt"
 	"github.com/ci123chain/ci123chain/gravity-bridge/orchestrator/gravity_utils"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
 	"github.com/ci123chain/ci123chain/pkg/client/cmd/rpc"
 	coretypes "github.com/tendermint/tendermint/rpc/core/types"
 	"io/ioutil"
+	"math/big"
 	"net/http"
 	"net/url"
 	"strings"
@@ -96,7 +98,7 @@ func (c Contact) GetChainStatus() (ChainStatus, error) {
 	}, nil
 }
 
-func (c Contact) GetNonce(address string) uint64{
+func (c Contact) GetNonce(address string) uint64 {
 	data := url.Values{}
 	data.Add("address", address)
 	nonceRes, _ := c.Post("/account/nonce", data)
@@ -106,6 +108,27 @@ func (c Contact) GetNonce(address string) uint64{
 	json.Unmarshal(res.Data, &queryRes)
 	nonce := queryRes.Value.(map[string]interface{})["nonce"].(float64)
 	return uint64(nonce)
+}
+
+func (c Contact) GetBalance(address string) sdk.Coins {
+	data := url.Values{}
+	data.Add("address", address)
+	balanceRes, _ := c.Post("/bank/balance", data)
+	var res rest.Response
+	var queryRes rest.QueryRes
+	json.Unmarshal(balanceRes, &res)
+	json.Unmarshal(res.Data, &queryRes)
+	balanceList := queryRes.Value.(map[string]interface{})["balance_list"].([]interface{})
+
+	var balance sdk.Coins
+	for _, v := range balanceList {
+		vMap := v.(map[string]interface{})
+		amt := vMap["amount"].(string)
+		x, _ :=new(big.Int).SetString(amt, 10)
+		balance = append(balance, sdk.NewCoin(vMap["denom"].(string), sdk.NewIntFromBigInt(x)))
+	}
+
+	return balance
 }
 
 func (c Contact) BroadcastTx(txBz []byte) []byte {
