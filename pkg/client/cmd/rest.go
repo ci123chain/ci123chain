@@ -420,12 +420,12 @@ func ExportConfigHandler(ctx context.Context) http.HandlerFunc  {
 		viper.SetEnvPrefix("CI")
 		_ = viper.BindEnv("HOME")
 		root := viper.GetString("HOME")
-		gen, err := ioutil.ReadFile(filepath.Join(root, "configs", GenesisFile))
+		gen, err := ioutil.ReadFile(filepath.Join(root, "config", GenesisFile))
 		if err != nil {
 			_, _ = w.Write([]byte(err.Error()))
 			return
 		}
-		pv, err := ioutil.ReadFile(filepath.Join(root, "configs", PrivValidatorKey))
+		pv, err := ioutil.ReadFile(filepath.Join(root, "config", PrivValidatorKey))
 		if err != nil {
 			_, _ = w.Write([]byte(err.Error()))
 			return

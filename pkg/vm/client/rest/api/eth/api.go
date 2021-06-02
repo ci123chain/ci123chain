@@ -311,9 +311,9 @@ func (api *PublicEthereumAPI) GetStorageAt(address common.Address, key string, b
 func (api *PublicEthereumAPI) GetTransactionReceipt(hash common.Hash) (map[string]interface{}, error) {
 	api.logger.Debug("eth_getTransactionReceipt", "hash", hash)
 	tx, err := api.clientCtx.Client.Tx(api.ctx, hash.Bytes(), false)
-	if err != nil {
+	if err != nil || tx.TxResult.Code == 204 {
 		// Return nil for transaction when not found
-		return nil, evmtypes.ErrClientQueryTxFailed
+		return nil, nil
 	}
 
 	var sdkTx sdk.Tx
@@ -342,11 +342,7 @@ func (api *PublicEthereumAPI) GetTransactionReceipt(hash common.Hash) (map[strin
 
 	// Set status codes based on tx result
 	var status hexutil.Uint
-	if tx.TxResult.IsOK() {
-		status = hexutil.Uint(1)
-	} else {
-		status = hexutil.Uint(0)
-	}
+	status = 1
 
 	txData := tx.TxResult.GetData()
 
@@ -506,7 +502,7 @@ func (api *PublicEthereumAPI) GetCode(address common.Address, blockNumber BlockN
 func (api *PublicEthereumAPI) GetTransactionByHash(hash common.Hash) (*Transaction, error) {
 	api.logger.Debug("eth_getTransactionByHash", "hash", hash)
 	tx, err := api.clientCtx.Client.Tx(api.ctx, hash.Bytes(), false)
-	if err != nil {
+	if err != nil || tx.TxResult.Code == 204 {
 		// Return nil for transaction when not found
 		return nil, nil
 	}
