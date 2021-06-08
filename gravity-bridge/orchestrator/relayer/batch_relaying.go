@@ -48,6 +48,7 @@ func relayBatches(
 		sigs, ok := getSigs.([]types.BatchConfirmResponse)
 		if !ok {
 			lg.Error(fmt.Sprintf("could not get signatures for %v:%d with %v", batch.TokenContract, batch.Nonce, sigs))
+			return
 		}
 
 		var confirm []types.Confirm
@@ -58,6 +59,7 @@ func relayBatches(
 		hash := types.EncodeTxBatchConfirmHashed(gravityId, batch)
 		if _, err := currentValSet.OrderSigs(hash, confirm); err != nil{
 			lg.Error("Batch can not be submitted yet, waiting for more signatures")
+			return
 		}
 
 		oldestSignedBatch := batch

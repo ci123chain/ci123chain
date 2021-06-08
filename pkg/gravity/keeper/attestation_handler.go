@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"github.com/ci123chain/ci123chain/pkg/account"
 	"github.com/ci123chain/ci123chain/pkg/supply"
 
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
@@ -14,6 +15,7 @@ import (
 type AttestationHandler struct {
 	keeper     Keeper
 	supplyKeeper supply.Keeper
+	accountKeeper account.AccountKeeper
 }
 
 // Handle is the entry point for Attestation processing.

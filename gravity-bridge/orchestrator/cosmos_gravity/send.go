@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	COMMON_GAS = 10000
+	COMMON_GAS = 100000
 )
 
 func SendValsetConfirms(contact Contact,
@@ -40,13 +40,61 @@ func SendValsetConfirms(contact Contact,
 		if err != nil {
 			return sdk.TxResponse{}, err
 		}
-		lg.Info(fmt.Sprintf("Sending valset update with address %s and sig %v", ourCosmosAddress.String(), sig))
+		lg.Info(fmt.Sprintf("Sending valset update with address %s and sig %s", ourCosmosAddress.String(), hex.EncodeToString(sig)))
 
 		confirm := &types2.MsgValsetConfirm{
 			Nonce:        valset.Nonce,
 			Orchestrator: ourCosmosAddress.String(),
 			EthAddress:   ourEthAddress.String(),
 			Signature:    hex.EncodeToString(sig),
+		}
+		msgs = append(msgs, confirm)
+	}
+
+	nonce := contact.GetNonce(ourCosmosAddress.String())
+
+	txBz, err := types3.SignCommonTx(sdk.HexToAddress(ourCosmosAddress.String()), nonce, COMMON_GAS, msgs, hex.EncodeToString(cosmosPrivKey.D.Bytes()), types3.GetCodec())
+	if err != nil {
+		return sdk.TxResponse{}, err
+	}
+
+	var result sdk.TxResponse
+	res := gravity_utils.Exec(func() interface{} {
+		res := contact.BroadcastTx(txBz)
+		return res
+	}).Await().([]byte)
+	json.Unmarshal(res, &result)
+
+	return result, nil
+}
+
+func SendBatchConfirm(contact Contact,
+	ethPrivKey *ecdsa.PrivateKey,
+	fee sdk.Coin,
+	transactionBatches []*types.TransactionBatch,
+	cosmosPrivKey *ecdsa.PrivateKey,
+	gravityId string) (sdk.TxResponse, error) {
+
+	ourCosmosAddress := crypto.PubkeyToAddress(cosmosPrivKey.PublicKey)
+	ourEthAddress := crypto.PubkeyToAddress(ethPrivKey.PublicKey)
+
+	var msgs []sdk.Msg
+	lg := logger.GetLogger()
+	for _, batch := range transactionBatches {
+		lg.Info(fmt.Sprintf("Submitting signature for batch: %v", batch.Nonce))
+		msg := types.EncodeTxBatchConfirmHashed(gravityId, *batch)
+		sig, err := crypto.Sign(msg[:], ethPrivKey)
+		if err != nil {
+			return sdk.TxResponse{}, err
+		}
+		lg.Info(fmt.Sprintf("Sending batch update with address %s and sig %s", ourCosmosAddress.String(), hex.EncodeToString(sig)))
+
+		confirm := &types2.MsgConfirmBatch{
+			Nonce:         batch.Nonce,
+			TokenContract: batch.TokenContract.String(),
+			EthSigner:     ourEthAddress.String(),
+			Orchestrator:  ourCosmosAddress.String(),
+			Signature:     hex.EncodeToString(sig),
 		}
 		msgs = append(msgs, confirm)
 	}
@@ -132,7 +180,7 @@ func SendEthereumClaims(contact Contact,
 
 	nonce := contact.GetNonce(ourCosmosAddress.String())
 
-	txBz, err := types3.SignCommonTx(sdk.HexToAddress(ourCosmosAddress.String()), nonce, COMMON_GAS, msgs, cosmosPrivKey.D.String(), types3.GetCodec())
+	txBz, err := types3.SignCommonTx(sdk.HexToAddress(ourCosmosAddress.String()), nonce, COMMON_GAS, msgs, hex.EncodeToString(cosmosPrivKey.D.Bytes()), types3.GetCodec())
 	if err != nil {
 		return sdk.TxResponse{}, err
 	}
@@ -181,37 +229,6 @@ func SendToEth(privKey *ecdsa.PrivateKey, destination *common.Address, amount sd
 	nonce := contact.GetNonce(ourAddress.String())
 
 	msgs := []sdk.Msg{msgSendToEth}
-
-	txBz, err := types3.SignCommonTx(sdk.HexToAddress(ourAddress.String()), nonce, COMMON_GAS, msgs, hex.EncodeToString(privKey.D.Bytes()), types3.GetCodec())
-	if err != nil {
-		return sdk.TxResponse{}, err
-	}
-
-	var result sdk.TxResponse
-	res := gravity_utils.Exec(func() interface{} {
-		res := contact.BroadcastTx(txBz)
-		return res
-	}).Await().([]byte)
-	json.Unmarshal(res, &result)
-
-	return result, nil
-}
-
-func SendRequestBatch(
-	privKey *ecdsa.PrivateKey,
-	denom string,
-	fee sdk.Coin,
-	contact Contact,
-	) (sdk.TxResponse, error) {
-	ourAddress := crypto.PubkeyToAddress(privKey.PublicKey)
-	msgRequestBatch := &types2.MsgRequestBatch{
-		Sender: ourAddress.String(),
-		Denom:  denom,
-	}
-
-	nonce := contact.GetNonce(ourAddress.String())
-
-	msgs := []sdk.Msg{msgRequestBatch}
 
 	txBz, err := types3.SignCommonTx(sdk.HexToAddress(ourAddress.String()), nonce, COMMON_GAS, msgs, hex.EncodeToString(privKey.D.Bytes()), types3.GetCodec())
 	if err != nil {

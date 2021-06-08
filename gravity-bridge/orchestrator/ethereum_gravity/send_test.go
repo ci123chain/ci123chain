@@ -26,7 +26,7 @@ func TestSendToCosmos(t *testing.T) {
 
 	privKey, _ := crypto.HexToECDSA(EthKey)
 
-	txRes, err := SendToCosmos(Erc20Address, GravityContract, big.NewInt(100), common.HexToAddress(CosmosDestination), privKey, timeout, client)
+	txRes, err := SendToCosmos(Erc20Address, GravityContract, big.NewInt(100000000), common.HexToAddress(CosmosDestination), privKey, timeout, client)
 	if err != nil {
 		fmt.Println(err)
 	}

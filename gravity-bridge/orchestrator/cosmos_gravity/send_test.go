@@ -17,7 +17,21 @@ func TestSendToEth(t *testing.T) {
 
 	privKey, _ := crypto.HexToECDSA(EthKey)
 	to := common.HexToAddress(EthAddress)
-	txRes, err := SendToEth(privKey, &to, types.NewChainCoin(types.NewInt(100000)), types.NewChainCoin(types.NewInt(100000)), contact)
+	txRes, err := SendToEth(privKey, &to, types.NewCoin("gravity0x5c702Fbbcfb8EF5cc70c4E4341AA437ef9D55281", types.NewInt(1000000)), types.NewCoin("gravity0x5c702Fbbcfb8EF5cc70c4E4341AA437ef9D55281", types.NewInt(10000)), contact)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(txRes)
+}
+
+func TestRequestBatch(t *testing.T) {
+	cosmosRpc := "http://127.0.0.1:1317"
+
+	EthKey := "a8a54b2d8197bc0b19bb8a084031be71835580a01e70a45a13babd16c9bc1563"
+	contact := NewContact(cosmosRpc)
+
+	privKey, _ := crypto.HexToECDSA(EthKey)
+	txRes, err := SendRequestBatch(privKey, "gravity0x5c702Fbbcfb8EF5cc70c4E4341AA437ef9D55281", contact)
 	if err != nil {
 		fmt.Println(err)
 	}

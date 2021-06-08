@@ -3,6 +3,7 @@ package keeper
 import (
 	"encoding/hex"
 	"fmt"
+	"github.com/ci123chain/ci123chain/pkg/account"
 	slashing "github.com/ci123chain/ci123chain/pkg/slashing/keeper"
 	staking "github.com/ci123chain/ci123chain/pkg/staking/keeper"
 	supply "github.com/ci123chain/ci123chain/pkg/supply/keeper"
@@ -21,6 +22,7 @@ import (
 
 // Keeper maintains the link to storage and exposes getter/setter methods for the various parts of the state machine
 type Keeper struct {
+	AccountKeeper	account.AccountKeeper
 	StakingKeeper staking.StakingKeeper
 	SupplyKeeper supply.Keeper
 	storeKey   sdk.StoreKey // Unexposed key to access store from sdk.Context
@@ -35,7 +37,7 @@ type Keeper struct {
 }
 
 // NewKeeper returns a new instance of the gravity keeper
-func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, paramSpace paramtypes.Subspace, stakingKeeper staking.StakingKeeper, supplyKeeper supply.Keeper, slashingKeeper slashing.Keeper) Keeper {
+func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, paramSpace paramtypes.Subspace, accountKeeper account.AccountKeeper, stakingKeeper staking.StakingKeeper, supplyKeeper supply.Keeper, slashingKeeper slashing.Keeper) Keeper {
 	// set KeyTable if it has not already been set
 	if !paramSpace.HasKeyTable() {
 		paramSpace = paramSpace.WithKeyTable(types.ParamKeyTable())
@@ -45,12 +47,15 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, paramSpace paramtypes.Su
 		cdc:            cdc,
 		paramSpace:     paramSpace,
 		storeKey:       storeKey,
+		AccountKeeper: accountKeeper,
 		StakingKeeper:  stakingKeeper,
 		SupplyKeeper: 	supplyKeeper,
 		SlashingKeeper: slashingKeeper,
 	}
 	k.AttestationHandler = AttestationHandler{
 		keeper:     k,
+		supplyKeeper: supplyKeeper,
+		accountKeeper: accountKeeper,
 	}
 
 	return k
@@ -605,13 +610,9 @@ func (k Keeper) logger(ctx sdk.Context) log.Logger {
 }
 
 func (k Keeper) UnpackAttestationClaim(att *types.Attestation) (types.EthereumClaim, error) {
-	var msg types.EthereumClaim
-	err := k.cdc.UnmarshalBinaryBare(att.Claim.Value, &msg)
-	if err != nil {
-		return nil, err
-	} else {
-		return msg, nil
-	}
+	//var msg types.EthereumClaim
+	msg := att.Claim.GetCachedValue().(types.EthereumClaim)
+	return msg, nil
 }
 
 // GetDelegateKeys iterates both the EthAddress and Orchestrator address indexes to produce

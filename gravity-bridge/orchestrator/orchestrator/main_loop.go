@@ -241,7 +241,7 @@ func eth_signer_main_loop(ethPrivKey, cosmosPrivKey *ecdsa.PrivateKey, contact c
 
 		oldestUnsignedValsets, ok := getOldestUnsignedValsets.([]types.ValSet)
 		if !ok {
-			lg.Error(fmt.Sprintf("Failed to get unsigned valsets, check your Cosmos RPC, error: %s", getOldestUnsignedValsets.(error).Error()))
+			lg.Info(fmt.Sprintf("Failed to get unsigned valsets, %s", getOldestUnsignedValsets.(error).Error()))
 		}
 
 		if len(oldestUnsignedValsets) == 0 {
@@ -257,6 +257,35 @@ func eth_signer_main_loop(ethPrivKey, cosmosPrivKey *ecdsa.PrivateKey, contact c
 			}).Await()
 			lg.Info(fmt.Sprintf("Valset confirm result is %v", res.(sdk.TxResponse)))
 		}
+
+		getOldestUnsignedTransactionBatch := gravity_utils.Exec(func() interface{} {
+			batch, err := cosmos_gravity.GetOldestUnsignedBatch(contact, ourCosmosAddress)
+			if err != nil {
+				return err
+			}
+			return batch
+		}).Await()
+
+		oldestUnsignedTransactionBatch, ok := getOldestUnsignedTransactionBatch.(*types.TransactionBatch)
+		if !ok {
+			lg.Info(fmt.Sprintf("Failed to get unsigned transactionBatch, %s", getOldestUnsignedTransactionBatch.(error).Error()))
+		}
+
+		if oldestUnsignedTransactionBatch == nil {
+			lg.Info("No unsigned batches! Everything good!")
+		} else {
+			lg.Info(fmt.Sprintf("Sending batch confirm starting with nonce %d", oldestUnsignedTransactionBatch.Nonce))
+			res := gravity_utils.Exec(func() interface{} {
+				txResponse, err := cosmos_gravity.SendBatchConfirm(contact, ethPrivKey, fee, []*types.TransactionBatch{oldestUnsignedTransactionBatch}, cosmosPrivKey, gravityId)
+				if err != nil {
+					return err
+				}
+				return txResponse
+			}).Await()
+			lg.Info(fmt.Sprintf("Batch confirm result is %v", res.(sdk.TxResponse)))
+		}
+
+		//todo get_oldest_unsigned_logic_call
 
 		elapsed := time.Since(loopStart)
 		if elapsed < ETH_SIGNER_LOOP_SPEED {

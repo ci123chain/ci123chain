@@ -44,7 +44,7 @@ func GetEthereumMsgHash(msg []byte) []byte {
 }
 
 func EncodeTxBatchConfirmHashed(gravityId string, batch TransactionBatch) []byte {
-	msg := encodeTxBatchConfirm(gravityId, batch)
+	msg := EncodeTxBatchConfirm(gravityId, batch)
 	x := GetEthereumMsgHash(msg)
 	return x[:]
 }
@@ -55,7 +55,7 @@ func EncodeValsetConfirmHashed(gravityId string, valset ValSet) []byte {
 	return x[:]
 }
 
-func encodeTxBatchConfirm(gravityId string, batch TransactionBatch) []byte {
+func EncodeTxBatchConfirm(gravityId string, batch TransactionBatch) []byte {
 	amounts, fees, destinations := batch.GetCheckPointValues()
 	return utils.RawEncode([]string{B32, B32, U256Ary, AddrAry, U256Ary, U256, Addr, U256},
 	[]interface{}{[]byte(gravityId), []byte("transactionBatch"), amounts, destinations, fees, batch.Nonce, batch.TokenContract.String(), batch.BatchTimeout})
