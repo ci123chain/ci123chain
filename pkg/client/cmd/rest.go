@@ -3,6 +3,7 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/ci123chain/ci123chain/pkg/abci/types"
 	grpctypes "github.com/ci123chain/ci123chain/pkg/abci/types/grpc"
 	accountRpc "github.com/ci123chain/ci123chain/pkg/account/rest"
 	"github.com/ci123chain/ci123chain/pkg/app/module"
@@ -55,6 +56,7 @@ const (
 	GenesisFile			   = "genesis.json"
 	PrivValidatorKey	   = "priv_validator_key.json"
 	flagETHChainID         = "eth_chain_id"
+	flagTokenName		   = "tokenname"
 )
 
 type ConfigFiles struct {
@@ -70,6 +72,8 @@ func init() {
 	rpcCmd.Flags().Uint(FlagRPCWriteTimeout, 10, "The RPC write timeout")
 	rpcCmd.Flags().String(FlagWebsocket, "8546", "websocket port to listen to")
 	rpcCmd.Flags().Int64(flagETHChainID, 1, "eth_chain_id")
+	rpcCmd.Flags().String(flagTokenName, "stake", "Chain token name")
+
 	_ = viper.BindPFlags(rpcCmd.Flags())
 }
 
@@ -79,6 +83,8 @@ var rpcCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		id := viper.GetInt64(flagETHChainID)
 		util.Setup(id)
+		denom := viper.GetString(flagTokenName)
+		types.SetCoinDenom(denom)
 		rs := NewRestServer()
 		err := rs.Start(
 			viper.GetString(FlagListenAddr),

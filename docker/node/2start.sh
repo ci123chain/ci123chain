@@ -39,7 +39,7 @@ if [ ! -f $CI_HOME/config/genesis.json ]; then
         echo "---Not found genesis file, Creating----"
 
         #./cid-linux init
-        /opt/cid-linux init --home=$CI_HOME --chain_id=$CI_CHAIN_ID --validator_key=$CI_VALIDATOR_KEY
+        /opt/cid-linux init --home=$CI_HOME --chain_id=$CI_CHAIN_ID --validator_key=$CI_VALIDATOR_KEY --denom=$CI_TOKENNAME
 
         /opt/cid-linux add-genesis-account 0x204bCC42559Faf6DFE1485208F7951aaD800B313 10000000000000000000000000000 --home=$CI_HOME
         # a78a8a281d160847f1ed7881e5497e1a98ccd4fe6ba9ce918630f93a44e09793
