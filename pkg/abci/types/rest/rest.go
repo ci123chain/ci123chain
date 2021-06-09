@@ -113,7 +113,7 @@ func PostProcessResponseBare(w http.ResponseWriter, ctx context.Context, body in
 	switch body.(type) {
 	case sdk.TxResponse:
 		b := body.(sdk.TxResponse)
-		if b.Code == 0 {
+		if b.Code == 1 {
 			res = Response{
 				Ret:     1,
 				Data:    dataJson,
@@ -127,7 +127,7 @@ func PostProcessResponseBare(w http.ResponseWriter, ctx context.Context, body in
 		}
 	case sdk.QureyAppResponse:
 		b := body.(sdk.QureyAppResponse)
-		if b.Code == 0 {
+		if b.Code == 1 {
 			res = Response{
 				Ret:     1,
 				Data:    dataJson,
