@@ -19,6 +19,7 @@ services:
       - raftleveldb
     environment:
       CI_CHAIN_ID: ibc3
+      CI_ETH_CHAIN_ID: 444900
       CI_NODE_DOMAIN: localhost
       CI_STATEDB_HOST: raftleveldb_dev
       CI_STATEDB_PORT: 80
