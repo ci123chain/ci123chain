@@ -147,11 +147,11 @@ func (api *PublicEthereumAPI) Syncing() (interface{}, error) {
 
 	status, err := api.clientCtx.Client.Status(api.ctx)
 	if err != nil {
-		return false, err
+		return false, evmtypes.ErrInvalidClientStatus
 	}
 
 	if !status.SyncInfo.CatchingUp {
-		return false, nil
+		return false, evmtypes.ErrInvalidClientStatus
 	}
 
 	return map[string]interface{}{
@@ -169,12 +169,12 @@ func (api *PublicEthereumAPI) Coinbase() (common.Address, error) {
 
 	node, err := api.clientCtx.GetNode()
 	if err != nil {
-		return common.Address{}, err
+		return common.Address{}, evmtypes.ErrGetNodeFailed
 	}
 
 	status, err := node.Status(api.ctx)
 	if err != nil {
-		return common.Address{}, err
+		return common.Address{}, evmtypes.ErrInvalidNodeStatus
 	}
 
 	return common.BytesToAddress(status.ValidatorInfo.Address.Bytes()), nil
@@ -203,7 +203,7 @@ func (api *PublicEthereumAPI) BlockNumber() (hexutil.Uint64, error) {
 	api.logger.Debug("eth_blockNumber")
 	info, err := api.clientCtx.Client.ABCIInfo(api.ctx)
 	if err != nil {
-		return 0, err
+		return 0, evmtypes.ErrGetABCIInfoFailed
 	}
 	api.logger.Debug(fmt.Sprintf("%d", info.Response.LastBlockHeight))
 	return hexutil.Uint64(info.Response.LastBlockHeight), nil
@@ -216,7 +216,7 @@ func (api *PublicEthereumAPI) GetBlockByNumber(blockNum BlockNumber, fullTx bool
 		// get latest block height
 		num, err := api.BlockNumber()
 		if err != nil {
-			return nil, err
+			return nil, evmtypes.ErrGetBlockNumber
 		}
 		height = int64(num)
 	}
@@ -234,7 +234,7 @@ func (api *PublicEthereumAPI) GetBlockByNumber(blockNum BlockNumber, fullTx bool
 			}else {
 				retry++
 				if retry == 10 {
-					return nil, err
+					return nil, evmtypes.ErrGetBlockFailed
 				}
 			}
 		}
@@ -273,19 +273,19 @@ func (api *PublicEthereumAPI) GetTransactionCount(address common.Address, blockN
 	qparams := keeper.NewQueryAccountParams(from, -1)
 	bz, err := cdc.MarshalJSON(qparams)
 	if err != nil {
-		return nil, err
+		return nil, evmtypes.ErrCdcMarshalFailed
 	}
 	res, _, _, err := clientCtx.Query("/custom/" + account.ModuleName + "/" + accounttypes.QueryAccount, bz, false)
 	if res == nil {
-		return nil, errors.New("The account does not exist")
+		return nil, evmtypes.ErrQueryAccountsFailed
 	}
 	if err != nil {
-		return nil, err
+		return nil, evmtypes.ErrQueryAccountsFailed
 	}
 	var acc exported.Account
 	err2 := cdc.UnmarshalBinaryLengthPrefixed(res, &acc)
 	if err2 != nil {
-		return nil, err2
+		return nil, evmtypes.ErrCdcUnmarshalFailed
 	}
 
 	nonce := acc.GetSequence()
@@ -299,7 +299,7 @@ func (api *PublicEthereumAPI) GetStorageAt(address common.Address, key string, b
 	clientCtx := api.clientCtx.WithHeight(blockNum.Int64())
 	res, _, _, err := clientCtx.Query(fmt.Sprintf("custom/%s/storage/%s/%s", evmtypes.ModuleName, address.Hex(), key), nil, false)
 	if err != nil {
-		return nil, err
+		return nil, evmtypes.ErrGetStorageAtFailed
 	}
 
 	var out evmtypes.QueryResStorage
@@ -313,7 +313,7 @@ func (api *PublicEthereumAPI) GetTransactionReceipt(hash common.Hash) (map[strin
 	tx, err := api.clientCtx.Client.Tx(api.ctx, hash.Bytes(), false)
 	if err != nil {
 		// Return nil for transaction when not found
-		return nil, nil
+		return nil, evmtypes.ErrClientQueryTxFailed
 	}
 
 	var sdkTx sdk.Tx

@@ -6,38 +6,43 @@ import (
 	"time"
 )
 
-func (k StakingKeeper) UnbondingTime(ctx sdk.Context) (res time.Duration) {
-	k.paramstore.Get(ctx, types.KeyUnbondingTime, &res)
-	return
+func (k StakingKeeper) UnbondingTime(ctx sdk.Context) (unbondingTime time.Duration) {
+	//k.paramstore.Get(ctx, types.KeyUnbondingTime, &unbondingTime)
+	return types.DefaultUnbondingTime
 }
 
-func (k StakingKeeper) MaxValidators(ctx sdk.Context) (res uint32) {
-	k.paramstore.Get(ctx, types.KeyMaxValidators, &res)
-	return
+func (k StakingKeeper) MaxValidators(ctx sdk.Context) (maxValidators uint32) {
+	//k.paramstore.Get(ctx, types.KeyMaxValidators, &maxValidators)
+	return types.DefaultMaxValidators
 }
 
-func (k StakingKeeper) MaxEntries(ctx sdk.Context) (res uint32) {
-	k.paramstore.Get(ctx, types.KeyMaxEntries, &res)
-	return
+func (k StakingKeeper) MaxEntries(ctx sdk.Context) (maxEntries uint32) {
+	//k.paramstore.Get(ctx, types.KeyMaxEntries, &maxEntries)
+	return types.DefaultMaxEntries
 }
 
-func (k StakingKeeper) HistoricalEntries(ctx sdk.Context) (res uint32) {
-	k.paramstore.Get(ctx, types.KeyHistoricalEntries, &res)
-	return
+func (k StakingKeeper) HistoricalEntries(ctx sdk.Context) (HisEntries uint32) {
+	//k.paramstore.Get(ctx, types.KeyHistoricalEntries, &HisEntries)
+	return types.DefaultHistoricalEntries
 }
 
-func (k StakingKeeper) BondDenom(ctx sdk.Context) (res string) {
-	k.paramstore.Get(ctx, types.KeyBondDenom, &res)
-	return
+func (k StakingKeeper) BondDenom(ctx sdk.Context) (bondDenom string) {
+	//k.paramstore.Get(ctx, types.KeyBondDenom, &bondDenom)
+	return sdk.ChainCoinDenom
 }
 
 func (k StakingKeeper) GetParams(ctx sdk.Context) types.Params {
+	unbondingTime := k.UnbondingTime(ctx)
+	maxValidators := k.MaxValidators(ctx)
+	maxEntries := k.MaxEntries(ctx)
+	hisEntries := k.HistoricalEntries(ctx)
+	bonddenom := k.BondDenom(ctx)
 	return types.NewParams(
-		k.UnbondingTime(ctx),
-		k.MaxValidators(ctx),
-		k.MaxEntries(ctx),
-		k.HistoricalEntries(ctx),
-		k.BondDenom(ctx),
+			unbondingTime,
+			maxValidators,
+			maxEntries,
+			hisEntries,
+			bonddenom,
 		)
 }
 

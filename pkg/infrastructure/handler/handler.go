@@ -24,13 +24,14 @@ func NewHandler(k keeper.InfrastructureKeeper) sdk.Handler {
 
 func HandleMsgStoreContent(ctx sdk.Context, k keeper.InfrastructureKeeper, msg infrastructure.MsgStoreContent) (*sdk.Result, error) {
 	em := ctx.EventManager()
-	//em.EmitEvents(sdk.Events{
-	//	sdk.NewEvent(transfer.EventType,
-	//		sdk.NewAttribute([]byte(sdk.AttributeKeyMethod), []byte(infrastructure.EventStoreContent)),
-	//		sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(infrastructure.AttributeValueModule)),
-	//		sdk.NewAttribute([]byte(sdk.AttributeKeySender), []byte(msg.FromAddress.String())),
-	//	),
-	//})
+	em.EmitEvents(sdk.Events{
+		sdk.NewEvent(infrastructure.AttributeValueModule,
+			sdk.NewAttribute([]byte(sdk.AttributeKeyMethod), []byte(infrastructure.EventStoreContent)),
+			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(infrastructure.AttributeValueModule)),
+			sdk.NewAttribute([]byte(sdk.AttributeKeySender), []byte(msg.FromAddress.String())),
+			sdk.NewAttribute([]byte(infrastructure.StoreKey), []byte(msg.Key)),
+		),
+	})
 
 	k.SetContent(ctx, []byte(msg.Key), msg.Content)
 	return &sdk.Result{ Events: em.Events(), }, nil

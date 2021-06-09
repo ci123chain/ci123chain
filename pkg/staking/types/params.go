@@ -29,7 +29,7 @@ const (
 	DefaultMaxValidators uint32 = 100
 
 	// Default maximum entries in a UBD/RED pair
-	DefaultMaxEntries uint32 = 7
+	DefaultMaxEntries uint32 = 9
 
 	// DefaultHistorical entries is 0 since it must only be non-zero for
 	// IBC connected chains

@@ -13,12 +13,44 @@ const (
 
 	CodeComputeGas          CodeType = 1702
 	CodeInvalidState        CodeType = 1703
+	CodeMissingPassword     CodeType = 1704
+	CodeInvalidPassword     CodeType = 1705
+	CodeTimeOut             CodeType = 1706
+	CodeInvalidPrivateKey   CodeType = 1707
+	CodeUnlockTimeTooLarge  CodeType = 1708
+	CodeInvalidClientStatus CodeType = 1709
+	CodeGetNodeFailed       CodeType = 1710
+	CodeInvalidNodeStatus  CodeType = 1711
+	CodeGetABCIInfoFailed   CodeType = 1712
+	CodeGetBlockNumber      CodeType = 1713
+	CodeGetBlockFailed      CodeType = 1714
+	CodeCdcMarshalFailed    CodeType = 1715
+	CodeCdcUnmarshalFailed  CodeType = 1716
+	CodeeQueryAccountFailed  CodeType = 1717
+	CodeGetStorageAtFailed   CodeType = 1718
+	CodeClientQueryTxFailed  CodeType = 1719
 )
 
 var (
 	ErrComputeGas = sdkerrors.Register(string(DefaultCodespace), uint32(CodeComputeGas), "invalid intrinsic gas for transaction")
 	ErrInvalidState = sdkerrors.Register(string(DefaultCodespace), uint32(CodeInvalidState), "invalid vm state")
-	ErrInvalidParams = sdkerrors.Register(string(DefaultCodespace), uint32(CodeCheckParamsError), "invalid params")
+	ErrInvalidParams = sdkerrors.Register(string(DefaultCodespace), uint32(CodeMissingPassword), "invalid params")
+	ErrMissingPassword = sdkerrors.Register(string(DefaultCodespace), uint32(CodeCheckParamsError), "missing password")
+	ErrInvalidPassword = sdkerrors.Register(string(DefaultCodespace), uint32(CodeInvalidPassword), "invalid password")
+	ErrTimeOut = sdkerrors.Register(string(DefaultCodespace), uint32(CodeTimeOut), "timeout")
+	ErrInvalidPrivateKey= sdkerrors.Register(string(DefaultCodespace), uint32(CodeInvalidPrivateKey), "invalid private_key")
+	ErrUnlockTimeTooLarger = sdkerrors.Register(string(DefaultCodespace), uint32(CodeUnlockTimeTooLarge), "unlock time too large")
+	ErrInvalidClientStatus = sdkerrors.Register(string(DefaultCodespace), uint32(CodeInvalidClientStatus), "unlock time too large")
+	ErrGetNodeFailed = sdkerrors.Register(string(DefaultCodespace), uint32(CodeGetNodeFailed), "get node failed")
+	ErrInvalidNodeStatus = sdkerrors.Register(string(DefaultCodespace), uint32(CodeInvalidNodeStatus), "invalid node status")
+	ErrGetABCIInfoFailed = sdkerrors.Register(string(DefaultCodespace), uint32(CodeGetABCIInfoFailed), "get abci info failed")
+	ErrGetBlockNumber = sdkerrors.Register(string(DefaultCodespace), uint32(CodeGetBlockNumber), "get block number failed")
+	ErrGetBlockFailed = sdkerrors.Register(string(DefaultCodespace), uint32(CodeGetBlockFailed), "get block failed")
+	ErrCdcMarshalFailed = sdkerrors.Register(string(DefaultCodespace), uint32(CodeCdcMarshalFailed), "cdc marshal failed")
+	ErrCdcUnmarshalFailed = sdkerrors.Register(string(DefaultCodespace), uint32(CodeCdcUnmarshalFailed), "cdc unmarshal failed")
+	ErrQueryAccountsFailed = sdkerrors.Register(string(DefaultCodespace), uint32(CodeeQueryAccountFailed), "query account failed")
+	ErrGetStorageAtFailed = sdkerrors.Register(string(DefaultCodespace), uint32(CodeGetStorageAtFailed), "get storage failed")
+	ErrClientQueryTxFailed = sdkerrors.Register(string(DefaultCodespace), uint32(CodeClientQueryTxFailed), "client query tx failed")
 )
 //
 //const (
