@@ -14,6 +14,7 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"net/http"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -113,6 +114,7 @@ func Start() {
 	http.Handle("/", timeoutHandler)
 	http.HandleFunc("/pubsub", PubSubHandle)
 	http.HandleFunc("/getAppkeyChannel", appKeyChannelHandlerFn)
+	http.HandleFunc("/getGatewayDomain", gatewayDomainHandlerFn)
 
 	// start health checking
 	go healthCheck()
@@ -181,6 +183,15 @@ func appKeyChannelHandlerFn(w http.ResponseWriter, r *http.Request) {
 			"cluster_id": cienv.GetEnv("IDG_SITEUID"),
 			"site_id":    cienv.GetEnv("IDG_CLUSTERUID"),
 		},
+	}
+	resultByte, _ := json.Marshal(res)
+	w.Header().Set("Content-Type", "application/json")
+	_, _ = w.Write(resultByte)
+}
+
+func gatewayDomainHandlerFn(w http.ResponseWriter, r *http.Request) {
+	res := map[string]interface{}{
+		"domain":   os.Getenv("CI_GATEWAY_DOMAIN"),
 	}
 	resultByte, _ := json.Marshal(res)
 	w.Header().Set("Content-Type", "application/json")
