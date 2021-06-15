@@ -3,7 +3,6 @@ package gateway
 import (
 	"encoding/hex"
 	"encoding/json"
-	"github.com/ci123chain/ci123chain/pkg/gateway/logger"
 	"github.com/ci123chain/ci123chain/pkg/gateway/server"
 	"github.com/ci123chain/ci123chain/pkg/gateway/types"
 	"io/ioutil"
@@ -32,9 +31,9 @@ func (sjob *SpecificJob) Do() {
 			return
 		}
 	}
-	resultBytes := sjob.Proxy.Handle(sjob.Request, sjob.BackEnds, sjob.RequestParams)
-
-	logger.Info("===\n Request for : %s; Params: %v;  response: %v", sjob.Request.URL.String(), sjob.RequestParams, string(resultBytes))
+	// for debug
+	//resultBytes := sjob.Proxy.Handle(sjob.Request, sjob.BackEnds, sjob.RequestParams)
+	//logger.Info("===\n Request for : %s; Params: %v;  response: %v", sjob.Request.URL.String(), sjob.RequestParams, string(resultBytes))
 }
 
 func NewSpecificJob(r *http.Request, backends []types.Instance) *SpecificJob {
