@@ -24,7 +24,9 @@ func NewChainCoin(amount Int) Coin {
 // NewCoin returns a new coin with a denomination and amount. It will panic if
 // the amount is negative.
 func NewCoin(denom string, amount Int) Coin {
-
+	if len(denom) < 1 {
+		return NewChainCoin(amount)
+	}
 	return Coin{
 		Denom:  denom,
 		Amount: amount,
@@ -266,7 +268,10 @@ func mustValidateDenom(denom string) {
 
 // Returns the amount of a denom from coins
 func (coins Coins) AmountOf(denom string) Int {
-	mustValidateDenom(denom)
+	if len(denom) < 1 {
+		denom = ChainCoinDenom
+	}
+		//mustValidateDenom(denom)
 
 	switch len(coins) {
 	case 0:

@@ -59,10 +59,10 @@ func CreateValidatorRequest(cliCtx context.Context, writer http.ResponseWriter, 
 		return
 	}
 	denom := request.FormValue("denom")
-	if denom == "" {
-		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "the name of the coin which you want to transfer cant not be empty").Error())
-		return
-	}
+	//if denom == "" {
+	//	rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "the name of the coin which you want to transfer cant not be empty").Error())
+	//	return
+	//}
 	coin := sdk.NewCoin(denom, amount)
 
 	if coin.IsNegative() || coin.IsZero() {
@@ -109,10 +109,10 @@ func DelegateTX(cliCtx context.Context, writer http.ResponseWriter, request *htt
 		return
 	}
 	denom := request.FormValue("denom")
-	if denom == "" {
-		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "the name of the coin which you want to transfer cant not be empty").Error())
-		return
-	}
+	//if denom == "" {
+	//	rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "the name of the coin which you want to transfer cant not be empty").Error())
+	//	return
+	//}
 	coin := sdk.NewCoin(denom, amount)
 	if coin.IsNegative() || coin.IsZero() {
 		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid amount").Error())
@@ -171,10 +171,10 @@ func RedelegateTX(cliCtx context.Context, writer http.ResponseWriter, request *h
 	}
 
 	denom := request.FormValue("denom")
-	if denom == "" {
-		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "the name of the coin which you want to transfer cant not be empty").Error())
-		return
-	}
+	//if denom == "" {
+	//	rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "the name of the coin which you want to transfer cant not be empty").Error())
+	//	return
+	//}
 	coin := sdk.NewCoin(denom, amount)
 	if coin.IsNegative() || coin.IsZero() {
 		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid amount").Error())
@@ -225,10 +225,10 @@ func UndelegateTX(cliCtx context.Context, writer http.ResponseWriter, request *h
 	}
 
 	denom := request.FormValue("denom")
-	if denom == "" {
-		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "the name of the coin which you want to transfer cant not be empty").Error())
-		return
-	}
+	//if denom == "" {
+	//	rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "the name of the coin which you want to transfer cant not be empty").Error())
+	//	return
+	//}
 	coin := sdk.NewCoin(denom, amount)
 	if coin.IsNegative() || coin.IsZero() {
 		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid amount").Error())

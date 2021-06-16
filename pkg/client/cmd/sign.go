@@ -52,9 +52,9 @@ var signCmd = &cobra.Command{
 			return errors.New("invalid to address")
 		}
 		d := viper.GetString(flagDenom)
-		if d == "" {
-			return errors.New("invalid denom")
-		}
+		//if d == "" {
+		//	return errors.New("invalid denom")
+		//}
 
 		gas := uint64((viper.GetInt(flagGas)))
 		amount := uint64(viper.GetInt(flagAmount))

@@ -31,10 +31,10 @@ func SendRequestHandlerFn(cliCtx context.Context, writer http.ResponseWriter, re
 		isFabric = false
 	}
 	denom := request.FormValue("denom")
-	if denom == "" {
-		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "the name of the coin which you want to transfer cant not be empty").Error())
-		return
-	}
+	//if denom == "" {
+	//	rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "the name of the coin which you want to transfer cant not be empty").Error())
+	//	return
+	//}
 	to := sdk.HexToAddress(request.FormValue("to"))
 	amount, err := strconv.ParseUint(request.FormValue("amount"), 10, 64)
 	if err != nil {

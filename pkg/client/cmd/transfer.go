@@ -58,9 +58,9 @@ var transferCmd = &cobra.Command{
 			return sdkerrors.Wrap(sdkerrors.ErrParams, "invalid to address")
 		}
 		d := viper.GetString(flagDenom)
-		if d == "" {
-			return sdkerrors.Wrap(sdkerrors.ErrParams, "invalid denom")
-		}
+		//if d == "" {
+		//	return sdkerrors.Wrap(sdkerrors.ErrParams, "invalid denom")
+		//}
 
 		gas := uint64((viper.GetInt(flagGas)))
 		amount := uint64(viper.GetInt(flagAmount))
