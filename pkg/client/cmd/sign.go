@@ -17,6 +17,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"io/ioutil"
+	"math/big"
 )
 
 
@@ -57,11 +58,16 @@ var signCmd = &cobra.Command{
 		//}
 
 		gas := uint64((viper.GetInt(flagGas)))
-		amount := uint64(viper.GetInt(flagAmount))
+		//amount := uint64(viper.GetInt(flagAmount))
+		amount, ok := new(big.Int).SetString(viper.GetString(flagAmount), 10)
+		if !ok {
+			return errors.New("invalid amount")
+		}
 		privKey := viper.GetString(flagKey)
 		isFabric := viper.GetBool(flagIsFabric)
 
-		coin := sdk.NewUInt64Coin(d, amount)
+		//coin := sdk.NewUInt64Coin(d, amount)
+		coin := sdk.NewCoin(d, sdk.NewIntFromBigInt(amount))
 		msg := transfer2.NewMsgTransfer(from, tos[0], sdk.NewCoins(coin), isFabric)
 		nonce, err := transfer2.GetNonceByAddress(from)
 		if err != nil {

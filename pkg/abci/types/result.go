@@ -114,9 +114,9 @@ func NewResponseResultTx(res *ctypes.ResultTx, tx Tx, timestamp string) TxRespon
 
 	parsedLogs, _ := ParseABCILogs(res.TxResult.Log)
 	var code = res.TxResult.Code
-	if code == 0 {
-		code = 1
-	}
+	//if code == 0 {
+	//	code = 1
+	//}
 
 	return TxResponse{
 		TxHash:    res.Hash.String(),

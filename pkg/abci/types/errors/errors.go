@@ -170,6 +170,8 @@ var (
 
 	ErrInvalidParam = Register(RootCodespace, 10105, "invalid params")
 
+	ErrCdcUnmarshalFailed = Register(RootCodespace, 10106, "cdc unmarshal failed")
+
 	// ErrPanic is only set when we recover from a panic, so we know to
 	// redact potentially sensitive system info
 	ErrPanic = Register(UndefinedCodespace, 111222, "panic")

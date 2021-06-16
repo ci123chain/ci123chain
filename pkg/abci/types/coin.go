@@ -3,6 +3,7 @@ package types
 import (
 	"encoding/json"
 	"fmt"
+	"math/big"
 	"regexp"
 	"sort"
 	"strings"
@@ -43,6 +44,10 @@ func NewEmptyCoin() Coin {
 
 func NewUInt64Coin(denom string, amount uint64) Coin {
 	return NewCoin(denom, NewInt(int64(amount)))
+}
+
+func NewIntCoin(denom string, amount *big.Int) Coin {
+	return NewCoin(denom, NewIntFromBigInt(amount))
 }
 
 func (c Coin) String() string {

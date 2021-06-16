@@ -16,7 +16,7 @@ const (
 	// under an internal error code and a generic message instead of
 	// detailed error string.
 	internalABCICodespace        = UndefinedCodespace
-	internalABCICode      uint32 = 1
+	internalABCICode      uint32 = 101
 )
 
 // ABCIInfo returns the ABCI error information as consumed by the tendermint

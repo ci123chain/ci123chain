@@ -11,6 +11,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"math/big"
 )
 
 const (
@@ -63,11 +64,16 @@ var transferCmd = &cobra.Command{
 		//}
 
 		gas := uint64((viper.GetInt(flagGas)))
-		amount := uint64(viper.GetInt(flagAmount))
+		//amount := uint64(viper.GetInt(flagAmount))
+		amount, ok := new(big.Int).SetString(viper.GetString(flagAmount), 10)
+		if !ok {
+			return sdkerrors.Wrap(sdkerrors.ErrParams, fmt.Sprintf("invalid amount %s", viper.GetString(flagAmount)))
+		}
 		privKey := viper.GetString(flagKey)
 		isFabric := viper.GetBool(flagIsFabric)
 
-		coin := sdk.NewUInt64Coin(d, amount)
+		//coin := sdk.NewUInt64Coin(d, amount)
+		coin := sdk.NewCoin(d, sdk.NewIntFromBigInt(amount))
 		msg := transfer2.NewMsgTransfer(from, tos[0], sdk.NewCoins(coin), isFabric)
 		nonce, err := transfer2.GetNonceByAddress(from)
 		if err != nil {

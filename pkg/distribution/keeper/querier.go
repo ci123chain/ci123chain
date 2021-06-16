@@ -198,6 +198,8 @@ func queryDelegatorAccountInfo(ctx sdk.Context, req abci.RequestQuery, k DistrKe
 	}
 
 	delegations := k.StakingKeeper.GetAllDelegatorDelegations(ctx, params.AccountAddress)
+	var rewardsAccount types.RewardsAccount
+	var validators = make([]types.RewardAccount, 0)
 	for _, v := range delegations {
 		validator, _ := k.StakingKeeper.GetValidator(ctx, params.AccountAddress)
 		endingPeriod := k.incrementValidatorPeriod(ctx, validator)
@@ -205,9 +207,16 @@ func queryDelegatorAccountInfo(ctx sdk.Context, req abci.RequestQuery, k DistrKe
 		rewards = rewards.Add(sdk.NewChainCoin(rw.Amount.RoundInt()))
 		amt := sdk.NewChainCoin(v.GetShares().RoundInt())
 		delegated = delegated.Add(amt)
+		var val = types.RewardAccount{
+			Amount:  sdk.NewChainCoin(rw.Amount.RoundInt()),
+			Address: validator.OperatorAddress.String(),
+		}
+		validators = append(validators, val)
 	}
+	rewardsAccount.Validator = validators
+	rewardsAccount.Coin = rewards
 
-	result := types.NewDelegatorAccountInfo(sdk.NewChainCoin(balance.AmountOf(sdk.ChainCoinDenom)), delegated, unbondings, rewards, commission)
+	result := types.NewDelegatorAccountInfo(sdk.NewChainCoin(balance.AmountOf(sdk.ChainCoinDenom)), delegated, unbondings, commission, rewardsAccount)
 	res := types.DistributionCdc.MustMarshalJSON(result)
 	return res, nil
 }

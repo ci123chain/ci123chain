@@ -29,6 +29,8 @@ const (
 	CodeeQueryAccountFailed  CodeType = 1717
 	CodeGetStorageAtFailed   CodeType = 1718
 	CodeClientQueryTxFailed  CodeType = 1719
+	CodeAccountExisted       CodeType = 1720
+	CodeImportRawKeyFailed   CodeType = 1721
 )
 
 var (
@@ -51,6 +53,8 @@ var (
 	ErrQueryAccountsFailed = sdkerrors.Register(string(DefaultCodespace), uint32(CodeeQueryAccountFailed), "query account failed")
 	ErrGetStorageAtFailed = sdkerrors.Register(string(DefaultCodespace), uint32(CodeGetStorageAtFailed), "get storage failed")
 	ErrClientQueryTxFailed = sdkerrors.Register(string(DefaultCodespace), uint32(CodeClientQueryTxFailed), "client query tx failed")
+	ErrAccountExisted = sdkerrors.Register(string(DefaultCodespace), uint32(CodeAccountExisted), "account already exists")
+	ErrImportRawKeyFailed = sdkerrors.Register(string(DefaultCodespace), uint32(CodeImportRawKeyFailed), "import raw key failed")
 )
 //
 //const (

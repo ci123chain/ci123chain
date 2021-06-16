@@ -46,8 +46,11 @@ func (api *PrivateAccountAPI) ImportRawKey(privkey string, password string) (com
 	}
 	acc, err := api.ks.ImportECDSA(key, password)
 	if err != nil {
+		if err.Error() == "account already exists" {
+			return common.Address{}, evmtypes.ErrAccountExisted
+		}
 		api.logger.Info(err.Error())
-		return common.Address{}, evmtypes.ErrInvalidPrivateKey
+		return common.Address{}, evmtypes.ErrImportRawKeyFailed
 	}
 	return acc.Address, nil
 }

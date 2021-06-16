@@ -116,7 +116,7 @@ func PostProcessResponseBare(w http.ResponseWriter, ctx context.Context, body in
 		if b.Code == 0 {
 			b.Code = 1
 		}
-		dataJson, _ := json.Marshal(body)
+		dataJson, _ := json.Marshal(b)
 		if b.Code == 1 {
 			res = Response{
 				Ret:     1,
@@ -134,7 +134,7 @@ func PostProcessResponseBare(w http.ResponseWriter, ctx context.Context, body in
 		if b.Code == 0 {
 			b.Code = 1
 		}
-		dataJson, _ := json.Marshal(body)
+		dataJson, _ := json.Marshal(b)
 		if b.Code == 1 {
 			res = Response{
 				Ret:     1,

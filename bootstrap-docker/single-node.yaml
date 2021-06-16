@@ -11,8 +11,8 @@ services:
       - bootstrap-node-single
 
   ci0:
-    image: cichain:v0.0.1
-#    image: harbor.oneitfarm.com/itfarm-test/sal20000ad4588ae210312eaeknb271z:v.1.3.24
+#    image: cichain:v0.0.1
+    image: harbor.oneitfarm.com/itfarm-test/sal20000ad4588ae210602eaemgr48er:1.5.1.1
     container_name: ci0
     hostname: ci0
     depends_on:
