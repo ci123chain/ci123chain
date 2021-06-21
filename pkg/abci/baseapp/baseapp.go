@@ -7,9 +7,11 @@ import (
 	types2 "github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/telemetry"
 	"github.com/ci123chain/ci123chain/pkg/transfer"
+	"github.com/ci123chain/ci123chain/pkg/util"
 	"google.golang.org/grpc/codes"
 	grpcstatus "google.golang.org/grpc/status"
 	"io"
+	"math/big"
 	"runtime/debug"
 	"strings"
 	"time"
@@ -32,6 +34,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/snapshots"
 	snapshottypes "github.com/ci123chain/ci123chain/pkg/snapshots/types"
 	staktypes "github.com/ci123chain/ci123chain/pkg/staking/types"
+	evm "github.com/ci123chain/ci123chain/pkg/vm/evmtypes"
 	wasmtypes "github.com/ci123chain/ci123chain/pkg/vm/wasmtypes"
 	"github.com/tendermint/tendermint/proto/tendermint/types"
 )
@@ -1081,6 +1084,8 @@ func allMsgAttributes(msgs []sdk.Msg) [][]sdk.Attribute {
 		var module = ""
 		var attrs = make([]sdk.Attribute, 0)
 
+		sender := v.GetFromAddress().String()
+
 		switch vt := v.(type) {
 		case *transfer.MsgTransfer:
 			operation = "transfer"
@@ -1142,13 +1147,27 @@ func allMsgAttributes(msgs []sdk.Msg) [][]sdk.Attribute {
 		case *iftypes.MsgStoreContent:
 			operation = "store_content"
 			module = iftypes.ModuleName
-		case *types2.MsgEthereumTx:
+		case *evm.MsgEvmTx:
+			operation = "evm_transaction"
+			module = types2.RouterKey
+			sender = vt.From.String()
+			r := vt.To()
+			if r != nil {
+				receiver = r.String()
+			}
+		case types2.MsgEthereumTx:
 			operation = "eth_transaction"
 			module = types2.RouterKey
+			s, _ := vt.VerifySig(big.NewInt(util.CHAINID))
+			sender = s.String()
+			r := vt.To()
+			if r != nil {
+				receiver = r.String()
+			}
 		}
 
 		attrs = sdk.NewAttributes(attrs,
-			sdk.NewAttribute([]byte(sdk.AttributeKeySender), []byte(v.GetFromAddress().String())),
+			sdk.NewAttribute([]byte(sdk.AttributeKeySender), []byte(sender)),
 			sdk.NewAttribute([]byte(sdk.AttributeKeyReceiver), []byte(receiver)),
 			sdk.NewAttribute([]byte(sdk.AttributeKeyMethod),[]byte(operation)),
 			sdk.NewAttribute([]byte(sdk.AttributeKeyAmount), []byte(amount)),
