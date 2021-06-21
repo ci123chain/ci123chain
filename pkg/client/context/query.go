@@ -37,7 +37,6 @@ func (ctx Context) Query(path string, key bytes.HexBytes, isProve bool) ([]byte,
 	resp := result.Response
 	if !resp.IsOK() {
 		return res, resp.Height, nil, sdkerrors.Wrap(sdkerrors.ErrResponse, fmt.Sprintf("query failed, got: %v", resp))
-
 	}
 
 	// verify proof

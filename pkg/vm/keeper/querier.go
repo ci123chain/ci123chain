@@ -7,6 +7,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/vm/evmtypes"
 	"github.com/ci123chain/ci123chain/pkg/vm/wasmtypes"
 	ethcmn "github.com/ethereum/go-ethereum/common"
+	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"strconv"
 )
@@ -29,6 +30,8 @@ func NewQuerier(k Keeper) sdk.Querier {
 			return queryBlockBloom(ctx, path, k)
 		case evmtypes.QueryCode:
 			return queryCode(ctx, path, k)
+		case evmtypes.QueryTransactionLogs:
+			return queryTransactionLogs(ctx, path, k)
 		default:
 			return nil, types.ErrInvalidEndPoint
 		}
@@ -155,6 +158,28 @@ func queryCode(ctx sdk.Context, path []string, keeper Keeper) ([]byte, error) {
 	addr := ethcmn.HexToAddress(path[1])
 	code := keeper.GetCode(ctx, addr)
 	res := evmtypes.QueryResCode{Code: code}
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, res)
+	if err != nil {
+		return nil, types.ErrCdcUnMarshalFailed
+	}
+
+	return bz, nil
+}
+
+// QueryETHLogs is response type for tx logs query
+type QueryETHLogs struct {
+	Logs []*ethtypes.Log `json:"logs"`
+}
+
+func queryTransactionLogs(ctx sdk.Context, path []string, keeper Keeper) ([]byte, error) {
+	txHash := ethcmn.HexToHash(path[1])
+
+	logs, err := keeper.GetLogs(ctx, txHash)
+	if err != nil {
+		return nil, err
+	}
+
+	res := QueryETHLogs{Logs: logs}
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, res)
 	if err != nil {
 		return nil, types.ErrCdcUnMarshalFailed

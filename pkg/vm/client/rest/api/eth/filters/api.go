@@ -572,7 +572,40 @@ func (b *EthBackend) BlockNumber() (hexutil.Uint64, error) {
 
 // GetBlockByNumber returns the block identified by number.
 func (b *EthBackend) GetBlockByNumber(blockNum rpctypes.BlockNumber, fullTx bool) (map[string]interface{}, error) {
-	return nil, nil
+	height := blockNum.Int64()
+	if height <= 0 {
+		// get latest block height
+		num, err := b.BlockNumber()
+		if err != nil {
+			return nil, err
+		}
+		height = int64(num)
+	}
+
+	resBlock, err := b.clientCtx.Client.Block(b.ctx, &height)
+	if err != nil {
+		retry := 0
+		for {
+			time.Sleep(time.Second * 1)
+			resBlock, err = b.clientCtx.Client.Block(b.ctx, &height)
+			if err == nil {
+				break
+			}else {
+				retry++
+				if retry == 10 {
+					return nil, evmtypes.ErrGetBlockFailed
+				}
+			}
+		}
+
+	}
+
+	var transactions []common.Hash
+	for _, tx := range resBlock.Block.Txs {
+		transactions = append(transactions, common.BytesToHash(tx.Hash()))
+	}
+
+	return rpctypes.EthBlockFromTendermint(b.clientCtx, resBlock.Block, transactions)
 }
 
 // GetBlockByHash returns the block identified by hash.
@@ -600,6 +633,19 @@ func (b *EthBackend) HeaderByNumber(blockNum rpctypes.BlockNumber) (*ethtypes.He
 
 	res, _, _, err := b.clientCtx.Query(fmt.Sprintf("custom/%s/%s/%d", vmmodule.ModuleName, evmtypes.QueryBloom, resBlock.Block.Height), nil, false)
 	if err != nil {
+		retry := 0
+		for {
+			time.Sleep(time.Second * 1)
+			res, _, _, err = b.clientCtx.Query(fmt.Sprintf("custom/%s/%s/%d", vmmodule.ModuleName, evmtypes.QueryBloom, resBlock.Block.Height), nil, false)
+			if err == nil {
+				break
+			}else {
+				retry++
+				if retry == 10 {
+					return nil, err
+				}
+			}
+		}
 		return nil, err
 	}
 
@@ -630,6 +676,19 @@ func (b *EthBackend) HeaderByHash(blockHash common.Hash) (*ethtypes.Header, erro
 
 	res, _, _, err = b.clientCtx.Query(fmt.Sprintf("custom/%s/%s/%d", vmmodule.ModuleName, evmtypes.QueryBloom, resBlock.Block.Height), nil, false)
 	if err != nil {
+		retry := 0
+		for {
+			time.Sleep(time.Second * 1)
+			res, _, _, err = b.clientCtx.Query(fmt.Sprintf("custom/%s/%s/%d", vmmodule.ModuleName, evmtypes.QueryBloom, resBlock.Block.Height), nil, false)
+			if err == nil {
+				break
+			}else {
+				retry++
+				if retry == 10 {
+					return nil, err
+				}
+			}
+		}
 		return nil, err
 	}
 
@@ -645,7 +704,7 @@ func (b *EthBackend) HeaderByHash(blockHash common.Hash) (*ethtypes.Header, erro
 // It returns an error if there's an encoding error.
 // If no logs are found for the tx hash, the error is nil.
 func (b *EthBackend) GetTransactionLogs(txHash common.Hash) ([]*ethtypes.Log, error) {
-	res, _, _, err := b.clientCtx.Query(fmt.Sprintf("custom/%s/%s/%s", evmtypes.ModuleName, evmtypes.QueryTransactionLogs, txHash.String()), nil, false)
+	res, _, _, err := b.clientCtx.Query(fmt.Sprintf("custom/%s/%s/%s", vmmodule.ModuleName, evmtypes.QueryTransactionLogs, txHash.String()), nil, false)
 	if err != nil {
 		return nil, err
 	}
