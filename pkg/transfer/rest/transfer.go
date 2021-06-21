@@ -10,7 +10,6 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/client/helper"
 	transfer2 "github.com/ci123chain/ci123chain/pkg/transfer"
 	"github.com/ci123chain/ci123chain/pkg/util"
-	"math/big"
 	"net/http"
 	"strconv"
 )
@@ -38,7 +37,7 @@ func SendRequestHandlerFn(cliCtx context.Context, writer http.ResponseWriter, re
 	//	return
 	//}
 	amount := request.FormValue("amount")
-	transferAmount, ok := new(big.Int).SetString(amount, 10)
+	transferAmount, ok := sdk.NewIntFromString(amount)
 	if !ok {
 		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid amount").Error())
 		return
@@ -48,7 +47,7 @@ func SendRequestHandlerFn(cliCtx context.Context, writer http.ResponseWriter, re
 		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "The balance is not enough to pay the amount").Error())
 		return
 	}
-	coin := sdk.NewIntCoin(denom, transferAmount)
+	coin := sdk.NewCoin(denom, transferAmount)
 	if coin.IsNegative() || coin.IsZero() {
 		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid amount").Error())
 		return

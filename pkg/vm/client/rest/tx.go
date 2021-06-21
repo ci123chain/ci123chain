@@ -69,8 +69,14 @@ func uploadContractHandler(cliCtx context.Context, w http.ResponseWriter, r *htt
 		msg = wasmtypes.NewMsgUploadContract(code, from)
 	} else {
 		amount_str := r.FormValue("amount")
-		amount_int64, _ := strconv.ParseInt(amount_str, 10, 64)
-		amount := big.NewInt(amount_int64)
+		amount := new(big.Int)
+		if len(amount_str) < 2 {
+			amount.SetString(amount_str, 10)
+		} else if amount_str[:2] == "0x" {
+			amount.SetString(amount_str[2:], 16)
+		} else {
+			amount.SetString(amount_str, 10)
+		}
 		msg = evm.NewMsgEvmTx(from, nonce, nil, amount, gas, big.NewInt(1), code)
 	}
 

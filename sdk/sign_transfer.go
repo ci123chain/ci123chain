@@ -40,6 +40,6 @@ func buildTransferTx(from, to string, gas, amount uint64, isFabric bool, denom s
 	if err != nil {
 		return nil, err
 	}
-	tx := transfer.NewMsgTransfer(fromAddr, toAddr, types.NewUInt64Coin(denom, amount), isFabric)
+	tx := transfer.NewMsgTransfer(fromAddr, toAddr, types.NewCoins(types.NewUInt64Coin(denom, amount)), isFabric)
 	return tx, nil
 }
