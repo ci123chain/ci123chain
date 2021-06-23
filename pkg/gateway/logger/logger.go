@@ -6,7 +6,7 @@ import (
 )
 
 func Init() {
-	log.InitZTLogger()
+	log.InitOneitfarmLogger()
 }
 
 func Error(format string, v ...interface{}) {

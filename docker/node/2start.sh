@@ -46,6 +46,7 @@ if [ ! -f $CI_HOME/config/genesis.json ]; then
         /opt/cid-linux add-genesis-account 0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c 10000000000000000000000000000 --home=$CI_HOME
         # 2b452434ac4f7cf9c5d61d62f23834f34e851fb6efdb8d4a8c6e214a8bc93d70
 
+
         if [ $CI_VALIDATOR_ADDRESS ]; then
           if [ -z $CI_GENESIS_AMOUNT ];then
             CI_GENESIS_AMOUNT=10000000000000000000000000000
