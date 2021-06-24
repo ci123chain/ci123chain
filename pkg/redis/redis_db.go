@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/ci123chain/ci123chain/pkg/libs"
 	"github.com/ci123chain/ci123chain/pkg/logger"
 	"github.com/go-redis/redis/v8"
 	db "github.com/tendermint/tm-db"
@@ -33,9 +34,7 @@ func DBIsValid(rdb *RedisDB) error {
 
 ///implement DB
 func (rdb *RedisDB) Get(key []byte) ([]byte, error) {
-
-	retry := 0
-	for {
+	return libs.Retry(0, func(retryTimes int) ([]byte, error) {
 		if key == nil {
 			return nil, nil
 		}else {
@@ -44,18 +43,15 @@ func (rdb *RedisDB) Get(key []byte) ([]byte, error) {
 				if IsKeyNotExist(err) {
 					return nil, nil
 				}else {
-					rdb.lg.Info("***************Retry******************")
-					rdb.lg.Info(fmt.Sprintf("Retry: %d", retry))
-					rdb.lg.Info(fmt.Sprintf("Method: Get, key: %s, id: %s", string(key), hex.EncodeToString(key)))
-					rdb.lg.Error(fmt.Sprintf("Error: %s", err.Error()))
-					retry ++
-					continue
+					rdb.lg.Error("db get failed", "Method", "Get", "Retry times", retryTimes, "key", string(key),
+						"id", hex.EncodeToString(key), "error", err.Error())
+					return nil, err
 				}
 			}
 			res, _ := hex.DecodeString(value)
 			return res, nil
 		}
-	}
+	})
 }
 
 func (rdb *RedisDB) Has(key []byte) (bool, error) {
@@ -67,9 +63,7 @@ func (rdb *RedisDB) Has(key []byte) (bool, error) {
 }
 
 func (rdb *RedisDB) Set(key, value []byte) error {
-	retry := 0
-
-	for {
+	_, err := libs.Retry(0, func(retryTimes int) (bytes []byte, e error) {
 		if key == nil {
 			rdb.lg.Debug("the key which you set is empty")
 			panic(errors.New(fmt.Sprintf("the key: %s , which you set is empty", hex.EncodeToString(key))))
@@ -80,16 +74,14 @@ func (rdb *RedisDB) Set(key, value []byte) error {
 
 		_, err :=rdb.DB.Set(ctx, hex.EncodeToString(key), hex.EncodeToString(value), 0).Result()
 		if err != nil {
-			rdb.lg.Info("***************Retry******************")
-			rdb.lg.Info(fmt.Sprintf("Retry: %d", retry))
-			rdb.lg.Info(fmt.Sprintf("Method: Set, key: %s, id: %s", string(key), hex.EncodeToString(key)))
-			rdb.lg.Error(fmt.Sprintf("Error: %s", err.Error()))
-			retry ++
-			continue
+			rdb.lg.Error("db set failed", "Method", "Set", "Retry times", retryTimes, "key", string(key),
+				"id", hex.EncodeToString(key), "error", err.Error())
+			return nil, err
 		}else {
-			return nil
+			return nil, nil
 		}
-	}
+	})
+	return err
 }
 
 
@@ -99,34 +91,29 @@ func (rdb *RedisDB) SetSync(key, value []byte) error {
 
 
 func (rdb *RedisDB) Delete(key []byte) error{
-	retry := 0
-	for {
+	_, err := libs.Retry(0, func(retryTimes int) (bytes []byte, e error) {
 		v, err := rdb.Has(key)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		if !v {
-			return nil
+			return nil, nil
 		}else {
 			n, err := rdb.DB.Del(ctx, hex.EncodeToString(key)).Result()
 			if err != nil {
-				rdb.lg.Info("delete key failed", "key", hex.EncodeToString(key))
-				rdb.lg.Info("***************Retry******************")
-				rdb.lg.Info(fmt.Sprintf("Retry: %d", retry))
-				rdb.lg.Info(fmt.Sprintf("Method: Delete, key: %s, id: %s", string(key), hex.EncodeToString(key)))
-				rdb.lg.Error(fmt.Sprintf("Error: %s", err.Error()))
-				retry++
+				rdb.lg.Error("delete key failed", "Method", "Delete", "Retry times", retryTimes, "key", string(key),
+					"id", hex.EncodeToString(key), "error", err.Error())
+				return nil, err
 			}else if n != 1 {
-				rdb.lg.Info(fmt.Sprintf("unexpected return value, expect 1, got %d", n))
-				rdb.lg.Info("***************Retry******************")
-				rdb.lg.Info(fmt.Sprintf("Retry: %d", retry))
-				rdb.lg.Info(fmt.Sprintf("Method: Delete, key: %s, id: %s", string(key), hex.EncodeToString(key)))
-				retry++
+				rdb.lg.Error(fmt.Sprintf("unexpected return value, expect 1, got %d", n), "Method", "Delete",
+					"Retry times", retryTimes, "key", string(key), "id", hex.EncodeToString(key))
+				return nil, fmt.Errorf("unexpected return value, expect 1, got %d", n)
 			}else {
-				return nil
+				return nil, nil
 			}
 		}
-	}
+	})
+	return err
 }
 
 func (rdb *RedisDB) DeleteSync(key []byte) error {
