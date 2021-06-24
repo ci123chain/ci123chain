@@ -174,7 +174,7 @@ func (api *PubSubAPI) subscribeLogs(conn *websocket.Conn, extra interface{}) (rp
 
 			crit.Topics = [][]common.Hash{}
 			for _, topic := range topics {
-				tstr, ok := topic.(string)
+				tstr, ok := topic.([]interface{})[0].(string)
 				if !ok {
 					return "", fmt.Errorf("invalid topics")
 				}

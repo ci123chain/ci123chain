@@ -101,19 +101,18 @@ func (k StakingKeeper) ApplyAndReturnValidatorSetUpdates(ctx sdk.Context) (updat
 
 		// everything that is iterated in this loop is becoming or already a
 		// part of the bonded validator set
-
 		valAddr := sdk.ToAccAddress(iterator.Value())
 		validator := k.mustGetValidator(ctx, valAddr)
 
 		if validator.Jailed {
 			panic("should never retrieve a jailed validator from the power store")
 		}
-		//fmt.Printf("validator.power = %d\n", validator.PotentialConsensusPower())
 
 		// if we get to a zero-power validator (which we don't bond),
 		// there are no more possible bonded validators
 		if validator.PotentialConsensusPower() == 0 {
-			break
+			//break
+			continue
 		}
 
 		// apply the appropriate state change if necessary
