@@ -426,7 +426,7 @@ func (api *PublicFilterAPI) GetLogs(ctx context.Context, crit filters.FilterCrit
 		if crit.FromBlock != nil {
 			begin = crit.FromBlock.Int64()
 		}
-		end := rpc.LatestBlockNumber.Int64()
+		end := begin + 1
 		if crit.ToBlock != nil {
 			end = crit.ToBlock.Int64()
 		}
@@ -646,7 +646,6 @@ func (b *EthBackend) HeaderByNumber(blockNum rpctypes.BlockNumber) (*ethtypes.He
 				}
 			}
 		}
-		return nil, err
 	}
 
 	var bloomRes evmtypes.QueryBloomFilter
@@ -689,7 +688,6 @@ func (b *EthBackend) HeaderByHash(blockHash common.Hash) (*ethtypes.Header, erro
 				}
 			}
 		}
-		return nil, err
 	}
 
 	var bloomRes evmtypes.QueryBloomFilter

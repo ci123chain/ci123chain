@@ -734,7 +734,6 @@ func EthBlockFromTendermint(clientCtx clientcontext.Context, block *tmtypes.Bloc
 				}
 			}
 		}
-		return nil, err
 	}
 
 	var bloomRes evmtypes.QueryBloomFilter
