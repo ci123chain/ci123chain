@@ -2,7 +2,7 @@ version: "3"
 services:
 
   raftleveldb:
-    image: harbor.oneitfarm.com/itfarm-test/sal20000ad4588ae210303eaeipha2i4:0.0.1
+    image: harbor.oneitfarm.com/itfarm-test/sal20000ad4588ae210622eaeo1u271a:0.0.3
     hostname: raftleveldb_dev
     container_name: raftleveldb_dev
     ports:
@@ -38,7 +38,7 @@ services:
 
 
   raftleveldb2:
-    image: harbor.oneitfarm.com/itfarm-test/sal20000ad4588ae210303eaeipha2i4:0.0.1
+    image: harbor.oneitfarm.com/itfarm-test/sal20000ad4588ae210622eaeo1u271a:0.0.3
     hostname: raftleveldb_dev2
     container_name: raftleveldb_dev2
     ports:
@@ -63,8 +63,8 @@ services:
       CI_TOKENNAME: stack2
       #      IDG_APPID: abcdefg  # 设置之后 使用 中台log 输出到redis
       #      CI_CLIHOME: /root/client
-      CI_VALIDATOR_KEY: 4wttMiieaewLiRYu+y05j0uslBDOX5IA3k4TY9GtQzSdTcXyd5Y982Q3CUdh+h1XcCvtpIUb+5q6rtJ8W4SEFw==
-      CI_PUBKEY: nU3F8neWPfNkNwlHYfodV3Ar7aSFG/uauq7SfFuEhBc=
+      CI_VALIDATOR_KEY: ZZyS+fsb1zlVDfTTcTXfCzEJ9vKzBERFaCj/jQ3xdOmYo73TTRHfeFLFJQc2uJWRH+x+7p
+      CI_PUBKEY: mKO9000R33hSxSUHNriVkR/sfu6cw+jml88US7wvbyg=
     ports:
       - 26556:26656
       - 26557:26657
