@@ -58,7 +58,7 @@ type Chain struct {
 	GasAdjustment  float64 `yaml:"gas-adjustment" json:"gas-adjustment"`
 	GasPrices      string  `yaml:"gas-prices" json:"gas-prices"`
 	TrustingPeriod string  `yaml:"trusting-period" json:"trusting-period"`
-	PrivateKey     string  `yaml:"private-key" json:"private-key"`
+	PrivateKey     string  `yaml:"private-key" json:"-"`//json返回值除去private-key
 	ChainType      string  `yaml:"chain-type" json:"chain-type"`
 
 	// TODO: make these private
