@@ -360,6 +360,11 @@ func (c *Chain) Error(err error) {
 	c.logger.Error(fmt.Sprintf("%s: err(%s)", c.ChainID, err.Error()))
 }
 
+// Error takes an error, wraps it in the chainID and logs the error
+func (c *Chain) UnknownError(errorStr string) {
+	c.logger.Error(errorStr)
+}
+
 
 // MustGetAddress used for brevity
 func (c *Chain) MustGetAddress() sdk.AccAddress {

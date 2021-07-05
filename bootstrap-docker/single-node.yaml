@@ -10,15 +10,15 @@ services:
     networks:
       - bootstrap-node-single
 
-  ci0:
-#    image: cichain:v0.0.1
-    image: harbor.oneitfarm.com/itfarm-test/sal20000ad4588ae210602eaemgr48er:1.5.1.1
-    container_name: ci0
-    hostname: ci0
+  ci1:
+    image: cichain:v0.0.1
+#    image: harbor.oneitfarm.com/itfarm-test/sal20000ad4588ae210602eaemgr48er:1.5.1.1
+    container_name: ci1
+    hostname: ci1
     depends_on:
       - raftleveldb
     environment:
-      CI_CHAIN_ID: ibc3
+      CI_CHAIN_ID: ibc1
       CI_ETH_CHAIN_ID: 444900
       CI_NODE_DOMAIN: localhost
       CI_STATEDB_HOST: raftleveldb_dev

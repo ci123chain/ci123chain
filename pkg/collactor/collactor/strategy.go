@@ -5,6 +5,7 @@ import (
 	"fmt"
 	tmservice "github.com/tendermint/tendermint/libs/service"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
+	"time"
 )
 
 
@@ -68,15 +69,7 @@ func RunStrategy(src, dst *Chain, strategy Strategy) (func(), error) {
 		}
 	}
 
-	// Fetch any unrelayed sequences depending on the channel order
-	sp, err := strategy.UnrelayedSequences(src, dst)
-	if err != nil {
-		return nil, err
-	}
-	//
-	if err = strategy.RelayPackets(src, dst, sp); err != nil {
-		return nil, err
-	}
+	go relayerPacketsIntervalLoop(src, dst, strategy)
 
 	// Return a function to stop the relayer goroutine
 	return func() {
@@ -85,7 +78,23 @@ func RunStrategy(src, dst *Chain, strategy Strategy) (func(), error) {
 	}, nil
 }
 
-
+func relayerPacketsIntervalLoop(src, dst *Chain, strategy Strategy) {
+	ticker := time.NewTicker(time.Duration(time.Second * 60))
+	for  {
+		select {
+		case <- ticker.C:
+			// Fetch any unrelayed sequences depending on the channel order
+			sp, err := strategy.UnrelayedSequences(src, dst)
+			if err != nil {
+				src.UnknownError(fmt.Sprintf("strategy.UnrelayedSequences error happened : %s", err.Error()))
+			}
+			//
+			if err = strategy.RelayPackets(src, dst, sp); err != nil {
+				src.UnknownError(fmt.Sprintf("strategy.RelayPackets error happened : %s", err.Error()))
+			}
+		}
+	}
+}
 
 func relayerListenLoop(src, dst *Chain, doneChan chan struct{}, strategy Strategy, errChan chan error) {
 	var (

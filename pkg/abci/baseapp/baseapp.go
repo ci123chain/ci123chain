@@ -999,12 +999,8 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 	runMsgCtx, msCache := app.cacheTxContext(ctx, txBytes)
 	result, err = app.runMsgs(runMsgCtx, msgs, mode)
 
-	if mode == runTxModeSimulate  { // XXX
-		return
-	}
-
 	// only update state if all messages pass
-	if result.IsOK() {
+	if err == nil && mode == runTxModeDeliver {
 		msCache.Write()
 	}
 	return
