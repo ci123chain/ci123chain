@@ -230,7 +230,7 @@ func (api *PublicEthereumAPI) GetBlockByNumber(blockNum BlockNumber, fullTx bool
 		}
 		return res, nil
 	})
-	resBlock := r.(coretypes.ResultBlock)
+	resBlock := r.(*coretypes.ResultBlock)
 
 	var transactions []common.Hash
 	for _, tx := range resBlock.Block.Txs {
