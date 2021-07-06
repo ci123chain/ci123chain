@@ -70,9 +70,19 @@ func ValSetUpdatedEventFromLog(log *web3.Log) (ValSetUpdatedEvent, error) {
 	}
 
 	check := validators
-	for i, j := 0, len(check)-1; i < j; i, j = i+1, j-1 {
-		check[i], check[j] = check[j], check[i]
-	}
+	//sort.SliceStable(check, func(i, j int) bool {
+	//	if check[i].Power < check[j].Power {
+	//		return true
+	//	} else if check[i].Power == check[j].Power {
+	//		if bytes.Compare(check[i].EthAddress.Bytes(), check[j].EthAddress.Bytes()) < 0 {
+	//			return true
+	//		}
+	//	}
+	//	return false
+	//})
+	//for i, j := 0, len(check)-1; i < j; i, j = i+1, j-1 {
+	//	check[i], check[j] = check[j], check[i]
+	//}
 
 	if !sort.SliceIsSorted(check, func(i, j int) bool {
 		if check[i].Power < check[j].Power {
