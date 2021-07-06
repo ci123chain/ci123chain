@@ -17,8 +17,8 @@ import (
 
 	"github.com/ci123chain/ci123chain/pkg/client/context"
 
-	rpcfilters "github.com/ci123chain/ci123chain/pkg/vm/client/rest/api/eth/filters"
 	rpctypes "github.com/ci123chain/ci123chain/pkg/vm/client/rest/api/eth"
+	rpcfilters "github.com/ci123chain/ci123chain/pkg/vm/client/rest/api/eth/filters"
 	"github.com/ci123chain/ci123chain/pkg/vm/evmtypes"
 )
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/app/types"
+	"github.com/ci123chain/ci123chain/pkg/libs"
 	vmmodule "github.com/ci123chain/ci123chain/pkg/vm/moduletypes"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/tendermint/tendermint/libs/log"
@@ -582,23 +583,18 @@ func (b *EthBackend) GetBlockByNumber(blockNum rpctypes.BlockNumber, fullTx bool
 		height = int64(num)
 	}
 
-	resBlock, err := b.clientCtx.Client.Block(b.ctx, &height)
-	if err != nil {
-		retry := 0
-		for {
-			time.Sleep(time.Second * 1)
-			resBlock, err = b.clientCtx.Client.Block(b.ctx, &height)
-			if err == nil {
-				break
-			}else {
-				retry++
-				if retry == 10 {
-					return nil, evmtypes.ErrGetBlockFailed
-				}
-			}
+	res, err := libs.RetryI(0, func(retryTimes int) (res interface{}, err error) {
+		res, err = b.clientCtx.Client.Block(b.ctx, &height)
+		if err != nil {
+			return nil, err
 		}
-
+		return res, nil
+	})
+	if err != nil {
+		return nil, err
 	}
+
+	resBlock := res.(coretypes.ResultBlock)
 
 	var transactions []common.Hash
 	for _, tx := range resBlock.Block.Txs {
@@ -631,22 +627,15 @@ func (b *EthBackend) HeaderByNumber(blockNum rpctypes.BlockNumber) (*ethtypes.He
 		return nil, err
 	}
 
-	res, _, _, err := b.clientCtx.Query(fmt.Sprintf("custom/%s/%s/%d", vmmodule.ModuleName, evmtypes.QueryBloom, resBlock.Block.Height), nil, false)
-	if err != nil {
-		retry := 0
-		for {
-			time.Sleep(time.Second * 1)
-			res, _, _, err = b.clientCtx.Query(fmt.Sprintf("custom/%s/%s/%d", vmmodule.ModuleName, evmtypes.QueryBloom, resBlock.Block.Height), nil, false)
-			if err == nil {
-				break
-			}else {
-				retry++
-				if retry == 10 {
-					return nil, err
-				}
-			}
+	r, err := libs.RetryI(0, func(retryTimes int) (res interface{}, e error) {
+		res, _, _, err := b.clientCtx.Query(fmt.Sprintf("custom/%s/%s/%d", vmmodule.ModuleName, evmtypes.QueryBloom, resBlock.Block.Height), nil, false)
+		if err != nil {
+			return nil, err
 		}
-	}
+		return res, nil
+	})
+
+	res := r.([]byte)
 
 	var bloomRes evmtypes.QueryBloomFilter
 	cdc.MustUnmarshalJSON(res, &bloomRes)
@@ -673,25 +662,18 @@ func (b *EthBackend) HeaderByHash(blockHash common.Hash) (*ethtypes.Header, erro
 		return nil, err2
 	}
 
-	res, _, _, err = b.clientCtx.Query(fmt.Sprintf("custom/%s/%s/%d", vmmodule.ModuleName, evmtypes.QueryBloom, resBlock.Block.Height), nil, false)
-	if err != nil {
-		retry := 0
-		for {
-			time.Sleep(time.Second * 1)
-			res, _, _, err = b.clientCtx.Query(fmt.Sprintf("custom/%s/%s/%d", vmmodule.ModuleName, evmtypes.QueryBloom, resBlock.Block.Height), nil, false)
-			if err == nil {
-				break
-			}else {
-				retry++
-				if retry == 10 {
-					return nil, err
-				}
-			}
+	r, _ := libs.RetryI(0, func(retryTimes int) (res interface{}, e error) {
+		res, _, _, err = b.clientCtx.Query(fmt.Sprintf("custom/%s/%s/%d", vmmodule.ModuleName, evmtypes.QueryBloom, resBlock.Block.Height), nil, false)
+		if err != nil {
+			return nil, err
 		}
-	}
+		return res, nil
+	})
+
+	result := r.([]byte)
 
 	var bloomRes evmtypes.QueryBloomFilter
-	cdc.MustUnmarshalJSON(res, &bloomRes)
+	cdc.MustUnmarshalJSON(result, &bloomRes)
 
 	ethHeader := rpctypes.EthHeaderFromTendermint(resBlock.Block.Header)
 	ethHeader.Bloom = bloomRes.Bloom

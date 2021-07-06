@@ -19,7 +19,7 @@ type RedisDB struct {
 }
 
 func (rdb *RedisDB) ReverseIterator(start, end []byte) (db.Iterator, error) {
-	return rdb.NewRedisIterator(start, true), nil
+	return rdb.NewRedisIterator(start, end, true), nil
 }
 
 func NewRedisDB(opt *redis.Options) *RedisDB {
@@ -34,7 +34,7 @@ func DBIsValid(rdb *RedisDB) error {
 
 ///implement DB
 func (rdb *RedisDB) Get(key []byte) ([]byte, error) {
-	return libs.Retry(0, func(retryTimes int) ([]byte, error) {
+	res, err :=  libs.RetryI(0, func(retryTimes int) (interface{}, error) {
 		if key == nil {
 			return nil, nil
 		}else {
@@ -52,6 +52,10 @@ func (rdb *RedisDB) Get(key []byte) ([]byte, error) {
 			return res, nil
 		}
 	})
+	if res == nil {
+		return nil, err
+	}
+	return res.([]byte), err
 }
 
 func (rdb *RedisDB) Has(key []byte) (bool, error) {
@@ -63,7 +67,7 @@ func (rdb *RedisDB) Has(key []byte) (bool, error) {
 }
 
 func (rdb *RedisDB) Set(key, value []byte) error {
-	_, err := libs.Retry(0, func(retryTimes int) (bytes []byte, e error) {
+	_, err := libs.RetryI(0, func(retryTimes int) (bytes interface{}, e error) {
 		if key == nil {
 			rdb.lg.Debug("the key which you set is empty")
 			panic(errors.New(fmt.Sprintf("the key: %s , which you set is empty", hex.EncodeToString(key))))
@@ -91,7 +95,7 @@ func (rdb *RedisDB) SetSync(key, value []byte) error {
 
 
 func (rdb *RedisDB) Delete(key []byte) error{
-	_, err := libs.Retry(0, func(retryTimes int) (bytes []byte, e error) {
+	_, err := libs.RetryI(0, func(retryTimes int) (bytes interface{}, e error) {
 		v, err := rdb.Has(key)
 		if err != nil {
 			return nil, err
@@ -141,7 +145,7 @@ func (rdb *RedisDB) Stats() map[string]string {
 }
 
 func (rdb *RedisDB) Iterator(start, end []byte) (db.Iterator, error) {
-	return rdb.NewRedisIterator(start, false), nil
+	return rdb.NewRedisIterator(start, end, false), nil
 }
 
 
@@ -159,29 +163,26 @@ func (ri *RedisIterator) Error() error {
 	return nil
 }
 
-func (rdb *RedisDB) NewRedisIterator(start []byte, isReserve bool) db.Iterator {
-	retry := 0
-
-	for {
+func (rdb *RedisDB) NewRedisIterator(start, end []byte, isReserve bool) db.Iterator {
+	iterator, _ := libs.RetryI(0, func(retryTimes int) (res interface{}, err error) {
 		results, err := rdb.DB.GetKeys(hex.EncodeToString(start), isReserve)
 		if err != nil {
-			rdb.lg.Info("***************Retry******************")
-			rdb.lg.Info(fmt.Sprintf("Retry: %d", retry))
-			rdb.lg.Info(fmt.Sprintf("Method: GetKeys, start: %s", hex.EncodeToString(start)))
-			rdb.lg.Error(fmt.Sprintf("Error: %s", err.Error()))
-			retry++
+			rdb.lg.Error("db get keys failed", "Method", "Get", "Retry times", retryTimes, "keys", string(start),
+				"id", hex.EncodeToString(start), "error", err.Error())
+			return nil, err
 		}else {
 			return &RedisIterator{
 				rdb:       rdb,
 				results:   results,
 				cursor:    0,
 				start:     start,
-				end:       nil,
+				end:       end,
 				isReverse: isReserve,
 				valid:     true,
-			}
+			}, nil
 		}
-	}
+	})
+	return iterator.(db.Iterator)
 }
 
 func (ri *RedisIterator) Domain() (start, end []byte) {

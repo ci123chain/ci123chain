@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/redis"
 	"github.com/ci123chain/ci123chain/pkg/staking/types"
 	gogotypes "github.com/gogo/protobuf/types"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
@@ -94,14 +95,28 @@ func (k StakingKeeper) ApplyAndReturnValidatorSetUpdates(ctx sdk.Context) (updat
 	// (see LastValidatorPowerKey).
 	last := k.getLastValidatorsByAddr(ctx)
 
-	// Iterate over validators, highest power to lowest.
+	// Iterate over validators
 	iterator := k.ValidatorsPowerStoreIterator(ctx)
 	defer iterator.Close()
-	for count := 0; iterator.Valid() && count < int(maxValidators); iterator.Next() {
 
+	var iteratorValidators = make(redis.KVPairs, 0)
+	for ; iterator.Valid(); iterator.Next() {
+		k := iterator.Key()
+		v := iterator.Value()
+		kv := redis.KVPair{
+			Key: string(k),
+			Value: string(v),
+		}
+		iteratorValidators = append(iteratorValidators, kv)
+	}
+	// sort, highest power to lowest.
+	sort.Sort(iteratorValidators)
+
+	count := 0
+	for _, v := range iteratorValidators {
 		// everything that is iterated in this loop is becoming or already a
 		// part of the bonded validator set
-		valAddr := sdk.ToAccAddress(iterator.Value())
+		valAddr := sdk.ToAccAddress([]byte(v.Value))
 		validator := k.mustGetValidator(ctx, valAddr)
 
 		if validator.Jailed {
@@ -111,8 +126,7 @@ func (k StakingKeeper) ApplyAndReturnValidatorSetUpdates(ctx sdk.Context) (updat
 		// if we get to a zero-power validator (which we don't bond),
 		// there are no more possible bonded validators
 		if validator.PotentialConsensusPower() == 0 {
-			//break
-			continue
+			break
 		}
 
 		// apply the appropriate state change if necessary
@@ -147,7 +161,9 @@ func (k StakingKeeper) ApplyAndReturnValidatorSetUpdates(ctx sdk.Context) (updat
 
 		count++
 		totalPower = totalPower.Add(sdk.NewInt(newPower))
-
+		if count > int(maxValidators) {
+			break
+		}
 	}
 
 	noLongerBonded := sortNoLongerBonded(last)
