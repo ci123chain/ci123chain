@@ -419,7 +419,7 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context) *types.Valset {
 	}
 
 	// TODO: make the nonce an incrementing one (i.e. fetch last nonce from state, increment, set here)
-	return types.NewValset(uint64(ctx.BlockHeight()), uint64(ctx.BlockHeight()), bridgeValidators)
+	return types.NewValset(k.GetLatestValsetNonce(ctx)+1, uint64(ctx.BlockHeight()), bridgeValidators)
 }
 
 /////////////////////////////
