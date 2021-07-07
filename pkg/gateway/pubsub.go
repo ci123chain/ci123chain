@@ -38,6 +38,21 @@ func PubSubHandle(w http.ResponseWriter, r *http.Request) {
 	go pubsubRoom.Receive(conn)
 }
 
+func EthPubSubHandle(w http.ResponseWriter, r *http.Request) {
+	conn, err := ug.Upgrade(w, r, nil)
+	if err != nil {
+		logger.Error("err: %s", err)
+		res, _ := json.Marshal(types.ErrorResponse{
+			Ret: -1,
+			Message:  fmt.Sprintf("invalid request you have sent to server, err: %s", err.Error()),
+		})
+		_, _ = w.Write(res)
+		return
+	}
+	go pubsubRoom.ReceiveEth(conn)
+}
+
+
 func checkBackend() {
 	t := time.NewTicker(time.Second * 7)
 	for {

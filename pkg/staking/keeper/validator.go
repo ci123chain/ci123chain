@@ -251,7 +251,7 @@ func (k StakingKeeper) SetLastValidatorPower(ctx sdk.Context, operator sdk.AccAd
 func (k StakingKeeper) ValidatorsPowerStoreIterator(ctx sdk.Context) sdk.Iterator {
 	prefix := types.ValidatorsByPowerIndexKey
 	store := ctx.KVStore(k.storeKey)
-	iterator := store.RemoteIterator(prefix, sdk.PrefixEndBytes(prefix))
+	iterator := store.ReverseIterator(prefix, sdk.PrefixEndBytes(prefix))
 	if iterator.Valid() {
 		return iterator
 	} else {

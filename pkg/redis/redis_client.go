@@ -45,7 +45,6 @@ func (client *RaftRedisClient) GetKeys(prefix string, desc bool) (KVPairs, error
 			pairs[i], pairs[len(pairs)-1-i] = pairs[len(pairs)-1-i], pairs[i]
 		}
 	}
-
 	return pairs, nil
 }
 
