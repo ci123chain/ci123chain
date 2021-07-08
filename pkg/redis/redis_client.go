@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"github.com/go-redis/redis/v8"
+	"strconv"
 )
 
 type RaftRedisClient struct {
@@ -47,6 +48,56 @@ func (client *RaftRedisClient) GetKeys(prefix string, desc bool) (KVPairs, error
 	}
 	return pairs, nil
 }
+
+func (client *RaftRedisClient) Iter(start, end string, desc, withvalues bool, limit int) ([]KVPair, error) {
+	args := []interface{}{"iter", start, end}
+	if withvalues {
+		args = append(args, "withvalues")
+	}
+	if desc {
+		args = append(args, "desc")
+	}
+	if limit > 0 {
+		args = append(args, "limit", strconv.Itoa(limit))
+	}
+	return client.getKVPairs(args)
+}
+
+func (client *RaftRedisClient) getKVPairs(args []interface{}) ([]KVPair, error) {
+	withvalues := false
+	for _, arg := range args {
+		if arg == "withvalues" {
+			withvalues = true
+			break
+		}
+	}
+
+	cmder := redis.NewStringSliceCmd(ctx, args...)
+	if err := client.Process(ctx, cmder); err != nil {
+		return nil, err
+	}
+	if err := cmder.Err(); err != nil {
+		return nil, err
+	}
+	var pairs []KVPair
+	result := cmder.Val()
+	if withvalues {
+		for i := 0; i < len(result); i += 2 {
+			pairs = append(pairs, KVPair{
+				Key:   result[i],
+				Value: result[i+1],
+			})
+		}
+	} else {
+		for i := 0; i < len(result); i += 1 {
+			pairs = append(pairs, KVPair{
+				Key: result[i],
+			})
+		}
+	}
+	return pairs, nil
+}
+
 
 type Batch struct {
 	rdb  *redis.Client

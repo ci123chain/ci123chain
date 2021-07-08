@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/libs"
 	"github.com/ci123chain/ci123chain/pkg/logger"
+	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/go-redis/redis/v8"
 	db "github.com/tendermint/tm-db"
 )
@@ -19,7 +20,7 @@ type RedisDB struct {
 }
 
 func (rdb *RedisDB) ReverseIterator(start, end []byte) (db.Iterator, error) {
-	return rdb.NewRedisIterator(start, end, true), nil
+	return rdb.NewRedisIterator(start, end, true, true, util.IteratorLimit), nil
 }
 
 func NewRedisDB(opt *redis.Options) *RedisDB {
@@ -145,7 +146,7 @@ func (rdb *RedisDB) Stats() map[string]string {
 }
 
 func (rdb *RedisDB) Iterator(start, end []byte) (db.Iterator, error) {
-	return rdb.NewRedisIterator(start, end, false), nil
+	return rdb.NewRedisIterator(start, end, false, true, util.IteratorLimit), nil
 }
 
 
@@ -163,26 +164,71 @@ func (ri *RedisIterator) Error() error {
 	return nil
 }
 
-func (rdb *RedisDB) NewRedisIterator(start, end []byte, isReserve bool) db.Iterator {
-	iterator, _ := libs.RetryI(0, func(retryTimes int) (res interface{}, err error) {
-		results, err := rdb.DB.GetKeys(hex.EncodeToString(start), isReserve)
+func (rdb *RedisDB) NewRedisIterator(start, end []byte, isReserve bool, withValue bool, limit int) db.Iterator {
+	var results = make([]KVPair, 0)
+	res, _ := libs.RetryI(0, func(retryTimes int) (res interface{}, err error) {
+		r, err := rdb.DB.Iter(hex.EncodeToString(start), hex.EncodeToString(end), isReserve, withValue, limit)
 		if err != nil {
 			rdb.lg.Error("db get keys failed", "Method", "Get", "Retry times", retryTimes, "keys", string(start),
 				"id", hex.EncodeToString(start), "error", err.Error())
 			return nil, err
 		}else {
-			return &RedisIterator{
-				rdb:       rdb,
-				results:   results,
-				cursor:    0,
-				start:     start,
-				end:       end,
-				isReverse: isReserve,
-				valid:     true,
-			}, nil
+			return r, nil
 		}
 	})
-	return iterator.(db.Iterator)
+	if len(res.([]KVPair)) < limit {
+		results = append(results, res.([]KVPair)...)
+	}else {
+		LOOP:
+			for {
+				st := res.([]KVPair)[len(res.([]KVPair))-1].Key
+				ress, _ := libs.RetryI(0, func(retryTimes int) (res interface{}, err error) {
+					r, err := rdb.DB.Iter(st, hex.EncodeToString(end), isReserve, withValue, limit)
+					if err != nil {
+						rdb.lg.Error("db get keys failed", "Method", "Get", "Retry times", retryTimes, "keys", string(start),
+							"id", hex.EncodeToString(start), "error", err.Error())
+						return nil, err
+					}else {
+						return r, nil
+					}
+				})
+				results = append(results, ress.([]KVPair)[1:]...)
+				if len(ress.([]KVPair)) == limit {
+					continue LOOP
+				}else {
+					break
+				}
+			}
+	}
+	return &RedisIterator{
+		rdb:       rdb,
+		results:   results,
+		cursor:    0,
+		start:     start,
+		end:       end,
+		isReverse: isReserve,
+		valid:     true,
+	}
+
+	//iterator, _ := libs.RetryI(0, func(retryTimes int) (res interface{}, err error) {
+	//	results, err := rdb.DB.GetKeys(hex.EncodeToString(start), isReserve)
+	//	if err != nil {
+	//		rdb.lg.Error("db get keys failed", "Method", "Get", "Retry times", retryTimes, "keys", string(start),
+	//			"id", hex.EncodeToString(start), "error", err.Error())
+	//		return nil, err
+	//	}else {
+	//		return &RedisIterator{
+	//			rdb:       rdb,
+	//			results:   results,
+	//			cursor:    0,
+	//			start:     start,
+	//			end:       end,
+	//			isReverse: isReserve,
+	//			valid:     true,
+	//		}, nil
+	//	}
+	//})
+	//return iterator.(db.Iterator)
 }
 
 func (ri *RedisIterator) Domain() (start, end []byte) {

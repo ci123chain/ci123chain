@@ -15,9 +15,14 @@ import (
 ///const CHIANID int64 = 999
 
 var CHAINID int64
+var IteratorLimit int
 
 func Setup(id int64) {
 	CHAINID = id
+}
+
+func SetLimit(limit int) {
+	IteratorLimit = limit
 }
 
 

@@ -37,6 +37,7 @@ const (
 	DefaultRPCPort = "80"
 
 	DefaultPrefix = "tm."
+	DefaultEthPrefix = "dao."
 	DefaultWSEndpoint = "/websocket"
 )
 
@@ -132,9 +133,6 @@ func (r *PubSubRoom)Receive(c *websocket.Conn) {
 	defer func() {
 		err := recover()
 		switch rt := err.(type) {
-		case ClientError:
-			logger.Error("recover clients error: %s", rt.Error)
-			r.HandleUnsubscribeAll(rt.Connect)
 		default:
 			logger.Error("recover unexpected error: %s", rt)
 		}
@@ -142,7 +140,9 @@ func (r *PubSubRoom)Receive(c *websocket.Conn) {
 	for {
 		_, data, err := c.ReadMessage()
 		if err != nil {
-			panic(NewServerError(err, c))
+			logger.Error(fmt.Sprintf("got client message error: %v", err.Error()))
+			_ = c.Close()
+			break
 		}
 		logger.Info("receive clients message: %s", string(data))
 		var m ReceiveMessage
@@ -167,7 +167,7 @@ func (r *PubSubRoom)Receive(c *websocket.Conn) {
 				}
 				_ = c.WriteJSON(res)
 				_ = c.Close()
-				continue
+				break
 			}
 		}else if len(r.backends) == 0 {
 			res := SendMessage{
@@ -176,7 +176,7 @@ func (r *PubSubRoom)Receive(c *websocket.Conn) {
 			}
 			_ = c.WriteJSON(res)
 			_ = c.Close()
-			continue
+			break
 		}
 		_ = json.Unmarshal(data, &m)
 		topic := m.Content.GetTopic()
@@ -206,9 +206,6 @@ func (r *PubSubRoom) ReceiveEth(c *websocket.Conn) {
 	defer func() {
 		err := recover()
 		switch rt := err.(type) {
-		case ClientError:
-			logger.Error("recover clients error: %s", rt.Error)
-			r.HandleUnsubscribeAll(rt.Connect)
 		default:
 			logger.Error("recover unexpected error: %s", rt)
 		}
@@ -217,12 +214,19 @@ func (r *PubSubRoom) ReceiveEth(c *websocket.Conn) {
 	for {
 		_, data, err := c.ReadMessage()
 		if err != nil {
-			panic(NewServerError(err, c))
+			logger.Error("got client error, client may down already")
+			_ = c.Close()
+			break
 		}
 		var msg EthSubcribeMsg
 		err = json.Unmarshal(data, &msg)
 		if err != nil {
-			panic(NewServerError(err, c))
+			res := SendMessage{
+				Time:    time.Now().Format(time.RFC3339),
+				Content: fmt.Sprintf("server got invalid message: %s", string(data)),
+			}
+			_ = c.WriteJSON(res)
+			continue
 		}
 		logger.Info("receive clients message: %s", string(data))
 
@@ -233,11 +237,11 @@ func (r *PubSubRoom) ReceiveEth(c *websocket.Conn) {
 			if err != nil {
 				res := SendMessage{
 					Time:    time.Now().Format(time.RFC3339),
-					Content: fmt.Sprintf("connect to eth failed, err: %s", err.Error()),
+					Content: fmt.Sprintf("connect to server failed, err: %s", err.Error()),
 				}
 				_ = c.WriteJSON(res)
 				_ = c.Close()
-				continue
+				break
 			}
 		}else if len(r.backends) == 0 {
 			res := SendMessage{
@@ -246,37 +250,63 @@ func (r *PubSubRoom) ReceiveEth(c *websocket.Conn) {
 			}
 			_ = c.WriteJSON(res)
 			_ = c.Close()
-			continue
+			break
 		}
 
 		for _, con := range r.EthConnections {
 			go func(remote, client *websocket.Conn, message EthSubcribeMsg) {
+				var ok = make(chan bool)
 				err := remote.WriteJSON(message)
 				if err != nil {
 					logger.Error(fmt.Sprintf("remote write message failed: %s", err.Error()))
-					r.Mutex.Lock()
 					r.RemoveEthConnection(remote)
-					r.Mutex.Unlock()
 					return
 				}
+				//remote write, client read.
+				go func(ok chan bool) {
+					for {
+						_, Data, err := remote.ReadMessage()
+						if err != nil {
+							logger.Error(fmt.Sprintf("remote read message failed: %s", err.Error()))
+							r.RemoveEthConnection(remote)
+							ok <- false
+							break
+						}
+						//err = client.WriteMessage(websocket.BinaryMessage, Data)
+						err = client.WriteJSON(string(Data))
+						if err != nil {
+							logger.Error(fmt.Sprintf("client write message failed: %s", err.Error()))
+							r.RemoveEthConnection(remote)
+							ok <- false
+							break
+						}
+					}
+				}(ok)
+				//client write, remote read.
+				go func(ok chan bool) {
+					for {
+						_, Data, err := client.ReadMessage()
+						if err != nil {
+							logger.Error(fmt.Sprintf("read remote message failed: %s", err.Error()))
+							r.RemoveEthConnection(remote)
+							ok <- false
+							break
+						}
+						err = remote.WriteMessage(websocket.BinaryMessage, Data)
+						if err != nil {
+							logger.Error(fmt.Sprintf("client write message failed: %s", err.Error()))
+							r.RemoveEthConnection(remote)
+							ok <- false
+							break
+						}
+					}
+				}(ok)
 
-				for {
-					_, Data, err := remote.ReadMessage()
-					if err != nil {
-						logger.Error(fmt.Sprintf("read remote message failed: %s", err.Error()))
-						r.Mutex.Lock()
-						r.RemoveEthConnection(remote)
-						r.Mutex.Unlock()
-						break
-					}
-					err = client.WriteJSON(string(Data))
-					if err != nil {
-						logger.Error(fmt.Sprintf("client write message failed: %s", err.Error()))
-						r.Mutex.Lock()
-						r.RemoveEthConnection(remote)
-						r.Mutex.Unlock()
-						break
-					}
+				select {
+				case _ = <- ok:
+					_ = client.Close()
+					r.RemoveEthConnection(remote)
+					break
 				}
 			}(con, c, msg)
 		}
@@ -601,6 +631,9 @@ func (r *PubSubRoom) RemoveAllEthConnections() {
 }
 
 func (r *PubSubRoom) RemoveEthConnection(c *websocket.Conn) {
+	if len(r.EthConnections) == 0 {
+		return
+	}
 	r.Mutex.Lock()
 	newMap := make(map[string]*websocket.Conn, 0)
 	for key, val := range r.EthConnections{
@@ -615,6 +648,7 @@ func (r *PubSubRoom) RemoveEthConnection(c *websocket.Conn) {
 	}
 
 	r.Mutex.Unlock()
+	_ = c.Close()
 }
 
 
@@ -781,9 +815,9 @@ func GetConnection(addr string) (*rpcclient.HTTP, bool){
 }
 
 func GetEthConnection(addr string) (*websocket.Conn, bool) {
-	//str := strings.Split(addr, ":")
-	//link := "dao." + str[0] + ":" + "8546"
-	link := "localhost:8546"
+	str := strings.Split(addr, ":")
+	link := DefaultEthPrefix + str[0] + ":" + DefaultPort
+	//link = "localhost:8546"
 	u := url.URL{Scheme: "ws", Host: link,  Path: "/"}
 	dialer := websocket.DefaultDialer
 	c, _, err := dialer.Dial(u.String(), nil)
