@@ -80,9 +80,9 @@ func ValSetUpdatedEventFromLog(log *web3.Log) (ValSetUpdatedEvent, error) {
 	//	}
 	//	return false
 	//})
-	//for i, j := 0, len(check)-1; i < j; i, j = i+1, j-1 {
-	//	check[i], check[j] = check[j], check[i]
-	//}
+	for i, j := 0, len(check)-1; i < j; i, j = i+1, j-1 {
+		check[i], check[j] = check[j], check[i]
+	}
 
 	if !sort.SliceIsSorted(check, func(i, j int) bool {
 		if check[i].Power < check[j].Power {

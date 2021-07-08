@@ -81,9 +81,11 @@ func relayValsets(
 				_, err := currentValSet.OrderSigs(hash, sigs)
 				if err != nil {
 					lastError = err
+				} else {
+					latestConfirmed = confirms
+					latestValset = *valset
+					break;
 				}
-				latestConfirmed = confirms
-				latestValset = *valset
 			}
 		}
 
