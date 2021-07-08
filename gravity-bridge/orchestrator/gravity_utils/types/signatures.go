@@ -31,9 +31,11 @@ func ToArrays(signatures []GravitySignature) GravitySignatureArrays {
 	for _, val := range signatures {
 		addresses = append(addresses, val.EthAddress)
 		powers = append(powers, val.Power)
-		v = append(v, val.V.Bytes()[0])
-		r = append(r, val.R.Bytes())
-		s = append(s, val.S.Bytes())
+		if val.V != nil && val.R != nil && val.S != nil{
+			v = append(v, val.V.Bytes()[0])
+			r = append(r, val.R.Bytes())
+			s = append(s, val.S.Bytes())
+		}
 	}
 
 	return GravitySignatureArrays{
