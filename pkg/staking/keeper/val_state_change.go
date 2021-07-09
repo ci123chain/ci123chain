@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/libs/sortition"
 	"github.com/ci123chain/ci123chain/pkg/staking/types"
 	gogotypes "github.com/gogo/protobuf/types"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
@@ -98,6 +99,7 @@ func (k StakingKeeper) ApplyAndReturnValidatorSetUpdates(ctx sdk.Context) (updat
 	iterator := k.ValidatorsPowerStoreIterator(ctx)
 	defer iterator.Close()
 
+	var typeValidators []types.Validator
 	for count := 0; count < int(maxValidators) && iterator.Valid(); iterator.Next() {
 		// everything that is iterated in this loop is becoming or already a
 		// part of the bonded validator set
@@ -113,6 +115,8 @@ func (k StakingKeeper) ApplyAndReturnValidatorSetUpdates(ctx sdk.Context) (updat
 		if validator.PotentialConsensusPower() == 0 {
 			break
 		}
+
+
 
 		// apply the appropriate state change if necessary
 		switch {
@@ -138,7 +142,7 @@ func (k StakingKeeper) ApplyAndReturnValidatorSetUpdates(ctx sdk.Context) (updat
 
 		// update the validator set if power has changed
 		if !found || !bytes.Equal(oldPowerBytes, newPowerBytes) {
-			updates = append(updates, validator.ABCIValidatorUpdate())
+			typeValidators = append(typeValidators, validator)
 			k.SetLastValidatorPower(ctx, valAddr, newPower)
 		}
 
@@ -147,6 +151,24 @@ func (k StakingKeeper) ApplyAndReturnValidatorSetUpdates(ctx sdk.Context) (updat
 		count++
 		totalPower = totalPower.Add(sdk.NewInt(newPower))
 	}
+
+	for _, validator := range typeValidators {
+		// vrf filter
+		header := ctx.BlockHeader()
+		t := 1
+		vrfNum := 26
+		_, j := sortition.Sortition(
+			validator.GetConsPubKey().Bytes(), header.Random.Seed, int64(t),
+			int64(vrfNum), validator.GetConsensusPower(), sdk.TokensToConsensusPower(totalPower))
+		if j > 0 {
+			v := validator.ABCIValidatorUpdate()
+			v.Power = int64(j)
+			updates = append(updates, v)
+		} else {
+			updates = append(updates, validator.ABCIValidatorUpdateZero())
+		}
+	}
+
 
 	noLongerBonded := sortNoLongerBonded(last)
 	for _, valAddrBytes := range noLongerBonded {
