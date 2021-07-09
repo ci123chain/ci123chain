@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	types2 "github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/client/helper"
@@ -18,6 +17,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"io/ioutil"
+	"math/big"
 )
 
 
@@ -47,30 +47,35 @@ var signCmd = &cobra.Command{
 		from := sdk.HexToAddress(viper.GetString(flagFrom))
 		tos, err := helper.ParseAddrs(viper.GetString(flagTo))
 		if err != nil {
-			return sdkerrors.Wrap(sdkerrors.ErrParams, "invalid to address")
+			return errors.New("invalid to addresss")
 		}
 		if len(tos) == 0 {
-			return sdkerrors.Wrap(sdkerrors.ErrParams, "invalid to address")
+			return errors.New("invalid to address")
 		}
 		d := viper.GetString(flagDenom)
-		if d == "" {
-			return sdkerrors.Wrap(sdkerrors.ErrParams, "invalid denom")
-		}
+		//if d == "" {
+		//	return errors.New("invalid denom")
+		//}
 
 		gas := uint64((viper.GetInt(flagGas)))
-		amount := uint64(viper.GetInt(flagAmount))
+		//amount := uint64(viper.GetInt(flagAmount))
+		amount, ok := new(big.Int).SetString(viper.GetString(flagAmount), 10)
+		if !ok {
+			return errors.New("invalid amount")
+		}
 		privKey := viper.GetString(flagKey)
 		isFabric := viper.GetBool(flagIsFabric)
 
-		coin := sdk.NewUInt64Coin(d, amount)
+		//coin := sdk.NewUInt64Coin(d, amount)
+		coin := sdk.NewCoin(d, sdk.NewIntFromBigInt(amount))
 		msg := transfer2.NewMsgTransfer(from, tos[0], sdk.NewCoins(coin), isFabric)
 		nonce, err := transfer2.GetNonceByAddress(from)
 		if err != nil {
-			return sdkerrors.Wrap(sdkerrors.ErrParams, "invalid nonce")
+			return errors.New("invalid nonce")
 		}
 		txByte, err := types2.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
 		if err != nil {
-			return sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("sign tx failed: %v", err.Error()))
+			return errors.New(fmt.Sprintf("sign tx failed: %v", err.Error()))
 		}
 
 		fmt.Println(hex.EncodeToString(txByte))

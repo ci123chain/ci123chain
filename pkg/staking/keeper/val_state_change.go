@@ -94,21 +94,19 @@ func (k StakingKeeper) ApplyAndReturnValidatorSetUpdates(ctx sdk.Context) (updat
 	// (see LastValidatorPowerKey).
 	last := k.getLastValidatorsByAddr(ctx)
 
-	// Iterate over validators, highest power to lowest.
+	// Iterate over validators
 	iterator := k.ValidatorsPowerStoreIterator(ctx)
 	defer iterator.Close()
-	for count := 0; iterator.Valid() && count < int(maxValidators); iterator.Next() {
 
+	for count := 0; count < int(maxValidators) && iterator.Valid(); iterator.Next() {
 		// everything that is iterated in this loop is becoming or already a
 		// part of the bonded validator set
-
 		valAddr := sdk.ToAccAddress(iterator.Value())
 		validator := k.mustGetValidator(ctx, valAddr)
 
 		if validator.Jailed {
 			panic("should never retrieve a jailed validator from the power store")
 		}
-		//fmt.Printf("validator.power = %d\n", validator.PotentialConsensusPower())
 
 		// if we get to a zero-power validator (which we don't bond),
 		// there are no more possible bonded validators
@@ -148,7 +146,6 @@ func (k StakingKeeper) ApplyAndReturnValidatorSetUpdates(ctx sdk.Context) (updat
 
 		count++
 		totalPower = totalPower.Add(sdk.NewInt(newPower))
-
 	}
 
 	noLongerBonded := sortNoLongerBonded(last)

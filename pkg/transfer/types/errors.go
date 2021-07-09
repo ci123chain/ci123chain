@@ -1,7 +1,6 @@
 package types
 //
 import (
-	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 )
@@ -15,6 +14,15 @@ const (
 	CodeInvalidReceiver     CodeType = 202
 	CodeCheckParamsError	CodeType = 203
 	CodeQueryTxError		CodeType = 204
+	CodeGetNodeFailed       CodeType = 205
+	CodeGetBlockFailed      CodeType = 206
+)
+
+var (
+	ErrQueryTx = sdkerrors.Register(string(DefaultCodespace), uint32(CodeQueryTxError), "query Tx failed")
+	ErrInvalidTxHash = sdkerrors.Register(string(DefaultCodespace), uint32(CodeCheckParamsError), "invalid tx hash")
+	ErrGetNodeFailed = sdkerrors.Register(string(DefaultCodespace), uint32(CodeGetNodeFailed), "get node failed")
+	ErrGetBlockFailed = sdkerrors.Register(string(DefaultCodespace), uint32(CodeGetBlockFailed), "get block with height failed")
 )
 //
 ////----------------------------------------
@@ -32,9 +40,9 @@ const (
 //	return sdk.NewError(codespace, CodeCheckParamsError, "param invalid: %s", str)
 //}
 //
-func ErrQueryTx(codespace sdk.CodespaceType, str string) error {
-	return sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("query Tx failed: %v", str))
-}
+//func ErrQueryTx(codespace sdk.CodespaceType, str string) error {
+//	return sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("query Tx failed: %v", str))
+//}
 //
 //
 //

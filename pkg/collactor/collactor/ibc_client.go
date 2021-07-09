@@ -39,10 +39,13 @@ func (c *Chain) GetIBCCreateClientHeader() (*tmclient.Header, error) {
 		return nil, err
 	}
 
-	protoVal := tmtypes.NewValidatorSet(lightBlock.ValidatorSet.Validators)
+	protoVal, err := tmtypes.NewValidatorSet(lightBlock.ValidatorSet.Validators).ToProto()
+	if err != nil {
+		return nil, err
+	}
 
 	return &tmclient.Header{
-		SignedHeader: lightBlock.SignedHeader,
+		SignedHeader: lightBlock.SignedHeader.ToProto(),
 		ValidatorSet: protoVal,
 	}, nil
 }
@@ -98,7 +101,10 @@ func (c *Chain) InjectTrustedFields(dst *Chain, header *tmclient.Header) (*tmcli
 	if err != nil {
 		return nil, err
 	}
-	cs := counterpartyClientRes.ClientState
+	cs, err := clienttypes.UnpackClientState(counterpartyClientRes.ClientState)
+	if err != nil {
+		return nil, err
+	}
 
 	// inject TrustedHeight as latest height stored on counterparty client
 	h.TrustedHeight = cs.GetLatestHeight().(clienttypes.Height)

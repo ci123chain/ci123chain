@@ -1,7 +1,6 @@
 package host
 
 import (
-	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"regexp"
 	"strings"
 )
@@ -20,23 +19,28 @@ var IsValidID = regexp.MustCompile(`^[a-zA-Z0-9\.\_\+\-\#\[\]\<\>]+$`).MatchStri
 
 func defaultIdentifierValidator(id string, min, max int) error { //nolint:unparam
 	if strings.TrimSpace(id) == "" {
-		return sdkerrors.Wrap(ErrInvalidID, "identifier cannot be blank")
+		//return sdkerrors.Wrap(ErrInvalidID, "identifier cannot be blank")
+		return ErrInvalidID
 	}
 	// valid id MUST NOT contain "/" separator
 	if strings.Contains(id, "/") {
-		return sdkerrors.Wrapf(ErrInvalidID, "identifier %s cannot contain separator '/'", id)
+		//return sdkerrors.Wrapf(ErrInvalidID, "identifier %s cannot contain separator '/'", id)
+		return ErrInvalidID
 	}
 	// valid id must fit the length requirements
 	if len(id) < min || len(id) > max {
-		return sdkerrors.Wrapf(ErrInvalidID, "identifier %s has invalid length: %d, must be between %d-%d characters", id, len(id), min, max)
+		//return sdkerrors.Wrapf(ErrInvalidID, "identifier %s has invalid length: %d, must be between %d-%d characters", id, len(id), min, max)
+		return ErrInvalidID
 	}
 	// valid id must contain only lower alphabetic characters
 	if !IsValidID(id) {
-		return sdkerrors.Wrapf(
-			ErrInvalidID,
-			"identifier %s must contain only alphanumeric or the following characters: '.', '_', '+', '-', '#', '[', ']', '<', '>'",
-			id,
-		)	}
+		//return sdkerrors.Wrapf(
+		//	ErrInvalidID,
+		//	"identifier %s must contain only alphanumeric or the following characters: '.', '_', '+', '-', '#', '[', ']', '<', '>'",
+		//	id,
+		//)
+		return ErrInvalidID
+	}
 	return nil
 }
 

@@ -3,7 +3,12 @@ package collactor
 import (
 	"context"
 	"fmt"
+	codectypes "github.com/ci123chain/ci123chain/pkg/abci/codec/types"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+    querytypes "github.com/ci123chain/ci123chain/pkg/abci/types/pagination"
 	accountutils "github.com/ci123chain/ci123chain/pkg/account/utils"
+	transfertypes "github.com/ci123chain/ci123chain/pkg/ibc/application/transfer/types"
+	transferutils "github.com/ci123chain/ci123chain/pkg/ibc/application/transfer/utils"
 	chantypes "github.com/ci123chain/ci123chain/pkg/ibc/core/channel/types"
 	chanutils "github.com/ci123chain/ci123chain/pkg/ibc/core/channel/utils"
 	clienttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/clients/types"
@@ -12,9 +17,8 @@ import (
 	conntypes "github.com/ci123chain/ci123chain/pkg/ibc/core/connection/types"
 	connutils "github.com/ci123chain/ci123chain/pkg/ibc/core/connection/utils"
 	ibcexported "github.com/ci123chain/ci123chain/pkg/ibc/core/exported"
+	ibctmtypes "github.com/ci123chain/ci123chain/pkg/ibc/light-clients/07-tendermint/types"
 	stakingutils "github.com/ci123chain/ci123chain/pkg/staking/client/utils"
-	transferutils "github.com/ci123chain/ci123chain/pkg/ibc/application/transfer/utils"
-	transfertypes "github.com/ci123chain/ci123chain/pkg/ibc/application/transfer/types"
 	"github.com/pkg/errors"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	"golang.org/x/sync/errgroup"
@@ -34,6 +38,8 @@ func (c *Chain) QueryLatestHeight() (int64, error) {
 	return res.SyncInfo.LatestBlockHeight, nil
 }
 
+
+
 // QueryClientState retrevies the latest consensus state for a client in state at a given height
 func (c *Chain) QueryClientState(height int64) (*clienttypes.QueryClientStateResponse, error) {
 	return clientutils.QueryClientStateABCI(c.CLIContext(height), c.PathEnd.ClientID)
@@ -41,7 +47,16 @@ func (c *Chain) QueryClientState(height int64) (*clienttypes.QueryClientStateRes
 
 // QueryClients queries all the clients!
 func (c *Chain) QueryClients(offset, limit uint64) (*clienttypes.QueryClientStatesResponse, error) {
-	return clientutils.QueryClientStatesABCI(c.CLIContext(0), offset, limit)
+	//return clientutils.QueryClientStatesABCI(c.CLIContext(0), offset, limit)
+	qc := clienttypes.NewQueryClient(c.CLIContext(0))
+	return qc.ClientStates(context.Background(), &clienttypes.QueryClientStatesRequest{
+		Pagination: &querytypes.PageRequest{
+			Key:        []byte(""),
+			Offset:     offset,
+			Limit:      limit,
+			CountTotal: true,
+		},
+	})
 }
 
 // QueryPacketCommitment returns the packet commitment proof at a given height
@@ -60,37 +75,37 @@ func (c *Chain) QueryPacketAcknowledgement(height int64,
 func (c *Chain) QueryPacketCommitments(
 	offset, limit, height uint64) (comRes *chantypes.QueryPacketCommitmentsResponse, err error) {
 
-	return chanutils.QueryPacketCommitments(c.CLIContext(int64(int(height))), c.PathEnd.PortID, c.PathEnd.ChannelID, offset, limit)
+	//return chanutils.QueryPacketCommitments(c.CLIContext(int64(int(height))), c.PathEnd.PortID, c.PathEnd.ChannelID, offset, limit)
 
-	//qc := chantypes.NewQueryClient(c.CLIContext(int64(height)))
-	//return qc.PacketCommitments(context.Background(), &chantypes.QueryPacketCommitmentsRequest{
-	//	PortId:    c.PathEnd.PortID,
-	//	ChannelId: c.PathEnd.ChannelID,
-	//	Pagination: &querytypes.PageRequest{
-	//		Offset:     offset,
-	//		Limit:      limit,
-	//		CountTotal: true,
-	//	},
-	//})
+	qc := chantypes.NewQueryClient(c.CLIContext(int64(height)))
+	return qc.PacketCommitments(context.Background(), &chantypes.QueryPacketCommitmentsRequest{
+		PortId:    c.PathEnd.PortID,
+		ChannelId: c.PathEnd.ChannelID,
+		Pagination: &querytypes.PageRequest{
+			Offset:     offset,
+			Limit:      limit,
+			CountTotal: true,
+		},
+	})
 }
 
 // QueryUnreceivedPackets returns a list of unrelayed packet commitments
 func (c *Chain) QueryUnreceivedPackets(height uint64, seqs []uint64) ([]uint64, error) {
-	res, err :=  chanutils.QueryUnreceivedPackets(c.CLIContext(int64(height)), c.PathEnd.PortID, c.PathEnd.ChannelID, seqs)
-	if err != nil {
-		return nil, err
-	}
-	return res.Sequences, nil
-	//qc := chantypes.NewQueryClient(c.CLIContext(int64(height)))
-	//res, err := qc.UnreceivedPackets(context.Background(), &chantypes.QueryUnreceivedPacketsRequest{
-	//	PortId:                    c.PathEnd.PortID,
-	//	ChannelId:                 c.PathEnd.ChannelID,
-	//	PacketCommitmentSequences: seqs,
-	//})
+	//res, err :=  chanutils.QueryUnreceivedPackets(c.CLIContext(int64(height)), c.PathEnd.PortID, c.PathEnd.ChannelID, seqs)
 	//if err != nil {
 	//	return nil, err
 	//}
 	//return res.Sequences, nil
+	qc := chantypes.NewQueryClient(c.CLIContext(int64(height)))
+	res, err := qc.UnreceivedPackets(context.Background(), &chantypes.QueryUnreceivedPacketsRequest{
+		PortId:                    c.PathEnd.PortID,
+		ChannelId:                 c.PathEnd.ChannelID,
+		PacketCommitmentSequences: seqs,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return res.Sequences, nil
 }
 
 
@@ -158,7 +173,17 @@ func (c *Chain) QueryConnection(height int64) (*conntypes.QueryConnectionRespons
 // QueryConnections gets any connections on a chain
 func (c *Chain) QueryConnections(
 	offset, limit uint64) (*conntypes.QueryConnectionsResponse, error) {
-	return connutils.QueryConnectionsABCI(c.CLIContext(0), offset, limit)
+	//return connutils.QueryConnectionsABCI(c.CLIContext(0), offset, limit)
+	qc := conntypes.NewQueryClient(c.CLIContext(0))
+	res, err := qc.Connections(context.Background(), &conntypes.QueryConnectionsRequest{
+		Pagination: &querytypes.PageRequest{
+			Key:        []byte(""),
+			Offset:     offset,
+			Limit:      limit,
+			CountTotal: true,
+		},
+	})
+	return res, err
 }
 
 
@@ -202,7 +227,16 @@ func (c *Chain) QueryChannel(height int64) (chanRes *chantypes.QueryChannelRespo
 
 // QueryChannels returns all the channels that are registered on a chain
 func (c *Chain) QueryChannels(offset, limit uint64) (*chantypes.QueryChannelsResponse, error) {
-	res, err := chanutils.QueryChannels(c.CLIContext(0), offset, limit)
+	//res, err := chanutils.QueryChannels(c.CLIContext(0), offset, limit)
+	qc := chantypes.NewQueryClient(c.CLIContext(0))
+	res, err := qc.Channels(context.Background(), &chantypes.QueryChannelsRequest{
+		Pagination: &querytypes.PageRequest{
+			Key:        []byte(""),
+			Offset:     offset,
+			Limit:      limit,
+			CountTotal: true,
+		},
+	})
 	return res, err
 }
 
@@ -270,4 +304,30 @@ func QueryConnectionPair(
 	})
 	err = eg.Wait()
 	return
+}
+
+
+// QueryBalance returns the amount of coins in the relayer account
+
+// QueryBalanceWithAddress returns the amount of coins in the relayer account with address as input
+func (c *Chain) QueryBalanceWithAddress(address sdk.AccAddress) (sdk.Coins, error) {
+	coins, err := accountutils.QueryBalance(c.CLIContext(0), address)
+	return coins, err
+}
+
+// CastClientStateToTMType casts client state to tendermint type
+func CastClientStateToTMType(cs *codectypes.Any) (*ibctmtypes.ClientState, error) {
+	clientStateExported, err := clienttypes.UnpackClientState(cs)
+	if err != nil {
+		return &ibctmtypes.ClientState{}, err
+	}
+
+	// cast from interface to concrete type
+	clientState, ok := clientStateExported.(*ibctmtypes.ClientState)
+	if !ok {
+		return &ibctmtypes.ClientState{},
+			fmt.Errorf("error when casting exported clientstate to tendermint type")
+	}
+
+	return clientState, nil
 }

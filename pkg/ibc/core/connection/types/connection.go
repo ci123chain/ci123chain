@@ -9,21 +9,21 @@ import (
 
 var _ exported.ConnectionI = (*ConnectionEnd)(nil)
 
-type ConnectionEnd struct {
-	// client associated with this connection.
-	ClientId string `protobuf:"bytes,1,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty" yaml:"client_id"`
-	// IBC version which can be utilised to determine encodings or protocols for
-	// channels or packets utilising this connection.
-	Versions []*Version `protobuf:"bytes,2,rep,name=versions,proto3" json:"versions,omitempty"`
-	// current state of the connection end.
-	State State `protobuf:"varint,3,opt,name=state,proto3,enum=ibc.collactor.connection.v1.State" json:"state,omitempty"`
-	// counterparty chain associated with this connection.
-	Counterparty Counterparty `protobuf:"bytes,4,opt,name=counterparty,proto3" json:"counterparty"`
-	// delay period that must pass before a consensus state can be used for packet-verification
-	// NOTE: delay period logic is only implemented by some clients.
-	DelayPeriod uint64 `protobuf:"varint,5,opt,name=delay_period,json=delayPeriod,proto3" json:"delay_period,omitempty" yaml:"delay_period"`
-
-}
+//type ConnectionEnd struct {
+//	// client associated with this connection.
+//	ClientId string `protobuf:"bytes,1,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty" yaml:"client_id"`
+//	// IBC version which can be utilised to determine encodings or protocols for
+//	// channels or packets utilising this connection.
+//	Versions []*Version `protobuf:"bytes,2,rep,name=versions,proto3" json:"versions,omitempty"`
+//	// current state of the connection end.
+//	State State `protobuf:"varint,3,opt,name=state,proto3,enum=ibc.collactor.connection.v1.State" json:"state,omitempty"`
+//	// counterparty chain associated with this connection.
+//	Counterparty Counterparty `protobuf:"bytes,4,opt,name=counterparty,proto3" json:"counterparty"`
+//	// delay period that must pass before a consensus state can be used for packet-verification
+//	// NOTE: delay period logic is only implemented by some clients.
+//	DelayPeriod uint64 `protobuf:"varint,5,opt,name=delay_period,json=delayPeriod,proto3" json:"delay_period,omitempty" yaml:"delay_period"`
+//
+//}
 
 // NewConnectionEnd creates a new ConnectionEnd instance.
 func NewConnectionEnd(state State, clientID string, counterparty Counterparty, versions []*Version, delayPeriod uint64) ConnectionEnd {
@@ -82,17 +82,17 @@ func (c ConnectionEnd) ValidateBasic() error {
 var _ exported.CounterpartyConnectionI = (*Counterparty)(nil)
 
 
-// Counterparty defines the counterparty chain associated with a connection end.
-type Counterparty struct {
-	// identifies the client on the counterparty chain associated with a given
-	// connection.
-	ClientId string `protobuf:"bytes,1,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty" yaml:"client_id"`
-	// identifies the connection end on the counterparty chain associated with a
-	// given connection.
-	ConnectionId string `protobuf:"bytes,2,opt,name=connection_id,json=connectionId,proto3" json:"connection_id,omitempty" yaml:"connection_id"`
-	// commitment merkle prefix of the counterparty chain.
-	Prefix commitmenttypes.MerklePrefix `protobuf:"bytes,3,opt,name=prefix,proto3" json:"prefix"`
-}
+//// Counterparty defines the counterparty chain associated with a connection end.
+//type Counterparty struct {
+//	// identifies the client on the counterparty chain associated with a given
+//	// connection.
+//	ClientId string `protobuf:"bytes,1,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty" yaml:"client_id"`
+//	// identifies the connection end on the counterparty chain associated with a
+//	// given connection.
+//	ConnectionId string `protobuf:"bytes,2,opt,name=connection_id,json=connectionId,proto3" json:"connection_id,omitempty" yaml:"connection_id"`
+//	// commitment merkle prefix of the counterparty chain.
+//	Prefix commitmenttypes.MerklePrefix `protobuf:"bytes,3,opt,name=prefix,proto3" json:"prefix"`
+//}
 
 func NewCounterparty(clientID, connectionID string, prefix commitmenttypes.MerklePrefix) Counterparty {
 	return Counterparty{
@@ -134,59 +134,59 @@ func (c Counterparty) ValidateBasic() error {
 	return nil
 }
 
-type State int32
-
-const (
-	// Default State
-	UNINITIALIZED State = 0
-	// A connection end has just started the opening handshake.
-	INIT State = 1
-	// A connection end has acknowledged the handshake step on the counterparty
-	// chain.
-	TRYOPEN State = 2
-	// A connection end has completed the handshake.
-	OPEN State = 3
-)
-
-var State_name = map[int32]string{
-	0: "STATE_UNINITIALIZED_UNSPECIFIED",
-	1: "STATE_INIT",
-	2: "STATE_TRYOPEN",
-	3: "STATE_OPEN",
-}
-
-var State_value = map[string]int32{
-	"STATE_UNINITIALIZED_UNSPECIFIED": 0,
-	"STATE_INIT":                      1,
-	"STATE_TRYOPEN":                   2,
-	"STATE_OPEN":                      3,
-}
-
-
-func (x State) String() string {
-	return State_name[int32(x)]
-}
-
-
+//type State int32
+//
+//const (
+//	// Default State
+//	UNINITIALIZED State = 0
+//	// A connection end has just started the opening handshake.
+//	INIT State = 1
+//	// A connection end has acknowledged the handshake step on the counterparty
+//	// chain.
+//	TRYOPEN State = 2
+//	// A connection end has completed the handshake.
+//	OPEN State = 3
+//)
+//
+//var State_name = map[int32]string{
+//	0: "STATE_UNINITIALIZED_UNSPECIFIED",
+//	1: "STATE_INIT",
+//	2: "STATE_TRYOPEN",
+//	3: "STATE_OPEN",
+//}
+//
+//var State_value = map[string]int32{
+//	"STATE_UNINITIALIZED_UNSPECIFIED": 0,
+//	"STATE_INIT":                      1,
+//	"STATE_TRYOPEN":                   2,
+//	"STATE_OPEN":                      3,
+//}
+//
+//
+//func (x State) String() string {
+//	return State_name[int32(x)]
+//}
 
 
-// IdentifiedConnection defines a connection with additional connection
-// identifier field.
-type IdentifiedConnection struct {
-	// connection identifier.
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" yaml:"id"`
-	// client associated with this connection.
-	ClientId string `protobuf:"bytes,2,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty" yaml:"client_id"`
-	// IBC version which can be utilised to determine encodings or protocols for
-	// channels or packets utilising this connection
-	Versions []*Version `protobuf:"bytes,3,rep,name=versions,proto3" json:"versions,omitempty"`
-	// current state of the connection end.
-	State State `protobuf:"varint,4,opt,name=state,proto3,enum=ibc.core.connection.v1.State" json:"state,omitempty"`
-	// counterparty chain associated with this connection.
-	Counterparty Counterparty `protobuf:"bytes,5,opt,name=counterparty,proto3" json:"counterparty"`
-	// delay period associated with this connection.
-	DelayPeriod uint64 `protobuf:"varint,6,opt,name=delay_period,json=delayPeriod,proto3" json:"delay_period,omitempty" yaml:"delay_period"`
-}
+
+
+//// IdentifiedConnection defines a connection with additional connection
+//// identifier field.
+//type IdentifiedConnection struct {
+//	// connection identifier.
+//	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" yaml:"id"`
+//	// client associated with this connection.
+//	ClientId string `protobuf:"bytes,2,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty" yaml:"client_id"`
+//	// IBC version which can be utilised to determine encodings or protocols for
+//	// channels or packets utilising this connection
+//	Versions []*Version `protobuf:"bytes,3,rep,name=versions,proto3" json:"versions,omitempty"`
+//	// current state of the connection end.
+//	State State `protobuf:"varint,4,opt,name=state,proto3,enum=ibc.core.connection.v1.State" json:"state,omitempty"`
+//	// counterparty chain associated with this connection.
+//	Counterparty Counterparty `protobuf:"bytes,5,opt,name=counterparty,proto3" json:"counterparty"`
+//	// delay period associated with this connection.
+//	DelayPeriod uint64 `protobuf:"varint,6,opt,name=delay_period,json=delayPeriod,proto3" json:"delay_period,omitempty" yaml:"delay_period"`
+//}
 
 // NewIdentifiedConnection creates a new IdentifiedConnection instance
 func NewIdentifiedConnection(connectionID string, conn ConnectionEnd) IdentifiedConnection {

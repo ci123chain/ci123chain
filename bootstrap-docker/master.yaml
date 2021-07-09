@@ -33,7 +33,7 @@ services:
       CI_STATEDB_TLS: "false"
       CI_HOME: /root/cid
 #      IDG_APPID: abcdefg
-      CI_CLIHOME: /root/cli
+      CI_CLIHOME: /root/client
       CI_VALIDATOR_KEY: BpiPMqeXTNJLBg6hRoWJjsjOLSHIQRIrkQlykLQ/0AE=
       CI_PUBKEY: Ap0lbWGAnzfqpc0D0GL081WCnWatdk2d5B21orPl30AS
     ports:

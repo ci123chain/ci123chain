@@ -1,8 +1,8 @@
 package rpc
 
 import (
-	"encoding/json"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
+	types2 "github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/client/types"
 	"github.com/gorilla/mux"
@@ -15,7 +15,7 @@ func LatestBlockRequestHandlerFn(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		output, err := getBlock(ctx, nil)
 		if err != nil {
-			rest.WriteErrorRes(w, types.ErrNode(types.DefaultCodespace, err).Error())
+			rest.WriteErrorRes(w, types.ErrGetBlockFailed.Error())
 			return
 		}
 
@@ -38,7 +38,7 @@ func getBlock(clientCtx context.Context, height *int64) ([]byte, error) {
 		return nil, err
 	}
 
-	return json.Marshal(res)
+	return types2.GetCodec().MarshalJSON(res)
 }
 
 // get the current blockchain height

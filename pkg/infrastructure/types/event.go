@@ -5,4 +5,5 @@ var (
 	EventStoreContent string = "store_content"
 
 	AttributeValueModule = "infrastructure"
+	StoreKey = "key"
 )

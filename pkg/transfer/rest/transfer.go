@@ -2,7 +2,6 @@ package rest
 
 import (
 	"encoding/hex"
-	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
@@ -31,14 +30,16 @@ func SendRequestHandlerFn(cliCtx context.Context, writer http.ResponseWriter, re
 		isFabric = false
 	}
 	denom := request.FormValue("denom")
-	if denom == "" {
-		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "the name of the coin which you want to transfer cant not be empty").Error())
-		return
-	}
 	to := sdk.HexToAddress(request.FormValue("to"))
-	amount, err := strconv.ParseUint(request.FormValue("amount"), 10, 64)
-	if err != nil {
-		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, err.Error()).Error())
+	//amount, err := strconv.ParseUint(request.FormValue("amount"), 10, 64)
+	//if err != nil {
+	//	rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, err.Error()).Error())
+	//	return
+	//}
+	amount := request.FormValue("amount")
+	transferAmount, ok := sdk.NewIntFromString(amount)
+	if !ok {
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid amount").Error())
 		return
 	}
 	isBalanceEnough := CheckAccountAndBalanceFromParams(cliCtx, request, writer, denom)
@@ -46,7 +47,7 @@ func SendRequestHandlerFn(cliCtx context.Context, writer http.ResponseWriter, re
 		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "The balance is not enough to pay the amount").Error())
 		return
 	}
-	coin := sdk.NewUInt64Coin(denom, amount)
+	coin := sdk.NewCoin(denom, transferAmount)
 	if coin.IsNegative() || coin.IsZero() {
 		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid amount").Error())
 		return
@@ -65,7 +66,8 @@ func SendRequestHandlerFn(cliCtx context.Context, writer http.ResponseWriter, re
 	var a types2.CommonTx
 	err = cdc.UnmarshalBinaryBare(txByte, &a)
 	if err != nil {
-		fmt.Println(err)
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrCdcUnmarshalFailed, err.Error()).Error())
+		return
 	}
 
 	res, err := cliCtx.BroadcastSignedTx(txByte)
@@ -84,7 +86,7 @@ func CheckAccountAndBalanceFromParams(ctx context.Context, r *http.Request, w ht
 
 
 	acc, _ := helper.StrToAddress(from)
-	balance, _, err := ctx.GetBalanceByAddress(acc, false)
+	balance, _, err := ctx.GetBalanceByAddress(acc, false, "")
 	if err != nil {
 		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInternal, "get balances of from account failed").Error())
 		return false

@@ -16,7 +16,7 @@ const UndefinedCodespace = "undefined"
 
 var (
 	// errInternal should never be exposed, but we reserve this code for non-specified errors
-	errInternal = Register(UndefinedCodespace, 1, "internal")
+	//errInternal = Register(UndefinedCodespace, 1, "internal")
 
 	// ErrTxDecode is returned if we cannot parse a transaction
 	ErrTxDecode = Register(RootCodespace, 2, "tx parse error")
@@ -154,10 +154,49 @@ var (
 	//ErrResponse
 	ErrResponse = Register(RootCodespace, 43, "invalid response")
 
+	ErrAccountNotExist = Register(RootCodespace, 47, "account not exist")
+
+	ErrInsufficientMempoolFess = Register(RootCodespace, 51, "insufficient mempool fess")
+
+	ErrAccountSetCoinFailed = Register(RootCodespace, 52, "set account coin failed")
+
+	ErrModuleAccountSetCoinFailed = Register(RootCodespace, 53, "module account set coin failed")
+
+	errInternal = Register(UndefinedCodespace, 54, "internal")
+
+	ErrRuxTxOutOfGas = Register(RootCodespace, 10101, "tx out of gas")
+
+	ErrRecoverInRunTx = Register(RootCodespace, 10102, "recover in run tx")
+
+	ErrInvalidParam = Register(RootCodespace, 10105, "invalid params")
+
+	ErrCdcUnmarshalFailed = Register(RootCodespace, 10106, "cdc unmarshal failed")
+
 	// ErrPanic is only set when we recover from a panic, so we know to
 	// redact potentially sensitive system info
 	ErrPanic = Register(UndefinedCodespace, 111222, "panic")
 )
+
+//func ErrRuxTxOutOfGas(desc string) error {
+//	return Register(RootCodespace, 10101, desc)
+//}
+
+//func ErrRecoverInRunTx(desc string) error {
+//	return Register(RootCodespace, 10102, desc)
+//}
+
+//func ErrModuleAccountNotExisted(desc string) error {
+//	return Register(RootCodespace, 10103, desc)
+//}
+//
+//
+//func ErrModuleAccountHasNoPermission(desc string) error {
+//	return Register(RootCodespace, 10104, desc)
+//}
+
+//func ErrInvalidParam(desc string) error {
+//	return Register(RootCodespace, 10105, desc)
+//}
 
 // Register returns an error instance that should be used as the base for
 // creating error instances during runtime.

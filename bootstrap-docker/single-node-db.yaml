@@ -1,7 +1,7 @@
 version: "3"
 services:
   raftleveldb1:
-    image: harbor.oneitfarm.com/itfarm-test/sal20000ad4588ae210303eaeipha2i4:0.0.1
+    image: harbor.oneitfarm.com/itfarm-test/sal20000ad4588ae210622eaeo1u271a:0.0.3
     hostname: raftleveldb_dev1
     container_name: raftleveldb_dev1
     ports:

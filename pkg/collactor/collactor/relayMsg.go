@@ -1,8 +1,9 @@
 package collactor
 
 import (
-	"encoding/json"
 	"fmt"
+	"github.com/gogo/protobuf/proto"
+
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 )
 
@@ -82,7 +83,8 @@ func (r *RelayMsgs) SendWithController(src, dst *Chain, useController bool) {
 
 	// submit batches of relay transactions
 	for _, msg := range r.Src {
-		bz, err := json.Marshal(msg)
+		pbMsg := msg.(sdk.PbMsg)
+		bz, err := proto.Marshal(pbMsg)
 		if err != nil {
 			panic(err)
 		}
@@ -120,7 +122,8 @@ func (r *RelayMsgs) SendWithController(src, dst *Chain, useController bool) {
 	msgs = []sdk.Msg{}
 
 	for _, msg := range r.Dst {
-		bz, err := json.Marshal(msg)
+		pbMsg := msg.(sdk.PbMsg)
+		bz, err := proto.Marshal(pbMsg)
 		if err != nil {
 			panic(err)
 		}

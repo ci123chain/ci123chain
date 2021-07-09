@@ -32,9 +32,9 @@ func QueryTendermintProof(clientCtx context.Context, key []byte) ([]byte, []byte
 
 	// Use the IAVL height if a valid tendermint height is passed in.
 	// A height of 0 will query with the latest state.
-	if height != 0 {
-		height--
-	}
+	//if height != 0 {
+	//	height--
+	//}
 
 	req := abci.RequestQuery{
 		Path:   fmt.Sprintf("store/%s/key", host.StoreKey),
@@ -62,7 +62,7 @@ func QueryTendermintProof(clientCtx context.Context, key []byte) ([]byte, []byte
 	}
 
 	revision := clienttypes.ParseChainID(clientCtx.ChainID)
-	return res.Value, proofBz, clienttypes.NewHeight(revision, uint64(res.Height)+1), nil
+	return res.Value, proofBz, clienttypes.NewHeight(revision, uint64(res.Height) + 1), nil
 }
 
 
@@ -79,9 +79,9 @@ func QueryTendermint(clientCtx context.Context, key []byte) ([]byte, clienttypes
 
 	// Use the IAVL height if a valid tendermint height is passed in.
 	// A height of 0 will query with the latest state.
-	if height != 0 {
-		height--
-	}
+	//if height != 0 {
+	//	height--
+	//}
 
 	req := abci.RequestQuery{
 		Path:   fmt.Sprintf("store/%s/key", host.StoreKey),
@@ -95,7 +95,7 @@ func QueryTendermint(clientCtx context.Context, key []byte) ([]byte, clienttypes
 	}
 
 	revision := clienttypes.ParseChainID(clientCtx.ChainID)
-	return res.Value, clienttypes.NewHeight(revision, uint64(res.Height)+1), nil
+	return res.Value, clienttypes.NewHeight(revision, uint64(res.Height) + 1), nil
 }
 
 

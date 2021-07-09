@@ -20,7 +20,7 @@ func NodeInfoRequestHandlerFn(ctx context.Context) http.HandlerFunc  {
 	return func(w http.ResponseWriter, request *http.Request) {
 		status, err := getNodeStatus(ctx)
 		if err != nil {
-			rest.WriteErrorRes(w, types.ErrNode(types.DefaultCodespace, err).Error())
+			rest.WriteErrorRes(w, types.ErrGetStatusFailed.Error())
 			return
 		}
 		resp := NodeInfoResponse{
@@ -47,7 +47,7 @@ func NodeSyncingRequestHandlerFn(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		status, err := getNodeStatus(ctx)
 		if err != nil {
-			rest.WriteErrorRes(w, types.ErrNode(types.DefaultCodespace, err).Error())
+			rest.WriteErrorRes(w, types.ErrGetStatusFailed.Error())
 			return
 		}
 

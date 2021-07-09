@@ -18,7 +18,7 @@ import (
 // Keeper defines the IBC fungible transfer keeper
 type Keeper struct {
 	storeKey   sdk.StoreKey
-	cdc        *codec.Codec
+	cdc        codec.BinaryMarshaler
 	paramSpace params.Subspace
 
 	channelKeeper types.ChannelKeeper
@@ -30,7 +30,7 @@ type Keeper struct {
 
 // NewKeeper creates a new IBC transfer Keeper instance
 func NewKeeper(
-	cdc *codec.Codec, key sdk.StoreKey, paramSpace params.Subspace,
+	cdc codec.BinaryMarshaler, key sdk.StoreKey, paramSpace params.Subspace,
 	channelKeeper types.ChannelKeeper, portKeeper types.PortKeeper,
 	supplyKeeper types.SupplyKeeper, scopedKeeper capabilitykeeper.ScopedKeeper,
 ) Keeper {

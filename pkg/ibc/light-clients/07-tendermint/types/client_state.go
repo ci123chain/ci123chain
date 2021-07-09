@@ -1,6 +1,8 @@
 package types
 
 import (
+	"encoding/hex"
+	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
@@ -19,43 +21,47 @@ import (
 var _ exported.ClientState = (*ClientState)(nil)
 
 
-// ClientState from Tendermint tracks the current validator set, latest height,
-// and a possible frozen height.
-type ClientState struct {
-	ChainId    string   `json:"chain_id,omitempty"`
-	TrustLevel Fraction `json:"trust_level" yaml:"trust_level"`
-	// duration of the period since the LastestTimestamp during which the
-	// submitted headers are valid for upgrade
-	TrustingPeriod time.Duration `json:"trusting_period" yaml:"trusting_period"`
-	// duration of the staking unbonding period
-	UnbondingPeriod time.Duration `json:"unbonding_period" yaml:"unbonding_period"`
-	// defines how much new (untrusted) header's Time can drift into the future.
-	MaxClockDrift time.Duration `json:"max_clock_drift" yaml:"max_clock_drift"`
-	// Block height when the client was frozen due to a misbehaviour
-	FrozenHeight clienttypes.Height `json:"frozen_height" yaml:"frozen_height"`
-	// Latest height the client was updated to
-	LatestHeight clienttypes.Height `json:"latest_height" yaml:"latest_height"`
-	// Proof specifications used in verifying counterparty state
-	ProofSpecs []*ics23.ProofSpec `json:"proof_specs,omitempty" yaml:"proof_specs"`
-	// Path at which next upgraded client will be committed.
-	// Each element corresponds to the key for a single CommitmentProof in the chained proof.
-	// NOTE: ClientState must stored under `{upgradePath}/{upgradeHeight}/clientState`
-	// ConsensusState must be stored under `{upgradepath}/{upgradeHeight}/consensusState`
-	// For SDK chains using the default upgrade module, upgrade_path should be []string{"upgrade", "upgradedIBCState"}`
-	UpgradePath []string `json:"upgrade_path,omitempty" yaml:"upgrade_path"`
-	// This flag, when set to true, will allow governance to recover a client
-	// which has expired
-	AllowUpdateAfterExpiry bool `json:"allow_update_after_expiry,omitempty" yaml:"allow_update_after_expiry"`
-	// This flag, when set to true, will allow governance to unfreeze a client
-	// whose chain has experienced a misbehaviour event
-	AllowUpdateAfterMisbehaviour bool `json:"allow_update_after_misbehaviour,omitempty" yaml:"allow_update_after_misbehaviour"`
-}
-
-// Fraction defines the protobuf message types for tmmath.Fraction that only supports positive values.
-type Fraction struct {
-	Numerator   uint64 `json:"numerator,omitempty"`
-	Denominator uint64 `json:"denominator,omitempty"`
-}
+//// ClientState from Tendermint tracks the current validator set, latest height,
+//// and a possible frozen height.
+//type ClientState struct {
+//	ChainId    string   `json:"chain_id,omitempty"`
+//	TrustLevel Fraction `json:"trust_level" yaml:"trust_level"`
+//	// duration of the period since the LastestTimestamp during which the
+//	// submitted headers are valid for upgrade
+//	TrustingPeriod time.Duration `json:"trusting_period" yaml:"trusting_period"`
+//	// duration of the staking unbonding period
+//	UnbondingPeriod time.Duration `json:"unbonding_period" yaml:"unbonding_period"`
+//	// defines how much new (untrusted) header's Time can drift into the future.
+//	MaxClockDrift time.Duration `json:"max_clock_drift" yaml:"max_clock_drift"`
+//	// Block height when the client was frozen due to a misbehaviour
+//	FrozenHeight clienttypes.Height `json:"frozen_height" yaml:"frozen_height"`
+//	// Latest height the client was updated to
+//	LatestHeight clienttypes.Height `json:"latest_height" yaml:"latest_height"`
+//	// Proof specifications used in verifying counterparty state
+//	ProofSpecs []*ics23.ProofSpec `json:"proof_specs,omitempty" yaml:"proof_specs"`
+//	// Path at which next upgraded client will be committed.
+//	// Each element corresponds to the key for a single CommitmentProof in the chained proof.
+//	// NOTE: ClientState must stored under `{upgradePath}/{upgradeHeight}/clientState`
+//	// ConsensusState must be stored under `{upgradepath}/{upgradeHeight}/consensusState`
+//	// For SDK chains using the default upgrade module, upgrade_path should be []string{"upgrade", "upgradedIBCState"}`
+//	UpgradePath []string `json:"upgrade_path,omitempty" yaml:"upgrade_path"`
+//	// This flag, when set to true, will allow governance to recover a client
+//	// which has expired
+//	AllowUpdateAfterExpiry bool `json:"allow_update_after_expiry,omitempty" yaml:"allow_update_after_expiry"`
+//	// This flag, when set to true, will allow governance to unfreeze a client
+//	// whose chain has experienced a misbehaviour event
+//	AllowUpdateAfterMisbehaviour bool `json:"allow_update_after_misbehaviour,omitempty" yaml:"allow_update_after_misbehaviour"`
+//}
+//
+//func (m *ClientState) Reset()         { *m = ClientState{} }
+//func (m *ClientState) String() string { return proto.CompactTextString(m) }
+//func (*ClientState) ProtoMessage()    {}
+//
+//// Fraction defines the protobuf message types for tmmath.Fraction that only supports positive values.
+//type Fraction struct {
+//	Numerator   uint64 `json:"numerator,omitempty"`
+//	Denominator uint64 `json:"denominator,omitempty"`
+//}
 
 
 // NewClientState creates a new ClientState instance
@@ -170,7 +176,7 @@ func (cs ClientState) Validate() error {
 	// UpgradePath may be empty, but if it isn't, each key must be non-empty
 	for i, k := range cs.UpgradePath {
 		if strings.TrimSpace(k) == "" {
-			return sdkerrors.Wrapf(clienttypes.ErrInvalidClient, "key in upgrade path at index %d cannot be empty", i)
+			return sdkerrors.Wrapf(clienttypes.ErrInvalidClient, fmt.Sprintf("key in upgrade path at index %d cannot be empty", i))
 		}
 	}
 
@@ -188,7 +194,7 @@ func (cs ClientState) Initialize(ctx sdk.Context, clientStore sdk.KVStore, consS
 
 
 func (cs ClientState) VerifyUpgradeAndUpdateState(ctx sdk.Context,
-	cdc *codec.Codec, store sdk.KVStore,
+	cdc codec.BinaryMarshaler, store sdk.KVStore,
 	newClient exported.ClientState, proofUpgradeClient,
 	proofUpgradeConsState []byte) (exported.ClientState, exported.ConsensusState, error) {
 	return nil, nil, nil
@@ -197,7 +203,7 @@ func (cs ClientState) VerifyUpgradeAndUpdateState(ctx sdk.Context,
 
 func (cs ClientState) VerifyClientState(
 	store sdk.KVStore,
-	cdc *codec.Codec,
+	cdc codec.BinaryMarshaler,
 	height exported.Height,
 	prefix exported.Prefix,
 	counterpartyClientIdentifier string,
@@ -221,7 +227,7 @@ func (cs ClientState) VerifyClientState(
 		return sdkerrors.Wrapf(clienttypes.ErrInvalidClient, "invalid client type %T, expected %T", clientState, &ClientState{})
 	}
 
-	bz, err := cdc.MarshalBinaryBare(clientState)
+	bz, err := cdc.MarshalInterface(clientState)
 	if err != nil {
 		return err
 	}
@@ -233,7 +239,7 @@ func (cs ClientState) VerifyClientState(
 // specified connection end stored on the target machine.
 func (cs ClientState) VerifyConnectionState(
 	store sdk.KVStore,
-	cdc *codec.Codec,
+	cdc codec.BinaryMarshaler,
 	height exported.Height,
 	prefix exported.Prefix,
 	proof []byte,
@@ -271,7 +277,7 @@ func (cs ClientState) VerifyConnectionState(
 
 func (cs ClientState) VerifyClientConsensusState(
 	store sdk.KVStore,
-	cdc *codec.Codec,
+	cdc codec.BinaryMarshaler,
 	height exported.Height,
 	counterpartyClientIdentifier string,
 	consensusHeight exported.Height, // todo ?
@@ -295,7 +301,7 @@ func (cs ClientState) VerifyClientConsensusState(
 	if !ok {
 		return sdkerrors.Wrapf(clienttypes.ErrInvalidConsensus, "invalid consensus type %T, expected %T", consensusState, &ConsensusState{})
 	}
-	bz, err := cdc.MarshalBinaryBare(consensusState)
+	bz, err := cdc.MarshalInterface(consensusState)
 	if err != nil {
 		return err
 	}
@@ -308,7 +314,7 @@ func (cs ClientState) VerifyClientConsensusState(
 
 
 func (cs ClientState) VerifyChannelState(store sdk.KVStore,
-	cdc *codec.Codec, height exported.Height,
+	cdc codec.BinaryMarshaler, height exported.Height,
 	prefix exported.Prefix, proof []byte,
 	portID, channelID string, channel exported.ChannelI) error {
 	merkleProof, consensusState, err := produceVerificationArgs(store, cdc, cs, height, prefix, proof)
@@ -333,13 +339,36 @@ func (cs ClientState) VerifyChannelState(store sdk.KVStore,
 	if err := merkleProof.VerifyMembership(cs.ProofSpecs, consensusState.GetRoot(), path, bz); err != nil {
 		return err
 	}
-
 	return nil
 }
 
-// todo ibc
-func (cs ClientState) VerifyPacketAcknowledgement(store sdk.KVStore, cdc *codec.Codec, height exported.Height, currentTimestamp uint64, delayPeriod uint64, prefix exported.Prefix, proof []byte, portID, channelID string, sequence uint64, acknowledgement []byte) error {
-	panic("implement me")
+// VerifyPacketAcknowledgement verifies a proof of an incoming packet
+// acknowledgement at the specified port, specified channel, and specified sequence.
+func (cs ClientState) VerifyPacketAcknowledgement(store sdk.KVStore, cdc codec.BinaryMarshaler, height exported.Height, currentTimestamp uint64, delayPeriod uint64,
+	prefix exported.Prefix, proof []byte, portID, channelID string, sequence uint64, acknowledgement []byte) error {
+	merkleProof, consensusState, err := produceVerificationArgs(store, cdc, cs, height, prefix, proof)
+	if err != nil {
+		return err
+	}
+
+	// check delay period has passed
+	if err := verifyDelayPeriodPassed(store, height, currentTimestamp, delayPeriod); err != nil {
+		return err
+	}
+
+	ackPath := commitmenttypes.NewMerklePath(host.PacketAcknowledgementPath(portID, channelID, sequence))
+	path, err := commitmenttypes.ApplyPrefix(prefix, ackPath)
+	if err != nil {
+		return err
+	}
+	fmt.Println("$$$VerifyPacketAcknowledgement.proofHeight$$$:", height)
+	fmt.Println("$$$acknowledgementBytes$$$:", acknowledgement)
+	fmt.Println("$$$VerifyPacketAcknowledgement.root$$$:", hex.EncodeToString(consensusState.GetRoot().GetHash()))
+	if err := merkleProof.VerifyMembership(cs.ProofSpecs, consensusState.GetRoot(), path, channeltypes.CommitAcknowledgement(acknowledgement)); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // private methods implements
@@ -349,7 +378,7 @@ func (cs ClientState) VerifyPacketAcknowledgement(store sdk.KVStore, cdc *codec.
 // merkle proof, the consensus state and an error if one occurred.
 func produceVerificationArgs(
 	store sdk.KVStore,
-	cdc *codec.Codec,
+	cdc codec.BinaryMarshaler,
 	cs ClientState,
 	height exported.Height,
 	prefix exported.Prefix,
@@ -385,7 +414,7 @@ func produceVerificationArgs(
 }
 
 
-func (cs ClientState) VerifyPacketCommitment(store sdk.KVStore, cdc *codec.Codec, height exported.Height, currentTimestamp uint64, delayPeriod uint64, prefix exported.Prefix, proof []byte, portID, channelID string, sequence uint64, commitmentBytes []byte) error {
+func (cs ClientState) VerifyPacketCommitment(store sdk.KVStore, cdc codec.BinaryMarshaler, height exported.Height, currentTimestamp uint64, delayPeriod uint64, prefix exported.Prefix, proof []byte, portID, channelID string, sequence uint64, commitmentBytes []byte) error {
 	merkleProof, consensusState, err := produceVerificationArgs(store, cdc, cs, height, prefix, proof)
 	if err != nil {
 		return err
@@ -409,7 +438,7 @@ func (cs ClientState) VerifyPacketCommitment(store sdk.KVStore, cdc *codec.Codec
 	return nil
 }
 
-func (cs ClientState) VerifyPacketReceiptAbsence(store sdk.KVStore, cdc *codec.Codec, height exported.Height, currentTimestamp uint64, delayPeriod uint64, prefix exported.Prefix, proof []byte, portID, channelID string, sequence uint64) error {
+func (cs ClientState) VerifyPacketReceiptAbsence(store sdk.KVStore, cdc codec.BinaryMarshaler, height exported.Height, currentTimestamp uint64, delayPeriod uint64, prefix exported.Prefix, proof []byte, portID, channelID string, sequence uint64) error {
 	merkleProof, consensusState, err := produceVerificationArgs(store, cdc, cs, height, prefix, proof)
 	if err != nil {
 		return err
@@ -433,7 +462,7 @@ func (cs ClientState) VerifyPacketReceiptAbsence(store sdk.KVStore, cdc *codec.C
 	return nil
 }
 
-func (cs ClientState) VerifyNextSequenceRecv(store sdk.KVStore, cdc *codec.Codec, height exported.Height, currentTimestamp uint64, delayPeriod uint64, prefix exported.Prefix, proof []byte, portID, channelID string, nextSequenceRecv uint64) error {
+func (cs ClientState) VerifyNextSequenceRecv(store sdk.KVStore, cdc codec.BinaryMarshaler, height exported.Height, currentTimestamp uint64, delayPeriod uint64, prefix exported.Prefix, proof []byte, portID, channelID string, nextSequenceRecv uint64) error {
 	merkleProof, consensusState, err := produceVerificationArgs(store, cdc, cs, height, prefix, proof)
 	if err != nil {
 		return err

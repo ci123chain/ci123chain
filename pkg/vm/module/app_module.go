@@ -3,6 +3,7 @@ package module
 import (
 	"encoding/json"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/abci/types/module"
 	"github.com/ci123chain/ci123chain/pkg/vm/evmtypes"
 	"github.com/ci123chain/ci123chain/pkg/vm/module/basic"
 	"github.com/ci123chain/ci123chain/pkg/vm/moduletypes"
@@ -35,4 +36,7 @@ func (am AppModule) EndBlock(ctx sdk.Context, req abci.RequestEndBlock) []abci.V
 
 func (am AppModule) Committer(ctx sdk.Context) {
 	//
+}
+
+func (am AppModule) RegisterServices(cfg module.Configurator) {
 }

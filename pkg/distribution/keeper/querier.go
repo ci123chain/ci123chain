@@ -105,7 +105,7 @@ func queryValidatorCommission(ctx sdk.Context, req abci.RequestQuery, k DistrKee
 	var params types.QueryValidatorCommissionParams
 	err := k.cdc.UnmarshalJSON(req.Data, &params)
 	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("cdc marshal failed: %v", err.Error()))
+		return nil, types.ErrInternalCdcMarshal
 	}
 	commission := k.GetValidatorAccumulatedCommission(ctx, params.ValidatorAddress)
 	res := types.DistributionCdc.MustMarshalJSON(commission)
@@ -116,7 +116,7 @@ func queryDelegationRewards(ctx sdk.Context, req abci.RequestQuery, k DistrKeepe
 	var params types.QueryDelegationRewardsParams
 	err := k.cdc.UnmarshalJSON(req.Data, &params)
 	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("cdc marshal failed: %v", err.Error()))
+		return nil, types.ErrInternalCdcMarshal
 	}
 
 	// cache-wrap context as to not persist state changes during querying
@@ -124,12 +124,12 @@ func queryDelegationRewards(ctx sdk.Context, req abci.RequestQuery, k DistrKeepe
 
 	val := k.StakingKeeper.Validator(ctx, params.ValidatorAddress)
 	if val == nil {
-		return nil, types.ErrNoValidatorExist(types.DefaultCodespace, params.ValidatorAddress.String())
+		return nil, types.ErrNoValidatorExist
 	}
 
 	del := k.StakingKeeper.Delegation(ctx, params.DelegatorAddress, params.ValidatorAddress)
 	if del == nil {
-		return nil, types.ErrNoDelegationExist(types.DefaultCodespace, params.ValidatorAddress.String(), params.DelegatorAddress.String())
+		return nil, types.ErrNoDelegationExist
 	}
 
 	endingPeriod := k.incrementValidatorPeriod(ctx, val)
@@ -143,7 +143,7 @@ func queryDelegatorAccountInfo(ctx sdk.Context, req abci.RequestQuery, k DistrKe
 
 	err := k.cdc.UnmarshalJSON(req.Data, &params)
 	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("cdc marshal failed: %v", err.Error()))
+		return nil, types.ErrInternalCdcMarshal
 	}
 
 	ctx, _ = ctx.CacheContext()
@@ -198,6 +198,8 @@ func queryDelegatorAccountInfo(ctx sdk.Context, req abci.RequestQuery, k DistrKe
 	}
 
 	delegations := k.StakingKeeper.GetAllDelegatorDelegations(ctx, params.AccountAddress)
+	var rewardsAccount types.RewardsAccount
+	var validators = make([]types.RewardAccount, 0)
 	for _, v := range delegations {
 		validator, _ := k.StakingKeeper.GetValidator(ctx, params.AccountAddress)
 		endingPeriod := k.incrementValidatorPeriod(ctx, validator)
@@ -205,9 +207,16 @@ func queryDelegatorAccountInfo(ctx sdk.Context, req abci.RequestQuery, k DistrKe
 		rewards = rewards.Add(sdk.NewChainCoin(rw.Amount.RoundInt()))
 		amt := sdk.NewChainCoin(v.GetShares().RoundInt())
 		delegated = delegated.Add(amt)
+		var val = types.RewardAccount{
+			Amount:  sdk.NewChainCoin(rw.Amount.RoundInt()),
+			Address: validator.OperatorAddress.String(),
+		}
+		validators = append(validators, val)
 	}
+	rewardsAccount.Validator = validators
+	rewardsAccount.Coin = rewards
 
-	result := types.NewDelegatorAccountInfo(sdk.NewChainCoin(balance.AmountOf(sdk.ChainCoinDenom)), delegated, unbondings, rewards, commission)
+	result := types.NewDelegatorAccountInfo(sdk.NewChainCoin(balance.AmountOf(sdk.ChainCoinDenom)), delegated, unbondings, commission, rewardsAccount)
 	res := types.DistributionCdc.MustMarshalJSON(result)
 	return res, nil
 }

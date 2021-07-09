@@ -1,7 +1,6 @@
 package personal
 
 import (
-	"errors"
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"math"
@@ -14,6 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/ci123chain/ci123chain/pkg/vm/client/rest/api/eth"
+	"github.com/ci123chain/ci123chain/pkg/vm/evmtypes"
 )
 
 // PrivateAccountAPI is the personal_ prefixed set of APIs in the Web3 JSON-RPC spec.
@@ -42,12 +42,15 @@ func (api *PrivateAccountAPI) ImportRawKey(privkey string, password string) (com
 	key, err := crypto.HexToECDSA(privkey)
 	if err != nil {
 		api.logger.Info(err.Error())
-		return common.Address{}, err
+		return common.Address{}, evmtypes.ErrInvalidPrivateKey
 	}
 	acc, err := api.ks.ImportECDSA(key, password)
 	if err != nil {
+		if err.Error() == "account already exists" {
+			return common.Address{}, evmtypes.ErrAccountExisted
+		}
 		api.logger.Info(err.Error())
-		return common.Address{}, err
+		return common.Address{}, evmtypes.ErrImportRawKeyFailed
 	}
 	return acc.Address, nil
 }
@@ -72,13 +75,13 @@ func (api *PrivateAccountAPI) UnlockAccount(addr common.Address, password string
 		d = 300 * time.Second
 
 	} else if *duration > max {
-		return false, errors.New("unlock duration too large")
+		return false, evmtypes.ErrUnlockTimeTooLarger
 	} else {
 		d = time.Duration(*duration) * time.Second
 	}
 	err := api.ks.TimedUnlock(accounts.Account{Address: addr}, password, d)
 	if err != nil {
-		return false, err
+		return false, evmtypes.ErrTimeOut
 	}
 
 	return true, nil

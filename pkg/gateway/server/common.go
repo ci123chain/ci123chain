@@ -9,6 +9,10 @@ import (
 	"strings"
 )
 
+const (
+	httpPrefix = "http://"
+)
+
 type Response struct {
 	Ret 	interface{} 	`json:"ret"`
 	Data 	interface{}	    `json:"data"`
@@ -20,25 +24,38 @@ func SendRequest(requestUrl *url.URL,r *http.Request, RequestParams map[string]s
 	cli := &http.Client{
 		Transport:&http.Transport{DisableKeepAlives:true},
 	}
-	reqUrl := "http://" + requestUrl.Host + r.URL.Path
+	reqUrl := httpPrefix + requestUrl.Host + r.URL.Path
 	data := url.Values{}
 	for k, v := range RequestParams {
 		data.Set(k, v)
 	}
 
-	req2, err := http.NewRequest(r.Method, reqUrl, strings.NewReader(data.Encode()))
-
+	bod, err := ioutil.ReadAll(r.Body)
+	defer r.Body.Close()
 	if err != nil {
 		return nil, nil, err
 	}
-	req2.Body = ioutil.NopCloser(strings.NewReader(data.Encode()))
+
+	req2, Err := http.NewRequest(r.Method, reqUrl, nil)
+	if Err != nil || req2 == nil {
+		return nil, nil, Err
+	}
+	if len(RequestParams) != 0 {
+		req2.Body = ioutil.NopCloser(strings.NewReader(data.Encode()))
+	}else if bod != nil {
+		req2.Body = ioutil.NopCloser(strings.NewReader(string(bod)))
+	}
+
 	defer req2.Body.Close()
 	//not use one connection
 	req2.Close = true
 
-	// set request content types
-	req2.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	// request
+	// set request content type
+	if len(RequestParams) != 0 {
+		req2.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	}else if bod != nil {
+		req2.Header.Set("Content-Type", "application/json-rpc")
+	}
 	rep2, err := cli.Do(req2)
 	if err != nil {
 		return nil, nil, err

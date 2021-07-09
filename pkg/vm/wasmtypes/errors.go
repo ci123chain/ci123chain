@@ -2,6 +2,7 @@ package types
 
 import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 )
 
 
@@ -11,12 +12,45 @@ const (
 )
 
 const (
-	CodeCheckParamsError	CodeType = 50
-	CodeInvalidMsgError     CodeType = 51
-	CodeHandleMsgFailedError  CodeType = 52
-	CodeSetSequenceFailedError CodeType = 53
-	CodeInvalidAddress        CodeType  = 54
+	CodeCheckParamsError	CodeType = 1750
+	CodeInvalidEndPoint     CodeType = 1751
+	//CodeInvalidMsgError     CodeType = 1751
+	//CodeHandleMsgFailedError  CodeType = 1752
+	//CodeSetSequenceFailedError CodeType = 1753
+	//CodeInvalidAddress        CodeType  = 1754
+	//CodeQueryCodeInfoFailed   CodeType = 1755
+	CodeCdcUnMarshalFailed      CodeType = 1756
+	CodeQueryFailed             CodeType = 1757
+	CodeJsonUnmarshalFailed     CodeType = 1758
+	CodeCdcMarshalFailed        CodeType = 1759
+	CodeGetBlockBloomFailed     CodeType = 1760
 )
+
+var (
+	ErrInvalidParams = sdkerrors.Register(string(DefaultCodespace), uint32(CodeCheckParamsError), "invalid params")
+	ErrInvalidEndPoint = sdkerrors.Register(string(DefaultCodespace), uint32(CodeInvalidEndPoint), "invalid endpoint")
+	ErrCdcUnMarshalFailed = sdkerrors.Register(string(DefaultCodespace), uint32(CodeCdcUnMarshalFailed), "cdc marshal failed")
+	ErrQueryFailed = sdkerrors.Register(string(DefaultCodespace), uint32(CodeQueryFailed), "query failed")
+	ErrJsonUnmarshalFailed = sdkerrors.Register(string(DefaultCodespace), uint32(CodeJsonUnmarshalFailed), "json marshal failed")
+	ErrCdcMarshalFailed = sdkerrors.Register(string(DefaultCodespace), uint32(CodeCdcMarshalFailed), "cdc marshal failed")
+	ErrGetBlockBloomFailed = sdkerrors.Register(string(DefaultCodespace), uint32(CodeGetBlockBloomFailed), "get block bloom failed")
+)
+
+//func ErrInvalidParams(desc string) error {
+//	return  sdkerrors.Register(string(DefaultCodespace), uint32(CodeCheckParamsError), desc)
+//}
+//
+//func ErrInvalidEndPoint(desc string) error {
+//	return  sdkerrors.Register(string(DefaultCodespace), uint32(CodeInvalidEndPoint), desc)
+//}
+
+//func ErrQueryCodeInfo(desc string) error {
+//	return  sdkerrors.Register(string(DefaultCodespace), uint32(CodeQueryCodeInfoFailed), desc)
+//}
+//
+//func ErrCdcUnMarshalFailed(desc string) error {
+//	return  sdkerrors.Register(string(DefaultCodespace), uint32(CodeCdcUnMarshalFailed), desc)
+//}
 
 //func ErrUploadFailed(codespce sdk.CodespaceType, err error) sdk.Error {
 //	return sdk.NewError(codespce, CodeHandleMsgFailedError, "upload failed: %s", err.Error())
@@ -42,8 +76,20 @@ const (
 //	return sdk.NewError(codespce, CodeHandleMsgFailedError, "execute failed: %s", err.Error())
 //}
 
-//func ErrQueryFailed(codespce sdk.CodespaceType, err error) error {
-//	return sdk.NewError(codespce, CodeHandleMsgFailedError, "query failed: %s", err.Error())
+//func ErrQueryFailed(desc string) error {
+//	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeQueryFailed), desc)
+//}
+//
+//func ErrJsonUnmarshalFailed(desc string) error {
+//	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeJsonUnmarshalFailed), desc)
+//}
+//
+//func ErrCdcMarshalFailed(desc string) error {
+//	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeCdcMarshalFailed), desc)
+//}
+//
+//func ErrGetBlockBloomFailed(desc string) error {
+//	return sdkerrors.Register(string(DefaultCodespace), uint32(CodeGetBlockBloomFailed), desc)
 //}
 
 //func ErrSetNewAccountSequence(codespce sdk.CodespaceType, err error) sdk.Error {

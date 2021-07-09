@@ -1,7 +1,6 @@
 package ante
 
 import (
-	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/account"
 	"github.com/ci123chain/ci123chain/pkg/account/exported"
@@ -31,7 +30,7 @@ func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, sk su
 			if err != nil {
 				return newCtx, sdk.Result{}, sdkerrors.ErrorInvalidSigner, true
 			}
-			signer = sdk.AccAddress{from}
+			signer = sdk.HexToAddress(from.String())
 		} else {
 			eth := cryptosuit.NewETHSignIdentity()
 			valid, err := eth.Verifier(tx.GetSignBytes(), tx.GetSignature(), nil, tx.GetFromAddress().Bytes())
@@ -44,13 +43,13 @@ func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, sk su
 		acc := ak.GetAccount(ctx, signer)
 		if acc == nil {
 			newCtx := ctx.WithGasMeter(sdk.NewGasMeter(0))
-			return newCtx, sdk.Result{}, sdkerrors.Wrap(sdkerrors.ErrorInvalidSigner, "the account not exist"), true
+			return newCtx, sdk.Result{}, sdkerrors.ErrAccountNotExist, true
 		}
 		accountSequence := acc.GetSequence()
 		txNonce := tx.GetNonce()
 		if txNonce != accountSequence {
 			newCtx := ctx.WithGasMeter(sdk.NewGasMeter(0))
-			return newCtx, sdk.Result{}, sdkerrors.Wrap(sdkerrors.ErrParams, "unexpected nonce"), true
+			return newCtx, sdk.Result{}, sdkerrors.ErrInvalidParam, true
 		}
 
 		params := authKeeper.GetParams(ctx)
@@ -60,13 +59,13 @@ func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, sk su
 		if ctx.IsCheckTx() && !simulate {
 			res := EnsureSufficientMempoolFees()
 			if !res.IsOK() {
-				return newCtx, res, sdkerrors.Wrap(sdkerrors.ErrInternal, "insufficient mempool fees"), true
+				return newCtx, res, sdkerrors.ErrInsufficientMempoolFess, true
 			}
 		}
 		gas := tx.GetGas()//用户期望的gas值 g.limit
 		//检查是否足够支付gas limit, 并预先扣除
 		if acc.GetCoins().AmountOf(sdk.ChainCoinDenom).LT(sdk.NewIntFromBigInt(big.NewInt(int64(gas)))) {
-			return newCtx, sdk.Result{}, sdkerrors.Wrap(sdkerrors.ErrInternal, "insufficient funds to pay gas"),true
+			return newCtx, sdk.Result{}, sdkerrors.ErrInsufficientFunds,true
 		}
 		err = DeductFees(acc,sdk.NewUInt64Coin(sdk.ChainCoinDenom, gas),ak,ctx)
 		if err != nil {
@@ -111,7 +110,7 @@ func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, sk su
 		err = feeCollectorModuleAccount.SetCoins(newFee)
 
 		if err != nil {
-			return newCtx, sdk.Result{}, sdkerrors.Wrap(sdkerrors.ErrInternal, "fee_collector module account set coin failed"), true
+			return newCtx, sdk.Result{}, sdkerrors.ErrModuleAccountSetCoinFailed, true
 		}
 		ak.SetAccount(ctx, feeCollectorModuleAccount)
 		//fck.AddCollectedFees(newCtx, getFee)
@@ -161,11 +160,11 @@ func DeductFees(acc exported.Account, fee sdk.Coin, ak account.AccountKeeper, ct
 	coin := acc.GetCoins()
 	newCoins, hasNeg := coin.SafeSub(sdk.NewCoins(fee))
 	if hasNeg {
-		return sdkerrors.Wrap(sdkerrors.ErrInsufficientFunds, fmt.Sprintf("insufficient funds to pay for fees; %s < %s", coin, fee))
+		return sdkerrors.ErrInsufficientFunds
 	}
 
 	if err := acc.SetCoins(newCoins); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInternal, "set coins failed")
+		return sdkerrors.ErrAccountSetCoinFailed
 	}
 	ak.SetAccount(ctx, acc)
 
@@ -177,7 +176,7 @@ func ReturnFees(acc exported.Account, restFee sdk.Coins, ak account.AccountKeepe
 	newCoins:= coin.Add(restFee)
 
 	if err := acc.SetCoins(newCoins); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInternal, "set coins failed")
+		return sdkerrors.ErrAccountSetCoinFailed
 	}
 	ak.SetAccount(ctx, acc)
 

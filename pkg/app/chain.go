@@ -5,8 +5,10 @@ import (
 	"errors"
 	"github.com/ci123chain/ci123chain/pkg/abci/baseapp"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
+	codectypes "github.com/ci123chain/ci123chain/pkg/abci/codec/types"
 	"github.com/ci123chain/ci123chain/pkg/abci/store"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	acc_module "github.com/ci123chain/ci123chain/pkg/account/module"
 	app_module "github.com/ci123chain/ci123chain/pkg/app/module"
 	capabilitykeeper "github.com/ci123chain/ci123chain/pkg/capability/keeper"
 	dist_module "github.com/ci123chain/ci123chain/pkg/distribution/module"
@@ -122,6 +124,8 @@ type Chain struct {
 
 	logger log.Logger
 	cdc    *amino.Codec
+	appCodec codec.Marshaler
+	interfaceRegistery codectypes.InterfaceRegistry
 
 	// keys to access the substores
 	capKeyMainStore *sdk.KVStoreKey
@@ -136,6 +140,9 @@ type Chain struct {
 
 func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer) *Chain {
 	cdc := app_types.GetCodec()
+	encodingConfig := app_types.GetEncodingConfig()
+	appCodec := encodingConfig.Marshaler
+	interfaceRegister := encodingConfig.InterfaceRegistry
 	cacheDir := os.ExpandEnv(filepath.Join(viper.GetString(cli.HomeFlag) , cacheName))
 	if _, err := os.Stat(cacheDir); os.IsNotExist(err) {
 		os.MkdirAll(cacheDir, os.ModePerm)
@@ -154,6 +161,8 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 	c := &Chain{
 		BaseApp: 			app,
 		cdc: 				cdc,
+		appCodec:           appCodec,
+		interfaceRegistery: interfaceRegister,
 		capKeyMainStore: 	MainStoreKey,
 		contractStore: 		ContractStoreKey,
 		txIndexStore: 		TxIndexStoreKey,
@@ -186,12 +195,12 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 	scopedTransferKeeper := capabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
 	// Create IBC Keeper
 	IBCKeeper := ibckeeper.NewKeeper(
-		cdc, IBCStoreKey, c.GetSubspace(ibchost.ModuleName), stakingKeeper, scopedIBCKeeper,
+		appCodec, IBCStoreKey, c.GetSubspace(ibchost.ModuleName), stakingKeeper, scopedIBCKeeper,
 	)
 
 	// Create Transfer Keepers
 	ibcTransferKeeper := ibctransferkeeper.NewKeeper(
-		cdc, IbcTransferStoreKey, c.GetSubspace(ibctransfertypes.ModuleName),
+		appCodec, IbcTransferStoreKey, c.GetSubspace(ibctransfertypes.ModuleName),
 		IBCKeeper.ChannelKeeper, &IBCKeeper.PortKeeper,
 		supplyKeeper, scopedTransferKeeper,
 	)
@@ -229,7 +238,7 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 		c.mm = module.NewManager(
 			moduleNameOrder,
 			auth.AppModule{AuthKeeper: c.authKeeper},
-			account.AppModule{AccountKeeper: accountKeeper},
+			acc_module.AppModule{AccountKeeper: accountKeeper},
 			supply_module.AppModule{Keeper: supplyKeeper},
 			dist_module.AppModule{DistributionKeeper: distrKeeper, AccountKeeper: accountKeeper, SupplyKeeper: supplyKeeper},
 			order_module.AppModule{OrderKeeper: &orderKeeper},
@@ -243,6 +252,7 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 			ibcTransferModule,
 		)
 	}
+	c.mm.RegisterServices(module.NewConfigurator(c.MsgServiceRouter(),c.GRPCQueryRouter()))
 	{
 		// invoke router
 		c.Router().AddRoute(transfer.RouteKey, handler.NewHandler(accountKeeper))

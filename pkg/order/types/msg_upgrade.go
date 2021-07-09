@@ -2,7 +2,6 @@ package types
 
 import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 )
 
 type MsgUpgrade struct {
@@ -27,13 +26,13 @@ func (msg *MsgUpgrade) MsgType() string { return "upgrade"}
 
 func (msg *MsgUpgrade) ValidateBasic() error {
 	if len(msg.Type) == 0 {
-		return sdkerrors.Wrap(sdkerrors.ErrParams, "invalid type of msg")
+		return ErrCheckParams
 	}
 	if msg.Height < 0 {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidHeight, "height should be positive")
+		return ErrCheckParams
 	}
 	if len(msg.Name) == 0 {
-		return sdkerrors.Wrap(sdkerrors.ErrParams, "invalid name of msg")
+		return ErrCheckParams
 	}
 	return nil
 }

@@ -17,8 +17,8 @@ import (
 
 	"github.com/ci123chain/ci123chain/pkg/client/context"
 
-	rpcfilters "github.com/ci123chain/ci123chain/pkg/vm/client/rest/api/eth/filters"
 	rpctypes "github.com/ci123chain/ci123chain/pkg/vm/client/rest/api/eth"
+	rpcfilters "github.com/ci123chain/ci123chain/pkg/vm/client/rest/api/eth/filters"
 	"github.com/ci123chain/ci123chain/pkg/vm/evmtypes"
 )
 
@@ -114,11 +114,12 @@ func (api *PubSubAPI) subscribeNewHeads(conn *websocket.Conn) (rpc.ID, error) {
 					}
 
 					err = f.conn.WriteJSON(res)
-					if err != nil {
-						api.logger.Error("error writing header")
-					}
 				}
 				api.filtersMu.Unlock()
+				if err != nil {
+					api.logger.Error("error writing header")
+					delete(api.filters, sub.ID())
+				}
 			case <-errCh:
 				api.filtersMu.Lock()
 				delete(api.filters, sub.ID())
@@ -174,7 +175,7 @@ func (api *PubSubAPI) subscribeLogs(conn *websocket.Conn, extra interface{}) (rp
 
 			crit.Topics = [][]common.Hash{}
 			for _, topic := range topics {
-				tstr, ok := topic.(string)
+				tstr, ok := topic.([]interface{})[0].(string)
 				if !ok {
 					return "", fmt.Errorf("invalid topics")
 				}
@@ -235,6 +236,7 @@ func (api *PubSubAPI) subscribeLogs(conn *websocket.Conn, extra interface{}) (rp
 
 				if err != nil {
 					err = fmt.Errorf("failed to write header: %w", err)
+					delete(api.filters, sub.ID())
 					return
 				}
 			case <-errCh:
@@ -291,6 +293,7 @@ func (api *PubSubAPI) subscribePendingTransactions(conn *websocket.Conn) (rpc.ID
 
 				if err != nil {
 					err = fmt.Errorf("failed to write header: %w", err)
+					delete(api.filters, sub.ID())
 					return
 				}
 			case <-errCh:

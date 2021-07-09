@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/app/types"
+	"github.com/ci123chain/ci123chain/pkg/libs"
 	vmmodule "github.com/ci123chain/ci123chain/pkg/vm/moduletypes"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/tendermint/tendermint/libs/log"
@@ -426,7 +427,7 @@ func (api *PublicFilterAPI) GetLogs(ctx context.Context, crit filters.FilterCrit
 		if crit.FromBlock != nil {
 			begin = crit.FromBlock.Int64()
 		}
-		end := rpc.LatestBlockNumber.Int64()
+		end := begin + 1
 		if crit.ToBlock != nil {
 			end = crit.ToBlock.Int64()
 		}
@@ -572,7 +573,35 @@ func (b *EthBackend) BlockNumber() (hexutil.Uint64, error) {
 
 // GetBlockByNumber returns the block identified by number.
 func (b *EthBackend) GetBlockByNumber(blockNum rpctypes.BlockNumber, fullTx bool) (map[string]interface{}, error) {
-	return nil, nil
+	height := blockNum.Int64()
+	if height <= 0 {
+		// get latest block height
+		num, err := b.BlockNumber()
+		if err != nil {
+			return nil, err
+		}
+		height = int64(num)
+	}
+
+	res, err := libs.RetryI(0, func(retryTimes int) (res interface{}, err error) {
+		res, err = b.clientCtx.Client.Block(b.ctx, &height)
+		if err != nil {
+			return nil, err
+		}
+		return res, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	resBlock := res.(coretypes.ResultBlock)
+
+	var transactions []common.Hash
+	for _, tx := range resBlock.Block.Txs {
+		transactions = append(transactions, common.BytesToHash(tx.Hash()))
+	}
+
+	return rpctypes.EthBlockFromTendermint(b.clientCtx, resBlock.Block, transactions)
 }
 
 // GetBlockByHash returns the block identified by hash.
@@ -598,10 +627,15 @@ func (b *EthBackend) HeaderByNumber(blockNum rpctypes.BlockNumber) (*ethtypes.He
 		return nil, err
 	}
 
-	res, _, _, err := b.clientCtx.Query(fmt.Sprintf("custom/%s/%s/%d", vmmodule.ModuleName, evmtypes.QueryBloom, resBlock.Block.Height), nil, false)
-	if err != nil {
-		return nil, err
-	}
+	r, err := libs.RetryI(0, func(retryTimes int) (res interface{}, e error) {
+		res, _, _, err := b.clientCtx.Query(fmt.Sprintf("custom/%s/%s/%d", vmmodule.ModuleName, evmtypes.QueryBloom, resBlock.Block.Height), nil, false)
+		if err != nil {
+			return nil, err
+		}
+		return res, nil
+	})
+
+	res := r.([]byte)
 
 	var bloomRes evmtypes.QueryBloomFilter
 	cdc.MustUnmarshalJSON(res, &bloomRes)
@@ -628,13 +662,18 @@ func (b *EthBackend) HeaderByHash(blockHash common.Hash) (*ethtypes.Header, erro
 		return nil, err2
 	}
 
-	res, _, _, err = b.clientCtx.Query(fmt.Sprintf("custom/%s/%s/%d", vmmodule.ModuleName, evmtypes.QueryBloom, resBlock.Block.Height), nil, false)
-	if err != nil {
-		return nil, err
-	}
+	r, _ := libs.RetryI(0, func(retryTimes int) (res interface{}, e error) {
+		res, _, _, err = b.clientCtx.Query(fmt.Sprintf("custom/%s/%s/%d", vmmodule.ModuleName, evmtypes.QueryBloom, resBlock.Block.Height), nil, false)
+		if err != nil {
+			return nil, err
+		}
+		return res, nil
+	})
+
+	result := r.([]byte)
 
 	var bloomRes evmtypes.QueryBloomFilter
-	cdc.MustUnmarshalJSON(res, &bloomRes)
+	cdc.MustUnmarshalJSON(result, &bloomRes)
 
 	ethHeader := rpctypes.EthHeaderFromTendermint(resBlock.Block.Header)
 	ethHeader.Bloom = bloomRes.Bloom
@@ -645,7 +684,7 @@ func (b *EthBackend) HeaderByHash(blockHash common.Hash) (*ethtypes.Header, erro
 // It returns an error if there's an encoding error.
 // If no logs are found for the tx hash, the error is nil.
 func (b *EthBackend) GetTransactionLogs(txHash common.Hash) ([]*ethtypes.Log, error) {
-	res, _, _, err := b.clientCtx.Query(fmt.Sprintf("custom/%s/%s/%s", evmtypes.ModuleName, evmtypes.QueryTransactionLogs, txHash.String()), nil, false)
+	res, _, _, err := b.clientCtx.Query(fmt.Sprintf("custom/%s/%s/%s", vmmodule.ModuleName, evmtypes.QueryTransactionLogs, txHash.String()), nil, false)
 	if err != nil {
 		return nil, err
 	}

@@ -41,7 +41,7 @@ func (k StakingKeeper) Delegate(ctx sdk.Context, delAddr sdk.AccAddress, bondAmt
 
 	if subtractAccount {
 		if tokenSrc == sdk.Bonded {
-			return newShares, types.ErrUnknowTokenSource
+			panic("delegation token source cannot be bonded")
 		}
 
 		var sendName string
@@ -51,8 +51,8 @@ func (k StakingKeeper) Delegate(ctx sdk.Context, delAddr sdk.AccAddress, bondAmt
 		case validator.IsUnbonding(), validator.IsUnbonded():
 			sendName = types.NotBondedPoolName
 		default:
-			//panic("invalid validator status")
-			return newShares, types.ErrInvalidValidatorStatus
+			panic("invalid validator status")
+			//return newShares, types.ErrInvalidValidatorStatus
 		}
 
 		//coins := sdk.NewCoins(sdk.NewCoin(bondAmt))
@@ -80,8 +80,8 @@ func (k StakingKeeper) Delegate(ctx sdk.Context, delAddr sdk.AccAddress, bondAmt
 				return newShares, types.ErrBondedTokensToNoBondedFailed
 			}
 		default:
-			return newShares, types.ErrUnknowTokenSource
-			//panic("unknown token source bond status")
+			//return newShares, types.ErrUnknowTokenSource
+			panic("unknown token source bond status")
 		}
 	}
 
@@ -111,7 +111,7 @@ func (k StakingKeeper) ValidateUnbondAmount(ctx sdk.Context, delAddr sdk.AccAddr
 	valAddr sdk.AccAddress, amt sdk.Int) (shares sdk.Dec, err error) {
 	validator, found := k.GetValidator(ctx, valAddr)
 	if !found {
-		return shares, types.ErrNoExpectedValidator(err)
+		return shares, types.ErrNoExpectedValidator
 	}
 	shares, err = validator.SharesFromTokens(amt)
 	if err != nil {

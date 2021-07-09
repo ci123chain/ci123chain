@@ -146,12 +146,12 @@ func (m *Metadata) GetChunkHashes() [][]byte {
 }
 
 func init() {
-	proto.RegisterType((*Snapshot)(nil), "cosmos.base.snapshots.v1beta1.Snapshot")
-	proto.RegisterType((*Metadata)(nil), "cosmos.base.snapshots.v1beta1.Metadata")
+	proto.RegisterType((*Snapshot)(nil), "weelink.base.snapshots.v1beta1.Snapshot")
+	proto.RegisterType((*Metadata)(nil), "weelink.base.snapshots.v1beta1.Metadata")
 }
 
 func init() {
-	proto.RegisterFile("cosmos/base/snapshots/v1beta1/snapshot.proto", fileDescriptor_dd7a3c9b0a19e1ee)
+	proto.RegisterFile("weelink/base/snapshots/v1beta1/snapshot.proto", fileDescriptor_dd7a3c9b0a19e1ee)
 }
 
 var fileDescriptor_dd7a3c9b0a19e1ee = []byte{

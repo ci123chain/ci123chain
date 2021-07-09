@@ -4,10 +4,17 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/store"
+	types2 "github.com/ci123chain/ci123chain/pkg/app/types"
+	"github.com/ci123chain/ci123chain/pkg/telemetry"
 	"github.com/ci123chain/ci123chain/pkg/transfer"
+	"github.com/ci123chain/ci123chain/pkg/util"
+	"google.golang.org/grpc/codes"
+	grpcstatus "google.golang.org/grpc/status"
 	"io"
+	"math/big"
 	"runtime/debug"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 
@@ -27,6 +34,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/snapshots"
 	snapshottypes "github.com/ci123chain/ci123chain/pkg/snapshots/types"
 	staktypes "github.com/ci123chain/ci123chain/pkg/staking/types"
+	evm "github.com/ci123chain/ci123chain/pkg/vm/evmtypes"
 	wasmtypes "github.com/ci123chain/ci123chain/pkg/vm/wasmtypes"
 	"github.com/tendermint/tendermint/proto/tendermint/types"
 )
@@ -61,6 +69,9 @@ type BaseApp struct {
 	queryRouter QueryRouter          // router for redirecting query calls
 	//handler     sdk.Handler
 	router 		sdk.Router
+
+	grpcQueryRouter   *GRPCQueryRouter     // router for redirecting gRPC query calls
+	msgServiceRouter  *MsgServiceRouter    // router for redirecting Msg service messages
 
 	txDecoder   sdk.TxDecoder // unmarshal []byte into sdk.Tx
 
@@ -235,6 +246,8 @@ func NewBaseApp(name string, logger log.Logger, ldb dbm.DB, cdb dbm.DB, cacheDir
 		//cms:         store.NewBaseMultiStore(db),
 		queryRouter: NewQueryRouter(),
 		router: 	 sdk.NewRouter(),
+		grpcQueryRouter:  NewGRPCQueryRouter(),
+		msgServiceRouter: NewMsgServiceRouter(),
 		txDecoder:   txDecoder,
 	}
 
@@ -316,6 +329,12 @@ func (app *BaseApp) LastCommitID() sdk.CommitID {
 func (app *BaseApp) LastBlockHeight() int64 {
 	return app.cms.LastCommitID().Version
 }
+
+// GRPCQueryRouter returns the GRPCQueryRouter of a BaseApp.
+func (app *BaseApp) GRPCQueryRouter() *GRPCQueryRouter { return app.grpcQueryRouter }
+
+// MsgServiceRouter returns the MsgServiceRouter of a BaseApp.
+func (app *BaseApp) MsgServiceRouter() *MsgServiceRouter { return app.msgServiceRouter }
 
 // SetHandler sets tx handler
 //func (app *BaseApp) SetHandler(h sdk.Handler) {
@@ -451,6 +470,26 @@ func splitPath(requestPath string) (path []string) {
 // Implements ABCI.
 // Delegates to CommitMultiStore if it implements Queryable
 func (app *BaseApp) Query(req abci.RequestQuery) (res abci.ResponseQuery) {
+	defer telemetry.MeasureSince(time.Now(), "abci", "query")
+
+	// Add panic recovery for all queries.
+	defer func() {
+		if r := recover(); r != nil {
+			res = sdkerrors.QueryResult(sdkerrors.Wrapf(sdkerrors.ErrPanic, "%v", r))
+		}
+	}()
+
+	// when a client did not provide a query height, manually inject the latest
+	if req.Height == 0 {
+		req.Height = app.LastBlockHeight()
+	}
+
+	// handle gRPC routes first rather than calling splitPath because '/' characters
+	// are used as part of gRPC paths
+	if grpcHandler := app.grpcQueryRouter.Route(req.Path); grpcHandler != nil {
+		return app.handleQueryGRPC(grpcHandler, req)
+	}
+
 	path := splitPath(req.Path)
 	if len(path) == 0 {
 		msg := "no query path provided"
@@ -470,6 +509,90 @@ func (app *BaseApp) Query(req abci.RequestQuery) (res abci.ResponseQuery) {
 
 	msg := "unknown query path"
 	return sdkerrors.QueryResult(sdkerrors.Wrap(sdkerrors.ErrParams, msg))
+}
+
+func (app *BaseApp) handleQueryGRPC(handler GRPCQueryHandler, req abci.RequestQuery) abci.ResponseQuery {
+	ctx, err := app.createQueryContext(req.Height, req.Prove)
+	if err != nil {
+		return sdkerrors.QueryResult(err)
+	}
+
+	res, err := handler(ctx, req)
+	if err != nil {
+		res = sdkerrors.QueryResult(gRPCErrorToSDKError(err))
+		res.Height = req.Height
+		return res
+	}
+
+	return res
+}
+
+// createQueryContext creates a new sdk.Context for a query, taking as args
+// the block height and whether the query needs a proof or not.
+func (app *BaseApp) createQueryContext(height int64, prove bool) (sdk.Context, error) {
+	if err := checkNegativeHeight(height); err != nil {
+		return sdk.Context{}, err
+	}
+
+	// when a client did not provide a query height, manually inject the latest
+	if height == 0 {
+		height = app.LastBlockHeight()
+	}
+
+	if height <= 1 && prove {
+		return sdk.Context{},
+			sdkerrors.Wrap(
+				sdkerrors.ErrInvalidRequest,
+				"cannot query with proof when height <= 1; please provide a valid height",
+			)
+	}
+
+	cacheMS := app.cms.CacheMultiStore()
+	//if err != nil {
+	//	return sdk.Context{},
+	//		sdkerrors.Wrapf(
+	//			sdkerrors.ErrInvalidRequest,
+	//			"failed to load state at height %d; %s (latest height: %d)", height, err, app.LastBlockHeight(),
+	//		)
+	//}
+
+	// branch the commit-multistore for safety
+	ctx := sdk.NewContext(
+		cacheMS, app.checkState.ctx.BlockHeader(), true, app.Logger,
+	)
+
+	return ctx, nil
+}
+
+func checkNegativeHeight(height int64) error {
+	if height < 0 {
+		// Reject invalid heights.
+		return sdkerrors.Wrap(
+			sdkerrors.ErrInvalidRequest,
+			"cannot query with height < 0; please provide a valid height",
+		)
+	}
+	return nil
+}
+
+func gRPCErrorToSDKError(err error) error {
+	status, ok := grpcstatus.FromError(err)
+	if !ok {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, err.Error())
+	}
+
+	switch status.Code() {
+	case codes.NotFound:
+		return sdkerrors.Wrap(sdkerrors.ErrKeyNotFound, err.Error())
+	case codes.InvalidArgument:
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, err.Error())
+	case codes.FailedPrecondition:
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, err.Error())
+	case codes.Unauthenticated:
+		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, err.Error())
+	default:
+		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, err.Error())
+	}
 }
 
 func handleQueryApp(app *BaseApp, path []string, req abci.RequestQuery) (res abci.ResponseQuery) {
@@ -631,11 +754,11 @@ func (app *BaseApp) CheckTx(req abci.RequestCheckTx) abci.ResponseCheckTx {
 
 	tx, err := app.txDecoder(req.Tx)
 	if err != nil {
-		return abcierrors.ResponseCheckTx(err, 0, 0, false)
+		return abcierrors.ResponseCheckTx(err, 0, 0, false, nil)
 	} else {
 		res, err := app.runTx(runTxModeCheck, req.Tx, tx)
 		if err != nil {
-			return abcierrors.ResponseCheckTx(err, res.GasWanted, res.GasUsed, false)
+			return abcierrors.ResponseCheckTx(err, res.GasWanted, res.GasUsed, false, res.Events.ToABCIEvents())
 		}
 		result = res
 	}
@@ -656,12 +779,12 @@ func (app *BaseApp) DeliverTx(req abci.RequestDeliverTx) abci.ResponseDeliverTx 
 
 	tx, err := app.txDecoder(req.Tx)
 	if err != nil {
-		return abcierrors.ResponseDeliverTx(err, 0, 0, false)
+		return abcierrors.ResponseDeliverTx(err, 0, 0, false, nil)
 	} else {
 		var err error
 		result, err = app.runTx(runTxModeDeliver, req.Tx, tx)
 		if err != nil {
-			return abcierrors.ResponseDeliverTx(err, result.GasWanted, result.GasUsed, false)
+			return abcierrors.ResponseDeliverTx(err, result.GasWanted, result.GasUsed, false, result.Events.ToABCIEvents())
 		}
 	}
 
@@ -792,22 +915,23 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 			switch rType := r.(type) {
 			case sdk.ErrorOutOfGas:
 				res := app.deferHandler(ctx, tx, true, mode == runTxModeSimulate)
-				newLog := fmt.Sprintf("out of gas in location -- %v", rType.Descriptor)
+				_ = fmt.Sprintf("out of gas in location -- %v", rType.Descriptor)
 				result.GasUsed = res.GasUsed
 				result.GasWanted = res.GasWanted
-				err = abcierrors.Wrap(abcierrors.ErrOutOfGas, newLog)
+				err = abcierrors.ErrRuxTxOutOfGas
 			default:
 				res := app.deferHandler(ctx, tx, false, mode == runTxModeSimulate)
-				newLog := fmt.Sprintf("recovered -- %v\nstack:%v\n", r, string(debug.Stack()))
+				_ = fmt.Sprintf("recovered -- %v\nstack:%v\n", r, string(debug.Stack()))
 				result.GasUsed = res.GasUsed
 				result.GasWanted = res.GasWanted
-				err = abcierrors.Wrap(abcierrors.ErrInternal, newLog)
+				err = abcierrors.ErrRecoverInRunTx
 			}
 			for _, v := range all_attributes {
 				v = append(v, sdk.NewAttribute([]byte(sdk.EventTypeType), []byte(sdk.AttributeKeyInvalidTx)))
 				event := sdk.NewEvent(sdk.AttributeKeyTx, v...)
 				result.Events = append(result.Events, event)
 			}
+			fmt.Println(result.Events)
 		} else {
 			res := app.deferHandler(ctx, tx, false, mode == runTxModeSimulate)
 			result.GasUsed = res.GasUsed
@@ -830,6 +954,7 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 			return sdk.Result{}, err
 		}
 	}
+	all_attributes = allMsgAttributes(msgs)
 
 	// Execute the ante handler if one is defined.
 	if app.anteHandler != nil {
@@ -869,17 +994,13 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 	// Create a new context based off of the existing context with a cache wrapped
 	// multi-store in case message processing fails.
 
-	all_attributes = allMsgAttributes(msgs)
+	//all_attributes = allMsgAttributes(msgs)
 
 	runMsgCtx, msCache := app.cacheTxContext(ctx, txBytes)
 	result, err = app.runMsgs(runMsgCtx, msgs, mode)
 
-	if mode == runTxModeSimulate  { // XXX
-		return
-	}
-
 	// only update state if all messages pass
-	if result.IsOK() {
+	if err == nil && mode == runTxModeDeliver {
 		msCache.Write()
 	}
 	return
@@ -959,6 +1080,8 @@ func allMsgAttributes(msgs []sdk.Msg) [][]sdk.Attribute {
 		var module = ""
 		var attrs = make([]sdk.Attribute, 0)
 
+		sender := v.GetFromAddress().String()
+
 		switch vt := v.(type) {
 		case *transfer.MsgTransfer:
 			operation = "transfer"
@@ -1020,10 +1143,27 @@ func allMsgAttributes(msgs []sdk.Msg) [][]sdk.Attribute {
 		case *iftypes.MsgStoreContent:
 			operation = "store_content"
 			module = iftypes.ModuleName
+		case *evm.MsgEvmTx:
+			operation = "evm_transaction"
+			module = types2.RouterKey
+			sender = vt.From.String()
+			r := vt.To()
+			if r != nil {
+				receiver = r.String()
+			}
+		case types2.MsgEthereumTx:
+			operation = "eth_transaction"
+			module = types2.RouterKey
+			s, _ := vt.VerifySig(big.NewInt(util.CHAINID))
+			sender = s.String()
+			r := vt.To()
+			if r != nil {
+				receiver = r.String()
+			}
 		}
 
 		attrs = sdk.NewAttributes(attrs,
-			sdk.NewAttribute([]byte(sdk.AttributeKeySender), []byte(v.GetFromAddress().String())),
+			sdk.NewAttribute([]byte(sdk.AttributeKeySender), []byte(sender)),
 			sdk.NewAttribute([]byte(sdk.AttributeKeyReceiver), []byte(receiver)),
 			sdk.NewAttribute([]byte(sdk.AttributeKeyMethod),[]byte(operation)),
 			sdk.NewAttribute([]byte(sdk.AttributeKeyAmount), []byte(amount)),

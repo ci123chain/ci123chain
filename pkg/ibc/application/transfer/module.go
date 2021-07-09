@@ -4,15 +4,18 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
+	codectypes "github.com/ci123chain/ci123chain/pkg/abci/codec/types"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/module"
 	capabilitytypes "github.com/ci123chain/ci123chain/pkg/capability/types"
+	client "github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/ibc/application/transfer/keeper"
 	"github.com/ci123chain/ci123chain/pkg/ibc/application/transfer/types"
 	channeltypes "github.com/ci123chain/ci123chain/pkg/ibc/core/channel/types"
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/host"
 	porttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/port/types"
+	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	abci "github.com/tendermint/tendermint/abci/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 	"math"
@@ -49,6 +52,12 @@ func (am AppModuleBasic) RegisterCodec(codec *codec.Codec) {
 	types.RegisterCodec(codec)
 }
 
+func (am AppModuleBasic) RegisterInterfaces(registry codectypes.InterfaceRegistry) {
+	types.RegisterInterfaces(registry)
+}
+
+func (am AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *runtime.ServeMux) {}
+
 func (am AppModuleBasic) DefaultGenesis(validators []tmtypes.GenesisValidator) json.RawMessage {
 	res, _ := json.Marshal(types.DefaultGenesisState())
 	return res
@@ -82,7 +91,7 @@ func (am AppModule) OnRecvPacket(
 	packet channeltypes.Packet,
 ) (*sdk.Result, []byte, error) {
 	var data types.FungibleTokenPacketData
-	if err := types.IBCTransferCdc.UnmarshalBinaryLengthPrefixed(packet.GetData(), &data); err != nil {
+	if err := types.ModuleCdc.UnmarshalJSON(packet.GetData(), &data); err != nil {
 		return nil, nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet data: %s", err.Error())
 	}
 
@@ -103,7 +112,6 @@ func (am AppModule) OnRecvPacket(
 			sdk.NewAttributeString(types.AttributeKeyAckSuccess, fmt.Sprintf("%t", err != nil)),
 		),
 	)
-
 	// NOTE: acknowledgement will be written synchronously during IBC handler execution.
 	return &sdk.Result{
 		Events: ctx.EventManager().Events(),
@@ -118,11 +126,12 @@ func (am AppModule) OnAcknowledgementPacket(
 	acknowledgement []byte,
 ) (*sdk.Result, error) {
 	var ack channeltypes.Acknowledgement
-	if err := types.IBCTransferCdc.UnmarshalBinaryBare(acknowledgement, &ack); err != nil {
+	if err := types.ModuleCdc.UnmarshalJSON(acknowledgement, &ack); err != nil {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet acknowledgement: %v", err)
 	}
+
 	var data types.FungibleTokenPacketData
-	if err := types.IBCTransferCdc.UnmarshalBinaryLengthPrefixed(packet.GetData(), &data); err != nil {
+	if err := types.ModuleCdc.UnmarshalJSON(packet.GetData(), &data); err != nil {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet data: %s", err.Error())
 	}
 
@@ -213,7 +222,7 @@ func (am AppModule) OnChanOpenConfirm(ctx sdk.Context, portID, channelID string)
 
 func (am AppModule) OnTimeoutPacket(ctx sdk.Context, packet channeltypes.Packet) (*sdk.Result, error) {
 	var data types.FungibleTokenPacketData
-	if err := types.IBCTransferCdc.UnmarshalBinaryLengthPrefixed(packet.GetData(), &data); err != nil {
+	if err := types.ModuleCdc.UnmarshalJSON(packet.GetData(), &data); err != nil {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet data: %s", err.Error())
 	}
 	// refund tokens
@@ -272,4 +281,7 @@ func ValidateTransferChannelParams(
 		return sdkerrors.Wrapf(types.ErrInvalidVersion, "got %s, expected %s", version, types.Version)
 	}
 	return nil
+}
+
+func (am AppModule) RegisterServices(cfg module.Configurator) {
 }

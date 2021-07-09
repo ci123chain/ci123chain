@@ -14,7 +14,8 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 	"golang.org/x/sync/errgroup"
-	"io/ioutil"
+	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -22,9 +23,14 @@ func lightError(err error) error { return fmt.Errorf("light client: %w", err) }
 
 
 var (
-	logger = light.Logger(log.NewTMLogger(log.NewSyncWriter(ioutil.Discard)))
+	//logger = light.Logger(log.NewTMLogger(log.NewSyncWriter(ioutil.Discard)))
+	logger = light.Logger(log.NewNopLogger())
 
 	ErrDatabase = errors.New("database failure")
+
+	// ErrLightNotInitialized returns the canonical error for a an uninitialized light client
+	ErrLightNotInitialized = errors.New("light client is not initialized")
+
 )
 
 // NewLightDB returns a new instance of the lightclient database connection
@@ -152,7 +158,10 @@ func (c *Chain) LightClient(db dbm.DB) (*light.Client, error) {
 	)
 }
 
-
+// DeleteLightDB removes the light client database on disk, forcing re-initialization
+func (c *Chain) DeleteLightDB() error {
+	return os.RemoveAll(filepath.Join(lightDir(c.HomePath), fmt.Sprintf("%s.db", c.ChainID)))
+}
 
 // UpdateLightClient updates the tendermint light client by verifying the current
 // header against a trusted header.
@@ -185,6 +194,10 @@ func (c *Chain) UpdateLightClient() (*tmtypes.LightBlock, error) {
 	return lightBlock, nil
 }
 
+// GetLatestLightHeader returns the header to be used for client creation
+func (c *Chain) GetLatestLightHeader() (*tmclient.Header, error) {
+	return c.GetLightSignedHeaderAtHeight(0)
+}
 
 // UpdateLightClients updates the off-chain tendermint light clients concurrently.
 func UpdateLightClients(src, dst *Chain) (srcLB, dstLB *tmtypes.LightBlock, err error) {
@@ -231,12 +244,12 @@ func (c *Chain) GetLightSignedHeaderAtHeight(height int64) (*tmclient.Header, er
 		return nil, err
 	}
 
-	protoVal := tmtypes.NewValidatorSet(sh.ValidatorSet.Validators)
+	protoVal, err := tmtypes.NewValidatorSet(sh.ValidatorSet.Validators).ToProto()
 	if err != nil {
 		return nil, err
 	}
 
-	return &tmclient.Header{SignedHeader: sh.SignedHeader, ValidatorSet: protoVal}, nil
+	return &tmclient.Header{SignedHeader: sh.SignedHeader.ToProto(), ValidatorSet: protoVal}, nil
 }
 
 // GetLatestLightHeights returns both the src and dst latest height in the local client

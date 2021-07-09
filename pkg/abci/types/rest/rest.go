@@ -109,11 +109,15 @@ func WriteErrorRes(w http.ResponseWriter, err string) {
 
 func PostProcessResponseBare(w http.ResponseWriter, ctx context.Context, body interface{}) {
 	var res Response
-	dataJson, _ := json.Marshal(body)
+
 	switch body.(type) {
 	case sdk.TxResponse:
 		b := body.(sdk.TxResponse)
 		if b.Code == 0 {
+			b.Code = 1
+		}
+		dataJson, _ := json.Marshal(b)
+		if b.Code == 1 {
 			res = Response{
 				Ret:     1,
 				Data:    dataJson,
@@ -128,6 +132,10 @@ func PostProcessResponseBare(w http.ResponseWriter, ctx context.Context, body in
 	case sdk.QureyAppResponse:
 		b := body.(sdk.QureyAppResponse)
 		if b.Code == 0 {
+			b.Code = 1
+		}
+		dataJson, _ := json.Marshal(b)
+		if b.Code == 1 {
 			res = Response{
 				Ret:     1,
 				Data:    dataJson,
@@ -140,6 +148,7 @@ func PostProcessResponseBare(w http.ResponseWriter, ctx context.Context, body in
 			}
 		}
 	default:
+		dataJson, _ := json.Marshal(body)
 		res = Response{
 			Ret:     1,
 			Data:    dataJson,

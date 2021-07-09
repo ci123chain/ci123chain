@@ -55,9 +55,8 @@ func (c *Chain) CreateOpenConnections(dst *Chain, maxRetries uint64, to time.Dur
 		// increment the failures counter and exit if we used all retry attempts
 		case !success:
 			failed++
-			c.Log("retrying transaction...")
 			time.Sleep(5 * time.Second)
-
+			c.Log("retrying transaction...")
 			if failed > maxRetries {
 				return modified, fmt.Errorf("! Connection failed: [%s]client{%s}conn{%s} -> [%s]client{%s}conn{%s}",
 					c.ChainID, c.PathEnd.ClientID, c.PathEnd.ConnectionID,
@@ -75,6 +74,8 @@ func (c *Chain) CreateOpenConnections(dst *Chain, maxRetries uint64, to time.Dur
 // file. The booleans return indicate if the message was successfully
 // executed and if this was the last handshake step.
 func ExecuteConnectionStep(src, dst *Chain) (success, last, modified bool, err error) {
+	//time.Sleep(2 * time.Second)
+
 	if _, _, err := UpdateLightClients(src, dst); err != nil {
 		return false, false, false, err
 	}
@@ -94,8 +95,10 @@ func ExecuteConnectionStep(src, dst *Chain) (success, last, modified bool, err e
 	}
 
 	// Query Connection data from src and dst
-	srcConn, dstConn, err := QueryConnectionPair(src, dst, int64(src.MustGetLatestLightHeight())-1,
-		int64(dst.MustGetLatestLightHeight()-1))
+	srcH := int64(src.MustGetLatestLightHeight())
+	dstH := int64(dst.MustGetLatestLightHeight())
+	srcConn, dstConn, err := QueryConnectionPair(src, dst, srcH,
+		dstH)
 	if err != nil {
 		return false, false, false, err
 	}
@@ -128,7 +131,6 @@ func ExecuteConnectionStep(src, dst *Chain) (success, last, modified bool, err e
 		if src.debug {
 			logConnectionStates(src, dst, srcConn, dstConn)
 		}
-
 		msgs, err := src.ConnAck(dst)
 		if err != nil {
 			return false, false, false, err

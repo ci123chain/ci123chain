@@ -22,7 +22,7 @@ func AppGenStateJSON(validators []tmtypes.GenesisValidator) (json.RawMessage, er
 	appState := module.ModuleBasics.DefaultGenesis(validators)
 	stateBytes, err := json.Marshal(appState)
 	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+		return nil, err
 	}
 	return stateBytes, nil
 }

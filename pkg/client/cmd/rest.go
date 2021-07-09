@@ -3,7 +3,10 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/ci123chain/ci123chain/pkg/abci/types"
+	grpctypes "github.com/ci123chain/ci123chain/pkg/abci/types/grpc"
 	accountRpc "github.com/ci123chain/ci123chain/pkg/account/rest"
+	"github.com/ci123chain/ci123chain/pkg/app/module"
 	"github.com/ci123chain/ci123chain/pkg/client"
 	"github.com/ci123chain/ci123chain/pkg/client/cmd/rpc"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
@@ -11,6 +14,8 @@ import (
 	gravity "github.com/ci123chain/ci123chain/pkg/gravity/types"
 	txRpc "github.com/ci123chain/ci123chain/pkg/transfer/rest"
 	"github.com/ci123chain/ci123chain/pkg/util"
+	"github.com/gogo/gateway"
+	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/libs/log"
@@ -26,6 +31,9 @@ import (
 	"time"
 
 	dRest "github.com/ci123chain/ci123chain/pkg/distribution/client/rest"
+	ibctransferRest "github.com/ci123chain/ci123chain/pkg/ibc/application/transfer/client/rest"
+	ibccore "github.com/ci123chain/ci123chain/pkg/ibc/core/client/rest"
+
 	iRest "github.com/ci123chain/ci123chain/pkg/infrastructure/client/rest"
 	mRest "github.com/ci123chain/ci123chain/pkg/mint/client/rest"
 	orQuery "github.com/ci123chain/ci123chain/pkg/order"
@@ -48,6 +56,7 @@ const (
 	GenesisFile			   = "genesis.json"
 	PrivValidatorKey	   = "priv_validator_key.json"
 	flagETHChainID         = "eth_chain_id"
+	flagTokenName		   = "tokenname"
 )
 
 type ConfigFiles struct {
@@ -63,6 +72,8 @@ func init() {
 	rpcCmd.Flags().Uint(FlagRPCWriteTimeout, 10, "The RPC write timeout")
 	rpcCmd.Flags().String(FlagWebsocket, "8546", "websocket port to listen to")
 	rpcCmd.Flags().Int64(flagETHChainID, 1, "eth_chain_id")
+	rpcCmd.Flags().String(flagTokenName, "stake", "Chain token name")
+
 	_ = viper.BindPFlags(rpcCmd.Flags())
 }
 
@@ -72,6 +83,8 @@ var rpcCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		id := viper.GetInt64(flagETHChainID)
 		util.Setup(id)
+		denom := viper.GetString(flagTokenName)
+		types.SetCoinDenom(denom)
 		rs := NewRestServer()
 		err := rs.Start(
 			viper.GetString(FlagListenAddr),
@@ -86,6 +99,7 @@ var rpcCmd = &cobra.Command{
 // RestServer represents the Light Client Rest server
 type RestServer struct {
 	Mux     *mux.Router
+	GRPCGatewayRouter *runtime.ServeMux
 	CliCtx  context.Context
 	listener net.Listener
 }
@@ -101,11 +115,11 @@ func NewRestServer() *RestServer {
 	r.HandleFunc("/healthcheck", HealthCheckHandler(cliCtx)).Methods("GET")
 	r.HandleFunc("/exportLog", ExportLogHandler(cliCtx)).Methods("GET")
 	r.HandleFunc("/exportConfig", ExportConfigHandler(cliCtx)).Methods("GET")
+	r.HandleFunc("/exportEnv", ExportEnv(cliCtx)).Methods("POST")
 	rpc.RegisterRoutes(cliCtx, r)
 	accountRpc.RegisterRoutes(cliCtx, r)
 	txRpc.RegisterTxRoutes(cliCtx, r)
 	// todo ibc
-	//ibc.RegisterRoutes(cliCtx, r)
 	dRest.RegisterRoutes(cliCtx, r)
 	order.RegisterTxRoutes(cliCtx, r)
 	orQuery.RegisterTxRoutes(cliCtx, r)
@@ -115,13 +129,55 @@ func NewRestServer() *RestServer {
 	iRest.RegisterRoutes(cliCtx, r)
 	gRest.RegisterRoutes(cliCtx, r, gravity.StoreKey)
 
+
+	ibctransferRest.RegisterRoutes(cliCtx, r)
+	ibccore.RegisterRoutes(cliCtx, r)
+
+	// The default JSON marshaller used by the gRPC-Gateway is unable to marshal non-nullable non-scalar fields.
+	// Using the gogo/gateway package with the gRPC-Gateway WithMarshaler option fixes the scalar field marshalling issue.
+	marshalerOption := &gateway.JSONPb{
+		EmitDefaults: true,
+		Indent:       "  ",
+		OrigName:     true,
+		AnyResolver:  cliCtx.InterfaceRegistry,
+	}
+
+	grpcRoute := runtime.NewServeMux(
+		// Custom marshaler option is required for gogo proto
+		runtime.WithMarshalerOption(runtime.MIMEWildcard, marshalerOption),
+
+		// This is necessary to get error details properly
+		// marshalled in unary requests.
+		runtime.WithProtoErrorHandler(runtime.DefaultHTTPProtoErrorHandler),
+
+		// Custom header matcher for mapping request headers to
+		// GRPC metadata
+		runtime.WithIncomingHeaderMatcher(CustomGRPCHeaderMatcher),
+	)
+	module.ModuleBasics.RegisterGRPCGatewayRoutes(cliCtx, grpcRoute)
+
 	return &RestServer{
 		Mux: r,
+		GRPCGatewayRouter: grpcRoute,
 		CliCtx: cliCtx,
 	}
 }
 
-const CorePrefix = "/collactor"
+// CustomGRPCHeaderMatcher for mapping request headers to
+// GRPC metadata.
+// HTTP headers that start with 'Grpc-Metadata-' are automatically mapped to
+// gRPC metadata after removing prefix 'Grpc-Metadata-'. We can use this
+// CustomGRPCHeaderMatcher if headers don't start with `Grpc-Metadata-`
+func CustomGRPCHeaderMatcher(key string) (string, bool) {
+	switch strings.ToLower(key) {
+	case grpctypes.GRPCBlockHeightHeader:
+		return grpctypes.GRPCBlockHeightHeader, true
+	default:
+		return runtime.DefaultHeaderMatcher(key)
+	}
+}
+
+const CorePrefix = "/core"
 
 type HeightParams struct {
 	Height   string   `json:"height"`
@@ -195,7 +251,6 @@ func Handle404() http.Handler {
 			http.Error(w, rep.Status, rep.StatusCode)
 			return
 		}
-
 		resBody, err := ioutil.ReadAll(rep.Body)
 		var resultResponse client.Response
 		if err != nil {
@@ -226,7 +281,7 @@ func Handle404() http.Handler {
 					resultResponse = client.Response{
 						Ret:     1,
 						Data:    nil,
-						Message: tmResponse.Error.Error(),
+						Message: tmResponse.Error.Message,
 					}
 				}
 			}else {
@@ -264,11 +319,17 @@ func (rs *RestServer) Start(listenAddr string, maxOpen int, readTimeout, writeTi
 	cfg.ReadTimeout = time.Duration(readTimeout) * time.Second
 	cfg.WriteTimeout = time.Duration(writeTimeout) * time.Second
 
+	//rs.registerGRPCGatewayRoutes()
+
 	rs.listener, err = rpcserver.Listen(listenAddr, cfg)
 	if err != nil {
 		return
 	}
 	return rpcserver.Serve(rs.listener, rs.Mux, logger,cfg)
+}
+
+func (rs *RestServer) registerGRPCGatewayRoutes() {
+	rs.Mux.PathPrefix("/").Handler(rs.GRPCGatewayRouter)
 }
 
 func HealthCheckHandler(ctx context.Context) http.HandlerFunc  {
@@ -365,12 +426,12 @@ func ExportConfigHandler(ctx context.Context) http.HandlerFunc  {
 		viper.SetEnvPrefix("CI")
 		_ = viper.BindEnv("HOME")
 		root := viper.GetString("HOME")
-		gen, err := ioutil.ReadFile(filepath.Join(root, "configs", GenesisFile))
+		gen, err := ioutil.ReadFile(filepath.Join(root, "config", GenesisFile))
 		if err != nil {
 			_, _ = w.Write([]byte(err.Error()))
 			return
 		}
-		pv, err := ioutil.ReadFile(filepath.Join(root, "configs", PrivValidatorKey))
+		pv, err := ioutil.ReadFile(filepath.Join(root, "config", PrivValidatorKey))
 		if err != nil {
 			_, _ = w.Write([]byte(err.Error()))
 			return
@@ -395,3 +456,26 @@ func ExportConfigHandler(ctx context.Context) http.HandlerFunc  {
 	}
 }
 
+func ExportEnv(ctx context.Context) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+
+		var ks []string
+		keys := req.FormValue("keys")
+		err := json.Unmarshal([]byte(keys), &ks)
+		if err != nil {
+			_, _ = w.Write([]byte(err.Error()))
+			return
+		}
+		var res = make(map[string]interface{}, 0)
+		for _, v := range ks {
+			value := os.Getenv(v)
+			res[v] = value
+		}
+		bytes, err := json.Marshal(res)
+		if err != nil {
+			_, _ = w.Write([]byte(err.Error()))
+			return
+		}
+		_, _ = w.Write(bytes)
+	}
+}

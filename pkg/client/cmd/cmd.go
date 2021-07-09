@@ -8,11 +8,12 @@ import (
 	"os"
 )
 
-var homeDir = os.ExpandEnv("$HOME/.cli")
+var homeDir = os.ExpandEnv("$HOME/.client")
 var cdc = types.GetCodec()
+var encoding = types.GetEncodingConfig()
 
 var rootCmd = &cobra.Command{
-	Use: 	"cli", 
+	Use: 	"client",
 	Short:  "Blockchain Client",
 }
 

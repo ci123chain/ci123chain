@@ -1,8 +1,10 @@
 package redis
 
 import (
+	"encoding/binary"
 	"errors"
 	"github.com/go-redis/redis/v8"
+	"strconv"
 )
 
 type RaftRedisClient struct {
@@ -23,7 +25,7 @@ func (client *RaftRedisClient) NewBatch() *Batch {
 
 // 获取前缀为 prefix 的所有键值对
 // desc 为降序返回
-func (client *RaftRedisClient) GetKeys(prefix string, desc bool) ([]KVPair, error) {
+func (client *RaftRedisClient) GetKeys(prefix string, desc bool) (KVPairs, error) {
 	cmder := redis.NewStringSliceCmd(ctx, "keys", prefix+"*", "withvalues")
 	if err := client.Process(ctx, cmder); err != nil {
 		return nil, err
@@ -31,7 +33,7 @@ func (client *RaftRedisClient) GetKeys(prefix string, desc bool) ([]KVPair, erro
 	if err := cmder.Err(); err != nil {
 		return nil, err
 	}
-	var pairs []KVPair
+	var pairs KVPairs
 	result := cmder.Val()
 	for i := 0; i < len(result); i += 2 {
 		pairs = append(pairs, KVPair{
@@ -46,6 +48,56 @@ func (client *RaftRedisClient) GetKeys(prefix string, desc bool) ([]KVPair, erro
 	}
 	return pairs, nil
 }
+
+func (client *RaftRedisClient) Iter(start, end string, desc, withvalues bool, limit int) ([]KVPair, error) {
+	args := []interface{}{"iter", start, end}
+	if withvalues {
+		args = append(args, "withvalues")
+	}
+	if desc {
+		args = append(args, "desc")
+	}
+	if limit > 0 {
+		args = append(args, "limit", strconv.Itoa(limit))
+	}
+	return client.getKVPairs(args)
+}
+
+func (client *RaftRedisClient) getKVPairs(args []interface{}) ([]KVPair, error) {
+	withvalues := false
+	for _, arg := range args {
+		if arg == "withvalues" {
+			withvalues = true
+			break
+		}
+	}
+
+	cmder := redis.NewStringSliceCmd(ctx, args...)
+	if err := client.Process(ctx, cmder); err != nil {
+		return nil, err
+	}
+	if err := cmder.Err(); err != nil {
+		return nil, err
+	}
+	var pairs []KVPair
+	result := cmder.Val()
+	if withvalues {
+		for i := 0; i < len(result); i += 2 {
+			pairs = append(pairs, KVPair{
+				Key:   result[i],
+				Value: result[i+1],
+			})
+		}
+	} else {
+		for i := 0; i < len(result); i += 1 {
+			pairs = append(pairs, KVPair{
+				Key: result[i],
+			})
+		}
+	}
+	return pairs, nil
+}
+
 
 type Batch struct {
 	rdb  *redis.Client
@@ -98,6 +150,29 @@ func (bt *Batch) Discard() {
 type KVPair struct {
 	Key   string
 	Value string
+}
+
+type KVPairs []KVPair
+
+func (kv KVPairs) Len() int {
+	return len(kv)
+}
+
+func (kv KVPairs) Less(i, j int) bool {
+	KI := make([]byte, 8)
+	KJ := make([]byte, 8)
+
+	copy(KI, []byte(kv[i].Key)[1:9])
+	copy(KJ, []byte(kv[j].Key)[1:9])
+
+	powerI := binary.BigEndian.Uint64(KI)
+	powerJ := binary.BigEndian.Uint64(KJ)
+
+	return powerI > powerJ
+}
+
+func (kv KVPairs) Swap(i, j int) {
+	kv[i], kv[j] = kv[j], kv[i]
 }
 
 func IsKeyNotExist(err error) bool {

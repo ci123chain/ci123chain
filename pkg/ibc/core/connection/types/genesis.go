@@ -9,13 +9,13 @@ type GenesisState struct {
 	NextConnectionSequence uint64 `protobuf:"varint,3,opt,name=next_connection_sequence,json=nextConnectionSequence,proto3" json:"next_connection_sequence,omitempty" yaml:"next_connection_sequence"`
 }
 
-// ConnectionPaths define all the connection paths for a given client state.
-type ConnectionPaths struct {
-	// client state unique identifier
-	ClientId string `protobuf:"bytes,1,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty" yaml:"client_id"`
-	// list of connection paths
-	Paths []string `protobuf:"bytes,2,rep,name=paths,proto3" json:"paths,omitempty"`
-}
+//// ConnectionPaths define all the connection paths for a given client state.
+//type ConnectionPaths struct {
+//	// client state unique identifier
+//	ClientId string `protobuf:"bytes,1,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty" yaml:"client_id"`
+//	// list of connection paths
+//	Paths []string `protobuf:"bytes,2,rep,name=paths,proto3" json:"paths,omitempty"`
+//}
 
 
 // DefaultGenesisState returns the ibc connection submodule's default genesis state.

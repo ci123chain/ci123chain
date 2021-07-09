@@ -320,6 +320,7 @@ func (ks *baseKVStore) GetCache() map[string][]byte{
 			valueBytes[rawkey] = cacheValue.value
 		}
 	}
+	ks.cache = make(map[string]cValue)
 	return valueBytes
 }
 

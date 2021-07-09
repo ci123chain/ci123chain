@@ -2,7 +2,7 @@ package redis
 
 import (
 	"encoding/hex"
-	"fmt"
+	"github.com/ci123chain/ci123chain/pkg/libs"
 )
 
 type redisBatch struct {
@@ -25,20 +25,17 @@ func (rb *redisBatch) Write() error {
 	if rb.batch.docs == nil {
 		return nil
 	}
-	retry := 0
-	for {
+	_, err := libs.RetryI(0, func(retryTimes int) (bytes interface{}, e error) {
 		_, err := rb.batch.Commit()
 		if err != nil {
-			rb.rdb.lg.Info("batch write failed")
-			rb.rdb.lg.Info("***************Retry******************")
-			rb.rdb.lg.Info(fmt.Sprintf("Retry: %d", retry))
-			rb.rdb.lg.Info(fmt.Sprintf("Method: Write"))
-			rb.rdb.lg.Error(fmt.Sprintf("Error: %s", err.Error()))
-			retry++
+			rb.rdb.lg.Error("batch write failed", "Method", "Write",
+				"Retry times", retryTimes, "error", err.Error())
+			return nil, err
 		}else {
-			return nil
+			return nil, nil
 		}
-	}
+	})
+	return err
 }
 
 

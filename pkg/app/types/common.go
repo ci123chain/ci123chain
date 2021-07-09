@@ -3,7 +3,6 @@ package types
 import (
 	"bytes"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	types2 "github.com/ci123chain/ci123chain/pkg/abci/types"
@@ -33,14 +32,15 @@ func NewCommonTx(from types2.AccAddress, nonce, gas uint64, msgs []types2.Msg) *
 
 func (tx CommonTx) ValidateBasic() error {
 	if tx.From.Empty() {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "empty from address")
+		return ErrInvalidParam("empty from address")
 	}
 	// TODO Currently we don't support a gas system.
 	if len(tx.Msgs) == 0 {
-		return sdkerrors.Wrap(sdkerrors.ErrParams, "empty messagees")
+		return ErrInvalidParam("empty messagees")
 	}
 	if len(tx.Signature) == 0 {
-		return sdkerrors.Wrap(sdkerrors.ErrNoSignatures, "message with no signature")
+		return ErrInvalidParam("message with no signature")
+
 	}
 	return nil
 }
@@ -93,13 +93,13 @@ func (tx *CommonTx) VerifySignature(hash []byte, fabricMode bool) error {
 		fab := cryptosuit.NewFabSignIdentity()
 		valid, err := fab.Verifier(hash, tx.Signature, tx.PubKey, tx.From.Bytes())
 		if !valid || err != nil {
-			return sdkerrors.Wrap(sdkerrors.ErrInternal, "verified failed")
+			return ErrInvalidParam("invalid signature")
 		}
 	} else {
 		eth := cryptosuit.NewETHSignIdentity()
 		valid, err := eth.Verifier(hash, tx.Signature, nil, tx.From.Bytes())
 		if !valid || err != nil {
-			return sdkerrors.Wrap(sdkerrors.ErrInternal, "verified failed")
+			return ErrInvalidParam("invalid signature")
 		}
 	}
 	return nil
@@ -111,7 +111,7 @@ func SignCommonTx(from types2.AccAddress, nonce, gas uint64, msgs []types2.Msg, 
 	privPub, err := hex.DecodeString(priv)
 	eth := cryptosuit.NewETHSignIdentity()
 	if !IsValidPrivateKey(from, privPub){
-		return nil, errors.New("invalid private_key, the private key does not match the from account")
+		return nil, ErrInvalidParam("invalid private_key, the private key does not match the from account")
 	}
 	signature, err = eth.Sign(tx.GetSignBytes(), privPub)
 	if err != nil {
@@ -125,14 +125,19 @@ func SignCommonTx(from types2.AccAddress, nonce, gas uint64, msgs []types2.Msg, 
 func DefaultTxDecoder(cdc *codec.Codec) types2.TxDecoder {
 	return func(txBytes []byte) (types2.Tx, error) {
 		var transfer *CommonTx
-		err := cdc.UnmarshalBinaryBare(txBytes, &transfer)
+		err := codec.GetLegacyAminoByCodec(cdc).UnmarshalBinaryBare(txBytes, &transfer)
 		if err != nil {
-			var ethTx *MsgEthereumTx
-			err := cdc.UnmarshalBinaryBare(txBytes, &ethTx)
+			var pbTx PbTx
+			err = GetEncodingConfig().Marshaler.UnmarshalBinaryBare(txBytes, &pbTx)
 			if err != nil {
-				return nil, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("decode msg failed: %v", err.Error()))
+				var ethTx *MsgEthereumTx
+				err := cdc.UnmarshalBinaryBare(txBytes, &ethTx)
+				if err != nil {
+					return nil, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("decode msg failed: %v", err.Error()))
+				}
+				return ethTx, nil
 			}
-			return ethTx, nil
+			return &pbTx, nil
 		}
 		return transfer, nil
 	}

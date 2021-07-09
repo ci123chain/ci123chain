@@ -3,6 +3,7 @@ package types
 import (
 	"encoding/json"
 	"fmt"
+	"math/big"
 	"regexp"
 	"sort"
 	"strings"
@@ -24,7 +25,9 @@ func NewChainCoin(amount Int) Coin {
 // NewCoin returns a new coin with a denomination and amount. It will panic if
 // the amount is negative.
 func NewCoin(denom string, amount Int) Coin {
-
+	if len(denom) < 1 {
+		return NewChainCoin(amount)
+	}
 	return Coin{
 		Denom:  denom,
 		Amount: amount,
@@ -41,6 +44,10 @@ func NewEmptyCoin() Coin {
 
 func NewUInt64Coin(denom string, amount uint64) Coin {
 	return NewCoin(denom, NewInt(int64(amount)))
+}
+
+func NewIntCoin(denom string, amount *big.Int) Coin {
+	return NewCoin(denom, NewIntFromBigInt(amount))
 }
 
 func (c Coin) String() string {
@@ -190,6 +197,12 @@ func (coins Coins) IsValid() bool {
 	}
 }
 
+// Empty returns true if there are no coins and false otherwise.
+func (coins Coins) Empty() bool {
+	return len(coins) == 0
+}
+
+
 // NewCoins constructs a new coin set. The provided coins will be sanitized by removing
 // zero coins and sorting the coin set. A panic will occur if the coin set is not valid.
 func NewCoins(coins ...Coin) Coins {
@@ -260,7 +273,10 @@ func mustValidateDenom(denom string) {
 
 // Returns the amount of a denom from coins
 func (coins Coins) AmountOf(denom string) Int {
-	mustValidateDenom(denom)
+	if len(denom) < 1 {
+		denom = ChainCoinDenom
+	}
+		//mustValidateDenom(denom)
 
 	switch len(coins) {
 	case 0:
@@ -437,7 +453,7 @@ func validate(denom string, amount Int) error {
 	return nil
 }
 
-// ParseCoinNormalized parses and normalize a cli input for one coin type, returning errors if invalid or on an empty string
+// ParseCoinNormalized parses and normalize a client input for one coin type, returning errors if invalid or on an empty string
 // as well.
 // Expected format: "{amount}{denomination}"
 func ParseCoinNormalized(coinStr string) (coin Coin, err error) {

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	ethcmn "github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
@@ -101,16 +100,16 @@ func (msg MsgEthereumTx) MsgType() string { return TypeMsgEthereumTx }
 // checks of a Transaction. If returns an error if validation fails.
 func (msg MsgEthereumTx) ValidateBasic() error {
 	if msg.Data.Price.Cmp(big.NewInt(0)) == 0 {
-		return sdkerrors.Wrap(sdkerrors.ErrInternal, "gas price cannot be 0")
+		return ErrInvalidParam("gas price cannot be 0")
 	}
 
 	if msg.Data.Price.Sign() == -1 {
-		return sdkerrors.Wrap(sdkerrors.ErrParams, fmt.Sprintf("gas price cannot be negative %s", msg.Data.Price))
+		return ErrInvalidParam(fmt.Sprintf("gas price cannot be negative %s", msg.Data.Price))
 	}
 
 	// Amount can be 0
 	if msg.Data.Amount.Sign() == -1 {
-		return sdkerrors.Wrap(sdkerrors.ErrParams, fmt.Sprintf("amount cannot be negative %s", msg.Data.Amount))
+		return ErrInvalidParam(fmt.Sprintf("amount cannot be negative %s", msg.Data.Amount))
 	}
 
 	return nil

@@ -152,7 +152,11 @@ func (s *Server) readLoop(wsConn *websocket.Conn) {
 		}
 
 		// otherwise, call the usual rpc server to respond
-		err = s.tcpGetAndSendResponse(wsConn, mb)
+		//err = s.tcpGetAndSendResponse(wsConn, mb)
+		//if err != nil {
+		//	s.sendErrResponse(wsConn, err.Error())
+		//}
+		err = s.httpGetAndSendResponse(wsConn, mb)
 		if err != nil {
 			s.sendErrResponse(wsConn, err.Error())
 		}
@@ -207,6 +211,43 @@ func (s *Server) tcpGetAndSendResponse(conn *websocket.Conn, mb []byte) error {
 	if err != nil {
 		return fmt.Errorf("could not read body from response; %s", err)
 	}
+
+	var wsSend interface{}
+	err = json.Unmarshal(body, &wsSend)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal rest-server response; %s", err)
+	}
+
+	return conn.WriteJSON(wsSend)
+}
+
+// httpGetAndSendResponse connects to the rest-server over http, posts a JSON-RPC request, and sends the response
+// to the clients over websockets
+func (s *Server) httpGetAndSendResponse(conn *websocket.Conn, mb []byte) error {
+	addr := strings.Split(s.rpcAddr, "tcp://")
+	if len(addr) != 2 {
+		return fmt.Errorf("invalid laddr %s", s.rpcAddr)
+	}
+
+	buf := &bytes.Buffer{}
+	_, err := buf.Write(mb)
+	if err != nil {
+		return fmt.Errorf("failed to write message; %s", err)
+	}
+
+	req, err := http.NewRequest("POST", "http://" + addr[1], buf)
+	if err != nil {
+		return fmt.Errorf("failed to request; %s", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json;")
+	cli := &http.Client{}
+	resp, err := cli.Do(req)
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("could not read body from response; %s", err)
+	}
+	defer resp.Body.Close()
 
 	var wsSend interface{}
 	err = json.Unmarshal(body, &wsSend)

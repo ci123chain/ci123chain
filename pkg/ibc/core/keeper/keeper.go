@@ -19,7 +19,7 @@ import (
 )
 
 type Keeper struct {
-	cdc *codec.Codec
+	cdc codec.BinaryMarshaler
 	ClientKeeper     clientkeeper.Keeper
 	ConnectionKeeper connectionkeeper.Keeper
 	ChannelKeeper    channelkeeper.Keeper
@@ -27,7 +27,7 @@ type Keeper struct {
 	Router           *porttypes.Router
 }
 
-func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, paramSpace paramtypes.Subspace,
+func NewKeeper(cdc codec.BinaryMarshaler, key sdk.StoreKey, paramSpace paramtypes.Subspace,
 	stakingKeeper clienttypes.StakingKeeper,scopedKeeper capabilitykeeper.ScopedKeeper,) Keeper {
 	clientKeeper := clientkeeper.NewKeeper(cdc, key, paramSpace, stakingKeeper)
 	connectionKeeper := connectionkeeper.NewKeeper(cdc, key, clientKeeper)
@@ -55,7 +55,17 @@ func (k *Keeper) SetRouter(rtr *porttypes.Router) {
 }
 
 func (k Keeper) CreateClient(ctx sdk.Context, msg *clienttypes.MsgCreateClient) (*clienttypes.MsgCreateClientResponse, error) {
-	clientID, err := k.ClientKeeper.CreateClient(ctx, msg.ClientState, msg.ConsensusState)
+	clientState, err := clienttypes.UnpackClientState(msg.ClientState)
+	if err != nil {
+		return nil, err
+	}
+
+	consensusState, err := clienttypes.UnpackConsensusState(msg.ConsensusState)
+	if err != nil {
+		return nil, err
+	}
+
+	clientID, err := k.ClientKeeper.CreateClient(ctx, clientState, consensusState)
 	if err != nil {
 		return nil, err
 	}
@@ -63,8 +73,8 @@ func (k Keeper) CreateClient(ctx sdk.Context, msg *clienttypes.MsgCreateClient) 
 		sdk.NewEvent(
 			clienttypes.EventTypeCreateClient,
 			sdk.NewAttributeString(clienttypes.AttributeKeyClientID, clientID),
-			sdk.NewAttributeString(clienttypes.AttributeKeyClientType, msg.ClientState.ClientType()),
-			sdk.NewAttributeString(clienttypes.AttributeKeyConsensusHeight, msg.ClientState.GetLatestHeight().String()),
+			sdk.NewAttributeString(clienttypes.AttributeKeyClientType, clientState.ClientType()),
+			sdk.NewAttributeString(clienttypes.AttributeKeyConsensusHeight, clientState.GetLatestHeight().String()),
 		),
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
@@ -78,7 +88,12 @@ func (k Keeper) CreateClient(ctx sdk.Context, msg *clienttypes.MsgCreateClient) 
 // UpdateClient defines a rpc handler method for MsgUpdateClient.
 func (k Keeper) UpdateClient(ctx sdk.Context, msg *clienttypes.MsgUpdateClient) (*clienttypes.MsgUpdateClientResponse, error) {
 
-	if err := k.ClientKeeper.UpdateClient(ctx, msg.ClientId, msg.Header); err != nil {
+	header, err := clienttypes.UnpackHeader(msg.Header)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := k.ClientKeeper.UpdateClient(ctx, msg.ClientId, header); err != nil {
 		return nil, err
 	}
 
@@ -123,9 +138,13 @@ func (k Keeper) ConnectionOpenInit(ctx sdk.Context ,
 
 // ConnectionOpenTry defines a rpc handler method for MsgConnectionOpenTry.
 func (k Keeper) ConnectionOpenTry(ctx sdk.Context, msg *connectiontypes.MsgConnectionOpenTry) (*connectiontypes.MsgConnectionOpenTryResponse, error) {
+	targetClient, err := clienttypes.UnpackClientState(msg.ClientState)
+	if err != nil {
+		return nil, sdkerrors.Wrapf(err, "client in msg is not exported.ClientState. invalid client: %v.", targetClient)
+	}
 
 	connectionID, err := k.ConnectionKeeper.ConnOpenTry(
-		ctx, msg.PreviousConnectionId, msg.Counterparty, msg.DelayPeriod, msg.ClientId, msg.ClientState,
+		ctx, msg.PreviousConnectionId, msg.Counterparty, msg.DelayPeriod, msg.ClientId, targetClient,
 		connectiontypes.VersionsToExported(msg.CounterpartyVersions), msg.ProofInit, msg.ProofClient, msg.ProofConsensus,
 		msg.ProofHeight, msg.ConsensusHeight,
 	)
@@ -153,9 +172,13 @@ func (k Keeper) ConnectionOpenTry(ctx sdk.Context, msg *connectiontypes.MsgConne
 
 // ConnectionOpenAck defines a rpc handler method for MsgConnectionOpenAck.
 func (k Keeper) ConnectionOpenAck(ctx sdk.Context, msg *connectiontypes.MsgConnectionOpenAck) (*connectiontypes.MsgConnectionOpenAckResponse, error) {
+	targetClient, err := clienttypes.UnpackClientState(msg.ClientState)
+	if err != nil {
+		return nil, sdkerrors.Wrapf(err, "client in msg is not exported.ClientState. invalid client: %v", targetClient)
+	}
 
 	if err := k.ConnectionKeeper.ConnOpenAck(
-		ctx, msg.ConnectionId, msg.ClientState, msg.Version, msg.CounterpartyConnectionId,
+		ctx, msg.ConnectionId, targetClient, msg.Version, msg.CounterpartyConnectionId,
 		msg.ProofTry, msg.ProofClient, msg.ProofConsensus,
 		msg.ProofHeight, msg.ConsensusHeight,
 	); err != nil {

@@ -33,8 +33,7 @@ func (sjob *SpecificJob) Do() {
 		}
 	}
 	resultBytes := sjob.Proxy.Handle(sjob.Request, sjob.BackEnds, sjob.RequestParams)
-
-	logger.Info("===\n Request for : %s; Params: %v;  response: %v", sjob.Request.URL.String(), sjob.RequestParams, string(resultBytes))
+	logger.Debug("===\n Request for : %s; Params: %v;  response: %v", sjob.Request.URL.String(), sjob.RequestParams, string(resultBytes))
 }
 
 func NewSpecificJob(r *http.Request, backends []types.Instance) *SpecificJob {
