@@ -35,6 +35,10 @@ func ToArrays(signatures []GravitySignature) GravitySignatureArrays {
 			v = append(v, val.V.Bytes()[0])
 			r = append(r, val.R.Bytes())
 			s = append(s, val.S.Bytes())
+		} else {
+			v = append(v, 0)
+			r = append(r, []byte{0})
+			s = append(s, []byte{0})
 		}
 	}
 
