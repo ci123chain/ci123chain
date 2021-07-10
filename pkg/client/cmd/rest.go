@@ -34,13 +34,13 @@ import (
 	ibctransferRest "github.com/ci123chain/ci123chain/pkg/ibc/application/transfer/client/rest"
 	ibccore "github.com/ci123chain/ci123chain/pkg/ibc/core/client/rest"
 
+	gRest "github.com/ci123chain/ci123chain/pkg/gravity/client/rest"
 	iRest "github.com/ci123chain/ci123chain/pkg/infrastructure/client/rest"
 	mRest "github.com/ci123chain/ci123chain/pkg/mint/client/rest"
 	orQuery "github.com/ci123chain/ci123chain/pkg/order"
 	order "github.com/ci123chain/ci123chain/pkg/order/rest"
 	sRest "github.com/ci123chain/ci123chain/pkg/staking/client/rest"
 	wRest "github.com/ci123chain/ci123chain/pkg/vm/client/rest"
-	gRest "github.com/ci123chain/ci123chain/pkg/gravity/client/rest"
 	"github.com/gorilla/mux"
 
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"

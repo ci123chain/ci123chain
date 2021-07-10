@@ -3,6 +3,7 @@ package websockets
 import (
 	"fmt"
 	"os"
+	"reflect"
 	"sync"
 
 	"github.com/gorilla/websocket"
@@ -175,7 +176,24 @@ func (api *PubSubAPI) subscribeLogs(conn *websocket.Conn, extra interface{}) (rp
 
 			crit.Topics = [][]common.Hash{}
 			for _, topic := range topics {
-				tstr, ok := topic.([]interface{})[0].(string)
+				var isSlice bool
+				var tstr string
+				var ok bool
+				switch reflect.TypeOf(topic).Kind().String() {
+				case "slice":
+					isSlice = true
+				}
+				if isSlice {
+					topicSlice := topic.([]interface{})
+					res := make([]common.Hash, 0)
+					for _, v := range topicSlice {
+						res = append(res, common.HexToHash(v.(string)))
+					}
+					crit.Topics = append(crit.Topics, res)
+					continue
+				}else {
+					tstr, ok = topic.(string)
+				}
 				if !ok {
 					return "", fmt.Errorf("invalid topics")
 				}
