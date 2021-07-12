@@ -17,18 +17,18 @@ const (
 	InstantiateFuncName = "init"
 )
 
-func NewHandler(k *Keeper) sdk.Handler {
+func NewHandler(k Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 		switch tx := msg.(type) {
 		case *wasm.MsgUploadContract:
-			return handleMsgUploadContract(ctx, *k, *tx)
+			return handleMsgUploadContract(ctx, k, *tx)
 		case *wasm.MsgInstantiateContract:
-			return handleMsgInstantiateContract(ctx, *k, *tx)
+			return handleMsgInstantiateContract(ctx, k, *tx)
 		case *wasm.MsgExecuteContract:
-			return handleMsgExecuteContract(ctx, *k, *tx)
+			return handleMsgExecuteContract(ctx, k, *tx)
 		case *wasm.MsgMigrateContract:
-			return handleMsgMigrateContract(ctx, *k, *tx)
+			return handleMsgMigrateContract(ctx, k, *tx)
 		case *evm.MsgEvmTx:
 			return handleMsgEvmTx(ctx, k, *tx)
 		case types.MsgEthereumTx:
@@ -108,7 +108,7 @@ func handleMsgMigrateContract(ctx sdk.Context, k Keeper, msg wasm.MsgMigrateCont
 }
 
 // handleMsgEvmTx handles an Ethereum specific tx
-func handleMsgEvmTx(ctx sdk.Context, k *Keeper, msg evm.MsgEvmTx) (*sdk.Result, error) {
+func handleMsgEvmTx(ctx sdk.Context, k Keeper, msg evm.MsgEvmTx) (*sdk.Result, error) {
 	// parse the chainID from a string to a base-10 integer
 	chainIDEpoch := big.NewInt(util.CHAINID)
 
@@ -155,6 +155,7 @@ func handleMsgEvmTx(ctx sdk.Context, k *Keeper, msg evm.MsgEvmTx) (*sdk.Result, 
 	if !st.Simulate {
 		// update block bloom filter
 		k.Bloom.Or(k.Bloom, executionResult.Bloom)
+
 		// update transaction logs in KVStore
 		err = k.SetLogs(ctx, common.BytesToHash(txHash), executionResult.Logs)
 		if err != nil {
@@ -191,7 +192,7 @@ func handleMsgEvmTx(ctx sdk.Context, k *Keeper, msg evm.MsgEvmTx) (*sdk.Result, 
 	return executionResult.Result, nil
 }
 
-func handleMsgEthereumTx(ctx sdk.Context, k *Keeper, msg types.MsgEthereumTx) (*sdk.Result, error) {
+func handleMsgEthereumTx(ctx sdk.Context, k Keeper, msg types.MsgEthereumTx) (*sdk.Result, error) {
 	// parse the chainID from a string to a base-10 integer
 	chainIDEpoch := big.NewInt(util.CHAINID)
 
@@ -241,6 +242,7 @@ func handleMsgEthereumTx(ctx sdk.Context, k *Keeper, msg types.MsgEthereumTx) (*
 	if !st.Simulate {
 		// update block bloom filter
 		k.Bloom.Or(k.Bloom, executionResult.Bloom)
+
 		// update transaction logs in KVStore
 		err = k.SetLogs(ctx, common.BytesToHash(txHash), executionResult.Logs)
 		if err != nil {

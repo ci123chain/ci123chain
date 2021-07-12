@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
@@ -229,6 +230,8 @@ func queryContractStateAllHandlerFn(cliCtx context.Context) http.HandlerFunc {
 			}
 
 			payload, err := evm.EVMEncode(args)
+			s := hex.EncodeToString(payload)
+			fmt.Println(s)
 			if err != nil {
 				rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrParams, fmt.Sprintf("encode evm callData failed: %v", err.Error())).Error())
 				return
