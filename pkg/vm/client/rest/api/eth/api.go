@@ -13,6 +13,7 @@ import (
 	accounttypes "github.com/ci123chain/ci123chain/pkg/account/types"
 	"github.com/ci123chain/ci123chain/pkg/app/types"
 	clientcontext "github.com/ci123chain/ci123chain/pkg/client/context"
+	"github.com/ci123chain/ci123chain/pkg/libs"
 	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/ci123chain/ci123chain/pkg/vm/evmtypes"
 	vmmodule "github.com/ci123chain/ci123chain/pkg/vm/moduletypes"
@@ -24,10 +25,10 @@ import (
 	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/tendermint/tendermint/libs/log"
+	coretypes "github.com/tendermint/tendermint/rpc/core/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 	"math/big"
 	"os"
-	"time"
 )
 
 const (
@@ -222,24 +223,14 @@ func (api *PublicEthereumAPI) GetBlockByNumber(blockNum BlockNumber, fullTx bool
 	}
 	api.logger.Debug("height", "h", height)
 
-	resBlock, err := api.clientCtx.Client.Block(api.ctx, &height)
-	if err != nil {
-
-		retry := 0
-		for {
-			time.Sleep(time.Second * 1)
-			resBlock, err = api.clientCtx.Client.Block(api.ctx, &height)
-			if err == nil {
-				break
-			}else {
-				retry++
-				if retry == 10 {
-					return nil, evmtypes.ErrGetBlockFailed
-				}
-			}
+	r, _ := libs.RetryI(0, func(retryTimes int) (res interface{}, err error) {
+		res, err = api.clientCtx.Client.Block(api.ctx, &height)
+		if err != nil {
+			return nil, err
 		}
-
-	}
+		return res, nil
+	})
+	resBlock := r.(*coretypes.ResultBlock)
 
 	var transactions []common.Hash
 	for _, tx := range resBlock.Block.Txs {
@@ -719,23 +710,14 @@ func EthBlockFromTendermint(clientCtx clientcontext.Context, block *tmtypes.Bloc
 	gasLimit := DefaultRPCGasLimit
 	gasUsed := big.NewInt(0)
 
-	res, _, _, err := clientCtx.Query(fmt.Sprintf("custom/%s/%s/%d", vmmodule.ModuleName, evmtypes.QueryBloom, block.Height), nil, false)
-	if err != nil {
-		retry := 0
-		for {
-			time.Sleep(time.Second * 1)
-			res, _, _, err = clientCtx.Query(fmt.Sprintf("custom/%s/%s/%d", vmmodule.ModuleName, evmtypes.QueryBloom, block.Height), nil, false)
-			if err == nil {
-				break
-			}else {
-				retry++
-				if retry == 10 {
-					return nil, err
-				}
-			}
+	r, _ := libs.RetryI(0, func(retryTimes int) (res interface{}, err error) {
+		res, _, _, err = clientCtx.Query(fmt.Sprintf("custom/%s/%s/%d", vmmodule.ModuleName, evmtypes.QueryBloom, block.Height), nil, false)
+		if err != nil {
+			return nil, err
 		}
-	}
-
+		return res, nil
+	})
+	res := r.([]byte)
 	var bloomRes evmtypes.QueryBloomFilter
 	types.GetCodec().MustUnmarshalJSON(res, &bloomRes)
 

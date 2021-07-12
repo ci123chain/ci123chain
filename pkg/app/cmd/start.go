@@ -44,6 +44,7 @@ const (
 	flagPvk            = "pvk" //priv_validator_key.json
 	version 		   = "CiChain v1.4.15"
 	flagETHChainID     = "eth_chain_id"
+	flagIteratorLimit  = "iterator_limit"
 )
 
 func startCmd(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Codec) *cobra.Command {
@@ -52,7 +53,9 @@ func startCmd(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Codec) *co
 		Short: "Run the full node",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			id := viper.GetInt64(flagETHChainID)
+			limit := viper.GetInt(flagIteratorLimit)
 			util.Setup(id)
+			util.SetLimit(limit)
 			if !viper.GetBool(flagWithTendermint) {
 				ctx.Logger.Info("Starting ABCI Without Tendermint")
 				return startStandAlone(ctx, appCreator)
@@ -82,6 +85,7 @@ func startCmd(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Codec) *co
 	cmd.Flags().String(flagShardIndex, "", "index of shard")
 	cmd.Flags().String(flagMasterDomain, "", "master node")
 	cmd.Flags().Int64(flagETHChainID, 1, "eth chain id")
+	cmd.Flags().Int(flagIteratorLimit, 10, "eth chain id")
 
 	//cmd.Flags().String(flagLogLevel, "debug", "Run abci app with different log level")
 	tcmd.AddNodeFlags(cmd)

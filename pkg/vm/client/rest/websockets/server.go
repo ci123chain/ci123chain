@@ -93,10 +93,30 @@ func (s *Server) readLoop(wsConn *websocket.Conn) {
 			return
 		}
 
+		s.logger.Info("got client message", "msg", string(mb))
 		var msg map[string]interface{}
 		err = json.Unmarshal(mb, &msg)
 		if err != nil {
-			s.sendErrResponse(wsConn, "invalid request")
+			var batchMsg []JsonrpcMessage
+			err = json.Unmarshal(mb, &batchMsg)
+			if err != nil {
+				s.sendErrResponse(wsConn, "invalid request")
+				continue
+			}
+			for _, v := range batchMsg {
+				batchByte, _ := json.Marshal(v)
+				err = s.httpGetAndSendResponse(wsConn, batchByte)
+				if err != nil {
+					fmt.Println(err.Error())
+					s.sendErrResponse(wsConn, err.Error())
+					continue
+				}
+			}
+			//err = s.httpGetAndSendResponse(wsConn, mb)
+			//if err != nil {
+			//	s.sendErrResponse(wsConn, err.Error())
+			//	continue
+			//}
 			continue
 		}
 

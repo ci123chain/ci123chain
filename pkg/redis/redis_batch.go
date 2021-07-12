@@ -25,7 +25,7 @@ func (rb *redisBatch) Write() error {
 	if rb.batch.docs == nil {
 		return nil
 	}
-	_, err := libs.Retry(0, func(retryTimes int) (bytes []byte, e error) {
+	_, err := libs.RetryI(0, func(retryTimes int) (bytes interface{}, e error) {
 		_, err := rb.batch.Commit()
 		if err != nil {
 			rb.rdb.lg.Error("batch write failed", "Method", "Write",

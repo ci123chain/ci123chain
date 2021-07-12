@@ -113,6 +113,7 @@ func Start() {
 	http.HandleFunc("/healthcheck", healthCheckHandlerFn)
 	http.Handle("/", timeoutHandler)
 	http.HandleFunc("/pubsub", PubSubHandle)
+	http.HandleFunc("/eth/pubsub", EthPubSubHandle)
 	http.HandleFunc("/getAppkeyChannel", appKeyChannelHandlerFn)
 	http.HandleFunc("/getGatewayDomain", gatewayDomainHandlerFn)
 
