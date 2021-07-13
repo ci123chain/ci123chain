@@ -128,6 +128,10 @@ func (r *PubSubRoom) SetEthConnections() (err error) {
 	return err
 }
 
+type PingPongMessage struct {
+	Message string `json:"message"`
+}
+
 func (r *PubSubRoom)Receive(c *websocket.Conn) {
 
 	defer func() {
@@ -143,6 +147,15 @@ func (r *PubSubRoom)Receive(c *websocket.Conn) {
 			logger.Error(fmt.Sprintf("got client message error: %v", err.Error()))
 			_ = c.Close()
 			break
+		}
+		var pingMsg PingPongMessage
+		err = json.Unmarshal(data, &pingMsg)
+		if err == nil && pingMsg.Message == "ping" {
+			_ = c.SetReadDeadline(time.Now().Add(time.Duration(15) * time.Second))
+			_ = c.SetWriteDeadline(time.Now().Add(time.Duration(15) * time.Second))
+			res := PingPongMessage{Message:"pong"}
+			_ = c.WriteJSON(res)
+			continue
 		}
 		logger.Info("receive clients message: %s", string(data))
 		var m ReceiveMessage
@@ -217,6 +230,15 @@ func (r *PubSubRoom) ReceiveEth(c *websocket.Conn) {
 			logger.Error("got client error, client may down already")
 			_ = c.Close()
 			break
+		}
+		var pingMsg PingPongMessage
+		err = json.Unmarshal(data, &pingMsg)
+		if err == nil {
+			_ = c.SetReadDeadline(time.Now().Add(time.Duration(45) * time.Second))
+			_ = c.SetWriteDeadline(time.Now().Add(time.Duration(45) * time.Second))
+			res := PingPongMessage{Message:"pong"}
+			_ = c.WriteJSON(res)
+			continue
 		}
 		var msg EthSubcribeMsg
 		err = json.Unmarshal(data, &msg)
@@ -828,6 +850,7 @@ func rpcAddress(host string) string {
 	res := DefaultTCP
 	str := strings.Split(host, ":")
 	res = res + DefaultPrefix + str[0] + ":" + DefaultPort
+	res = "tcp://localhost:26657"
 	return res
 }
 
