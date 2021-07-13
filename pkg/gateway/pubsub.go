@@ -33,8 +33,8 @@ func PubSubHandle(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write(res)
 		return
 	}
-	_ = conn.SetReadDeadline(time.Now().Add(time.Duration(15) * time.Second))
-	_ = conn.SetWriteDeadline(time.Now().Add(time.Duration(15) * time.Second))
+	_ = conn.SetReadDeadline(time.Now().Add(time.Duration(60) * time.Second))
+	_ = conn.SetWriteDeadline(time.Now().Add(time.Duration(60) * time.Second))
 	//根据订阅的topic来建立新的map.
 	// map [topic] -> conn
 	go pubsubRoom.Receive(conn)

@@ -151,8 +151,8 @@ func (r *PubSubRoom)Receive(c *websocket.Conn) {
 		var pingMsg PingPongMessage
 		err = json.Unmarshal(data, &pingMsg)
 		if err == nil && pingMsg.Message == "ping" {
-			_ = c.SetReadDeadline(time.Now().Add(time.Duration(15) * time.Second))
-			_ = c.SetWriteDeadline(time.Now().Add(time.Duration(15) * time.Second))
+			_ = c.SetReadDeadline(time.Now().Add(time.Duration(60) * time.Second))
+			_ = c.SetWriteDeadline(time.Now().Add(time.Duration(60) * time.Second))
 			res := PingPongMessage{Message:"pong"}
 			_ = c.WriteJSON(res)
 			continue
@@ -234,8 +234,8 @@ func (r *PubSubRoom) ReceiveEth(c *websocket.Conn) {
 		var pingMsg PingPongMessage
 		err = json.Unmarshal(data, &pingMsg)
 		if err == nil {
-			_ = c.SetReadDeadline(time.Now().Add(time.Duration(45) * time.Second))
-			_ = c.SetWriteDeadline(time.Now().Add(time.Duration(45) * time.Second))
+			_ = c.SetReadDeadline(time.Now().Add(time.Duration(60) * time.Second))
+			_ = c.SetWriteDeadline(time.Now().Add(time.Duration(60) * time.Second))
 			res := PingPongMessage{Message:"pong"}
 			_ = c.WriteJSON(res)
 			continue
