@@ -2,7 +2,7 @@ module chain_proxy
 
 go 1.13
 
-require github.com/ci123chain/ci123chain v1.5.3-rc2.0.20210713032804-f4fc1052d1d7
+require github.com/ci123chain/ci123chain v1.5.3-rc2.0.20210713053525-e339e718f461
 
 replace (
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
