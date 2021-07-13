@@ -20,6 +20,7 @@ const (
 	QueryLogs            = "logs"
 	QueryAccount         = "account"
 	QueryExportAccount   = "exportAccount"
+	QuerySectionBloom    = "sectionBloom"
 )
 
 // QueryResProtocolVersion is response types for protocol version query
@@ -102,3 +103,11 @@ type QueryResAccount struct {
 }
 
 type QueryResExportAccount = GenesisAccount
+
+//QuerySectionBloom
+type QuerySectionBloomReq struct {
+	Sections []uint64 `json:"sections"`
+	Filter uint `json:"filter"`
+}
+
+type QuerySectionBloomRes map[uint64][]byte

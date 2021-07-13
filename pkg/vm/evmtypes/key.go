@@ -10,6 +10,8 @@ const (
 	ModuleName = "evm"
 )
 
+const SectionSize = 4096
+
 // KVStore key prefixes
 var (
 	KeyPrefixBlockHash   = []byte{0x01}
@@ -18,6 +20,7 @@ var (
 	KeyPrefixCode        = []byte{0x04}
 	KeyPrefixStorage     = []byte{0x05}
 	KeyPrefixChainConfig = []byte{0x06}
+	KeyPrefixSection     = []byte{0x07}
 )
 
 // BloomKey defines the store key for a block Bloom
