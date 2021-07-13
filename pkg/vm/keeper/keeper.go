@@ -706,7 +706,7 @@ var (
 type Generator struct {
 	Blooms   [ethtypes.BloomBitLength][]byte `json:"blooms"`// Rotated blooms for per-bit matching
 	Sections uint  `json:"sections"`                       // Number of sections to batch together
-	NextSec  uint   `json:"next_sec"`                     // Next section to set when adding a bloom
+	//NextSec  uint   `json:"next_sec"`                     // Next section to set when adding a bloom
 }
 
 // NewGenerator creates a rotated bloom generator that can iteratively fill a
@@ -726,15 +726,15 @@ func NewGenerator(sections uint) (*Generator, error) {
 // in memory accordingly.
 func (b *Generator) AddBloom(index uint, bloom ethtypes.Bloom) error {
 	// Make sure we're not adding more bloom filters than our capacity
-	if b.NextSec >= b.Sections {
+	if index >= b.Sections {
 		return errSectionOutOfBounds
 	}
-	if b.NextSec != index {
-		return errors.New("bloom filter with unexpected index")
-	}
+	//if b.NextSec != index {
+	//	return errors.New("bloom filter with unexpected index")
+	//}
 	// Rotate the bloom and insert into our collection
-	byteIndex := b.NextSec / 8
-	bitMask := byte(1) << byte(7-b.NextSec%8)
+	byteIndex := index / 8
+	bitMask := byte(1) << byte(7-index%8)
 
 	for i := 0; i < ethtypes.BloomBitLength; i++ {
 		bloomByteIndex := ethtypes.BloomByteLength - 1 - i/8
@@ -744,7 +744,7 @@ func (b *Generator) AddBloom(index uint, bloom ethtypes.Bloom) error {
 			b.Blooms[i][byteIndex] |= bitMask
 		}
 	}
-	b.NextSec++
+	//b.NextSec++
 
 	return nil
 }
