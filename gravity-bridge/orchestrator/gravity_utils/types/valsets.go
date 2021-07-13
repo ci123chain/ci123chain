@@ -46,6 +46,9 @@ func (v ValSet) getSignatureStatus(signedMsg []byte, sigs []Confirm) (SignatureS
 
 	var out []GravitySignature
 	signatureMap := make(map[common.Address]Confirm)
+	for _, sig := range sigs {
+		signatureMap[sig.GetEthAddress()] = sig
+	}
 	var power_of_good_sigs uint64 = 0;
 	var power_of_unset_keys uint64 = 0;
 	var number_of_unset_key_validators uint64 = 0;

@@ -40,7 +40,7 @@ func CheckForEvents(client *jsonrpc.Client,
 			startingBlock,
 			latestBlock,
 			[]string{contractAddr},
-			[]string{"SendToCosmosEvent(address,address,bytes32,uint256,uint256)"},
+			[]string{"SendToCosmosEvent(address,address,address,uint256,uint256)"},
 			client)
 		if err != nil {
 			return err
@@ -48,7 +48,7 @@ func CheckForEvents(client *jsonrpc.Client,
 		return events
 	}).Await()
 
-	lg.Info(fmt.Sprintf("Deposits %v", getDeposits))
+
 	depositsEvents, okd := getDeposits.([]*web3.Log)
 
 	getBatches := gravity_utils.Exec(func() interface{} {
@@ -64,7 +64,6 @@ func CheckForEvents(client *jsonrpc.Client,
 		return events
 	}).Await()
 
-	lg.Info(fmt.Sprintf("Batches %v", getBatches))
 	batchEvents, okb := getBatches.([]*web3.Log)
 
 	getValsets := gravity_utils.Exec(func() interface{} {
@@ -80,7 +79,6 @@ func CheckForEvents(client *jsonrpc.Client,
 		return events
 	}).Await()
 
-	lg.Info(fmt.Sprintf("Valsets %v", getValsets))
 	valsetsEvents, okv := getValsets.([]*web3.Log)
 
 	getErc20Deployed := gravity_utils.Exec(func() interface{} {
@@ -96,7 +94,6 @@ func CheckForEvents(client *jsonrpc.Client,
 		return events
 	}).Await()
 
-	lg.Info(fmt.Sprintf("Erc20 Deployments %v", getErc20Deployed))
 	erc20DeployedEvents, oke := getErc20Deployed.([]*web3.Log)
 
 	getLogicCallExecuted := gravity_utils.Exec(func() interface{} {
@@ -112,7 +109,6 @@ func CheckForEvents(client *jsonrpc.Client,
 		return events
 	}).Await()
 
-	lg.Info(fmt.Sprintf("Logic call executions %v", getLogicCallExecuted))
 	logicCallExecutedEvents, okl := getLogicCallExecuted.([]*web3.Log)
 
 	if okd && okb && okv && oke && okl {

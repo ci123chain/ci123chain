@@ -49,10 +49,9 @@ func batchByNonceHandler(cliCtx context.Context, storeName string) http.HandlerF
 			return
 		}
 
-		//todo
-		var out types.OutgoingTxBatch
+		var out *types.OutgoingTxBatch
 		cliCtx.Cdc.MustUnmarshalJSON(res, &out)
-		rest.PostProcessResponseBare(w, cliCtx.WithHeight(height), res)
+		rest.PostProcessResponseBare(w, cliCtx.WithHeight(height), out)
 	}
 }
 
@@ -70,10 +69,9 @@ func lastBatchesHandler(cliCtx context.Context, storeName string) http.HandlerFu
 			return
 		}
 
-		//todo
-		var out types.OutgoingTxBatch
+		var out []*types.OutgoingTxBatch
 		cliCtx.Cdc.MustUnmarshalJSON(res, &out)
-		rest.PostProcessResponseBare(w, cliCtx.WithHeight(height), res)
+		rest.PostProcessResponseBare(w, cliCtx.WithHeight(height), out)
 	}
 }
 
@@ -93,11 +91,9 @@ func allValsetConfirmsHandler(cliCtx context.Context, storeName string) http.Han
 			return
 		}
 
-		//todo
-		var out types.OutgoingTxBatch
+		var out []*types.MsgValsetConfirm
 		cliCtx.Cdc.MustUnmarshalJSON(res, &out)
-
-		rest.PostProcessResponseBare(w, cliCtx.WithHeight(height), res)
+		rest.PostProcessResponseBare(w, cliCtx.WithHeight(height), out)
 	}
 }
 
@@ -114,14 +110,13 @@ func allBatchConfirmsHandler(cliCtx context.Context, storeName string) http.Hand
 			return
 		}
 		if len(res) == 0 {
-			rest.WriteErrorRes(w, "valset confirms not found")
+			rest.WriteErrorRes(w, "batch confirms not found")
 			return
 		}
 
-		//todo
-		var out types.OutgoingTxBatch
+		var out []types.MsgConfirmBatch
 		cliCtx.Cdc.MustUnmarshalJSON(res, &out)
-		rest.PostProcessResponseBare(w, cliCtx.WithHeight(height), res)
+		rest.PostProcessResponseBare(w, cliCtx.WithHeight(height), out)
 	}
 }
 
@@ -175,13 +170,13 @@ func lastBatchesByAddressHandler(cliCtx context.Context, storeName string) http.
 			return
 		}
 		if len(res) == 0 {
-			rest.WriteErrorRes(w, "no pending valset requests found")
+			rest.WriteErrorRes(w, "no pending batch requests found")
 			return
 		}
 
 		var out types.OutgoingTxBatch
 		cliCtx.Cdc.MustUnmarshalJSON(res, &out)
-		rest.PostProcessResponseBare(w, cliCtx.WithHeight(height), res)
+		rest.PostProcessResponseBare(w, cliCtx.WithHeight(height), out)
 	}
 }
 
@@ -222,7 +217,7 @@ func currentValsetHandler(cliCtx context.Context, storeName string) http.Handler
 		}
 		var out types.Valset
 		cliCtx.Cdc.MustUnmarshalJSON(res, &out)
-		rest.PostProcessResponseBare(w, cliCtx.WithHeight(height), res)
+		rest.PostProcessResponseBare(w, cliCtx.WithHeight(height), out)
 	}
 }
 

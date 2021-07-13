@@ -182,19 +182,20 @@ func (v Valset) GetCheckpoint(gravityIDstring string) []byte {
 	// it gets encoded as a function name which we must then discard.
 	bytes, packErr := contractAbi.Pack("checkpoint", gravityID, checkpoint, big.NewInt(int64(v.Nonce)), memberAddresses, convertedPowers)
 
-	fmt.Println("----------------")
-	fmt.Println(gravityIDstring)
-	fmt.Println(gravityID)
-	fmt.Println(checkpoint)
-	fmt.Println(v.Nonce)
-	fmt.Println(memberAddresses)
-	fmt.Println(convertedPowers)
-	fmt.Println("----------------")
-	fmt.Println(bytes)
-	fmt.Println(string(bytes))
-	fmt.Println(bytes[4:])
-	fmt.Println(string(bytes[4:]))
-	fmt.Println("----------------")
+	//fmt.Println("----------------")
+	//fmt.Println(gravityIDstring)
+	//fmt.Println(gravityID)
+	//fmt.Println(checkpoint)
+	//fmt.Println(v.Nonce)
+	//fmt.Println(memberAddresses)
+	//fmt.Println(convertedPowers)
+	//fmt.Println("----------------")
+	//fmt.Println(bytes)
+	//fmt.Println(string(bytes))
+	//fmt.Println(bytes[4:])
+	//fmt.Println(string(bytes[4:]))
+	//fmt.Println("----------------")
+
 	// this should never happen outside of test since any case that could crash on encoding
 	// should be filtered above.
 	if packErr != nil {
