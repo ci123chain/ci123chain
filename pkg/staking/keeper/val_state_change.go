@@ -6,7 +6,6 @@ import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/libs/sortition"
 	"github.com/ci123chain/ci123chain/pkg/staking/types"
-	gogotypes "github.com/gogo/protobuf/types"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
 	"sort"
 )
@@ -135,16 +134,16 @@ func (k StakingKeeper) ApplyAndReturnValidatorSetUpdates(ctx sdk.Context) (updat
 		// fetch the old power bytes
 		var valAddrBytes [sdk.AddrLen]byte
 		copy(valAddrBytes[:], valAddr.Bytes()[:])
-		oldPowerBytes, found := last[valAddrBytes]
+		//oldPowerBytes, found := last[valAddrBytes]
 
 		newPower := validator.ConsensusPower()
-		newPowerBytes := k.cdc.MustMarshalBinaryLengthPrefixed(&gogotypes.Int64Value{Value: newPower})
-
-		// update the validator set if power has changed
-		if !found || !bytes.Equal(oldPowerBytes, newPowerBytes) {
+		//newPowerBytes := k.cdc.MustMarshalBinaryLengthPrefixed(&gogotypes.Int64Value{Value: newPower})
+		//
+		//// update the validator set if power has changed
+		//if !found || !bytes.Equal(oldPowerBytes, newPowerBytes) {
 			typeValidators = append(typeValidators, validator)
 			k.SetLastValidatorPower(ctx, valAddr, newPower)
-		}
+		//}
 
 		delete(last, valAddrBytes)
 
@@ -152,21 +151,36 @@ func (k StakingKeeper) ApplyAndReturnValidatorSetUpdates(ctx sdk.Context) (updat
 		totalPower = totalPower.Add(sdk.NewInt(newPower))
 	}
 
+	vrfUpdate := false
 	for _, validator := range typeValidators {
 		// vrf filter
 		header := ctx.BlockHeader()
-		t := 1
-		vrfNum := 26
+
+		if header.Random == nil {
+			updates = append(updates, validator.ABCIValidatorUpdate())
+			continue
+		}
+
+		vrfNum := totalPower.Int64() / 2
+		_ = validator.GetConsPubKey().Bytes()
+
 		_, j := sortition.Sortition(
-			validator.GetConsPubKey().Bytes(), header.Random.Seed, int64(t),
-			int64(vrfNum), validator.GetConsensusPower(), sdk.TokensToConsensusPower(totalPower))
+			validator.GetConsPubKey().Bytes(), header.Random.Seed, 1,
+			vrfNum, validator.GetConsensusPower(), totalPower.Int64())
 		if j > 0 {
 			v := validator.ABCIValidatorUpdate()
 			v.Power = int64(j)
 			updates = append(updates, v)
+			vrfUpdate = true
 		} else {
 			updates = append(updates, validator.ABCIValidatorUpdateZero())
 		}
+		k.Logger(ctx).Info("update validators:", "old power", validator.GetConsensusPower(), "new power", j,  "address", validator.GetConsAddress())
+
+	}
+
+	if !vrfUpdate {
+		updates = []abcitypes.ValidatorUpdate{}
 	}
 
 
@@ -206,9 +220,9 @@ func (k StakingKeeper) ApplyAndReturnValidatorSetUpdates(ctx sdk.Context) (updat
 	if len(updates) > 0 {
 		k.SetLastTotalPower(ctx, totalPower)
 	}
-
 	return updates
 }
+
 
 // perform all the store operations for when a validator status becomes bonded
 func (k StakingKeeper) bondValidator(ctx sdk.Context, validator types.Validator) types.Validator {

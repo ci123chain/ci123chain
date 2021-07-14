@@ -3,7 +3,6 @@ package sortition
 import (
 	"encoding/hex"
 	"errors"
-	"fmt"
 	utils "github.com/tendermint/tendermint/vrf/ed25519"
 	"math/big"
 )
@@ -55,7 +54,7 @@ func Sortition(key []byte, seed []byte, t, s, w, W int64) (hash []byte, j uint) 
 			}
 		}
 
-		fmt.Printf("[j=%d]lot: %.2f, section: %.2f, hash: %v\n", j, lot, section, new(big.Int).SetBytes(hash))
+		//fmt.Printf("[j=%d]lot: %.2f, section: %.2f, hash: %v\n", j, lot, section, new(big.Int).SetBytes(hash))
 	}
 
 	return

@@ -54,11 +54,11 @@ func EthPubSubHandle(w http.ResponseWriter, r *http.Request) {
 
 
 func checkBackend() {
-	t := time.NewTicker(time.Second * 7)
+	t := time.NewTicker(time.Second * 10)
 	for {
 		select {
 		case <-t.C:
-			logger.Info("Start backend check...")
+			logger.Debug("Start backend check...")
 			var connectErr bool
 			for k, v := range pubsubRoom.Connections {
 				_, err := v.Health(context.Background())
@@ -89,7 +89,7 @@ func checkBackend() {
 					pubsubRoom.AddShard()
 				}
 			}
-			logger.Info("Backend check completed")
+			logger.Debug("Backend check completed")
 		}
 	}
 }

@@ -23,7 +23,7 @@ const (
 	flagLogLevel = "log_level"
 	HomeFlag     = "home"
 	//logDEBUG     = "main:debug,state:debug,ibc:debug,*:error"
-	logINFO      = "state:info,x/ibc/client:info,x/ibc/connection:info,x/ibc/channel:info,*:error"
+	logINFO      = "state:info,x/staking:info,x/ibc/client:info,x/ibc/connection:info,x/ibc/channel:info,*:error"
 	logDEBUG      = "*:debug"
 	//logINFO      = "*:info"
 	logERROR     = "*:error"
