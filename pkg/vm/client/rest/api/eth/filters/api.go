@@ -431,7 +431,7 @@ func (api *PublicFilterAPI) GetLogs(ctx context.Context, crit filters.FilterCrit
 		if crit.FromBlock != nil {
 			begin = crit.FromBlock.Int64()
 		}
-		end := begin + 1
+		end := rpc.LatestBlockNumber.Int64()
 		if crit.ToBlock != nil {
 			end = crit.ToBlock.Int64()
 		}
