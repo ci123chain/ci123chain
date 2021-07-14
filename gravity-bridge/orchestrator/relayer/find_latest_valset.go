@@ -147,10 +147,10 @@ func checkIfValsetsDiffer(cosmosValset, ethereumValset *types.ValSet) bool {
 	eValSet := ethereumValset.Members
 
 	sort.SliceStable(cValSet, func(i, j int) bool {
-		if cValSet[i].Power < cValSet[j].Power {
+		if cValSet[i].Power > cValSet[j].Power {
 			return true
 		} else if cValSet[i].Power == cValSet[j].Power {
-			if bytes.Compare(cValSet[i].EthAddress.Bytes(), cValSet[j].EthAddress.Bytes()) < 0 {
+			if bytes.Compare(cValSet[i].EthAddress.Bytes(), cValSet[j].EthAddress.Bytes()) > 0 {
 				return true
 			}
 		}
@@ -158,10 +158,10 @@ func checkIfValsetsDiffer(cosmosValset, ethereumValset *types.ValSet) bool {
 	})
 
 	sort.SliceStable(eValSet, func(i, j int) bool {
-		if eValSet[i].Power < eValSet[j].Power {
+		if eValSet[i].Power > eValSet[j].Power {
 			return true
 		} else if eValSet[i].Power == eValSet[j].Power {
-			if bytes.Compare(eValSet[i].EthAddress.Bytes(), eValSet[j].EthAddress.Bytes()) < 0 {
+			if bytes.Compare(eValSet[i].EthAddress.Bytes(), eValSet[j].EthAddress.Bytes()) > 0 {
 				return true
 			}
 		}

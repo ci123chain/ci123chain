@@ -33,8 +33,8 @@ func ToArrays(signatures []GravitySignature) GravitySignatureArrays {
 		powers = append(powers, val.Power)
 		if val.V != nil && val.R != nil && val.S != nil{
 			v = append(v, val.V.Bytes()[0])
-			r = append(r, val.R.Bytes())
-			s = append(s, val.S.Bytes())
+			r = append(r, common.LeftPadBytes(val.R.Bytes(),32))
+			s = append(s, common.LeftPadBytes(val.S.Bytes(),32))
 		} else {
 			v = append(v, 0)
 			r = append(r, []byte{0})
