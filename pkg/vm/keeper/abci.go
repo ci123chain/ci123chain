@@ -51,5 +51,8 @@ func (k *Keeper) EndBlock(ctx sdk.Context, req abci.RequestEndBlock) []abci.Vali
 	bloom := ethtypes.BytesToBloom(k.Bloom.Bytes())
 	k.SetBlockBloom(ctx, req.Height, bloom)
 
+	// set section
+	k.RecordSection(ctx, req.Height, bloom)
+
 	return nil
 }
