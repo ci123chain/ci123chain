@@ -144,7 +144,9 @@ func (k Keeper) IsTombstoned(ctx sdk.Context, consAddr sdk.AccAddress) bool {
 func (k Keeper) SetValidatorMissedBlockBitArray(ctx sdk.Context, address sdk.AccAddress, index int64, missed bool) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshalBinaryBare(&gogotypes.BoolValue{Value: missed})
-	store.Set(types.ValidatorMissedBlockBitArrayKey(address, index), bz)
+	if bz != nil {
+		store.Set(types.ValidatorMissedBlockBitArrayKey(address, index), bz)
+	}
 }
 
 // clearValidatorMissedBlockBitArray deletes every instance of ValidatorMissedBlockBitArray in the store
