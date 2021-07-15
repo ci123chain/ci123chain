@@ -14,11 +14,11 @@ type MsgRedelegate struct {
 	Amount               types.Coin	 		 `json:"amount"`
 }
 
-func NewMsgRedelegate(_ types.AccAddress, delegateAddr types.AccAddress, validatorSrcAddr,
+func NewMsgRedelegate(fromAddr types.AccAddress, delegateAddr types.AccAddress, validatorSrcAddr,
 	validatorDstAddr types.AccAddress, amount types.Coin) *MsgRedelegate {
 	//
 	return &MsgRedelegate{
-
+		FromAddress: 		 fromAddr,
 		DelegatorAddress:    delegateAddr,
 		ValidatorSrcAddress: validatorSrcAddr,
 		ValidatorDstAddress: validatorDstAddr,

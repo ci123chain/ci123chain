@@ -2,11 +2,13 @@ package filters
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/libs"
 	vmmodule "github.com/ci123chain/ci123chain/pkg/vm/moduletypes"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/core/bloombits"
 	"github.com/tendermint/tendermint/libs/log"
 	"os"
 	"sync"
@@ -37,6 +39,8 @@ type Backend interface {
 
 	GetTransactionLogs(txHash common.Hash) ([]*ethtypes.Log, error)
 	BloomStatus() (uint64, uint64)
+	ServiceFilter(ctx context.Context, session *bloombits.MatcherSession)
+	GetSectionBloom(sections []uint64, filter uint) (*evmtypes.QuerySectionBloomRes, error)
 }
 
 // consider a filter inactive if it has not been polled for within deadline
@@ -427,7 +431,7 @@ func (api *PublicFilterAPI) GetLogs(ctx context.Context, crit filters.FilterCrit
 		if crit.FromBlock != nil {
 			begin = crit.FromBlock.Int64()
 		}
-		end := begin + 1
+		end := rpc.LatestBlockNumber.Int64()
 		if crit.ToBlock != nil {
 			end = crit.ToBlock.Int64()
 		}
@@ -548,16 +552,20 @@ type EthBackend struct {
 	clientCtx clientcontext.Context
 	logger    log.Logger
 	gasLimit  int64
+	bloomRequests     chan chan *bloombits.Retrieval
 }
 
 // New creates a new EthBackend instance
 func New(clientCtx clientcontext.Context) *EthBackend {
-	return &EthBackend{
+	backend := &EthBackend{
 		ctx:       context.Background(),
 		clientCtx: clientCtx,
 		logger:    log.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", "json-rpc"),
 		gasLimit:  int64(^uint32(0)),
+		bloomRequests: make(chan chan *bloombits.Retrieval),
 	}
+	backend.startBloomHandle()
+	return backend
 }
 
 // BlockNumber returns the current block number.
@@ -594,7 +602,7 @@ func (b *EthBackend) GetBlockByNumber(blockNum rpctypes.BlockNumber, fullTx bool
 		return nil, err
 	}
 
-	resBlock := res.(coretypes.ResultBlock)
+	resBlock := res.(*coretypes.ResultBlock)
 
 	var transactions []common.Hash
 	for _, tx := range resBlock.Block.Txs {
@@ -740,8 +748,85 @@ func (b *EthBackend) GetLogs(blockHash common.Hash) ([][]*ethtypes.Log, error) {
 	return blockLogs, nil
 }
 
+// GetLogs returns all the logs from all the ethereum transactions in a block.
+func (b *EthBackend) GetSectionBloom(sections []uint64, filter uint) (*evmtypes.QuerySectionBloomRes, error) {
+	param := evmtypes.QuerySectionBloomReq{
+		Sections: sections,
+		Filter:    filter,
+	}
+	bz, err := json.Marshal(&param)
+	if err != nil {
+		return nil, err
+	}
+	res, _, _, err := b.clientCtx.Query(fmt.Sprintf("custom/%s/%s", vmmodule.ModuleName, evmtypes.QuerySectionBloom), bz, false)
+	if err != nil {
+		return nil, err
+	}
+
+	out := evmtypes.QuerySectionBloomRes{}
+	if err := json.Unmarshal(res, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 // BloomStatus returns the BloomBitsBlocks and the number of processed sections maintained
 // by the chain indexer.
 func (b *EthBackend) BloomStatus() (uint64, uint64) {
-	return 4096, 0
+	return evmtypes.SectionSize, 0
+}
+
+func (b *EthBackend) ServiceFilter(ctx context.Context, session *bloombits.MatcherSession) {
+	for i := 0; i < bloomFilterThreads; i++ {
+		go session.Multiplex(bloomRetrievalBatch, bloomRetrievalWait, b.bloomRequests)
+	}
+}
+const (
+	// bloomServiceThreads is the number of goroutines used globally by an Ethereum
+	// instance to service bloombits lookups for all running filters.
+	bloomServiceThreads = 16
+
+	// bloomFilterThreads is the number of goroutines used locally per filter to
+	// multiplex requests onto the global servicing goroutines.
+	bloomFilterThreads = 3
+
+	// bloomRetrievalBatch is the maximum number of bloom bit retrievals to service
+	// in a single batch.
+	bloomRetrievalBatch = 16
+
+	// bloomRetrievalWait is the maximum time to wait for enough bloom bit requests
+	// to accumulate request an entire batch (avoiding hysteresis).
+	bloomRetrievalWait = time.Duration(0)
+)
+
+func (b *EthBackend) startBloomHandle() {
+	for i := 0; i < bloomServiceThreads; i++ {
+		go func() {
+			for {
+				select {
+				//case <-eth.closeBloomHandler:
+				//	return
+
+				case request := <-b.bloomRequests:
+					task := <-request
+					task.Bitsets = make([][]byte, len(task.Sections))
+					//get section
+					blooms, err := b.GetSectionBloom(task.Sections, task.Bit)
+					if err != nil {
+						task.Error = err
+					} else {
+						for i, section := range task.Sections {
+							bitset, ok := (*blooms)[section]
+							if ok {
+								task.Bitsets[i] = bitset
+							} else {
+								task.Bitsets[i] = make([]byte, 1)
+							}
+						}
+					}
+					request <- task
+				}
+			}
+		}()
+	}
 }

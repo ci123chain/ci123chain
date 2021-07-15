@@ -9,7 +9,6 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/client/helper"
 	transfer2 "github.com/ci123chain/ci123chain/pkg/transfer"
-	"github.com/ci123chain/ci123chain/pkg/util"
 	"net/http"
 	"strconv"
 )
@@ -24,11 +23,7 @@ func SendRequestHandlerFn(cliCtx context.Context, writer http.ResponseWriter, re
 		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, err.Error()).Error())
 		return
 	}
-	fabric := request.FormValue("fabric")
-	isFabric, err := util.CheckFabric(fabric)
-	if err != nil {
-		isFabric = false
-	}
+
 	denom := request.FormValue("denom")
 	to := sdk.HexToAddress(request.FormValue("to"))
 	//amount, err := strconv.ParseUint(request.FormValue("amount"), 10, 64)
@@ -52,7 +47,7 @@ func SendRequestHandlerFn(cliCtx context.Context, writer http.ResponseWriter, re
 		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid amount").Error())
 		return
 	}
-	msg := transfer2.NewMsgTransfer(from, to, sdk.NewCoins(coin), isFabric)
+	msg := transfer2.NewMsgTransfer(from, to, sdk.NewCoins(coin))
 	if !broadcast {
 		rest.PostProcessResponseBare(writer, cliCtx, hex.EncodeToString(msg.Bytes()))
 		return

@@ -70,11 +70,10 @@ var transferCmd = &cobra.Command{
 			return sdkerrors.Wrap(sdkerrors.ErrParams, fmt.Sprintf("invalid amount %s", viper.GetString(flagAmount)))
 		}
 		privKey := viper.GetString(flagKey)
-		isFabric := viper.GetBool(flagIsFabric)
 
 		//coin := sdk.NewUInt64Coin(d, amount)
 		coin := sdk.NewCoin(d, sdk.NewIntFromBigInt(amount))
-		msg := transfer2.NewMsgTransfer(from, tos[0], sdk.NewCoins(coin), isFabric)
+		msg := transfer2.NewMsgTransfer(from, tos[0], sdk.NewCoins(coin))
 		nonce, err := transfer2.GetNonceByAddress(from)
 		if err != nil {
 			return sdkerrors.Wrap(sdkerrors.ErrParams, "invalid nonce")

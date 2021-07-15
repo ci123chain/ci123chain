@@ -9,8 +9,6 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/account/exported"
 	"github.com/ci123chain/ci123chain/pkg/account/keeper"
 	"github.com/ci123chain/ci123chain/pkg/account/types"
-	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
-	"github.com/ci123chain/ci123chain/pkg/transaction"
 	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/pkg/errors"
 	"github.com/tendermint/tendermint/crypto/merkle"
@@ -182,36 +180,6 @@ func (ctx Context) PrintOutput(toPrint fmt.Stringer) (err error) {
 
 	fmt.Println(toPrint)
 	return
-}
-
-
-func (ctx *Context) SignWithTx(tx transaction.Transaction, privKey []byte, fabricMode bool) (transaction.Transaction, error) {
-
-	var signature []byte
-	var err error
-
-	if fabricMode {
-		fab := cryptosuit.NewFabSignIdentity()
-		pubkey, err := fab.GetPubKey(privKey)
-		if err != nil {
-			return nil, err
-		}
-		tx.SetPubKey(pubkey)
-		signature, err = fab.Sign(tx.GetSignBytes(), privKey)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		//cryptosuit.NewETHSignIdentity().Sign(tx.GetSignBytes(), addr)
-		eth := cryptosuit.NewETHSignIdentity()
-		signature, err = eth.Sign(tx.GetSignBytes(), privKey)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	tx.SetSignature(signature)
-	return tx, nil
 }
 
 // broadcastTx

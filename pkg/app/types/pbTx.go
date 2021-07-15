@@ -91,25 +91,6 @@ func (m *PbTx) GetMsgs() []types2.Msg {
 	return nil
 }
 
-
-func (tx *PbTx) VerifySignature(hash []byte, fabricMode bool) error {
-
-	if fabricMode {
-		fab := cryptosuit.NewFabSignIdentity()
-		valid, err := fab.Verifier(hash, tx.Signature, tx.PubKey, tx.From)
-		if !valid || err != nil {
-			return sdkerrors.Wrap(sdkerrors.ErrInternal, "verified failed")
-		}
-	} else {
-		eth := cryptosuit.NewETHSignIdentity()
-		valid, err := eth.Verifier(hash, tx.Signature, nil, tx.From)
-		if !valid || err != nil {
-			return sdkerrors.Wrap(sdkerrors.ErrInternal, "verified failed")
-		}
-	}
-	return nil
-}
-
 func SignPbTx(from types2.AccAddress, nonce, gas uint64, msgs []types2.PbMsg, priv string, cdc codec.BinaryMarshaler) ([]byte, error){
 	tx := NewPbTx(from, nonce, gas, msgs)
 	var signature []byte

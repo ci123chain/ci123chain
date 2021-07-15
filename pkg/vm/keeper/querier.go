@@ -32,6 +32,8 @@ func NewQuerier(k Keeper) sdk.Querier {
 			return queryCode(ctx, path, k)
 		case evmtypes.QueryTransactionLogs:
 			return queryTransactionLogs(ctx, path, k)
+		case evmtypes.QuerySectionBloom:
+			return querySectionBloom(ctx, req, k)
 		default:
 			return nil, types.ErrInvalidEndPoint
 		}
@@ -183,6 +185,32 @@ func queryTransactionLogs(ctx sdk.Context, path []string, keeper Keeper) ([]byte
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, res)
 	if err != nil {
 		return nil, types.ErrCdcUnMarshalFailed
+	}
+
+	return bz, nil
+}
+
+func querySectionBloom(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, error) {
+	var params evmtypes.QuerySectionBloomReq
+	err := json.Unmarshal(req.Data, &params)
+	if err != nil {
+		return nil, types.ErrCdcUnMarshalFailed
+	}
+
+	data := evmtypes.QuerySectionBloomRes{}
+
+	for _, v := range params.Sections {
+		bloom, found := k.GetSectionBloom(ctx, int64(v))
+		if !found {
+			continue
+		}
+		bloomIdx, _ := bloom.Bitset(params.Filter)
+		data[v] = bloomIdx
+	}
+
+	bz, err := json.Marshal(&data)
+	if err != nil {
+		return nil, types.ErrJsonUnmarshalFailed
 	}
 
 	return bz, nil

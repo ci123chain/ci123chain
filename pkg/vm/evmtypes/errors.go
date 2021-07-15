@@ -31,6 +31,9 @@ const (
 	CodeClientQueryTxFailed  CodeType = 1719
 	CodeAccountExisted       CodeType = 1720
 	CodeImportRawKeyFailed   CodeType = 1721
+	CodeBloomFilterSectionNum CodeType = 1722
+	CodeSectionOutOfBounds   CodeType = 1723
+	CodeBloomBitOutOfBounds  CodeType = 1724
 )
 
 var (
@@ -55,6 +58,9 @@ var (
 	ErrClientQueryTxFailed = sdkerrors.Register(string(DefaultCodespace), uint32(CodeClientQueryTxFailed), "client query tx failed")
 	ErrAccountExisted = sdkerrors.Register(string(DefaultCodespace), uint32(CodeAccountExisted), "account already exists")
 	ErrImportRawKeyFailed = sdkerrors.Register(string(DefaultCodespace), uint32(CodeImportRawKeyFailed), "import raw key failed")
+	ErrBloomFilterSectionNum = sdkerrors.Register(string(DefaultCodespace), uint32(CodeBloomFilterSectionNum), "section count not multiple of 8")
+	ErrSectionOutOfBounds = sdkerrors.Register(string(DefaultCodespace), uint32(CodeSectionOutOfBounds), "section out of bounds")
+	ErrBloomBitOutOfBounds = sdkerrors.Register(string(DefaultCodespace), uint32(CodeBloomBitOutOfBounds), "bloom bit out of bounds")
 )
 //
 //const (

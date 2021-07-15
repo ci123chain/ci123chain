@@ -87,23 +87,6 @@ func (msg *CommonTx) GetFromAddress() types2.AccAddress{
 	return msg.From
 }
 
-func (tx *CommonTx) VerifySignature(hash []byte, fabricMode bool) error {
-
-	if fabricMode {
-		fab := cryptosuit.NewFabSignIdentity()
-		valid, err := fab.Verifier(hash, tx.Signature, tx.PubKey, tx.From.Bytes())
-		if !valid || err != nil {
-			return ErrInvalidParam("invalid signature")
-		}
-	} else {
-		eth := cryptosuit.NewETHSignIdentity()
-		valid, err := eth.Verifier(hash, tx.Signature, nil, tx.From.Bytes())
-		if !valid || err != nil {
-			return ErrInvalidParam("invalid signature")
-		}
-	}
-	return nil
-}
 
 func SignCommonTx(from types2.AccAddress, nonce, gas uint64, msgs []types2.Msg, priv string, cdc *codec.Codec) ([]byte, error){
 	tx := NewCommonTx(from, nonce, gas, msgs)

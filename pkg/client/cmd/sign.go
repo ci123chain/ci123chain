@@ -6,17 +6,12 @@ import (
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	types2 "github.com/ci123chain/ci123chain/pkg/app/types"
-	"github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/client/helper"
-	"github.com/ci123chain/ci123chain/pkg/transaction"
 	transfer2 "github.com/ci123chain/ci123chain/pkg/transfer"
 	"github.com/ci123chain/ci123chain/pkg/util"
-	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"io/ioutil"
 	"math/big"
 )
 
@@ -32,8 +27,6 @@ func init()  {
 	util.CheckRequiredFlag(signCmd, flagAmount)
 	util.CheckRequiredFlag(signCmd, flagGas)
 }
-
-const isFabric = false
 
 var signCmd = &cobra.Command{
 	Use: "sign",
@@ -64,11 +57,10 @@ var signCmd = &cobra.Command{
 			return errors.New("invalid amount")
 		}
 		privKey := viper.GetString(flagKey)
-		isFabric := viper.GetBool(flagIsFabric)
 
 		//coin := sdk.NewUInt64Coin(d, amount)
 		coin := sdk.NewCoin(d, sdk.NewIntFromBigInt(amount))
-		msg := transfer2.NewMsgTransfer(from, tos[0], sdk.NewCoins(coin), isFabric)
+		msg := transfer2.NewMsgTransfer(from, tos[0], sdk.NewCoins(coin))
 		nonce, err := transfer2.GetNonceByAddress(from)
 		if err != nil {
 			return errors.New("invalid nonce")
@@ -83,22 +75,6 @@ var signCmd = &cobra.Command{
 	},
 }
 
-func getSignedDataWithTx(ctx context.Context, tx transaction.Transaction, password string, from sdk.AccAddress) ([]byte, error) {
-	ks := getDefaultKeystore()
-	acc := accounts.Account{
-		Address: from.Address,
-	}
-	acct, err := ks.Find(acc)
-	if err != nil {
-		return nil, errors.New(fmt.Sprintf("%s address not found", from.Hex()))
-	}
-	keyjson, err := ioutil.ReadFile(acct.URL.Path)
-
-	pkey, err := keystore.DecryptKey(keyjson, password)
-	privByte := crypto.FromECDSA(pkey.PrivateKey)
-	signedtx, err := ctx.SignWithTx(tx, privByte, isFabric)
-	return signedtx.Bytes(), nil
-}
 
 func getDefaultKeystore() *keystore.KeyStore {
 	dir := viper.GetString(helper.FlagHomeDir)
