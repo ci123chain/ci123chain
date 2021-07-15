@@ -13,7 +13,6 @@ import (
 	types2 "github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
 	evm "github.com/ci123chain/ci123chain/pkg/vm/evmtypes"
-	"github.com/ci123chain/ci123chain/pkg/vm/keeper"
 	vmmodule "github.com/ci123chain/ci123chain/pkg/vm/moduletypes"
 	"github.com/ci123chain/ci123chain/pkg/vm/moduletypes/utils"
 	wasmtypes "github.com/ci123chain/ci123chain/pkg/vm/wasmtypes"
@@ -44,30 +43,30 @@ func uploadContractHandler(cliCtx context.Context, w http.ResponseWriter, r *htt
 	}
 
 	var msg sdk.Msg
-	if keeper.IsWasm(code) {
-		wasmCode, err := keeper.UnCompress(code)
-		if err != nil {
-			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrParams, "uncompress code failed").Error())
-			return
-		}
-		codeHash := keeper.MakeCodeHash(wasmCode)
-		params := wasmtypes.NewQueryCodeInfoParams(strings.ToUpper(hex.EncodeToString(codeHash)))
-		bz, Er := cliCtx.Cdc.MarshalJSON(params)
-		if Er != nil {
-			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, Er.Error()).Error())
-			return
-		}
-		res, _, _, Err := cliCtx.Query("/custom/" + vmmodule.ModuleName + "/" + wasmtypes.QueryCodeInfo, bz, false)
-		if Err != nil {
-			rest.WriteErrorRes(w, Err.Error())
-			return
-		}
-		if len(res) > 0 { //already exists
-			rest.PostProcessResponseBare(w, cliCtx, sdk.TxResponse{Code: 0, Data: strings.ToUpper(hex.EncodeToString(codeHash))})
-			return
-		}
-		msg = wasmtypes.NewMsgUploadContract(code, from)
-	} else {
+	//if keeper.IsWasm(code) {
+	//	wasmCode, err := keeper.UnCompress(code)
+	//	if err != nil {
+	//		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrParams, "uncompress code failed").Error())
+	//		return
+	//	}
+	//	codeHash := keeper.MakeCodeHash(wasmCode)
+	//	params := wasmtypes.NewQueryCodeInfoParams(strings.ToUpper(hex.EncodeToString(codeHash)))
+	//	bz, Er := cliCtx.Cdc.MarshalJSON(params)
+	//	if Er != nil {
+	//		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, Er.Error()).Error())
+	//		return
+	//	}
+	//	res, _, _, Err := cliCtx.Query("/custom/" + vmmodule.ModuleName + "/" + wasmtypes.QueryCodeInfo, bz, false)
+	//	if Err != nil {
+	//		rest.WriteErrorRes(w, Err.Error())
+	//		return
+	//	}
+	//	if len(res) > 0 { //already exists
+	//		rest.PostProcessResponseBare(w, cliCtx, sdk.TxResponse{Code: 0, Data: strings.ToUpper(hex.EncodeToString(codeHash))})
+	//		return
+	//	}
+	//	msg = wasmtypes.NewMsgUploadContract(code, from)
+	//} else {
 		amount_str := r.FormValue("amount")
 		amount := new(big.Int)
 		if len(amount_str) < 2 {
@@ -78,7 +77,7 @@ func uploadContractHandler(cliCtx context.Context, w http.ResponseWriter, r *htt
 			amount.SetString(amount_str, 10)
 		}
 		msg = evm.NewMsgEvmTx(from, nonce, nil, amount, gas, big.NewInt(1), code)
-	}
+	//}
 
 	if !broadcast {
 		rest.PostProcessResponseBare(w, cliCtx, hex.EncodeToString(msg.Bytes()))

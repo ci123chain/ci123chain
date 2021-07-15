@@ -34,23 +34,23 @@ func (sink Sink) WriteI32(i int32) {
 	sink.writeLittleEndian(i)
 }
 
-func (sink Sink) WriteI64(i int64) {
-	sink.writeLittleEndian(i)
-}
+//func (sink Sink) WriteI64(i int64) {
+//	sink.writeLittleEndian(i)
+//}
+//
+//func (sink Sink) WriteString(s string) {
+//	sink.WriteU32(uint32(len(s)))
+//	sink.buf.WriteString(s)
+//}
+//
+//func (sink Sink) WriteBytes(b []byte) {
+//	sink.WriteU32(uint32(len(b)))
+//	sink.writeRawBytes(b)
+//}
 
-func (sink Sink) WriteString(s string) {
-	sink.WriteU32(uint32(len(s)))
-	sink.buf.WriteString(s)
-}
-
-func (sink Sink) WriteBytes(b []byte) {
-	sink.WriteU32(uint32(len(b)))
-	sink.writeRawBytes(b)
-}
-
-func (sink Sink) WriteAddress(addr Address) {
-	sink.writeRawBytes(addr[:])
-}
+//func (sink Sink) WriteAddress(addr Address) {
+//	sink.writeRawBytes(addr[:])
+//}
 
 func (sink Sink) writeRawBytes(b []byte) {
 	sink.buf.Write(b)

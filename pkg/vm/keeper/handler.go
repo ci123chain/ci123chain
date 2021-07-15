@@ -6,7 +6,6 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/util"
 	evm "github.com/ci123chain/ci123chain/pkg/vm/evmtypes"
-	wasm "github.com/ci123chain/ci123chain/pkg/vm/wasmtypes"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 	tmtypes "github.com/tendermint/tendermint/types"
@@ -21,14 +20,14 @@ func NewHandler(k *Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 		switch tx := msg.(type) {
-		case *wasm.MsgUploadContract:
-			return handleMsgUploadContract(ctx, *k, *tx)
-		case *wasm.MsgInstantiateContract:
-			return handleMsgInstantiateContract(ctx, *k, *tx)
-		case *wasm.MsgExecuteContract:
-			return handleMsgExecuteContract(ctx, *k, *tx)
-		case *wasm.MsgMigrateContract:
-			return handleMsgMigrateContract(ctx, *k, *tx)
+		//case *wasm.MsgUploadContract:
+		//	return handleMsgUploadContract(ctx, *k, *tx)
+		//case *wasm.MsgInstantiateContract:
+		//	return handleMsgInstantiateContract(ctx, *k, *tx)
+		//case *wasm.MsgExecuteContract:
+		//	return handleMsgExecuteContract(ctx, *k, *tx)
+		//case *wasm.MsgMigrateContract:
+		//	return handleMsgMigrateContract(ctx, *k, *tx)
 		case *evm.MsgEvmTx:
 			return handleMsgEvmTx(ctx, k, *tx)
 		case types.MsgEthereumTx:
@@ -39,73 +38,73 @@ func NewHandler(k *Keeper) sdk.Handler {
 		}
 	}
 }
-
-func handleMsgUploadContract(ctx sdk.Context, k Keeper, msg wasm.MsgUploadContract) (res *sdk.Result, err error) {
-	codeHash, err := k.Upload(ctx, msg.Code, msg.FromAddress)
-	if err != nil {
-		return nil, err
-	}
-	res = &sdk.Result{
-		Data:  codeHash,
-		Events: ctx.EventManager().Events(),
-	}
-	return
-}
-
-func handleMsgInstantiateContract(ctx sdk.Context, k Keeper, msg wasm.MsgInstantiateContract) (res *sdk.Result, err error) {
-	gasLimit := ctx.GasLimit()
-	gasWanted := gasLimit - ctx.GasMeter().GasConsumed()
-
-	args, err := wasm.CallData2Input(msg.Args)
-	if err != nil {
-		return nil, err
-	}
-	contractAddr, err := k.Instantiate(ctx, msg.CodeHash, msg.FromAddress, args, msg.Name, msg.Version, msg.Author, msg.Email, msg.Describe, wasm.EmptyAddress, gasWanted)
-	if err != nil {
-		return nil, err
-	}
-	res = &sdk.Result{
-		Data:  []byte(fmt.Sprintf("%s", contractAddr.String())),
-		Events: ctx.EventManager().Events(),
-	}
-	return
-}
-
-func handleMsgExecuteContract(ctx sdk.Context, k Keeper, msg wasm.MsgExecuteContract) (res *sdk.Result, err error){
-	gasLimit := ctx.GasLimit()
-	gasWanted := gasLimit - ctx.GasMeter().GasConsumed()
-
-	args, err := wasm.CallData2Input(msg.Args)
-	if err != nil {
-		return nil, err
-	}
-	result, Err := k.Execute(ctx, msg.Contract, msg.FromAddress, args, gasWanted)
-	if Err != nil {
-		return nil, Err
-	}
-	res = &result
-	res.Events = ctx.EventManager().Events()
-	return
-}
-
-func handleMsgMigrateContract(ctx sdk.Context, k Keeper, msg wasm.MsgMigrateContract) (res *sdk.Result, err error) {
-	gasLimit := ctx.GasLimit()
-	gasWanted := gasLimit - ctx.GasMeter().GasConsumed()
-
-	args, err := wasm.CallData2Input(msg.Args)
-	if err != nil {
-		return nil, err
-	}
-	contractAddr, err := k.Migrate(ctx, msg.CodeHash, msg.FromAddress, msg.Contract, args, msg.Name, msg.Version, msg.Author, msg.Email, msg.Describe, gasWanted)
-	if err != nil {
-		return nil, err
-	}
-	res = &sdk.Result{
-		Data:  []byte(fmt.Sprintf("%s", contractAddr.String())),
-		Events: ctx.EventManager().Events(),
-	}
-	return
-}
+//
+//func handleMsgUploadContract(ctx sdk.Context, k Keeper, msg wasm.MsgUploadContract) (res *sdk.Result, err error) {
+//	codeHash, err := k.Upload(ctx, msg.Code, msg.FromAddress)
+//	if err != nil {
+//		return nil, err
+//	}
+//	res = &sdk.Result{
+//		Data:  codeHash,
+//		Events: ctx.EventManager().Events(),
+//	}
+//	return
+//}
+//
+//func handleMsgInstantiateContract(ctx sdk.Context, k Keeper, msg wasm.MsgInstantiateContract) (res *sdk.Result, err error) {
+//	gasLimit := ctx.GasLimit()
+//	gasWanted := gasLimit - ctx.GasMeter().GasConsumed()
+//
+//	args, err := wasm.CallData2Input(msg.Args)
+//	if err != nil {
+//		return nil, err
+//	}
+//	contractAddr, err := k.Instantiate(ctx, msg.CodeHash, msg.FromAddress, args, msg.Name, msg.Version, msg.Author, msg.Email, msg.Describe, wasm.EmptyAddress, gasWanted)
+//	if err != nil {
+//		return nil, err
+//	}
+//	res = &sdk.Result{
+//		Data:  []byte(fmt.Sprintf("%s", contractAddr.String())),
+//		Events: ctx.EventManager().Events(),
+//	}
+//	return
+//}
+//
+//func handleMsgExecuteContract(ctx sdk.Context, k Keeper, msg wasm.MsgExecuteContract) (res *sdk.Result, err error){
+//	gasLimit := ctx.GasLimit()
+//	gasWanted := gasLimit - ctx.GasMeter().GasConsumed()
+//
+//	args, err := wasm.CallData2Input(msg.Args)
+//	if err != nil {
+//		return nil, err
+//	}
+//	result, Err := k.Execute(ctx, msg.Contract, msg.FromAddress, args, gasWanted)
+//	if Err != nil {
+//		return nil, Err
+//	}
+//	res = &result
+//	res.Events = ctx.EventManager().Events()
+//	return
+//}
+//
+//func handleMsgMigrateContract(ctx sdk.Context, k Keeper, msg wasm.MsgMigrateContract) (res *sdk.Result, err error) {
+//	gasLimit := ctx.GasLimit()
+//	gasWanted := gasLimit - ctx.GasMeter().GasConsumed()
+//
+//	args, err := wasm.CallData2Input(msg.Args)
+//	if err != nil {
+//		return nil, err
+//	}
+//	contractAddr, err := k.Migrate(ctx, msg.CodeHash, msg.FromAddress, msg.Contract, args, msg.Name, msg.Version, msg.Author, msg.Email, msg.Describe, gasWanted)
+//	if err != nil {
+//		return nil, err
+//	}
+//	res = &sdk.Result{
+//		Data:  []byte(fmt.Sprintf("%s", contractAddr.String())),
+//		Events: ctx.EventManager().Events(),
+//	}
+//	return
+//}
 
 // handleMsgEvmTx handles an Ethereum specific tx
 func handleMsgEvmTx(ctx sdk.Context, k *Keeper, msg evm.MsgEvmTx) (*sdk.Result, error) {

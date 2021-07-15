@@ -39,7 +39,6 @@ require (
 	github.com/tendermint/tm-db v0.6.4
 	github.com/tyler-smith/go-bip39 v1.1.0
 	github.com/umbracle/go-web3 v0.0.0-20210428185842-ec1b314b9425
-	github.com/wasmerio/go-ext-wasm v0.3.1
 	gitlab.oneitfarm.com/bifrost/cilog v0.1.10
 	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad
 	golang.org/x/sync v0.0.0-20201207232520-09787c993a3a
