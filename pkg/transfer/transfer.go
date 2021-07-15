@@ -11,15 +11,13 @@ type MsgTransfer struct {
 	FromAddress sdk.AccAddress  `json:"from"`
 	To     		sdk.AccAddress  `json:"to"`
 	Amount 		sdk.Coins        `json:"amount"`
-	FabricMode 	bool         	`json:"fabric_mode"`
 }
 
-func NewMsgTransfer(from, to sdk.AccAddress, amount sdk.Coins, isFabric bool ) *MsgTransfer {
+func NewMsgTransfer(from, to sdk.AccAddress, amount sdk.Coins ) *MsgTransfer {
 	msg := &MsgTransfer{
 		FromAddress: 	from,
 		To: 			to,
 		Amount: 		amount,
-		FabricMode: 	isFabric,
 	}
 	return msg
 }
