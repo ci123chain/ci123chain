@@ -152,8 +152,7 @@ func (am AppManager) EndBlocker(ctx types.Context, req abci.RequestEndBlock) abc
 			if len(validatorUpdates) > 0 {
 				panic("validator EndBlock updates already set by a previous module")
 			}
-
-			validatorUpdates = moduleValUpdates
+			validatorUpdates = append(validatorUpdates, moduleValUpdates...)
 		}
 	}
 	return abci.ResponseEndBlock{ValidatorUpdates:validatorUpdates, Events: ctx.EventManager().ABCIEvents()}

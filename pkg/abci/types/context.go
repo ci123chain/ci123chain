@@ -49,6 +49,7 @@ func NewContext(ms MultiStore, header types.Header, isCheckTx bool, logger log.L
 	c = c.WithLogger(logger)
 	c = c.WithVoteInfos(nil)
 	c = c.WithGasMeter(NewInfiniteGasMeter())
+	c = c.WithEventManager(NewEventManager())
 	return c
 }
 
