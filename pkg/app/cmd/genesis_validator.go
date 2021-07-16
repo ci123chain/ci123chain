@@ -18,9 +18,11 @@ import (
 	"time"
 )
 
+const (
+	flagMoniker = "moniker"
+)
 
 func AddGenesisValidatorCmd(ctx *app.Context, cdc *codec.Codec) *cobra.Command {
-
 	cmd := &cobra.Command{
 		Use:  "add-genesis-validator [address] [amount] [pub_key] [commission_rate] [commission_max_rate] [commission_max_change_rate]",
 		Short: "Add genesis validator to genesis.json",
@@ -65,7 +67,9 @@ func AddGenesisValidatorCmd(ctx *app.Context, cdc *codec.Codec) *cobra.Command {
 				Status:            1,
 				Tokens:            types.NewInt(coin),
 				DelegatorShares:   types.NewDec(coin),
-				Description:       staking.Description{},
+				Description:       staking.Description{
+					Moniker:	viper.GetString(flagMoniker),
+				},
 				UnbondingHeight:   int64(-1),
 				UnbondingTime:     time.Time{},
 				BondedHeight:     int64(0),
@@ -132,6 +136,7 @@ func AddGenesisValidatorCmd(ctx *app.Context, cdc *codec.Codec) *cobra.Command {
 			return app.ExportGenesisFile(genDoc, genFile)
 		},
 	}
+	cmd.Flags().String(flagMoniker, "", "validator moniker")
 	return cmd
 }
 

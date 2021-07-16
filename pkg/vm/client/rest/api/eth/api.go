@@ -465,7 +465,7 @@ func (api *PublicEthereumAPI) SendRawTransaction(data hexutil.Bytes) (common.Has
 
 	//// TODO: Possibly log the contract creation address (if recipient address is nil) or tx data
 	//// If error is encountered on the node, the broadcast will not return an error
-	res, err := api.clientCtx.BroadcastSignedTx(tx.Bytes())
+	res, err := api.clientCtx.BroadcastSignedDataAsync(tx.Bytes())
 	if err != nil {
 		api.logger.Debug("eth_sendRawTransaction", "err", err)
 		return common.Hash{}, err
