@@ -112,7 +112,8 @@ func (ctx *Context) GetBalanceByAddress(addr sdk.AccAddress, isProve bool, heigh
 	}
 	res, _, proof, err := ctx.Query("/custom/" + types.ModuleName + "/" + types.QueryAccount, bz, isProve)
 	if res == nil{
-		return sdk.NewCoins(), nil, errors.New("The account does not exist")
+		//return sdk.NewCoins(), nil, errors.New("The account does not exist")
+		return sdk.NewCoins(sdk.NewEmptyCoin()), nil, nil
 	}
 	if err != nil {
 		return sdk.NewCoins(), nil, err
@@ -140,7 +141,7 @@ func (ctx *Context) GetNonceByAddress(addr sdk.AccAddress, isProve bool) (uint64
 	}
 	res, _, proof, err := ctx.Query("/custom/" + types.ModuleName + "/" + types.QueryAccount, bz, isProve)
 	if res == nil{
-		return 0, nil, errors.New("The account does not exist")
+		return 0, nil, nil
 	}
 	if err != nil {
 		return 0, nil, err

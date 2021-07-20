@@ -13,8 +13,6 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/gorilla/mux"
-	"github.com/tendermint/go-amino"
-	"github.com/tendermint/tendermint/crypto/ed25519"
 	"net/http"
 )
 
@@ -24,7 +22,6 @@ func RegisterRoutes(cliCtx context.Context, r *mux.Router) {
 	r.HandleFunc("/account/new", NewAccountRequestHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/bank/balance", QueryBalancesRequestHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/account/nonce", QueryNonceRequestHandleFn(cliCtx)).Methods("POST")
-	r.HandleFunc("/node/new_validator", CreateNewValidatorKey(cliCtx)).Methods("POST")
 	r.HandleFunc("/transaction/multi_msgs_tx", rest.MiddleHandler(cliCtx, MultiMsgsRequest, sdkerrors.RootCodespace)).Methods("POST")
 }
 
@@ -154,21 +151,6 @@ func QueryNonceRequestHandleFn(cliCtx context.Context) http.HandlerFunc {
 		}
 		value := NonceData{Nonce:res}
 		resp := rest.BuildQueryRes(height, isProve, value, proof)
-		rest.PostProcessResponseBare(w, cliCtx, resp)
-	}
-}
-
-func CreateNewValidatorKey(cliCtx context.Context) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		validatorKey := ed25519.GenPrivKey()
-
-		cdc := amino.NewCodec()
-		keyByte, err := cdc.MarshalJSON(validatorKey)
-		if err != nil {
-			rest.WriteErrorRes(w, "cdc marshal validatorKey failed")
-		}
-		resp := Key{ValidatorKey:string(keyByte[1:len(keyByte)-1])}
 		rest.PostProcessResponseBare(w, cliCtx, resp)
 	}
 }

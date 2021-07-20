@@ -5,16 +5,15 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/gorilla/mux"
+	"github.com/gorilla/websocket"
+	"github.com/spf13/viper"
 	"io/ioutil"
 	"math/big"
 	"net"
 	"net/http"
 	"os"
 	"strings"
-
-	"github.com/gorilla/mux"
-	"github.com/gorilla/websocket"
-	"github.com/spf13/viper"
 
 	"github.com/tendermint/tendermint/libs/log"
 
@@ -92,8 +91,6 @@ func (s *Server) readLoop(wsConn *websocket.Conn) {
 			s.logger.Error("failed to read message;","error", err.Error())
 			return
 		}
-
-		s.logger.Info("got client message", "msg", string(mb))
 		var msg map[string]interface{}
 		err = json.Unmarshal(mb, &msg)
 		if err != nil {
@@ -107,21 +104,18 @@ func (s *Server) readLoop(wsConn *websocket.Conn) {
 				batchByte, _ := json.Marshal(v)
 				err = s.httpGetAndSendResponse(wsConn, batchByte)
 				if err != nil {
-					fmt.Println(err.Error())
 					s.sendErrResponse(wsConn, err.Error())
 					continue
 				}
 			}
-			//err = s.httpGetAndSendResponse(wsConn, mb)
-			//if err != nil {
-			//	s.sendErrResponse(wsConn, err.Error())
-			//	continue
-			//}
 			continue
 		}
 
 		// check if method == eth_subscribe or eth_unsubscribe
 		method := msg["method"]
+		if method == nil {
+			continue
+		}
 		if method.(string) == "eth_subscribe" {
 			params := msg["params"].([]interface{})
 			if len(params) == 0 {
@@ -134,11 +128,21 @@ func (s *Server) readLoop(wsConn *websocket.Conn) {
 				s.sendErrResponse(wsConn, err.Error())
 				continue
 			}
-
+			//ID, _ := json.Marshal("2")
+			//Id, _ := json.Marshal(string(id))
+			//res := SubscriptionNotification{
+			//	Version: "2.0",
+			//	ID:      ID,
+			//	Result:  Id,
+			//	Params: nil,
+			//	Error:  nil,
+			//	Method: "",
+			//}
+			ID := msg["id"].(float64)
 			res := &SubscriptionResponseJSON{
 				Jsonrpc: "2.0",
-				ID:      1,
-				Result:  id,
+				ID:  ID,
+				Result: id,
 			}
 
 			err = wsConn.WriteJSON(res)
