@@ -3,7 +3,6 @@ package app
 import (
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/client/cmd"
@@ -32,6 +31,7 @@ const (
 	defaultConfigFilePath = "config.toml"
 	defaultConfigPath  = "config"
 	defaultDataPath    = "data"
+	flagValidatorKey   = "VALIDATOR_KEY"
 )
 
 type Context struct {
@@ -126,13 +126,13 @@ func configFollowMaster(master, root string) (*cfg.Config, error){
 	ioutil.WriteFile(c.GenesisFile(), configFiles.GenesisFile, os.ModePerm)
 
 	var valKey ed25519.PrivKey
-	validator := ed25519.GenPrivKey()
+	//validator := ed25519.GenPrivKey()
 	cdc := amino.NewCodec()
-	keyByte, err := cdc.MarshalJSON(validator)
-	if err != nil {
-		return nil, err
-	}
-	validatorKey := string(keyByte[1:len(keyByte)-1])
+	//keyByte, err := cdc.MarshalJSON(validator)
+	//if err != nil {
+	//	return nil, err
+	//}
+	validatorKey := viper.GetString(flagValidatorKey)
 	privStr := fmt.Sprintf(`{"type":"%s","value":"%s"}`, ed25519.PrivKeyName, validatorKey)
 	cdc = types.GetCodec()
 	err = cdc.UnmarshalJSON([]byte(privStr), &valKey)
