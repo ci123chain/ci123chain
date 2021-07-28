@@ -764,7 +764,7 @@ func formatBlock(
 		"gasLimit":         hexutil.Uint64(gasLimit), // Static gas limit
 		"gasUsed":          hexutil.Uint64(gasUsed.Uint64()),//(*hexutil.Big)(gasUsed),
 		"timestamp":        hexutil.Uint64(header.Time.Unix()),
-		"transactions":     []interface{}{},//transactions, //.([]common.Hash),
+		"transactions":     transactions.([]common.Hash),
 		"uncles":           []string{},
 		"receiptsRoot":     common.Hash{},
 	}
