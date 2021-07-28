@@ -771,7 +771,7 @@ func formatBlock(
 	if len(transactions.([]common.Hash)) == 0 {
 		res["transactions"] = []string{}
 	} else {
-		res["transactions"] = len(transactions.([]common.Hash))
+		res["transactions"] = transactions.([]common.Hash)
 	}
 
 	return res
