@@ -746,7 +746,7 @@ func formatBlock(
 	//	transactionRoot = common.BytesToHash(header.DataHash.Bytes())
 	//}
 
-	return map[string]interface{}{
+	res := map[string]interface{}{
 		"number":           hexutil.Uint64(header.Height),
 		"hash":             hexutil.Bytes(header.Hash()),
 		"parentHash":       common.BytesToHash(header.LastBlockID.Hash.Bytes()),//hexutil.Bytes(header.LastBlockID.Hash),
@@ -764,10 +764,17 @@ func formatBlock(
 		"gasLimit":         hexutil.Uint64(gasLimit), // Static gas limit
 		"gasUsed":          hexutil.Uint64(gasUsed.Uint64()),//(*hexutil.Big)(gasUsed),
 		"timestamp":        hexutil.Uint64(header.Time.Unix()),
-		"transactions":     transactions.([]common.Hash),
 		"uncles":           []string{},
 		"receiptsRoot":     common.Hash{},
 	}
+
+	if len(transactions.([]common.Hash)) == 0 {
+		res["transactions"] = []string{}
+	} else {
+		res["transactions"] = len(transactions.([]common.Hash))
+	}
+
+	return res
 }
 
 
