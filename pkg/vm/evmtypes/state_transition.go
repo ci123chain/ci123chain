@@ -120,7 +120,8 @@ func (st StateTransition) TransitionDb(ctx sdk.Context, config ChainConfig) (*Ex
 	switch contractCreation {
 	case true:
 		ret, contractAddress, leftOverGas, err = evm.Create(senderRef, st.Payload, gasLimit, st.Amount)
-		recipientLog = fmt.Sprintf("contract address %s", contractAddress.String())
+		//recipientLog = fmt.Sprintf("contract address %s", contractAddress.String())
+		recipientLog = contractAddress.String()
 	default:
 		// Increment the nonce for the next transaction	(just for evm state transition)
 		csdb.SetNonce(st.Sender, csdb.GetNonce(st.Sender)+1)
@@ -185,6 +186,9 @@ func (st StateTransition) TransitionDb(ctx sdk.Context, config ChainConfig) (*Ex
 	resultLog := fmt.Sprintf(
 		"executed EVM state transition; sender address %s; %s", st.Sender.String(), recipientLog,
 	)
+	if contractCreation{
+		resultLog = recipientLog
+	}
 
 	executionResult := &ExecutionResult{
 		Logs:  logs,

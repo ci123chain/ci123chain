@@ -268,7 +268,8 @@ func (api *PublicEthereumAPI) GetTransactionCount(address common.Address, blockN
 	}
 	res, _, _, err := clientCtx.Query("/custom/" + account.ModuleName + "/" + accounttypes.QueryAccount, bz, false)
 	if res == nil {
-		return nil, evmtypes.ErrQueryAccountsFailed
+		n := hexutil.Uint64(0)
+		return &n, nil
 	}
 	if err != nil {
 		return nil, evmtypes.ErrQueryAccountsFailed
@@ -465,12 +466,14 @@ func (api *PublicEthereumAPI) SendRawTransaction(data hexutil.Bytes) (common.Has
 
 	//// TODO: Possibly log the contract creation address (if recipient address is nil) or tx data
 	//// If error is encountered on the node, the broadcast will not return an error
-	res, err := api.clientCtx.BroadcastSignedTx(tx.Bytes())
+	res, err := api.clientCtx.BroadcastSignedDataAsync(tx.Bytes())
 	if err != nil {
 		api.logger.Debug("eth_sendRawTransaction", "err", err)
 		return common.Hash{}, err
 	}
 	api.logger.Debug("sendRawTransaction response log", "log", res.RawLog)
+
+	api.logger.Debug("return Transaction hash", "hash", res.TxHash)
 
 	// Return transaction hash
 	return common.HexToHash(res.TxHash), nil
@@ -528,7 +531,9 @@ func (api *PublicEthereumAPI) GetBalance(address common.Address, blockNum BlockN
 	}
 	res, _, _, err := clientCtx.Query("/custom/" + account.ModuleName + "/" + accounttypes.QueryAccount, bz, false)
 	if res == nil {
-		return nil, errors.New("The account does not exist")
+		zero := sdk.NewEmptyCoin().Amount.BigInt()
+		return (*hexutil.Big)(zero), nil
+		//return nil, errors.New("The account does not exist")
 	}
 	if err != nil {
 		return nil, err
@@ -730,29 +735,36 @@ func formatBlock(
 	header tmtypes.Header, size int, gasLimit int64,
 	gasUsed *big.Int, transactions interface{}, bloom ethtypes.Bloom,
 ) map[string]interface{} {
-	if len(header.DataHash) == 0 {
-		header.DataHash = common.Hash{}.Bytes()
-	}
+	//if len(header.DataHash) == 0 {
+	//	header.DataHash = common.Hash{}.Bytes()
+	//}
+
+	//var transactionRoot common.Hash
+	//if len(header.DataHash) == 0 {
+	//	transactionRoot = common.BytesToHash(ethtypes.EmptyRootHash.Bytes())
+	//}else {
+	//	transactionRoot = common.BytesToHash(header.DataHash.Bytes())
+	//}
 
 	return map[string]interface{}{
 		"number":           hexutil.Uint64(header.Height),
 		"hash":             hexutil.Bytes(header.Hash()),
-		"parentHash":       hexutil.Bytes(header.LastBlockID.Hash),
-		"nonce":            hexutil.Uint64(0), // PoW specific
-		"sha3Uncles":       common.Hash{},     // No uncles in Tendermint
+		"parentHash":       common.BytesToHash(header.LastBlockID.Hash.Bytes()),//hexutil.Bytes(header.LastBlockID.Hash),
+		"nonce":            nil, // PoW specific
+		"sha3Uncles":       ethtypes.EmptyUncleHash, //common.Hash{},     // No uncles in Tendermint
 		"logsBloom":        bloom,
-		"transactionsRoot": hexutil.Bytes(header.DataHash),
-		"stateRoot":        hexutil.Bytes(header.AppHash),
+		"transactionsRoot": ethtypes.EmptyRootHash,//hexutil.Bytes(header.DataHash),
+		"stateRoot":        common.BytesToHash(header.AppHash),//hexutil.Bytes(header.AppHash),
 		"miner":            common.Address{},
 		"mixHash":          common.Hash{},
-		"difficulty":       0,
-		"totalDifficulty":  0,
-		"extraData":        hexutil.Uint64(0),
+		"difficulty":       hexutil.Uint64(0), //big.NewInt(0),
+		//"totalDifficulty":  0,
+		"extraData":        []byte(""),
 		"size":             hexutil.Uint64(size),
 		"gasLimit":         hexutil.Uint64(gasLimit), // Static gas limit
-		"gasUsed":          (*hexutil.Big)(gasUsed),
+		"gasUsed":          hexutil.Uint64(gasUsed.Uint64()),//(*hexutil.Big)(gasUsed),
 		"timestamp":        hexutil.Uint64(header.Time.Unix()),
-		"transactions":     transactions.([]common.Hash),
+		"transactions":     []interface{}{},//transactions, //.([]common.Hash),
 		"uncles":           []string{},
 		"receiptsRoot":     common.Hash{},
 	}

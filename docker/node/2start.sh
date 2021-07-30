@@ -52,9 +52,9 @@ if [ ! -f $CI_HOME/config/genesis.json ]; then
             CI_GENESIS_AMOUNT=10000000000000000000000000000
           fi
           /opt/cid-linux add-genesis-account $CI_VALIDATOR_ADDRESS $CI_GENESIS_AMOUNT --home=$CI_HOME
-          /opt/cid-linux add-genesis-validator $CI_VALIDATOR_ADDRESS 800000000 $CI_PUBKEY 1 40 5 --home=$CI_HOME
+          /opt/cid-linux add-genesis-validator $CI_VALIDATOR_ADDRESS 800000000 $CI_PUBKEY 1 40 5 --home=$CI_HOME --moniker=$CI_NODE_NAME
         else
-          /opt/cid-linux add-genesis-validator 0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c 800000000 $CI_PUBKEY 1 40 5 --home=$CI_HOME
+          /opt/cid-linux add-genesis-validator 0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c 800000000 $CI_PUBKEY 1 40 5 --home=$CI_HOME --moniker=$CI_NODE_NAME
         fi
 
         if [ $GENESIS_SHARED ]; then

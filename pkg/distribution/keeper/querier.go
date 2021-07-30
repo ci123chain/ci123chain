@@ -201,7 +201,7 @@ func queryDelegatorAccountInfo(ctx sdk.Context, req abci.RequestQuery, k DistrKe
 	var rewardsAccount types.RewardsAccount
 	var validators = make([]types.RewardAccount, 0)
 	for _, v := range delegations {
-		validator, _ := k.StakingKeeper.GetValidator(ctx, params.AccountAddress)
+		validator, _ := k.StakingKeeper.GetValidator(ctx, v.ValidatorAddress)
 		endingPeriod := k.incrementValidatorPeriod(ctx, validator)
 		rw := k.calculateDelegationRewards(ctx, validator, v, endingPeriod)
 		rewards = rewards.Add(sdk.NewChainCoin(rw.Amount.RoundInt()))

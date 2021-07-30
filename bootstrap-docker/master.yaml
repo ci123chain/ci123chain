@@ -1,7 +1,7 @@
 version: "3"
 services:
   raftleveldb:
-    image: harbor.oneitfarm.com/itfarm-test/sal20000ad4588ae210303eaeipha2i4:0.0.1
+    image: harbor.oneitfarm.com/itfarm-test/sal20000ad4588ae210709eaejdg06i5:0.0.6
     hostname: raftleveldb_dev
     container_name: raftleveldb_dev
     ports:
@@ -10,7 +10,7 @@ services:
       - master-slave
 
   raftleveldb1:
-    image: harbor.oneitfarm.com/itfarm-test/sal20000ad4588ae210303eaeipha2i4:0.0.1
+    image: harbor.oneitfarm.com/itfarm-test/sal20000ad4588ae210709eaejdg06i5:0.0.6
     hostname: raftleveldb_dev1
     container_name: raftleveldb_dev1
     ports:
@@ -34,8 +34,8 @@ services:
       CI_HOME: /root/cid
 #      IDG_APPID: abcdefg
       CI_CLIHOME: /root/client
-      CI_VALIDATOR_KEY: BpiPMqeXTNJLBg6hRoWJjsjOLSHIQRIrkQlykLQ/0AE=
-      CI_PUBKEY: Ap0lbWGAnzfqpc0D0GL081WCnWatdk2d5B21orPl30AS
+      CI_VALIDATOR_KEY: 4wttMiieaewLiRYu+y05j0uslBDOX5IA3k4TY9GtQzSdTcXyd5Y982Q3CUdh+h1XcCvtpIUb+5q6rtJ8W4SEFw==
+      CI_PUBKEY: nU3F8neWPfNkNwlHYfodV3Ar7aSFG/uauq7SfFuEhBc=
     ports:
       - 26606:26656
       - 1310:80

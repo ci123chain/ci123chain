@@ -6,6 +6,7 @@ import (
 )
 
 func RegisterRoutes(cliCtx context.Context, r *mux.Router) {
+	RegisterRestNodeRoutes(cliCtx, r)
 	RegisterQueryRoutes(cliCtx, r)
 	RegisterRestTxRoutes(cliCtx, r)
 }
