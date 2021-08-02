@@ -657,13 +657,13 @@ func IsWasm(input []byte) bool {
 }
 
 func (k *Keeper) RecordSection(ctx sdk.Context, height int64, bloom ethtypes.Bloom) {
-	index := height/evmtypes.SectionSize
+	index := (height-1)/evmtypes.SectionSize
 
 	gen, found := k.GetSectionBloom(ctx, index)
 	if !found {
 		gen, _ = NewGenerator(evmtypes.SectionSize)
 	}
-	gen.AddBloom(uint(height-index * evmtypes.SectionSize-1), bloom)
+	gen.AddBloom(uint((height-1) % evmtypes.SectionSize), bloom)
 
 	k.SetSectionBloom(ctx, index, gen)
 }
