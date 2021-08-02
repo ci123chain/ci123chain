@@ -27,6 +27,7 @@ const (
 	flagCiStateDBHost  = "statedb_host"
 	flagCiStateDBPort  = "statedb_port"
 	flagCiStateDBTls   = "statedb_tls"
+	flagRPCPort 	   = "rpcport"
 	AppID			   = "hedlzgp1u48kjf50xtcvwdklminbqe9a"
 )
 
@@ -44,8 +45,8 @@ func Start() {
 	flag.StringVar(&serverList, "backends", "", "Load balanced backends, use commas to separate")
 	flag.StringVar(&urlreg, "urlreg", "http://***:80", "reg for url connection to node")
 	flag.IntVar(&port, "port", 3030, "Port to serve")
-	flag.String("rpcport", "80", "rpc address for websocket")
 
+	flag.String(flagRPCPort, "80", "rpc address for websocket")
 	flag.String(flagCiStateDBType, "redis", "database types")
 	flag.String(flagCiStateDBHost, "", "db host")
 	flag.Uint64(flagCiStateDBPort, 7443, "db port")
@@ -83,7 +84,7 @@ func Start() {
 	//logDir = viper.GetString("logdir")
 	port = viper.GetInt("port")
 	urlreg = viper.GetString("urlreg")
-	rpcAddress := viper.GetString("rpcport")
+	rpcAddress := viper.GetString(flagRPCPort)
 	if rpcAddress == "" {
 		rpcAddress = types.DefaultRPCPort
 	}
