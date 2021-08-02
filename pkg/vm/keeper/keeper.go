@@ -694,11 +694,11 @@ func (k *Keeper) SetSectionBloom(ctx sdk.Context, index int64, gen *Generator) {
 var (
 	// errSectionOutOfBounds is returned if the user tried to add more bloom filters
 	// to the batch than available space, or if tries to retrieve above the capacity.
-	errSectionOutOfBounds = errors.New("section out of bounds")
+	errSectionOutOfBounds = evmtypes.ErrSectionOutOfBounds
 
 	// errBloomBitOutOfBounds is returned if the user tried to retrieve specified
 	// bit bloom above the capacity.
-	errBloomBitOutOfBounds = errors.New("bloom bit out of bounds")
+	errBloomBitOutOfBounds = evmtypes.ErrBloomBitOutOfBounds
 )
 
 // Generator takes a number of bloom filters and generates the rotated bloom bits
@@ -713,7 +713,7 @@ type Generator struct {
 // batched bloom filter's bits.
 func NewGenerator(sections uint) (*Generator, error) {
 	if sections%8 != 0 {
-		return nil, errors.New("section count not multiple of 8")
+		return nil, evmtypes.ErrBloomFilterSectionNum
 	}
 	b := &Generator{Sections: sections}
 	for i := 0; i < ethtypes.BloomBitLength; i++ {
