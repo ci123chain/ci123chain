@@ -29,9 +29,6 @@ fi
 # genesis file
 if [ ! -f $CI_HOME/config/genesis.json ]; then
     if [ -z $CI_MASTER_DOMAIN]; then
-      if [ $CI_CONFIG ]; then
-        echo "---Found CI_CONFIG env----"
-      else
         echo "---Not found genesis file, Creating----"
 
         #./cid-linux init
@@ -57,7 +54,7 @@ if [ ! -f $CI_HOME/config/genesis.json ]; then
             /opt/cid-linux add-genesis-shard "$GENESIS_SHARED"
             #./cid-linux add-genesis-shard "ci0:0;ci1:0;ci2:0"
         fi
-      fi
+
     fi
 else
     echo "---Found genesis file----"
