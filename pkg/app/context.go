@@ -123,7 +123,9 @@ func configFollowMaster(master, root string) (*cfg.Config, error){
 
 	config.SaveConfig(c)
 
-	ioutil.WriteFile(c.GenesisFile(), configFiles.GenesisFile, os.ModePerm)
+	if err := ioutil.WriteFile(c.GenesisFile(), configFiles.GenesisFile, os.ModePerm); err != nil {
+		panic(err)
+	}
 
 	var valKey ed25519.PrivKey
 	//validator := ed25519.GenPrivKey()
