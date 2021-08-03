@@ -1,0 +1,24 @@
+services:
+  - name: "服务db"
+    type: "binary"
+    image: harbor.oneitfarm.com/itfarm-test/sal20000ad4588ae210803eaeohe27al:0.0.7
+    workdir: "/opt/cosmos"
+    ports: [8081]
+    cmd_paths: ["/opt/cosmos/raft_leveldb"]
+    cmd_args: ["--port=5002"]
+
+  - name: "服务proxy"
+    type: "binary"
+    image: harbor.oneitfarm.com/itfarm-test/sal20000ad4588ae210713eaeknc06sa:1.4.4
+    workdir: "/etc/service/cproxy-linux"
+    ports: [80]
+    cmd_paths: ["/etc/service/cproxy-linux/run"]
+    cmd_args: ["--port=80"]
+
+  - name: "服务ci123chain"
+    type: "binary"
+    image: harbor.oneitfarm.com/itfarm-test/sal20000ad4588ae210803eaenau27zi:1.5.4.3
+    workdir: "/opt" # 除二进制外的其他程序
+    ports: [1317, 8546, 26657, 26656]
+    cmd_paths: [ "/opt/cid-linux", "/opt/cli-linux" ] # 程序文件路径
+    cmd_args: [ "start --statedb_host=127.0.0.1 --statedb_tls=false --statedb_port=5002 --master_domain=weelinktest1node01f.gw002.oneitfarm.com  --validator_key=ZZyS+fsb1zlVDfTTcTXfCzEJ9vKzBERFaCj/jQ3xdOmYo73TTRHfeFLFJQc2uJWRH+x+7pzD6OaXzxRLvC9vKA==", "rest-server --laddr=tcp://0.0.0.0:1317" ] # 程序执行参数
