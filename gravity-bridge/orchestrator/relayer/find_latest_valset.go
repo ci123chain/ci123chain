@@ -94,7 +94,7 @@ func findLatestValset(contact cosmos_gravity.Contact, contractAddr string, clien
 			allValSetEvents[i], allValSetEvents[j] = allValSetEvents[j], allValSetEvents[i]
 		}
 
-		lg.Info(fmt.Sprintf("Found events: %v", allValSetEvents))
+		lg.Info(fmt.Sprintf("Found events"))
 
 		ethValSet := new(types.ValSet)
 		if len(allValSetEvents) != 0 {
@@ -147,10 +147,10 @@ func checkIfValsetsDiffer(cosmosValset, ethereumValset *types.ValSet) bool {
 	eValSet := ethereumValset.Members
 
 	sort.SliceStable(cValSet, func(i, j int) bool {
-		if cValSet[i].Power < cValSet[j].Power {
+		if cValSet[i].Power > cValSet[j].Power {
 			return true
 		} else if cValSet[i].Power == cValSet[j].Power {
-			if bytes.Compare(cValSet[i].EthAddress.Bytes(), cValSet[j].EthAddress.Bytes()) < 0 {
+			if bytes.Compare(cValSet[i].EthAddress.Bytes(), cValSet[j].EthAddress.Bytes()) > 0 {
 				return true
 			}
 		}
@@ -158,10 +158,10 @@ func checkIfValsetsDiffer(cosmosValset, ethereumValset *types.ValSet) bool {
 	})
 
 	sort.SliceStable(eValSet, func(i, j int) bool {
-		if eValSet[i].Power < eValSet[j].Power {
+		if eValSet[i].Power > eValSet[j].Power {
 			return true
 		} else if eValSet[i].Power == eValSet[j].Power {
-			if bytes.Compare(eValSet[i].EthAddress.Bytes(), eValSet[j].EthAddress.Bytes()) < 0 {
+			if bytes.Compare(eValSet[i].EthAddress.Bytes(), eValSet[j].EthAddress.Bytes()) > 0 {
 				return true
 			}
 		}
@@ -175,7 +175,7 @@ func checkIfValsetsDiffer(cosmosValset, ethereumValset *types.ValSet) bool {
 	}
 
 	for i := 0; i < len(cValSet); i++ {
-		if cValSet[i] != eValSet[i] {
+		if cValSet[i].EthAddress.String() != eValSet[i].EthAddress.String() || cValSet[i].Power != eValSet[i].Power {
 			return false
 		}
 	}

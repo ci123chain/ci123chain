@@ -36,13 +36,16 @@ func EstimateValsetCost(
 	//}
 	gasPrice, _ := client.Eth().GasPrice()
 	payload, _ := encodeValsetPayload(latestCosmosValset, currentValSet, latestCosmosConfirmed, gravityId)
-	val, _ := client.Eth().EstimateGas(&web3.CallMsg{
+	val, err := client.Eth().EstimateGas(&web3.CallMsg{
 		From:     ourEthAddress,
 		To:       &to,
 		Data:     payload,
 		GasPrice: gasPrice,
 		Value:    big.NewInt(0),
 	})
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	return GasCost{
 		Gas:      big.NewInt(int64(val)),

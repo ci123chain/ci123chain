@@ -2,7 +2,6 @@ package types
 
 import (
 	"bytes"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/logger"
@@ -23,17 +22,8 @@ func ValSetUpdatedEventFromLog(log *web3.Log) (ValSetUpdatedEvent, error) {
 		return ValSetUpdatedEvent{},  errors.New("Too few topics")
 	}
 
-	var nonceBz []byte
-	nonceBz, err := log.Topics[1].MarshalText()
-	if err != nil {
-		return ValSetUpdatedEvent{}, err
-	}
-
-	nonceB, err := hex.DecodeString(string(nonceBz[2:]))
-	x := new(big.Int)
-	y := new(big.Int)
-	nonceBig := x.SetBytes(nonceB)
-	maxU64 := y.SetUint64(math.MaxUint64)
+	nonceBig := new(big.Int).SetBytes(log.Topics[1][:])
+	maxU64 := new(big.Int).SetUint64(math.MaxUint64)
 	if nonceBig.Cmp(maxU64) > 0 {
 		return ValSetUpdatedEvent{}, errors.New("Nonce overflow, probably incorrect parsing")
 	}
@@ -42,7 +32,7 @@ func ValSetUpdatedEventFromLog(log *web3.Log) (ValSetUpdatedEvent, error) {
 	var indexStart uint64 = 2 * 32
 	indexEnd := indexStart + 32
 	ethAddressOffset := indexStart + 32
-	lenEthAddressesBig := x.SetBytes(log.Data[indexStart:indexEnd])
+	lenEthAddressesBig := new(big.Int).SetBytes(log.Data[indexStart:indexEnd])
 	if lenEthAddressesBig.Cmp(maxU64) > 0 {
 		return ValSetUpdatedEvent{}, errors.New("Ethereum array len overflow, probably incorrect parsing")
 	}
@@ -51,7 +41,7 @@ func ValSetUpdatedEventFromLog(log *web3.Log) (ValSetUpdatedEvent, error) {
 	indexStart = (3 + lenEthAddresses) * 32
 	indexEnd = indexStart + 32
 	powersOffset := indexStart + 32
-	lenPowersBig := x.SetBytes(log.Data[indexStart:indexEnd])
+	lenPowersBig := new(big.Int).SetBytes(log.Data[indexStart:indexEnd])
 	if lenPowersBig.Cmp(maxU64) > 0 {
 		return ValSetUpdatedEvent{}, errors.New("Powers array len overflow, probably incorrect parsing")
 	}
@@ -67,7 +57,7 @@ func ValSetUpdatedEventFromLog(log *web3.Log) (ValSetUpdatedEvent, error) {
 		powerEnd := powerStart + 32
 		addressStart := (i * 32) + ethAddressOffset
 		addressEnd := addressStart + 32
-		powerBig := x.SetBytes(log.Data[powerStart:powerEnd])
+		powerBig := new(big.Int).SetBytes(log.Data[powerStart:powerEnd])
 		ethAddress := common.BytesToAddress(log.Data[addressStart + 12:addressEnd])
 		if powerBig.Cmp(maxU64) > 0 {
 			return ValSetUpdatedEvent{}, errors.New("Power overflow, probably incorrect parsing")
@@ -80,6 +70,16 @@ func ValSetUpdatedEventFromLog(log *web3.Log) (ValSetUpdatedEvent, error) {
 	}
 
 	check := validators
+	//sort.SliceStable(check, func(i, j int) bool {
+	//	if check[i].Power < check[j].Power {
+	//		return true
+	//	} else if check[i].Power == check[j].Power {
+	//		if bytes.Compare(check[i].EthAddress.Bytes(), check[j].EthAddress.Bytes()) < 0 {
+	//			return true
+	//		}
+	//	}
+	//	return false
+	//})
 	for i, j := 0, len(check)-1; i < j; i, j = i+1, j-1 {
 		check[i], check[j] = check[j], check[i]
 	}
@@ -123,34 +123,22 @@ type TransactionBatchExecutedEvent struct {
 	EventNonce uint64
 }
 
+//todo
 func TransactionBatchExecutedEventFromLog(log *web3.Log) (TransactionBatchExecutedEvent, error) {
 	if len(log.Topics) < 3 {
 		return TransactionBatchExecutedEvent{}, errors.New("Too few topics")
 	}
-	x := new(big.Int)
 
-	var batchNonceBz []byte
-	batchNonceBz, err := log.Topics[1].MarshalText()
-	if err != nil {
-		return TransactionBatchExecutedEvent{}, err
-	}
-	nonceB, err := hex.DecodeString(string(batchNonceBz[2:]))
-	batchNonce := x.SetBytes(nonceB)
+	batchNonce := new(big.Int).SetBytes(log.Topics[1][:])
+	erc20 := common.BytesToAddress(log.Topics[2][12:32])
 
-	var erc20Bz []byte
-	erc20Bz, err = log.Topics[2].MarshalText()
-	if err != nil {
-		return TransactionBatchExecutedEvent{}, err
-	}
-	erc20 := common.BytesToAddress(erc20Bz[14:34])
-
-	eventNonce := x.SetBytes(log.Data)
+	eventNonce := new(big.Int).SetBytes(log.Data)
 	blockHeight := log.BlockNumber
 	if blockHeight == 0 {
 		return TransactionBatchExecutedEvent{}, errors.New("Log does not have block number, we only search logs already in blocks?")
 	}
 
-	maxU64 := x.SetUint64(math.MaxUint64)
+	maxU64 := new(big.Int).SetUint64(math.MaxUint64)
 	if eventNonce.Cmp(maxU64) > 0 || batchNonce.Cmp(maxU64) > 0 {
 		return TransactionBatchExecutedEvent{}, errors.New("Event nonce overflow, probably incorrect parsing")
 	}
@@ -199,34 +187,19 @@ func SendToCosmosEventFromLog(log *web3.Log) (SendToCosmosEvent, error) {
 	if len(log.Topics) < 4 {
 		return SendToCosmosEvent{}, errors.New("Too few topics")
 	}
-	x := new(big.Int)
 
-	erc20Bz, err := log.Topics[1].MarshalText()
-	if err != nil {
-		return SendToCosmosEvent{}, err
-	}
-	erc20 := common.BytesToAddress(erc20Bz[14:34])
+	erc20 := common.BytesToAddress(log.Topics[1][12:32])
+	sender := common.BytesToAddress(log.Topics[2][12:32])
+	destination := common.BytesToAddress(log.Topics[3][12:32])
 
-	senderBz, err := log.Topics[2].MarshalText()
-	if err != nil {
-		return SendToCosmosEvent{}, err
-	}
-	sender := common.BytesToAddress(senderBz[14:34])
-
-	destinationBz, err := log.Topics[3].MarshalText()
-	if err != nil {
-		return SendToCosmosEvent{}, err
-	}
-	destination := common.BytesToAddress(destinationBz[14:34])
-
-	amount := x.SetBytes(log.Data[2:34])
-	eventNonce := x.SetBytes(log.Data[34:])
+	amount := new(big.Int).SetBytes(log.Data[:32])
+	eventNonce := new(big.Int).SetBytes(log.Data[32:])
 	blockHeight := log.BlockNumber
 	if blockHeight == 0 {
 		return SendToCosmosEvent{}, errors.New("Log does not have block number, we only search logs already in blocks?")
 	}
 
-	maxU64 := x.SetUint64(math.MaxUint64)
+	maxU64 := new(big.Int).SetUint64(math.MaxUint64)
 	if eventNonce.Cmp(maxU64) > 0 {
 		return SendToCosmosEvent{}, errors.New("Event nonce overflow, probably incorrect parsing")
 	}
@@ -277,35 +250,29 @@ func Erc20DeployedEventFromLog(log *web3.Log) (Erc20DeployedEvent, error) {
 	if len(log.Topics) < 2 {
 		return Erc20DeployedEvent{}, errors.New("Too few topics")
 	}
+	erc20 := common.BytesToAddress(log.Topics[1][12:32])
 
-	erc20Bz, err := log.Topics[1].MarshalText()
-	if err != nil {
-		return Erc20DeployedEvent{}, err
-	}
-	erc20 := common.BytesToAddress(erc20Bz[14:34])
-
-	x := new(big.Int)
-	maxU8 := x.SetUint64(math.MaxUint8)
-	maxU32 := x.SetUint64(math.MaxUint32)
-	maxU64 := x.SetUint64(math.MaxUint64)
+	maxU8 := new(big.Int).SetUint64(math.MaxUint8)
+	maxU32 := new(big.Int).SetUint64(math.MaxUint32)
+	maxU64 := new(big.Int).SetUint64(math.MaxUint64)
 
 	indexStart := 3 * 32
 	indexEnd := indexStart + 32
-	decimal := x.SetBytes(log.Data[indexStart:indexEnd])
+	decimal := new(big.Int).SetBytes(log.Data[indexStart:indexEnd])
 	if decimal.Cmp(maxU8) > 0 {
 		return Erc20DeployedEvent{}, errors.New("Decimals overflow, probably incorrect parsing")
 	}
 
 	indexStart = 4 * 32
 	indexEnd = indexStart + 32
-	nonce := x.SetBytes(log.Data[indexStart:indexEnd])
+	nonce := new(big.Int).SetBytes(log.Data[indexStart:indexEnd])
 	if nonce.Cmp(maxU64) > 0 {
 		return Erc20DeployedEvent{}, errors.New("Nonce overflow, probably incorrect parsing")
 	}
 
 	indexStart = 5 * 32
 	indexEnd = indexStart + 32
-	denomLen := x.SetBytes(log.Data[indexStart:indexEnd])
+	denomLen := new(big.Int).SetBytes(log.Data[indexStart:indexEnd])
 	if denomLen.Cmp(maxU32) > 0 {
 		return Erc20DeployedEvent{}, errors.New("Denom length overflow, probably incorrect parsing")
 	}
@@ -319,7 +286,7 @@ func Erc20DeployedEventFromLog(log *web3.Log) (Erc20DeployedEvent, error) {
 
 	indexStart = ((indexEnd + 31) / 32) * 32
 	indexEnd = indexStart + 32
-	erc20NameLen := x.SetBytes(log.Data[indexStart:indexEnd])
+	erc20NameLen := new(big.Int).SetBytes(log.Data[indexStart:indexEnd])
 	if erc20NameLen.Cmp(maxU32) > 0 {
 		return Erc20DeployedEvent{}, errors.New("Erc20 name length overflow, probably incorrect parsing")
 	}
@@ -331,7 +298,7 @@ func Erc20DeployedEventFromLog(log *web3.Log) (Erc20DeployedEvent, error) {
 
 	indexStart = ((indexEnd + 31) / 32) * 32
 	indexEnd = indexStart + 32
-	symbolLen := x.SetBytes(log.Data[indexStart:indexEnd])
+	symbolLen := new(big.Int).SetBytes(log.Data[indexStart:indexEnd])
 	if symbolLen.Cmp(maxU32) > 0 {
 		return Erc20DeployedEvent{}, errors.New("Symbol length overflow, probably incorrect parsing")
 	}

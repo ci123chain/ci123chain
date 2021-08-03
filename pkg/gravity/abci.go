@@ -12,10 +12,10 @@ import (
 func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 	// Question: what here can be epoched?
 	//slashing(ctx, k)
-	//attestationTally(ctx, k)
-	//cleanupTimedOutBatches(ctx, k)
-	//cleanupTimedOutLogicCalls(ctx, k)
-	//createValsets(ctx, k)
+	attestationTally(ctx, k)
+	cleanupTimedOutBatches(ctx, k)
+	cleanupTimedOutLogicCalls(ctx, k)
+	createValsets(ctx, k)
 }
 
 func createValsets(ctx sdk.Context, k keeper.Keeper) {

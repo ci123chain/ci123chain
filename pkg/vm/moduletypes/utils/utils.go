@@ -212,10 +212,20 @@ func parseNumber(number interface{}) *big.Int {
 		return ensureParse(x)
 	case int:
 		return big.NewInt(int64(x))
+	case int8:
+		return big.NewInt(int64(x))
+	case int16:
+		return big.NewInt(int64(x))
 	case int32:
 		return big.NewInt(int64(x))
 	case int64:
 		return big.NewInt(x)
+	case uint:
+		return big.NewInt(int64(x))
+	case uint8:
+		return big.NewInt(int64(x))
+	case uint16:
+		return big.NewInt(int64(x))
 	case uint32:
 		return big.NewInt(int64(x))
 	case uint64:
@@ -292,6 +302,18 @@ func encodeSingle(paramType string, args interface{}) []byte {
 					ret = append(ret, encodeSingle(realType, v)...)
 				}
 				break;
+			case []int8:
+				length = len(arg)
+				for _, v := range arg {
+					ret = append(ret, encodeSingle(realType, v)...)
+				}
+				break;
+			case []int16:
+				length = len(arg)
+				for _, v := range arg {
+					ret = append(ret, encodeSingle(realType, v)...)
+				}
+				break;
 			case []int32:
 				length = len(arg)
 				for _, v := range arg {
@@ -305,6 +327,18 @@ func encodeSingle(paramType string, args interface{}) []byte {
 				}
 				break;
 			case []uint:
+				length = len(arg)
+				for _, v := range arg {
+					ret = append(ret, encodeSingle(realType, v)...)
+				}
+				break;
+			case []uint8:
+				length = len(arg)
+				for _, v := range arg {
+					ret = append(ret, encodeSingle(realType, v)...)
+				}
+				break;
+			case []uint16:
 				length = len(arg)
 				for _, v := range arg {
 					ret = append(ret, encodeSingle(realType, v)...)

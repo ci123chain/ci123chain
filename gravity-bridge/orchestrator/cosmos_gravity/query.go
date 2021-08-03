@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/ci123chain/ci123chain/gravity-bridge/orchestrator/gravity_utils/types"
+	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
 	gravity "github.com/ci123chain/ci123chain/pkg/gravity/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -86,7 +87,6 @@ func GetLatestValSets(contact Contact) ([]*types.ValSet, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	var cval []gravity.Valset
 	var oval []*types.ValSet
 	if err = json.Unmarshal(data, &cval); err != nil {
@@ -147,6 +147,64 @@ func GetOldestUnsignedValsets(contact Contact, address common.Address) ([]types.
 	return oval, nil
 }
 
+func GetOldestUnsignedBatch(contact Contact, address common.Address) (*types.TransactionBatch, error) {
+	res, err := contact.Get(fmt.Sprintf("/%s/pending_batch_requests/%s", gravity.StoreKey, address.String()))
+	if err != nil {
+		return nil, err
+	}
+	data, err := resToData(res)
+	if err != nil {
+		return nil, err
+	}
+	var cbatch gravity.OutgoingTxBatch
+	if err = json.Unmarshal(data, &cbatch); err != nil {
+		return nil, err
+	}
+	if cbatch.Block == 0 {
+		return nil, nil
+	}
+
+	var batchTransactions []types.BatchTransaction
+	totalFee := types.Erc20Token{
+		Amount:               sdk.NewInt(0),
+		TokenContractAddress: common.Address{},
+	}
+	for _, v := range cbatch.Transactions {
+		if totalFee.Amount.IsZero() {
+			totalFee = types.Erc20Token{
+				Amount:               v.Erc20Fee.Amount,
+				TokenContractAddress: common.HexToAddress(v.Erc20Fee.Contract),
+			}
+		} else {
+			totalFee.Amount = totalFee.Amount.Add(v.Erc20Fee.Amount)
+		}
+		batchTransactions = append(batchTransactions, types.BatchTransaction{
+			Id:          v.Id,
+			Sender:      common.HexToAddress(v.Sender),
+			Destination: common.HexToAddress(v.DestAddress),
+			Erc20Token:  types.Erc20Token{
+				Amount:               v.Erc20Token.Amount,
+				TokenContractAddress: common.HexToAddress(v.Erc20Token.Contract),
+			},
+			Erc20Fee:    types.Erc20Token{
+				Amount:               v.Erc20Fee.Amount,
+				TokenContractAddress: common.HexToAddress(v.Erc20Fee.Contract),
+			},
+		})
+	}
+
+	obatch := &types.TransactionBatch{
+		Nonce:         cbatch.BatchNonce,
+		BatchTimeout:  cbatch.BatchTimeout,
+		Transactions:  batchTransactions,
+		TotalFee:      totalFee,
+		TokenContract: common.HexToAddress(cbatch.TokenContract),
+	}
+
+	return obatch, nil
+}
+
+
 func GetLastEventNonce(contact Contact, ourCosmosAddress common.Address) (uint64, error) {
 	//QueryLastEventNonceByAddrRequest
 	res, err := contact.Get(fmt.Sprintf("/%s/last_event_nonce/%s", gravity.StoreKey, ourCosmosAddress.String()))
@@ -177,7 +235,10 @@ func GetLatestTransactionBatches(contact Contact) ([]types.TransactionBatch, err
 
 	var response []types.TransactionBatch
 	for _, batch := range batchs {
-		var totalFee types.Erc20Token
+		totalFee := types.Erc20Token{
+			Amount:               sdk.NewInt(0),
+			TokenContractAddress: common.Address{},
+		}
 		var transactions []types.BatchTransaction
 		for _, tx := range batch.Transactions {
 			transaction := types.BatchTransaction{
@@ -341,5 +402,8 @@ func resToData(res []byte) (json.RawMessage, error) {
 	if err := json.Unmarshal(res, &response); err != nil {
 		return nil, err
 	}
+	//if response.Ret != 1 {
+	//	return nil, errors.New(response.Message)
+	//}
 	return response.Data, nil
 }

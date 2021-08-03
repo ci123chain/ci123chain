@@ -95,14 +95,13 @@ func FromBytesToEthSignature(bz []byte) (EthSignature, error) {
 	if len(bz) != 65 {
 		return EthSignature{}, errors.New("InvalidSignatureLength")
 	}
-	x := new(big.Int)
 
-	r := x.SetBytes(bz[0:32])
-	s := x.SetBytes(bz[32:64])
-	v := x.SetBytes(bz[64:])
+	r := new(big.Int).SetBytes(bz[0:32])
+	s := new(big.Int).SetBytes(bz[32:64])
+	v := new(big.Int).SetBytes(bz[64:])
 
 	return EthSignature{
-		V: v,
+		V: v.Add(v, big.NewInt(27)),
 		R: r,
 		S: s,
 	}, nil

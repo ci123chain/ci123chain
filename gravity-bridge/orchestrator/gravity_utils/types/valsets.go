@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/ethereum/go-ethereum/common"
 	"math"
+	"math/big"
 )
 
 type ValSet struct {
@@ -46,6 +47,9 @@ func (v ValSet) getSignatureStatus(signedMsg []byte, sigs []Confirm) (SignatureS
 
 	var out []GravitySignature
 	signatureMap := make(map[common.Address]Confirm)
+	for _, sig := range sigs {
+		signatureMap[sig.GetEthAddress()] = sig
+	}
 	var power_of_good_sigs uint64 = 0;
 	var power_of_unset_keys uint64 = 0;
 	var number_of_unset_key_validators uint64 = 0;
@@ -79,7 +83,7 @@ func (v ValSet) getSignatureStatus(signedMsg []byte, sigs []Confirm) (SignatureS
 					out = append(out, GravitySignature{
 						Power:      member.Power,
 						EthAddress: ethAddress,
-						V:          nil,
+						V:          big.NewInt(0),
 						R:          nil,
 						S:          nil,
 					})
@@ -90,7 +94,7 @@ func (v ValSet) getSignatureStatus(signedMsg []byte, sigs []Confirm) (SignatureS
 				out = append(out, GravitySignature{
 					Power:      member.Power,
 					EthAddress: ethAddress,
-					V:          nil,
+					V:          big.NewInt(0),
 					R:          nil,
 					S:          nil,
 				})
@@ -101,7 +105,7 @@ func (v ValSet) getSignatureStatus(signedMsg []byte, sigs []Confirm) (SignatureS
 			out = append(out, GravitySignature{
 				Power:      member.Power,
 				EthAddress: common.Address{},
-				V:          nil,
+				V:          big.NewInt(0),
 				R:          nil,
 				S:          nil,
 			})
