@@ -111,6 +111,7 @@ var (
 		distr.ModuleName:      nil,
 		mint.ModuleName:       {supply.Minter},
 		ibc.ModuleName: nil,
+		gravity.ModuleName: {supply.Minter},
 		ibctransfer.ModuleName: nil,
 		stakingTypes.BondedPoolName: {supply.Burner, supply.Staking},
 		stakingTypes.NotBondedPoolName: {supply.Burner, supply.Staking},
@@ -179,7 +180,7 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 
 	slashingKeeper := slashing.NewKeeper(cdc, SlashingStoreKey, stakingKeeper, c.GetSubspace(slashing.ModuleName))
 
-	gravityKeeper := gravity.NewKeeper(cdc, GravityStoreKey, c.GetSubspace(gravity.ModuleName), stakingKeeper, supplyKeeper, slashingKeeper)
+	gravityKeeper := gravity.NewKeeper(cdc, GravityStoreKey, c.GetSubspace(gravity.ModuleName), accountKeeper, stakingKeeper, supplyKeeper, slashingKeeper)
 
 	distrKeeper := k.NewKeeper(cdc, DisrtStoreKey, supplyKeeper, accountKeeper, auth.FeeCollectorName, c.GetSubspace(distr.ModuleName), stakingKeeper, cdb)
 

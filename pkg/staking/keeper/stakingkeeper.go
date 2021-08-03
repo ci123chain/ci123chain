@@ -78,7 +78,7 @@ func (k StakingKeeper) GetLastTotalPower(ctx sdk.Context) sdk.Int {
 	}
 
 	ip := sdk.IntProto{}
-	k.cdc.MustUnmarshalBinaryBare(bz, &ip)
+	k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &ip)
 
 	return ip.Int
 }

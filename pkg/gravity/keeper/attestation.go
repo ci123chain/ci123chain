@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	"strconv"
 
 	codectypes "github.com/ci123chain/ci123chain/pkg/abci/codec/types"
@@ -131,7 +132,7 @@ func (k Keeper) emitObservedEvent(ctx sdk.Context, att *types.Attestation, claim
 func (k Keeper) SetAttestation(ctx sdk.Context, eventNonce uint64, claimHash []byte, att *types.Attestation) {
 	store := ctx.KVStore(k.storeKey)
 	aKey := types.GetAttestationKey(eventNonce, claimHash)
-	store.Set(aKey, k.cdc.MustMarshalBinaryBare(att))
+	store.Set(aKey, codec.GetLegacyAminoByCodec(k.cdc).MustMarshalBinaryBare(att))
 }
 
 // GetAttestation return an attestation given a nonce
@@ -143,7 +144,7 @@ func (k Keeper) GetAttestation(ctx sdk.Context, eventNonce uint64, claimHash []b
 		return nil
 	}
 	var att types.Attestation
-	k.cdc.MustUnmarshalBinaryBare(bz, &att)
+	codec.GetLegacyAminoByCodec(k.cdc).MustUnmarshalBinaryBare(bz, &att)
 	return &att
 }
 
@@ -181,7 +182,7 @@ func (k Keeper) IterateAttestaions(ctx sdk.Context, cb func([]byte, types.Attest
 
 	for ; iter.Valid(); iter.Next() {
 		att := types.Attestation{}
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &att)
+		codec.GetLegacyAminoByCodec(k.cdc).MustUnmarshalBinaryBare(iter.Value(), &att)
 		// cb returns true to stop early
 		if cb(iter.Key(), att) {
 			return

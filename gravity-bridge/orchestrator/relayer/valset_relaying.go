@@ -81,9 +81,11 @@ func relayValsets(
 				_, err := currentValSet.OrderSigs(hash, sigs)
 				if err != nil {
 					lastError = err
+				} else {
+					latestConfirmed = confirms
+					latestValset = *valset
+					break;
 				}
-				latestConfirmed = confirms
-				latestValset = *valset
 			}
 		}
 
@@ -110,7 +112,7 @@ func relayValsets(
 			return
 		}
 
-		lg.Info("We have detected latest valset %d but latest on Ethereum is %d This valset will be submit, expected cost: %v", latestCosmosValset.Nonce, currentValSet.Nonce, cost)
+		lg.Info(fmt.Sprintf("We have detected latest valset %d but latest on Ethereum is %d This valset will be submit, expected cost: %v", latestCosmosValset.Nonce, currentValSet.Nonce, cost))
 		gravity_utils.Exec(func() interface{} {
 			if err := ethereum_gravity.SendEthValsetUpdate(latestCosmosValset, currentValSet, latestCosmosConfirmed, client, timeout, contractAddr, gravityId, ethKey); err != nil {
 				return err
