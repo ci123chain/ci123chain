@@ -81,11 +81,12 @@ func startCmd(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Codec) *co
 	cmd.Flags().String(flagCiStateDBHost, "", "db host")
 	cmd.Flags().Uint64(flagCiStateDBPort, 7443, "db port")
 	cmd.Flags().Bool(flagCiStateDBTls, true, "use tls")
-	cmd.Flags().String(flagCiNodeDomain, "", "node domain")
+	cmd.Flags().String(flagCiNodeDomain, "localhost", "node domain")
 	cmd.Flags().String(flagShardIndex, "", "index of shard")
 	cmd.Flags().String(flagMasterDomain, "", "master node")
 	cmd.Flags().Int64(flagETHChainID, 1, "eth chain id")
 	cmd.Flags().Int(flagIteratorLimit, 10, "eth chain id")
+	cmd.Flags().String(FlagWithValidator, "", "validator_key")
 
 	//cmd.Flags().String(flagLogLevel, "debug", "Run abci app with different log level")
 	tcmd.AddNodeFlags(cmd)
