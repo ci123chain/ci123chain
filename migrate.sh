@@ -1,3 +1,3 @@
 #! /bin/bash
-cp ./wasmerio /go/pkg/mod/github.com/wasmerio
+cp -r ./wasmerio /go/pkg/mod/github.com
 export GOPATH=/go
