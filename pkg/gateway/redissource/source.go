@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/gateway/logger"
+	"github.com/ci123chain/ci123chain/pkg/libs"
 	r "github.com/ci123chain/ci123chain/pkg/redis"
 	"github.com/go-redis/redis/v8"
 	"regexp"
@@ -22,11 +23,15 @@ func NewRedisSource(host, urlreg string) *RedisDBSourceImp {
 		hostStr: 	host,
 		urlreg:  	urlreg,
 	}
-	conn, err := imp.GetDBConnection()
-	if err != nil {
-		panic(errors.New(fmt.Sprintf("Cann't connect to %s: %s", host, err.Error())))
-	}
-	imp.conn = conn
+	go func() {
+		libs.RetryI(0, func(retryTimes int) (interface{}, error) {
+			conn, err := imp.GetDBConnection()
+			if err == nil {
+				imp.conn = conn
+			}
+			return nil, err
+		})
+	}()
 	return imp
 }
 
@@ -37,6 +42,9 @@ type RedisDBSourceImp struct {
 }
 
 func (s *RedisDBSourceImp) FetchSource() (hostArr []string) {
+	if s.conn == nil {
+		return nil
+	}
 	logger.Debug("Start fetch from redisDB")
 	if s.conn.DB.Client == nil {
 		opt, err := getOption(s.hostStr)
