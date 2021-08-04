@@ -70,6 +70,12 @@ type PublicFilterAPI struct {
 
 // NewAPI returns a new PublicFilterAPI instance.
 func NewAPI(clientCtx clientcontext.Context, backend Backend) *PublicFilterAPI {
+	api := &PublicFilterAPI{
+		clientCtx: clientCtx,
+		backend:   backend,
+		filters:   make(map[rpc.ID]*filter),
+		//events:    NewEventSystem(clientCtx.Client),
+	}
 	// start the clients to subscribe to Tendermint events
 	if err := clientCtx.Client.Start(); err != nil {
 		go func() {
@@ -77,14 +83,10 @@ func NewAPI(clientCtx clientcontext.Context, backend Backend) *PublicFilterAPI {
 				err := clientCtx.Client.Start()
 				return nil, err
 			})
+			api.events = NewEventSystem(clientCtx.Client)
 		}()
-	}
-
-	api := &PublicFilterAPI{
-		clientCtx: clientCtx,
-		backend:   backend,
-		filters:   make(map[rpc.ID]*filter),
-		events:    NewEventSystem(clientCtx.Client),
+	} else {
+		api.events = NewEventSystem(clientCtx.Client)
 	}
 
 	go api.timeoutLoop()
