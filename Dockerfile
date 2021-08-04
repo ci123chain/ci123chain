@@ -6,6 +6,8 @@ COPY ./docker/node/build/cid-linux /opt/cid-linux
 COPY ./docker/node/build/cli-linux /opt/cli-linux
 
 COPY ./wasmerio /go/pkg/mod/github.com/wasmerio
+COPY ./migrate.sh /opt
+COPY ./wasmerio /opt/wasmerio
 
 ENV GOPATH /go
 
