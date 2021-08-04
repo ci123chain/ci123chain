@@ -3,6 +3,7 @@ package filters
 import (
 	"context"
 	"fmt"
+	"github.com/ci123chain/ci123chain/pkg/libs"
 	"time"
 
 	tmquery "github.com/tendermint/tendermint/libs/pubsub/query"
@@ -85,7 +86,7 @@ func NewEventSystem(client rpcclient.Client) *EventSystem {
 		chainCh: make(<-chan coretypes.ResultEvent),
 	}
 
-	go es.eventLoop()
+	go es.eventLoopWrap()
 	return es
 }
 
@@ -283,9 +284,11 @@ func (es *EventSystem) handleChainEvent(ev coretypes.ResultEvent) {
 	}
 	// TODO: light clients
 }
-
+func (es *EventSystem) eventLoopWrap() {
+	libs.RetryI(0, es.eventLoop)
+}
 // eventLoop (un)installs filters and processes mux events.
-func (es *EventSystem) eventLoop() {
+func (es *EventSystem) eventLoop(t int) (interface{}, error) {
 	var (
 		err                                                                           error
 		cancelPendingTxsSubs, cancelLogsSubs, cancelPendingLogsSubs, cancelHeaderSubs context.CancelFunc
@@ -294,7 +297,8 @@ func (es *EventSystem) eventLoop() {
 	// Subscribe events
 	es.txsSub, cancelPendingTxsSubs, err = es.SubscribePendingTxs()
 	if err != nil {
-		panic(fmt.Errorf("failed to subscribe pending txs: %w", err))
+		return nil, fmt.Errorf("failed to subscribe pending txs: %w", err)
+		//panic(fmt.Errorf("failed to subscribe pending txs: %w", err))
 	}
 
 	defer cancelPendingTxsSubs()
@@ -364,15 +368,15 @@ func (es *EventSystem) eventLoop() {
 			close(f.err)
 			// System stopped
 		case <-es.txsSub.Err():
-			return
+			return nil, nil
 		case <-es.logsSub.Err():
-			return
+			return nil, nil
 		// case <-es.rmLogsSub.Err():
 		// 	return
 		case <-es.pendingLogsSub.Err():
-			return
+			return nil, nil
 		case <-es.chainSub.Err():
-			return
+			return nil, nil
 		}
 	}
 	// }()
