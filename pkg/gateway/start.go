@@ -43,7 +43,7 @@ func Start() {
 	flag.StringVar(&logLevel, "loglevel", "DEBUG", "level for log")
 
 	flag.StringVar(&serverList, "backends", "", "Load balanced backends, use commas to separate")
-	flag.StringVar(&urlreg, "urlreg", "http://***:80", "reg for url connection to node")
+	flag.StringVar(&urlreg, "urlreg", "http://***", "reg for url connection to node")
 	flag.IntVar(&port, "port", 3030, "Port to serve")
 
 	flag.String(flagRPCPort, "80", "rpc address for websocket")
