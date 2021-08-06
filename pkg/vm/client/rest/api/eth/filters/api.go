@@ -662,7 +662,7 @@ func (b *EthBackend) HeaderByNumber(blockNum rpctypes.BlockNumber) (*ethtypes.He
 
 // HeaderByHash returns the block header identified by hash.
 func (b *EthBackend) HeaderByHash(blockHash common.Hash) (*ethtypes.Header, error) {
-	res, _, _, err := b.clientCtx.Query(fmt.Sprintf("custom/%s/%s/%s", evmtypes.ModuleName, evmtypes.QueryHashToHeight, blockHash.Hex()), nil, false)
+	res, _, _, err := b.clientCtx.Query(fmt.Sprintf("custom/%s/%s/%s", vmmodule.ModuleName, evmtypes.QueryHashToHeight, blockHash.Hex()), nil, false)
 	if err != nil {
 		return nil, err
 	}
@@ -721,7 +721,7 @@ func (b *EthBackend) PendingTransactions() ([]*rpctypes.Transaction, error) {
 
 // GetLogs returns all the logs from all the ethereum transactions in a block.
 func (b *EthBackend) GetLogs(blockHash common.Hash) ([][]*ethtypes.Log, error) {
-	res, _, _, err := b.clientCtx.Query(fmt.Sprintf("custom/%s/%s/%s", evmtypes.ModuleName, evmtypes.QueryHashToHeight, blockHash.Hex()), nil, false)
+	res, _, _, err := b.clientCtx.Query(fmt.Sprintf("custom/%s/%s/%s", vmmodule.ModuleName, evmtypes.QueryHashToHeight, blockHash.Hex()), nil, false)
 	if err != nil {
 		return nil, err
 	}
@@ -739,7 +739,7 @@ func (b *EthBackend) GetLogs(blockHash common.Hash) ([][]*ethtypes.Log, error) {
 	var blockLogs = [][]*ethtypes.Log{}
 	for _, tx := range block.Block.Txs {
 		// NOTE: we query the state in case the tx result logs are not persisted after an upgrade.
-		res, _, _, err := b.clientCtx.Query(fmt.Sprintf("custom/%s/%s/%s", evmtypes.ModuleName, evmtypes.QueryTransactionLogs, common.BytesToHash(tx.Hash()).String()), nil, false)
+		res, _, _, err := b.clientCtx.Query(fmt.Sprintf("custom/%s/%s/%s", vmmodule.ModuleName, evmtypes.QueryTransactionLogs, common.BytesToHash(tx.Hash()).String()), nil, false)
 		if err != nil {
 			continue
 		}
