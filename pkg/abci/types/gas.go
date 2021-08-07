@@ -27,6 +27,10 @@ type ErrorOutOfGas struct {
 	Descriptor string
 }
 
+func (e ErrorOutOfGas) Error() string {
+	return e.Descriptor
+}
+
 // ErrorGasOverflow defines an error thrown when an action results gas consumption
 // unsigned integer overflow.
 type ErrorGasOverflow struct {

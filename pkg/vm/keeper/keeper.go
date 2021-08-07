@@ -25,7 +25,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/tendermint/tendermint/libs/log"
 	dbm "github.com/tendermint/tm-db"
-	"github.com/wasmerio/go-ext-wasm/wasmer"
+	"github.com/wasmerio/wasmer-go/wasmer"
 	"io/ioutil"
 	"math/big"
 	"os"
@@ -643,7 +643,10 @@ func IsValidaWasmFile(code []byte) error {
 	if !IsWasm(code) {
 		return errors.New("it is not a wasm file")
 	}else {
-		_, err := wasmer.Compile(code)
+		// Create an Engine
+		engine := wasmer.NewEngine()
+		store := wasmer.NewStore(engine)
+		_, err := wasmer.NewModule(store, code)
 		if err != nil {
 			return err
 		}

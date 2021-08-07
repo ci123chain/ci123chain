@@ -3,7 +3,6 @@ package keeper
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/wasmerio/go-ext-wasm/wasmer"
 	"io/ioutil"
 	"path"
 	"testing"
@@ -23,14 +22,6 @@ func TestCheckWasmFile(t *testing.T) {
 	}
 	if !IsWasm(file) {
 		fmt.Println("it is not wasm file")
-		return
-	}else {
-		_, err := wasmer.Compile(file)
-		if err != nil {
-			fmt.Println("invalid wasm file")
-			return
-		}
-		fmt.Println("valid wasm file")
 		return
 	}
 }
