@@ -2,8 +2,10 @@ package keeper
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/vm/evmtypes"
 	"github.com/ci123chain/ci123chain/pkg/vm/wasmtypes"
 	ethcmn "github.com/ethereum/go-ethereum/common"
@@ -30,6 +32,8 @@ func NewQuerier(k Keeper) sdk.Querier {
 			return queryBlockBloom(ctx, path, k)
 		case evmtypes.QueryCode:
 			return queryCode(ctx, path, k)
+		case evmtypes.QueryHashToHeight:
+			return queryHashToHeight(ctx, path, k)
 		case evmtypes.QueryTransactionLogs:
 			return queryTransactionLogs(ctx, path, k)
 		case evmtypes.QuerySectionBloom:
@@ -163,6 +167,27 @@ func queryCode(ctx sdk.Context, path []string, keeper Keeper) ([]byte, error) {
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, res)
 	if err != nil {
 		return nil, types.ErrCdcUnMarshalFailed
+	}
+
+	return bz, nil
+}
+
+// QueryResBlockNumber is response type for block number query
+type QueryResBlockNumber struct {
+	Number int64 `json:"blockNumber"`
+}
+
+func queryHashToHeight(ctx sdk.Context, path []string, keeper Keeper) ([]byte, error) {
+	blockHash := ethcmn.FromHex(path[1])
+	blockNumber, found := keeper.GetBlockHash(ctx, blockHash)
+	if !found {
+		return []byte{}, fmt.Errorf("block height not found for hash %s", path[1])
+	}
+
+	res := QueryResBlockNumber{Number: blockNumber}
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, res)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
 
 	return bz, nil

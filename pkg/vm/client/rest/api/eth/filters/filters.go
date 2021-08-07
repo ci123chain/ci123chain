@@ -172,7 +172,7 @@ func (f *Filter) blockLogs(header *ethtypes.Header) ([]*ethtypes.Log, error) {
 		return []*ethtypes.Log{}, nil
 	}
 
-	logsList, err := f.backend.GetLogs(header.Hash())
+	logsList, err := f.backend.GetLogs(*f.criteria.BlockHash)
 	if err != nil {
 		return []*ethtypes.Log{}, err
 	}

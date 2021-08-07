@@ -54,6 +54,7 @@ type Chain struct {
 	//Key            string  `yaml:"key" json:"key"`
 	ChainID        string  `yaml:"chain-id" json:"chain-id"`
 	RPCAddr        string  `yaml:"rpc-addr" json:"rpc-addr"`
+	RESTAddr       string  `yaml:"rest-addr" json:"rest-addr"`
 	AccountPrefix  string  `yaml:"account-prefix" json:"account-prefix"`
 	GasAdjustment  float64 `yaml:"gas-adjustment" json:"gas-adjustment"`
 	GasPrices      string  `yaml:"gas-prices" json:"gas-prices"`
@@ -657,6 +658,8 @@ func (c *Chain) Update(key, value string) (out *Chain, err error) {
 			return
 		}
 		out.RPCAddr = value
+	case "rest-addr":
+		out.RESTAddr = value
 	case "gas-adjustment":
 		if value == "" {
 			out.GasAdjustment = 1
