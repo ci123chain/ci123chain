@@ -78,7 +78,7 @@ func startCmd(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Codec) *co
 	cmd.Flags().String(flagTraceStore, "", "Enable KVStore tracing to an output file")
 	cmd.Flags().String(flagPruning, "syncable", "Pruning strategy: syncable, nothing, everything")
 	cmd.Flags().String(flagCiStateDBType, "redis", "database types")
-	cmd.Flags().String(flagCiStateDBHost, "", "db host")
+	cmd.Flags().String(flagCiStateDBHost, "localhost", "db host")
 	cmd.Flags().Uint64(flagCiStateDBPort, 7443, "db port")
 	cmd.Flags().Bool(flagCiStateDBTls, true, "use tls")
 	cmd.Flags().String(flagCiNodeDomain, "localhost", "node domain")
