@@ -5,9 +5,12 @@ WORKDIR /opt/ci123chain
 COPY ./docker/node/build/cid-linux /opt/cid-linux
 COPY ./docker/node/build/cli-linux /opt/cli-linux
 
-COPY ./wasmerio /go/pkg/mod/github.com/wasmerio
+COPY ./wasmer-go@v1.0.3-rc2 /go/pkg/mod/github.com/ci123chain/wasmer-go@v1.0.3-rc2
+# For single package
+COPY ./wasmer-go@v1.0.3-rc2 /opt/wasmer-go@v1.0.3-rc2
+
 COPY ./migrate.sh /opt
-COPY ./wasmerio /opt/wasmerio
+
 
 ENV GOPATH /go
 

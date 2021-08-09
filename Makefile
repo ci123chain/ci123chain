@@ -31,7 +31,7 @@ local-stop:
 release:
 	$(GO_BUILD_CMD) -o ./docker/node/build/cid-linux ./cmd/cid
 	$(GO_BUILD_CMD) -o ./docker/node/build/cli-linux ./cmd/cicli
-	mv /go/pkg/mod/github.com/wasmerio ./wasmerio
+	mv /go/pkg/mod/github.com/ci123chain/wasmer-go@v1.0.3-rc2 ./wasmer-go@v1.0.3-rc2
 
 release-build:
 	docker build -f Dockerfile_local -t cichain:$(Tag) .

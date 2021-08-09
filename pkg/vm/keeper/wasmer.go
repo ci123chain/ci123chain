@@ -145,7 +145,7 @@ func (w wasmRuntime) Call(code []byte, input []byte, method string, cfg *runtime
 	if err != nil {
 		return nil, err
 	}
-	defer instance.Close()
+	//defer instance.Close()
 	methodEncode := "x" + hex.EncodeToString([]byte(method))
 	invokeCall, err := instance.Exports.GetRawFunction(methodEncode)
 	invoke := invokeCall.Native()

@@ -6,18 +6,19 @@ import (
 	"errors"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/app/types"
+	"github.com/ci123chain/ci123chain/pkg/libs"
 	r "github.com/ci123chain/ci123chain/pkg/redis"
 	"github.com/go-redis/redis/v8"
 	sdk "github.com/tendermint/tendermint/abci/types"
 	"strings"
 
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/tendermint/tendermint/libs/log"
 	tmtypes "github.com/tendermint/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 	"io"
 	"os"
 	"path/filepath"
-	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 )
 type (
 	AppCreator func(home string, logger log.Logger, statedb, traceStore string) (sdk.Application, error)
@@ -38,7 +39,7 @@ func ConstructAppCreator(appFn AppCreatorInit, name string) AppCreator {
 			return nil, err
 		}
 		//cdb, err := GetCDB(statedb)
-		rdb, err := GetRDB(statedb)
+		rdb, err := GetRDB(statedb, logger)
 		if err != nil {
 			return nil, types.ErrNewDB(types.DefaultCodespace, err)
 		}
@@ -66,12 +67,8 @@ func ConstructAppExporter(appFn AppExporterInit, name string) AppExporter {
 		if err != nil {
 			return nil, nil, types.ErrNewDB(types.DefaultCodespace, err)
 		}
-		//cdb, err := GetCDB(statedb)
-		//if err != nil {
-		//	return nil, nil, abci.ErrInternal("GetCDB failed")
-		//}
-		//RedisDB
-		rdb, err := GetRDB(statedb)
+
+		rdb, err := GetRDB(statedb, logger)
 		if err != nil {
 			return nil, nil, sdkerrors.Wrap(sdkerrors.ErrInternal, "get db failed")
 		}
@@ -91,14 +88,19 @@ func ConstructAppExporter(appFn AppExporterInit, name string) AppExporter {
 	}
 }
 
-func GetRDB(stateDB string) (db dbm.DB, err error) {
-
-	opt, err := getOption(stateDB)
-	if err != nil {
+func GetRDB(stateDB string, logger log.Logger) (db dbm.DB, err error) {
+	_, err = libs.RetryI(10, func(retryTimes int) (interface{}, error) {
+		opt, err := getOption(stateDB)
+		if err != nil {
+			return nil, err
+		}
+		db = r.NewRedisDB(opt)
+		err = r.DBIsValid(db.(*r.RedisDB))
+		if logger != nil && err != nil {
+			logger.Error("connect raft leveldb error", "host", stateDB)
+		}
 		return nil, err
-	}
-	db = r.NewRedisDB(opt)
-	err = r.DBIsValid(db.(*r.RedisDB))
+	})
 	return
 }
 
