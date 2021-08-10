@@ -31,6 +31,10 @@ type Context struct {
 	InterfaceRegistry codectypes.InterfaceRegistry
 	Code 		int64
 	Simulate    bool
+	Broadcast bool
+	PrivateKey string
+	Nonce uint64
+	Gas uint64
 }
 
 func (ctx *Context) Context() context.Context {
@@ -88,6 +92,26 @@ func (ctx Context) WithBlocked(blocked bool) Context {
 // WithSimulation returns a copy of the context with updated Simulate value
 func (ctx Context) WithSimulation(simulate bool) Context {
 	ctx.Simulate = simulate
+	return ctx
+}
+
+func (ctx Context) WithBroadcast(broadcast bool) Context {
+	ctx.Broadcast = broadcast
+	return ctx
+}
+
+func (ctx Context) WithNonce(nonce uint64) Context {
+	ctx.Nonce = nonce
+	return ctx
+}
+
+func (ctx Context) WithGas(gas uint64) Context {
+	ctx.Gas = gas
+	return ctx
+}
+
+func (ctx Context) WithPrivateKey(privateKey string) Context {
+	ctx.PrivateKey = privateKey
 	return ctx
 }
 

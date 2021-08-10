@@ -10,20 +10,9 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/client/helper"
 	transfer2 "github.com/ci123chain/ci123chain/pkg/transfer"
 	"net/http"
-	"strconv"
 )
 
 func SendRequestHandlerFn(cliCtx context.Context, writer http.ResponseWriter, request *http.Request) {
-	broadcast, err := strconv.ParseBool(request.FormValue("broadcast"))
-	if err != nil {
-		broadcast = true
-	}
-	privKey, from, nonce, gas, err := rest.GetNecessaryParams(cliCtx, request, cdc, broadcast)
-	if err != nil {
-		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, err.Error()).Error())
-		return
-	}
-
 	denom := request.FormValue("denom")
 	to := sdk.HexToAddress(request.FormValue("to"))
 	//amount, err := strconv.ParseUint(request.FormValue("amount"), 10, 64)
@@ -47,13 +36,13 @@ func SendRequestHandlerFn(cliCtx context.Context, writer http.ResponseWriter, re
 		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid amount").Error())
 		return
 	}
-	msg := transfer2.NewMsgTransfer(from, to, sdk.NewCoins(coin))
-	if !broadcast {
+	msg := transfer2.NewMsgTransfer(cliCtx.FromAddr, to, sdk.NewCoins(coin))
+	if !cliCtx.Broadcast {
 		rest.PostProcessResponseBare(writer, cliCtx, hex.EncodeToString(msg.Bytes()))
 		return
 	}
 
-	txByte, err := types2.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
+	txByte, err := types2.SignCommonTx(cliCtx.FromAddr, cliCtx.Nonce, cliCtx.Gas, []sdk.Msg{msg}, cliCtx.PrivateKey, cdc)
 	if err != nil {
 		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, err.Error()).Error())
 		return

@@ -90,6 +90,9 @@ func (msg *CommonTx) GetFromAddress() types2.AccAddress{
 
 func SignCommonTx(from types2.AccAddress, nonce, gas uint64, msgs []types2.Msg, priv string, cdc *codec.Codec) ([]byte, error){
 	tx := NewCommonTx(from, nonce, gas, msgs)
+	if priv == "" {
+		return cdc.MarshalBinaryBare(tx)
+	}
 	var signature []byte
 	privPub, err := hex.DecodeString(priv)
 	eth := cryptosuit.NewETHSignIdentity()

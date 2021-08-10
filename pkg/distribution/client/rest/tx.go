@@ -11,7 +11,6 @@ import (
 	sSDK "github.com/ci123chain/ci123chain/sdk/distribution"
 	"github.com/gorilla/mux"
 	"net/http"
-	"strconv"
 )
 
 func registerTxRoutes(cliCtx context.Context, r *mux.Router) {
@@ -63,22 +62,13 @@ func fundCommunityPoolHandler(cliCtx context.Context, writer http.ResponseWriter
 }
 
 func withdrawValidatorCommissionsHandler(cliCtx context.Context, writer http.ResponseWriter, req *http.Request) {
-	broadcast, err := strconv.ParseBool(req.FormValue("broadcast"))
-	if err != nil {
-		broadcast = true
-	}
-	privKey, from, nonce, gas, err := rest.GetNecessaryParams(cliCtx, req, cdc, broadcast)
-	if err != nil {
-		rest.WriteErrorRes(writer, err.Error())
-		return
-	}
-	validator := from
-	msg := types.NewMsgWithdrawValidatorCommission(from, validator)
-	if !broadcast {
+	validator := cliCtx.FromAddr
+	msg := types.NewMsgWithdrawValidatorCommission(cliCtx.FromAddr, validator)
+	if !cliCtx.Broadcast {
 		rest.PostProcessResponseBare(writer, cliCtx, hex.EncodeToString(msg.Bytes()))
 		return
 	}
-	txByte, err := types2.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
+	txByte, err := types2.SignCommonTx(cliCtx.FromAddr, cliCtx.Nonce, cliCtx.Gas, []sdk.Msg{msg}, cliCtx.PrivateKey, cdc)
 	if err != nil {
 		rest.WriteErrorRes(writer, err.Error())
 		return
@@ -92,26 +82,15 @@ func withdrawValidatorCommissionsHandler(cliCtx context.Context, writer http.Res
 }
 
 func withdrawDelegationRewardsHandler(cliCtx context.Context, writer http.ResponseWriter, req *http.Request) {
-	broadcast, err := strconv.ParseBool(req.FormValue("broadcast"))
-	if err != nil {
-		broadcast = true
-	}
-
-	privKey, from, nonce, gas, err := rest.GetNecessaryParams(cliCtx, req, cdc, broadcast)
-	if err != nil {
-		rest.WriteErrorRes(writer, err.Error())
-		return
-	}
-
 	validator := sdk.HexToAddress(req.FormValue("validator_address"))
-	delegator := from
-	msg := types.NewMsgWithdrawDelegatorReward(from, validator, delegator)
-	if !broadcast {
+	delegator := cliCtx.FromAddr
+	msg := types.NewMsgWithdrawDelegatorReward(cliCtx.FromAddr, validator, delegator)
+	if !cliCtx.Broadcast {
 		rest.PostProcessResponseBare(writer, cliCtx, hex.EncodeToString(msg.Bytes()))
 		return
 	}
 
-	txByte, err := types2.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
+	txByte, err := types2.SignCommonTx(cliCtx.FromAddr, cliCtx.Nonce, cliCtx.Gas, []sdk.Msg{msg}, cliCtx.PrivateKey, cdc)
 	if err != nil {
 		rest.WriteErrorRes(writer, err.Error())
 		return
@@ -125,24 +104,14 @@ func withdrawDelegationRewardsHandler(cliCtx context.Context, writer http.Respon
 }
 
 func setDelegatorWithdrawalAddrHandler(cliCtx context.Context, writer http.ResponseWriter, req *http.Request) {
-	broadcast, err := strconv.ParseBool(req.FormValue("broadcast"))
-	if err != nil {
-		broadcast = true
-	}
-	privKey, from, nonce, gas, err := rest.GetNecessaryParams(cliCtx, req, cdc, broadcast)
-	if err != nil {
-		rest.WriteErrorRes(writer, err.Error())
-		return
-	}
-
-	delegator := from
+	delegator := cliCtx.FromAddr
 	withdraw := sdk.HexToAddress(req.FormValue("withdraw_address"))
-	msg := types.NewMsgSetWithdrawAddress(from, withdraw, delegator)
-	if !broadcast {
+	msg := types.NewMsgSetWithdrawAddress(cliCtx.FromAddr, withdraw, delegator)
+	if !cliCtx.Broadcast {
 		rest.PostProcessResponseBare(writer, cliCtx, hex.EncodeToString(msg.Bytes()))
 		return
 	}
-	txByte, err := types2.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
+	txByte, err := types2.SignCommonTx(cliCtx.FromAddr, cliCtx.Nonce, cliCtx.Gas, []sdk.Msg{msg}, cliCtx.PrivateKey, cdc)
 	if err != nil {
 		rest.WriteErrorRes(writer, err.Error())
 		return

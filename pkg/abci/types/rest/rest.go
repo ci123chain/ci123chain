@@ -249,6 +249,48 @@ func MiddleHandler(ctx context.Context, f func(clictx context.Context, w http.Re
 		simulate, _ := strconv.ParseBool(r.FormValue("simulate"))
 		ctx = ctx.WithSimulation(simulate)
 
+		broadcast, err := strconv.ParseBool(r.FormValue("broadcast"))
+		if err != nil {
+			broadcast = true
+		}
+		ctx = ctx.WithBroadcast(broadcast)
+
+		if !broadcast || simulate {
+			ctx = ctx.WithNonce(0)
+			ctx = ctx.WithGas(0)
+			ctx = ctx.WithPrivateKey("")
+		} else {
+			if r.FormValue("private_key") == "" {
+				WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid private_key").Error())
+				return
+			} else {
+				ctx = ctx.WithPrivateKey(r.FormValue("private_key"))
+			}
+			gas, err := strconv.ParseUint(r.FormValue("gas"), 10, 64)
+			if err != nil {
+				WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid gas").Error())
+				return
+			}
+			ctx = ctx.WithGas(gas)
+
+			var nonce uint64
+			userNonce := r.FormValue("nonce")
+			if userNonce != "" {
+				nonce, err = strconv.ParseUint(userNonce, 10, 64)
+				if err != nil {
+					WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid nonce").Error())
+					return
+				}
+			}else {
+				nonce, _, err = ctx.GetNonceByAddress(from, false)
+				if err != nil {
+					WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid nonce").Error())
+					return
+				}
+			}
+			ctx = ctx.WithNonce(nonce)
+		}
+
 		f(ctx, w, r)
 	}
 }

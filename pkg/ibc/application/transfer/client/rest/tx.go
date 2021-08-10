@@ -48,11 +48,6 @@ func ibcTransferHandler(cliCtx context.Context, writer http.ResponseWriter, req 
 		timeoutTimestamp = time.Now().UTC().Add(time.Duration(timeoutTimestamp) * time.Second).UnixNano()
 	}
 
-	privateKey, from, nonce, gas, err := rest.GetNecessaryParams(cliCtx, req, cliCtx.Cdc, true)
-	if err != nil {
-		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, err.Error()).Error())
-		return
-	}
 	if coin.IsNegative() || coin.IsZero() {
 		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid coin").Error())
 		return
@@ -62,7 +57,7 @@ func ibcTransferHandler(cliCtx context.Context, writer http.ResponseWriter, req 
 		sourcePort,
 		sourceChannel,
 		coin,
-		from.String(), // 'MustGetAddress' must be called directly before calling 'NewMsg...'
+		cliCtx.FromAddr.String(), // 'MustGetAddress' must be called directly before calling 'NewMsg...'
 		receiver,
 		clienttypes.NewHeight(DefaultVersion, uint64(timeoutHeight)),
 		uint64(timeoutTimestamp),
@@ -71,7 +66,7 @@ func ibcTransferHandler(cliCtx context.Context, writer http.ResponseWriter, req 
 		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid coin").Error())
 		return
 	}
-	txByte, err := types2.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privateKey, cliCtx.Cdc)
+	txByte, err := types2.SignCommonTx(cliCtx.FromAddr, cliCtx.Nonce, cliCtx.Gas, []sdk.Msg{msg}, cliCtx.PrivateKey, cliCtx.Cdc)
 
 	res, err := cliCtx.BroadcastSignedTx(txByte)
 	if err != nil {

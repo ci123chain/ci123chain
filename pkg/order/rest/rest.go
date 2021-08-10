@@ -20,15 +20,6 @@ func RegisterTxRoutes(cliCtx context.Context, r *mux.Router)  {
 var cdc = types2.GetCodec()
 
 func AddShardTxRequest(cliCtx context.Context, writer http.ResponseWriter, request *http.Request) {
-	broatcast, err := strconv.ParseBool(request.FormValue("broadcast"))
-	if err != nil {
-		broatcast = true
-	}
-	privKey, from, nonce, gas, err := rest.GetNecessaryParams(cliCtx, request, cdc, broatcast)
-	if err != nil {
-		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, err.Error()).Error())
-		return
-	}
 	Type := request.FormValue("type")
 	name := request.FormValue("name")
 	height := request.FormValue("height")
@@ -39,13 +30,13 @@ func AddShardTxRequest(cliCtx context.Context, writer http.ResponseWriter, reque
 		return
 	}
 
-	msg := types.NewMsgUpgrade(from, Type, name, Height)
-	if !broatcast {
+	msg := types.NewMsgUpgrade(cliCtx.FromAddr, Type, name, Height)
+	if !cliCtx.Broadcast {
 		rest.PostProcessResponseBare(writer, cliCtx, hex.EncodeToString(msg.Bytes()))
 		return
 	}
 
-	txByte, err := types2.SignCommonTx(from, nonce, gas, []abcitypes.Msg{msg}, privKey, cdc)
+	txByte, err := types2.SignCommonTx(cliCtx.FromAddr, cliCtx.Nonce, cliCtx.Gas, []abcitypes.Msg{msg}, cliCtx.PrivateKey, cdc)
 	if err != nil {
 		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, err.Error()).Error())
 		return

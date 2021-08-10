@@ -14,7 +14,6 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/infrastructure/types"
 	"github.com/gorilla/mux"
 	"net/http"
-	"strconv"
 )
 
 func RegisterRestTxRoutes(cliCtx context.Context, r *mux.Router)  {
@@ -25,19 +24,8 @@ var cdc = types2.GetCodec()
 
 
 func StoreContentRequest(cliCtx context.Context, writer http.ResponseWriter, request *http.Request) {
-	//
-	broadcast, err := strconv.ParseBool(request.FormValue("broadcast"))
-	if err != nil {
-		broadcast = true
-	}
-	privKey, from, nonce, gas, err := rest.GetNecessaryParams(cliCtx, request, cdc, broadcast)
-	if err != nil {
-		rest.WriteErrorRes(writer, err.Error())
-		return
-	}
-
 	//verify account exists
-	err = checkAccountExist(cliCtx, from)
+	err := checkAccountExist(cliCtx, cliCtx.FromAddr)
 	if err != nil {
 		rest.WriteErrorRes(writer, err.Error())
 		return
@@ -59,14 +47,14 @@ func StoreContentRequest(cliCtx context.Context, writer http.ResponseWriter, req
 		rest.WriteErrorRes(writer, err.Error())
 		return
 	}
-	msg := infrastructure.NewStoreContentMsg(from, key_str, value)
+	msg := infrastructure.NewStoreContentMsg(cliCtx.FromAddr, key_str, value)
 
-	if !broadcast {
+	if !cliCtx.Broadcast {
 		rest.PostProcessResponseBare(writer, cliCtx, hex.EncodeToString(msg.Bytes()))
 		return
 	}
 
-	txByte, err := types2.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
+	txByte, err := types2.SignCommonTx(cliCtx.FromAddr, cliCtx.Nonce, cliCtx.Gas, []sdk.Msg{msg}, cliCtx.PrivateKey, cdc)
 	if err != nil {
 		rest.WriteErrorRes(writer, err.Error())
 		return

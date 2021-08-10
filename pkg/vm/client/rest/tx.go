@@ -20,23 +20,11 @@ import (
 	ethcmn "github.com/ethereum/go-ethereum/common"
 	"math/big"
 	"net/http"
-	"strconv"
 	"strings"
 )
 const CAN_MIGRATE string = `{"method":"canMigrate()"}`
 
 func uploadContractHandler(cliCtx context.Context, w http.ResponseWriter, r *http.Request) {
-	broadcast, err := strconv.ParseBool(r.FormValue("broadcast"))
-	if err != nil {
-		broadcast = true
-	}
-
-	privKey, from, nonce, gas, err := rest.GetNecessaryParams(cliCtx, r, cdc, broadcast)
-	if err != nil {
-		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid new_rate").Error())
-		return
-	}
-
 	code, err := getCode(r)
 	if err != nil || code == nil {
 		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrParams, "get contract code failed").Error())
@@ -66,7 +54,7 @@ func uploadContractHandler(cliCtx context.Context, w http.ResponseWriter, r *htt
 			rest.PostProcessResponseBare(w, cliCtx, sdk.TxResponse{Code: 0, Data: strings.ToUpper(hex.EncodeToString(codeHash))})
 			return
 		}
-		msg = wasmtypes.NewMsgUploadContract(code, from)
+		msg = wasmtypes.NewMsgUploadContract(code, cliCtx.FromAddr)
 	} else {
 		amount_str := r.FormValue("amount")
 		amount := new(big.Int)
@@ -77,14 +65,14 @@ func uploadContractHandler(cliCtx context.Context, w http.ResponseWriter, r *htt
 		} else {
 			amount.SetString(amount_str, 10)
 		}
-		msg = evm.NewMsgEvmTx(from, nonce, nil, amount, gas, big.NewInt(1), code)
+		msg = evm.NewMsgEvmTx(cliCtx.FromAddr, cliCtx.Nonce, nil, amount, cliCtx.Gas, big.NewInt(1), code)
 	}
 
-	if !broadcast {
+	if !cliCtx.Broadcast {
 		rest.PostProcessResponseBare(w, cliCtx, hex.EncodeToString(msg.Bytes()))
 		return
 	}
-	txByte, err := types2.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
+	txByte, err := types2.SignCommonTx(cliCtx.FromAddr, cliCtx.Nonce, cliCtx.Gas, []sdk.Msg{msg}, cliCtx.PrivateKey, cdc)
 	if err != nil {
 		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInternal, err.Error()).Error())
 		return
@@ -98,15 +86,6 @@ func uploadContractHandler(cliCtx context.Context, w http.ResponseWriter, r *htt
 }
 
 func instantiateContractHandler(cliCtx context.Context,w http.ResponseWriter, r *http.Request) {
-	broadcast, err := strconv.ParseBool(r.FormValue("broadcast"))
-	if err != nil {
-		broadcast = true
-	}
-	privKey, from, nonce, gas, err := rest.GetNecessaryParams(cliCtx, r, cdc, broadcast)
-	if err != nil {
-		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrParams, err.Error()).Error())
-		return
-	}
 	codeHash := r.FormValue("code_hash")
 	hash, err := hex.DecodeString(strings.ToLower(codeHash))
 	if err != nil {
@@ -129,13 +108,13 @@ func instantiateContractHandler(cliCtx context.Context,w http.ResponseWriter, r 
 			return
 		}
 	}
-	msg := wasmtypes.NewMsgInstantiateContract(hash, from, name, version, author, email, describe, args)
-	if !broadcast {
+	msg := wasmtypes.NewMsgInstantiateContract(hash, cliCtx.FromAddr, name, version, author, email, describe, args)
+	if !cliCtx.Broadcast {
 		rest.PostProcessResponseBare(w, cliCtx, hex.EncodeToString(msg.Bytes()))
 		return
 	}
 
-	txByte, err := types2.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
+	txByte, err := types2.SignCommonTx(cliCtx.FromAddr, cliCtx.Nonce, cliCtx.Gas, []sdk.Msg{msg}, cliCtx.PrivateKey, cdc)
 	if err != nil {
 		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInternal, err.Error()).Error())
 		return
@@ -149,16 +128,6 @@ func instantiateContractHandler(cliCtx context.Context,w http.ResponseWriter, r 
 }
 
 func executeContractHandler(cliCtx context.Context,w http.ResponseWriter, r *http.Request) {
-	broadcast, err := strconv.ParseBool(r.FormValue("broadcast"))
-	if err != nil {
-		broadcast = true
-	}
-	privKey, from, nonce, gas, err := rest.GetNecessaryParams(cliCtx, r, cdc, broadcast)
-	if err != nil {
-		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrParams, err.Error()).Error())
-		return
-	}
-
 	contractAddr := r.FormValue("contract_address")
 	contractAddress := sdk.HexToAddress(contractAddr)
 	qparams := keeper2.NewQueryAccountParams(contractAddress, -1)
@@ -197,7 +166,7 @@ func executeContractHandler(cliCtx context.Context,w http.ResponseWriter, r *htt
 		}
 	}
 	if acc.GetContractType() == types.WasmContractType {
-		msg = wasmtypes.NewMsgExecuteContract(from, contractAddress, args)
+		msg = wasmtypes.NewMsgExecuteContract(cliCtx.FromAddr, contractAddress, args)
 	} else if acc.GetContractType() == types.EvmContractType {
 		var to *ethcmn.Address
 		to_str := r.FormValue("contract_address")
@@ -223,17 +192,17 @@ func executeContractHandler(cliCtx context.Context,w http.ResponseWriter, r *htt
 			rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrParams, "encode evm callData failed").Error())
 			return
 		}
-		msg = evm.NewMsgEvmTx(from, nonce, to, amount, gas, big.NewInt(1), payload)
+		msg = evm.NewMsgEvmTx(cliCtx.FromAddr, cliCtx.Nonce, to, amount, cliCtx.Gas, big.NewInt(1), payload)
 	} else {
 		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrParams, "encode evm callData failed").Error())
 		return
 	}
 
-	if !broadcast {
+	if !cliCtx.Broadcast {
 		rest.PostProcessResponseBare(w, cliCtx, hex.EncodeToString(msg.Bytes()))
 		return
 	}
-	txByte, err := types2.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
+	txByte, err := types2.SignCommonTx(cliCtx.FromAddr, cliCtx.Nonce, cliCtx.Gas, []sdk.Msg{msg}, cliCtx.PrivateKey, cdc)
 	if err != nil {
 		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("sign tx failed: %v", err.Error())).Error())
 		return
@@ -247,22 +216,12 @@ func executeContractHandler(cliCtx context.Context,w http.ResponseWriter, r *htt
 }
 
 func migrateContractHandler(cliCtx context.Context,w http.ResponseWriter, r *http.Request) {
-	broadcast, err := strconv.ParseBool(r.FormValue("broadcast"))
-	if err != nil {
-		broadcast = true
-	}
-	privKey, from, nonce, gas, err := rest.GetNecessaryParams(cliCtx, r, cdc, broadcast)
-	if err != nil {
-		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrParams, err.Error()).Error())
-		return
-	}
-
 	sender := cliCtx.FromAddr
 	contractAddr := r.FormValue("contract_address")
 	contractAddress := sdk.HexToAddress(contractAddr)
 	var arg utils.CallData
 	queryParam := []byte(CAN_MIGRATE)
-	err = json.Unmarshal(queryParam, &arg)
+	err := json.Unmarshal(queryParam, &arg)
 	if err != nil {
 		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error()).Error())
 	}
@@ -305,13 +264,13 @@ func migrateContractHandler(cliCtx context.Context,w http.ResponseWriter, r *htt
 			return
 		}
 	}
-	msg := wasmtypes.NewMsgMigrateContract(hash, from, name, version, author, email, describe, contractAddress, args)
-	if !broadcast {
+	msg := wasmtypes.NewMsgMigrateContract(hash, cliCtx.FromAddr, name, version, author, email, describe, contractAddress, args)
+	if !cliCtx.Broadcast {
 		rest.PostProcessResponseBare(w, cliCtx, hex.EncodeToString(msg.Bytes()))
 		return
 	}
 
-	txByte, err := types2.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
+	txByte, err := types2.SignCommonTx(cliCtx.FromAddr, cliCtx.Nonce, cliCtx.Gas, []sdk.Msg{msg}, cliCtx.PrivateKey, cdc)
 	if err != nil {
 		rest.WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("sign tx faied: %v", err.Error())).Error())
 		return

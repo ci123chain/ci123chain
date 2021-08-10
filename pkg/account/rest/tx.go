@@ -165,11 +165,6 @@ func MultiMsgsRequest(cliCtx context.Context, w http.ResponseWriter, r *http.Req
 		rest.WriteErrorRes(w, err.Error())
 		return
 	}
-	privKey, from, nonce, gas, err := rest.GetNecessaryParams(cliCtx, r, cdc, true)
-	if err != nil {
-		rest.WriteErrorRes(w, err.Error())
-		return
-	}
 	for _, v := range msgs_str{
 		var msg abcitype.Msg
 		msg_byte, err := hex.DecodeString(v)
@@ -184,7 +179,7 @@ func MultiMsgsRequest(cliCtx context.Context, w http.ResponseWriter, r *http.Req
 		}
 		msgs = append(msgs, msg)
 	}
-	txByte, err := types2.SignCommonTx(from, nonce, gas, msgs, privKey, cdc)
+	txByte, err := types2.SignCommonTx(cliCtx.FromAddr, cliCtx.Nonce, cliCtx.Gas, msgs, cliCtx.PrivateKey, cdc)
 	if err != nil {
 		rest.WriteErrorRes(w, err.Error())
 		return
