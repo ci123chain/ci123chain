@@ -246,6 +246,8 @@ func MiddleHandler(ctx context.Context, f func(clictx context.Context, w http.Re
 		}
 		ctx = ctx.WithBlocked(async)
 		ctx = ctx.WithFrom(from)
+		simulate, _ := strconv.ParseBool(r.FormValue("simulate"))
+		ctx = ctx.WithSimulation(simulate)
 
 		f(ctx, w, r)
 	}

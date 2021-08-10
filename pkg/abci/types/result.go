@@ -6,35 +6,36 @@ import (
 	"fmt"
 	"strings"
 
+	abci "github.com/tendermint/tendermint/abci/types"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 )
-
-// Result is the union of ResponseFormat and ResponseCheckTx.
-type Result struct {
-	// Code is the response code, is stored back on the chain.
-	Code CodeType
-
-	// Codespace is the string referring to the domain of an error
-	Codespace CodespaceType
-
-	// Data is any data returned from the app.
-	// Data has to be length prefixed in order to separate
-	// results from multiple msgs executions
-	Data []byte
-
-	// Log contains the txs log information. NOTE: nondeterministic.
-	Log string
-
-	// GasWanted is the maximum units of work we allow this tx to perform.
-	GasWanted uint64
-
-	// GasUsed is the amount of gas actually consumed. NOTE: unimplemented
-	GasUsed uint64
-
-	// Events contains a slice of Event objects that were emitted during some
-	// execution.
-	Events Events
-}
+//
+//// Result is the union of ResponseFormat and ResponseCheckTx.
+//type Result struct {
+//	// Code is the response code, is stored back on the chain.
+//	Code CodeType
+//
+//	// Codespace is the string referring to the domain of an error
+//	Codespace CodespaceType
+//
+//	// Data is any data returned from the app.
+//	// Data has to be length prefixed in order to separate
+//	// results from multiple msgs executions
+//	Data []byte
+//
+//	// Log contains the txs log information. NOTE: nondeterministic.
+//	Log string
+//
+//	// GasWanted is the maximum units of work we allow this tx to perform.
+//	GasWanted uint64
+//
+//	// GasUsed is the amount of gas actually consumed. NOTE: unimplemented
+//	GasUsed uint64
+//
+//	// Events contains a slice of Event objects that were emitted during some
+//	// execution.
+//	Events Events
+//}
 
 type QureyAppResponse struct {
 	Code      uint32          `json:"code"`
@@ -48,7 +49,7 @@ type QureyAppResponse struct {
 
 // TODO: In the future, more codes may be OK.
 func (res Result) IsOK() bool {
-	return res.Code.IsOK()
+	return CodeType(res.Code).IsOK()
 }
 
 // ABCIMessageLogs represents a slice of ABCIMessageLog.
@@ -62,12 +63,12 @@ type ABCIMessageLog struct {
 	Events StringEvents `json:"events"`
 }
 
-func NewABCIMessageLog(i uint32, success bool, log string, events Events) ABCIMessageLog {
+func NewABCIMessageLog(i uint32, success bool, log string, events []abci.Event) ABCIMessageLog {
 	return ABCIMessageLog{
 		MsgIndex: i,
 		Success: success,
 		Log:      log,
-		Events:   StringifyEvents(events.ToABCIEvents()),
+		Events:   StringifyEvents(events),
 	}
 }
 
@@ -300,7 +301,7 @@ func WrapServiceResult(ctx Context, res interface{}, err error) (*Result, error)
 		}
 	}
 
-	var events Events
+	var events []abci.Event
 	if evtMgr := ctx.EventManager(); evtMgr != nil {
 		events = evtMgr.Events()
 	}

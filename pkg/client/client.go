@@ -46,3 +46,21 @@ func NewClientContextFromViper(cdc *codec.Codec) (context.Context, error) {
 		Cdc: 		cdc,
 	}, nil
 }
+
+func NewClientContext() (context.Context, error) {
+	nodeURI := viper.GetString(helper.FlagNode)
+
+	var rpc client.Client
+	var err error
+	if nodeURI != "" {
+		rpc, err = http.NewWithTimeout(nodeURI, "/websocket", 60)
+		if err != nil {
+			os.Exit(1)
+		}
+	}
+
+	return context.Context{
+		NodeURI: 	nodeURI,
+		Client: 	rpc,
+	}, nil
+}

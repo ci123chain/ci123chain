@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/app/types"
+	client "github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/libs"
 	r "github.com/ci123chain/ci123chain/pkg/redis"
 	"github.com/go-redis/redis/v8"
@@ -21,18 +22,18 @@ import (
 	"path/filepath"
 )
 type (
-	AppCreator func(home string, logger log.Logger, statedb, traceStore string) (sdk.Application, error)
+	AppCreator func(home string, logger log.Logger, statedb, traceStore string) (Application, error)
 
 	AppExporter func(home string, logger log.Logger, statedb, traceStore string) (json.RawMessage, []tmtypes.GenesisValidator, error)
 
-	AppCreatorInit func(logger log.Logger, ldb dbm.DB, cdb dbm.DB, writer io.Writer) sdk.Application
+	AppCreatorInit func(logger log.Logger, ldb dbm.DB, cdb dbm.DB, writer io.Writer) Application
 
 	AppExporterInit func(logger log.Logger, ldb dbm.DB, cdb dbm.DB, writer io.Writer) (json.RawMessage, []tmtypes.GenesisValidator, error)
 )
 
 func ConstructAppCreator(appFn AppCreatorInit, name string) AppCreator {
 
-	return func(rootDir string, logger log.Logger, statedb, traceStore string) (sdk.Application, error) {
+	return func(rootDir string, logger log.Logger, statedb, traceStore string) (Application, error) {
 		dataDir := filepath.Join(rootDir, "data")
 		ldb, err := dbm.NewGoLevelDB(name, dataDir)
 		if err != nil {
@@ -163,4 +164,12 @@ func getOption(statedb string) (*redis.Options, error) {
 			}
 		}
 	}
+}
+
+type Application interface {
+	sdk.Application
+
+	// RegisterTxService registers the gRPC Query service for tx (such as tx
+	// simulation, fetching txs by hash...).
+	RegisterTxService(clientCtx client.Context)
 }

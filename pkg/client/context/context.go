@@ -2,6 +2,7 @@ package context
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	codectypes "github.com/ci123chain/ci123chain/pkg/abci/codec/types"
@@ -9,10 +10,12 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/account/exported"
 	"github.com/ci123chain/ci123chain/pkg/account/keeper"
 	"github.com/ci123chain/ci123chain/pkg/account/types"
+	"github.com/ci123chain/ci123chain/pkg/app/types/service"
 	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/pkg/errors"
 	"github.com/tendermint/tendermint/crypto/merkle"
 	rpclient "github.com/tendermint/tendermint/rpc/client"
+	"strings"
 )
 
 type Context struct {
@@ -27,6 +30,7 @@ type Context struct {
 	Cdc 		*codec.Codec
 	InterfaceRegistry codectypes.InterfaceRegistry
 	Code 		int64
+	Simulate    bool
 }
 
 func (ctx *Context) Context() context.Context {
@@ -78,6 +82,12 @@ func (ctx Context) WithFrom(from sdk.AccAddress) Context {
 
 func (ctx Context) WithBlocked(blocked bool) Context {
 	ctx.Blocked = blocked
+	return ctx
+}
+
+// WithSimulation returns a copy of the context with updated Simulate value
+func (ctx Context) WithSimulation(simulate bool) Context {
+	ctx.Simulate = simulate
 	return ctx
 }
 
@@ -185,12 +195,43 @@ func (ctx Context) PrintOutput(toPrint fmt.Stringer) (err error) {
 
 // broadcastTx
 func (ctx *Context) BroadcastSignedTx(data []byte) (sdk.TxResponse, error) {
+	if ctx.Simulate {
+		return ctx.CalculateGas(data)
+	}
 	async := ctx.Blocked
 	if async {
 		return ctx.BroadcastSignedDataAsync(data)
 	} else {
 		return ctx.BroadcastSignedData(data)
 	}
+}
+
+func (ctx *Context) CalculateGas(txByte []byte) (sdk.TxResponse, error){
+	simReq := &service.SimulateRequest{Tx: txByte}
+	by, err := simReq.Marshal()
+	if err != nil {
+		return sdk.TxResponse{}, err
+	}
+	bz, height, _, err := ctx.Query("/weelink.app.Service/Simulate", by, false)
+	if err != nil {
+		return sdk.TxResponse{}, err
+	}
+
+	var simRes service.SimulateResponse
+	if err := simRes.Unmarshal(bz); err != nil {
+		return sdk.TxResponse{}, err
+	}
+
+	return sdk.TxResponse{
+		Height:     height,
+		Code:       simRes.Result.GetCode(),
+		Data:       strings.ToUpper(hex.EncodeToString(simRes.Result.GetData())),
+		RawLog:     simRes.Result.GetLog(),
+		GasWanted:  int64(simRes.Result.GetGasWanted()),
+		GasUsed:    int64(simRes.Result.GetGasUsed()),
+		Events:     sdk.StringifyEvents(simRes.Result.GetEvents()),
+		Codespace:  simRes.Result.GetCodespace(),
+	}, nil
 }
 
 // 消息确认 同步

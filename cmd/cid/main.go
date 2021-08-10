@@ -8,7 +8,6 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/logger"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/cli"
 	"github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/types"
@@ -74,7 +73,7 @@ func main()  {
 	exector.Execute()
 }
 
-func newApp(lg log.Logger, ldb db.DB, cdb db.DB,traceStore io.Writer) abci.Application{
+func newApp(lg log.Logger, ldb db.DB, cdb db.DB,traceStore io.Writer) app.Application{
 	logger.SetLogger(lg)
 	return app.NewChain(lg, ldb, cdb, traceStore)
 }

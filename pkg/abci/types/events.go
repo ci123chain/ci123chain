@@ -22,7 +22,7 @@ func NewEventManager() *EventManager {
 	return &EventManager{EmptyEvents()}
 }
 
-func (em *EventManager) Events() Events { return em.events }
+func (em *EventManager) Events() []abci.Event { return em.events.ToABCIEvents() }
 
 // EmitEvent stores a single Event object.
 func (em *EventManager) EmitEvent(event Event) {

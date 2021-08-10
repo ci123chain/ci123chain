@@ -1,0 +1,34 @@
+syntax = "proto3";
+package weelink.app;
+
+import "google/api/annotations.proto";
+import "weelink/abci/result.proto";
+import "gogoproto/gogo.proto";
+
+option (gogoproto.goproto_registration) = true;
+option go_package = "github.com/ci123chain/ci123chain/pkg/app/types/service";
+
+// Service defines a gRPC service for interacting with transactions.
+service Service {
+  // Simulate simulates executing a transaction for estimating gas usage.
+  rpc Simulate(SimulateRequest) returns (SimulateResponse) {
+    option (google.api.http) = {
+      post: "/weelink/tx/simulate"
+      body: "*"
+    };
+  }
+}
+
+// SimulateRequest is the request type for the Service.Simulate
+// RPC method.
+message SimulateRequest {
+  // tx is the transaction to simulate.
+  bytes tx = 1;
+}
+
+// SimulateResponse is the response type for the
+// Service.SimulateRPC method.
+message SimulateResponse {
+  // result is the result of the simulation.
+  weelink.base.abci.Result result = 1;
+}

@@ -28,6 +28,7 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
+	client "github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/module"
 	"github.com/ci123chain/ci123chain/pkg/account"
 	"github.com/ci123chain/ci123chain/pkg/account/keeper"
@@ -36,6 +37,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/auth"
 	"github.com/ci123chain/ci123chain/pkg/auth/ante"
 	_defer "github.com/ci123chain/ci123chain/pkg/auth/defer"
+	authtx "github.com/ci123chain/ci123chain/pkg/auth/tx"
 	auth_types "github.com/ci123chain/ci123chain/pkg/auth/types"
 	capabilitytypes "github.com/ci123chain/ci123chain/pkg/capability/types"
 	distr "github.com/ci123chain/ci123chain/pkg/distribution"
@@ -125,7 +127,7 @@ type Chain struct {
 	logger log.Logger
 	cdc    *amino.Codec
 	appCodec codec.Marshaler
-	interfaceRegistery codectypes.InterfaceRegistry
+	interfaceRegistry codectypes.InterfaceRegistry
 
 	// keys to access the substores
 	capKeyMainStore *sdk.KVStoreKey
@@ -162,7 +164,7 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 		BaseApp: 			app,
 		cdc: 				cdc,
 		appCodec:           appCodec,
-		interfaceRegistery: interfaceRegister,
+		interfaceRegistry:  interfaceRegister,
 		capKeyMainStore: 	MainStoreKey,
 		contractStore: 		ContractStoreKey,
 		txIndexStore: 		TxIndexStoreKey,
@@ -462,3 +464,8 @@ func (app *Chain) GetSubspace(moduleName string) params.Subspace {
 	return subspace
 }
 
+func (app *Chain) RegisterTxService(clientCtx client.Context) {
+	authtx.RegisterTxService(app.BaseApp.GRPCQueryRouter(), clientCtx, app.BaseApp.Simulate, app.interfaceRegistry)
+}
+
+var _ Application = (*Chain)(nil)

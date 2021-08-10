@@ -6,6 +6,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	"github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/app"
+	"github.com/ci123chain/ci123chain/pkg/client"
 	hnode "github.com/ci123chain/ci123chain/pkg/node"
 	staking "github.com/ci123chain/ci123chain/pkg/staking/types"
 	"github.com/ci123chain/ci123chain/pkg/util"
@@ -18,6 +19,7 @@ import (
 	"github.com/tendermint/tendermint/node"
 	pvm "github.com/tendermint/tendermint/privval"
 	"github.com/tendermint/tendermint/proxy"
+	"github.com/tendermint/tendermint/rpc/client/local"
 	"io/ioutil"
 	"os"
 	"strconv"
@@ -208,6 +210,13 @@ func StartInProcess(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Code
 		return nil, err
 	}
 	ctx.Logger.Info("Starting Node Server Success")
+
+	cliCtx, err := client.NewClientContext()
+	if err != nil {
+		return nil, err
+	}
+	cliCtx.WithClient(local.New(tmNode))
+	app.RegisterTxService(cliCtx)
 
 	// Sleep forever and then...
 	tos.TrapSignal(ctx.Logger, func() {

@@ -15,7 +15,11 @@ func (app *BaseApp) Check(tx sdk.Tx) (result sdk.Result, err error) {
 }
 
 // nolint - full tx execution
-func (app *BaseApp) Simulate(tx sdk.Tx) (result sdk.Result, err error) {
+func (app *BaseApp) Simulate(txByte []byte) (result sdk.Result, err error) {
+	tx, err := app.txDecoder(txByte)
+	if err != nil {
+		return sdk.Result{}, err
+	}
 	return app.runTx(runTxModeSimulate, nil, tx)
 }
 

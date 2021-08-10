@@ -1,0 +1,24 @@
+syntax = "proto3";
+package weelink.base.abci;
+
+option go_package = "github.com/ci123chain/ci123chain/pkg/abci/types";
+
+import "gogoproto/gogo.proto";
+import "tendermint/abci/types.proto";
+
+message Result {
+
+  uint32 code = 1;
+
+  string codespace = 2;
+
+  bytes data = 3;
+
+  string log = 4;
+
+  uint64 gasWanted = 5;
+
+  uint64 gasUsed = 6;
+
+  repeated tendermint.abci.Event events = 7 [(gogoproto.nullable) = false];
+}

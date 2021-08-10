@@ -598,18 +598,19 @@ func gRPCErrorToSDKError(err error) error {
 func handleQueryApp(app *BaseApp, path []string, req abci.RequestQuery) (res abci.ResponseQuery) {
 	if len(path) >= 2 {
 		var result sdk.Result
+		var err error
 		switch path[1] {
 		case "simulate":
 			txBytes := req.Data
-			tx, err := app.txDecoder(txBytes)
-			if err != nil {
-				return abcierrors.QueryResult(sdkerrors.Wrap(sdkerrors.ErrTxDecode, err.Error()))
-			} else {
-				result, err = app.Simulate(tx)
+			//tx, err := app.txDecoder(txBytes)
+			//if err != nil {
+			//	return abcierrors.QueryResult(sdkerrors.Wrap(sdkerrors.ErrTxDecode, err.Error()))
+			//} else {
+				result, err = app.Simulate(txBytes)
 				if err != nil {
 					return abcierrors.QueryResult(err)
 				}
-			}
+			//}
 			simulationResp := sdk.QureyAppResponse{
 				Code:       uint32(result.Code),
 				FormatData: string(result.Data),
@@ -758,7 +759,7 @@ func (app *BaseApp) CheckTx(req abci.RequestCheckTx) abci.ResponseCheckTx {
 	} else {
 		res, err := app.runTx(runTxModeCheck, req.Tx, tx)
 		if err != nil {
-			return abcierrors.ResponseCheckTx(err, res.GasWanted, res.GasUsed, false, res.Events.ToABCIEvents())
+			return abcierrors.ResponseCheckTx(err, res.GasWanted, res.GasUsed, false, res.Events)
 		}
 		result = res
 	}
@@ -769,7 +770,7 @@ func (app *BaseApp) CheckTx(req abci.RequestCheckTx) abci.ResponseCheckTx {
 		Log:       result.Log,
 		GasWanted: int64(result.GasWanted), // TODO: Should type accept unsigned ints?
 		GasUsed:   int64(result.GasUsed),   // TODO: Should type accept unsigned ints?
-		Events:    result.Events.ToABCIEvents(),
+		Events:    result.Events,
 	}
 }
 
@@ -784,7 +785,7 @@ func (app *BaseApp) DeliverTx(req abci.RequestDeliverTx) abci.ResponseDeliverTx 
 		var err error
 		result, err = app.runTx(runTxModeDeliver, req.Tx, tx)
 		if err != nil {
-			return abcierrors.ResponseDeliverTx(err, result.GasWanted, result.GasUsed, false, result.Events.ToABCIEvents())
+			return abcierrors.ResponseDeliverTx(err, result.GasWanted, result.GasUsed, false, result.Events)
 		}
 	}
 
@@ -795,7 +796,7 @@ func (app *BaseApp) DeliverTx(req abci.RequestDeliverTx) abci.ResponseDeliverTx 
 		Log:       result.Log,
 		GasWanted: int64(result.GasWanted), // TODO: Should type accept unsigned ints?
 		GasUsed:   int64(result.GasUsed),   // TODO: Should type accept unsigned ints?
-		Events:    result.Events.ToABCIEvents(),
+		Events:    result.Events,
 	}
 	return res
 }
@@ -813,10 +814,10 @@ func (app *BaseApp) getContextForTx(mode runTxMode, txBytes []byte) (ctx sdk.Con
 
 func (app *BaseApp) runMsgs(ctx sdk.Context, msgs []sdk.Msg, mode runTxMode) (sdk.Result, error){
 	msgLogs := make(sdk.ABCIMessageLogs, 0, len(msgs))
-	var code      sdk.CodeType
-	var codespace sdk.CodespaceType
+	var code      uint32
+	var codespace string
 	var data []byte
-	var events sdk.Events
+	var events []abci.Event
 
 	for msgIdx, msg := range msgs{
 		msgRoute := msg.Route()
@@ -929,17 +930,19 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 			for _, v := range all_attributes {
 				v = append(v, sdk.NewAttribute([]byte(sdk.EventTypeType), []byte(sdk.AttributeKeyInvalidTx)))
 				event := sdk.NewEvent(sdk.AttributeKeyTx, v...)
-				result.Events = append(result.Events, event)
+				result.Events = append(result.Events, abci.Event(event))
 			}
 			fmt.Println(result.Events)
 		} else {
 			res := app.deferHandler(ctx, tx, false, mode == runTxModeSimulate)
-			result.GasUsed = res.GasUsed
+			if mode != runTxModeSimulate {
+				result.GasUsed = res.GasUsed
+			}
 			result.GasWanted = gasWanted
 			for _, v := range all_attributes {
 				v = append(v, sdk.NewAttribute([]byte(sdk.EventTypeType), []byte(sdk.AttributeKeyValidTx)))
 				event := sdk.NewEvent(sdk.AttributeKeyTx, v...)
-				result.Events = append(result.Events, event)
+				result.Events = append(result.Events, abci.Event(event))
 			}
 		}
 	}()
