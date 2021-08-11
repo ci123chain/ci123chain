@@ -226,6 +226,7 @@ func (api *PublicEthereumAPI) GetBlockByNumber(blockNum BlockNumber, fullTx bool
 	r, _ := libs.RetryI(0, func(retryTimes int) (res interface{}, err error) {
 		res, err = api.clientCtx.Client.Block(api.ctx, &height)
 		if err != nil {
+			api.logger.Warn("eth_getBlockByNumber", "error", err.Error())
 			return nil, err
 		}
 		return res, nil

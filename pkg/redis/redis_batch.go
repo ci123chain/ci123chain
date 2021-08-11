@@ -28,8 +28,13 @@ func (rb *redisBatch) Write() error {
 	_, err := libs.RetryI(0, func(retryTimes int) (bytes interface{}, e error) {
 		_, err := rb.batch.Commit()
 		if err != nil {
-			rb.rdb.lg.Error("batch write failed", "Method", "Write",
-				"Retry times", retryTimes, "error", err.Error())
+			if retryTimes > 10 {
+				rb.rdb.lg.Error("batch write failed", "Method", "Write",
+					"Retry times", retryTimes, "error", err.Error())
+			} else {
+				rb.rdb.lg.Warn("batch write failed", "Method", "Write",
+					"Retry times", retryTimes, "error", err.Error())
+			}
 			return nil, err
 		}else {
 			return nil, nil

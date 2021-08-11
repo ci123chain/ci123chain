@@ -97,7 +97,7 @@ func GetRDB(stateDB string, logger log.Logger) (db dbm.DB, err error) {
 		db = r.NewRedisDB(opt)
 		err = r.DBIsValid(db.(*r.RedisDB))
 		if logger != nil && err != nil {
-			logger.Error("connect raft leveldb error", "host", stateDB)
+			logger.Warn("connect raft leveldb error", "host", stateDB)
 		}
 		return nil, err
 	})

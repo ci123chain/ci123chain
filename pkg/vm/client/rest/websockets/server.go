@@ -84,11 +84,11 @@ func (s *Server) sendErrResponse(conn *websocket.Conn, msg string) {
 }
 
 func (s *Server) readLoop(wsConn *websocket.Conn) {
+	defer wsConn.Close()
 	for {
 		_, mb, err := wsConn.ReadMessage()
 		if err != nil {
-			_ = wsConn.Close()
-			s.logger.Error("failed to read message;","error", err.Error())
+			s.logger.Warn("failed to read message;","error", err.Error())
 			return
 		}
 		var msg map[string]interface{}
@@ -147,7 +147,7 @@ func (s *Server) readLoop(wsConn *websocket.Conn) {
 
 			err = wsConn.WriteJSON(res)
 			if err != nil {
-				s.logger.Error("failed to write json response", err)
+				s.logger.Warn("eth_subscribe failed to write json response", err)
 				continue
 			}
 
@@ -168,7 +168,7 @@ func (s *Server) readLoop(wsConn *websocket.Conn) {
 
 			err = wsConn.WriteJSON(res)
 			if err != nil {
-				s.logger.Error("failed to write json response", err)
+				s.logger.Warn("eth_unsubscribe failed to write json response", err)
 				continue
 			}
 
