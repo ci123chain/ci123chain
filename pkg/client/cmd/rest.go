@@ -488,9 +488,9 @@ func ExportEnv(ctx context.Context) http.HandlerFunc {
 
 func SetupRegisterCenter() {
 	logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", "register-center")
-	appID := os.Getenv("APPID")
+	appID := os.Getenv("CI_VALIDATOR_KEY")
 	if appID == "" {
-		logger.Error("APPID can not be empty")
+		logger.Error("CI_VALIDATOR_KEY can not be empty")
 		os.Exit(1)
 	}
 	hn, _ := os.Hostname()
@@ -567,7 +567,7 @@ func registerCenterHandler(ctx context.Context) http.HandlerFunc {
 		//}
 		res := map[string]interface{}{
 			"state": 200,
-			"appID": os.Getenv("APPID"),
+			"appID": os.Getenv("CI_VALIDATOR_KEY"),
 		}
 		bytes, err := json.Marshal(res)
 		if err != nil {
