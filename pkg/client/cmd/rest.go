@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	ctx "context"
 	"encoding/json"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/types"
@@ -45,6 +46,9 @@ import (
 
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	ltypes "github.com/tendermint/tendermint/rpc/jsonrpc/types"
+
+	"gitlab.oneitfarm.com/bifrost/sesdk"
+	"gitlab.oneitfarm.com/bifrost/sesdk/discovery"
 )
 
 const (
@@ -110,12 +114,14 @@ func NewRestServer() *RestServer {
 	if err != nil {
 		return nil
 	}
+	go SetupRegisterCenter()
 
 	r.NotFoundHandler = Handle404()
 	r.HandleFunc("/healthcheck", HealthCheckHandler(cliCtx)).Methods("GET")
 	r.HandleFunc("/exportLog", ExportLogHandler(cliCtx)).Methods("GET")
 	r.HandleFunc("/exportConfig", ExportConfigHandler(cliCtx)).Methods("GET")
 	r.HandleFunc("/exportEnv", ExportEnv(cliCtx)).Methods("POST")
+	r.HandleFunc("/info", registerCenterHandler(cliCtx)).Methods("GET")
 	rpc.RegisterRoutes(cliCtx, r)
 	accountRpc.RegisterRoutes(cliCtx, r)
 	txRpc.RegisterTxRoutes(cliCtx, r)
@@ -470,6 +476,98 @@ func ExportEnv(ctx context.Context) http.HandlerFunc {
 		for _, v := range ks {
 			value := os.Getenv(v)
 			res[v] = value
+		}
+		bytes, err := json.Marshal(res)
+		if err != nil {
+			_, _ = w.Write([]byte(err.Error()))
+			return
+		}
+		_, _ = w.Write(bytes)
+	}
+}
+
+func SetupRegisterCenter() {
+	logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", "register-center")
+	appID := os.Getenv("APPID")
+	if appID == "" {
+		logger.Error("APPID can not be empty")
+		os.Exit(1)
+	}
+	hn, _ := os.Hostname()
+	// 注册中心自身，初始化配置
+	conf := &discovery.Config{
+		// discovery地址
+		Nodes:    []string{"192.168.2.80:8181", "192.168.2.80:8182", "192.168.2.80:8183"},
+		Region:   "sh",
+		Zone:     "sh001",
+		Env:      "dev",
+		Host:     hn,               // hostname
+		RenewGap: time.Second * 30, // 心跳时间
+	}
+	// 自身实例信息
+	ins := &sesdk.Instance{
+		Region:   "sh",
+		Zone:     "sh001",
+		Env:      "dev",
+		AppID:    appID, // 自身唯一识别号
+		Hostname: hn,
+		Addrs: []string{ // 可上报任意服务监听地址，供发现方连接
+			"http://127.0.0.1:8545",
+			//"https://127.0.0.1:443",
+			//"tcp://192.168.2.88:3030",
+		},
+		// 上报任意自身属性信息
+		Metadata: map[string]string{
+			"weight":       "10", // 负载均衡权重
+			"runtime":      "production",
+			"service_name": "tttttttttt",
+		},
+	}
+	// 实例化discovery对象
+	dis, err := discovery.New(conf)
+	if err != nil {
+		panic(err)
+	}
+	// 注册自身
+	_, err = dis.Register(ctx.Background(), ins)
+	if err != nil {
+		panic(err)
+	}
+	//// 启动服务主要逻辑
+	//go func() {
+	//	http.HandleFunc("/info", func(writer http.ResponseWriter, request *http.Request) {
+	//		_, _ = writer.Write([]byte(`{"state":1,"msg":"OK"}`))
+	//	})
+	//
+	//	err := http.ListenAndServe(":38081", nil)
+	//	if err != nil {
+	//		panic(err)
+	//	}
+	//}()
+	// 监听系统信号，服务下线
+	dis.ExitSignal(func(s os.Signal) {
+		logger.Info("got exit signal, exit now", "signal", s.String())
+	})
+}
+
+func registerCenterHandler(ctx context.Context) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+
+		//var ks []string
+		//keys := req.FormValue("keys")
+		//err := json.Unmarshal([]byte(keys), &ks)
+		//if err != nil {
+		//	_, _ = w.Write([]byte(err.Error()))
+		//	return
+		//}
+		//var res = make(map[string]interface{}, 0)
+		//for _, v := range ks {
+		//	value := os.Getenv(v)
+		//	res[v] = value
+		//}
+		res := map[string]interface{}{
+			"state": 200,
+			"appID": os.Getenv("APPID"),
 		}
 		bytes, err := json.Marshal(res)
 		if err != nil {

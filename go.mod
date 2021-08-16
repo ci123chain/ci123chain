@@ -41,6 +41,7 @@ require (
 	github.com/umbracle/go-web3 v0.0.0-20210428185842-ec1b314b9425
 	github.com/wasmerio/wasmer-go v1.0.3
 	gitlab.oneitfarm.com/bifrost/cilog v0.1.10
+	gitlab.oneitfarm.com/bifrost/sesdk v1.0.26
 	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad
 	golang.org/x/sync v0.0.0-20201207232520-09787c993a3a
 	google.golang.org/genproto v0.0.0-20210114201628-6edceaf6022f
