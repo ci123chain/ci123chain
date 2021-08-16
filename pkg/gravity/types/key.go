@@ -16,6 +16,8 @@ const (
 
 	// QuerierRoute to be used for querierer msgs
 	QuerierRoute = ModuleName
+
+	WlKTokenAddress = "0x0000000000000000000000ffff"
 )
 
 var (
@@ -94,11 +96,11 @@ var (
 	// LastObservedEthereumBlockHeightKey indexes the latest Ethereum block height
 	LastObservedEthereumBlockHeightKey = []byte{0xf9}
 
-	// DenomToERC20Key prefixes the index of Cosmos originated asset denoms to ERC20s
-	DenomToERC20Key = []byte{0xf3}
+	// WlkToEthKey prefixes the index of wlk asset to eth ERC20s
+	WlkToEthKey = []byte{0xf3}
 
-	// ERC20ToDenomKey prefixes the index of Cosmos originated assets ERC20s to denoms
-	ERC20ToDenomKey = []byte{0xf4}
+	// EthToWlkKey prefixes the index of eth originated assets ERC20s to wlk
+	EthToWlkKey = []byte{0xf4}
 
 	// LastSlashedValsetNonce indexes the latest slashed valset nonce
 	LastSlashedValsetNonce = []byte{0xf5}
@@ -111,6 +113,8 @@ var (
 
 	// LastUnBondingBlockHeight indexes the last validator unbonding block height
 	LastUnBondingBlockHeight = []byte{0xf8}
+
+	ContractMetaDataKey = []byte{0xf9}
 )
 
 // GetOrchestratorAddressKey returns the following key format
@@ -252,12 +256,16 @@ func GetLastEventNonceByValidatorKey(validator sdk.AccAddress) []byte {
 	return append(LastEventNonceByValidatorKey, validator.Bytes()...)
 }
 
-func GetDenomToERC20Key(denom string) []byte {
-	return append(DenomToERC20Key, []byte(denom)...)
+func GetWlKToEthKey(denom string) []byte {
+	return append(WlkToEthKey, []byte(denom)...)
 }
 
-func GetERC20ToDenomKey(erc20 string) []byte {
-	return append(ERC20ToDenomKey, []byte(erc20)...)
+func GetEthToWlkKey(erc20 string) []byte {
+	return append(EthToWlkKey, []byte(erc20)...)
+}
+
+func GetContractMetaDataKey(contract string) []byte {
+	return append(ContractMetaDataKey, []byte(contract)...)
 }
 
 func GetOutgoingLogicCallKey(invalidationId []byte, invalidationNonce uint64) []byte {

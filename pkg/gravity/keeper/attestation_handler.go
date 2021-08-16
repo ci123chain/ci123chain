@@ -2,11 +2,11 @@ package keeper
 
 import (
 	"fmt"
-	"github.com/ci123chain/ci123chain/pkg/account"
-	"github.com/ci123chain/ci123chain/pkg/supply"
-
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
+	"github.com/ci123chain/ci123chain/pkg/account"
+	"github.com/ci123chain/ci123chain/pkg/supply"
+	vmtypes "github.com/ci123chain/ci123chain/pkg/vm/types"
 
 	"github.com/ci123chain/ci123chain/pkg/gravity/types"
 )
@@ -16,6 +16,7 @@ type AttestationHandler struct {
 	keeper     Keeper
 	supplyKeeper supply.Keeper
 	accountKeeper account.AccountKeeper
+	evmKeeper  vmtypes.Keeper
 }
 
 // Handle is the entry point for Attestation processing.
@@ -24,11 +25,12 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim
 	switch claim := claim.(type) {
 	case *types.MsgDepositClaim:
 		// Check if coin is Cosmos-originated asset and get denom
-		isCosmosOriginated, denom := a.keeper.ERC20ToDenomLookup(ctx, claim.TokenContract)
+		isCosmosOriginated, wlkContract := a.keeper.ERC20ToDenomLookup(ctx, claim.TokenContract)
 
 		if isCosmosOriginated {
+			// 如果是 weelink 原生币
 			// If it is cosmos originated, unlock the coins
-			coins := sdk.Coins{sdk.NewCoin(denom, claim.Amount)}
+			coins := sdk.Coins{sdk.NewCoin(sdk.DefaultBondDenom, claim.Amount)}
 
 			addr, err := sdk.AccAddressFromBech32(claim.CosmosReceiver)
 			if err != nil {
@@ -39,81 +41,53 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim
 				return sdkerrors.Wrap(err, "transfer vouchers")
 			}
 		} else {
+			// erc20 代币
 			// If it is not cosmos originated, mint the coins (aka vouchers)
-			coins := sdk.Coins{sdk.NewCoin(denom, claim.Amount)}
-
-			if err := a.supplyKeeper.MintCoins(ctx, types.ModuleName, coins); err != nil {
-				return sdkerrors.Wrapf(err, "mint vouchers coins: %s", coins)
-			}
-
-			addr, err := sdk.AccAddressFromBech32(claim.CosmosReceiver)
+			//coin := sdk.NewCoin(denom, claim.Amount)
+			receiverAddr, err := sdk.AccAddressFromBech32(claim.CosmosReceiver)
 			if err != nil {
 				return sdkerrors.Wrap(err, "invalid reciever address")
 			}
-
-			if err = a.supplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, addr, coins); err != nil {
-				return sdkerrors.Wrap(err, "transfer vouchers")
+			metaData := a.keeper.GetTokenMetaData(ctx, wlkContract)
+			if metaData.Symbol == "" {
+				return types.ErrNoContractMetaData
 			}
+
+			owner := a.supplyKeeper.GetModuleAddress(types.ModuleName)
+			//param := []interface{}{metaData.Name, metaData.Symbol, metaData.Symbol, 0, true}
+			//denomAddr, err := a.DeployERC20Contract(ctx, owner, param)
+			//if err != nil {
+			//	return err
+			//}
+
+			err = a.Mint(ctx, sdk.HexToAddress(wlkContract), owner, receiverAddr, claim.Amount.BigInt())
+			return err
 		}
 	case *types.MsgWithdrawClaim:
 		a.keeper.OutgoingTxBatchExecuted(ctx, claim.TokenContract, claim.BatchNonce)
 	case *types.MsgERC20DeployedClaim:
 		// Check if it already exists
-		existingERC20, exists := a.keeper.GetCosmosOriginatedERC20(ctx, claim.CosmosDenom)
+		existingERC20, exists := a.keeper.GetMapedEthToken(ctx, claim.TokenContract)
 		if exists {
 			return sdkerrors.Wrap(
 				types.ErrInvalid,
-				fmt.Sprintf("ERC20 %s already exists for denom %s", existingERC20, claim.CosmosDenom))
+				fmt.Sprintf("ERC20 %s in wlk already exists for eth %s", existingERC20, claim.TokenContract))
 		}
 
-		// Check if denom exists
-		metadata := a.keeper.SupplyKeeper.GetDenomMetaData(ctx, claim.CosmosDenom)
-		if metadata.Base == "" {
-			return sdkerrors.Wrap(types.ErrUnknown, fmt.Sprintf("denom not found %s", claim.CosmosDenom))
+		owner := a.supplyKeeper.GetModuleAddress(types.ModuleName)
+		param := []interface{}{claim.Symbol, claim.Name, claim.Decimals, 0, true}
+		wlkAddr, err := a.DeployERC20Contract(ctx, owner, param)
+		if err != nil {
+			return err
 		}
-
-		// Check if attributes of ERC20 match Cosmos denom
-		if claim.Name != metadata.Display {
-			return sdkerrors.Wrap(
-				types.ErrInvalid,
-				fmt.Sprintf("ERC20 name %s does not match denom display %s", claim.Name, metadata.Description))
-		}
-
-		if claim.Symbol != metadata.Display {
-			return sdkerrors.Wrap(
-				types.ErrInvalid,
-				fmt.Sprintf("ERC20 symbol %s does not match denom display %s", claim.Symbol, metadata.Display))
-		}
-
-		// ERC20 tokens use a very simple mechanism to tell you where to display the decimal point.
-		// The "decimals" field simply tells you how many decimal places there will be.
-		// Cosmos denoms have a system that is much more full featured, with enterprise-ready token denominations.
-		// There is a DenomUnits array that tells you what the name of each denomination of the
-		// token is.
-		// To correlate this with an ERC20 "decimals" field, we have to search through the DenomUnits array
-		// to find the DenomUnit which matches up to the main token "display" value. Then we take the
-		// "exponent" from this DenomUnit.
-		// If the correct DenomUnit is not found, it will default to 0. This will result in there being no decimal places
-		// in the token's ERC20 on Ethereum. So, for example, if this happened with Atom, 1 Atom would appear on Ethereum
-		// as 1 million Atoms, having 6 extra places before the decimal point.
-		// This will only happen with a Denom Metadata which is for all intents and purposes invalid, but I am not sure
-		// this is checked for at any other point.
-		decimals := uint32(0)
-		for _, denomUnit := range metadata.DenomUnits {
-			if denomUnit.Denom == metadata.Display {
-				decimals = denomUnit.Exponent
-				break
-			}
-		}
-
-		if decimals != uint32(claim.Decimals) {
-			return sdkerrors.Wrap(
-				types.ErrInvalid,
-				fmt.Sprintf("ERC20 decimals %d does not match denom decimals %d", claim.Decimals, decimals))
-		}
-
 		// Add to denom-erc20 mapping
-		a.keeper.setCosmosOriginatedDenomToERC20(ctx, claim.CosmosDenom, claim.TokenContract)
+		a.keeper.setERC20Map(ctx, wlkAddr.String(), claim.TokenContract)
+		a.keeper.SetTokenMetaData(ctx, wlkAddr.String(), types.MetaData{
+			Symbol:   claim.Symbol,
+			Name:     claim.Name,
+			Decimals: claim.Decimals,
+		})
+		//a.keeper.setCosmosOriginatedDenomToERC20(ctx, claim.CosmosDenom, claim.TokenContract)
 
 	default:
 		return sdkerrors.Wrapf(types.ErrInvalid, "event type: %s", claim.GetType())

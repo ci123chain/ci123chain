@@ -24,4 +24,5 @@ var (
 	NewInstantiateTx = types.NewMsgInstantiateContract
 	NewExecuteTx = types.NewMsgExecuteContract
 	NewMigrateTx = types.NewMsgMigrateContract
+
 )

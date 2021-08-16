@@ -2,6 +2,7 @@ package evmtypes
 
 import (
 	"fmt"
+	"github.com/ci123chain/ci123chain/pkg/vm/types"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -37,12 +38,17 @@ type GasInfo struct {
 	GasRefunded uint64
 }
 
+var _ types.VMResult = (*ExecutionResult)(nil)
 // ExecutionResult represents what's returned from a transition
 type ExecutionResult struct {
 	Logs    []*ethtypes.Log
 	Bloom   *big.Int
 	Result  *sdk.Result
 	GasInfo GasInfo
+}
+
+func (e ExecutionResult) VMResult() *sdk.Result {
+	return e.Result
 }
 
 func (st StateTransition) newEVM(ctx sdk.Context, csdb *CommitStateDB, gasLimit uint64, gasPrice *big.Int, config ChainConfig) *vm.EVM {

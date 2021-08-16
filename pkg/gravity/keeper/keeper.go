@@ -7,6 +7,7 @@ import (
 	slashing "github.com/ci123chain/ci123chain/pkg/slashing/keeper"
 	staking "github.com/ci123chain/ci123chain/pkg/staking/keeper"
 	supply "github.com/ci123chain/ci123chain/pkg/supply/keeper"
+	vmtypes "github.com/ci123chain/ci123chain/pkg/vm/types"
 	"math"
 	"sort"
 	"strconv"
@@ -31,13 +32,14 @@ type Keeper struct {
 	cdc            *codec.Codec // The wire codec for binary encoding/decoding.
 	SlashingKeeper slashing.Keeper
 
+
 	AttestationHandler interface {
 		Handle(sdk.Context, types.Attestation, types.EthereumClaim) error
 	}
 }
 
 // NewKeeper returns a new instance of the gravity keeper
-func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, paramSpace paramtypes.Subspace, accountKeeper account.AccountKeeper, stakingKeeper staking.StakingKeeper, supplyKeeper supply.Keeper, slashingKeeper slashing.Keeper) Keeper {
+func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, paramSpace paramtypes.Subspace, accountKeeper account.AccountKeeper, stakingKeeper staking.StakingKeeper, supplyKeeper supply.Keeper, slashingKeeper slashing.Keeper, vmkeeper vmtypes.Keeper) Keeper {
 	// set KeyTable if it has not already been set
 	if !paramSpace.HasKeyTable() {
 		paramSpace = paramSpace.WithKeyTable(types.ParamKeyTable())
@@ -47,7 +49,7 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, paramSpace paramtypes.Su
 		cdc:            cdc,
 		paramSpace:     paramSpace,
 		storeKey:       storeKey,
-		AccountKeeper: accountKeeper,
+		AccountKeeper: 	accountKeeper,
 		StakingKeeper:  stakingKeeper,
 		SupplyKeeper: 	supplyKeeper,
 		SlashingKeeper: slashingKeeper,
@@ -56,6 +58,7 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, paramSpace paramtypes.Su
 		keeper:     k,
 		supplyKeeper: supplyKeeper,
 		accountKeeper: accountKeeper,
+		evmKeeper: vmkeeper,
 	}
 
 	return k
@@ -729,4 +732,20 @@ func prefixRange(prefix []byte) ([]byte, []byte) {
 		end = nil
 	}
 	return prefix, end
+}
+
+
+
+func (k Keeper) SetTokenMetaData(ctx sdk.Context, contract string, meta types.MetaData) {
+	ctx.KVStore(k.storeKey).Set(types.GetContractMetaDataKey(contract), k.cdc.MustMarshalBinaryBare(meta))
+}
+
+func (k Keeper) GetTokenMetaData(ctx sdk.Context, contract string) types.MetaData {
+	bz := ctx.KVStore(k.storeKey).Get(types.GetContractMetaDataKey(contract))
+	if bz == nil {
+		return types.MetaData{}
+	}
+	var md types.MetaData
+	k.cdc.MustUnmarshalBinaryBare(bz, &md)
+	return md
 }

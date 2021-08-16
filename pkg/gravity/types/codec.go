@@ -33,4 +33,5 @@ func RegisterCodec(cdc *codec.Codec)  {
 	cdc.RegisterConcrete(&ERC20Token{}, "gravity/ERC20Token", nil)
 	cdc.RegisterConcrete(&IDSet{}, "gravity/IDSet", nil)
 	cdc.RegisterConcrete(&Attestation{}, "gravity/Attestation", nil)
+	cdc.RegisterConcrete(&MetaData{}, "gravity/ContractMetaData", nil)
 }
