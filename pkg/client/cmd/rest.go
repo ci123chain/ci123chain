@@ -489,38 +489,45 @@ func ExportEnv(ctx context.Context) http.HandlerFunc {
 func SetupRegisterCenter() {
 	logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", "register-center")
 	appID := os.Getenv("CI_VALIDATOR_KEY")
+	address := os.Getenv("MSP_SE_NGINX_ADDRESS")
+	region := os.Getenv("IDG_SITEUID")
+	env := os.Getenv("MSP_SE_ENV")
+	zone := os.Getenv("IDG_CLUSTERUID")
 	if appID == "" {
 		logger.Error("CI_VALIDATOR_KEY can not be empty")
 		os.Exit(1)
 	}
-	hn, _ := os.Hostname()
+	hn := os.Getenv("PODNAME")
+	serviceName := os.Getenv("IDG_SERVICE_NAME")
+	weight := os.Getenv("IDG_WEIGHT")
+	rt := os.Getenv("IDG_RUNTIME")
 	// 注册中心自身，初始化配置
 	conf := &discovery.Config{
 		// discovery地址
-		Nodes:    []string{"192.168.2.80:8181", "192.168.2.80:8182", "192.168.2.80:8183"},
-		Region:   "sh",
-		Zone:     "sh001",
-		Env:      "dev",
+		Nodes:    []string{address},
+		Region:   region,
+		Zone:     zone,
+		Env:      env,
 		Host:     hn,               // hostname
 		RenewGap: time.Second * 30, // 心跳时间
 	}
 	// 自身实例信息
 	ins := &sesdk.Instance{
-		Region:   "sh",
-		Zone:     "sh001",
-		Env:      "dev",
+		Region:   region,
+		Zone:     zone,
+		Env:      env,
 		AppID:    appID, // 自身唯一识别号
 		Hostname: hn,
 		Addrs: []string{ // 可上报任意服务监听地址，供发现方连接
-			"http://127.0.0.1:8545",
+			"http://127.0.0.1:80",
 			//"https://127.0.0.1:443",
 			//"tcp://192.168.2.88:3030",
 		},
 		// 上报任意自身属性信息
 		Metadata: map[string]string{
-			"weight":       "10", // 负载均衡权重
-			"runtime":      "production",
-			"service_name": "tttttttttt",
+			"weight":       weight, // 负载均衡权重
+			"runtime":      rt,
+			"service_name": serviceName,
 		},
 	}
 	// 实例化discovery对象
