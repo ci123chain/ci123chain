@@ -114,7 +114,7 @@ func NewRestServer() *RestServer {
 	if err != nil {
 		return nil
 	}
-	go SetupRegisterCenter()
+	go SetupRegisterCenter(callBack)
 
 	r.NotFoundHandler = Handle404()
 	r.HandleFunc("/healthcheck", HealthCheckHandler(cliCtx)).Methods("GET")
@@ -486,13 +486,18 @@ func ExportEnv(ctx context.Context) http.HandlerFunc {
 	}
 }
 
-func SetupRegisterCenter() {
+func callBack(err error, lg log.Logger) {
+	lg.Info("setup discovery failed", "error", err.Error())
+	os.Exit(1)
+}
+
+func SetupRegisterCenter(f func(err error, lg log.Logger)) {
 	logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", "register-center")
 	appID := os.Getenv("CI_VALIDATOR_KEY")
-	address := os.Getenv("MSP_SE_NGINX_ADDRESS")
-	region := os.Getenv("IDG_SITEUID")
-	env := os.Getenv("MSP_SE_ENV")
-	zone := os.Getenv("IDG_CLUSTERUID")
+	address := "192.168.60.48:80"  //os.Getenv("MSP_SE_NGINX_ADDRESS")
+	region := "sal2" //os.Getenv("IDG_SITEUID")
+	env := "production"   //os.Getenv("MSP_SE_ENV")
+	zone := "aliyun-sh-prod" //os.Getenv("IDG_CLUSTERUID")
 	if appID == "" {
 		logger.Error("CI_VALIDATOR_KEY can not be empty")
 		os.Exit(1)
@@ -533,12 +538,12 @@ func SetupRegisterCenter() {
 	// 实例化discovery对象
 	dis, err := discovery.New(conf)
 	if err != nil {
-		panic(err)
+		f(err, logger)
 	}
 	// 注册自身
 	_, err = dis.Register(ctx.Background(), ins)
 	if err != nil {
-		panic(err)
+		f(err, logger)
 	}
 	//// 启动服务主要逻辑
 	//go func() {
