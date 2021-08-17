@@ -26,8 +26,7 @@ func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, sk su
 			params := authKeeper.GetParams(ctx)
 			newCtx = SetGasMeter(simulate, ctx, 0)
 			tx.SetSignature(simSecp256k1Sig[:])
-			k := tx.Bytes()
-			newCtx.GasMeter().ConsumeGas(params.TxSizeCostPerByte*sdk.Gas(len(k)), "txSize")
+			newCtx.GasMeter().ConsumeGas(params.TxSizeCostPerByte*sdk.Gas(len(tx.Bytes())), "txSize")
 			newCtx.GasMeter().ConsumeGas(GasSimulateCost, "simulate cost")
 			return
 		}
