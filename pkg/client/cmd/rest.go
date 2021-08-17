@@ -114,7 +114,7 @@ func NewRestServer() *RestServer {
 	if err != nil {
 		return nil
 	}
-	//go SetupRegisterCenter(callBack)
+	go util.SetupRegisterCenter(callBack)
 
 	r.NotFoundHandler = Handle404()
 	r.HandleFunc("/healthcheck", HealthCheckHandler(cliCtx)).Methods("GET")
@@ -578,8 +578,7 @@ func registerCenterHandler(ctx context.Context) http.HandlerFunc {
 		//	res[v] = value
 		//}
 		res := map[string]interface{}{
-			"state": 200,
-			"appID": os.Getenv("CI_VALIDATOR_KEY"),
+			"host": os.Getenv("PODNAME"),
 		}
 		bytes, err := json.Marshal(res)
 		if err != nil {
