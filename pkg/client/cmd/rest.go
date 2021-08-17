@@ -114,7 +114,7 @@ func NewRestServer() *RestServer {
 	if err != nil {
 		return nil
 	}
-	go SetupRegisterCenter(callBack)
+	//go SetupRegisterCenter(callBack)
 
 	r.NotFoundHandler = Handle404()
 	r.HandleFunc("/healthcheck", HealthCheckHandler(cliCtx)).Methods("GET")
