@@ -2,12 +2,14 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/ci123chain/ci123chain/pkg/abci/baseapp"
 	"github.com/ci123chain/ci123chain/pkg/app"
 	"github.com/ci123chain/ci123chain/pkg/app/cmd"
 	types2 "github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/logger"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/tendermint/tendermint/config"
 	"github.com/tendermint/tendermint/libs/cli"
 	"github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/types"
@@ -29,9 +31,12 @@ const (
 	logNONE      = "*:none"
 )
 
+var gasPriceConfig *config.GasPriceConfig
+
 func main()  {
 	cobra.EnableCommandSorting = false
 	ctx := app.NewDefaultContext()
+	gasPriceConfig = ctx.Config.GasPrice
 	rootCmd := &cobra.Command{
 		Use: 	 "ci123",
 		Short:  "ci123 node",
@@ -75,7 +80,7 @@ func main()  {
 
 func newApp(lg log.Logger, ldb db.DB, cdb db.DB,traceStore io.Writer) app.Application{
 	logger.SetLogger(lg)
-	return app.NewChain(lg, ldb, cdb, traceStore)
+	return app.NewChain(lg, ldb, cdb, traceStore, baseapp.SetGasPriceConfig(gasPriceConfig))
 }
 
 func exportAppState(lg log.Logger, ldb db.DB, cdb db.DB, traceStore io.Writer) (json.RawMessage, []types.GenesisValidator, error) {

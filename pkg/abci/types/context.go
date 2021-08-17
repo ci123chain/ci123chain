@@ -3,6 +3,7 @@ package types
 
 import (
 	"context"
+	"github.com/tendermint/tendermint/config"
 	"sync"
 	"time"
 
@@ -158,6 +159,7 @@ const (
 	contextKeyTxIndex
 	contextKeyGasLimit
 	contextKeyNonce
+	contextKeyGasPrice
 )
 
 func (c Context) MultiStore() MultiStore {
@@ -194,6 +196,10 @@ func (c Context) IsCheckTx() bool { return c.Value(contextKeyIsCheckTx).(bool) }
 
 func (c Context) TxIndex() uint32 {
 	return c.Value(contextKeyTxIndex).(uint32)
+}
+
+func (c Context) GasPriceConfig() *config.GasPriceConfig {
+	return c.Value(contextKeyGasPrice).(*config.GasPriceConfig)
 }
 
 func (c Context) WithMultiStore(ms MultiStore) Context {
@@ -264,6 +270,10 @@ func (c Context) WithGasLimit(gas uint64) Context {
 
 func (c Context) WithNonce(nonce uint64) Context {
 	return c.withValue(contextKeyNonce, nonce)
+}
+
+func (c Context) WithGasPrice(gasPriceConfig *config.GasPriceConfig) Context {
+	return c.withValue(contextKeyGasPrice, gasPriceConfig)
 }
 
 // Cache the multistore and return a new cached context. The cached context is

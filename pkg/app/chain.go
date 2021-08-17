@@ -140,7 +140,7 @@ type Chain struct {
 	mm *module.AppManager
 }
 
-func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer) *Chain {
+func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer, baseAppOptions ...func(*baseapp.BaseApp)) *Chain {
 	cdc := app_types.GetCodec()
 	encodingConfig := app_types.GetEncodingConfig()
 	appCodec := encodingConfig.Marshaler
@@ -150,7 +150,7 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 		os.MkdirAll(cacheDir, os.ModePerm)
 		os.Chmod(cacheDir, os.ModePerm)
 	}
-	app := baseapp.NewBaseApp("ci123", logger, ldb, cdb, cacheDir, app_types.DefaultTxDecoder(cdc))
+	app := baseapp.NewBaseApp("ci123", logger, ldb, cdb, cacheDir, app_types.DefaultTxDecoder(cdc), baseAppOptions...)
 	cache := filepath.Join(cacheDir, cacheName)
 	if _, err := os.Stat(cache); !os.IsNotExist(err) {
 		//cache exist, check latest version

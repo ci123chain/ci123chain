@@ -8,6 +8,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/telemetry"
 	"github.com/ci123chain/ci123chain/pkg/transfer"
 	"github.com/ci123chain/ci123chain/pkg/util"
+	"github.com/tendermint/tendermint/config"
 	"google.golang.org/grpc/codes"
 	grpcstatus "google.golang.org/grpc/status"
 	"io"
@@ -105,6 +106,8 @@ type BaseApp struct {
 	snapshotManager    *snapshots.Manager
 	snapshotInterval   uint64 // block interval between state sync snapshots
 	snapshotKeepRecent uint32 // recent state sync snapshots to keep
+
+	gasPriceConfig *config.GasPriceConfig
 }
 
 func (app *BaseApp) ListSnapshots(req abci.RequestListSnapshots) abci.ResponseListSnapshots {
@@ -360,9 +363,9 @@ func (app *BaseApp) initFromStore(mainKey sdk.StoreKey) error {
 // NewContext returns a new Context with the correct store, the given header, and nil txBytes.
 func (app *BaseApp) NewContext(isCheckTx bool, header types.Header) sdk.Context {
 	if isCheckTx {
-		return sdk.NewContext(app.checkState.ms, header, true, app.Logger)
+		return sdk.NewContext(app.checkState.ms, header, true, app.Logger).WithGasPrice(app.gasPriceConfig)
 	}
-	return sdk.NewContext(app.deliverState.ms, header, false, app.Logger)
+	return sdk.NewContext(app.deliverState.ms, header, false, app.Logger).WithGasPrice(app.gasPriceConfig)
 }
 
 type state struct {
@@ -382,7 +385,7 @@ func (app *BaseApp) setCheckState(header types.Header) {
 	ms := app.cms.CacheMultiStore()
 	app.checkState = &state{
 		ms:  ms,
-		ctx: sdk.NewContext(ms, header, true, app.Logger),
+		ctx: sdk.NewContext(ms, header, true, app.Logger).WithGasPrice(app.gasPriceConfig),
 	}
 }
 
@@ -390,7 +393,7 @@ func (app *BaseApp) setDeliverState(header types.Header) {
 	ms := app.cms.CacheMultiStore()
 	app.deliverState = &state{
 		ms:  ms,
-		ctx: sdk.NewContext(ms, header, false, app.Logger),
+		ctx: sdk.NewContext(ms, header, false, app.Logger).WithGasPrice(app.gasPriceConfig),
 	}
 }
 

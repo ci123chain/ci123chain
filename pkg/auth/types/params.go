@@ -15,6 +15,7 @@ var (
 	KeyTxSizeCostPerByte      = []byte("TxSizeCostPerByte")
 	KeySigVerifyCostED25519   = []byte("SigVerifyCostED25519")
 	KeySigVerifyCostSecp256k1 = []byte("SigVerifyCostSecp256k1")
+	KeyNumTxs                 = []byte("NumTxs")
 	//KeyTxSigLimit             = []byte("TxSigLimit")
 )
 

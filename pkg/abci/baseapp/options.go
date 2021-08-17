@@ -3,6 +3,7 @@ package baseapp
 
 import (
 	"fmt"
+	"github.com/tendermint/tendermint/config"
 
 	"github.com/ci123chain/ci123chain/pkg/abci/store"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
@@ -28,6 +29,11 @@ func SetPruning(pruning string) func(*BaseApp) {
 	return func(bap *BaseApp) {
 		bap.cms.SetPruning(pruningEnum)
 	}
+}
+
+// SetGasPriceConfig returns an option that sets the gas price config on the app.
+func SetGasPriceConfig(gasPriceConfig *config.GasPriceConfig) func(*BaseApp) {
+	return func(bap *BaseApp) { bap.SetGasPriceConfig(gasPriceConfig) }
 }
 
 func (app *BaseApp) SetName(name string) {
@@ -122,4 +128,8 @@ func (app *BaseApp) enforceSeal() {
 	if !app.sealed {
 		panic("enforceSeal() on BaseApp but not sealed")
 	}
+}
+
+func (app *BaseApp) SetGasPriceConfig(gasPriceConfig *config.GasPriceConfig) {
+	app.gasPriceConfig = gasPriceConfig
 }

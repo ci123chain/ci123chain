@@ -69,11 +69,20 @@ func addUint64Overflow(a, b uint64) (uint64, bool) {
 	return a + b, false
 }
 
+var gasPrice float64
+func SetGasPrice(gp float64) {
+	gasPrice = gp
+}
+
+func calculateGas(gas Gas) Gas{
+	return Gas(math.Ceil(float64(gas)*gasPrice))
+}
+
 func (g *basicGasMeter) ConsumeGas(amount Gas, descriptor string) {
 	var overflow bool
 	//amount /= unit
 	// TODO: Should we set the consumed field after overflow checking?
-	g.consumed, overflow = addUint64Overflow(g.consumed, amount)
+	g.consumed, overflow = addUint64Overflow(g.consumed, calculateGas(amount))
 	if overflow {
 		panic(ErrorGasOverflow{descriptor})
 	}
@@ -102,7 +111,7 @@ func (g *infiniteGasMeter) ConsumeGas(amount Gas, descriptor string) {
 	var overflow bool
 
 	// TODO: Should we set the consumed field after overflow checking?
-	g.consumed, overflow = addUint64Overflow(g.consumed, amount)
+	g.consumed, overflow = addUint64Overflow(g.consumed, calculateGas(amount))
 	if overflow {
 		panic(ErrorGasOverflow{descriptor})
 	}

@@ -53,12 +53,17 @@ type AppModule struct {
 }
 
 func (am AppModule) EndBlock(ctx abci_types.Context, req abci.RequestEndBlock) []abci.ValidatorUpdate {
+	am.AuthKeeper.SetNumTxs(ctx)
 	//panic("implement me")
 	return nil
 }
 
 func (am AppModule) BeginBlocker(ctx abci_types.Context, req abci.RequestBeginBlock) {
 	//do you want to do
+	numTxs := am.AuthKeeper.GetNumTxs(ctx)
+	gasPrice := ctx.GasPriceConfig().BaseGasPrice + float64(numTxs * numTxs)/ctx.GasPriceConfig().GasPriceTxBase
+
+	abci_types.SetGasPrice(gasPrice)
 }
 
 func (am AppModule) Committer(ctx abci_types.Context) {
