@@ -20,6 +20,8 @@ import (
 const (
 	DefaultPage  = 1
 	DefaultLimit = 30 // should be consistent with tendermint/tendermint/rpc/collactor/pipe.go:19
+
+	DefaultSimulateGas = 200000
 )
 
 type Response struct {
@@ -255,24 +257,7 @@ func MiddleHandler(ctx context.Context, f func(clictx context.Context, w http.Re
 		}
 		ctx = ctx.WithBroadcast(broadcast)
 
-		if !broadcast || simulate {
-			ctx = ctx.WithNonce(0)
-			ctx = ctx.WithGas(0)
-			ctx = ctx.WithPrivateKey("")
-		} else {
-			if r.FormValue("private_key") == "" {
-				WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid private_key").Error())
-				return
-			} else {
-				ctx = ctx.WithPrivateKey(r.FormValue("private_key"))
-			}
-			gas, err := strconv.ParseUint(r.FormValue("gas"), 10, 64)
-			if err != nil {
-				WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid gas").Error())
-				return
-			}
-			ctx = ctx.WithGas(gas)
-
+		if simulate || broadcast {
 			var nonce uint64
 			userNonce := r.FormValue("nonce")
 			if userNonce != "" {
@@ -289,6 +274,31 @@ func MiddleHandler(ctx context.Context, f func(clictx context.Context, w http.Re
 				}
 			}
 			ctx = ctx.WithNonce(nonce)
+
+			gas, err := strconv.ParseUint(r.FormValue("gas"), 10, 64)
+			if err != nil {
+				if simulate {
+					gas = DefaultSimulateGas
+				} else {
+					WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid gas").Error())
+					return
+				}
+			}
+			ctx = ctx.WithGas(gas)
+
+			var privateKey string
+			if !simulate {
+				privateKey = r.FormValue("private_key")
+				if privateKey == "" {
+					WriteErrorRes(w, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid private_key").Error())
+					return
+				}
+			}
+			ctx = ctx.WithPrivateKey(privateKey)
+		} else {
+			ctx = ctx.WithNonce(0)
+			ctx = ctx.WithGas(0)
+			ctx = ctx.WithPrivateKey("")
 		}
 
 		f(ctx, w, r)

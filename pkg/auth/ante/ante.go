@@ -15,12 +15,20 @@ import (
 )
 const (
 	Price uint64 = 1
+	GasSimulateCost sdk.Gas = 200
 )
+var simSecp256k1Sig [65]byte
 
 //const unit = 1000
 func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, sk supply.Keeper) sdk.AnteHandler {
 	return func(ctx sdk.Context, tx sdk.Tx, simulate bool) (newCtx sdk.Context, res sdk.Result, err error, abort bool) {
 		if simulate {
+			params := authKeeper.GetParams(ctx)
+			newCtx = SetGasMeter(simulate, ctx, 0)
+			tx.SetSignature(simSecp256k1Sig[:])
+			k := tx.Bytes()
+			newCtx.GasMeter().ConsumeGas(params.TxSizeCostPerByte*sdk.Gas(len(k)), "txSize")
+			newCtx.GasMeter().ConsumeGas(GasSimulateCost, "simulate cost")
 			return
 		}
 		var signer sdk.AccAddress
