@@ -44,8 +44,13 @@ func (rdb *RedisDB) Get(key []byte) ([]byte, error) {
 				if IsKeyNotExist(err) {
 					return nil, nil
 				}else {
-					rdb.lg.Error("db get failed", "Method", "Get", "Retry times", retryTimes, "key", string(key),
-						"id", hex.EncodeToString(key), "error", err.Error())
+					if retryTimes > 10 {
+						rdb.lg.Error("DB get failed", "Method", "Get", "Retry times", retryTimes, "key", string(key),
+							"id", hex.EncodeToString(key), "error", err.Error())
+					} else {
+						rdb.lg.Warn("DB get failed", "Method", "Get", "Retry times", retryTimes, "key", string(key),
+							"id", hex.EncodeToString(key), "error", err.Error())
+					}
 					return nil, err
 				}
 			}
@@ -79,8 +84,13 @@ func (rdb *RedisDB) Set(key, value []byte) error {
 
 		_, err :=rdb.DB.Set(ctx, hex.EncodeToString(key), hex.EncodeToString(value), 0).Result()
 		if err != nil {
-			rdb.lg.Error("db set failed", "Method", "Set", "Retry times", retryTimes, "key", string(key),
-				"id", hex.EncodeToString(key), "error", err.Error())
+			if retryTimes > 10 {
+				rdb.lg.Error("db set failed", "Method", "Set", "Retry times", retryTimes, "key", string(key),
+					"id", hex.EncodeToString(key), "error", err.Error())
+			} else {
+				rdb.lg.Warn("db set failed", "Method", "Set", "Retry times", retryTimes, "key", string(key),
+					"id", hex.EncodeToString(key), "error", err.Error())
+			}
 			return nil, err
 		}else {
 			return nil, nil
@@ -106,11 +116,11 @@ func (rdb *RedisDB) Delete(key []byte) error{
 		}else {
 			n, err := rdb.DB.Del(ctx, hex.EncodeToString(key)).Result()
 			if err != nil {
-				rdb.lg.Error("delete key failed", "Method", "Delete", "Retry times", retryTimes, "key", string(key),
+				rdb.lg.Warn("delete key failed", "Method", "Delete", "Retry times", retryTimes, "key", string(key),
 					"id", hex.EncodeToString(key), "error", err.Error())
 				return nil, err
 			}else if n != 1 {
-				rdb.lg.Error(fmt.Sprintf("unexpected return value, expect 1, got %d", n), "Method", "Delete",
+				rdb.lg.Warn(fmt.Sprintf("unexpected return value, expect 1, got %d", n), "Method", "Delete",
 					"Retry times", retryTimes, "key", string(key), "id", hex.EncodeToString(key))
 				return nil, fmt.Errorf("unexpected return value, expect 1, got %d", n)
 			}else {
@@ -185,7 +195,7 @@ func (rdb *RedisDB) NewRedisIterator(start, end []byte, isReserve bool, withValu
 				ress, _ := libs.RetryI(0, func(retryTimes int) (res interface{}, err error) {
 					r, err := rdb.DB.Iter(st, hex.EncodeToString(end), isReserve, withValue, limit)
 					if err != nil {
-						rdb.lg.Error("db get keys failed", "Method", "Get", "Retry times", retryTimes, "keys", string(start),
+						rdb.lg.Warn("db get keys failed", "Method", "Get", "Retry times", retryTimes, "keys", string(start),
 							"id", hex.EncodeToString(start), "error", err.Error())
 						return nil, err
 					}else {
