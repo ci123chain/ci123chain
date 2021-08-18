@@ -10,7 +10,6 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/gateway/logger"
 	"github.com/ci123chain/ci123chain/pkg/gateway/redissource"
 	"github.com/ci123chain/ci123chain/pkg/gateway/types"
-	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/pretty66/gosdk/cienv"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -65,8 +64,8 @@ func Start() {
 	if dbType == "" {
 		dbType = "redis"
 	}
-	//dbHost := viper.GetString(flagCiStateDBHost)
-	dbHost := util.Discovery(util.CallBack)
+	dbHost := viper.GetString(flagCiStateDBHost)
+	//dbHost := util.Discovery(util.CallBack)
 	if dbHost == "" {
 		panic(errors.New(fmt.Sprintf("%s can not be empty", "ci-statedb-host")))
 	}
