@@ -1,26 +1,33 @@
 package logger
 
 import (
-	"github.com/tendermint/tendermint/libs/log"
-	logger "gitlab.oneitfarm.com/bifrost/cilog/v2"
+	"fmt"
+	tmlogger "github.com/tendermint/tendermint/libs/log"
+	"os"
 )
 
-func Init() {
-	log.InitOneitfarmLogger()
-}
+//func Init() {
+//	log.InitOneitfarmLogger()
+//}
+
+var logger = tmlogger.NewTMLogger(tmlogger.NewSyncWriter(os.Stdout))
 
 func Error(format string, v ...interface{}) {
-	logger.Errorf(format, v...)
+	msg := fmt.Sprintf(format, v...)
+	logger.Error(msg)
 }
 
 func Warn(format string, v ...interface{}) {
-	logger.Warnf(format, v...)
+	msg := fmt.Sprintf(format, v...)
+	logger.Warn(msg)
 }
 
 func Info(format string, v ...interface{}) {
-	logger.Infof(format, v...)
+	msg := fmt.Sprintf(format, v...)
+	logger.Info(msg)
 }
 
 func Debug(format string, v ...interface{}) {
-	logger.Debugf(format, v...)
+	msg := fmt.Sprintf(format, v...)
+	logger.Debug(msg)
 }

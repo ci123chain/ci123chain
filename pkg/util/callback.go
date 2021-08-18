@@ -6,7 +6,7 @@ import (
 )
 
 func CallBack(err error) {
-	logger.Init()
+	//logger.Init()
 	logger.Error("get info from remote discovery failed", "error", err.Error())
 	os.Exit(1)
 }

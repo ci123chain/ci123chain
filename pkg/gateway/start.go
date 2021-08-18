@@ -94,7 +94,7 @@ func Start() {
 		panic(err)
 	}
 	// 初始化logger
-	logger.Init()
+	//logger.Init()
 	//dynamic.Init()
 	//init PubSubRoom
 	pubsubRoom = &types.PubSubRoom{}
