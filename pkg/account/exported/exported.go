@@ -22,6 +22,9 @@ type Account interface {
 	GetCoins() types.Coins
 	SetCoins(types.Coins) error
 
+	SetCodeHash(bz []byte)
+	GetCodeHash() []byte
+
 	SetContractType(contractType string) error
 	GetContractType() string
 

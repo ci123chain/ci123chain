@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/ci123chain/ci123chain/pkg/abci/store"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
@@ -30,6 +31,9 @@ func (k Keeper) GetMapedEthToken(ctx sdk.Context, denom string) (string, bool) {
 }
 
 func (k Keeper) setERC20Map(ctx sdk.Context, wlkContract string, ethContract string) {
+	if wlkContract == "" || ethContract == "" {
+		panic("contract address cannot be empty")
+	}
 	store := ctx.KVStore(k.storeKey)
 	store.Set(types.GetWlKToEthKey(wlkContract), []byte(ethContract))
 	store.Set(types.GetEthToWlkKey(ethContract), []byte(wlkContract))
@@ -47,7 +51,7 @@ func (k Keeper) DenomToERC20Lookup(ctx sdk.Context, denom string) (bool, string,
 		// Look up ERC20 contract in index and error if it's not in there.
 		tc2, exists := k.GetMapedEthToken(ctx, denom)
 		if !exists {
-			return false, "", fmt.Errorf("denom not a gravity voucher coin: %s, and also not in cosmos-originated ERC20 index", err)
+			return false, "", fmt.Errorf("denom not a default coin: %s, and also not a ERC20 index", err)
 		}
 		// This is a cosmos-originated asset
 		return true, tc2, nil
@@ -88,4 +92,8 @@ func (k Keeper) IterateERC20ToDenom(ctx sdk.Context, cb func([]byte, *types.ERC2
 			break
 		}
 	}
+}
+
+func (k Keeper) IsWlkToken(token string) bool {
+	return strings.EqualFold(token, sdk.DefaultBondDenom)
 }

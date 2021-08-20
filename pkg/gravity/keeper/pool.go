@@ -25,14 +25,19 @@ func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, counte
 
 	// If the coin is a gravity voucher, burn the coins. If not, check if there is a deployed ERC20 contract representing it.
 	// If there is, lock the coins.
-
-	isCosmosOriginated, tokenContract, err := k.DenomToERC20Lookup(ctx, totalAmount.Denom)
+	_, counterPartContract, err := k.DenomToERC20Lookup(ctx, totalAmount.Denom)
 	if err != nil {
 		return 0, err
 	}
 
+	wlkContract, exist := k.GetMapedWlkToken(ctx, counterPartContract)
+	if !exist {
+		return 0, types.ErrMappedContractNotFound
+	}
+	//isCosmosOriginated, tokenContract, err := k.WlkToEthLookup(ctx, totalAmount.Denom)
+
 	// If it is a cosmos-originated asset we lock it
-	if isCosmosOriginated {
+	if k.IsWlkToken(wlkContract) {
 		// lock coins in module
 		if err := k.SupplyKeeper.SendCoinsFromAccountToModule(ctx, sender, types.ModuleName, totalInVouchers); err != nil {
 			return 0, err
@@ -40,12 +45,11 @@ func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, counte
 	} else {
 		// If it is an ethereum-originated asset we burn it
 		// send coins to module in prep for burn
-		if err := k.SupplyKeeper.SendCoinsFromAccountToModule(ctx, sender, types.ModuleName, totalInVouchers); err != nil {
+		if err := k.SupplyKeeper.SendCoinsFromEVMAccountToModule(ctx, sender, types.ModuleName, sdk.HexToAddress(wlkContract), totalAmount.Amount.BigInt()); err != nil {
 			return 0, err
 		}
-
 		// burn vouchers to send them back to ETH
-		if err := k.SupplyKeeper.BurnCoins(ctx, types.ModuleName, totalInVouchers); err != nil {
+		if err := k.SupplyKeeper.BurnEVMCoin(ctx, types.ModuleName, sdk.HexToAddress(wlkContract), totalAmount.Amount.BigInt()); err != nil {
 			panic(err)
 		}
 	}
@@ -53,7 +57,7 @@ func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, counte
 	// get next tx id from keeper
 	nextID := k.autoIncrementID(ctx, types.KeyLastTXPoolID)
 
-	erc20Fee := types.NewSDKIntERC20Token(fee.Amount, tokenContract)
+	erc20Fee := types.NewSDKIntERC20Token(fee.Amount, counterPartContract)
 
 	// construct outgoing tx, as part of this process we represent
 	// the token as an ERC20 token since it is preparing to go to ETH
@@ -62,7 +66,7 @@ func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, counte
 		Id:          nextID,
 		Sender:      sender.String(),
 		DestAddress: counterpartReceiver,
-		Erc20Token:  types.NewSDKIntERC20Token(amount.Amount, tokenContract),
+		Erc20Token:  types.NewSDKIntERC20Token(amount.Amount, counterPartContract),
 		Erc20Fee:    erc20Fee,
 	}
 
@@ -72,7 +76,7 @@ func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, counte
 	}
 
 	// add a second index with the fee
-	k.appendToUnbatchedTXIndex(ctx, tokenContract, *erc20Fee, nextID)
+	k.appendToUnbatchedTXIndex(ctx, counterPartContract, *erc20Fee, nextID)
 
 	// todo: add second index for sender so that we can easily query: give pending Tx by sender
 	// todo: what about a second index for receiver?

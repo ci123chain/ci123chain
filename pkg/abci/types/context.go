@@ -158,6 +158,7 @@ const (
 	contextKeyTxIndex
 	contextKeyGasLimit
 	contextKeyNonce
+	contextKeyIsRootMsg
 )
 
 func (c Context) MultiStore() MultiStore {
@@ -191,6 +192,14 @@ func (c Context) GasLimit() uint64 { return c.Value(contextKeyGasLimit).(uint64)
 func (c Context) Nonce() uint64 { return c.Value(contextKeyNonce).(uint64) }
 
 func (c Context) IsCheckTx() bool { return c.Value(contextKeyIsCheckTx).(bool) }
+
+func (c Context) IsRootMsg() bool {
+	if c.Value(contextKeyIsRootMsg) != nil {
+		return c.Value(contextKeyIsRootMsg).(bool)
+	}
+	return false
+}
+
 
 func (c Context) TxIndex() uint32 {
 	return c.Value(contextKeyTxIndex).(uint32)
@@ -249,6 +258,8 @@ func (c Context) WithVoteInfos(VoteInfos []abci.VoteInfo) Context {
 }
 
 func (c Context) WithGasMeter(meter GasMeter) Context { return c.withValue(contextKeyGasMeter, meter) }
+
+func (c Context) WithIsRootMsg(isRootMsg bool) Context { return c.withValue(contextKeyIsRootMsg, isRootMsg) }
 
 func (c Context) WithIsCheckTx(isCheckTx bool) Context {
 	return c.withValue(contextKeyIsCheckTx, isCheckTx)

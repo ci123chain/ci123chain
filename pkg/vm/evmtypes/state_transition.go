@@ -102,6 +102,17 @@ func (st StateTransition) TransitionDb(ctx sdk.Context, config ChainConfig) (*Ex
 	evmGasMeter := sdk.NewInfiniteGasMeter()
 	csdb.WithContext(ctx.WithGasMeter(evmGasMeter))
 
+	var gasConsumed uint64
+
+	defer func() {
+		// TODO: Refund unused gas here, if intended in future
+		// Consume gas from evm execution
+		// Out of gas check does not need to be done here since it is done within the EVM execution
+		if !ctx.IsRootMsg() {
+			ctx.WithGasMeter(currentGasMeter).GasMeter().ConsumeGas(gasConsumed, "EVM execution consumption")
+		}
+	}()
+
 	// Clear cache of accounts to handle changes outside of the EVM
 	csdb.UpdateAccounts()
 
@@ -135,11 +146,10 @@ func (st StateTransition) TransitionDb(ctx sdk.Context, config ChainConfig) (*Ex
 		recipientLog = fmt.Sprintf("recipient address %s", st.Recipient.String())
 	}
 
-	gasConsumed := gasLimit - leftOverGas
+	gasConsumed = gasLimit - leftOverGas
 
 	if err != nil {
 		// Consume gas before returning
-		ctx.GasMeter().ConsumeGas(gasConsumed, "evm execution consumption")
 		return nil, err
 	}
 
@@ -195,6 +205,11 @@ func (st StateTransition) TransitionDb(ctx sdk.Context, config ChainConfig) (*Ex
 	if contractCreation{
 		resultLog = recipientLog
 	}
+
+	//if ctx.IsRootMsg() {
+	//	gasConsumed = 0
+	//	gasLimit = 0
+	//}
 
 	executionResult := &ExecutionResult{
 		Logs:  logs,

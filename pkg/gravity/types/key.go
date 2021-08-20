@@ -2,6 +2,7 @@ package types
 
 import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"strings"
 )
 
 const (
@@ -211,6 +212,7 @@ func GetOutgoingTxPoolKey(id uint64) []byte {
 // prefix     nonce                     eth-contract-address
 // [0xa][0 0 0 0 0 0 0 1][0xc783df8a850f42e7F7e57013759C285caa701eB6]
 func GetOutgoingTxBatchKey(tokenContract string, nonce uint64) []byte {
+	tokenContract = strings.ToLower(tokenContract)
 	return append(append(OutgoingTXBatchKey, []byte(tokenContract)...), UInt64Bytes(nonce)...)
 }
 
@@ -226,6 +228,7 @@ func GetOutgoingTxBatchBlockKey(block uint64) []byte {
 // [0xe1][0xc783df8a850f42e7F7e57013759C285caa701eB6][0 0 0 0 0 0 0 1][cosmosvaloper1ahx7f8wyertuus9r20284ej0asrs085case3kn]
 // TODO this should be a sdk.AccAddress
 func GetBatchConfirmKey(tokenContract string, batchNonce uint64, validator sdk.AccAddress) []byte {
+	tokenContract = strings.ToLower(tokenContract)
 	a := append(UInt64Bytes(batchNonce), validator.Bytes()...)
 	b := append([]byte(tokenContract), a...)
 	c := append(BatchConfirmKey, b...)
@@ -257,10 +260,12 @@ func GetLastEventNonceByValidatorKey(validator sdk.AccAddress) []byte {
 }
 
 func GetWlKToEthKey(denom string) []byte {
+	denom = strings.ToLower(denom)
 	return append(WlkToEthKey, []byte(denom)...)
 }
 
 func GetEthToWlkKey(erc20 string) []byte {
+	erc20 = strings.ToLower(erc20)
 	return append(EthToWlkKey, []byte(erc20)...)
 }
 

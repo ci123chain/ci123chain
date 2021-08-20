@@ -207,8 +207,9 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 	homeDir := viper.GetString(cli.HomeFlag)
 	var wasmconfig wasm_types.WasmConfig
 	vmKeeper := vm.NewKeeper(cdc, WasmStoreKey, homeDir, wasmconfig, c.GetSubspace(vm.ModuleName), accountKeeper, stakingKeeper, cdb)
+	supplyKeeper = supplyKeeper.SetVMKeeper(vmKeeper)
 
-	gravityKeeper := gravity.NewKeeper(cdc, GravityStoreKey, c.GetSubspace(gravity.ModuleName), accountKeeper, stakingKeeper, supplyKeeper, slashingKeeper, vmKeeper)
+	gravityKeeper := gravity.NewKeeper(cdc, GravityStoreKey, c.GetSubspace(gravity.ModuleName), accountKeeper, stakingKeeper, supplyKeeper, slashingKeeper)
 
 	stakingKeeper.SetHooks(staking.NewMultiStakingHooks(distrKeeper.Hooks(), slashingKeeper.Hooks(), gravityKeeper.Hooks()))
 

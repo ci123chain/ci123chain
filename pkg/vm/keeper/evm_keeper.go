@@ -13,8 +13,8 @@ import (
 var _ types.Keeper = (*Keeper)(nil)
 
 func (k Keeper) EvmTxExec(ctx sdk.Context,m sdk.Msg) (types.VMResult, error) {
-	msg, ok := m.(*evm.MsgEvmTx)
-	if !ok || msg == nil {
+	msg, ok := m.(evm.MsgEvmTx)
+	if !ok {
 		return nil, evm.ErrContractMsgInvalid
 	}
 	// parse the chainID from a string to a base-10 integer
@@ -73,28 +73,5 @@ func (k Keeper) EvmTxExec(ctx sdk.Context,m sdk.Msg) (types.VMResult, error) {
 	// log successful execution
 	k.Logger(ctx).Info(executionResult.Result.Log)
 
-	ctx.EventManager().EmitEvents(sdk.Events{
-		sdk.NewEvent(
-			evm.EventTypeEvmTx,
-			sdk.NewAttribute([]byte(sdk.AttributeKeyAmount), []byte(msg.Data.Amount.String())),
-		),
-		sdk.NewEvent(
-			sdk.EventTypeMessage,
-			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(evm.AttributeValueCategory)),
-			sdk.NewAttribute([]byte(sdk.AttributeKeySender), []byte(sender.String())),
-		),
-	})
-
-	if msg.Data.Recipient != nil {
-		ctx.EventManager().EmitEvent(
-			sdk.NewEvent(
-				evm.EventTypeEvmTx,
-				sdk.NewAttribute([]byte(evm.AttributeKeyRecipient), []byte(msg.Data.Recipient.String())),
-			),
-		)
-	}
-
-	// set the events to the result
-	executionResult.Result.Events = ctx.EventManager().Events()
 	return executionResult, nil
 }

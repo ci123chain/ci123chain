@@ -7,10 +7,10 @@ import (
 	slashing "github.com/ci123chain/ci123chain/pkg/slashing/keeper"
 	staking "github.com/ci123chain/ci123chain/pkg/staking/keeper"
 	supply "github.com/ci123chain/ci123chain/pkg/supply/keeper"
-	vmtypes "github.com/ci123chain/ci123chain/pkg/vm/types"
 	"math"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	"github.com/ci123chain/ci123chain/pkg/abci/store"
@@ -39,7 +39,8 @@ type Keeper struct {
 }
 
 // NewKeeper returns a new instance of the gravity keeper
-func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, paramSpace paramtypes.Subspace, accountKeeper account.AccountKeeper, stakingKeeper staking.StakingKeeper, supplyKeeper supply.Keeper, slashingKeeper slashing.Keeper, vmkeeper vmtypes.Keeper) Keeper {
+func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, paramSpace paramtypes.Subspace, accountKeeper account.AccountKeeper,
+	stakingKeeper staking.StakingKeeper, supplyKeeper supply.Keeper, slashingKeeper slashing.Keeper) Keeper {
 	// set KeyTable if it has not already been set
 	if !paramSpace.HasKeyTable() {
 		paramSpace = paramSpace.WithKeyTable(types.ParamKeyTable())
@@ -58,7 +59,6 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, paramSpace paramtypes.Su
 		keeper:     k,
 		supplyKeeper: supplyKeeper,
 		accountKeeper: accountKeeper,
-		evmKeeper: vmkeeper,
 	}
 
 	return k
@@ -333,6 +333,7 @@ func (k Keeper) SetBatchConfirm(ctx sdk.Context, batch *types.MsgConfirmBatch) [
 // TODO: specify which nonce this is
 func (k Keeper) IterateBatchConfirmByNonceAndTokenContract(ctx sdk.Context, nonce uint64, tokenContract string, cb func([]byte, types.MsgConfirmBatch) bool) {
 	prefixStore := store.NewPrefixStore(ctx.KVStore(k.storeKey), types.BatchConfirmKey)
+	tokenContract = strings.ToLower(tokenContract)
 	prefix := append([]byte(tokenContract), types.UInt64Bytes(nonce)...)
 	iter := prefixStore.Iterator(prefixRange(prefix))
 	defer iter.Close()

@@ -114,8 +114,32 @@ func handleMsgEvmTx(ctx sdk.Context, k *Keeper, msg evm.MsgEvmTx) (*sdk.Result, 
 	if err != nil {
 		return nil, err
 	}
+	sender := common.BytesToAddress(msg.GetFromAddress().Bytes())
 
-	return executionResult.VMResult(), err
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			evm.EventTypeEvmTx,
+			sdk.NewAttribute([]byte(sdk.AttributeKeyAmount), []byte(msg.Data.Amount.String())),
+		),
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(evm.AttributeValueCategory)),
+			sdk.NewAttribute([]byte(sdk.AttributeKeySender), []byte(sender.String())),
+		),
+	})
+
+	if msg.Data.Recipient != nil {
+		ctx.EventManager().EmitEvent(
+			sdk.NewEvent(
+				evm.EventTypeEvmTx,
+				sdk.NewAttribute([]byte(evm.AttributeKeyRecipient), []byte(msg.Data.Recipient.String())),
+			),
+		)
+	}
+	// set the events to the result
+	result := executionResult.VMResult()
+	result.Events = ctx.EventManager().Events()
+	return result, err
 }
 
 func handleMsgEthereumTx(ctx sdk.Context, k *Keeper, msg types.MsgEthereumTx) (*sdk.Result, error) {
