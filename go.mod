@@ -40,7 +40,6 @@ require (
 	github.com/tyler-smith/go-bip39 v1.1.0
 	github.com/umbracle/go-web3 v0.0.0-20210428185842-ec1b314b9425
 	github.com/wasmerio/wasmer-go v1.0.3
-	gitlab.oneitfarm.com/bifrost/cilog v0.1.10
 	gitlab.oneitfarm.com/bifrost/sesdk v1.0.26
 	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad
 	golang.org/x/sync v0.0.0-20201207232520-09787c993a3a
@@ -53,6 +52,6 @@ require (
 replace (
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 	//github.com/tendermint/tendermint => ../tendermint-ci
-	github.com/tendermint/tendermint => github.com/ci123chain/tendermint v0.32.7-ci3
+	github.com/tendermint/tendermint => github.com/ci123chain/tendermint v0.32.7-ci6
 	github.com/wasmerio/wasmer-go => github.com/ci123chain/wasmer-go v1.0.3-rc2
 )
