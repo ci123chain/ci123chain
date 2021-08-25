@@ -63,14 +63,14 @@ func checkBackend() {
 			for k, v := range pubsubRoom.Connections {
 				_, err := v.Health(context.Background())
 				if err != nil {
-					logger.Error("lost connect on:", k)
-					logger.Error("health check error: ", err.Error())
+					logger.Warn("lost connect on:", k)
+					logger.Warn("health check error: ", err.Error())
 					connectErr = true
 					break
 				}
 			}
 			if connectErr {
-				logger.Error("Lost connect, remove all subscribe")
+				logger.Warn("Lost connect, remove all subscribe")
 				pubsubRoom.Mutex.Lock()
 				pubsubRoom.RemoveAllTMConnections()
 				pubsubRoom.Mutex.Unlock()

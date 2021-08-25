@@ -10,6 +10,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/gateway/logger"
 	"github.com/ci123chain/ci123chain/pkg/gateway/redissource"
 	"github.com/ci123chain/ci123chain/pkg/gateway/types"
+	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/pretty66/gosdk/cienv"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -43,7 +44,7 @@ func Start() {
 	flag.StringVar(&logLevel, "loglevel", "DEBUG", "level for log")
 
 	flag.StringVar(&serverList, "backends", "", "Load balanced backends, use commas to separate")
-	flag.StringVar(&urlreg, "urlreg", "http://***:80", "reg for url connection to node")
+	flag.StringVar(&urlreg, "urlreg", "http://***", "reg for url connection to node")
 	flag.IntVar(&port, "port", 3030, "Port to serve")
 
 	flag.String(flagRPCPort, "80", "rpc address for websocket")
@@ -64,7 +65,8 @@ func Start() {
 	if dbType == "" {
 		dbType = "redis"
 	}
-	dbHost := viper.GetString(flagCiStateDBHost)
+	//dbHost := viper.GetString(flagCiStateDBHost)
+	dbHost := util.Discovery(util.CallBack)
 	if dbHost == "" {
 		panic(errors.New(fmt.Sprintf("%s can not be empty", "ci-statedb-host")))
 	}
@@ -93,7 +95,7 @@ func Start() {
 		panic(err)
 	}
 	// 初始化logger
-	logger.Init()
+	//logger.Init()
 	//dynamic.Init()
 	//init PubSubRoom
 	pubsubRoom = &types.PubSubRoom{}

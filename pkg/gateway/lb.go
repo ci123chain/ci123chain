@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 )
 
@@ -33,7 +34,11 @@ func GetRetryFromContext(r *http.Request) int {
 // isAlive checks whether a backend is Alive by establishing a TCP connection
 func isBackendAlive(u *url.URL) bool {
 	timeout := 2 * time.Second
-	conn, err := net.DialTimeout("tcp", u.Host, timeout)
+	host := u.Host
+	if len(u.Host) != 0 && !strings.Contains(u.Host, ":") {
+		host += ":80"
+	}
+	conn, err := net.DialTimeout("tcp", host, timeout)
 	if err != nil {
 		logger.Warn(fmt.Sprintf("Site unreachable for host: %s, error: %v", u.String(), err))
 		return false
