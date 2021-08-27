@@ -2,14 +2,12 @@ package util
 
 import (
 	ctx "context"
-	"encoding/json"
 	"errors"
 	"github.com/tendermint/tendermint/libs/log"
 	"gitlab.oneitfarm.com/bifrost/sesdk"
 	"gitlab.oneitfarm.com/bifrost/sesdk/discovery"
-	"io/ioutil"
-	"net/http"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -109,22 +107,24 @@ func Discovery(f func(err error)) string {
 	if err != nil {
 		f(err)
 	}
+	res := strings.Split(ep.Host, ":")
+	return res[1]
 	// 根据发现的地址测试调用
-	resp, err := http.Get(ep.Host + "/info")
-	if err != nil {
-		f(err)
-	}
-	b, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		f(err)
-	}
-	var result map[string]string
-	err = json.Unmarshal(b, &result)
-	if err != nil {
-		f(err)
-	}
-	if len(result) == 0 {
-		f(errors.New("empty result from remote discovery"))
-	}
-	return result["host"]
+	//resp, err := http.Get(ep.Host + "/info")
+	//if err != nil {
+	//	f(err)
+	//}
+	//b, err := ioutil.ReadAll(resp.Body)
+	//if err != nil {
+	//	f(err)
+	//}
+	//var result map[string]string
+	//err = json.Unmarshal(b, &result)
+	//if err != nil {
+	//	f(err)
+	//}
+	//if len(result) == 0 {
+	//	f(errors.New("empty result from remote discovery"))
+	//}
+	//return result["host"]
 }
