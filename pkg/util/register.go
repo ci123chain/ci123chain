@@ -26,9 +26,9 @@ func SetupRegisterCenter(f func(err error, lg log.Logger)) {
 		os.Exit(1)
 	}
 	hn := os.Getenv("PODNAME")
-	serviceName := os.Getenv("IDG_SERVICE_NAME")
-	weight := os.Getenv("IDG_WEIGHT")
-	rt := os.Getenv("IDG_RUNTIME")
+	//serviceName := os.Getenv("IDG_SERVICE_NAME")
+	//weight := os.Getenv("IDG_WEIGHT")
+	//rt := os.Getenv("IDG_RUNTIME")
 	// 注册中心自身，初始化配置
 	conf := &discovery.Config{
 		// discovery地址
@@ -53,9 +53,9 @@ func SetupRegisterCenter(f func(err error, lg log.Logger)) {
 		},
 		// 上报任意自身属性信息
 		Metadata: map[string]string{
-			"weight":       weight, // 负载均衡权重
-			"runtime":      rt,
-			"service_name": serviceName,
+			//"weight":       weight, // 负载均衡权重
+			//"runtime":      rt,
+			//"service_name": serviceName,
 		},
 	}
 	// 实例化discovery对象
@@ -86,10 +86,12 @@ func Discovery(f func(err error)) string {
 		f(errors.New("appID is empty"))
 	}
 	hn := os.Getenv("PODNAME")
+	//hn, _ := os.Hostname()
 	// 注册中心自身，初始化配置
 	conf := &discovery.Config{
 		// discovery地址
-		Nodes:    []string{address},
+		Nodes: []string{address},
+		// Nodes:    []string{"127.0.0.1:7171"},
 		Region:   region,
 		Zone:     zone,
 		Env:      env,

@@ -42,6 +42,7 @@ import (
 	order "github.com/ci123chain/ci123chain/pkg/order/rest"
 	sRest "github.com/ci123chain/ci123chain/pkg/staking/client/rest"
 	wRest "github.com/ci123chain/ci123chain/pkg/vm/client/rest"
+	pRest "github.com/ci123chain/ci123chain/pkg/pre_staking/client/rest"
 	"github.com/gorilla/mux"
 
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
@@ -114,14 +115,14 @@ func NewRestServer() *RestServer {
 	if err != nil {
 		return nil
 	}
-	go util.SetupRegisterCenter(callBack)
+	//go util.SetupRegisterCenter(callBack)
 
 	r.NotFoundHandler = Handle404()
 	r.HandleFunc("/healthcheck", HealthCheckHandler(cliCtx)).Methods("GET")
 	r.HandleFunc("/exportLog", ExportLogHandler(cliCtx)).Methods("GET")
 	r.HandleFunc("/exportConfig", ExportConfigHandler(cliCtx)).Methods("GET")
 	r.HandleFunc("/exportEnv", ExportEnv(cliCtx)).Methods("POST")
-	r.HandleFunc("/info", registerCenterHandler(cliCtx)).Methods("GET")
+	//r.HandleFunc("/info", registerCenterHandler(cliCtx)).Methods("GET")
 	rpc.RegisterRoutes(cliCtx, r)
 	accountRpc.RegisterRoutes(cliCtx, r)
 	txRpc.RegisterTxRoutes(cliCtx, r)
@@ -134,6 +135,7 @@ func NewRestServer() *RestServer {
 	mRest.RegisterRoutes(cliCtx, r)
 	iRest.RegisterRoutes(cliCtx, r)
 	gRest.RegisterRoutes(cliCtx, r, gravity.StoreKey)
+	pRest.RegisterRoutes(cliCtx, r)
 
 
 	ibctransferRest.RegisterRoutes(cliCtx, r)
@@ -578,7 +580,7 @@ func registerCenterHandler(ctx context.Context) http.HandlerFunc {
 		//	res[v] = value
 		//}
 		res := map[string]interface{}{
-			"host": os.Getenv("PODNAME"),
+			"host": os.Getenv("IDG_HOST_80"),
 		}
 		bytes, err := json.Marshal(res)
 		if err != nil {

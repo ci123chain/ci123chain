@@ -915,23 +915,22 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 			switch rType := r.(type) {
 			case sdk.ErrorOutOfGas:
 				res := app.deferHandler(ctx, tx, true, mode == runTxModeSimulate)
-				_ = fmt.Sprintf("out of gas in location -- %v", rType.Descriptor)
+				err = errors.New(fmt.Sprintf("out of gas in location -- %v", rType.Descriptor))
 				result.GasUsed = res.GasUsed
 				result.GasWanted = res.GasWanted
-				err = abcierrors.ErrRuxTxOutOfGas
+				//err = abcierrors.ErrRuxTxOutOfGas
 			default:
 				res := app.deferHandler(ctx, tx, false, mode == runTxModeSimulate)
-				_ = fmt.Sprintf("recovered -- %v\nstack:%v\n", r, string(debug.Stack()))
+				err = errors.New(fmt.Sprintf("recovered -- %v\nstack:%v\n", r, string(debug.Stack())))
 				result.GasUsed = res.GasUsed
 				result.GasWanted = res.GasWanted
-				err = abcierrors.ErrRecoverInRunTx
+				//err = abcierrors.ErrRecoverInRunTx
 			}
 			for _, v := range all_attributes {
 				v = append(v, sdk.NewAttribute([]byte(sdk.EventTypeType), []byte(sdk.AttributeKeyInvalidTx)))
 				event := sdk.NewEvent(sdk.AttributeKeyTx, v...)
 				result.Events = append(result.Events, event)
 			}
-			fmt.Println(result.Events)
 		} else {
 			res := app.deferHandler(ctx, tx, false, mode == runTxModeSimulate)
 			result.GasUsed = res.GasUsed

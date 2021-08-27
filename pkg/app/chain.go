@@ -50,8 +50,10 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/order"
 	orhandler "github.com/ci123chain/ci123chain/pkg/order/handler"
 	"github.com/ci123chain/ci123chain/pkg/params"
-	"github.com/ci123chain/ci123chain/pkg/staking"
+	prestaking "github.com/ci123chain/ci123chain/pkg/pre_staking"
+	prestakingModule "github.com/ci123chain/ci123chain/pkg/pre_staking/module"
 	"github.com/ci123chain/ci123chain/pkg/slashing"
+	"github.com/ci123chain/ci123chain/pkg/staking"
 	stakingTypes "github.com/ci123chain/ci123chain/pkg/staking/types"
 	"github.com/ci123chain/ci123chain/pkg/supply"
 	supply_types "github.com/ci123chain/ci123chain/pkg/supply/types"
@@ -75,7 +77,7 @@ const (
 	flagAddress    = "address"
 	flagName       = "name"
 	flagClientHome = "home-client"
-	flagNodeDomain = "node_domain"
+	flagNodeDomain = "IDG_HOST_80"
 	flagShardIndex = "shardIndex"
 	cacheName      = "cache"
 	heightKey      = "s/k:order/OrderBook"
@@ -96,6 +98,7 @@ var (
 
 	DisrtStoreKey    = sdk.NewKVStoreKey(k.DisrtKey)
 	StakingStoreKey  = sdk.NewKVStoreKey(staking.StoreKey)
+	preStakingStorekey = sdk.NewKVStoreKey(prestaking.StoreKey)
 	SlashingStoreKey  = sdk.NewKVStoreKey(slashing.StoreKey)
 	GravityStoreKey  = sdk.NewKVStoreKey(gravity.StoreKey)
 	WasmStoreKey     = sdk.NewKVStoreKey(vm.StoreKey)
@@ -115,6 +118,7 @@ var (
 		ibctransfer.ModuleName: nil,
 		stakingTypes.BondedPoolName: {supply.Burner, supply.Staking},
 		stakingTypes.NotBondedPoolName: {supply.Burner, supply.Staking},
+		prestaking.ModuleName: nil,
 	}
 )
 
@@ -178,6 +182,8 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 
 	stakingKeeper := staking.NewKeeper(cdc, StakingStoreKey, accountKeeper, supplyKeeper, c.GetSubspace(staking.ModuleName), cdb)
 
+	prestakingKeeper := prestaking.NewKeeper(cdc, preStakingStorekey, accountKeeper, supplyKeeper, stakingKeeper, c.GetSubspace(prestaking.ModuleName),cdb)
+
 	slashingKeeper := slashing.NewKeeper(cdc, SlashingStoreKey, stakingKeeper, c.GetSubspace(slashing.ModuleName))
 
 	gravityKeeper := gravity.NewKeeper(cdc, GravityStoreKey, c.GetSubspace(gravity.ModuleName), accountKeeper, stakingKeeper, supplyKeeper, slashingKeeper)
@@ -226,6 +232,7 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 			distr.ModuleName,
 			order.ModuleName,
 			stakingTypes.ModuleName,
+			prestaking.ModuleName,
 			slashing.ModuleName,
 			gravity.ModuleName,
 			vm.ModuleName,
@@ -243,6 +250,7 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 			dist_module.AppModule{DistributionKeeper: distrKeeper, AccountKeeper: accountKeeper, SupplyKeeper: supplyKeeper},
 			order_module.AppModule{OrderKeeper: &orderKeeper},
 			staking_module.AppModule{StakingKeeper: stakingKeeper, AccountKeeper: accountKeeper, SupplyKeeper: supplyKeeper},
+			prestakingModule.AppModule{Keeper:prestakingKeeper},
 			slashing.AppModule{Keeper: slashingKeeper, AccountKeeper: accountKeeper, StakingKeeper: stakingKeeper},
 			gravity.AppModule{Keeper: gravityKeeper, AccKeeper: accountKeeper},
 			vm_module.AppModule{Keeper: &vmKeeper},
@@ -258,6 +266,7 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 		c.Router().AddRoute(transfer.RouteKey, handler.NewHandler(accountKeeper))
 		c.Router().AddRoute(order.RouteKey, orhandler.NewHandler(&orderKeeper))
 		c.Router().AddRoute(staking.RouteKey, staking.NewHandler(stakingKeeper))
+		c.Router().AddRoute(prestaking.RouteKey, prestaking.NewHandler(prestakingKeeper))
 		c.Router().AddRoute(slashing.RouteKey, slashing.NewHandler(slashingKeeper))
 		c.Router().AddRoute(gravity.RouteKey, gravity.NewHandler(gravityKeeper))
 		c.Router().AddRoute(distr.RouteKey, distr.NewHandler(distrKeeper))
@@ -271,6 +280,7 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 		c.QueryRouter().AddRoute(distr.RouteKey, distr.NewQuerier(distrKeeper))
 		c.QueryRouter().AddRoute(order.RouteKey, order.NewQuerier(&orderKeeper))
 		c.QueryRouter().AddRoute(staking.RouteKey, staking.NewQuerier(stakingKeeper))
+		c.QueryRouter().AddRoute(prestaking.RouteKey, prestaking.NewQuerier(prestakingKeeper))
 		c.QueryRouter().AddRoute(slashing.RouteKey, slashing.NewQuerier(slashingKeeper, cdc))
 		c.QueryRouter().AddRoute(gravity.RouteKey, gravity.NewQuerier(gravityKeeper))
 		c.QueryRouter().AddRoute(account.RouteKey, account.NewQuerier(accountKeeper))
@@ -318,6 +328,7 @@ func (c *Chain) mountStores() error {
 		DisrtStoreKey,
 		OrderStoreKey,
 		StakingStoreKey,
+		preStakingStorekey,
 		SlashingStoreKey,
 		GravityStoreKey,
 		WasmStoreKey,
@@ -417,7 +428,8 @@ func toRedisdb(cdb tmdb.DB) *redis.RedisDB {
 			cmn.Exit(err.Error())
 		}
 	}
-	nodeList = append(nodeList, viper.GetString(flagNodeDomain))
+	//nodeList = append(nodeList, viper.GetString(flagNodeDomain))
+	nodeList = append(nodeList, os.Getenv(flagNodeDomain))
 	nodeListBytes, _ = json.Marshal(nodeList)
 	odb.Set([]byte(redissource.FlagNodeList), nodeListBytes)
 

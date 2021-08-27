@@ -35,7 +35,7 @@ const (
 	flagCiStateDBHost  = "statedb_host"
 	flagCiStateDBTls   = "statedb_tls"
 	flagCiStateDBPort  = "statedb_port"
-	flagCiNodeDomain   = "node_domain"
+	flagCiNodeDomain   = "IDG_HOST_80"
 	flagMasterDomain   = "master_domain"
 	flagShardIndex     = "shardIndex"
 	flagGenesis        = "genesis" //genesis.json
@@ -135,6 +135,7 @@ func StartInProcess(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Code
 	}
 	//dbHost := viper.GetString(flagCiStateDBHost)
 	dbHost := util.Discovery(util.CallBack)
+	ctx.Logger.Info("discovery remote db host", "host", dbHost)
 	if dbHost == "" {
 		return nil, errors.New(fmt.Sprintf("%s can not be empty", flagCiStateDBHost))
 	}
@@ -152,8 +153,8 @@ func StartInProcess(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Code
 		return nil, errors.New(fmt.Sprintf("types of db: %s, which is not reids not implement yet", dbType))
 	}
 
-	nodeDomain := viper.GetString(flagCiNodeDomain)
-
+	//nodeDomain := viper.GetString(flagCiNodeDomain)
+	nodeDomain := os.Getenv(flagCiNodeDomain)
 	if nodeDomain == "" {
 		return nil, errors.New("node domain can not be empty")
 	}

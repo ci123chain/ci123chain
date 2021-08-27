@@ -7,9 +7,9 @@ import (
 	ak "github.com/ci123chain/ci123chain/pkg/account/keeper"
 	"github.com/ci123chain/ci123chain/pkg/staking"
 	k "github.com/ci123chain/ci123chain/pkg/staking/keeper"
+	"github.com/ci123chain/ci123chain/pkg/staking/module/basic"
 	"github.com/ci123chain/ci123chain/pkg/staking/types"
 	sk "github.com/ci123chain/ci123chain/pkg/supply/keeper"
-	"github.com/ci123chain/ci123chain/pkg/staking/module/basic"
 	abci "github.com/tendermint/tendermint/abci/types"
 )
 
