@@ -107,8 +107,8 @@ func Discovery(f func(err error)) string {
 	if err != nil {
 		f(err)
 	}
-	res := strings.Split(ep.Host, ":")
-	return res[1]
+	res := strings.Split(ep.Host, "//")
+	return strings.Split(res[1], ":")[0]
 	// 根据发现的地址测试调用
 	//resp, err := http.Get(ep.Host + "/info")
 	//if err != nil {
