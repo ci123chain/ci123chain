@@ -11,6 +11,11 @@ import (
 	"time"
 )
 
+type DomainInfo struct {
+	Host26657   string  `json:"host_26657"`
+	Host8546    string  `json:"host_8546"`
+}
+
 
 func SetupRegisterCenter(f func(err error, lg log.Logger)) {
 	logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", "register-center")

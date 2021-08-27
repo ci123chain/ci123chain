@@ -2,6 +2,9 @@ package types
 
 import (
 	"context"
+	"github.com/ci123chain/ci123chain/pkg/util"
+	"io/ioutil"
+	"net/http"
 	"net/url"
 
 	//"encoding/hex"
@@ -96,13 +99,23 @@ func (r *PubSubRoom) HasEthConnections() bool {
 
 func (r *PubSubRoom) SetTMConnections() (err error) {
 	for _, v := range r.backends {
-		addr := rpcAddress(v.URL().Host)
+		err, info := GetURL(v.URL().Host)
+		if err != nil {
+			logger.Error(fmt.Sprintf("get remote node domain info: %s, failed", v.URL().Host))
+			r.Mutex.Lock()
+			r.RemoveAllTMConnections()
+			r.Mutex.Unlock()
+			break
+		}
+		addr := rpcAddress(info.Host26657)
 		if r.Connections[addr] == nil {
 			conn, ok := GetConnection(addr)
 			if !ok {
 				err = errors.New(fmt.Sprintf("connect remote addr: %s, failed", addr))
 				logger.Error(err.Error())
+				r.Mutex.Lock()
 				r.RemoveAllTMConnections()
+				r.Mutex.Unlock()
 				break
 			}
 			r.Connections[addr] = conn
@@ -113,13 +126,23 @@ func (r *PubSubRoom) SetTMConnections() (err error) {
 
 func (r *PubSubRoom) SetEthConnections() (err error) {
 	for _, v := range r.backends {
-		addr := rpcAddress(v.URL().Host)
+		err, info := GetURL(v.URL().Host)
+		if err != nil {
+			logger.Error(fmt.Sprintf("get remote node domain info: %s, failed", v.URL().Host))
+			r.Mutex.Lock()
+			r.RemoveAllEthConnections()
+			r.Mutex.Unlock()
+			break
+		}
+		addr := rpcAddress(info.Host8546)
 		if r.EthConnections[addr] == nil {
 			conn, ok := GetEthConnection(addr)
 			if !ok {
 				err = errors.New(fmt.Sprintf("connect remote addr: %s, failed", addr))
 				logger.Error(err.Error())
+				r.Mutex.Lock()
 				r.RemoveAllEthConnections()
+				r.Mutex.Unlock()
 				break
 			}
 			r.EthConnections[addr] = conn
@@ -431,7 +454,15 @@ func (r *PubSubRoom) AddShard() {
 	ctx, _ := context.WithTimeout(context.Background(), timeOut)
 	//defer cancel()
 	for _, v := range r.backends {
-		addr := rpcAddress(v.URL().Host)
+		err, info := GetURL(v.URL().Host)
+		if err != nil {
+			logger.Error(fmt.Sprintf("get remote node domain info: %s, failed", v.URL().Host))
+			r.Mutex.Lock()
+			r.RemoveAllTMConnections()
+			r.Mutex.Unlock()
+			break
+		}
+		addr := rpcAddress(info.Host26657)
 		if r.Connections[addr] == nil {
 			conn, ok := GetConnection(addr)
 			if !ok {
@@ -875,6 +906,36 @@ func rpcAddress(host string) string {
 //		TxAmount:    amount,
 //	}
 //}
+
+func GetURL(host string) (error, *util.DomainInfo) {
+	cli := &http.Client{
+		Transport:&http.Transport{DisableKeepAlives:true},
+	}
+	reqUrl := "http://" + strings.Split(host, ":")[0] + ":80" + "/info"
+	req2, err := http.NewRequest("GET", reqUrl, nil)
+	if err != nil || req2 == nil {
+		return err, nil
+	}
+	defer req2.Body.Close()
+	//not use one connection
+	req2.Close = true
+	rep2, err := cli.Do(req2)
+	if err != nil {
+		return err, nil
+	}
+	b, err := ioutil.ReadAll(rep2.Body)
+	if err != nil {
+		return err, nil
+	}
+	defer rep2.Body.Close()
+
+	var info util.DomainInfo
+	err = json.Unmarshal(b, &info)
+	if err != nil {
+		return err, nil
+	}
+	return nil, &info
+}
 
 type TMResponse struct {
 	response <- chan ctypes.ResultEvent

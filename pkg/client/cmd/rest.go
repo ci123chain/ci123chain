@@ -122,7 +122,7 @@ func NewRestServer() *RestServer {
 	r.HandleFunc("/exportLog", ExportLogHandler(cliCtx)).Methods("GET")
 	r.HandleFunc("/exportConfig", ExportConfigHandler(cliCtx)).Methods("GET")
 	r.HandleFunc("/exportEnv", ExportEnv(cliCtx)).Methods("POST")
-	//r.HandleFunc("/info", registerCenterHandler(cliCtx)).Methods("GET")
+	r.HandleFunc("/info", registerCenterHandler(cliCtx)).Methods("GET")
 	rpc.RegisterRoutes(cliCtx, r)
 	accountRpc.RegisterRoutes(cliCtx, r)
 	txRpc.RegisterTxRoutes(cliCtx, r)
@@ -567,20 +567,9 @@ func SetupRegisterCenter(f func(err error, lg log.Logger)) {
 func registerCenterHandler(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 
-		//var ks []string
-		//keys := req.FormValue("keys")
-		//err := json.Unmarshal([]byte(keys), &ks)
-		//if err != nil {
-		//	_, _ = w.Write([]byte(err.Error()))
-		//	return
-		//}
-		//var res = make(map[string]interface{}, 0)
-		//for _, v := range ks {
-		//	value := os.Getenv(v)
-		//	res[v] = value
-		//}
 		res := map[string]interface{}{
-			"host": os.Getenv("IDG_HOST_80"),
+			"host_26657": os.Getenv("IDG_HOST_26657"),
+			"host_8546": os.Getenv("IDG_HOST_8546"),
 		}
 		bytes, err := json.Marshal(res)
 		if err != nil {
