@@ -102,9 +102,7 @@ func (r *PubSubRoom) SetTMConnections() (err error) {
 		err, info := GetURL(v.URL().Host)
 		if err != nil {
 			logger.Error(fmt.Sprintf("get remote node domain info: %s, failed", v.URL().Host))
-			r.Mutex.Lock()
 			r.RemoveAllTMConnections()
-			r.Mutex.Unlock()
 			break
 		}
 		addr := rpcAddress(info.Host26657)
@@ -113,9 +111,7 @@ func (r *PubSubRoom) SetTMConnections() (err error) {
 			if !ok {
 				err = errors.New(fmt.Sprintf("connect remote addr: %s, failed", addr))
 				logger.Error(err.Error())
-				r.Mutex.Lock()
 				r.RemoveAllTMConnections()
-				r.Mutex.Unlock()
 				break
 			}
 			r.Connections[addr] = conn
@@ -129,9 +125,7 @@ func (r *PubSubRoom) SetEthConnections() (err error) {
 		err, info := GetURL(v.URL().Host)
 		if err != nil {
 			logger.Error(fmt.Sprintf("get remote node domain info: %s, failed", v.URL().Host))
-			r.Mutex.Lock()
 			r.RemoveAllEthConnections()
-			r.Mutex.Unlock()
 			break
 		}
 		addr := rpcAddress(info.Host8546)
@@ -140,9 +134,7 @@ func (r *PubSubRoom) SetEthConnections() (err error) {
 			if !ok {
 				err = errors.New(fmt.Sprintf("connect remote addr: %s, failed", addr))
 				logger.Error(err.Error())
-				r.Mutex.Lock()
 				r.RemoveAllEthConnections()
-				r.Mutex.Unlock()
 				break
 			}
 			r.EthConnections[addr] = conn
@@ -392,7 +384,9 @@ func (r *PubSubRoom) Subscribe(topic string) {
 				logger.Error(fmt.Sprintf("subscribe topic: %s failed", topic))
 				if _, err := conn.Health(ctx); err != nil {
 					////connection failed
+					r.Mutex.Lock()
 					r.RemoveAllTMConnections()
+					r.Mutex.Unlock()
 					break
 				}else {
 					Err := fmt.Sprintf("subscribe topic: %s failed, maybe you should check your topic", topic)
@@ -407,17 +401,16 @@ func (r *PubSubRoom) Subscribe(topic string) {
 			tmRes := TMResponse{
 				response: responses,
 				topic:    topic,
+				addr:     conn.Remote(),
 			}
 			go func(res TMResponse) {
+				var start = time.Now()
+				var worked = false
 				for e := range res.response {
 					logger.Info("receive tendermint response: %v", e.Data)
 					var v interface{}
 					switch e.Data.(type) {
 					case types.EventDataTx:
-						//ok, _ := regexp.MatchString("tm.event = 'Tx'", topic)
-						//if !ok {
-						//	continue
-						//}
 						tx := e.Data.(types.EventDataTx)
 						var aa sdk.Tx
 						err = cdc.UnmarshalBinaryBare(tx.Tx, &aa)
@@ -429,21 +422,31 @@ func (r *PubSubRoom) Subscribe(topic string) {
 							logger.Error(fmt.Sprintf("marshal error: %s", err.Error()))
 						}
 						tx.Tx = res
-						//hash := hex.EncodeToString(tx.Tx.Hash())
-						//v = NewGotTxResponse(tx.Height, tx.Index, hash, tx.Result)
 						v = tx
 					default:
 						v = e.Data
 					}
-					//response := SendMessage{
-					//	Time:   time.Now().Format(time.RFC3339),
-					//	Content: v,
-					//}
 					response := SendMessage{
 						Time:   time.Now().Format(time.RFC3339),
 						Content: v,//e.Data,
 					}
 					Notify(r, res.topic, response)
+					worked = true
+				}
+				var end = time.Now()
+				if !worked {
+					if end.Sub(start).Seconds() > 15 {
+						Err := fmt.Sprintf("the node: %s, is bad, no result return after 15 senconds", res.addr)
+						response := SendMessage{
+							Time:   time.Now().Format(time.RFC3339),
+							Content: Err,
+						}
+						Notify(r, res.topic, response)
+						r.Mutex.Lock()
+						r.RemoveAllTMConnections()
+						r.Mutex.Unlock()
+						return
+					}
 				}
 			}(tmRes)
 		}
@@ -509,9 +512,12 @@ func (r *PubSubRoom) AddShard() {
 					tmRes := TMResponse{
 						response: responses,
 						topic:    topic,
+						addr:     conn.Remote(),
 					}
 
 					go func(res TMResponse) {
+						var start = time.Now()
+						var worked = false
 						for e := range res.response {
 							//var v interface{}
 							//switch e.Data.(types) {
@@ -591,21 +597,31 @@ func (r *PubSubRoom) AddShard() {
 									logger.Error(fmt.Sprintf("marshal error: %s", err.Error()))
 								}
 								tx.Tx = res
-								//hash := hex.EncodeToString(tx.Tx.Hash())
-								//v = NewGotTxResponse(tx.Height, tx.Index, hash, tx.Result)
 								v = tx
 							default:
 								v = e.Data
 							}
-							//response := SendMessage{
-							//	Time:   time.Now().Format(time.RFC3339),
-							//	Content: v,
-							//}
 							response := SendMessage{
 								Time:   time.Now().Format(time.RFC3339),
 								Content: v,//e.Data,
 							}
 							Notify(r, res.topic, response)
+							worked = true
+						}
+						var end = time.Now()
+						if !worked {
+							if end.Sub(start).Seconds() > 15 {
+								Err := fmt.Sprintf("the node: %s, is bad, no result return after 15 senconds", res.addr)
+								response := SendMessage{
+									Time:   time.Now().Format(time.RFC3339),
+									Content: Err,
+								}
+								Notify(r, res.topic, response)
+								r.Mutex.Lock()
+								r.RemoveAllTMConnections()
+								r.Mutex.Unlock()
+								return
+							}
 						}
 					}(tmRes)
 				}
@@ -847,8 +863,8 @@ func GetConnection(addr string) (*rpcclient.HTTP, bool){
 
 func GetEthConnection(addr string) (*websocket.Conn, bool) {
 	str := strings.Split(addr, ":")
-	link := DefaultEthPrefix + str[0] + ":" + DefaultPort
-	//link = "localhost:8546"
+	//link := DefaultEthPrefix + str[0] + ":" + DefaultPort
+	link := str[0] + ":" + DefaultPort
 	u := url.URL{Scheme: "ws", Host: link,  Path: "/"}
 	dialer := websocket.DefaultDialer
 	c, _, err := dialer.Dial(u.String(), nil)
@@ -858,7 +874,7 @@ func GetEthConnection(addr string) (*websocket.Conn, bool) {
 func rpcAddress(host string) string {
 	res := DefaultTCP
 	str := strings.Split(host, ":")
-	res = res + DefaultPrefix + str[0] + ":" + DefaultPort
+	res = res + str[0] + ":" + DefaultPort
 	return res
 }
 
@@ -911,12 +927,11 @@ func GetURL(host string) (error, *util.DomainInfo) {
 	cli := &http.Client{
 		Transport:&http.Transport{DisableKeepAlives:true},
 	}
-	reqUrl := "http://" + strings.Split(host, ":")[0] + ":80" + "/info"
+	reqUrl := "http://" + strings.Split(host, ":")[0] + ":" + DefaultPort + "/info"
 	req2, err := http.NewRequest("GET", reqUrl, nil)
 	if err != nil || req2 == nil {
 		return err, nil
 	}
-	defer req2.Body.Close()
 	//not use one connection
 	req2.Close = true
 	rep2, err := cli.Do(req2)
@@ -940,6 +955,7 @@ func GetURL(host string) (error, *util.DomainInfo) {
 type TMResponse struct {
 	response <- chan ctypes.ResultEvent
 	topic  string
+	addr   string
 }
 
 type EthSubcribeMsg struct {
