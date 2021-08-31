@@ -29,6 +29,7 @@ type BaseAccount struct {
 	ContractList    []string        `json:"contract_list" yaml:"contract_list"`
 	ContractType    string         `json:"contract_type" yaml:"contract_type"`
 	CodeHash		[]byte 			`json:"code_hash" yaml:"code_hash"`
+	IsModule        bool            `json:"is_module"`
 }
 
 func (acc *BaseAccount) SetCodeHash(bz []byte) {
@@ -182,4 +183,13 @@ func (acc *BaseAccount) SetContractType(contractType string) error {
 
 func (acc *BaseAccount) GetContractType() string {
 	return acc.ContractType
+}
+
+func (acc *BaseAccount) SetIsModule(flag bool) error {
+	acc.IsModule = flag
+	return nil
+}
+
+func (acc *BaseAccount) GetIsModule() bool {
+	return acc.IsModule
 }

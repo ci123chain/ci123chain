@@ -116,6 +116,10 @@ var (
 	LastUnBondingBlockHeight = []byte{0xf8}
 
 	ContractMetaDataKey = []byte{0xf9}
+
+	TxIdKey = []byte{0xfa}
+
+	EventNonceKey = []byte{0xfb}
 )
 
 // GetOrchestratorAddressKey returns the following key format
@@ -282,4 +286,12 @@ func GetLogicConfirmKey(invalidationId []byte, invalidationNonce uint64, validat
 	interm := append(KeyOutgoingLogicConfirm, invalidationId...)
 	interm = append(interm, UInt64Bytes(invalidationNonce)...)
 	return append(interm, validator.Bytes()...)
+}
+
+func GetTxIdKey(txId uint64) []byte {
+	return append(TxIdKey, sdk.Uint64ToBigEndian(txId)...)
+}
+
+func GetEventNonceKey(eventNonce uint64) []byte {
+	return append(EventNonceKey, sdk.Uint64ToBigEndian(eventNonce)...)
 }

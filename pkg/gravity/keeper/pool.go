@@ -49,9 +49,9 @@ func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, counte
 			return 0, err
 		}
 		// burn vouchers to send them back to ETH
-		if err := k.SupplyKeeper.BurnEVMCoin(ctx, types.ModuleName, sdk.HexToAddress(wlkContract), totalAmount.Amount.BigInt()); err != nil {
-			panic(err)
-		}
+		//if err := k.SupplyKeeper.BurnEVMCoin(ctx, types.ModuleName, sdk.HexToAddress(wlkContract), totalAmount.Amount.BigInt()); err != nil {
+		//	panic(err)
+		//}
 	}
 
 	// get next tx id from keeper
@@ -74,6 +74,8 @@ func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, counte
 	if err := k.setPoolEntry(ctx, outgoing); err != nil {
 		return 0, err
 	}
+
+	k.setTxIdState(ctx, nextID, txIdStatePending)
 
 	// add a second index with the fee
 	k.appendToUnbatchedTXIndex(ctx, counterPartContract, *erc20Fee, nextID)
@@ -125,6 +127,8 @@ func (k Keeper) RemoveFromOutgoingPoolAndRefund(ctx sdk.Context, txId uint64, se
 	// delete this tx from both indexes
 	k.removePoolEntry(ctx, txId)
 	k.removeFromUnbatchedTXIndex(ctx, *tx.Erc20Fee, txId)
+
+	k.setTxIdState(ctx, txId, txIDStateCancel)
 
 	// reissue the amount and the fee
 
@@ -235,6 +239,44 @@ func (k Keeper) getPoolEntry(ctx sdk.Context, id uint64) (*types.OutgoingTransfe
 func (k Keeper) removePoolEntry(ctx sdk.Context, id uint64) {
 	store := ctx.KVStore(k.storeKey)
 	store.Delete(types.GetOutgoingTxPoolKey(id))
+}
+
+var (
+	txIdStatePending = []byte("pending")
+	txIdStateDone = []byte("done")
+	txIDStateCancel = []byte("cancel")
+)
+
+func (k Keeper) setTxIdState(ctx sdk.Context, txId uint64, state []byte) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(types.GetTxIdKey(txId), state)
+}
+
+func (k Keeper) getTxIdState(ctx sdk.Context, txId uint64) ([]byte, error) {
+	store := ctx.KVStore(k.storeKey)
+	by := store.Get(types.GetTxIdKey(txId))
+	if by == nil {
+		return nil, types.ErrUnknown
+	}
+	return by, nil
+}
+
+var (
+	eventNonceStateDone = []byte("done")
+)
+
+func (k Keeper) setEventNonceState(ctx sdk.Context, eventNonce uint64, state []byte) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(types.GetEventNonceKey(eventNonce), state)
+}
+
+func (k Keeper) getEventNonceState(ctx sdk.Context, eventNonce uint64) ([]byte, error) {
+	store := ctx.KVStore(k.storeKey)
+	by := store.Get(types.GetEventNonceKey(eventNonce))
+	if by == nil {
+		return nil, types.ErrUnknown
+	}
+	return by, nil
 }
 
 // GetPoolTransactions, grabs all transactions from the tx pool, useful for queries or genesis save/load

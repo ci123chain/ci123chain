@@ -407,6 +407,9 @@ func (so *stateObject) deepCopy(db *CommitStateDB) *stateObject {
 func (so *stateObject) empty() bool {
 	evmDenom := so.stateDB.GetParams().EvmDenom
 	balance := so.account.GetCoins().AmountOf(evmDenom)
+	if so.account.GetIsModule() {
+		return false
+	}
 	return so.account == nil ||
 		(so.account != nil &&
 			so.account.GetSequence() == 0 &&

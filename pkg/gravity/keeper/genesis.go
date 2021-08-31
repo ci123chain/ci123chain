@@ -43,6 +43,7 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 	// reset pool transactions in state
 	for _, tx := range data.UnbatchedTransfers {
 		k.setPoolEntry(ctx, tx)
+		k.setTxIdState(ctx, tx.Id, txIdStatePending)
 	}
 
 	// reset attestations in state

@@ -33,4 +33,7 @@ type Account interface {
 	SpendableCoins(blockTime time.Time) types.Coins
 	// Ensure that account implements stringer
 	String() string
+
+	SetIsModule(flag bool) error
+	GetIsModule() bool
 }

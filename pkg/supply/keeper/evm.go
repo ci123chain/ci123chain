@@ -32,6 +32,12 @@ func (k Keeper) MintCoinsFromModuleToEvmAccount(ctx sdk.Context,
 	return err
 }
 
+// TransferFromModuleToEvmAccount transfers coins from a ModuleAccount to an AccAddress
+func (k Keeper) TransferFromModuleToEvmAccount(ctx sdk.Context,
+	recipientAddr sdk.AccAddress, wlkContract string, amt *big.Int) error {
+	return k.SendCoinsFromModuleToEVMAccount(ctx, recipientAddr, types.ModuleName, sdk.HexToAddress(wlkContract), amt)
+}
+
 func (k Keeper) BuildParams(sender sdk.AccAddress, to *common.Address, payload []byte, gasLimit, nonce uint64) evmtypes.MsgEvmTx {
 	return evmtypes.MsgEvmTx{
 		From: sender,
@@ -91,12 +97,37 @@ func (k Keeper) SendCoinsFromEVMAccountToModule(ctx sdk.Context, senderAddr sdk.
 	if !ok {
 		return fmt.Errorf("invalid method")
 	}
-	params := []interface{}{to, amount}
+	params := []interface{}{to.Address, amount}
 	data, err := abi.Encode(params, m.Inputs)
 	data = append(m.ID(), data...)
 
 	ctx = ctx.WithIsRootMsg(true)
 	msg := k.BuildParams(senderAddr, &wlkContract.Address, data, DefaultGas, k.getNonce(ctx, senderAddr))
+
+	result, err := k.evmKeeper.EvmTxExec(ctx, msg)
+	k.Logger(ctx).Info("Transfer action result", "value", result)
+	return err
+}
+
+func (k Keeper) SendCoinsFromModuleToEVMAccount(ctx sdk.Context, to sdk.AccAddress,
+	moduleName string, wlkContract sdk.AccAddress, amount *big.Int) error {
+
+	from := k.GetModuleAddress(moduleName)
+
+	abiIns, err := abi.NewABI(DefaultERC20ABI)
+	if err != nil {
+		return err
+	}
+	m, ok := abiIns.Methods["transfer"]
+	if !ok {
+		return fmt.Errorf("invalid method")
+	}
+	params := []interface{}{to.Address, amount}
+	data, err := abi.Encode(params, m.Inputs)
+	data = append(m.ID(), data...)
+
+	ctx = ctx.WithIsRootMsg(true)
+	msg := k.BuildParams(from, &wlkContract.Address, data, DefaultGas, k.getNonce(ctx, from))
 
 	result, err := k.evmKeeper.EvmTxExec(ctx, msg)
 	k.Logger(ctx).Info("Transfer action result", "value", result)
@@ -114,7 +145,7 @@ func (k Keeper) BurnEVMCoin(ctx sdk.Context, moduleName string, wlkContract sdk.
 	if !ok {
 		return fmt.Errorf("invalid method")
 	}
-	params := []interface{}{from, amount}
+	params := []interface{}{from.Address, amount}
 	data, err := abi.Encode(params, m.Inputs)
 	data = append(m.ID(), data...)
 
@@ -137,7 +168,7 @@ func (k Keeper) Mint(ctx sdk.Context, contract, to sdk.AccAddress, moduleName st
 		return fmt.Errorf("invalid method")
 	}
 
-	params := []interface{}{to, amount}
+	params := []interface{}{to.Address.Bytes(), amount}
 
 	data, err := abi.Encode(params, m.Inputs)
 	data = append(m.ID(), data...)

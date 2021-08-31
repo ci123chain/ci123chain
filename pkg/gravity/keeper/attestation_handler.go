@@ -62,7 +62,8 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim
 				return types.ErrNoContractMetaData
 			}
 
-			err = a.supplyKeeper.MintCoinsFromModuleToEvmAccount(ctx, receiverAddr, wlkToken, claim.Amount.BigInt())
+			//err = a.supplyKeeper.MintCoinsFromModuleToEvmAccount(ctx, receiverAddr, wlkToken, claim.Amount.BigInt())
+			err = a.supplyKeeper.TransferFromModuleToEvmAccount(ctx, receiverAddr, wlkToken, claim.Amount.BigInt())
 		}
 		return err
 	case *types.MsgWithdrawClaim:

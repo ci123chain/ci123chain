@@ -316,6 +316,8 @@ func (k msgServer) DepositClaim(c context.Context, msg *types.MsgDepositClaim) (
 		),
 	)
 
+	k.setEventNonceState(ctx, msg.EventNonce, eventNonceStateDone)
+
 	return &types.MsgDepositClaimResponse{}, nil
 }
 
