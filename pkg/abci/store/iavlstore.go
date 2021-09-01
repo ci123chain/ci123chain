@@ -171,20 +171,23 @@ func (st *iavlStore) Set(key, value []byte) {
 func (st *iavlStore) Get(key []byte) (value []byte) {
 	remoteValue := st.parent.(KVStore).Get(key)
 	_, localValue := st.tree.Get(key)
-	if 	!bytes.Equal(remoteValue, localValue) {
-		logger.GetLogger().Error("iavlStore get value not matched!", "store", st.key.Name(), "key", string(key))
+	if localValue != nil {
+		if !bytes.Equal(remoteValue, localValue) {
+			logger.GetLogger().Error("iavlStore get value not matched!", "store", st.key.Name(), "key", string(key))
+		}
 	}
 	switch st.mode {
-		case ModeSingle:
+	case ModeMulti:
+		value = remoteValue
+		return
+	default:
+		if localValue != nil {
 			value = localValue
-			return
-		case ModeMulti:
+		} else {
 			value = remoteValue
-			return
-		default:
-			value = localValue
+		}
+		return
 	}
-	return
 }
 
 // Implements KVStore.

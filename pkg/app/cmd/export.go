@@ -65,11 +65,6 @@ func ExportCmd(appExporter app.AppExporter, defaultNodeHome string) *cobra.Comma
 				return errors.New(fmt.Sprintf("types of db: %s, which is not reids not implement yet", dbType))
 			}
 
-			//db, err := openDB(config.RootDir)
-			//if err != nil {
-			//	return err
-			//}
-
 			if appExporter == nil {
 				if _, err := fmt.Fprintln(os.Stderr, "WARNING: App exporter not defined. Returning genesis file."); err != nil {
 					return err
@@ -142,6 +137,7 @@ func ExportCmd(appExporter app.AppExporter, defaultNodeHome string) *cobra.Comma
 				return err
 			}
 
+			_ = ioutil.WriteFile(filepath.Join(homeDir, "data/exportFile.json"), MustSortJSON(encoded), os.ModePerm)
 			cmd.Println(string(MustSortJSON(encoded)))
 			return nil
 		},
