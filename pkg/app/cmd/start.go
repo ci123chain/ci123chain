@@ -45,6 +45,7 @@ const (
 	version 		   = "CiChain v1.4.15"
 	flagETHChainID     = "eth_chain_id"
 	flagIteratorLimit  = "iterator_limit"
+	flagRunMode		   = "mode"
 )
 
 func startCmd(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Codec) *cobra.Command {
@@ -87,6 +88,7 @@ func startCmd(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Codec) *co
 	cmd.Flags().Int64(flagETHChainID, 1, "eth chain id")
 	cmd.Flags().Int(flagIteratorLimit, 10, "eth chain id")
 	cmd.Flags().String(FlagWithValidator, "", "validator_key")
+	cmd.Flags().String(flagRunMode, "single", "run chain mode")
 
 	//cmd.Flags().String(flagLogLevel, "debug", "Run abci app with different log level")
 	tcmd.AddNodeFlags(cmd)
