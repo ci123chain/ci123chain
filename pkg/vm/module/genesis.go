@@ -7,10 +7,13 @@ import (
 	"errors"
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/account"
+	"github.com/ci123chain/ci123chain/pkg/account/exported"
 	"github.com/ci123chain/ci123chain/pkg/vm/evmtypes"
 	"github.com/ci123chain/ci123chain/pkg/vm/moduletypes"
 	"github.com/ci123chain/ci123chain/pkg/vm/moduletypes/utils"
 	types "github.com/ci123chain/ci123chain/pkg/vm/wasmtypes"
+	"github.com/ethereum/go-ethereum/common"
 	"io/ioutil"
 	"strings"
 )
@@ -106,6 +109,41 @@ func EvmInitGenesis(ctx sdk.Context, k moduletypes.KeeperI, data evmtypes.Genesi
 	}
 
 	return
+}
+
+
+
+func ExportGenesis(ctx sdk.Context, k moduletypes.KeeperI, ak account.AccountKeeper) evmtypes.GenesisState {
+
+	// nolint: prealloc
+	var ethGenAccounts []evmtypes.GenesisAccount
+	ak.IterateAccounts(ctx, func(account exported.Account) bool {
+
+		addr := common.HexToAddress(account.GetAddress().String())
+
+		storage, err := k.GetAccountStorage(ctx, addr)
+		if err != nil {
+			panic(err)
+		}
+
+		genAccount := evmtypes.GenesisAccount{
+			Address: addr,
+			Code:    k.GetCode(ctx, addr),
+			Storage: storage,
+		}
+
+		ethGenAccounts = append(ethGenAccounts, genAccount)
+		return false
+	})
+
+	config, _ := k.GetChainConfig(ctx)
+
+	return evmtypes.GenesisState{
+		Accounts:    ethGenAccounts,
+		TxsLogs:     k.GetAllTxLogs(ctx),
+		ChainConfig: config,
+		Params:      k.GetParams(ctx),
+	}
 }
 
 

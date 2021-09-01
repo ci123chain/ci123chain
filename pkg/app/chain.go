@@ -21,6 +21,7 @@ import (
 	order_module "github.com/ci123chain/ci123chain/pkg/order/module"
 	ordertypes "github.com/ci123chain/ci123chain/pkg/order/types"
 	"github.com/ci123chain/ci123chain/pkg/redis"
+	keeper2 "github.com/ci123chain/ci123chain/pkg/staking/keeper"
 	staking_module "github.com/ci123chain/ci123chain/pkg/staking/module"
 	supply_module "github.com/ci123chain/ci123chain/pkg/supply/module"
 	vm_module "github.com/ci123chain/ci123chain/pkg/vm/module"
@@ -50,6 +51,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/order"
 	orhandler "github.com/ci123chain/ci123chain/pkg/order/handler"
 	"github.com/ci123chain/ci123chain/pkg/params"
+	ptypes "github.com/ci123chain/ci123chain/pkg/params/types"
 	prestaking "github.com/ci123chain/ci123chain/pkg/pre_staking"
 	prestakingModule "github.com/ci123chain/ci123chain/pkg/pre_staking/module"
 	"github.com/ci123chain/ci123chain/pkg/slashing"
@@ -138,6 +140,7 @@ type Chain struct {
 
 	authKeeper 		auth.AuthKeeper
 	paramsKeepr 	params.Keeper
+	StakingKeeper   keeper2.StakingKeeper
 	// the module manager
 	mm *module.AppManager
 }
@@ -176,11 +179,15 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 
 	c.paramsKeepr = initAppParamsKeeper(cdc, ParamStoreKey, ParamTransStoreKey)
 
+	c.SetParamStore(c.paramsKeepr.Subspace(baseapp.Paramspace).WithKeyTable(ptypes.ConsensusParamsKeyTable()))
+
 	supplyKeeper := supply.NewKeeper(cdc, SupplyStoreKey, accountKeeper, maccPerms)
 
 	c.authKeeper = auth.NewAuthKeeper(cdc, AuthStoreKey, c.GetSubspace(auth.ModuleName))
 
 	stakingKeeper := staking.NewKeeper(cdc, StakingStoreKey, accountKeeper, supplyKeeper, c.GetSubspace(staking.ModuleName), cdb)
+
+	c.StakingKeeper = stakingKeeper
 
 	prestakingKeeper := prestaking.NewKeeper(cdc, preStakingStorekey, accountKeeper, supplyKeeper, stakingKeeper, c.GetSubspace(prestaking.ModuleName),cdb)
 
@@ -253,7 +260,7 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer)
 			prestakingModule.AppModule{Keeper:prestakingKeeper},
 			slashing.AppModule{Keeper: slashingKeeper, AccountKeeper: accountKeeper, StakingKeeper: stakingKeeper},
 			gravity.AppModule{Keeper: gravityKeeper, AccKeeper: accountKeeper},
-			vm_module.AppModule{Keeper: &vmKeeper},
+			vm_module.AppModule{Keeper: &vmKeeper, AccountKeeper:accountKeeper},
 			mint_module.AppModule{Keeper: mintKeeper},
 			infrastructure_module.AppModule{Keeper: infrastructureKeeper},
 			ibc.NewCoreModule(&IBCKeeper),
@@ -373,10 +380,23 @@ func initAppParamsKeeper(cdc *codec.Codec, key *sdk.KVStoreKey, tkey *sdk.Transi
 }
 
 
-func (c *Chain) ExportAppStateJSON() (json.RawMessage, []types.GenesisValidator, error) {
-	// TODO: Implement
-	// Currently non-functional, just enough to compile
-	return nil, nil, errors.New("not implemented error")
+func (c *Chain) ExportAppStateJSON() (ExportedApp, error) {
+	ctx := c.BaseApp.NewContext(true, tmtypes.Header{Height: c.BaseApp.LastBlockHeight()})
+	height := c.LastBlockHeight() + 1
+	genState :=  c.mm.ExportGenesis(ctx)
+	appState, err := json.MarshalIndent(genState, "", "  ")
+	if err != nil {
+		return ExportedApp{}, err
+	}
+
+	validators, err := staking.WriteValidators(ctx, c.StakingKeeper)
+	cp := c.BaseApp.GetConsensusParams(ctx)
+	return ExportedApp{
+		AppState:        appState,
+		Validators:      validators,
+		Height:          height,
+		ConsensusParams: cp,
+	}, err
 }
 
 //_____________________________________________________________________

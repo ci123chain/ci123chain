@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/module"
+	"github.com/ci123chain/ci123chain/pkg/account"
 	"github.com/ci123chain/ci123chain/pkg/vm/evmtypes"
 	"github.com/ci123chain/ci123chain/pkg/vm/module/basic"
 	"github.com/ci123chain/ci123chain/pkg/vm/moduletypes"
@@ -14,6 +15,7 @@ import (
 type AppModule struct {
 	basic.AppModuleBasic
 	Keeper  moduletypes.KeeperI
+	AccountKeeper  account.AccountKeeper
 }
 
 func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.ValidatorUpdate {
@@ -39,4 +41,8 @@ func (am AppModule) Committer(ctx sdk.Context) {
 }
 
 func (am AppModule) RegisterServices(cfg module.Configurator) {
+}
+
+func (am AppModule) ExportGenesis(ctx sdk.Context) json.RawMessage {
+	return wasm.WasmCodec.MustMarshalJSON(ExportGenesis(ctx, am.Keeper, am.AccountKeeper))
 }

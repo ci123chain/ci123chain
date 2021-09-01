@@ -73,6 +73,10 @@ func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.Va
 	return nil
 }
 
+func (am AppModule) ExportGenesis(ctx sdk.Context) json.RawMessage {
+	return nil
+}
+
 func (am AppModule) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) {
 
 }

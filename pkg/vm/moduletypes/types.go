@@ -8,6 +8,7 @@ import (
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"math/big"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 const (
@@ -50,5 +51,15 @@ type KeeperI interface {
 	SetChainConfig(ctx sdk.Context, config evmtypes.ChainConfig)
 
 	SetParams(ctx sdk.Context, params evmtypes.Params)
+
+	GetParams(ctx sdk.Context) evmtypes.Params
+
+	GetAllTxLogs(ctx sdk.Context) []evmtypes.TransactionLogs
+
+	GetChainConfig(ctx sdk.Context) (evmtypes.ChainConfig, bool)
+
+	GetAccountStorage(ctx sdk.Context, address common.Address) (evmtypes.Storage, error)
+
+	GetCode(ctx sdk.Context, address ethcmn.Address) []byte
 }
 

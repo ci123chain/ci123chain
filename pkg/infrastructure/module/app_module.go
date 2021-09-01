@@ -37,3 +37,7 @@ func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.Val
 
 func (am AppModule) RegisterServices(cfg module.Configurator) {
 }
+
+func (am AppModule) ExportGenesis(ctx sdk.Context) json.RawMessage {
+	return nil
+}

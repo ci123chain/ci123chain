@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
@@ -513,4 +514,163 @@ func (k DistrKeeper) SetWithdrawAddr(ctx sdk.Context, delegatorAddr sdk.AccAddre
 
 	k.SetDelegatorWithdrawAddr(ctx, delegatorAddr, withdrawAddr)
 	return nil
+}
+
+func (k DistrKeeper) IterateDelegatorWithdrawAddrs(ctx sdk.Context, handler func(del sdk.AccAddress, addr sdk.AccAddress) (stop bool)) {
+	store := ctx.KVStore(k.storeKey)
+	//prefix := types.DelegatorWithdrawAddrPrefix
+	//iter := store.RemoteIterator(prefix, sdk.PrefixEndBytes(prefix))
+	iter := sdk.KVStorePrefixIterator(store, types.DelegatorWithdrawAddrPrefix)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		addr := sdk.ToAccAddress(iter.Value())
+		del := addr
+		if handler(del, addr) {
+			break
+		}
+	}
+}
+
+// GetValidatorSlashEventAddressHeight creates the height from a validator's slash event key.
+func GetValidatorSlashEventAddressHeight(key []byte) (valAddr sdk.AccAddress, height uint64) {
+	// key is in the format:
+	// 0x08<valAddrLen (1 Byte)><valAddr_Bytes><height>: ValidatorSlashEvent
+	valAddrLen := int(key[1])
+	valAddr = sdk.ToAccAddress(key[2 : 2+valAddrLen])
+	startB := 2 + valAddrLen
+	b := key[startB : startB+8] // the next 8 bytes represent the height
+	height = binary.BigEndian.Uint64(b)
+	return
+}
+
+func (k DistrKeeper) IterateValidatorSlashEvents(ctx sdk.Context, handler func(val sdk.AccAddress, height uint64, event types.ValidatorSlashEvent) (stop bool)) {
+	store := ctx.KVStore(k.storeKey)
+	iter := sdk.KVStorePrefixIterator(store, types.ValidatorSlashEventPrefix)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		var event types.ValidatorSlashEvent
+		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &event)
+		val, height := GetValidatorSlashEventAddressHeight(iter.Key())
+		if handler(val, height, event) {
+			break
+		}
+	}
+}
+
+
+func (k DistrKeeper) GetPreviousProposerConsAddr(ctx sdk.Context) sdk.AccAddress {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.ProposerKey)
+	if bz == nil {
+		panic("previous proposer not set")
+	}
+
+	var addrValue sdk.AccAddr
+	k.cdc.MustUnmarshalBinaryLengthPrefixed(bz[:], &addrValue)
+	return sdk.ToAccAddress(addrValue)
+}
+
+
+// iterate validator outstanding rewards
+func (k DistrKeeper) IterateValidatorOutstandingRewards(ctx sdk.Context, handler func(val sdk.AccAddress, rewards types.ValidatorOutstandingRewards) (stop bool)) {
+	store := ctx.KVStore(k.storeKey)
+	iter := sdk.KVStorePrefixIterator(store, types.ValidatorOutstandingRewardsPrefix)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		rewards := types.ValidatorOutstandingRewards{}
+		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &rewards)
+		addr := sdk.ToAccAddress(iter.Key()[2:])
+		if handler(addr, rewards) {
+			break
+		}
+	}
+}
+
+// iterate over accumulated commissions
+func (k DistrKeeper) IterateValidatorAccumulatedCommissions(ctx sdk.Context, handler func(val sdk.AccAddress, commission types.ValidatorAccumulatedCommission) (stop bool)) {
+	store := ctx.KVStore(k.storeKey)
+	iter := sdk.KVStorePrefixIterator(store, types.ValidatorAccumulatedCommissionPrefix)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		var commission types.ValidatorAccumulatedCommission
+		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &commission)
+		addr := sdk.ToAccAddress(iter.Key()[2:])
+		if handler(addr, commission) {
+			break
+		}
+	}
+}
+
+func GetValidatorHistoricalRewardsAddressPeriod(key []byte) (valAddr sdk.AccAddress, period uint64) {
+	// key is in the format:
+	// 0x05<valAddrLen (1 Byte)><valAddr_Bytes><period_Bytes>
+	valAddrLen := int(key[1])
+	valAddr = sdk.ToAccAddress(key[2 : 2+valAddrLen])
+	b := key[2+valAddrLen:]
+	if len(b) != 8 {
+		panic("unexpected key length")
+	}
+	period = binary.LittleEndian.Uint64(b)
+	return
+}
+
+
+// iterate over historical rewards
+func (k DistrKeeper) IterateValidatorHistoricalRewards(ctx sdk.Context, handler func(val sdk.AccAddress, period uint64, rewards types.ValidatorHistoricalRewards) (stop bool)) {
+	store := ctx.KVStore(k.storeKey)
+	iter := sdk.KVStorePrefixIterator(store, types.ValidatorHistoricalRewardsPrefix)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		var rewards types.ValidatorHistoricalRewards
+		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &rewards)
+		addr, period := GetValidatorHistoricalRewardsAddressPeriod(iter.Key())
+		if handler(addr, period, rewards) {
+			break
+		}
+	}
+}
+
+
+func (k DistrKeeper) IterateValidatorCurrentRewards(ctx sdk.Context, handler func(val sdk.AccAddress, rewards types.ValidatorCurrentRewards) (stop bool)) {
+	store := ctx.KVStore(k.storeKey)
+	iter := sdk.KVStorePrefixIterator(store, types.ValidatorCurrentRewardsPrefix)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		var rewards types.ValidatorCurrentRewards
+		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &rewards)
+		addr := sdk.ToAccAddress(iter.Key()[2:])
+		if handler(addr, rewards) {
+			break
+		}
+	}
+}
+
+// GetDelegatorStartingInfoAddresses creates the addresses from a delegator starting info key.
+func GetDelegatorStartingInfoAddresses(key []byte) (valAddr sdk.AccAddress, delAddr sdk.AccAddress) {
+	// key is in the format:
+	// 0x04<valAddrLen (1 Byte)><valAddr_Bytes><accAddrLen (1 Byte)><accAddr_Bytes>
+	valAddrLen := int(key[1])
+	valAddr = sdk.ToAccAddress(key[2 : 2+valAddrLen])
+	delAddrLen := int(key[2+valAddrLen])
+	delAddr = sdk.ToAccAddress(key[3+valAddrLen:])
+	if len(delAddr.Bytes()) != delAddrLen {
+		panic("unexpected key length")
+	}
+
+	return
+}
+
+// iterate over delegator starting infos
+func (k DistrKeeper) IterateDelegatorStartingInfos(ctx sdk.Context, handler func(val sdk.AccAddress, del sdk.AccAddress, info types.DelegatorStartingInfo) (stop bool)) {
+	store := ctx.KVStore(k.storeKey)
+	iter := sdk.KVStorePrefixIterator(store, types.DelegatorStartingInfoPrefix)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		var info types.DelegatorStartingInfo
+		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &info)
+		val, del := GetDelegatorStartingInfoAddresses(iter.Key())
+		if handler(val, del, info) {
+			break
+		}
+	}
 }

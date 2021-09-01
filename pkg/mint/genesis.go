@@ -9,3 +9,11 @@ func InitGenesis(ctx sdk.Context, keeper keeper.MinterKeeper, data GenesisState)
 	keeper.SetMinter(ctx, data.Minter)
 	keeper.SetParams(ctx, data.Params)
 }
+
+
+func ExportGenesis(ctx sdk.Context, keeper keeper.MinterKeeper) GenesisState {
+
+	minter := keeper.GetMinter(ctx)
+	params := keeper.GetParams(ctx)
+	return GenesisState(NewGenesisState(minter, params))
+}

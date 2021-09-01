@@ -135,8 +135,10 @@ func StartInProcess(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Code
 	if dbType == "" {
 		dbType = "redis"
 	}
-	//dbHost := viper.GetString(flagCiStateDBHost)
-	dbHost := util.Discovery(util.CallBack)
+	dbHost := viper.GetString(flagCiStateDBHost)
+	if dbHost == "" {
+		dbHost = util.Discovery(util.CallBack)
+	}
 	ctx.Logger.Info("discovery remote db host", "host", dbHost)
 	if dbHost == "" {
 		return nil, errors.New(fmt.Sprintf("%s can not be empty", flagCiStateDBHost))

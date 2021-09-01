@@ -105,6 +105,8 @@ type BaseApp struct {
 	snapshotManager    *snapshots.Manager
 	snapshotInterval   uint64 // block interval between state sync snapshots
 	snapshotKeepRecent uint32 // recent state sync snapshots to keep
+
+	paramStore ParamStore
 }
 
 func (app *BaseApp) ListSnapshots(req abci.RequestListSnapshots) abci.ResponseListSnapshots {
@@ -255,6 +257,15 @@ func NewBaseApp(name string, logger log.Logger, ldb dbm.DB, cdb dbm.DB, cacheDir
 		option(app)
 	}
 	return app
+}
+
+// SetParamStore sets a parameter store on the BaseApp.
+func (app *BaseApp) SetParamStore(ps ParamStore) {
+	if app.sealed {
+		panic("SetParamStore() on sealed BaseApp")
+	}
+
+	app.paramStore = ps
 }
 
 // BaseApp Name
@@ -431,6 +442,10 @@ func (app *BaseApp) InitChain(req abci.RequestInitChain) (res abci.ResponseInitC
 	app.setDeliverState(types.Header{ChainID: req.ChainId})
 	app.setCheckState(types.Header{ChainID: req.ChainId})
 
+	if req.ConsensusParams != nil {
+		app.StoreConsensusParams(app.deliverState.ctx, req.ConsensusParams)
+	}
+
 	if app.initChainer == nil {
 		return
 	}
@@ -562,6 +577,53 @@ func (app *BaseApp) createQueryContext(height int64, prove bool) (sdk.Context, e
 	)
 
 	return ctx, nil
+}
+
+func (app *BaseApp) StoreConsensusParams(ctx sdk.Context, cp *abci.ConsensusParams) {
+	if app.paramStore == nil {
+		panic("cannot store consensus params with no params store set")
+	}
+
+	if cp == nil {
+		return
+	}
+
+	app.paramStore.Set(ctx, ParamStoreKeyBlockParams, cp.Block)
+	app.paramStore.Set(ctx, ParamStoreKeyEvidenceParams, cp.Evidence)
+	app.paramStore.Set(ctx, ParamStoreKeyValidatorParams, cp.Validator)
+}
+
+// GetConsensusParams returns the current consensus parameters from the BaseApp's
+// ParamStore. If the BaseApp has no ParamStore defined, nil is returned.
+func (app *BaseApp) GetConsensusParams(ctx sdk.Context) *abci.ConsensusParams {
+	if app.paramStore == nil {
+		return nil
+	}
+
+	cp := new(abci.ConsensusParams)
+
+	if app.paramStore.Has(ctx, ParamStoreKeyBlockParams) {
+		var bp abci.BlockParams
+
+		app.paramStore.Get(ctx, ParamStoreKeyBlockParams, &bp)
+		cp.Block = &bp
+	}
+
+	if app.paramStore.Has(ctx, ParamStoreKeyEvidenceParams) {
+		var ep types.EvidenceParams
+
+		app.paramStore.Get(ctx, ParamStoreKeyEvidenceParams, &ep)
+		cp.Evidence = &ep
+	}
+
+	if app.paramStore.Has(ctx, ParamStoreKeyValidatorParams) {
+		var vp types.ValidatorParams
+
+		app.paramStore.Get(ctx, ParamStoreKeyValidatorParams, &vp)
+		cp.Validator = &vp
+	}
+
+	return cp
 }
 
 func checkNegativeHeight(height int64) error {

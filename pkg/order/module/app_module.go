@@ -53,3 +53,7 @@ func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.Va
 
 func (am AppModule) RegisterServices(cfg module.Configurator) {
 }
+
+func (am AppModule) ExportGenesis(ctx sdk.Context) json.RawMessage {
+	return nil
+}

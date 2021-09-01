@@ -83,10 +83,11 @@ func (am AppModule) InitGenesis(ctx sdk.Context, bz json.RawMessage) []abci.Vali
 }
 
 //// ExportGenesis exports the current genesis state to a json.RawMessage
-//func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONMarshaler) json.RawMessage {
-//	gs := keeper.ExportGenesis(ctx, am.keeper)
-//	return cdc.MustMarshalJSON(&gs)
-//}
+func (am AppModule) ExportGenesis(ctx sdk.Context) json.RawMessage {
+	gs := keeper.ExportGenesis(ctx, am.Keeper)
+	by, _ := json.Marshal(gs)
+	return by
+}
 
 // EndBlock implements app module
 func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {

@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	ctx "context"
 	"encoding/json"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/types"
@@ -40,16 +39,13 @@ import (
 	mRest "github.com/ci123chain/ci123chain/pkg/mint/client/rest"
 	orQuery "github.com/ci123chain/ci123chain/pkg/order"
 	order "github.com/ci123chain/ci123chain/pkg/order/rest"
+	pRest "github.com/ci123chain/ci123chain/pkg/pre_staking/client/rest"
 	sRest "github.com/ci123chain/ci123chain/pkg/staking/client/rest"
 	wRest "github.com/ci123chain/ci123chain/pkg/vm/client/rest"
-	pRest "github.com/ci123chain/ci123chain/pkg/pre_staking/client/rest"
 	"github.com/gorilla/mux"
 
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	ltypes "github.com/tendermint/tendermint/rpc/jsonrpc/types"
-
-	"gitlab.oneitfarm.com/bifrost/sesdk"
-	"gitlab.oneitfarm.com/bifrost/sesdk/discovery"
 )
 
 const (
@@ -486,82 +482,6 @@ func ExportEnv(ctx context.Context) http.HandlerFunc {
 		}
 		_, _ = w.Write(bytes)
 	}
-}
-
-func callBack(err error, lg log.Logger) {
-	lg.Info("setup discovery failed", "error", err.Error())
-	os.Exit(1)
-}
-
-func SetupRegisterCenter(f func(err error, lg log.Logger)) {
-	logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", "register-center")
-	appID := os.Getenv("CI_VALIDATOR_KEY")
-	address := "192.168.60.48:80"  //os.Getenv("MSP_SE_NGINX_ADDRESS")
-	region := "sal2" //os.Getenv("IDG_SITEUID")
-	env := "production"   //os.Getenv("MSP_SE_ENV")
-	zone := "aliyun-sh-prod" //os.Getenv("IDG_CLUSTERUID")
-	if appID == "" {
-		logger.Error("CI_VALIDATOR_KEY can not be empty")
-		os.Exit(1)
-	}
-	hn := os.Getenv("PODNAME")
-	serviceName := os.Getenv("IDG_SERVICE_NAME")
-	weight := os.Getenv("IDG_WEIGHT")
-	rt := os.Getenv("IDG_RUNTIME")
-	// 注册中心自身，初始化配置
-	conf := &discovery.Config{
-		// discovery地址
-		Nodes:    []string{address},
-		Region:   region,
-		Zone:     zone,
-		Env:      env,
-		Host:     hn,               // hostname
-		RenewGap: time.Second * 30, // 心跳时间
-	}
-	// 自身实例信息
-	ins := &sesdk.Instance{
-		Region:   region,
-		Zone:     zone,
-		Env:      env,
-		AppID:    appID, // 自身唯一识别号
-		Hostname: hn,
-		Addrs: []string{ // 可上报任意服务监听地址，供发现方连接
-			"http://127.0.0.1:80",
-			//"https://127.0.0.1:443",
-			//"tcp://192.168.2.88:3030",
-		},
-		// 上报任意自身属性信息
-		Metadata: map[string]string{
-			"weight":       weight, // 负载均衡权重
-			"runtime":      rt,
-			"service_name": serviceName,
-		},
-	}
-	// 实例化discovery对象
-	dis, err := discovery.New(conf)
-	if err != nil {
-		f(err, logger)
-	}
-	// 注册自身
-	_, err = dis.Register(ctx.Background(), ins)
-	if err != nil {
-		f(err, logger)
-	}
-	//// 启动服务主要逻辑
-	//go func() {
-	//	http.HandleFunc("/info", func(writer http.ResponseWriter, request *http.Request) {
-	//		_, _ = writer.Write([]byte(`{"state":1,"msg":"OK"}`))
-	//	})
-	//
-	//	err := http.ListenAndServe(":38081", nil)
-	//	if err != nil {
-	//		panic(err)
-	//	}
-	//}()
-	// 监听系统信号，服务下线
-	dis.ExitSignal(func(s os.Signal) {
-		logger.Info("got exit signal, exit now", "signal", s.String())
-	})
 }
 
 func registerCenterHandler(ctx context.Context) http.HandlerFunc {

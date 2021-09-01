@@ -53,6 +53,7 @@ func SetDefaultPort(port string) {
 }
 
 type PubSubRoom struct {
+	RemoteClients []*websocket.Conn
 	ConnMap    map[string][]*websocket.Conn
 	//HasCreatedConn map[string]bool
 
@@ -71,6 +72,7 @@ func (r PubSubRoom) GetBackends() []Instance {
 }
 
 func (r *PubSubRoom)GetPubSubRoom() {
+	r.RemoteClients = make([]*websocket.Conn, 0)
 	r.ConnMap = make(map[string][]*websocket.Conn, 0)
 	//r.HasCreatedConn = make(map[string]bool)
 	r.Connections = make(map[string]*rpcclient.HTTP, 0)
@@ -102,7 +104,7 @@ func (r *PubSubRoom) SetTMConnections() (err error) {
 		err, info := GetURL(v.URL().Host)
 		if err != nil {
 			logger.Error(fmt.Sprintf("get remote node domain info: %s, failed", v.URL().Host))
-			r.RemoveAllTMConnections()
+			r.RemoveAllTMConnections(errors.New(fmt.Sprintf("get remote node domain info: %s, failed", v.URL().Host)))
 			break
 		}
 		addr := rpcAddress(info.Host26657)
@@ -111,7 +113,7 @@ func (r *PubSubRoom) SetTMConnections() (err error) {
 			if !ok {
 				err = errors.New(fmt.Sprintf("connect remote addr: %s, failed", addr))
 				logger.Error(err.Error())
-				r.RemoveAllTMConnections()
+				r.RemoveAllTMConnections(err)
 				break
 			}
 			r.Connections[addr] = conn
@@ -128,7 +130,7 @@ func (r *PubSubRoom) SetEthConnections() (err error) {
 			r.RemoveAllEthConnections()
 			break
 		}
-		addr := rpcAddress(info.Host8546)
+		addr := info.Host8546
 		if r.EthConnections[addr] == nil {
 			conn, ok := GetEthConnection(addr)
 			if !ok {
@@ -329,7 +331,7 @@ func (r *PubSubRoom) ReceiveEth(c *websocket.Conn) {
 }
 
 func (r *PubSubRoom) HandleSubscribe(topic string, c *websocket.Conn) {
-	r.Mutex.Lock()
+	//r.Mutex.Lock()
 	if len(r.ConnMap[topic]) == 0 {
 		r.Subscribe(topic)
 		r.ConnMap[topic] = make([]*websocket.Conn, 0)
@@ -338,7 +340,7 @@ func (r *PubSubRoom) HandleSubscribe(topic string, c *websocket.Conn) {
 	}else {
 		r.ConnMap[topic] = append(r.ConnMap[topic], c)
 	}
-	r.Mutex.Unlock()
+	//r.Mutex.Unlock()
 }
 
 func (r *PubSubRoom) HandleUnsubscribe(topic string, c *websocket.Conn) {
@@ -385,7 +387,7 @@ func (r *PubSubRoom) Subscribe(topic string) {
 				if _, err := conn.Health(ctx); err != nil {
 					////connection failed
 					r.Mutex.Lock()
-					r.RemoveAllTMConnections()
+					r.RemoveAllTMConnections(err)
 					r.Mutex.Unlock()
 					break
 				}else {
@@ -443,7 +445,7 @@ func (r *PubSubRoom) Subscribe(topic string) {
 						}
 						Notify(r, res.topic, response)
 						r.Mutex.Lock()
-						r.RemoveAllTMConnections()
+						r.RemoveAllTMConnections(errors.New(Err))
 						r.Mutex.Unlock()
 						return
 					}
@@ -461,7 +463,7 @@ func (r *PubSubRoom) AddShard() {
 		if err != nil {
 			logger.Error(fmt.Sprintf("get remote node domain info: %s, failed", v.URL().Host))
 			r.Mutex.Lock()
-			r.RemoveAllTMConnections()
+			r.RemoveAllTMConnections(errors.New(fmt.Sprintf("get remote node domain info: %s, failed", v.URL().Host)))
 			r.Mutex.Unlock()
 			break
 		}
@@ -471,7 +473,7 @@ func (r *PubSubRoom) AddShard() {
 			if !ok {
 				logger.Error(fmt.Sprintf("connect remote addr: %s, failed", addr))
 				r.Mutex.Lock()
-				r.RemoveAllTMConnections()
+				r.RemoveAllTMConnections(errors.New(fmt.Sprintf("connect remote addr: %s, failed", addr)))
 				r.Mutex.Unlock()
 				break
 			}
@@ -493,7 +495,7 @@ func (r *PubSubRoom) AddShard() {
 							//}
 							//NotifyAll(r, ErrRes)
 							r.Mutex.Lock()
-							r.RemoveAllTMConnections()
+							r.RemoveAllTMConnections(err)
 							r.Mutex.Unlock()
 							break
 						}else {
@@ -618,7 +620,7 @@ func (r *PubSubRoom) AddShard() {
 								}
 								Notify(r, res.topic, response)
 								r.Mutex.Lock()
-								r.RemoveAllTMConnections()
+								r.RemoveAllTMConnections(errors.New(Err))
 								r.Mutex.Unlock()
 								return
 							}
@@ -650,11 +652,17 @@ func (r *PubSubRoom) Unsubscribe(topic string) {
 	}
 }
 
-func (r *PubSubRoom) RemoveAllTMConnections() {
+func (r *PubSubRoom) RemoveAllTMConnections(err error) {
 	for _, v := range r.ConnMap {
 		//r.HasCreatedConn[k] = false
 		for _, val := range v {
 			if val != nil {
+				//Err := fmt.Sprintf("the node: %s, is bad, no result return after 15 senconds", res.addr)
+				response := SendMessage{
+					Time:   time.Now().Format(time.RFC3339),
+					Content: err.Error(),
+				}
+				_ = val.WriteJSON(response)
 				_ = val.Close()
 			}
 		}
@@ -664,6 +672,7 @@ func (r *PubSubRoom) RemoveAllTMConnections() {
 		_ = v.Stop()
 	}
 	//r.Clients = make([]*websocket.Conn, 0)
+	r.RemoteClients = make([]*websocket.Conn, 0)
 	r.backends = make([]Instance, 0)
 	r.ConnMap = make(map[string][]*websocket.Conn, 0)
 	//r.HasCreatedConn = make(map[string]bool)
@@ -674,6 +683,9 @@ func (r *PubSubRoom) RemoveAllEthConnections() {
 	for _, v := range r.EthConnections {
 		_ = v.Close()
 	}
+	r.RemoteClients = make([]*websocket.Conn, 0)
+	r.backends = make([]Instance, 0)
+	r.ConnMap = make(map[string][]*websocket.Conn, 0)
 	r.EthConnections = make(map[string]*websocket.Conn, 0)
 }
 
@@ -693,6 +705,7 @@ func (r *PubSubRoom) RemoveEthConnection(c *websocket.Conn) {
 	}else {
 		r.EthConnections = make(map[string]*websocket.Conn, 0)
 	}
+	DeleteSlice(r.RemoteClients, c)
 
 	r.Mutex.Unlock()
 	_ = c.Close()
@@ -707,6 +720,9 @@ func Notify(r *PubSubRoom, topic string, m SendMessage) {
 		if err := conn.WriteJSON(m); err != nil {
 			logger.Error("notify message error: %s", err.Error())
 			r.HandleUnsubscribeAll(conn)
+			r.Mutex.Lock()
+			DeleteSlice(r.RemoteClients, conn)
+			r.Mutex.Unlock()
 			_ = conn.Close()
 			i--
 		}
@@ -862,9 +878,9 @@ func GetConnection(addr string) (*rpcclient.HTTP, bool){
 }
 
 func GetEthConnection(addr string) (*websocket.Conn, bool) {
-	str := strings.Split(addr, ":")
+	str := strings.Split(addr, "//")
 	//link := DefaultEthPrefix + str[0] + ":" + DefaultPort
-	link := str[0] + ":" + DefaultPort
+	link := strings.Split(str[1], ":")[0] + ":" + DefaultPort
 	u := url.URL{Scheme: "ws", Host: link,  Path: "/"}
 	dialer := websocket.DefaultDialer
 	c, _, err := dialer.Dial(u.String(), nil)
@@ -959,7 +975,7 @@ type TMResponse struct {
 }
 
 type EthSubcribeMsg struct {
-	JsonRpc  string   `json:"json_rpc"`
+	JsonRpc  string   `json:"jsonrpc"`
 	ID       float64   `json:"id"`
 	Method   string   `json:"method"`
 	Params   []interface{}  `json:"params"`

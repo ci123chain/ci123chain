@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"github.com/ci123chain/ci123chain/pkg/app"
 	"github.com/ci123chain/ci123chain/pkg/app/cmd"
 	types2 "github.com/ci123chain/ci123chain/pkg/app/types"
@@ -11,7 +10,6 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/cli"
 	"github.com/tendermint/tendermint/libs/log"
-	"github.com/tendermint/tendermint/types"
 	"github.com/tendermint/tm-db"
 	"io"
 	"os"
@@ -60,7 +58,7 @@ func main()  {
 		rootCmd,
 		app.NewAppInit(),
 		app.ConstructAppCreator(newApp, appName),
-		app.ConstructAppExporter(exportAppState, appName),
+		app.ConstructAppExporter(appName, ctx.Config.RootDir),
 		)
 	viper.SetEnvPrefix("CI")
 	viper.BindPFlags(rootCmd.Flags())
@@ -79,7 +77,7 @@ func newApp(lg log.Logger, ldb db.DB, cdb db.DB,traceStore io.Writer) abci.Appli
 	return app.NewChain(lg, ldb, cdb, traceStore)
 }
 
-func exportAppState(lg log.Logger, ldb db.DB, cdb db.DB, traceStore io.Writer) (json.RawMessage, []types.GenesisValidator, error) {
-	logger.SetLogger(lg)
-	return app.NewChain(lg, ldb, cdb, traceStore).ExportAppStateJSON()
-}
+//func exportAppState(lg log.Logger, ldb db.DB, cdb db.DB, traceStore io.Writer) (json.RawMessage, []types.GenesisValidator, error) {
+//	logger.SetLogger(lg)
+//	return app.NewChain(lg, ldb, cdb, traceStore).ExportAppStateJSON()
+//}

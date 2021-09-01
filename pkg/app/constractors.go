@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
+	stypes "github.com/ci123chain/ci123chain/pkg/staking/types"
 	"github.com/tendermint/tendermint/libs/log"
 	tmtypes "github.com/tendermint/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
@@ -23,7 +24,25 @@ import (
 type (
 	AppCreator func(home string, logger log.Logger, statedb, traceStore string) (sdk.Application, error)
 
-	AppExporter func(home string, logger log.Logger, statedb, traceStore string) (json.RawMessage, []tmtypes.GenesisValidator, error)
+	AppOptions interface {
+		Get(string) interface{}
+	}
+	// ExportedApp represents an exported app state, along with
+	// validators, consensus params and latest app height.
+	ExportedApp struct {
+		// AppState is the application state as JSON.
+		AppState json.RawMessage
+		// Validators is the exported validator set.
+		Validators []stypes.Validator
+		// Height is the app's latest block height.
+		Height int64
+		// ConsensusParams are the exported consensus params for ABCI.
+		ConsensusParams *sdk.ConsensusParams
+	}
+
+	// AppExporter is a function that dumps all app state to
+	// JSON-serializable structure and returns the current validator set.
+	AppExporter func(log.Logger, string, io.Writer, int64, bool, []string, AppOptions) (ExportedApp, error)
 
 	AppCreatorInit func(logger log.Logger, ldb dbm.DB, cdb dbm.DB, writer io.Writer) sdk.Application
 
@@ -59,32 +78,20 @@ func ConstructAppCreator(appFn AppCreatorInit, name string) AppCreator {
 	}
 }
 
-func ConstructAppExporter(appFn AppExporterInit, name string) AppExporter {
-	return func(rootDir string, logger log.Logger, statedb,traceStore string) (json.RawMessage, []tmtypes.GenesisValidator, error) {
+func ConstructAppExporter(name, rootDir string) AppExporter {
+	return func(lg log.Logger, stateDB string, traceStore io.Writer, height int64, forZeroHeight bool, jailAllowedAddrs []string,
+		appOpts AppOptions) (ExportedApp, error) {
 		dataDir := filepath.Join(rootDir, "data")
 
 		ldb, err := dbm.NewGoLevelDB(name, dataDir)
 		if err != nil {
-			return nil, nil, types.ErrNewDB(types.DefaultCodespace, err)
+			return ExportedApp{}, types.ErrNewDB(types.DefaultCodespace, err)
 		}
-
-		rdb, err := GetRDB(statedb, logger)
+		rdb, err := GetRDB(stateDB, lg)
 		if err != nil {
-			return nil, nil, sdkerrors.Wrap(sdkerrors.ErrInternal, "get db failed")
+			return ExportedApp{}, types.ErrNewDB(types.DefaultCodespace, err)
 		}
-		var traceStoreWriter io.Writer
-		if traceStore != "" {
-			traceStoreWriter, err = os.OpenFile(
-				traceStore,
-				os.O_WRONLY | os.O_APPEND | os.O_CREATE,
-				0666,
-				)
-			if err != nil {
-				return nil, nil, sdkerrors.Wrap(sdkerrors.ErrInternal, err.Error())
-			}
-		}
-		return appFn(logger, ldb, rdb, traceStoreWriter)
-		//return appFn(logger, ldb, cdb, traceStoreWriter)
+		return NewChain(lg, ldb, rdb, traceStore).ExportAppStateJSON()
 	}
 }
 

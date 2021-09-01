@@ -164,7 +164,9 @@ func (ak AccountKeeper) GetNextAccountNumber(ctx types.Context) uint64 {
 // IterateAccounts iterates over all the stored accounts and performs a callback function
 func (ak AccountKeeper) IterateAccounts(ctx types.Context, cb func(account exported.Account) (stop bool)) {
 	store := ctx.KVStore(ak.key)
-	iterator := types.KVStorePrefixIterator(store, acc_types.AddressStoreKeyPrefix)
+	prefix := acc_types.AddressStoreKeyPrefix
+	iterator := store.RemoteIterator(prefix, types.PrefixEndBytes(prefix))
+	//iterator := types.KVStorePrefixIterator(store, prefix)
 
 	defer iterator.Close()
 	for ; iterator.Valid(); iterator.Next() {
