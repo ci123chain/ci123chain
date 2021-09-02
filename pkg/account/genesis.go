@@ -17,8 +17,10 @@ func InitGenesis(ctx types.Context, _ *codec.Codec, accountKeeper keeper.Account
 
 func ExportGenesis(ctx types.Context, ak keeper.AccountKeeper) GenesisState {
 	var genAccounts GenesisAccounts
-	ak.IterateAccounts(ctx, func(account exported.Account ) bool {
+	ak.IterateAccounts(ctx, func(account exported.Account) bool {
 		genAccount := NewGenesisAccountRaw(account.GetAddress(), account.GetCoins())
+		genAccount.Sequence = account.GetSequence()
+		genAccount.AccountNumber = account.GetAccountNumber()
 		genAccounts = append(genAccounts, genAccount)
 		return false
 	})

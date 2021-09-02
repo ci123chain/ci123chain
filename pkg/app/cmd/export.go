@@ -12,7 +12,6 @@ import (
 	tmjson "github.com/tendermint/tendermint/libs/json"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	tmtypes "github.com/tendermint/tendermint/types"
-	dbm "github.com/tendermint/tm-db"
 	"io"
 	"io/ioutil"
 	"os"
@@ -35,6 +34,7 @@ func ExportCmd(appExporter app.AppExporter, defaultNodeHome string) *cobra.Comma
 			config := serverCtx.Config
 
 			homeDir, _ := cmd.Flags().GetString(flags.FlagHome)
+			fmt.Println(homeDir)
 			config.SetRoot(homeDir)
 
 			if _, err := os.Stat(config.GenesisFile()); os.IsNotExist(err) {
@@ -102,7 +102,7 @@ func ExportCmd(appExporter app.AppExporter, defaultNodeHome string) *cobra.Comma
 			var vals = make([]tmtypes.GenesisValidator, 0)
 			for _, v := range exported.Validators {
 				v := tmtypes.GenesisValidator{
-					Address: v.GetOperator().Bytes(),
+					Address: v.GetConsPubKey().Address(),
 					PubKey:  v.GetConsPubKey(),
 					Power:   v.PotentialConsensusPower(),
 					Name:    v.GetMoniker(),
@@ -112,7 +112,7 @@ func ExportCmd(appExporter app.AppExporter, defaultNodeHome string) *cobra.Comma
 
 			doc.AppState = exported.AppState
 			doc.Validators = vals
-			doc.InitialHeight = exported.Height
+			doc.InitialHeight = exported.Height + 1
 			doc.ConsensusParams = &tmproto.ConsensusParams{
 				Block: tmproto.BlockParams{
 					MaxBytes:   exported.ConsensusParams.Block.MaxBytes,
@@ -132,19 +132,18 @@ func ExportCmd(appExporter app.AppExporter, defaultNodeHome string) *cobra.Comma
 			// NOTE: Tendermint uses a custom JSON decoder for GenesisDoc
 			// (except for stuff inside AppState). Inside AppState, we're free
 			// to encode as protobuf or amino.
-			encoded, err := tmjson.Marshal(doc)
+			encoded, err := tmjson.MarshalIndent(doc, "", "")
 			if err != nil {
 				return err
 			}
-
-			_ = ioutil.WriteFile(filepath.Join(homeDir, "data/exportFile.json"), MustSortJSON(encoded), os.ModePerm)
+			_ = ioutil.WriteFile(filepath.Join(homeDir, "log/exportFile.json"), encoded, 0755)
 			cmd.Println(string(MustSortJSON(encoded)))
 			return nil
 		},
 	}
 	cmd.SetOut(cmd.OutOrStdout())
 	cmd.SetErr(cmd.ErrOrStderr())
-	cmd.Flags().String(flags.FlagHome, defaultNodeHome, "The application home directory")
+	cmd.Flags().String(flags.FlagHome, "", "The application home directory")
 	cmd.Flags().Int64(FlagHeight, -1, "Export state from a particular height (-1 means latest height)")
 	cmd.Flags().Bool(FlagForZeroHeight, false, "Export state to start at height zero (perform preproccessing)")
 	cmd.Flags().StringSlice(FlagJailAllowedAddrs, []string{}, "Comma-separated list of operator addresses of jailed validators to unjail")
@@ -154,11 +153,6 @@ func ExportCmd(appExporter app.AppExporter, defaultNodeHome string) *cobra.Comma
 	cmd.Flags().Bool(flagCiStateDBTls, true, "use tls")
 
 	return cmd
-}
-
-func openDB(rootDir string) (dbm.DB, error) {
-	dataDir := filepath.Join(rootDir, "data")
-	return dbm.NewGoLevelDB("application", dataDir)
 }
 
 

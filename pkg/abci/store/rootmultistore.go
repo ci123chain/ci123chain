@@ -205,6 +205,10 @@ func (rs *rootMultiStore) ResetTraceContext() MultiStore {
 
 // Implements Committer/CommitStore.
 func (rs *rootMultiStore) LastCommitID() CommitID {
+	if rs.lastCommitID.Version == 0 {
+		v := rs.GetLatestVersion()
+		_ = rs.LoadVersion(v)
+	}
 	return rs.lastCommitID
 }
 

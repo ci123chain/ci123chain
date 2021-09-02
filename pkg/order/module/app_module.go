@@ -55,5 +55,7 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 }
 
 func (am AppModule) ExportGenesis(ctx sdk.Context) json.RawMessage {
-	return nil
+	ob, _ := am.OrderKeeper.GetOrderBook(ctx)
+	gs := types.NewGenesisState(types.Params{OrderBook:ob})
+	return types.ModuleCdc.MustMarshalJSON(gs)
 }

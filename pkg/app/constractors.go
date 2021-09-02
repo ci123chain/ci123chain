@@ -9,6 +9,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/libs"
 	r "github.com/ci123chain/ci123chain/pkg/redis"
 	"github.com/go-redis/redis/v8"
+	"github.com/spf13/viper"
 	sdk "github.com/tendermint/tendermint/abci/types"
 	"strings"
 
@@ -49,6 +50,10 @@ type (
 	AppExporterInit func(logger log.Logger, ldb dbm.DB, cdb dbm.DB, writer io.Writer) (json.RawMessage, []tmtypes.GenesisValidator, error)
 )
 
+var (
+	flagHome = "home"
+)
+
 func ConstructAppCreator(appFn AppCreatorInit, name string) AppCreator {
 
 	return func(rootDir string, logger log.Logger, statedb, traceStore string) (sdk.Application, error) {
@@ -78,11 +83,11 @@ func ConstructAppCreator(appFn AppCreatorInit, name string) AppCreator {
 	}
 }
 
-func ConstructAppExporter(name, rootDir string) AppExporter {
+func ConstructAppExporter(name string) AppExporter {
 	return func(lg log.Logger, stateDB string, traceStore io.Writer, height int64, forZeroHeight bool, jailAllowedAddrs []string,
 		appOpts AppOptions) (ExportedApp, error) {
-		dataDir := filepath.Join(rootDir, "data")
-
+			home := viper.GetString(flagHome)
+		dataDir := filepath.Join(home, "data")
 		ldb, err := dbm.NewGoLevelDB(name, dataDir)
 		if err != nil {
 			return ExportedApp{}, types.ErrNewDB(types.DefaultCodespace, err)

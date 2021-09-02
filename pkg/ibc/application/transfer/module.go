@@ -74,7 +74,20 @@ func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.Va
 }
 
 func (am AppModule) ExportGenesis(ctx sdk.Context) json.RawMessage {
-	return nil
+
+	params := am.keeper.GetParams(ctx)
+	var traces = make([]types.DenomTrace, 0)
+	am.keeper.IteratorDenomTrace(ctx, func(trace types.DenomTrace) bool {
+		traces = append(traces, trace)
+		return false
+	})
+	gs := types.GenesisState{
+		PortId:      am.keeper.GetPort(ctx),
+		DenomTraces: traces,
+		Params:      params,
+	}
+	res, _ := json.Marshal(gs)
+	return res
 }
 
 func (am AppModule) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) {

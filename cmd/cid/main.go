@@ -52,22 +52,27 @@ func main()  {
 	rootCmd.Flags().String(flagLogLevel, "info", "Run abci app with different log level")
 	rootCmd.PersistentFlags().String("log_level", ctx.Config.LogLevel, "log level")
 
+	rootDir := os.ExpandEnv(DefaultConfDir)
+	if len(viper.GetString(HomeFlag)) > 0 {
+		rootDir = os.ExpandEnv(viper.GetString(HomeFlag))
+	}
+	ctx.Config.SetRoot(rootDir)
 	cmd.AddServerCommands(
 		ctx,
 		types2.GetCodec(),
 		rootCmd,
 		app.NewAppInit(),
 		app.ConstructAppCreator(newApp, appName),
-		app.ConstructAppExporter(appName, ctx.Config.RootDir),
+		app.ConstructAppExporter(appName),
 		)
 	viper.SetEnvPrefix("CI")
 	viper.BindPFlags(rootCmd.Flags())
 	viper.BindPFlags(rootCmd.PersistentFlags())
 	viper.AutomaticEnv()
-	rootDir := os.ExpandEnv(DefaultConfDir)
-	if len(viper.GetString(HomeFlag)) > 0 {
-		rootDir = os.ExpandEnv(viper.GetString(HomeFlag))
-	}
+	//rootDir := os.ExpandEnv(DefaultConfDir)
+	//if len(viper.GetString(HomeFlag)) > 0 {
+	//	rootDir = os.ExpandEnv(viper.GetString(HomeFlag))
+	//}
 	exector := cli.PrepareBaseCmd(rootCmd, "CI", rootDir)
 	exector.Execute()
 }

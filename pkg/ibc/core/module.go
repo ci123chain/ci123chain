@@ -98,5 +98,6 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 }
 
 func (m AppModule) ExportGenesis(ctx sdk.Context) json.RawMessage {
-	return nil
+	res, _  := json.Marshal(ExportGenesis(ctx, *m.keeper))
+	return res
 }

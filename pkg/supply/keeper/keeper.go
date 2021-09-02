@@ -57,12 +57,16 @@ func (k Keeper) GetModuleAccountAndPermissions(ctx sdk.Context, moduleName strin
 	acc := k.ak.GetAccount(ctx, addr)
 	if acc != nil {
 		macc, ok := acc.(exported.ModuleAccountI)
-		if !ok {
-			panic("account is not a module account")
+		//if !ok {
+		//	panic("account is not a module account")
+		//}
+		if ok {
+			return macc, perms
 		}
-		return macc, perms
+		//return macc, perms
 	}
 
+	perms = k.permAddrs[moduleName].GetPermissions()
 	macc := types.NewEmptyModuleAccount(moduleName, perms...)
 	maccI := (k.ak.NewAccount(ctx, macc)).(exported.ModuleAccountI)
 	k.SetModuleAccount(ctx, maccI)

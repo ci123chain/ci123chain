@@ -47,3 +47,17 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, gs types.GenesisState) {
 	// NOTE: localhost creation is specifically disallowed for the time being.
 	// Issue: https://github.com/cosmos/cosmos-sdk/issues/7871
 }
+
+
+func ExportGenesis(ctx sdk.Context, k keeper.Keeper, clientID string) types.GenesisState {
+	ps := k.GetParams(ctx)
+
+	gs := types.GenesisState{
+		Clients:            types.IdentifiedClientStates{},
+		ClientsConsensus:   types.ClientsConsensusStates{},
+		ClientsMetadata:    []types.IdentifiedGenesisMetadata{},
+		Params:             ps,
+		NextClientSequence: k.GetNextClientSequence(ctx),
+	}
+	return gs
+}

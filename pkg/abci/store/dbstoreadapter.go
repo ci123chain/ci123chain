@@ -1,6 +1,7 @@
 package store
 
 import (
+	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	dbm "github.com/tendermint/tm-db"
 	"io"
@@ -84,7 +85,11 @@ func (dsa dbStoreAdapter) Parent() KVStore {
 var _ KVStore = dbStoreAdapter{}
 
 func (dsa dbStoreAdapter) RemoteIterator(start, end []byte) Iterator {
-	i, _ := dsa.DB.Iterator(start, end)
+	i, err := dsa.DB.Iterator(start, end)
+	if err != nil {
+		fmt.Println(err)
+		return nil
+	}
 	return i
 }
 

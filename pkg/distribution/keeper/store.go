@@ -578,8 +578,8 @@ func (k DistrKeeper) IterateValidatorOutstandingRewards(ctx sdk.Context, handler
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
 		rewards := types.ValidatorOutstandingRewards{}
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &rewards)
-		addr := sdk.ToAccAddress(iter.Key()[2:])
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &rewards)
+		addr := sdk.ToAccAddress(iter.Key()[1:])
 		if handler(addr, rewards) {
 			break
 		}
@@ -593,8 +593,8 @@ func (k DistrKeeper) IterateValidatorAccumulatedCommissions(ctx sdk.Context, han
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
 		var commission types.ValidatorAccumulatedCommission
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &commission)
-		addr := sdk.ToAccAddress(iter.Key()[2:])
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &commission)
+		addr := sdk.ToAccAddress(iter.Key()[1:])
 		if handler(addr, commission) {
 			break
 		}
@@ -604,9 +604,9 @@ func (k DistrKeeper) IterateValidatorAccumulatedCommissions(ctx sdk.Context, han
 func GetValidatorHistoricalRewardsAddressPeriod(key []byte) (valAddr sdk.AccAddress, period uint64) {
 	// key is in the format:
 	// 0x05<valAddrLen (1 Byte)><valAddr_Bytes><period_Bytes>
-	valAddrLen := int(key[1])
-	valAddr = sdk.ToAccAddress(key[2 : 2+valAddrLen])
-	b := key[2+valAddrLen:]
+	//valAddrLen := 20
+	valAddr = sdk.ToAccAddress(key[1:21])
+	b := key[21:]
 	if len(b) != 8 {
 		panic("unexpected key length")
 	}
@@ -622,7 +622,7 @@ func (k DistrKeeper) IterateValidatorHistoricalRewards(ctx sdk.Context, handler 
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
 		var rewards types.ValidatorHistoricalRewards
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &rewards)
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &rewards)
 		addr, period := GetValidatorHistoricalRewardsAddressPeriod(iter.Key())
 		if handler(addr, period, rewards) {
 			break
@@ -637,8 +637,8 @@ func (k DistrKeeper) IterateValidatorCurrentRewards(ctx sdk.Context, handler fun
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
 		var rewards types.ValidatorCurrentRewards
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &rewards)
-		addr := sdk.ToAccAddress(iter.Key()[2:])
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &rewards)
+		addr := sdk.ToAccAddress(iter.Key()[1:])
 		if handler(addr, rewards) {
 			break
 		}
@@ -649,11 +649,11 @@ func (k DistrKeeper) IterateValidatorCurrentRewards(ctx sdk.Context, handler fun
 func GetDelegatorStartingInfoAddresses(key []byte) (valAddr sdk.AccAddress, delAddr sdk.AccAddress) {
 	// key is in the format:
 	// 0x04<valAddrLen (1 Byte)><valAddr_Bytes><accAddrLen (1 Byte)><accAddr_Bytes>
-	valAddrLen := int(key[1])
-	valAddr = sdk.ToAccAddress(key[2 : 2+valAddrLen])
-	delAddrLen := int(key[2+valAddrLen])
-	delAddr = sdk.ToAccAddress(key[3+valAddrLen:])
-	if len(delAddr.Bytes()) != delAddrLen {
+	//valAddrLen := int(key[1])
+	valAddr = sdk.ToAccAddress(key[1:21])
+	//delAddrLen := int(key[2+valAddrLen])
+	delAddr = sdk.ToAccAddress(key[21:])
+	if len(delAddr.Bytes()) != 20 {
 		panic("unexpected key length")
 	}
 
@@ -667,7 +667,7 @@ func (k DistrKeeper) IterateDelegatorStartingInfos(ctx sdk.Context, handler func
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
 		var info types.DelegatorStartingInfo
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &info)
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &info)
 		val, del := GetDelegatorStartingInfoAddresses(iter.Key())
 		if handler(val, del, info) {
 			break

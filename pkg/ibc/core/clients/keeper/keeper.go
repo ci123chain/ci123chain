@@ -197,3 +197,17 @@ func (k Keeper) GetLatestClientConsensusState(ctx sdk.Context, clientID string) 
 	}
 	return k.GetClientConsensusState(ctx, clientID, clientState.GetLatestHeight())
 }
+
+func (k Keeper) GetAllClientsConsensusState(ctx sdk.Context, clientID string, cb func(state exported.ConsensusState) (stop bool)) {
+	store := k.ClientStore(ctx, clientID)
+
+	iter := sdk.KVStorePrefixIterator(store, []byte(host.KeyConsensusStatePrefix))
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		cs := k.MustUnmarshalConsensusState(iter.Value())
+		if cb(cs) {
+			break
+		}
+	}
+}

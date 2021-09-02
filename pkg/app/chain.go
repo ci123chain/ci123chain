@@ -382,7 +382,7 @@ func initAppParamsKeeper(cdc *codec.Codec, key *sdk.KVStoreKey, tkey *sdk.Transi
 
 func (c *Chain) ExportAppStateJSON() (ExportedApp, error) {
 	ctx := c.BaseApp.NewContext(true, tmtypes.Header{Height: c.BaseApp.LastBlockHeight()})
-	height := c.LastBlockHeight() + 1
+	height := c.LastBlockHeight()
 	genState :=  c.mm.ExportGenesis(ctx)
 	appState, err := json.MarshalIndent(genState, "", "  ")
 	if err != nil {

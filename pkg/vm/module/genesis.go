@@ -77,10 +77,16 @@ func WasmInitGenesis(ctx sdk.Context, wasmer moduletypes.KeeperI) {
 func EvmInitGenesis(ctx sdk.Context, k moduletypes.KeeperI, data evmtypes.GenesisState) {
 	for _, account := range data.Accounts {
 		// FIXME: this will override bank InitGenesis balance!
-		k.SetBalance(ctx, account.Address, account.Balance)
-		k.SetCode(ctx, account.Address, account.Code)
-		for _, storage := range account.Storage {
-			k.SetState(ctx, account.Address, storage.Key, storage.Value)
+		if account.Balance != nil {
+			k.SetBalance(ctx, account.Address, account.Balance)
+		}
+		if account.Code != nil {
+			k.SetCode(ctx, account.Address, account.Code)
+		}
+		if account.Storage != nil {
+			for _, storage := range account.Storage {
+				k.SetState(ctx, account.Address, storage.Key, storage.Value)
+			}
 		}
 	}
 
@@ -140,7 +146,7 @@ func ExportGenesis(ctx sdk.Context, k moduletypes.KeeperI, ak account.AccountKee
 
 	return evmtypes.GenesisState{
 		Accounts:    ethGenAccounts,
-		TxsLogs:     k.GetAllTxLogs(ctx),
+		//TxsLogs:     k.GetAllTxLogs(ctx),
 		ChainConfig: config,
 		Params:      k.GetParams(ctx),
 	}
