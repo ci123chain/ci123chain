@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"errors"
-	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/account"
 	"github.com/ci123chain/ci123chain/pkg/order/types"
@@ -28,7 +27,6 @@ func NewOrderKeeper(cdb *redis.RedisDB, key sdk.StoreKey, ak account.AccountKeep
 func (ok *OrderKeeper) WaitForReady(ctx sdk.Context) {
 	for {
 		orderbook, err := ok.GetOrderBook(ctx)
-		fmt.Println(orderbook)
 		if err != nil {
 			if err.Error() != types.NoOrderBookErr {
 				panic(err)

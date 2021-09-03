@@ -9,11 +9,15 @@ import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/account"
 	"github.com/ci123chain/ci123chain/pkg/account/exported"
+	types3 "github.com/ci123chain/ci123chain/pkg/account/types"
+	types2 "github.com/ci123chain/ci123chain/pkg/supply/types"
 	"github.com/ci123chain/ci123chain/pkg/vm/evmtypes"
 	"github.com/ci123chain/ci123chain/pkg/vm/moduletypes"
 	"github.com/ci123chain/ci123chain/pkg/vm/moduletypes/utils"
 	types "github.com/ci123chain/ci123chain/pkg/vm/wasmtypes"
 	"github.com/ethereum/go-ethereum/common"
+	ethcmn "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"io/ioutil"
 	"strings"
 )
@@ -75,17 +79,17 @@ func WasmInitGenesis(ctx sdk.Context, wasmer moduletypes.KeeperI) {
 }
 
 func EvmInitGenesis(ctx sdk.Context, k moduletypes.KeeperI, data evmtypes.GenesisState) {
-	for _, account := range data.Accounts {
+	for _, acc := range data.Accounts {
 		// FIXME: this will override bank InitGenesis balance!
-		if account.Balance != nil {
-			k.SetBalance(ctx, account.Address, account.Balance)
+		if acc.Balance != nil {
+			k.SetBalance(ctx, acc.Address, acc.Balance)
 		}
-		if account.Code != nil {
-			k.SetCode(ctx, account.Address, account.Code)
+		if acc.Code != nil {
+			k.SetCode(ctx, acc.Address, acc.Code)
 		}
-		if account.Storage != nil {
-			for _, storage := range account.Storage {
-				k.SetState(ctx, account.Address, storage.Key, storage.Value)
+		if acc.Storage != nil {
+			for _, storage := range acc.Storage {
+				k.SetState(ctx, acc.Address, storage.Key, storage.Value)
 			}
 		}
 	}
@@ -125,16 +129,35 @@ func ExportGenesis(ctx sdk.Context, k moduletypes.KeeperI, ak account.AccountKee
 	var ethGenAccounts []evmtypes.GenesisAccount
 	ak.IterateAccounts(ctx, func(account exported.Account) bool {
 
-		addr := common.HexToAddress(account.GetAddress().String())
+		a := account.GetAddress().String()
+		addr := common.HexToAddress(a)
 
-		storage, err := k.GetAccountStorage(ctx, addr)
-		if err != nil {
-			panic(err)
+		store := evmtypes.NewStore(ctx.KVStore(k.GetStoreKey()), evmtypes.AddressStoragePrefix(addr))
+
+		//store := ctx.KVStore(k.GetStoreKey())
+		iter := sdk.KVStorePrefixIterator(store, nil)
+
+		var storage = make(evmtypes.Storage, 0)
+		for ; iter.Valid(); iter.Next() {
+			var state evmtypes.State
+			state.Key = ethcmn.BytesToHash(iter.Key())
+			state.Value = ethcmn.BytesToHash(iter.Value())
+
+			storage = append(storage, state)
+		}
+		var Code hexutil.Bytes
+		switch ac := account.(type) {
+		case *types2.ModuleAccount:
+			Code = ac.CodeHash
+		case *types3.BaseAccount:
+			Code = ac.CodeHash
+		default:
+			Code = account.(*types2.ModuleAccount).CodeHash
 		}
 
 		genAccount := evmtypes.GenesisAccount{
 			Address: addr,
-			Code:    k.GetCode(ctx, addr),
+			Code:    Code,
 			Storage: storage,
 		}
 

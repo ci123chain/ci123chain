@@ -81,6 +81,10 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, homeDir string, wasmConf
 	return wk
 }
 
+func (k Keeper) GetStoreKey() sdk.StoreKey {
+	return k.storeKey
+}
+
 //
 func (k *Keeper) Upload(ctx sdk.Context, wasmCode []byte, creator sdk.AccAddress) (codeHash []byte, err error) {
 	ccstore := ctx.KVStore(k.storeKey)

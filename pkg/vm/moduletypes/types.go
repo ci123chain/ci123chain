@@ -61,5 +61,8 @@ type KeeperI interface {
 	GetAccountStorage(ctx sdk.Context, address common.Address) (evmtypes.Storage, error)
 
 	GetCode(ctx sdk.Context, address ethcmn.Address) []byte
+
+
+	GetStoreKey() sdk.StoreKey
 }
 

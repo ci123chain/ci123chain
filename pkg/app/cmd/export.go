@@ -34,7 +34,6 @@ func ExportCmd(appExporter app.AppExporter, defaultNodeHome string) *cobra.Comma
 			config := serverCtx.Config
 
 			homeDir, _ := cmd.Flags().GetString(flags.FlagHome)
-			fmt.Println(homeDir)
 			config.SetRoot(homeDir)
 
 			if _, err := os.Stat(config.GenesisFile()); os.IsNotExist(err) {
@@ -136,7 +135,7 @@ func ExportCmd(appExporter app.AppExporter, defaultNodeHome string) *cobra.Comma
 			if err != nil {
 				return err
 			}
-			_ = ioutil.WriteFile(filepath.Join(homeDir, "log/exportFile.json"), encoded, 0755)
+			_ = ioutil.WriteFile(filepath.Join(homeDir, "logs/exportFile.json"), encoded, 0755)
 			cmd.Println(string(MustSortJSON(encoded)))
 			return nil
 		},
