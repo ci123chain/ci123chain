@@ -36,7 +36,10 @@ func isBackendAlive(u *url.URL) bool {
 	timeout := 2 * time.Second
 	host := u.Host
 	if len(u.Host) != 0 && !strings.Contains(u.Host, ":") {
-		host += ":80"
+		host += ":" + *ShardPort
+	}
+	if host == "" {
+		return false
 	}
 	conn, err := net.DialTimeout("tcp", host, timeout)
 	if err != nil {

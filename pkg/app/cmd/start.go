@@ -82,7 +82,7 @@ func startCmd(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Codec) *co
 	cmd.Flags().String(flagCiStateDBHost, "", "db host")
 	cmd.Flags().Uint64(flagCiStateDBPort, 7443, "db port")
 	cmd.Flags().Bool(flagCiStateDBTls, true, "use tls")
-	cmd.Flags().String(flagCiNodeDomain, "localhost", "node domain")
+	cmd.Flags().String(flagCiNodeDomain, "", "node domain")
 	cmd.Flags().String(flagShardIndex, "", "index of shard")
 	cmd.Flags().String(flagMasterDomain, "", "master node")
 	cmd.Flags().Int64(flagETHChainID, 1, "eth chain id")
@@ -160,7 +160,10 @@ func StartInProcess(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Code
 	//nodeDomain := viper.GetString(flagCiNodeDomain)
 	nodeDomain := os.Getenv(flagCiNodeDomain)
 	if nodeDomain == "" {
-		return nil, errors.New("node domain can not be empty")
+		nodeDomain = util.GetLocalAddress()
+		if nodeDomain == "" {
+			return nil, errors.New("you have no valid ip address which used to be dial by other peer")
+		}
 	}
 
 	appState, gendoc, err := app.GenesisStateFromGenFile(cdc, cfg.GenesisFile())

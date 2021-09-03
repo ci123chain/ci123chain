@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/types"
 	grpctypes "github.com/ci123chain/ci123chain/pkg/abci/types/grpc"
@@ -111,14 +112,21 @@ func NewRestServer() *RestServer {
 	if err != nil {
 		return nil
 	}
-	//go util.SetupRegisterCenter(callBack)
+	host26657 := os.Getenv("IDG_HOST_26657")
+	if host26657 == "" {
+		panic(errors.New("env IDG_HOST_26657 can not be empty"))
+	}
+	host8546 := os.Getenv("IDG_HOST_8546")
+	if host8546 == "" {
+		panic(errors.New("env IDG_HOST_8546 can not be empty"))
+	}
 
 	r.NotFoundHandler = Handle404()
 	r.HandleFunc("/healthcheck", HealthCheckHandler(cliCtx)).Methods("GET")
 	r.HandleFunc("/exportLog", ExportLogHandler(cliCtx)).Methods("GET")
 	r.HandleFunc("/exportConfig", ExportConfigHandler(cliCtx)).Methods("GET")
 	r.HandleFunc("/exportEnv", ExportEnv(cliCtx)).Methods("POST")
-	r.HandleFunc("/info", registerCenterHandler(cliCtx)).Methods("GET")
+	r.HandleFunc("/info", registerCenterHandler(cliCtx, host26657, host8546)).Methods("GET")
 	rpc.RegisterRoutes(cliCtx, r)
 	accountRpc.RegisterRoutes(cliCtx, r)
 	txRpc.RegisterTxRoutes(cliCtx, r)
@@ -484,12 +492,11 @@ func ExportEnv(ctx context.Context) http.HandlerFunc {
 	}
 }
 
-func registerCenterHandler(ctx context.Context) http.HandlerFunc {
+func registerCenterHandler(ctx context.Context, host26657, host8546 string) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
-
 		res := map[string]interface{}{
-			"host_26657": os.Getenv("IDG_HOST_26657"),
-			"host_8546": os.Getenv("IDG_HOST_8546"),
+			"host_26657": host26657,
+			"host_8546":  host8546,
 		}
 		bytes, err := json.Marshal(res)
 		if err != nil {

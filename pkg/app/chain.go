@@ -24,6 +24,7 @@ import (
 	keeper2 "github.com/ci123chain/ci123chain/pkg/staking/keeper"
 	staking_module "github.com/ci123chain/ci123chain/pkg/staking/module"
 	supply_module "github.com/ci123chain/ci123chain/pkg/supply/module"
+	"github.com/ci123chain/ci123chain/pkg/util"
 	vm_module "github.com/ci123chain/ci123chain/pkg/vm/module"
 	tmtypes "github.com/tendermint/tendermint/proto/tendermint/types"
 	"io/ioutil"
@@ -449,9 +450,13 @@ func toRedisdb(cdb tmdb.DB) *redis.RedisDB {
 		}
 	}
 	//nodeList = append(nodeList, viper.GetString(flagNodeDomain))
-	nodeList = append(nodeList, os.Getenv(flagNodeDomain))
+	n := os.Getenv(flagNodeDomain)
+	if n == "" {
+		n = util.GetLocalAddress()
+	}
+	nodeList = append(nodeList, n)
 	nodeListBytes, _ = json.Marshal(nodeList)
-	odb.Set([]byte(redissource.FlagNodeList), nodeListBytes)
+	_ = odb.Set([]byte(redissource.FlagNodeList), nodeListBytes)
 
 	return odb
 }

@@ -45,11 +45,15 @@ const (
 )
 
 var (
-	DefaultPort = "80"
+	TMPort = "80"
+	EthPort = "80"
+	ShardPort = "80"
 	cdc = apptypes.GetCodec()
 )
-func SetDefaultPort(port string) {
-	DefaultPort = port
+func SetDefaultPort(tmport, shardport, ethport string) {
+	TMPort = tmport
+	EthPort = ethport
+	ShardPort = shardport
 }
 
 type PubSubRoom struct {
@@ -880,7 +884,7 @@ func GetConnection(addr string) (*rpcclient.HTTP, bool){
 func GetEthConnection(addr string) (*websocket.Conn, bool) {
 	str := strings.Split(addr, "//")
 	//link := DefaultEthPrefix + str[0] + ":" + DefaultPort
-	link := strings.Split(str[1], ":")[0] + ":" + DefaultPort
+	link := strings.Split(str[1], ":")[0] + ":" + EthPort
 	u := url.URL{Scheme: "ws", Host: link,  Path: "/"}
 	dialer := websocket.DefaultDialer
 	c, _, err := dialer.Dial(u.String(), nil)
@@ -890,7 +894,7 @@ func GetEthConnection(addr string) (*websocket.Conn, bool) {
 func rpcAddress(host string) string {
 	res := DefaultTCP
 	str := strings.Split(host, ":")
-	res = res + str[0] + ":" + DefaultPort
+	res = res + str[0] + ":" + TMPort
 	return res
 }
 
@@ -943,7 +947,7 @@ func GetURL(host string) (error, *util.DomainInfo) {
 	cli := &http.Client{
 		Transport:&http.Transport{DisableKeepAlives:true},
 	}
-	reqUrl := "http://" + strings.Split(host, ":")[0] + ":" + DefaultPort + "/info"
+	reqUrl := "http://" + strings.Split(host, ":")[0] + ":" + ShardPort + "/info"
 	req2, err := http.NewRequest("GET", reqUrl, nil)
 	if err != nil || req2 == nil {
 		return err, nil
