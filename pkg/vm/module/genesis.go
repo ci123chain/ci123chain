@@ -78,7 +78,7 @@ func WasmInitGenesis(ctx sdk.Context, wasmer moduletypes.KeeperI) {
 	}
 }
 
-func EvmInitGenesis(ctx sdk.Context, k moduletypes.KeeperI, data evmtypes.GenesisState) {
+func EvmInitGenesis(ctx sdk.Context, k moduletypes.KeeperI, ak account.AccountKeeper, data evmtypes.GenesisState) {
 	for _, acc := range data.Accounts {
 		// FIXME: this will override bank InitGenesis balance!
 		if acc.Balance != nil {
@@ -88,7 +88,9 @@ func EvmInitGenesis(ctx sdk.Context, k moduletypes.KeeperI, data evmtypes.Genesi
 			k.SetCode(ctx, acc.Address, acc.Code)
 		}
 		if acc.Storage != nil {
+			store := evmtypes.NewStore(ctx.KVStore(k.GetStoreKey()), evmtypes.AddressStoragePrefix(acc.Address))
 			for _, storage := range acc.Storage {
+				store.Set(storage.Key.Bytes(), storage.Value.Bytes())
 				k.SetState(ctx, acc.Address, storage.Key, storage.Value)
 			}
 		}
@@ -121,6 +123,47 @@ func EvmInitGenesis(ctx sdk.Context, k moduletypes.KeeperI, data evmtypes.Genesi
 	return
 }
 
+//func ExportGenesis(ctx sdk.Context, k moduletypes.KeeperI, ak account.AccountKeeper) evmtypes.GenesisState {
+//
+//	initExportEnv("", "", 10)
+//
+//	// nolint: prealloc
+//	var ethGenAccounts []evmtypes.GenesisAccount
+//	csdb := evmtypes.CreateEmptyCommitStateDB(k.GenerateCSDBParams(), ctx)
+//
+//	ak.IterateAccounts(ctx, func(account exported.Account) bool {
+//		a := account.GetAddress().String()
+//		addr := common.HexToAddress(a)
+//		code, storage := []byte(nil), evmtypes.Storage(nil)
+//
+//		code = csdb.GetCode(addr)
+//		if code != nil {
+//			codeCount++
+//		}
+//		if _, err := k.GetAccountStorage(ctx, addr); err != nil {
+//			panic(err)
+//		}
+//		storageCount += uint64(len(storage))
+//
+//		genAccount := evmtypes.GenesisAccount{
+//			Address: addr,
+//			Code:    code,
+//			Storage: storage,
+//		}
+//
+//		ethGenAccounts = append(ethGenAccounts, genAccount)
+//		return false
+//	})
+//	wg.Wait()
+//
+//	config, _ := k.GetChainConfig(ctx)
+//	return evmtypes.GenesisState{
+//		Accounts:                    ethGenAccounts,
+//		ChainConfig:                 config,
+//		Params:                      k.GetParams(ctx),
+//	}
+//}
+
 
 
 func ExportGenesis(ctx sdk.Context, k moduletypes.KeeperI, ak account.AccountKeeper) evmtypes.GenesisState {
@@ -145,19 +188,25 @@ func ExportGenesis(ctx sdk.Context, k moduletypes.KeeperI, ak account.AccountKee
 
 			storage = append(storage, state)
 		}
-		var Code hexutil.Bytes
+		var CodeHash hexutil.Bytes
 		switch ac := account.(type) {
 		case *types2.ModuleAccount:
-			Code = ac.CodeHash
+			CodeHash = ac.CodeHash
 		case *types3.BaseAccount:
-			Code = ac.CodeHash
+			CodeHash = ac.CodeHash
 		default:
-			Code = account.(*types2.ModuleAccount).CodeHash
+			CodeHash = account.(*types2.ModuleAccount).CodeHash
+		}
+
+		store2 := evmtypes.NewStore(ctx.KVStore(k.GetStoreKey()), evmtypes.KeyPrefixCode)
+		var code hexutil.Bytes
+		if CodeHash != nil {
+			code = store2.Get(CodeHash)
 		}
 
 		genAccount := evmtypes.GenesisAccount{
 			Address: addr,
-			Code:    Code,
+			Code:    code,
 			Storage: storage,
 		}
 

@@ -22,7 +22,7 @@ func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.Va
 	var genesisState evmtypes.GenesisState
 	//wasm.WasmCodec.MustUnmarshalJSON(data, &genesisState)
 	_ = json.Unmarshal(data, &genesisState)
-	EvmInitGenesis(ctx, am.Keeper, genesisState)
+	EvmInitGenesis(ctx, am.Keeper, am.AccountKeeper, genesisState)
 	return nil
 }
 

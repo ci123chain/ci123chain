@@ -435,9 +435,20 @@ func (app *BaseApp) setIndexEvents(ie []string) {
 	}
 }
 
+func (app *BaseApp) SetInitialVersion(version int64) error {
+	return app.cms.SetInitialVersion(version)
+}
+
 // Implements ABCI
 // InitChain runs the initialization logic directly on the CommitMultiStore and commits it.
 func (app *BaseApp) InitChain(req abci.RequestInitChain) (res abci.ResponseInitChain) {
+
+	if req.InitialHeight > 1 {
+		if err := app.SetInitialVersion(req.InitialHeight); err != nil {
+			panic(err)
+		}
+	}
+
 	// Initialize the deliver state and check state with ChainID and run initChain
 	app.setDeliverState(types.Header{ChainID: req.ChainId})
 	app.setCheckState(types.Header{ChainID: req.ChainId})
