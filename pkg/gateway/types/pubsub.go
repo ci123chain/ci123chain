@@ -294,7 +294,8 @@ func (r *PubSubRoom) ReceiveEth(c *websocket.Conn) {
 							break
 						}
 						//err = client.WriteMessage(websocket.BinaryMessage, Data)
-						err = client.WriteJSON(string(Data))
+						err = client.WriteMessage(1, Data)
+						//err = client.WriteJSON(string(Data))
 						if err != nil {
 							logger.Warn(fmt.Sprintf("client write message failed: %s", err.Error()))
 							r.RemoveEthConnection(remote)
@@ -883,8 +884,12 @@ func GetConnection(addr string) (*rpcclient.HTTP, bool){
 
 func GetEthConnection(addr string) (*websocket.Conn, bool) {
 	str := strings.Split(addr, "//")
-	//link := DefaultEthPrefix + str[0] + ":" + DefaultPort
-	link := strings.Split(str[1], ":")[0] + ":" + EthPort
+	var link string
+	if len(str) >= 2 {
+		link = strings.Split(str[1], ":")[0] + ":" + EthPort
+	}else {
+		link = strings.Split(str[0], ":")[0] + ":" + EthPort
+	}
 	u := url.URL{Scheme: "ws", Host: link,  Path: "/"}
 	dialer := websocket.DefaultDialer
 	c, _, err := dialer.Dial(u.String(), nil)
