@@ -137,7 +137,12 @@ func StartInProcess(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Code
 	}
 	dbHost := viper.GetString(flagCiStateDBHost)
 	if dbHost == "" {
-		dbHost = util.Discovery(util.CallBack)
+		var err error
+		dbHost, err = util.GetDomain()
+		if err != nil {
+			ctx.Logger.Error("get remote db host failed", "err", err.Error())
+			return nil, err
+		}
 	}
 	ctx.Logger.Info("discovery remote db host", "host", dbHost)
 	if dbHost == "" {

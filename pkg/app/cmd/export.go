@@ -48,7 +48,11 @@ func ExportCmd(appExporter app.AppExporter, defaultNodeHome string) *cobra.Comma
 			}
 			dbHost := viper.GetString(flagCiStateDBHost)
 			if dbHost == "" {
-				dbHost = util.Discovery(util.CallBack)
+				var err error
+				dbHost, err = util.GetDomain()
+				if err != nil {
+					return err
+				}
 			}
 			dbTls := viper.GetBool(flagCiStateDBTls)
 			dbPort := viper.GetUint64(flagCiStateDBPort)

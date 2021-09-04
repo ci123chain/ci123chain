@@ -71,7 +71,12 @@ func Start() {
 	}
 	dbHost := viper.GetString(flagCiStateDBHost)
 	if dbHost == "" {
-		dbHost = util.Discovery(util.CallBack)
+		var err error
+		dbHost, err = util.GetDomain()
+		if err != nil {
+			logger.Error("get remote db host failed", "err", err.Error())
+			return
+		}
 	}
 	if dbHost == "" {
 		panic(errors.New(fmt.Sprintf("%s can not be empty", "ci-statedb-host")))
