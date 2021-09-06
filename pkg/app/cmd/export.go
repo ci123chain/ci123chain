@@ -116,21 +116,38 @@ func ExportCmd(appExporter app.AppExporter, defaultNodeHome string) *cobra.Comma
 			doc.AppState = exported.AppState
 			doc.Validators = vals
 			doc.InitialHeight = exported.Height + 1
-			doc.ConsensusParams = &tmproto.ConsensusParams{
-				Block: tmproto.BlockParams{
-					MaxBytes:   exported.ConsensusParams.Block.MaxBytes,
-					MaxGas:     exported.ConsensusParams.Block.MaxGas,
-					TimeIotaMs: doc.ConsensusParams.Block.TimeIotaMs,
-				},
-				Evidence: tmproto.EvidenceParams{
-					MaxAgeNumBlocks: exported.ConsensusParams.Evidence.MaxAgeNumBlocks,
-					MaxAgeDuration:  exported.ConsensusParams.Evidence.MaxAgeDuration,
-					MaxBytes:        exported.ConsensusParams.Evidence.MaxBytes,
-				},
-				Validator: tmproto.ValidatorParams{
-					PubKeyTypes: exported.ConsensusParams.Validator.PubKeyTypes,
-				},
+			if exported.ConsensusParams != nil {
+				doc.ConsensusParams = &tmproto.ConsensusParams{
+					Block: tmproto.BlockParams{
+						MaxBytes:   exported.ConsensusParams.Block.MaxBytes,
+						MaxGas:     exported.ConsensusParams.Block.MaxGas,
+						TimeIotaMs: doc.ConsensusParams.Block.TimeIotaMs,
+					},
+					Evidence: tmproto.EvidenceParams{
+						MaxAgeNumBlocks: exported.ConsensusParams.Evidence.MaxAgeNumBlocks,
+						MaxAgeDuration:  exported.ConsensusParams.Evidence.MaxAgeDuration,
+						MaxBytes:        exported.ConsensusParams.Evidence.MaxBytes,
+					},
+					Validator: tmproto.ValidatorParams{
+						PubKeyTypes: exported.ConsensusParams.Validator.PubKeyTypes,
+					},
+				}
 			}
+			//doc.ConsensusParams = &tmproto.ConsensusParams{
+			//	Block: tmproto.BlockParams{
+			//		MaxBytes:   exported.ConsensusParams.Block.MaxBytes,
+			//		MaxGas:     exported.ConsensusParams.Block.MaxGas,
+			//		TimeIotaMs: doc.ConsensusParams.Block.TimeIotaMs,
+			//	},
+			//	Evidence: tmproto.EvidenceParams{
+			//		MaxAgeNumBlocks: exported.ConsensusParams.Evidence.MaxAgeNumBlocks,
+			//		MaxAgeDuration:  exported.ConsensusParams.Evidence.MaxAgeDuration,
+			//		MaxBytes:        exported.ConsensusParams.Evidence.MaxBytes,
+			//	},
+			//	Validator: tmproto.ValidatorParams{
+			//		PubKeyTypes: exported.ConsensusParams.Validator.PubKeyTypes,
+			//	},
+			//}
 
 			// NOTE: Tendermint uses a custom JSON decoder for GenesisDoc
 			// (except for stuff inside AppState). Inside AppState, we're free
