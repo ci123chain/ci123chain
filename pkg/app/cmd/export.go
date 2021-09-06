@@ -117,21 +117,47 @@ func ExportCmd(appExporter app.AppExporter, defaultNodeHome string) *cobra.Comma
 			doc.Validators = vals
 			doc.InitialHeight = exported.Height + 1
 			if exported.ConsensusParams != nil {
-				doc.ConsensusParams = &tmproto.ConsensusParams{
-					Block: tmproto.BlockParams{
-						MaxBytes:   exported.ConsensusParams.Block.MaxBytes,
-						MaxGas:     exported.ConsensusParams.Block.MaxGas,
-						TimeIotaMs: doc.ConsensusParams.Block.TimeIotaMs,
-					},
-					Evidence: tmproto.EvidenceParams{
-						MaxAgeNumBlocks: exported.ConsensusParams.Evidence.MaxAgeNumBlocks,
-						MaxAgeDuration:  exported.ConsensusParams.Evidence.MaxAgeDuration,
-						MaxBytes:        exported.ConsensusParams.Evidence.MaxBytes,
-					},
-					Validator: tmproto.ValidatorParams{
-						PubKeyTypes: exported.ConsensusParams.Validator.PubKeyTypes,
-					},
+				var block tmproto.BlockParams
+				var evidence tmproto.EvidenceParams
+				var validator tmproto.ValidatorParams
+				if exported.ConsensusParams.Block != nil {
+					block.MaxBytes = exported.ConsensusParams.Block.MaxBytes
+					block.MaxGas = exported.ConsensusParams.Block.MaxGas
+					block.TimeIotaMs = doc.ConsensusParams.Block.TimeIotaMs
+				}else {
+					block.MaxGas = 0
+					block.MaxBytes = 0
+					block.TimeIotaMs = 0
 				}
+				if exported.ConsensusParams.Evidence != nil {
+					evidence.MaxAgeNumBlocks = exported.ConsensusParams.Evidence.MaxAgeNumBlocks
+					evidence.MaxAgeDuration = exported.ConsensusParams.Evidence.MaxAgeDuration
+					evidence.MaxBytes = exported.ConsensusParams.Evidence.MaxBytes
+				}else {
+					evidence.MaxBytes = 0
+					evidence.MaxAgeDuration = 0
+					evidence.MaxAgeNumBlocks = 0
+				}
+				if exported.ConsensusParams.Validator != nil {
+					validator.PubKeyTypes = exported.ConsensusParams.Validator.PubKeyTypes
+				}else {
+					validator.PubKeyTypes = []string{vals[0].PubKey.Type()}
+				}
+				//doc.ConsensusParams = &tmproto.ConsensusParams{
+				//	Block: tmproto.BlockParams{
+				//		MaxBytes:   exported.ConsensusParams.Block.MaxBytes,
+				//		MaxGas:     exported.ConsensusParams.Block.MaxGas,
+				//		TimeIotaMs: doc.ConsensusParams.Block.TimeIotaMs,
+				//	},
+				//	Evidence: tmproto.EvidenceParams{
+				//		MaxAgeNumBlocks: exported.ConsensusParams.Evidence.MaxAgeNumBlocks,
+				//		MaxAgeDuration:  exported.ConsensusParams.Evidence.MaxAgeDuration,
+				//		MaxBytes:        exported.ConsensusParams.Evidence.MaxBytes,
+				//	},
+				//	Validator: tmproto.ValidatorParams{
+				//		PubKeyTypes: exported.ConsensusParams.Validator.PubKeyTypes,
+				//	},
+				//}
 			}
 			//doc.ConsensusParams = &tmproto.ConsensusParams{
 			//	Block: tmproto.BlockParams{
