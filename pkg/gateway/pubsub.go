@@ -28,7 +28,7 @@ const (
 )
 
 func PubSubHandle(w http.ResponseWriter, r *http.Request) {
-	if len(pubsubRoom.RemoteClients) > MaxConnection {
+	if len(pubsubRoom.RemoteClients) >= MaxConnection {
 		res, _ := json.Marshal(types.ErrorResponse{
 			Ret: -1,
 			Message:  "max clinet has coonected, connection refused",
@@ -55,7 +55,7 @@ func PubSubHandle(w http.ResponseWriter, r *http.Request) {
 }
 
 func EthPubSubHandle(w http.ResponseWriter, r *http.Request) {
-	if len(pubsubRoom.RemoteClients) > MaxConnection {
+	if len(pubsubRoom.RemoteClients) >= MaxConnection {
 		res, _ := json.Marshal(types.ErrorResponse{
 			Ret: -1,
 			Message:  "max clinet has coonected, connection refused",
