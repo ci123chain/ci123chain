@@ -280,7 +280,8 @@ func (r *PubSubRoom) ReceiveEth(c *websocket.Conn) {
 				err := remote.WriteJSON(message)
 				if err != nil {
 					logger.Warn(fmt.Sprintf("remote write message failed: %s", err.Error()))
-					r.RemoveEthConnection(remote)
+					r.RemoveEthConnection(client)
+					ok <- false
 					return
 				}
 				//remote write, client read.
@@ -289,7 +290,7 @@ func (r *PubSubRoom) ReceiveEth(c *websocket.Conn) {
 						_, Data, err := remote.ReadMessage()
 						if err != nil {
 							logger.Warn(fmt.Sprintf("remote read message failed: %s", err.Error()))
-							r.RemoveEthConnection(remote)
+							r.RemoveEthConnection(client)
 							ok <- false
 							break
 						}
@@ -298,8 +299,7 @@ func (r *PubSubRoom) ReceiveEth(c *websocket.Conn) {
 						//err = client.WriteJSON(string(Data))
 						if err != nil {
 							logger.Warn(fmt.Sprintf("client write message failed: %s", err.Error()))
-							r.RemoveEthConnection(remote)
-							ok <- false
+							r.RemoveEthConnection(client)
 							break
 						}
 					}
@@ -310,15 +310,14 @@ func (r *PubSubRoom) ReceiveEth(c *websocket.Conn) {
 						_, Data, err := client.ReadMessage()
 						if err != nil {
 							logger.Warn(fmt.Sprintf("read remote message failed: %s", err.Error()))
-							r.RemoveEthConnection(remote)
+							r.RemoveEthConnection(client)
 							ok <- false
 							break
 						}
 						err = remote.WriteMessage(websocket.BinaryMessage, Data)
 						if err != nil {
 							logger.Warn(fmt.Sprintf("client write message failed: %s", err.Error()))
-							r.RemoveEthConnection(remote)
-							ok <- false
+							r.RemoveEthConnection(client)
 							break
 						}
 					}
@@ -326,8 +325,7 @@ func (r *PubSubRoom) ReceiveEth(c *websocket.Conn) {
 
 				select {
 				case _ = <- ok:
-					_ = client.Close()
-					r.RemoveEthConnection(remote)
+					r.RemoveAllEthConnections()
 					break
 				}
 			}(con, c, msg)
@@ -699,19 +697,7 @@ func (r *PubSubRoom) RemoveEthConnection(c *websocket.Conn) {
 		return
 	}
 	r.Mutex.Lock()
-	newMap := make(map[string]*websocket.Conn, 0)
-	for key, val := range r.EthConnections{
-		if val != c {
-			newMap[key] = val
-		}
-	}
-	if len(newMap) != 0 {
-		r.EthConnections = newMap
-	}else {
-		r.EthConnections = make(map[string]*websocket.Conn, 0)
-	}
-	DeleteSlice(r.RemoteClients, c)
-
+	r.RemoteClients = DeleteSlice(r.RemoteClients, c)
 	r.Mutex.Unlock()
 	_ = c.Close()
 }
@@ -726,7 +712,7 @@ func Notify(r *PubSubRoom, topic string, m SendMessage) {
 			logger.Error("notify message error: %s", err.Error())
 			r.HandleUnsubscribeAll(conn)
 			r.Mutex.Lock()
-			DeleteSlice(r.RemoteClients, conn)
+			r.RemoteClients = DeleteSlice(r.RemoteClients, conn)
 			r.Mutex.Unlock()
 			_ = conn.Close()
 			i--
@@ -735,14 +721,13 @@ func Notify(r *PubSubRoom, topic string, m SendMessage) {
 }
 
 func DeleteSlice(res []*websocket.Conn, s *websocket.Conn) []*websocket.Conn {
-	j := 0
+	result := make([]*websocket.Conn, 0)
 	for _, val := range res {
-		if val != s {
-			res[j] = val
-			j++
+		if val.RemoteAddr().String() != s.RemoteAddr().String() {
+			result = append(result, val)
 		}
 	}
-	return res[:j]
+	return result
 }
 
 
