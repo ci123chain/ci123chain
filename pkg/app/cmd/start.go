@@ -20,6 +20,7 @@ import (
 	"github.com/tendermint/tendermint/proxy"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 )
@@ -46,6 +47,7 @@ const (
 	flagETHChainID     = "eth_chain_id"
 	flagIteratorLimit  = "iterator_limit"
 	flagRunMode		   = "mode"
+	flagStartFromExport = "export"
 )
 
 func startCmd(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Codec) *cobra.Command {
@@ -57,6 +59,15 @@ func startCmd(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Codec) *co
 			limit := viper.GetInt(flagIteratorLimit)
 			util.Setup(id)
 			util.SetLimit(limit)
+			ok := viper.GetBool(flagStartFromExport)
+			if ok {
+				by, err := ioutil.ReadFile("/opt/exportFile.json")
+				if err == nil && by != nil {
+					_ = ioutil.WriteFile(filepath.Join(ctx.Config.RootDir, "config/genesis.json"), by, 0755)
+				}else {
+					ctx.Logger.Warn("start node with export genesis file, but no exportFile.json found in /opt")
+				}
+			}
 			if !viper.GetBool(flagWithTendermint) {
 				ctx.Logger.Info("Starting ABCI Without Tendermint")
 				return startStandAlone(ctx, appCreator)
@@ -89,6 +100,7 @@ func startCmd(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Codec) *co
 	cmd.Flags().Int(flagIteratorLimit, 10, "eth chain id")
 	cmd.Flags().String(FlagWithValidator, "", "validator_key")
 	cmd.Flags().String(flagRunMode, "single", "run chain mode")
+	cmd.Flags().Bool(flagStartFromExport, true, "start with export file")
 
 	//cmd.Flags().String(flagLogLevel, "debug", "Run abci app with different log level")
 	tcmd.AddNodeFlags(cmd)
