@@ -96,3 +96,8 @@ func (m AppModule) EndBlock(ctx sdk.Context, req abci.RequestEndBlock) []abci.Va
 func (am AppModule) RegisterServices(cfg module.Configurator) {
 	types.RegisterQueryService(cfg.QueryServer(), am.keeper)
 }
+
+func (m AppModule) ExportGenesis(ctx sdk.Context) json.RawMessage {
+	res, _  := json.Marshal(ExportGenesis(ctx, *m.keeper))
+	return res
+}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/libs"
+	"strings"
 	"time"
 
 	tmquery "github.com/tendermint/tendermint/libs/pubsub/query"
@@ -193,10 +194,14 @@ func (es *EventSystem) subscribeMinedPendingLogs(crit filters.FilterCriteria) (*
 // subscribeLogs creates a subscription that will write all logs matching the
 // given criteria to the given logs channel.
 func (es *EventSystem) subscribeLogs(crit filters.FilterCriteria) (*Subscription, context.CancelFunc, error) {
+	logEvents := evmEvents
+	if len(crit.Addresses) == 1 {
+		logEvents = tmquery.MustParse(fmt.Sprintf("%s='%s' AND %s.%s='%s'", tmtypes.EventTypeKey, tmtypes.EventTx, evmtypes.EventTypeEvmTx, evmtypes.AttributeKeyContractAddress, strings.ToLower(crit.Addresses[0].String()))).String()
+	}
 	sub := &Subscription{
 		id:        rpc.NewID(),
 		typ:       filters.LogsSubscription,
-		event:     evmEvents,
+		event:     logEvents,
 		logsCrit:  crit,
 		created:   time.Now().UTC(),
 		logs:      make(chan []*ethtypes.Log),

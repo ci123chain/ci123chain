@@ -1,9 +1,12 @@
 package types
 
 import (
+	"github.com/cosmos/cosmos-sdk/baseapp"
 	"reflect"
 
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	abci "github.com/tendermint/tendermint/abci/types"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 )
 
 type attribute struct {
@@ -77,4 +80,18 @@ func (t KeyTable) maxKeyLength() (res int) {
 	}
 
 	return
+}
+
+func ConsensusParamsKeyTable() KeyTable {
+	return NewKeyTable(
+		NewParamSetPair(
+			baseapp.ParamStoreKeyBlockParams, abci.BlockParams{}, baseapp.ValidateBlockParams,
+		),
+		NewParamSetPair(
+			baseapp.ParamStoreKeyEvidenceParams, tmproto.EvidenceParams{}, baseapp.ValidateEvidenceParams,
+		),
+		NewParamSetPair(
+			baseapp.ParamStoreKeyValidatorParams, tmproto.ValidatorParams{}, baseapp.ValidateValidatorParams,
+		),
+	)
 }

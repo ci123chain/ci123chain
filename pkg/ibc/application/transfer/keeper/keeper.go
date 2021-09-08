@@ -93,6 +93,20 @@ func (k Keeper) SetDenomTrace(ctx sdk.Context, denomTrace types.DenomTrace) {
 	store.Set(denomTrace.Hash(), bz)
 }
 
+func (k Keeper) IteratorDenomTrace(ctx sdk.Context, cb func(trace types.DenomTrace) (stop bool)) {
+	store := store.NewPrefixStore(ctx.KVStore(k.storeKey), types.DenomTraceKey)
+	iter := sdk.KVStorePrefixIterator(store, types.DenomTraceKey)
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		var dt types.DenomTrace
+		dt = k.MustUnmarshalDenomTrace(iter.Value())
+		if cb(dt) {
+			break
+		}
+	}
+}
+
 // ClaimCapability allows the transfer module that can claim a capability that IBC module
 // passes to it
 func (k Keeper) ClaimCapability(ctx sdk.Context, cap *capabilitytypes.Capability, name string) error {

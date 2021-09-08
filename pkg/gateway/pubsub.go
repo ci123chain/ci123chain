@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/md5"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/gateway/logger"
 	"github.com/ci123chain/ci123chain/pkg/gateway/types"
@@ -22,7 +23,19 @@ var (
 	}
 )
 
+const (
+	MaxConnection = 10
+)
+
 func PubSubHandle(w http.ResponseWriter, r *http.Request) {
+	if len(pubsubRoom.RemoteClients) >= MaxConnection {
+		res, _ := json.Marshal(types.ErrorResponse{
+			Ret: -1,
+			Message:  "max clinet has coonected, connection refused",
+		})
+		_, _ = w.Write(res)
+		return
+	}
 	conn, err := ug.Upgrade(w, r, nil)
 	if err != nil {
 		logger.Error("err: %s", err)
@@ -33,12 +46,23 @@ func PubSubHandle(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write(res)
 		return
 	}
+	pubsubRoom.Mutex.Lock()
+	pubsubRoom.RemoteClients = append(pubsubRoom.RemoteClients, conn)
+	pubsubRoom.Mutex.Unlock()
 	//根据订阅的topic来建立新的map.
 	// map [topic] -> conn
 	go pubsubRoom.Receive(conn)
 }
 
 func EthPubSubHandle(w http.ResponseWriter, r *http.Request) {
+	if len(pubsubRoom.RemoteClients) >= MaxConnection {
+		res, _ := json.Marshal(types.ErrorResponse{
+			Ret: -1,
+			Message:  "max clinet has coonected, connection refused",
+		})
+		_, _ = w.Write(res)
+		return
+	}
 	conn, err := ug.Upgrade(w, r, nil)
 	if err != nil {
 		logger.Error("err: %s", err)
@@ -49,6 +73,9 @@ func EthPubSubHandle(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write(res)
 		return
 	}
+	pubsubRoom.Mutex.Lock()
+	pubsubRoom.RemoteClients = append(pubsubRoom.RemoteClients, conn)
+	pubsubRoom.Mutex.Unlock()
 	go pubsubRoom.ReceiveEth(conn)
 }
 
@@ -63,16 +90,16 @@ func checkBackend() {
 			for k, v := range pubsubRoom.Connections {
 				_, err := v.Health(context.Background())
 				if err != nil {
-					logger.Error("lost connect on:", k)
-					logger.Error("health check error: ", err.Error())
+					logger.Warn("lost connect on:", k)
+					logger.Warn("health check error: ", err.Error())
 					connectErr = true
 					break
 				}
 			}
 			if connectErr {
-				logger.Error("Lost connect, remove all subscribe")
+				logger.Warn("Lost connect, remove all subscribe")
 				pubsubRoom.Mutex.Lock()
-				pubsubRoom.RemoveAllTMConnections()
+				pubsubRoom.RemoveAllTMConnections(errors.New("remote node is bad"))
 				pubsubRoom.Mutex.Unlock()
 			}
 			spByte, _ := json.Marshal(serverPool.backends)

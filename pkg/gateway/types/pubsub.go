@@ -2,6 +2,9 @@ package types
 
 import (
 	"context"
+	"github.com/ci123chain/ci123chain/pkg/util"
+	"io/ioutil"
+	"net/http"
 	"net/url"
 
 	//"encoding/hex"
@@ -42,14 +45,19 @@ const (
 )
 
 var (
-	DefaultPort = "80"
+	TMPort = "80"
+	EthPort = "80"
+	ShardPort = "80"
 	cdc = apptypes.GetCodec()
 )
-func SetDefaultPort(port string) {
-	DefaultPort = port
+func SetDefaultPort(tmport, shardport, ethport string) {
+	TMPort = tmport
+	EthPort = ethport
+	ShardPort = shardport
 }
 
 type PubSubRoom struct {
+	RemoteClients []*websocket.Conn
 	ConnMap    map[string][]*websocket.Conn
 	//HasCreatedConn map[string]bool
 
@@ -68,6 +76,7 @@ func (r PubSubRoom) GetBackends() []Instance {
 }
 
 func (r *PubSubRoom)GetPubSubRoom() {
+	r.RemoteClients = make([]*websocket.Conn, 0)
 	r.ConnMap = make(map[string][]*websocket.Conn, 0)
 	//r.HasCreatedConn = make(map[string]bool)
 	r.Connections = make(map[string]*rpcclient.HTTP, 0)
@@ -94,15 +103,21 @@ func (r *PubSubRoom) HasEthConnections() bool {
 	return len(r.EthConnections) != 0
 }
 
-func (r *PubSubRoom)SetTMConnections() (err error) {
+func (r *PubSubRoom) SetTMConnections() (err error) {
 	for _, v := range r.backends {
-		addr := rpcAddress(v.URL().Host)
+		err, info := GetURL(v.URL().Host)
+		if err != nil {
+			logger.Error(fmt.Sprintf("get remote node domain info: %s, failed", v.URL().Host))
+			r.RemoveAllTMConnections(errors.New(fmt.Sprintf("get remote node domain info: %s, failed", v.URL().Host)))
+			break
+		}
+		addr := rpcAddress(info.Host26657)
 		if r.Connections[addr] == nil {
 			conn, ok := GetConnection(addr)
 			if !ok {
 				err = errors.New(fmt.Sprintf("connect remote addr: %s, failed", addr))
 				logger.Error(err.Error())
-				r.RemoveAllTMConnections()
+				r.RemoveAllTMConnections(err)
 				break
 			}
 			r.Connections[addr] = conn
@@ -113,7 +128,13 @@ func (r *PubSubRoom)SetTMConnections() (err error) {
 
 func (r *PubSubRoom) SetEthConnections() (err error) {
 	for _, v := range r.backends {
-		addr := rpcAddress(v.URL().Host)
+		err, info := GetURL(v.URL().Host)
+		if err != nil {
+			logger.Error(fmt.Sprintf("get remote node domain info: %s, failed", v.URL().Host))
+			r.RemoveAllEthConnections()
+			break
+		}
+		addr := info.Host8546
 		if r.EthConnections[addr] == nil {
 			conn, ok := GetEthConnection(addr)
 			if !ok {
@@ -128,19 +149,19 @@ func (r *PubSubRoom) SetEthConnections() (err error) {
 	return err
 }
 
-func (r *PubSubRoom)Receive(c *websocket.Conn) {
+func (r *PubSubRoom) Receive(c *websocket.Conn) {
 
 	defer func() {
 		err := recover()
 		switch rt := err.(type) {
 		default:
-			logger.Error("recover unexpected error: %s", rt)
+			logger.Warn("recover unexpected error: %s", rt)
 		}
 	}()
 	for {
 		_, data, err := c.ReadMessage()
 		if err != nil {
-			logger.Error(fmt.Sprintf("got client message error: %v", err.Error()))
+			logger.Warn(fmt.Sprintf("got client message error: %v", err.Error()))
 			_ = c.Close()
 			break
 		}
@@ -207,14 +228,14 @@ func (r *PubSubRoom) ReceiveEth(c *websocket.Conn) {
 		err := recover()
 		switch rt := err.(type) {
 		default:
-			logger.Error("recover unexpected error: %s", rt)
+			logger.Warn("recover unexpected error: %s", rt)
 		}
 	}()
 
 	for {
 		_, data, err := c.ReadMessage()
 		if err != nil {
-			logger.Error("got client error, client may down already")
+			logger.Warn("got client error, client may down already")
 			_ = c.Close()
 			break
 		}
@@ -258,8 +279,9 @@ func (r *PubSubRoom) ReceiveEth(c *websocket.Conn) {
 				var ok = make(chan bool)
 				err := remote.WriteJSON(message)
 				if err != nil {
-					logger.Error(fmt.Sprintf("remote write message failed: %s", err.Error()))
-					r.RemoveEthConnection(remote)
+					logger.Warn(fmt.Sprintf("remote write message failed: %s", err.Error()))
+					r.RemoveEthConnection(client)
+					ok <- false
 					return
 				}
 				//remote write, client read.
@@ -267,17 +289,17 @@ func (r *PubSubRoom) ReceiveEth(c *websocket.Conn) {
 					for {
 						_, Data, err := remote.ReadMessage()
 						if err != nil {
-							logger.Error(fmt.Sprintf("remote read message failed: %s", err.Error()))
-							r.RemoveEthConnection(remote)
+							logger.Warn(fmt.Sprintf("remote read message failed: %s", err.Error()))
+							r.RemoveEthConnection(client)
 							ok <- false
 							break
 						}
 						//err = client.WriteMessage(websocket.BinaryMessage, Data)
-						err = client.WriteJSON(string(Data))
+						err = client.WriteMessage(1, Data)
+						//err = client.WriteJSON(string(Data))
 						if err != nil {
-							logger.Error(fmt.Sprintf("client write message failed: %s", err.Error()))
-							r.RemoveEthConnection(remote)
-							ok <- false
+							logger.Warn(fmt.Sprintf("client write message failed: %s", err.Error()))
+							r.RemoveEthConnection(client)
 							break
 						}
 					}
@@ -287,16 +309,15 @@ func (r *PubSubRoom) ReceiveEth(c *websocket.Conn) {
 					for {
 						_, Data, err := client.ReadMessage()
 						if err != nil {
-							logger.Error(fmt.Sprintf("read remote message failed: %s", err.Error()))
-							r.RemoveEthConnection(remote)
+							logger.Warn(fmt.Sprintf("read remote message failed: %s", err.Error()))
+							r.RemoveEthConnection(client)
 							ok <- false
 							break
 						}
 						err = remote.WriteMessage(websocket.BinaryMessage, Data)
 						if err != nil {
-							logger.Error(fmt.Sprintf("client write message failed: %s", err.Error()))
-							r.RemoveEthConnection(remote)
-							ok <- false
+							logger.Warn(fmt.Sprintf("client write message failed: %s", err.Error()))
+							r.RemoveEthConnection(client)
 							break
 						}
 					}
@@ -304,8 +325,7 @@ func (r *PubSubRoom) ReceiveEth(c *websocket.Conn) {
 
 				select {
 				case _ = <- ok:
-					_ = client.Close()
-					r.RemoveEthConnection(remote)
+					r.RemoveAllEthConnections()
 					break
 				}
 			}(con, c, msg)
@@ -314,7 +334,7 @@ func (r *PubSubRoom) ReceiveEth(c *websocket.Conn) {
 }
 
 func (r *PubSubRoom) HandleSubscribe(topic string, c *websocket.Conn) {
-	r.Mutex.Lock()
+	//r.Mutex.Lock()
 	if len(r.ConnMap[topic]) == 0 {
 		r.Subscribe(topic)
 		r.ConnMap[topic] = make([]*websocket.Conn, 0)
@@ -323,7 +343,7 @@ func (r *PubSubRoom) HandleSubscribe(topic string, c *websocket.Conn) {
 	}else {
 		r.ConnMap[topic] = append(r.ConnMap[topic], c)
 	}
-	r.Mutex.Unlock()
+	//r.Mutex.Unlock()
 }
 
 func (r *PubSubRoom) HandleUnsubscribe(topic string, c *websocket.Conn) {
@@ -369,7 +389,9 @@ func (r *PubSubRoom) Subscribe(topic string) {
 				logger.Error(fmt.Sprintf("subscribe topic: %s failed", topic))
 				if _, err := conn.Health(ctx); err != nil {
 					////connection failed
-					r.RemoveAllTMConnections()
+					r.Mutex.Lock()
+					r.RemoveAllTMConnections(err)
+					r.Mutex.Unlock()
 					break
 				}else {
 					Err := fmt.Sprintf("subscribe topic: %s failed, maybe you should check your topic", topic)
@@ -384,17 +406,16 @@ func (r *PubSubRoom) Subscribe(topic string) {
 			tmRes := TMResponse{
 				response: responses,
 				topic:    topic,
+				addr:     conn.Remote(),
 			}
 			go func(res TMResponse) {
+				var start = time.Now()
+				var worked = false
 				for e := range res.response {
 					logger.Info("receive tendermint response: %v", e.Data)
 					var v interface{}
 					switch e.Data.(type) {
 					case types.EventDataTx:
-						//ok, _ := regexp.MatchString("tm.event = 'Tx'", topic)
-						//if !ok {
-						//	continue
-						//}
 						tx := e.Data.(types.EventDataTx)
 						var aa sdk.Tx
 						err = cdc.UnmarshalBinaryBare(tx.Tx, &aa)
@@ -406,21 +427,31 @@ func (r *PubSubRoom) Subscribe(topic string) {
 							logger.Error(fmt.Sprintf("marshal error: %s", err.Error()))
 						}
 						tx.Tx = res
-						//hash := hex.EncodeToString(tx.Tx.Hash())
-						//v = NewGotTxResponse(tx.Height, tx.Index, hash, tx.Result)
 						v = tx
 					default:
 						v = e.Data
 					}
-					//response := SendMessage{
-					//	Time:   time.Now().Format(time.RFC3339),
-					//	Content: v,
-					//}
 					response := SendMessage{
 						Time:   time.Now().Format(time.RFC3339),
 						Content: v,//e.Data,
 					}
 					Notify(r, res.topic, response)
+					worked = true
+				}
+				var end = time.Now()
+				if !worked {
+					if end.Sub(start).Seconds() > 15 {
+						Err := fmt.Sprintf("the node: %s, is bad, no result return after 15 senconds", res.addr)
+						response := SendMessage{
+							Time:   time.Now().Format(time.RFC3339),
+							Content: Err,
+						}
+						Notify(r, res.topic, response)
+						r.Mutex.Lock()
+						r.RemoveAllTMConnections(errors.New(Err))
+						r.Mutex.Unlock()
+						return
+					}
 				}
 			}(tmRes)
 		}
@@ -431,13 +462,21 @@ func (r *PubSubRoom) AddShard() {
 	ctx, _ := context.WithTimeout(context.Background(), timeOut)
 	//defer cancel()
 	for _, v := range r.backends {
-		addr := rpcAddress(v.URL().Host)
+		err, info := GetURL(v.URL().Host)
+		if err != nil {
+			logger.Error(fmt.Sprintf("get remote node domain info: %s, failed", v.URL().Host))
+			r.Mutex.Lock()
+			r.RemoveAllTMConnections(errors.New(fmt.Sprintf("get remote node domain info: %s, failed", v.URL().Host)))
+			r.Mutex.Unlock()
+			break
+		}
+		addr := rpcAddress(info.Host26657)
 		if r.Connections[addr] == nil {
 			conn, ok := GetConnection(addr)
 			if !ok {
 				logger.Error(fmt.Sprintf("connect remote addr: %s, failed", addr))
 				r.Mutex.Lock()
-				r.RemoveAllTMConnections()
+				r.RemoveAllTMConnections(errors.New(fmt.Sprintf("connect remote addr: %s, failed", addr)))
 				r.Mutex.Unlock()
 				break
 			}
@@ -459,7 +498,7 @@ func (r *PubSubRoom) AddShard() {
 							//}
 							//NotifyAll(r, ErrRes)
 							r.Mutex.Lock()
-							r.RemoveAllTMConnections()
+							r.RemoveAllTMConnections(err)
 							r.Mutex.Unlock()
 							break
 						}else {
@@ -478,9 +517,12 @@ func (r *PubSubRoom) AddShard() {
 					tmRes := TMResponse{
 						response: responses,
 						topic:    topic,
+						addr:     conn.Remote(),
 					}
 
 					go func(res TMResponse) {
+						var start = time.Now()
+						var worked = false
 						for e := range res.response {
 							//var v interface{}
 							//switch e.Data.(types) {
@@ -560,21 +602,31 @@ func (r *PubSubRoom) AddShard() {
 									logger.Error(fmt.Sprintf("marshal error: %s", err.Error()))
 								}
 								tx.Tx = res
-								//hash := hex.EncodeToString(tx.Tx.Hash())
-								//v = NewGotTxResponse(tx.Height, tx.Index, hash, tx.Result)
 								v = tx
 							default:
 								v = e.Data
 							}
-							//response := SendMessage{
-							//	Time:   time.Now().Format(time.RFC3339),
-							//	Content: v,
-							//}
 							response := SendMessage{
 								Time:   time.Now().Format(time.RFC3339),
 								Content: v,//e.Data,
 							}
 							Notify(r, res.topic, response)
+							worked = true
+						}
+						var end = time.Now()
+						if !worked {
+							if end.Sub(start).Seconds() > 15 {
+								Err := fmt.Sprintf("the node: %s, is bad, no result return after 15 senconds", res.addr)
+								response := SendMessage{
+									Time:   time.Now().Format(time.RFC3339),
+									Content: Err,
+								}
+								Notify(r, res.topic, response)
+								r.Mutex.Lock()
+								r.RemoveAllTMConnections(errors.New(Err))
+								r.Mutex.Unlock()
+								return
+							}
 						}
 					}(tmRes)
 				}
@@ -603,11 +655,17 @@ func (r *PubSubRoom) Unsubscribe(topic string) {
 	}
 }
 
-func (r *PubSubRoom) RemoveAllTMConnections() {
+func (r *PubSubRoom) RemoveAllTMConnections(err error) {
 	for _, v := range r.ConnMap {
 		//r.HasCreatedConn[k] = false
 		for _, val := range v {
 			if val != nil {
+				//Err := fmt.Sprintf("the node: %s, is bad, no result return after 15 senconds", res.addr)
+				response := SendMessage{
+					Time:   time.Now().Format(time.RFC3339),
+					Content: err.Error(),
+				}
+				_ = val.WriteJSON(response)
 				_ = val.Close()
 			}
 		}
@@ -617,6 +675,7 @@ func (r *PubSubRoom) RemoveAllTMConnections() {
 		_ = v.Stop()
 	}
 	//r.Clients = make([]*websocket.Conn, 0)
+	r.RemoteClients = make([]*websocket.Conn, 0)
 	r.backends = make([]Instance, 0)
 	r.ConnMap = make(map[string][]*websocket.Conn, 0)
 	//r.HasCreatedConn = make(map[string]bool)
@@ -627,6 +686,9 @@ func (r *PubSubRoom) RemoveAllEthConnections() {
 	for _, v := range r.EthConnections {
 		_ = v.Close()
 	}
+	r.RemoteClients = make([]*websocket.Conn, 0)
+	r.backends = make([]Instance, 0)
+	r.ConnMap = make(map[string][]*websocket.Conn, 0)
 	r.EthConnections = make(map[string]*websocket.Conn, 0)
 }
 
@@ -635,18 +697,7 @@ func (r *PubSubRoom) RemoveEthConnection(c *websocket.Conn) {
 		return
 	}
 	r.Mutex.Lock()
-	newMap := make(map[string]*websocket.Conn, 0)
-	for key, val := range r.EthConnections{
-		if val != c {
-			newMap[key] = val
-		}
-	}
-	if len(newMap) != 0 {
-		r.EthConnections = newMap
-	}else {
-		r.EthConnections = make(map[string]*websocket.Conn, 0)
-	}
-
+	r.RemoteClients = DeleteSlice(r.RemoteClients, c)
 	r.Mutex.Unlock()
 	_ = c.Close()
 }
@@ -660,6 +711,9 @@ func Notify(r *PubSubRoom, topic string, m SendMessage) {
 		if err := conn.WriteJSON(m); err != nil {
 			logger.Error("notify message error: %s", err.Error())
 			r.HandleUnsubscribeAll(conn)
+			r.Mutex.Lock()
+			r.RemoteClients = DeleteSlice(r.RemoteClients, conn)
+			r.Mutex.Unlock()
 			_ = conn.Close()
 			i--
 		}
@@ -667,14 +721,13 @@ func Notify(r *PubSubRoom, topic string, m SendMessage) {
 }
 
 func DeleteSlice(res []*websocket.Conn, s *websocket.Conn) []*websocket.Conn {
-	j := 0
+	result := make([]*websocket.Conn, 0)
 	for _, val := range res {
-		if val != s {
-			res[j] = val
-			j++
+		if val.RemoteAddr().String() != s.RemoteAddr().String() {
+			result = append(result, val)
 		}
 	}
-	return res[:j]
+	return result
 }
 
 
@@ -815,9 +868,13 @@ func GetConnection(addr string) (*rpcclient.HTTP, bool){
 }
 
 func GetEthConnection(addr string) (*websocket.Conn, bool) {
-	str := strings.Split(addr, ":")
-	link := DefaultEthPrefix + str[0] + ":" + DefaultPort
-	//link = "localhost:8546"
+	str := strings.Split(addr, "//")
+	var link string
+	if len(str) >= 2 {
+		link = strings.Split(str[1], ":")[0] + ":" + EthPort
+	}else {
+		link = strings.Split(str[0], ":")[0] + ":" + EthPort
+	}
 	u := url.URL{Scheme: "ws", Host: link,  Path: "/"}
 	dialer := websocket.DefaultDialer
 	c, _, err := dialer.Dial(u.String(), nil)
@@ -827,7 +884,7 @@ func GetEthConnection(addr string) (*websocket.Conn, bool) {
 func rpcAddress(host string) string {
 	res := DefaultTCP
 	str := strings.Split(host, ":")
-	res = res + DefaultPrefix + str[0] + ":" + DefaultPort
+	res = res + str[0] + ":" + TMPort
 	return res
 }
 
@@ -876,13 +933,43 @@ func rpcAddress(host string) string {
 //	}
 //}
 
+func GetURL(host string) (error, *util.DomainInfo) {
+	cli := &http.Client{
+		Transport:&http.Transport{DisableKeepAlives:true},
+	}
+	reqUrl := "http://" + strings.Split(host, ":")[0] + ":" + ShardPort + "/info"
+	req2, err := http.NewRequest("GET", reqUrl, nil)
+	if err != nil || req2 == nil {
+		return err, nil
+	}
+	//not use one connection
+	req2.Close = true
+	rep2, err := cli.Do(req2)
+	if err != nil {
+		return err, nil
+	}
+	b, err := ioutil.ReadAll(rep2.Body)
+	if err != nil {
+		return err, nil
+	}
+	defer rep2.Body.Close()
+
+	var info util.DomainInfo
+	err = json.Unmarshal(b, &info)
+	if err != nil {
+		return err, nil
+	}
+	return nil, &info
+}
+
 type TMResponse struct {
 	response <- chan ctypes.ResultEvent
 	topic  string
+	addr   string
 }
 
 type EthSubcribeMsg struct {
-	JsonRpc  string   `json:"json_rpc"`
+	JsonRpc  string   `json:"jsonrpc"`
 	ID       float64   `json:"id"`
 	Method   string   `json:"method"`
 	Params   []interface{}  `json:"params"`

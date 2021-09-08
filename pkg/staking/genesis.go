@@ -143,3 +143,23 @@ func InitGenesis(
 
 	return res
 }
+
+
+func ExportGenesis(ctx sdk.Context, k keeper.StakingKeeper) types.GenesisState {
+	return types.NewGenesisState(k.GetParams(ctx), k.GetAllValidators(ctx), k.GetAllDelegations(ctx))
+}
+
+
+
+
+// WriteValidators returns a slice of bonded genesis validators.
+func WriteValidators(ctx sdk.Context, keeper keeper.StakingKeeper) (vals []types.Validator, err error) {
+	keeper.IterateLastValidators(ctx, func(_ int64, validator types.Validator) (stop bool) {
+
+		vals = append(vals, validator)
+
+		return false
+	})
+
+	return
+}

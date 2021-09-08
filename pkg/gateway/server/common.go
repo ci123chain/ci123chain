@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/gateway/types"
 	"io/ioutil"
 	"net/http"
@@ -24,7 +25,8 @@ func SendRequest(requestUrl *url.URL,r *http.Request, RequestParams map[string]s
 	cli := &http.Client{
 		Transport:&http.Transport{DisableKeepAlives:true},
 	}
-	reqUrl := httpPrefix + requestUrl.Host + r.URL.Path
+	reqUrl := httpPrefix + requestUrl.Host  + ":"+ types.ShardPort + r.URL.Path
+	fmt.Println(reqUrl)
 	data := url.Values{}
 	for k, v := range RequestParams {
 		data.Set(k, v)

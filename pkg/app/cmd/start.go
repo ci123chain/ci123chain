@@ -22,6 +22,7 @@ import (
 	"github.com/tendermint/tendermint/rpc/client/local"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 )
@@ -37,7 +38,7 @@ const (
 	flagCiStateDBHost  = "statedb_host"
 	flagCiStateDBTls   = "statedb_tls"
 	flagCiStateDBPort  = "statedb_port"
-	flagCiNodeDomain   = "node_domain"
+	flagCiNodeDomain   = "IDG_HOST_80"
 	flagMasterDomain   = "master_domain"
 	flagShardIndex     = "shardIndex"
 	flagGenesis        = "genesis" //genesis.json
@@ -47,6 +48,8 @@ const (
 	version 		   = "CiChain v1.4.15"
 	flagETHChainID     = "eth_chain_id"
 	flagIteratorLimit  = "iterator_limit"
+	flagRunMode		   = "mode"
+	flagStartFromExport = "export"
 )
 
 func startCmd(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Codec) *cobra.Command {
@@ -58,6 +61,15 @@ func startCmd(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Codec) *co
 			limit := viper.GetInt(flagIteratorLimit)
 			util.Setup(id)
 			util.SetLimit(limit)
+			ok := viper.GetBool(flagStartFromExport)
+			if ok {
+				by, err := ioutil.ReadFile("/opt/exportFile.json")
+				if err == nil && by != nil {
+					_ = ioutil.WriteFile(filepath.Join(ctx.Config.RootDir, "config/genesis.json"), by, 0755)
+				}else {
+					ctx.Logger.Warn("start node with export genesis file, but no exportFile.json found in /opt")
+				}
+			}
 			if !viper.GetBool(flagWithTendermint) {
 				ctx.Logger.Info("Starting ABCI Without Tendermint")
 				return startStandAlone(ctx, appCreator)
@@ -80,15 +92,17 @@ func startCmd(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Codec) *co
 	cmd.Flags().String(flagTraceStore, "", "Enable KVStore tracing to an output file")
 	cmd.Flags().String(flagPruning, "syncable", "Pruning strategy: syncable, nothing, everything")
 	cmd.Flags().String(flagCiStateDBType, "redis", "database types")
-	cmd.Flags().String(flagCiStateDBHost, "localhost", "db host")
+	cmd.Flags().String(flagCiStateDBHost, "", "db host")
 	cmd.Flags().Uint64(flagCiStateDBPort, 7443, "db port")
 	cmd.Flags().Bool(flagCiStateDBTls, true, "use tls")
-	cmd.Flags().String(flagCiNodeDomain, "localhost", "node domain")
+	cmd.Flags().String(flagCiNodeDomain, "", "node domain")
 	cmd.Flags().String(flagShardIndex, "", "index of shard")
 	cmd.Flags().String(flagMasterDomain, "", "master node")
 	cmd.Flags().Int64(flagETHChainID, 1, "eth chain id")
 	cmd.Flags().Int(flagIteratorLimit, 10, "eth chain id")
 	cmd.Flags().String(FlagWithValidator, "", "validator_key")
+	cmd.Flags().String(flagRunMode, "single", "run chain mode")
+	cmd.Flags().Bool(flagStartFromExport, false, "start with export file")
 
 	//cmd.Flags().String(flagLogLevel, "debug", "Run abci app with different log level")
 	tcmd.AddNodeFlags(cmd)
@@ -137,6 +151,15 @@ func StartInProcess(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Code
 	}
 	dbHost := viper.GetString(flagCiStateDBHost)
 	if dbHost == "" {
+		var err error
+		dbHost, err = util.GetDomain()
+		if err != nil {
+			ctx.Logger.Error("get remote db host failed", "err", err.Error())
+			return nil, err
+		}
+	}
+	ctx.Logger.Info("discovery remote db host", "host", dbHost)
+	if dbHost == "" {
 		return nil, errors.New(fmt.Sprintf("%s can not be empty", flagCiStateDBHost))
 	}
 	dbTls := viper.GetBool(flagCiStateDBTls)
@@ -153,10 +176,13 @@ func StartInProcess(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Code
 		return nil, errors.New(fmt.Sprintf("types of db: %s, which is not reids not implement yet", dbType))
 	}
 
-	nodeDomain := viper.GetString(flagCiNodeDomain)
-
+	//nodeDomain := viper.GetString(flagCiNodeDomain)
+	nodeDomain := os.Getenv(flagCiNodeDomain)
 	if nodeDomain == "" {
-		return nil, errors.New("node domain can not be empty")
+		nodeDomain = util.GetLocalAddress()
+		if nodeDomain == "" {
+			return nil, errors.New("you have no valid ip address which used to be dial by other peer")
+		}
 	}
 
 	appState, gendoc, err := app.GenesisStateFromGenFile(cdc, cfg.GenesisFile())

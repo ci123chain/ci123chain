@@ -9,6 +9,10 @@ import (
 
 type GenesisState GenesisAccounts
 
+func NewGenesisState(accounts GenesisAccounts) GenesisState {
+	return GenesisState(accounts)
+}
+
 func SetGenesisStateInAppState(cdc *codec.Codec, appState map[string]json.RawMessage,
 	genesisState GenesisState)  map[string]json.RawMessage  {
 

@@ -9,6 +9,8 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/ibc/core/host"
 	porttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/port/types"
 	"github.com/tendermint/tendermint/libs/log"
+	"strconv"
+	"strings"
 )
 
 // Keeper defines the IBC channel keeper
@@ -67,6 +69,22 @@ func (k Keeper) SetChannel(ctx sdk.Context, portID, channelID string, channel ty
 	store.Set(host.ChannelKey(portID, channelID), bz)
 }
 
+func (k Keeper) GetChannels(ctx sdk.Context, cb func(channel types.Channel, portID, channelID string) (stop bool)) {
+	store := ctx.KVStore(k.storeKey)
+	iter := sdk.KVStorePrefixIterator(store, []byte(host.KeyChannelEndPrefix))
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		key := string(iter.Key())
+		keys := strings.Split(key, "/")
+		var v types.Channel
+		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &v)
+		if cb(v, keys[1], keys[2]) {
+			break
+		}
+	}
+}
+
 // GenerateChannelIdentifier returns the next channel identifier.
 func (k Keeper) GenerateChannelIdentifier(ctx sdk.Context) string {
 	nextChannelSeq := k.GetNextChannelSequence(ctx)
@@ -116,6 +134,19 @@ func (k Keeper) SetNextSequenceSend(ctx sdk.Context, portID, channelID string, s
 	store.Set(host.NextSequenceSendKey(portID, channelID), bz)
 }
 
+func (k Keeper) GetAllNextSequenceSend(ctx sdk.Context, cb func(seq uint64, portID, channelID string) (stop bool)) {
+	store := ctx.KVStore(k.storeKey)
+	iter := sdk.KVStorePrefixIterator(store, []byte(host.KeyNextSeqSendPrefix))
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		key := string(iter.Key())
+		keys := strings.Split(key, "/")
+		if cb(sdk.BigEndianToUint64(iter.Value()), keys[1], keys[2]) {
+			break
+		}
+	}
+}
 
 
 // GetNextSequenceRecv gets a channel's next receive sequence from the store
@@ -136,6 +167,19 @@ func (k Keeper) SetNextSequenceRecv(ctx sdk.Context, portID, channelID string, s
 	store.Set(host.NextSequenceRecvKey(portID, channelID), bz)
 }
 
+func (k Keeper) GetAllNextSequenceRecv(ctx sdk.Context, cb func(seq uint64, portID, channelID string) (stop bool)) {
+	store := ctx.KVStore(k.storeKey)
+	iter := sdk.KVStorePrefixIterator(store, []byte(host.KeyNextSeqRecvPrefix))
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		key := string(iter.Key())
+		keys := strings.Split(key, "/")
+		if cb(sdk.BigEndianToUint64(iter.Value()), keys[1], keys[2]) {
+			break
+		}
+	}
+}
 
 // GetNextSequenceAck gets a channel's next ack sequence from the store
 func (k Keeper) GetNextSequenceAck(ctx sdk.Context, portID, channelID string) (uint64, bool) {
@@ -155,6 +199,20 @@ func (k Keeper) SetNextSequenceAck(ctx sdk.Context, portID, channelID string, se
 	store.Set(host.NextSequenceAckKey(portID, channelID), bz)
 }
 
+func (k Keeper) GetAllNextSequenceAck(ctx sdk.Context, cb func(seq uint64, portID, channelID string) (stop bool)) {
+	store := ctx.KVStore(k.storeKey)
+	iter := sdk.KVStorePrefixIterator(store, []byte(host.KeyNextSeqAckPrefix))
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		key := string(iter.Key())
+		keys := strings.Split(key, "/")
+		if cb(sdk.BigEndianToUint64(iter.Value()), keys[1], keys[2]) {
+			break
+		}
+	}
+}
+
 // LookupModuleByChannel will return the IBCModule along with the capability associated with a given channel defined by its portID and channelID
 func (k Keeper) LookupModuleByChannel(ctx sdk.Context, portID, channelID string) (string, *capabilitytypes.Capability, error) {
 	modules, cap, err := k.scopedKeeper.LookupModules(ctx, host.ChannelCapabilityPath(portID, channelID))
@@ -169,6 +227,21 @@ func (k Keeper) LookupModuleByChannel(ctx sdk.Context, portID, channelID string)
 func (k Keeper) SetPacketCommitment(ctx sdk.Context, portID, channelID string, sequence uint64, commitmentHash []byte) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(host.PacketCommitmentKey(portID, channelID, sequence), commitmentHash)
+}
+
+func (k Keeper) GetAllPacketCommitments(ctx sdk.Context, cb func(data []byte, portID, channelID string, Seq uint64) (stop bool)) {
+	store := ctx.KVStore(k.storeKey)
+	iter := sdk.KVStorePrefixIterator(store, []byte(host.KeyPacketCommitmentPrefix))
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		key := string(iter.Key())
+		keys := strings.Split(key, "/")
+		seq, _ := strconv.ParseUint(keys[3], 10, 64)
+		if cb(iter.Value(), keys[1], keys[2], seq) {
+			break
+		}
+	}
 }
 
 // GetPacketCommitment gets the packet commitment hash from the store
@@ -202,6 +275,21 @@ func (k Keeper) SetPacketReceipt(ctx sdk.Context, portID, channelID string, sequ
 	store.Set(host.PacketReceiptKey(portID, channelID, sequence), []byte{byte(1)})
 }
 
+func (k Keeper) GetAllPacketReceipts(ctx sdk.Context, cb func(data []byte, portID, channelID string, Seq uint64) (stop bool)) {
+	store := ctx.KVStore(k.storeKey)
+	iter := sdk.KVStorePrefixIterator(store, []byte(host.KeyPacketReceiptPrefix))
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		key := string(iter.Key())
+		keys := strings.Split(key, "/")
+		seq, _ := strconv.ParseUint(keys[3], 10, 64)
+		if cb(iter.Value(), keys[1], keys[2], seq) {
+			break
+		}
+	}
+}
+
 // HasPacketAcknowledgement check if the packet ack hash is already on the store
 func (k Keeper) HasPacketAcknowledgement(ctx sdk.Context, portID, channelID string, sequence uint64) bool {
 	store := ctx.KVStore(k.storeKey)
@@ -223,4 +311,20 @@ func (k Keeper) GetPacketAcknowledgement(ctx sdk.Context, portID, channelID stri
 func (k Keeper) SetPacketAcknowledgement(ctx sdk.Context, portID, channelID string, sequence uint64, ackHash []byte) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(host.PacketAcknowledgementKey(portID, channelID, sequence), ackHash)
+}
+
+
+func (k Keeper) GetAllPacketAAcknowledgements(ctx sdk.Context, cb func(data []byte, portID, channelID string, Seq uint64) (stop bool)) {
+	store := ctx.KVStore(k.storeKey)
+	iter := sdk.KVStorePrefixIterator(store, []byte(host.KeyPacketAckPrefix))
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		key := string(iter.Key())
+		keys := strings.Split(key, "/")
+		seq, _ := strconv.ParseUint(keys[3], 10, 64)
+		if cb(iter.Value(), keys[1], keys[2], seq) {
+			break
+		}
+	}
 }

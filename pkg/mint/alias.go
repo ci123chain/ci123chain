@@ -21,6 +21,7 @@ var (
 	ModuleCdc = types.MintCdc
 	NewKeeper = keeper.NewMinterKeeper
 	NewQuerier = keeper.NewQuerier
+	NewGenesisState = types.NewGenesisState
 )
 
 type (

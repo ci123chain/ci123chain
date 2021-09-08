@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/module"
+	i "github.com/ci123chain/ci123chain/pkg/infrastructure"
 	"github.com/ci123chain/ci123chain/pkg/infrastructure/keeper"
 	"github.com/ci123chain/ci123chain/pkg/infrastructure/module/basic"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -22,7 +23,9 @@ func (am AppModule) Committer(ctx sdk.Context) {
 }
 
 func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.ValidatorUpdate {
-	//do nothing
+	var res i.GenesisState
+	_ = json.Unmarshal(data, &res)
+	i.InitGenesis(ctx, am.Keeper, res)
 	return nil
 }
 
@@ -36,4 +39,9 @@ func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.Val
 }
 
 func (am AppModule) RegisterServices(cfg module.Configurator) {
+}
+
+func (am AppModule) ExportGenesis(ctx sdk.Context) json.RawMessage {
+	res, _ := json.Marshal(i.ExportGenesis(ctx, am.Keeper))
+	return res
 }

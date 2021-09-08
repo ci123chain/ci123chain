@@ -16,3 +16,13 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, createLocalhost bool, gs *typ
 	connection.InitGenesis(ctx, k.ConnectionKeeper, gs.ConnectionGenesis)
 	channel.InitGenesis(ctx, k.ChannelKeeper, gs.ChannelGenesis)
 }
+
+func ExportGenesis(ctx sdk.Context, k keeper.Keeper) types.GenesisState {
+
+	gs := types.GenesisState{
+		ClientGenesis:     clients.ExportGenesis(ctx, k.ClientKeeper, ""),
+		ConnectionGenesis: connection.ExportGenesis(ctx, k.ConnectionKeeper),
+		ChannelGenesis:    channel.ExportGenesis(ctx, k.ChannelKeeper),
+	}
+	return gs
+}

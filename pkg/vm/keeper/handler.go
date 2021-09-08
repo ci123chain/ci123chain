@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 	tmtypes "github.com/tendermint/tendermint/types"
 	"math/big"
+	"strings"
 )
 
 const (
@@ -186,7 +187,31 @@ func handleMsgEvmTx(ctx sdk.Context, k *Keeper, msg evm.MsgEvmTx) (*sdk.Result, 
 			),
 		)
 	}
-	
+
+	var resultData evm.ResultData
+	resultData, err = evm.DecodeResultData(executionResult.Result.Data)
+	if err != nil {
+		return nil, err
+	}
+
+	logAddress := make(map[string]struct{})
+	for _, log := range resultData.Logs {
+		if _, ok := logAddress[log.Address.String()]; !ok {
+			logAddress[log.Address.String()] = struct{}{}
+		}
+	}
+
+	var eventLogAddress sdk.Events
+	for addr, _ := range logAddress {
+		eventLogAddress = append(eventLogAddress, sdk.NewEvent(
+			evm.EventTypeEvmTx,
+			sdk.NewAttribute([]byte(evm.AttributeKeyContractAddress), []byte(addr)),
+		))
+	}
+	if len(eventLogAddress) != 0 {
+		ctx.EventManager().EmitEvents(eventLogAddress)
+	}
+
 	// set the events to the result
 	executionResult.Result.Events = ctx.EventManager().Events()
 	return executionResult.Result, nil
@@ -272,6 +297,30 @@ func handleMsgEthereumTx(ctx sdk.Context, k *Keeper, msg types.MsgEthereumTx) (*
 				sdk.NewAttribute([]byte(evm.AttributeKeyRecipient), []byte(msg.Data.Recipient.String())),
 			),
 		)
+	}
+
+	var resultData evm.ResultData
+	resultData, err = evm.DecodeResultData(executionResult.Result.Data)
+	if err != nil {
+		return nil, err
+	}
+
+	logAddress := make(map[string]struct{})
+	for _, log := range resultData.Logs {
+		if _, ok := logAddress[log.Address.String()]; !ok {
+			logAddress[strings.ToLower(log.Address.String())] = struct{}{}
+		}
+	}
+
+	var eventLogAddress sdk.Events
+	for addr, _ := range logAddress {
+		eventLogAddress = append(eventLogAddress, sdk.NewEvent(
+			evm.EventTypeEvmTx,
+			sdk.NewAttribute([]byte(evm.AttributeKeyContractAddress), []byte(addr)),
+		))
+	}
+	if len(eventLogAddress) != 0 {
+		ctx.EventManager().EmitEvents(eventLogAddress)
 	}
 
 	// set the events to the result

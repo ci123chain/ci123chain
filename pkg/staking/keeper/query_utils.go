@@ -119,3 +119,30 @@ func (k StakingKeeper) GetAllDelegatorDelegations(ctx sdk.Context, delegator sdk
 
 	return delegations
 }
+
+
+// GetAllDelegations returns all delegations used during genesis dump
+func (k StakingKeeper) GetAllDelegations(ctx sdk.Context) (delegations []types.Delegation) {
+	k.IterateAllDelegations(ctx, func(delegation types.Delegation) bool {
+		delegations = append(delegations, delegation)
+		return false
+	})
+
+	return delegations
+}
+
+// IterateAllDelegations iterate through all of the delegations
+func (k StakingKeeper) IterateAllDelegations(ctx sdk.Context, cb func(delegation types.Delegation) (stop bool)) {
+	store := ctx.KVStore(k.storeKey)
+
+	iterator := sdk.KVStorePrefixIterator(store, types.DelegationKey)
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		var delegation types.Delegation
+		types.StakingCodec.MustUnmarshalBinaryLengthPrefixed(iterator.Value(), &delegation)
+		if cb(delegation) {
+			break
+		}
+	}
+}

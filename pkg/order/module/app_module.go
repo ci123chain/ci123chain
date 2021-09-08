@@ -53,3 +53,9 @@ func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.Va
 
 func (am AppModule) RegisterServices(cfg module.Configurator) {
 }
+
+func (am AppModule) ExportGenesis(ctx sdk.Context) json.RawMessage {
+	ob, _ := am.OrderKeeper.GetOrderBook(ctx)
+	gs := types.NewGenesisState(types.Params{OrderBook:ob})
+	return types.ModuleCdc.MustMarshalJSON(gs)
+}

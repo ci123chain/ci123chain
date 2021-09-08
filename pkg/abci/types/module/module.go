@@ -19,6 +19,7 @@ type AppModuleGenesis interface {
 	InitGenesis(ctx types.Context, data json.RawMessage) []abci.ValidatorUpdate
 	BeginBlocker(ctx types.Context, req abci.RequestBeginBlock)
 	EndBlock(ctx types.Context, req abci.RequestEndBlock) []abci.ValidatorUpdate
+	ExportGenesis(types.Context) json.RawMessage
 }
 
 type AppModuleBasic interface {
@@ -163,4 +164,13 @@ func (am *AppManager) RegisterServices(cfg Configurator) {
 	for _, module := range am.Modules {
 		module.RegisterServices(cfg)
 	}
+}
+
+func (am *AppManager) ExportGenesis(ctx types.Context) map[string]json.RawMessage {
+	genesisData := make(map[string]json.RawMessage)
+	for _, moduleName := range am.Orders {
+		genesisData[moduleName] = am.Modules[moduleName].ExportGenesis(ctx)
+	}
+
+	return genesisData
 }

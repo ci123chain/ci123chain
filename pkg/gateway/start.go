@@ -10,6 +10,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/gateway/logger"
 	"github.com/ci123chain/ci123chain/pkg/gateway/redissource"
 	"github.com/ci123chain/ci123chain/pkg/gateway/types"
+	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/pretty66/gosdk/cienv"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -27,7 +28,9 @@ const (
 	flagCiStateDBHost  = "statedb_host"
 	flagCiStateDBPort  = "statedb_port"
 	flagCiStateDBTls   = "statedb_tls"
-	flagRPCPort 	   = "rpcport"
+	flagRPCPort 	   = "port_tm"
+	flagShard          = "port_shard"
+	flagETHRPCPort     = "port_eth"
 	AppID			   = "hedlzgp1u48kjf50xtcvwdklminbqe9a"
 )
 
@@ -46,7 +49,9 @@ func Start() {
 	flag.StringVar(&urlreg, "urlreg", "http://***", "reg for url connection to node")
 	flag.IntVar(&port, "port", 3030, "Port to serve")
 
-	flag.String(flagRPCPort, "80", "rpc address for websocket")
+	flag.String(flagRPCPort, "80", "tendermint port for websocket")
+	flag.String(flagShard, "80", "shard port for websocket")
+	flag.String(flagETHRPCPort, "80", "eth port for websocket")
 	flag.String(flagCiStateDBType, "redis", "database types")
 	flag.String(flagCiStateDBHost, "", "db host")
 	flag.Uint64(flagCiStateDBPort, 7443, "db port")
@@ -66,6 +71,14 @@ func Start() {
 	}
 	dbHost := viper.GetString(flagCiStateDBHost)
 	if dbHost == "" {
+		var err error
+		dbHost, err = util.GetDomain()
+		if err != nil {
+			logger.Error("get remote db host failed", "err", err.Error())
+			return
+		}
+	}
+	if dbHost == "" {
 		panic(errors.New(fmt.Sprintf("%s can not be empty", "ci-statedb-host")))
 	}
 	dbTls := viper.GetBool(flagCiStateDBTls)
@@ -84,20 +97,28 @@ func Start() {
 	//logDir = viper.GetString("logdir")
 	port = viper.GetInt("port")
 	urlreg = viper.GetString("urlreg")
-	rpcAddress := viper.GetString(flagRPCPort)
-	if rpcAddress == "" {
-		rpcAddress = types.DefaultRPCPort
+	tmport := viper.GetString(flagRPCPort)
+	if tmport == "" {
+		tmport = "26657"
+	}
+	shardport := viper.GetString(flagShard)
+	if shardport == "" {
+		shardport = "8545"
+	}
+	ethport := viper.GetString(flagETHRPCPort)
+	if ethport == "" {
+		ethport = "8546"
 	}
 
 	if ok, err := regexp.MatchString("[*]+", urlreg); !ok {
 		panic(err)
 	}
 	// 初始化logger
-	logger.Init()
+	//logger.Init()
 	//dynamic.Init()
 	//init PubSubRoom
 	pubsubRoom = &types.PubSubRoom{}
-	types.SetDefaultPort(rpcAddress)
+	types.SetDefaultPort(tmport,shardport, ethport)
 	pubsubRoom.GetPubSubRoom()
 
 	svr := redissource.NewRedisSource(statedb, urlreg)

@@ -28,3 +28,7 @@ var (
 
 	AttributeValueStoreContent       = types.EventStoreContent
 )
+
+type (
+	GenesisState = types.GenesisState
+)

@@ -36,3 +36,7 @@ func (am AppModule) EndBlock(_ types.Context, _ abci.RequestEndBlock) []abci.Val
 
 func (am AppModule) RegisterServices(cfg module.Configurator) {
 }
+
+func (am AppModule) ExportGenesis(ctx types.Context) json.RawMessage{
+	return supply.ModuleCdc.MustMarshalJSON(supply.ExportGenesis(ctx, am.Keeper))
+}

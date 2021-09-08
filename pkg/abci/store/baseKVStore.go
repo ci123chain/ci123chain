@@ -59,7 +59,7 @@ func (ks *baseKVStore) Get(key []byte) (value []byte) {
 	cacheValue, ok := ks.cache[ckey]
 	if !ok {
 		value = ks.parent.Get(key)
-			ks.setCacheValue(key, value, false, false)
+		ks.setCacheValue(key, value, false, false)
 	} else {
 		value = cacheValue.value
 	}

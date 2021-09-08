@@ -81,6 +81,10 @@ func (bs *baseMultiStore) LoadLatestVersion() error {
 	return err
 }
 
+func (bs *baseMultiStore) SetInitialVersion(version int64) error {
+	return nil
+}
+
 func (bs *baseMultiStore) LoadVersion(ver int64) error {
 	if ver == 0 {
 		for key, storeParams := range bs.storesParams {
