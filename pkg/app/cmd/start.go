@@ -100,7 +100,7 @@ func startCmd(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Codec) *co
 	cmd.Flags().Int(flagIteratorLimit, 10, "eth chain id")
 	cmd.Flags().String(FlagWithValidator, "", "validator_key")
 	cmd.Flags().String(flagRunMode, "single", "run chain mode")
-	cmd.Flags().Bool(flagStartFromExport, true, "start with export file")
+	cmd.Flags().Bool(flagStartFromExport, false, "start with export file")
 
 	//cmd.Flags().String(flagLogLevel, "debug", "Run abci app with different log level")
 	tcmd.AddNodeFlags(cmd)
