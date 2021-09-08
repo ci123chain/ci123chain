@@ -79,6 +79,19 @@ func EthPubSubHandle(w http.ResponseWriter, r *http.Request) {
 	go pubsubRoom.ReceiveEth(conn)
 }
 
+func checkEthBackend() {
+	t := time.NewTicker(time.Second * 30)
+	for {
+		select {
+		case <-t.C:
+			logger.Debug("Start eth backend check...")
+			for _, v := range pubsubRoom.EthConnections {
+				_ = v.WriteMessage(websocket.PingMessage, nil)
+			}
+		}
+	}
+}
+
 
 func checkBackend() {
 	t := time.NewTicker(time.Second * 10)
