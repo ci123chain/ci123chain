@@ -20,6 +20,9 @@ func NewInfrastructureKeeper(cdc *codec.Codec, key sdk.StoreKey) InfrastructureK
 	}
 }
 
+func (k InfrastructureKeeper) GetStoreKey() sdk.StoreKey {
+	return k.storeKey
+}
 
 
 //get method

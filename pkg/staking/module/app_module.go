@@ -7,9 +7,9 @@ import (
 	ak "github.com/ci123chain/ci123chain/pkg/account/keeper"
 	"github.com/ci123chain/ci123chain/pkg/staking"
 	k "github.com/ci123chain/ci123chain/pkg/staking/keeper"
+	"github.com/ci123chain/ci123chain/pkg/staking/module/basic"
 	"github.com/ci123chain/ci123chain/pkg/staking/types"
 	sk "github.com/ci123chain/ci123chain/pkg/supply/keeper"
-	"github.com/ci123chain/ci123chain/pkg/staking/module/basic"
 	abci "github.com/tendermint/tendermint/abci/types"
 )
 
@@ -43,4 +43,8 @@ func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.Val
 }
 
 func (am AppModule) RegisterServices(cfg module.Configurator) {
+}
+
+func (am AppModule) ExportGenesis(ctx sdk.Context) json.RawMessage {
+	return types.StakingCodec.MustMarshalJSON(staking.ExportGenesis(ctx, am.StakingKeeper))
 }

@@ -150,10 +150,6 @@ func (f *Filter) indexedLogs(ctx context.Context, end uint64) ([]*ethtypes.Log, 
 			f.criteria.FromBlock = big.NewInt(int64(number) + 1)
 
 			// Retrieve the suggested block and pull any truly matching logs
-			header, err := f.backend.HeaderByNumber(rpctypes.BlockNumber(number))
-			if header == nil || err != nil {
-				return logs, err
-			}
 			found := f.checkMatches(int64(number))
 			if err != nil {
 				return logs, err

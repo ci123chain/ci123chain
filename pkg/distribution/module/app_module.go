@@ -42,3 +42,7 @@ func (am AppModule) Committer(ctx types.Context) {
 
 func (am AppModule) RegisterServices(cfg module.Configurator) {
 }
+
+func (am AppModule) ExportGenesis(ctx types.Context) json.RawMessage {
+	return distribution.ModuleCdc.MustMarshalJSON(distribution.ExportGenesis(ctx, am.AccountKeeper, am.SupplyKeeper, am.DistributionKeeper))
+}

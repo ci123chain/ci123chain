@@ -86,9 +86,9 @@ func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.Va
 
 // ExportGenesis returns the exported genesis state as raw bytes for the slashing
 // module.
-func (am AppModule) ExportGenesis(ctx sdk.Context, cdc *codec.Codec) json.RawMessage {
+func (am AppModule) ExportGenesis(ctx sdk.Context) json.RawMessage {
 	gs := ExportGenesis(ctx, am.Keeper)
-	return cdc.MustMarshalJSON(gs)
+	return types.SlashingCodec.MustMarshalJSON(gs)
 }
 
 // BeginBlock returns the begin blocker for the slashing module.

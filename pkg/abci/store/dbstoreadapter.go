@@ -84,7 +84,10 @@ func (dsa dbStoreAdapter) Parent() KVStore {
 var _ KVStore = dbStoreAdapter{}
 
 func (dsa dbStoreAdapter) RemoteIterator(start, end []byte) Iterator {
-	i, _ := dsa.DB.Iterator(start, end)
+	i, err := dsa.DB.Iterator(start, end)
+	if err != nil {
+		return nil
+	}
 	return i
 }
 

@@ -46,6 +46,10 @@ func (am AppModule) InitGenesis(ctx abci_types.Context, data json.RawMessage) []
 	return nil
 }
 
+func (am AppModule) ExportGenesis(ctx abci_types.Context) json.RawMessage {
+	return types.ModuleCdc.MustMarshalJSON(ExportGenesis(ctx, am.AuthKeeper))
+}
+
 type AppModule struct {
 	AppModuleBasic
 

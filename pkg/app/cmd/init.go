@@ -381,7 +381,8 @@ func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initCo
 			panic(err)
 		}
 	}else {
-		panic(errors.New("validator key can not be empty"))
+		//panic(errors.New("validator key can not be empty"))
+		validatorKey = ed25519.GenPrivKey()
 	}
 
 	//create priv_validator_key.json

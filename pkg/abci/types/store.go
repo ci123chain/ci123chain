@@ -115,6 +115,8 @@ type CommitMultiStore interface {
 	// the next commit after loading must be idempotent (return the
 	// same commit id).  Otherwise the behavior is undefined.
 	LoadVersion(ver int64) error
+
+	SetInitialVersion(version int64) error
 }
 
 //---------subsp-------------------------------

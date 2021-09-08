@@ -1,10 +1,12 @@
 package store
 
 import (
+	"bytes"
 	"fmt"
 	ics23 "github.com/confio/ics23/go"
 	"github.com/cosmos/iavl"
 	"github.com/pkg/errors"
+	"github.com/spf13/viper"
 	tmcrypto "github.com/tendermint/tendermint/proto/tendermint/crypto"
 	"io"
 	"reflect"
@@ -19,6 +21,9 @@ import (
 )
 
 const (
+	FlagRunMode = "mode"
+	ModeSingle = "single"
+	ModeMulti = "multi"
 	defaultIAVLCacheSize = 10000
 )
 
@@ -66,6 +71,8 @@ type iavlStore struct {
 
 	key   sdk.StoreKey
 	lg logger.Logger
+
+	mode string
 }
 
 // CONTRACT: tree should be fully loaded.
@@ -79,6 +86,7 @@ func newIAVLStore(db dbm.DB, tree *iavl.MutableTree, numRecent int64, storeEvery
 		parent: 	NewBaseKVStore(dbStoreAdapter{db}, storeEvery, numRecent, key),
 		lg:         logger,
 		key:        key,
+		mode: 		viper.GetString(FlagRunMode),
 	}
 	return st
 }
@@ -161,8 +169,25 @@ func (st *iavlStore) Set(key, value []byte) {
 
 // Implements KVStore.
 func (st *iavlStore) Get(key []byte) (value []byte) {
-	value = st.parent.(KVStore).Get(key)
-	return
+	remoteValue := st.parent.(KVStore).Get(key)
+	_, localValue := st.tree.Get(key)
+	if localValue != nil {
+		if !bytes.Equal(remoteValue, localValue) {
+			logger.GetLogger().Error("iavlStore get value not matched!", "store", st.key.Name(), "key", string(key))
+		}
+	}
+	switch st.mode {
+	case ModeMulti:
+		value = remoteValue
+		return
+	default:
+		if localValue != nil {
+			value = localValue
+		} else {
+			value = remoteValue
+		}
+		return
+	}
 }
 
 // Implements KVStore.

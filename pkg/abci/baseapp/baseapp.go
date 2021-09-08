@@ -108,6 +108,9 @@ type BaseApp struct {
 	snapshotKeepRecent uint32 // recent state sync snapshots to keep
 
 	gasPriceConfig *config.GasPriceConfig
+
+	paramStore ParamStore
+
 }
 
 func (app *BaseApp) ListSnapshots(req abci.RequestListSnapshots) abci.ResponseListSnapshots {
@@ -258,6 +261,15 @@ func NewBaseApp(name string, logger log.Logger, ldb dbm.DB, cdb dbm.DB, cacheDir
 		option(app)
 	}
 	return app
+}
+
+// SetParamStore sets a parameter store on the BaseApp.
+func (app *BaseApp) SetParamStore(ps ParamStore) {
+	if app.sealed {
+		panic("SetParamStore() on sealed BaseApp")
+	}
+
+	app.paramStore = ps
 }
 
 // BaseApp Name
@@ -427,12 +439,27 @@ func (app *BaseApp) setIndexEvents(ie []string) {
 	}
 }
 
+func (app *BaseApp) SetInitialVersion(version int64) error {
+	return app.cms.SetInitialVersion(version)
+}
+
 // Implements ABCI
 // InitChain runs the initialization logic directly on the CommitMultiStore and commits it.
 func (app *BaseApp) InitChain(req abci.RequestInitChain) (res abci.ResponseInitChain) {
+
+	if req.InitialHeight > 1 {
+		if err := app.SetInitialVersion(req.InitialHeight); err != nil {
+			panic(err)
+		}
+	}
+
 	// Initialize the deliver state and check state with ChainID and run initChain
 	app.setDeliverState(types.Header{ChainID: req.ChainId})
 	app.setCheckState(types.Header{ChainID: req.ChainId})
+
+	if req.ConsensusParams != nil {
+		app.StoreConsensusParams(app.deliverState.ctx, req.ConsensusParams)
+	}
 
 	if app.initChainer == nil {
 		return
@@ -565,6 +592,53 @@ func (app *BaseApp) createQueryContext(height int64, prove bool) (sdk.Context, e
 	)
 
 	return ctx, nil
+}
+
+func (app *BaseApp) StoreConsensusParams(ctx sdk.Context, cp *abci.ConsensusParams) {
+	if app.paramStore == nil {
+		panic("cannot store consensus params with no params store set")
+	}
+
+	if cp == nil {
+		return
+	}
+
+	app.paramStore.Set(ctx, ParamStoreKeyBlockParams, cp.Block)
+	app.paramStore.Set(ctx, ParamStoreKeyEvidenceParams, cp.Evidence)
+	app.paramStore.Set(ctx, ParamStoreKeyValidatorParams, cp.Validator)
+}
+
+// GetConsensusParams returns the current consensus parameters from the BaseApp's
+// ParamStore. If the BaseApp has no ParamStore defined, nil is returned.
+func (app *BaseApp) GetConsensusParams(ctx sdk.Context) *abci.ConsensusParams {
+	if app.paramStore == nil {
+		return nil
+	}
+
+	cp := new(abci.ConsensusParams)
+
+	if app.paramStore.Has(ctx, ParamStoreKeyBlockParams) {
+		var bp abci.BlockParams
+
+		app.paramStore.Get(ctx, ParamStoreKeyBlockParams, &bp)
+		cp.Block = &bp
+	}
+
+	if app.paramStore.Has(ctx, ParamStoreKeyEvidenceParams) {
+		var ep types.EvidenceParams
+
+		app.paramStore.Get(ctx, ParamStoreKeyEvidenceParams, &ep)
+		cp.Evidence = &ep
+	}
+
+	if app.paramStore.Has(ctx, ParamStoreKeyValidatorParams) {
+		var vp types.ValidatorParams
+
+		app.paramStore.Get(ctx, ParamStoreKeyValidatorParams, &vp)
+		cp.Validator = &vp
+	}
+
+	return cp
 }
 
 func checkNegativeHeight(height int64) error {
@@ -919,23 +993,22 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 			switch rType := r.(type) {
 			case sdk.ErrorOutOfGas:
 				res := app.deferHandler(ctx, tx, true, mode == runTxModeSimulate)
-				_ = fmt.Sprintf("out of gas in location -- %v", rType.Descriptor)
+				err = errors.New(fmt.Sprintf("out of gas in location -- %v", rType.Descriptor))
 				result.GasUsed = res.GasUsed
 				result.GasWanted = res.GasWanted
-				err = abcierrors.ErrRuxTxOutOfGas
+				//err = abcierrors.ErrRuxTxOutOfGas
 			default:
 				res := app.deferHandler(ctx, tx, false, mode == runTxModeSimulate)
-				_ = fmt.Sprintf("recovered -- %v\nstack:%v\n", r, string(debug.Stack()))
+				err = errors.New(fmt.Sprintf("recovered -- %v\nstack:%v\n", r, string(debug.Stack())))
 				result.GasUsed = res.GasUsed
 				result.GasWanted = res.GasWanted
-				err = abcierrors.ErrRecoverInRunTx
+				//err = abcierrors.ErrRecoverInRunTx
 			}
 			for _, v := range all_attributes {
 				v = append(v, sdk.NewAttribute([]byte(sdk.EventTypeType), []byte(sdk.AttributeKeyInvalidTx)))
 				event := sdk.NewEvent(sdk.AttributeKeyTx, v...)
 				result.Events = append(result.Events, abci.Event(event))
 			}
-			fmt.Println(result.Events)
 		} else {
 			res := app.deferHandler(ctx, tx, false, mode == runTxModeSimulate)
 			if mode != runTxModeSimulate {

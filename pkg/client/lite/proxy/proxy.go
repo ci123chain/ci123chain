@@ -41,7 +41,7 @@ func StartProxy(c rpcclient.Client, listenAddr string, logger log.Logger, maxOpe
 
 	unsubscribeFromAllEvents := func(remoteAddr string) {
 		if err := c.UnsubscribeAll(context.Background(), remoteAddr); err != nil {
-			logger.Error("Failed to unsubscribe from events", "err", err)
+			logger.Warn("Failed to unsubscribe from events", "err", err)
 		}
 	}
 	wm := rpcserver.NewWebsocketManager(r, rpcserver.OnDisconnect(unsubscribeFromAllEvents))

@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"bytes"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/ibc/application/transfer/types"
 )
@@ -22,4 +23,16 @@ func (k Keeper) GetReceiveEnabled(ctx sdk.Context) bool {
 // SetParams sets the total set of ibc-transfer parameters.
 func (k Keeper) SetParams(ctx sdk.Context, params types.Params) {
 	k.paramSpace.SetParamSet(ctx, &params)
+}
+
+func (k Keeper) GetParams(ctx sdk.Context) (params types.Params) {
+	ps := types.DefaultParams()
+	for _, v := range ps.ParamSetPairs() {
+		if bytes.Equal(v.Key, types.KeySendEnabled) {
+			params.SendEnabled = v.Value.(bool)
+		}else if bytes.Equal(v.Key, types.KeyReceiveEnabled) {
+			params.ReceiveEnabled = v.Value.(bool)
+		}
+	}
+	return
 }

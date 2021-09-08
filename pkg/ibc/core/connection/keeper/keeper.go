@@ -62,6 +62,21 @@ func (k Keeper) GetConnection(ctx sdk.Context, connectionID string) (types.Conne
 	return connection, true
 }
 
+func (k Keeper) GetConnects(ctx sdk.Context, cb func(end types.ConnectionEnd) (stop bool)) {
+	store := ctx.KVStore(k.storeKey)
+
+	iter := sdk.KVStorePrefixIterator(store, []byte(host.KeyConnectionPrefix))
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		var ce types.ConnectionEnd
+		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &ce)
+		if cb(ce) {
+			break
+		}
+	}
+}
+
 func (k Keeper) GetTimestampAtHeight(ctx sdk.Context, connection types.ConnectionEnd, height exported.Height) (uint64, error) {
 	consensusState, found := k.clientKeeper.GetClientConsensusState(
 		ctx, connection.GetClientID(), height,
