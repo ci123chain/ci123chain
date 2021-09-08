@@ -86,7 +86,11 @@ func (s *Server) sendErrResponse(conn *websocket.Conn, msg string) {
 func (s *Server) readLoop(wsConn *websocket.Conn) {
 	defer wsConn.Close()
 	for {
-		_, mb, err := wsConn.ReadMessage()
+		mt, mb, err := wsConn.ReadMessage()
+		if mt == websocket.PingMessage {
+			_ = wsConn.WriteMessage(websocket.PongMessage, nil)
+			continue
+		}
 		if err != nil {
 			s.logger.Warn("failed to read message;","error", err.Error())
 			return

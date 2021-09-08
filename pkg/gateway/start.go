@@ -146,6 +146,9 @@ func Start() {
 	//check pubsub backends.
 	go checkBackend()
 
+	//check eth pubsub
+	go checkEthBackend()
+
 	logger.Info("Load Balancer started at :%d\n", port)
 	if err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil); err != nil {
 		logger.Info("info: %s", err)
