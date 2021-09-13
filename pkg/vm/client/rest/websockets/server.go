@@ -51,6 +51,8 @@ func (s *Server) Start() {
 			s.logger.Error("http error:", err)
 		}
 	}()
+
+	go s.api.checkTendermint(s.api.clientCtx)
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {

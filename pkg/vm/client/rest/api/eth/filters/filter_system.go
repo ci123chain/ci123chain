@@ -97,6 +97,11 @@ func (es *EventSystem) WithContext(ctx context.Context) {
 	es.ctx = ctx
 }
 
+func (es *EventSystem) Check(ctx context.Context) bool {
+	_, err := es.client.Health(ctx)
+	return err == nil
+}
+
 // subscribe performs a new event subscription to a given Tendermint event.
 // The subscription creates a unidirectional receive event channel to receive the ResultEvent. By
 // default, the subscription timeouts (i.e is canceled) after 5 minutes. This function returns an

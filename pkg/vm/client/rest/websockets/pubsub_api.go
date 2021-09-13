@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/gorilla/websocket"
 
@@ -38,6 +39,15 @@ func NewAPI(clientCtx context.Context) *PubSubAPI {
 		events:    rpcfilters.NewEventSystem(clientCtx.Client),
 		filters:   make(map[rpc.ID]*wsSubscription),
 		logger:    log.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", "websocket-clients"),
+	}
+}
+
+func (api *PubSubAPI) checkTendermint(clientCtx context.Context) {
+	var ticker = time.NewTicker(time.Second * 15)
+
+	select {
+	case _ = <-ticker.C:
+		api.events.Check(clientCtx.Context())
 	}
 }
 
