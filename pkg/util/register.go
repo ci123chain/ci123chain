@@ -28,20 +28,18 @@ func GetDomain() (host string, err error) {
 func Discovery() (string, error) {
 
 	appID := os.Getenv("CI_VALIDATOR_KEY")
-	address := "192.168.60.48:80"  //os.Getenv("MSP_SE_NGINX_ADDRESS")
-	region := "sal2" //os.Getenv("IDG_SITEUID")
-	env := "production"   //os.Getenv("MSP_SE_ENV")
-	zone := "aliyun-sh-prod" //os.Getenv("IDG_CLUSTERUID")
+	address := os.Getenv("CI_SE_NGINX_ADDRESS")
+	region := os.Getenv("IDG_SITEUID")
+	env := os.Getenv("CI_SE_ENV")
+	zone := os.Getenv("IDG_CLUSTERUID")
 	if appID == "" {
 		return "", errors.New("appID is empty")
 	}
 	hn := os.Getenv("PODNAME")
-	//hn, _ := os.Hostname()
 	// 注册中心自身，初始化配置
 	conf := &discovery.Config{
 		// discovery地址
 		Nodes: []string{address},
-		// Nodes:    []string{"127.0.0.1:7171"},
 		Region:   region,
 		Zone:     zone,
 		Env:      env,
