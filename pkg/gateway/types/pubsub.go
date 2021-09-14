@@ -14,6 +14,7 @@ import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	apptypes "github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/gateway/logger"
+	vmtypes "github.com/ci123chain/ci123chain/pkg/vm/client/rest/websockets"
 	"github.com/gorilla/websocket"
 	"github.com/tendermint/tendermint/libs/pubsub/query"
 	rpcclient "github.com/tendermint/tendermint/rpc/client/http"
@@ -65,6 +66,9 @@ type PubSubRoom struct {
 	Connections    map[string]*rpcclient.HTTP
 	EthConnections map[string]*websocket.Conn
 	Mutex          sync.Mutex
+
+	IDs            map[float64]*websocket.Conn
+	Subs           map[string]*websocket.Conn
 }
 
 func (r *PubSubRoom) SetBackends(bs []Instance) {
@@ -82,6 +86,8 @@ func (r *PubSubRoom)GetPubSubRoom() {
 	r.Connections = make(map[string]*rpcclient.HTTP, 0)
 	r.backends = make([]Instance, 0)
 	r.EthConnections = make(map[string]*websocket.Conn, 0)
+	r.IDs = make(map[float64]*websocket.Conn, 0)
+	r.Subs = make(map[string]*websocket.Conn, 0)
 }
 
 func (r *PubSubRoom) HasClientConnect() bool {
@@ -128,7 +134,8 @@ func (r *PubSubRoom) SetTMConnections() (err error) {
 
 func (r *PubSubRoom) SetEthConnections() (err error) {
 	for _, v := range r.backends {
-		err, info := GetURL(v.URL().Host)
+		var info *util.DomainInfo
+		err, info = GetURL(v.URL().Host)
 		if err != nil {
 			logger.Error(fmt.Sprintf("get remote node domain info: %s, failed", v.URL().Host))
 			r.RemoveAllEthConnections()
@@ -146,6 +153,10 @@ func (r *PubSubRoom) SetEthConnections() (err error) {
 			r.EthConnections[addr] = conn
 		}
 	}
+	if err == nil {
+		r.HandleEthSub()
+	}
+
 	return err
 }
 
@@ -297,73 +308,140 @@ func (r *PubSubRoom) ReceiveEth(c *websocket.Conn) {
 			_ = c.Close()
 			break
 		}
+		if r.IDs[msg.ID] != nil && r.IDs[msg.ID].RemoteAddr().String() != "" {
+			res := SendMessage{
+				Time:    time.Now().Format(time.RFC3339),
+				Content: fmt.Sprintf("the id: %v,  you input has been used", msg.ID),
+			}
+			_ = c.WriteJSON(res)
+			_ = c.Close()
+			break
+		}
+
+		r.Mutex.Lock()
+		r.IDs[msg.ID] = c
+		r.Mutex.Unlock()
 
 		for _, con := range r.EthConnections {
-			go func(remote, client *websocket.Conn, message EthSubcribeMsg) {
+			go func(remote *websocket.Conn, message EthSubcribeMsg) {
 				var ok = make(chan bool)
 				err := remote.WriteJSON(message)
 				if err != nil {
 					remoteErr := fmt.Sprintf("remote write message failed: %s", err.Error())
 					logger.Warn(remoteErr)
-					r.RemoveEthConnection(client, errors.New(remoteErr))
+					//r.RemoveEthConnection(client, errors.New(remoteErr))
 					ok <- false
 					return
 				}
 				//remote write, client read.
-				go func(ok chan bool) {
-					for {
-						mt, Data, err := remote.ReadMessage()
-						if mt == websocket.PongMessage {
-							continue
-						}
-						if err != nil {
-							remoteErr := fmt.Sprintf("remote read message failed: %s", err.Error())
-							logger.Warn(remoteErr)
-							r.RemoveEthConnection(client, errors.New(remoteErr))
-							ok <- false
-							break
-						}
-						//err = client.WriteMessage(websocket.BinaryMessage, Data)
-						err = client.WriteMessage(1, Data)
-						//err = client.WriteJSON(string(Data))
-						if err != nil {
-							logger.Warn(fmt.Sprintf("client write message failed: %s", err.Error()))
-							r.RemoveEthConnection(client, nil)
-							break
-						}
-					}
-				}(ok)
-				//client write, remote read.
-				go func(ok chan bool) {
-					for {
-						mt, Data, err := client.ReadMessage()
-						if mt == websocket.PingMessage {
-							_ = client.WriteMessage(websocket.PongMessage, nil)
-							continue
-						}
-						if err != nil {
-							logger.Warn(fmt.Sprintf("read remote message failed: %s", err.Error()))
-							r.RemoveEthConnection(client, nil)
-							ok <- false
-							break
-						}
-						err = remote.WriteMessage(websocket.BinaryMessage, Data)
-						if err != nil {
-							remoteErr := fmt.Sprintf("client write message failed: %s", err.Error())
-							logger.Warn(remoteErr)
-							r.RemoveEthConnection(client, errors.New(remoteErr))
-							break
-						}
-					}
-				}(ok)
+				//go func(ok chan bool) {
+				//	for {
+				//		mt, Data, err := remote.ReadMessage()
+				//		if mt == websocket.PongMessage {
+				//			continue
+				//		}
+				//		if err != nil {
+				//			remoteErr := fmt.Sprintf("remote read message failed: %s", err.Error())
+				//			logger.Warn(remoteErr)
+				//			r.RemoveEthConnection(client, errors.New(remoteErr))
+				//			ok <- false
+				//			break
+				//		}
+				//		//err = client.WriteMessage(websocket.BinaryMessage, Data)
+				//		err = client.WriteMessage(1, Data)
+				//		//err = client.WriteJSON(string(Data))
+				//		if err != nil {
+				//			logger.Warn(fmt.Sprintf("client write message failed: %s", err.Error()))
+				//			r.RemoveEthConnection(client, nil)
+				//			break
+				//		}
+				//	}
+				//}(ok)
+				////client write, remote read.
+				//go func(ok chan bool) {
+				//	for {
+				//		mt, Data, err := client.ReadMessage()
+				//		if mt == websocket.PingMessage {
+				//			_ = client.WriteMessage(websocket.PongMessage, nil)
+				//			continue
+				//		}
+				//		if err != nil {
+				//			logger.Warn(fmt.Sprintf("read remote message failed: %s", err.Error()))
+				//			r.RemoveEthConnection(client, nil)
+				//			ok <- false
+				//			break
+				//		}
+				//		err = remote.WriteMessage(websocket.BinaryMessage, Data)
+				//		if err != nil {
+				//			remoteErr := fmt.Sprintf("client write message failed: %s", err.Error())
+				//			logger.Warn(remoteErr)
+				//			r.RemoveEthConnection(client, errors.New(remoteErr))
+				//			break
+				//		}
+				//	}
+				//}(ok)
 
 				select {
 				case _ = <- ok:
+					r.Mutex.Lock()
 					r.RemoveAllEthConnections()
+					r.Mutex.Unlock()
 					break
 				}
-			}(con, c, msg)
+			}(con, msg)
 		}
+	}
+}
+
+func (r *PubSubRoom) HandleEthSub() {
+
+	for _, con := range r.EthConnections {
+		go func(remote *websocket.Conn) {
+			for {
+				mt, Data, err := remote.ReadMessage()
+				if mt == websocket.PongMessage || Data == nil {
+					continue
+				}
+				var subres vmtypes.SubscriptionResponseJSON
+				err = json.Unmarshal(Data, &subres)
+				if err == nil {
+					c := r.IDs[subres.ID]
+					if c != nil {
+						err = c.WriteMessage(websocket.BinaryMessage, Data)
+						if err != nil {
+							logger.Warn(fmt.Sprintf("client write message failed: %s", err.Error()))
+							r.RemoveEthConnection(c, nil)
+							continue
+						}
+						r.Mutex.Lock()
+						r.IDs = DeleteIDs(r.IDs, subres.ID)
+						r.Subs[subres.Result.(string)] = c
+						r.Mutex.Unlock()
+						continue
+					}
+				}
+				var result vmtypes.SubscriptionNotification
+				err = json.Unmarshal(Data, &result)
+				client := r.Subs[string(result.Params.Subscription)]
+				if client == nil || client.RemoteAddr().String() == "" {
+					logger.Warn(fmt.Sprintf("got empty client in subs with subid: %v", string(result.Params.Subscription)))
+					continue
+				}
+				if err != nil {
+					logger.Warn(fmt.Sprintf("client write message failed: %s", err.Error()))
+					r.Subs = DeleteSubs(r.Subs, client)
+					r.RemoveEthConnection(client, nil)
+					break
+				}
+				err = client.WriteMessage(websocket.BinaryMessage, Data)
+				if err != nil {
+					logger.Warn(fmt.Sprintf("client write message failed: %s", err.Error()))
+					r.Subs = DeleteSubs(r.Subs, client)
+					r.RemoveEthConnection(client, nil)
+					continue
+				}
+			}
+		}(con)
 	}
 }
 
@@ -666,6 +744,41 @@ func (r *PubSubRoom) AddShard() {
 				}
 			}
 		}
+
+		if r.EthConnections[addr] == nil {
+			remote, OK := GetEthConnection(addr)
+			if !OK {
+				logger.Warn(fmt.Sprintf("get connection wtih addr: %v, failed", addr))
+				r.RemoveAllEthConnections()
+				break
+			}
+			go func() {
+				for {
+					mt, Data, err := remote.ReadMessage()
+					if mt == websocket.PongMessage || Data == nil {
+						continue
+					}
+					var result vmtypes.SubscriptionNotification
+					err = json.Unmarshal(Data, &result)
+					if err != nil {
+						logger.Warn(fmt.Sprintf("receive invalid resposne from remote: %s", err.Error()))
+						r.RemoveAllEthConnections()
+						break
+					}
+					client := r.Subs[string(result.Params.Subscription)]
+					if client == nil || client.RemoteAddr().String() == "" {
+						logger.Warn(fmt.Sprintf("got empty client in subs with subid: %v", string(result.Params.Subscription)))
+						continue
+					}
+					err = client.WriteMessage(websocket.BinaryMessage, Data)
+					if err != nil {
+						logger.Warn(fmt.Sprintf("client write message failed: %s", err.Error()))
+						r.RemoveEthConnection(client, nil)
+						continue
+					}
+				}
+			}()
+		}
 	}
 }
 
@@ -721,10 +834,18 @@ func (r *PubSubRoom) RemoveAllEthConnections() {
 	for _, v := range r.EthConnections {
 		_ = v.Close()
 	}
+	for _, v := range r.Subs {
+		_ = v.Close()
+	}
+	for _, v := range r.IDs {
+		_ = v.Close()
+	}
 	r.RemoteClients = make([]*websocket.Conn, 0)
 	r.backends = make([]Instance, 0)
 	r.ConnMap = make(map[string][]*websocket.Conn, 0)
 	r.EthConnections = make(map[string]*websocket.Conn, 0)
+	r.IDs = make(map[float64]*websocket.Conn, 0)
+	r.Subs = make(map[string]*websocket.Conn, 0)
 }
 
 func (r *PubSubRoom) RemoveEthConnection(c *websocket.Conn, err error) {
@@ -760,6 +881,26 @@ func Notify(r *PubSubRoom, topic string, m SendMessage) {
 			i--
 		}
 	}
+}
+
+func DeleteSubs(subs map[string]*websocket.Conn, c *websocket.Conn) map[string]*websocket.Conn{
+	result := make(map[string]*websocket.Conn, 0)
+	for key, val := range subs {
+		if val.LocalAddr().String() != c.LocalAddr().String() {
+			result[key] = val
+		}
+	}
+	return result
+}
+
+func DeleteIDs(ids map[float64]*websocket.Conn, id float64) map[float64]*websocket.Conn {
+	result := make(map[float64]*websocket.Conn, 0)
+	for key, val := range ids {
+		if key != id {
+			result[key] = val
+		}
+	}
+	return result
 }
 
 func DeleteSlice(res []*websocket.Conn, s *websocket.Conn) []*websocket.Conn {
