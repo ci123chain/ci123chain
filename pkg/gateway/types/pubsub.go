@@ -162,6 +162,7 @@ func (r *PubSubRoom) Receive(c *websocket.Conn) {
 		mt, data, err := c.ReadMessage()
 		if err != nil {
 			logger.Warn(fmt.Sprintf("got client message error: %v", err.Error()))
+			r.HandleUnsubscribeAll(c)
 			_ = c.Close()
 			break
 		}
@@ -170,9 +171,6 @@ func (r *PubSubRoom) Receive(c *websocket.Conn) {
 			if err != nil {
 				logger.Error("client write message failed: %s", err.Error())
 				r.HandleUnsubscribeAll(c)
-				r.Mutex.Lock()
-				r.RemoteClients = DeleteSlice(r.RemoteClients, c)
-				r.Mutex.Unlock()
 				_ = c.Close()
 				break
 			}
@@ -199,6 +197,7 @@ func (r *PubSubRoom) Receive(c *websocket.Conn) {
 					Content: fmt.Sprintf("connect to tendermint failed, err: %s", err.Error()),
 				}
 				_ = c.WriteJSON(res)
+				r.HandleUnsubscribeAll(c)
 				_ = c.Close()
 				break
 			}
@@ -208,6 +207,7 @@ func (r *PubSubRoom) Receive(c *websocket.Conn) {
 				Content: fmt.Sprintf("there has no backends in server pool"),
 			}
 			_ = c.WriteJSON(res)
+			r.HandleUnsubscribeAll(c)
 			_ = c.Close()
 			break
 		}
@@ -248,6 +248,7 @@ func (r *PubSubRoom) ReceiveEth(c *websocket.Conn) {
 		mt, data, err := c.ReadMessage()
 		if err != nil {
 			logger.Warn("got client error, client may down already")
+			r.RemoveEthConnection(c, nil)
 			_ = c.Close()
 			break
 		}
@@ -256,9 +257,6 @@ func (r *PubSubRoom) ReceiveEth(c *websocket.Conn) {
 			if err != nil {
 				logger.Warn(fmt.Sprintf("client write message failed: %s", err.Error()))
 				r.RemoveEthConnection(c, nil)
-				r.Mutex.Lock()
-				r.RemoteClients = DeleteSlice(r.RemoteClients, c)
-				r.Mutex.Unlock()
 				_ = c.Close()
 				break
 			}
@@ -285,6 +283,7 @@ func (r *PubSubRoom) ReceiveEth(c *websocket.Conn) {
 					Content: fmt.Sprintf("connect to server failed, err: %s", err.Error()),
 				}
 				_ = c.WriteJSON(res)
+				r.RemoveEthConnection(c, nil)
 				_ = c.Close()
 				break
 			}
@@ -294,6 +293,7 @@ func (r *PubSubRoom) ReceiveEth(c *websocket.Conn) {
 				Content: fmt.Sprintf("there has no backends in server pool"),
 			}
 			_ = c.WriteJSON(res)
+			r.RemoveEthConnection(c, nil)
 			_ = c.Close()
 			break
 		}
