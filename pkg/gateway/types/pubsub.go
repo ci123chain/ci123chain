@@ -318,9 +318,17 @@ func (r *PubSubRoom) ReceiveEth(c *websocket.Conn) {
 			break
 		}
 
-		r.Mutex.Lock()
-		r.IDs[msg.ID] = c
-		r.Mutex.Unlock()
+		if msg.Method == "eth_unsubscribe" {
+			r.Mutex.Lock()
+			r.Subs = DeleteSubs(r.Subs, c)
+			r.Mutex.Unlock()
+		} else if msg.Method == "eth_subscribe" {
+			r.Mutex.Lock()
+			r.IDs[msg.ID] = c
+			r.Mutex.Unlock()
+		}else {
+			continue
+		}
 
 		for _, con := range r.EthConnections {
 			go func(remote *websocket.Conn, message EthSubcribeMsg) {
@@ -405,42 +413,67 @@ func (r *PubSubRoom) HandleEthSub() {
 				var subres vmtypes.SubscriptionResponseJSON
 				err = json.Unmarshal(Data, &subres)
 				if err == nil {
-					c := r.IDs[subres.ID]
-					if c != nil {
-						err = c.WriteMessage(websocket.BinaryMessage, Data)
-						if err != nil {
-							logger.Warn(fmt.Sprintf("client write message failed: %s", err.Error()))
-							r.RemoveEthConnection(c, nil)
+					switch subres.Result.(type) {
+					case string:
+						c := r.IDs[subres.ID]
+						if c != nil {
+							err = c.WriteMessage(websocket.TextMessage, Data)
+							if err != nil {
+								logger.Warn(fmt.Sprintf("client write message failed: %s", err.Error()))
+								r.RemoveEthConnection(c, nil)
+								continue
+							}
+							r.Mutex.Lock()
+							r.IDs = DeleteIDs(r.IDs, subres.ID)
+							r.Subs[subres.Result.(string)] = c
+							r.Mutex.Unlock()
 							continue
 						}
-						r.Mutex.Lock()
-						r.IDs = DeleteIDs(r.IDs, subres.ID)
-						switch typ := subres.Result.(type) {
-						case string:
-							r.Subs[subres.Result.(string)] = c
-						case bool:
-							r.Subs = DeleteSubs(r.Subs, c)
-						default:
-							logger.Warn(fmt.Sprintf("subscription result got invalid type: %v", typ))
-						}
-						r.Mutex.Unlock()
+						logger.Warn(fmt.Sprintf("no client mathc id: %v", subres.ID))
 						continue
+					case bool:
+						//r.Subs = DeleteSubs(r.Subs, c)
+						continue
+					default:
+						//logger.Warn(fmt.Sprintf("subscription result got invalid type: %v", typ))
+						//continue
 					}
+					//c := r.IDs[subres.ID]
+					//if c != nil {
+					//	err = c.WriteMessage(websocket.TextMessage, Data)
+					//	if err != nil {
+					//		logger.Warn(fmt.Sprintf("client write message failed: %s", err.Error()))
+					//		r.RemoveEthConnection(c, nil)
+					//		continue
+					//	}
+					//	r.Mutex.Lock()
+					//	r.IDs = DeleteIDs(r.IDs, subres.ID)
+					//	switch typ := subres.Result.(type) {
+					//	case string:
+					//		r.Subs[subres.Result.(string)] = c
+					//	case bool:
+					//		//r.Subs = DeleteSubs(r.Subs, c)
+					//	default:
+					//		logger.Warn(fmt.Sprintf("subscription result got invalid type: %v", typ))
+					//	}
+					//	r.Mutex.Unlock()
+					//	continue
+					//}
 				}
 				var result vmtypes.SubscriptionNotification
 				err = json.Unmarshal(Data, &result)
+				if err != nil {
+					logger.Warn(fmt.Sprintf("client write message failed: %s", err.Error()))
+					//r.Subs = DeleteSubs(r.Subs, client)
+					//r.RemoveEthConnection(client, nil)
+					continue
+				}
 				client := r.Subs[string(result.Params.Subscription)]
 				if client == nil || client.RemoteAddr().String() == "" {
 					logger.Warn(fmt.Sprintf("got empty client in subs with subid: %v", string(result.Params.Subscription)))
 					continue
 				}
-				if err != nil {
-					logger.Warn(fmt.Sprintf("client write message failed: %s", err.Error()))
-					r.Subs = DeleteSubs(r.Subs, client)
-					r.RemoveEthConnection(client, nil)
-					break
-				}
-				err = client.WriteMessage(websocket.BinaryMessage, Data)
+				err = client.WriteMessage(websocket.TextMessage, Data)
 				if err != nil {
 					logger.Warn(fmt.Sprintf("client write message failed: %s", err.Error()))
 					r.Subs = DeleteSubs(r.Subs, client)
@@ -893,10 +926,12 @@ func Notify(r *PubSubRoom, topic string, m SendMessage) {
 func DeleteSubs(subs map[string]*websocket.Conn, c *websocket.Conn) map[string]*websocket.Conn{
 	result := make(map[string]*websocket.Conn, 0)
 	for key, val := range subs {
-		if val.LocalAddr().String() != c.LocalAddr().String() {
+		fmt.Println(fmt.Sprintf("addr: %v", val.RemoteAddr().String()))
+		if val.LocalAddr().String() == c.LocalAddr().String() && val.RemoteAddr().String() != c.RemoteAddr().String() {
 			result[key] = val
 		}
 	}
+	fmt.Println(fmt.Sprintf("result: %v", result))
 	return result
 }
 
