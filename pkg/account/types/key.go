@@ -30,11 +30,11 @@ func AddressStoreKey(addr types.AccAddress) []byte {
 }
 
 
-func HeightUpdateKey(addr types.AccAddress, height int64) []byte {
-	a := append(HeightUpdateKeyPrefix, addr.Bytes()...)
-	return append(a, []byte(string(height))...)
-}
-
-func HeightsUpdateKey(addr types.AccAddress) []byte {
-	return append(HeightsUpdateKeyPrefix, addr.Bytes()...)
-}
+//func HeightUpdateKey(addr types.AccAddress, height int64) []byte {
+//	a := append(HeightUpdateKeyPrefix, addr.Bytes()...)
+//	return append(a, []byte(string(height))...)
+//}
+//
+//func HeightsUpdateKey(addr types.AccAddress) []byte {
+//	return append(HeightsUpdateKeyPrefix, addr.Bytes()...)
+//}

@@ -415,7 +415,14 @@ func (r *PubSubRoom) HandleEthSub() {
 						}
 						r.Mutex.Lock()
 						r.IDs = DeleteIDs(r.IDs, subres.ID)
-						r.Subs[subres.Result.(string)] = c
+						switch typ := subres.Result.(type) {
+						case string:
+							r.Subs[subres.Result.(string)] = c
+						case bool:
+							r.Subs = DeleteSubs(r.Subs, c)
+						default:
+							logger.Warn(fmt.Sprintf("subscription result got invalid type: %v", typ))
+						}
 						r.Mutex.Unlock()
 						continue
 					}
