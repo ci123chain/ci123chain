@@ -163,7 +163,7 @@ func Redact(err error) error {
 		return errPanicWithMsg
 	}
 	if abciCode(err) == internalABCICode {
-		return errInternal
+		return err
 	}
 
 	return err

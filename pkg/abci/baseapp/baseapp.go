@@ -841,8 +841,8 @@ func (app *BaseApp) CheckTx(req abci.RequestCheckTx) abci.ResponseCheckTx {
 		result = res
 	}
 	return abci.ResponseCheckTx{
-		Code:      uint32(result.Code),
-		Codespace: string(result.Codespace),
+		Code:      result.Code,
+		Codespace: result.Codespace,
 		Data:      result.Data,
 		Log:       result.Log,
 		GasWanted: int64(result.GasWanted), // TODO: Should type accept unsigned ints?

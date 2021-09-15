@@ -102,6 +102,9 @@ func (s Subspace) Get(ctx sdk.Context, key []byte, ptr interface{}) {
 
 	store := s.kvStore(ctx)
 	bz := store.Get(key)
+	if bz == nil {
+		return
+	}
 
 	if err := s.cdc.UnmarshalJSON(bz, ptr); err != nil {
 		panic(err)
