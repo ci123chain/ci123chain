@@ -23,19 +23,7 @@ var (
 	}
 )
 
-const (
-	MaxConnection = 10
-)
-
 func PubSubHandle(w http.ResponseWriter, r *http.Request) {
-	if len(pubsubRoom.RemoteClients) >= MaxConnection {
-		res, _ := json.Marshal(types.ErrorResponse{
-			Ret: -1,
-			Message:  "max clinet has coonected, connection refused",
-		})
-		_, _ = w.Write(res)
-		return
-	}
 	conn, err := ug.Upgrade(w, r, nil)
 	if err != nil {
 		logger.Error("err: %s", err)
@@ -44,6 +32,15 @@ func PubSubHandle(w http.ResponseWriter, r *http.Request) {
 			Message:  fmt.Sprintf("invalid request you have sent to server, err: %s", err.Error()),
 		})
 		_, _ = w.Write(res)
+		return
+	}
+	if len(pubsubRoom.RemoteClients) >= pubsubRoom.MaxConnections {
+		res, _ := json.Marshal(types.ErrorResponse{
+			Ret: -1,
+			Message:  "max client has connected, connection refused",
+		})
+		_ = conn.WriteMessage(websocket.TextMessage, res)
+		_ = conn.Close()
 		return
 	}
 	pubsubRoom.Mutex.Lock()
@@ -55,14 +52,6 @@ func PubSubHandle(w http.ResponseWriter, r *http.Request) {
 }
 
 func EthPubSubHandle(w http.ResponseWriter, r *http.Request) {
-	if len(pubsubRoom.RemoteClients) >= MaxConnection {
-		res, _ := json.Marshal(types.ErrorResponse{
-			Ret: -1,
-			Message:  "max clinet has coonected, connection refused",
-		})
-		_, _ = w.Write(res)
-		return
-	}
 	conn, err := ug.Upgrade(w, r, nil)
 	if err != nil {
 		logger.Error("err: %s", err)
@@ -71,6 +60,15 @@ func EthPubSubHandle(w http.ResponseWriter, r *http.Request) {
 			Message:  fmt.Sprintf("invalid request you have sent to server, err: %s", err.Error()),
 		})
 		_, _ = w.Write(res)
+		return
+	}
+	if len(pubsubRoom.RemoteClients) >= pubsubRoom.MaxConnections {
+		res, _ := json.Marshal(types.ErrorResponse{
+			Ret: -1,
+			Message:  "max clients has connected, connection refused",
+		})
+		_ = conn.WriteMessage(websocket.TextMessage, res)
+		_ = conn.Close()
 		return
 	}
 	pubsubRoom.Mutex.Lock()

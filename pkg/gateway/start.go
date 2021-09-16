@@ -32,6 +32,7 @@ const (
 	flagShard          = "port_shard"
 	flagETHRPCPort     = "port_eth"
 	AppID			   = "hedlzgp1u48kjf50xtcvwdklminbqe9a"
+	flagMaxConnection  = "max_connection"
 )
 
 var serverPool *ServerPool
@@ -56,6 +57,7 @@ func Start() {
 	flag.String(flagCiStateDBHost, "", "db host")
 	flag.Uint64(flagCiStateDBPort, 7443, "db port")
 	flag.Bool(flagCiStateDBTls, true, "use tls")
+	flag.Int(flagMaxConnection, 20, "proxy max connection")
 
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 	pflag.Parse()
@@ -109,6 +111,10 @@ func Start() {
 	if ethport == "" {
 		ethport = "8546"
 	}
+	maxConnections := viper.GetInt(flagMaxConnection)
+	if maxConnections < 1 {
+		panic(errors.New(fmt.Sprintf("invalid max_connections: %v", maxConnections)))
+	}
 
 	if ok, err := regexp.MatchString("[*]+", urlreg); !ok {
 		panic(err)
@@ -120,6 +126,7 @@ func Start() {
 	pubsubRoom = &types.PubSubRoom{}
 	types.SetDefaultPort(tmport,shardport, ethport)
 	pubsubRoom.GetPubSubRoom()
+	pubsubRoom.MaxConnections = maxConnections
 
 	svr := redissource.NewRedisSource(statedb, urlreg)
 

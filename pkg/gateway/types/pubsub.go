@@ -69,6 +69,7 @@ type PubSubRoom struct {
 
 	IDs            map[float64]*websocket.Conn
 	Subs           map[string]*websocket.Conn
+	MaxConnections  int
 }
 
 func (r *PubSubRoom) SetBackends(bs []Instance) {
