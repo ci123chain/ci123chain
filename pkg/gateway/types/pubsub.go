@@ -243,11 +243,12 @@ func (r *PubSubRoom) Receive(c *websocket.Conn) {
 			r.HandleUnsubscribe(topic, c)
 		case DefaultUnsubscribeAllMethod:
 			r.HandleUnsubscribeAll(c)
+			_ = c.Close()
 		}
 	}
 }
 
-func (r *PubSubRoom) ReceiveEth(c *websocket.Conn) {
+func (r *PubSubRoom) ReceiveEth(c *websocket.Conn){
 	defer func() {
 		err := recover()
 		switch rt := err.(type) {
@@ -524,6 +525,7 @@ func (r *PubSubRoom) HandleUnsubscribeAll(c *websocket.Conn) {
 			}
 		}
 	}
+	r.RemoteClients = DeleteSlice(r.RemoteClients, c)
 	r.Mutex.Unlock()
 }
 
