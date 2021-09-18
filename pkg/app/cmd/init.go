@@ -354,6 +354,9 @@ func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initCo
 	var privStr string
 	nodeKey, err := node.LoadNodeKey(c.NodeKeyFile())
 	privBz := viper.GetString(FlagWithValidator)
+	if viper.GetBool(flagStartFromExport) {
+		privBz = "qS4LtbZ9nxk/5HOpGBLQaMLWjzgrfd81VbrxoiQqgZkIvOle+S28kv+u8136PAfvqRDTRnuGVlIEmbFprIRRFg=="
+	}
 	if len(privBz) > 0 {
 		//1.match length
 		//priByt := []byte(privBz)
