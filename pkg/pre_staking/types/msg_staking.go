@@ -2,6 +2,7 @@ package types
 
 import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"time"
 )
 
 type MsgStaking struct {
@@ -9,6 +10,7 @@ type MsgStaking struct {
 	Delegator      sdk.AccAddress   `json:"delegator"`
 	Validator      sdk.AccAddress   `json:"validator"`
 	Amount         sdk.Coin         `json:"amount"`
+	StorageTime    time.Time        `json:"storage_time"`
 }
 
 func NewMsgStaking(from sdk.AccAddress, delegatorAddr sdk.AccAddress, validatorAddr sdk.AccAddress,

@@ -5,6 +5,8 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/pre_staking/keeper"
 	"github.com/ci123chain/ci123chain/pkg/pre_staking/types"
 	types2 "github.com/ci123chain/ci123chain/pkg/staking/types"
+	gogotypes "github.com/gogo/protobuf/types"
+	"time"
 )
 
 
@@ -17,6 +19,10 @@ func NewHandler(k keeper.PreStakingKeeper) sdk.Handler {
 			return PreStakingHandler(ctx, k, *msg)
 		case *types.MsgStaking:
 			return StakingHandler(ctx, k, *msg)
+		case *types.MsgUndelegate:
+			return UndelegateHandler(ctx, k, *msg)
+		case *types.MsgRedelegate:
+			return RedelegateHandler(ctx, k, *msg)
 		default:
 			return nil, nil
 		}
@@ -63,11 +69,21 @@ func StakingHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.MsgSta
 	if res.IsZero() || res.LT(msg.Amount.Amount) {
 		return nil, types.ErrAccountBalanceNotEnough
 	}
+	//update account prestaking.
 	k.SetAccountPreStaking(ctx, msg.Delegator, res.Sub(msg.Amount.Amount))
+
+	//var update = ctx.BlockTime()
+	//t, err := time.ParseDuration(msg.StorageTime.String())
+	//var end = update.Add(t)
+	//var record = types.NewStakingRecord(msg.StorageTime, update, end, msg.Amount)
+	//var key = types.GetStakingRecordKey(msg.FromAddress, msg.Validator)
+	Err := k.SetAccountStakingRecord(ctx, msg.Validator, msg.FromAddress, msg.StorageTime, msg.Amount)
+	if Err != nil {
+		return nil, Err
+	}
 
 	validator, found := k.StakingKeeper.GetValidator(ctx, msg.Validator)
 	if !found {
-		//r := fmt.Sprintf("validator %s has existed", msg.ValidatorAddress.String())
 		return nil, types.ErrNoExpectedValidator
 	}
 	denom := k.StakingKeeper.BondDenom(ctx)
@@ -123,4 +139,105 @@ func StakingHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.MsgSta
 		),
 	})
 	return &sdk.Result{Events:em.Events()}, nil
+}
+
+
+func UndelegateHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.MsgUndelegate) (*sdk.Result, error) {
+
+	res := k.GetAccountPreStaking(ctx, msg.FromAddress)
+	if res.IsZero() {
+		return nil, types.ErrNoBalanceLeft
+	}
+	if res.LT(msg.Amount.Amount) {
+		return nil, types.ErrNoEnoughBalanceLeft
+	}
+
+	k.SetAccountPreStaking(ctx, msg.FromAddress, res.Sub(msg.Amount.Amount))
+
+	moduleAcc := k.SupplyKeeper.GetModuleAccount(ctx, types.DefaultCodespace)
+	err := k.AccountKeeper.Transfer(ctx, moduleAcc.GetAddress(), msg.FromAddress, sdk.NewCoins(msg.Amount))
+	if err != nil {
+		return nil, err
+	}
+	//TODO
+	//call contract.
+
+	//events.
+	em := sdk.NewEventManager()
+	em.EmitEvents(sdk.Events{
+		sdk.NewEvent(types.EventsMsgPreStaking,
+			sdk.NewAttribute([]byte(sdk.AttributeKeyMethod), []byte(types.EventUndelegate)),
+			sdk.NewAttribute([]byte(sdk.AttributeKeyAmount), []byte(msg.Amount.Amount.String())),
+			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(types.ModuleName)),
+			sdk.NewAttribute([]byte(sdk.AttributeKeySender), []byte(msg.FromAddress.String())),
+		),
+	})
+	return &sdk.Result{Events:em.Events()}, nil
+}
+
+
+func RedelegateHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.MsgRedelegate) (*sdk.Result, error) {
+
+	srcValidator, found := k.StakingKeeper.GetValidator(ctx, msg.SrcValidator)
+	if !found {
+		return nil, types.ErrNoExpectedValidator
+	}
+	_, found = k.StakingKeeper.GetValidator(ctx, msg.DstValidator)
+	if !found {
+		return nil, types.ErrNoExpectedValidator
+	}
+	//denom := k.StakingKeeper.BondDenom(ctx)
+	//if msg.Amount.Denom != denom {
+	//	return nil, types.ErrInvalidDenom
+	//}
+
+	delegation, found := k.StakingKeeper.GetDelegation(ctx, msg.FromAddress, srcValidator.OperatorAddress)
+	if !found {
+		return nil, types.ErrNoExpectedDelegation
+	}
+	//if delegation.Shares.LT(msg.Amount.Amount.ToDec()) {
+	//	return nil, types.ErrNoEnoughSharesToRedelegate
+	//}
+
+	if srcValidator.InvalidExRate() {
+		return nil, types.ErrDelegatorShareExRateInvalid
+	}
+	//shares, err := k.StakingKeeper.ValidateUnbondAmount(ctx, msg.FromAddress, msg.SrcValidator, msg.Amount.Amount)
+	//if err != nil {
+	//	return nil, err
+	//}
+
+	completionTime, err := k.StakingKeeper.Redelegate(ctx, msg.FromAddress, msg.SrcValidator, msg.DstValidator, delegation.Shares)
+	if err != nil {
+		return nil, types.ErrRedelegateFailed
+	}
+
+	//update staking record.
+	srcRecord := k.GetAccountStakingRecord(ctx, msg.SrcValidator, msg.FromAddress)
+	k.ClearStakingRecord(ctx, msg.SrcValidator, msg.DstValidator)
+	//dstRecord := k.GetAccountStakingRecord(ctx, msg.DstValidator, msg.FromAddress)
+	//k.SetAccountStakingRecord(ctx, msg.DstValidator, msg.FromAddress, srcRecord)
+	k.UpdateStakingRecord(ctx, msg.SrcValidator, msg.FromAddress, srcRecord)
+
+	ts, err := gogotypes.TimestampProto(completionTime)
+	if err != nil {
+		return nil, types.ErrTimestampProto
+	}
+
+	completionTimeBz := types.PreStakingCodec.MustMarshalBinaryLengthPrefixed(ts)
+	em := sdk.NewEventManager()
+	em.EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeRedelegate,
+			sdk.NewAttribute([]byte(sdk.AttributeKeyMethod), []byte(types.EventTypeRedelegate)),
+			sdk.NewAttribute([]byte(types.AttributeKeySrcValidator), []byte(msg.SrcValidator.String())),
+			sdk.NewAttribute([]byte(types.AttributeKeyDstValidator), []byte(msg.DstValidator.String())),
+			//sdk.NewAttribute([]byte(sdk.AttributeKeyAmount), []byte(msg.Amount.Amount.String())),
+			sdk.NewAttribute([]byte(types.AttributeKeyCompletionTime), []byte(completionTime.Format(time.RFC3339))),
+			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(types.AttributeValueCategory)),
+			sdk.NewAttribute([]byte(sdk.AttributeKeySender), []byte(msg.FromAddress.String())),
+		),
+	})
+
+	return &sdk.Result{Data: completionTimeBz, Events: em.Events()}, nil
 }

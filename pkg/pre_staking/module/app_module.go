@@ -9,6 +9,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/pre_staking/module/basic"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	abci "github.com/tendermint/tendermint/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/pre_staking"
 )
 
 type AppModule struct {
@@ -20,7 +21,7 @@ func (am AppModule) RegisterGRPCGatewayRoutes(context.Context, *runtime.ServeMux
 }
 
 func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.ValidatorUpdate {
-	//
+	pre_staking.InitGenesis(ctx, am.Keeper)
 	return nil
 }
 
@@ -33,6 +34,7 @@ func (am AppModule) Committer(ctx sdk.Context) {
 }
 
 func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
+	pre_staking.EndBlock(ctx, am.Keeper)
 	return nil
 }
 
