@@ -17,10 +17,15 @@ const (
 
 var (
 	PreStakingKey = []byte{0x50}
+	StakingRecordKey = []byte{0x51}
 )
 
 
 
 func GetPreStakingKey(delegator sdk.AccAddress) []byte {
 	return append(PreStakingKey, delegator.Bytes()...)
+}
+
+func GetStakingRecordKey(delegator, validator sdk.AccAddress) []byte {
+	return append(StakingRecordKey, append(delegator.Bytes(), validator.Bytes()...)...)
 }
