@@ -52,6 +52,6 @@ require (
 replace (
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 	//github.com/tendermint/tendermint => ../citendermint
-	github.com/tendermint/tendermint => github.com/ci123chain/tendermint v0.32.7-ci10
+	github.com/tendermint/tendermint => github.com/ci123chain/tendermint v0.32.7-ci10t
 	github.com/wasmerio/wasmer-go => github.com/ci123chain/wasmer-go v1.0.3-rc2
 )
