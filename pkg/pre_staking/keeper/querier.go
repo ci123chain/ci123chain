@@ -2,6 +2,7 @@ package keeper
 
 import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	types2 "github.com/ci123chain/ci123chain/pkg/pre_staking/types"
 	sktypes "github.com/ci123chain/ci123chain/pkg/staking/types"
 	"github.com/tendermint/tendermint/abci/types"
@@ -16,7 +17,7 @@ func NewQuerier(k PreStakingKeeper) sdk.Querier {
 		case types2.StakingRecordQuery:
 			return StakingRecord(ctx, req, k)
 		default:
-			return nil, nil
+			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "unknown request endpoint")
 		}
 	}
 }

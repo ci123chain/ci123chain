@@ -19,3 +19,7 @@ var (
 	NewHandler = h.NewHandler
 	NewKeeper = k.NewPreStakingKeeper
 )
+
+type (
+	GenesisState = types.GenesisState
+)

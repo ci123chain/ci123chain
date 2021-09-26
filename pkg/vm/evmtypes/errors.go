@@ -34,6 +34,9 @@ const (
 	CodeBloomFilterSectionNum CodeType = 1722
 	CodeSectionOutOfBounds   CodeType = 1723
 	CodeBloomBitOutOfBounds  CodeType = 1724
+	CodeInvalidContractMsg   CodeType = 1725
+	CodeInvalidEVMChainConfig CodeType = 1726
+	CodeExecTransactionInvalid CodeType = 1727
 
 	CodeContractMethodInvalid  CodeType = 1730
 )
@@ -65,6 +68,9 @@ var (
 	ErrBloomBitOutOfBounds = sdkerrors.Register(string(DefaultCodespace), uint32(CodeBloomBitOutOfBounds), "bloom bit out of bounds")
 
 	ErrContractMethodInvalid = sdkerrors.Register(string(DefaultCodespace), uint32(CodeContractMethodInvalid), "contract method invalid")
+	ErrContractMsgInvalid = sdkerrors.Register(string(DefaultCodespace), uint32(CodeInvalidContractMsg), "invalid contract msg")
+	ErrEVMChainConfigInvalid = sdkerrors.Register(string(DefaultCodespace), uint32(CodeInvalidEVMChainConfig), "invalid evm chain config")
+	ErrExecTransactionInvalid = sdkerrors.Register(string(DefaultCodespace), uint32(CodeExecTransactionInvalid), "execute transaction failed")
 )
 //
 //const (
