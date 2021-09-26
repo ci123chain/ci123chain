@@ -562,10 +562,19 @@ func (api *PublicEthereumAPI) Call(args CallArgs, _ BlockNumber, _ *map[common.A
 	if err != nil {
 		return []byte{}, err
 	}
-
 	return (hexutil.Bytes)(data.Ret), nil
 }
-
+func readLength(data []byte) (int, error) {
+	lengthBig := big.NewInt(0).SetBytes(data[0:32])
+	if lengthBig.BitLen() > 63 {
+		return 0, fmt.Errorf("length larger than int64: %v", lengthBig.Int64())
+	}
+	length := int(lengthBig.Uint64())
+	if length > len(data) {
+		return 0, fmt.Errorf("length insufficient %v require %v", len(data), length)
+	}
+	return length, nil
+}
 // DoCall performs a simulated call operation through the evmtypes. It returns the
 // estimated gas used on the operation or an error if fails.
 func (api *PublicEthereumAPI) doCall(

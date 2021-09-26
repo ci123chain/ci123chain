@@ -2,6 +2,7 @@ package types
 
 import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"strings"
 )
 
 const (
@@ -16,6 +17,8 @@ const (
 
 	// QuerierRoute to be used for querierer msgs
 	QuerierRoute = ModuleName
+
+	WlKTokenAddress = "0x0000000000000000000000ffff"
 )
 
 var (
@@ -94,11 +97,11 @@ var (
 	// LastObservedEthereumBlockHeightKey indexes the latest Ethereum block height
 	LastObservedEthereumBlockHeightKey = []byte{0xf9}
 
-	// DenomToERC20Key prefixes the index of Cosmos originated asset denoms to ERC20s
-	DenomToERC20Key = []byte{0xf3}
+	// WlkToEthKey prefixes the index of wlk asset to eth ERC20s
+	WlkToEthKey = []byte{0xf3}
 
-	// ERC20ToDenomKey prefixes the index of Cosmos originated assets ERC20s to denoms
-	ERC20ToDenomKey = []byte{0xf4}
+	// EthToWlkKey prefixes the index of eth originated assets ERC20s to wlk
+	EthToWlkKey = []byte{0xf4}
 
 	// LastSlashedValsetNonce indexes the latest slashed valset nonce
 	LastSlashedValsetNonce = []byte{0xf5}
@@ -111,6 +114,12 @@ var (
 
 	// LastUnBondingBlockHeight indexes the last validator unbonding block height
 	LastUnBondingBlockHeight = []byte{0xf8}
+
+	ContractMetaDataKey = []byte{0xf9}
+
+	TxIdKey = []byte{0xfa}
+
+	EventNonceKey = []byte{0xfb}
 )
 
 // GetOrchestratorAddressKey returns the following key format
@@ -207,6 +216,7 @@ func GetOutgoingTxPoolKey(id uint64) []byte {
 // prefix     nonce                     eth-contract-address
 // [0xa][0 0 0 0 0 0 0 1][0xc783df8a850f42e7F7e57013759C285caa701eB6]
 func GetOutgoingTxBatchKey(tokenContract string, nonce uint64) []byte {
+	tokenContract = strings.ToLower(tokenContract)
 	return append(append(OutgoingTXBatchKey, []byte(tokenContract)...), UInt64Bytes(nonce)...)
 }
 
@@ -222,6 +232,7 @@ func GetOutgoingTxBatchBlockKey(block uint64) []byte {
 // [0xe1][0xc783df8a850f42e7F7e57013759C285caa701eB6][0 0 0 0 0 0 0 1][cosmosvaloper1ahx7f8wyertuus9r20284ej0asrs085case3kn]
 // TODO this should be a sdk.AccAddress
 func GetBatchConfirmKey(tokenContract string, batchNonce uint64, validator sdk.AccAddress) []byte {
+	tokenContract = strings.ToLower(tokenContract)
 	a := append(UInt64Bytes(batchNonce), validator.Bytes()...)
 	b := append([]byte(tokenContract), a...)
 	c := append(BatchConfirmKey, b...)
@@ -252,12 +263,18 @@ func GetLastEventNonceByValidatorKey(validator sdk.AccAddress) []byte {
 	return append(LastEventNonceByValidatorKey, validator.Bytes()...)
 }
 
-func GetDenomToERC20Key(denom string) []byte {
-	return append(DenomToERC20Key, []byte(denom)...)
+func GetWlKToEthKey(denom string) []byte {
+	denom = strings.ToLower(denom)
+	return append(WlkToEthKey, []byte(denom)...)
 }
 
-func GetERC20ToDenomKey(erc20 string) []byte {
-	return append(ERC20ToDenomKey, []byte(erc20)...)
+func GetEthToWlkKey(erc20 string) []byte {
+	erc20 = strings.ToLower(erc20)
+	return append(EthToWlkKey, []byte(erc20)...)
+}
+
+func GetContractMetaDataKey(contract string) []byte {
+	return append(ContractMetaDataKey, []byte(contract)...)
 }
 
 func GetOutgoingLogicCallKey(invalidationId []byte, invalidationNonce uint64) []byte {
@@ -269,4 +286,12 @@ func GetLogicConfirmKey(invalidationId []byte, invalidationNonce uint64, validat
 	interm := append(KeyOutgoingLogicConfirm, invalidationId...)
 	interm = append(interm, UInt64Bytes(invalidationNonce)...)
 	return append(interm, validator.Bytes()...)
+}
+
+func GetTxIdKey(txId uint64) []byte {
+	return append(TxIdKey, sdk.Uint64ToBigEndian(txId)...)
+}
+
+func GetEventNonceKey(eventNonce uint64) []byte {
+	return append(EventNonceKey, sdk.Uint64ToBigEndian(eventNonce)...)
 }

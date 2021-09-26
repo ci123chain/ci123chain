@@ -1,9 +1,9 @@
 package gravity
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/module"
-	"encoding/json"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	tmtypes "github.com/tendermint/tendermint/types"
 
@@ -37,6 +37,8 @@ func (AppModuleBasic) RegisterCodec(codec *codec.Codec) {
 }
 
 func (AppModuleBasic) RegisterInterfaces(registry codectypes.InterfaceRegistry) {
+	types.RegisterInterfaces(registry)
+	types.SetBinary(registry)
 	return
 }
 
@@ -74,7 +76,7 @@ func (AppModule) Name() string {
 // InitGenesis initializes the genesis state for this module and implements app module.
 func (am AppModule) InitGenesis(ctx sdk.Context, bz json.RawMessage) []abci.ValidatorUpdate {
 	var genesisState types.GenesisState
-	err := json.Unmarshal(bz, &genesisState)
+	err := types.SubModuleCdc.UnmarshalJSON(bz, &genesisState)
 	if err != nil {
 		panic(fmt.Sprintf("failed to unmarshal %s genesis state: %s", types.ModuleName, err))
 	}
@@ -85,8 +87,7 @@ func (am AppModule) InitGenesis(ctx sdk.Context, bz json.RawMessage) []abci.Vali
 //// ExportGenesis exports the current genesis state to a json.RawMessage
 func (am AppModule) ExportGenesis(ctx sdk.Context) json.RawMessage {
 	gs := keeper.ExportGenesis(ctx, am.Keeper)
-	by, _ := json.Marshal(gs)
-	return by
+	return types.SubModuleCdc.MustMarshalJSON(&gs)
 }
 
 // EndBlock implements app module

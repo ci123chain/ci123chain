@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
+	"github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/gorilla/mux"
 
 	"github.com/ci123chain/ci123chain/pkg/gravity/types"
@@ -246,5 +246,33 @@ func ERC20ToDenomHandler(cliCtx context.Context, storeName string) http.HandlerF
 			return
 		}
 		rest.PostProcessResponseBare(w, cliCtx.WithHeight(height), res)
+	}
+}
+
+func queryTxIdHandler(cliCtx context.Context, storeName string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		txId := vars[txId]
+
+		res, height, _, err := cliCtx.Query(fmt.Sprintf("custom/%s/txId/%s", storeName, txId), nil, false)
+		if err != nil {
+			rest.WriteErrorRes(w, err.Error())
+			return
+		}
+		rest.PostProcessResponseBare(w, cliCtx.WithHeight(height), string(res))
+	}
+}
+
+func queryEventNonceHandler(cliCtx context.Context, storeName string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		eventNonce := vars[eventNonce]
+
+		res, height, _, err := cliCtx.Query(fmt.Sprintf("custom/%s/eventNonce/%s", storeName, eventNonce), nil, false)
+		if err != nil {
+			rest.WriteErrorRes(w, err.Error())
+			return
+		}
+		rest.PostProcessResponseBare(w, cliCtx.WithHeight(height), string(res))
 	}
 }

@@ -3,12 +3,13 @@ package keeper
 import (
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
+	"github.com/ci123chain/ci123chain/pkg/abci/store"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/account"
 	"github.com/ci123chain/ci123chain/pkg/supply/exported"
 	"github.com/ci123chain/ci123chain/pkg/supply/types"
-	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
-	"github.com/ci123chain/ci123chain/pkg/abci/store"
+	vmtypes "github.com/ci123chain/ci123chain/pkg/vm/types"
 	"github.com/tendermint/tendermint/libs/log"
 )
 
@@ -16,6 +17,7 @@ type Keeper struct {
 	cdc 		*codec.Codec
 	storeKey 	sdk.StoreKey
 	ak 			account.AccountKeeper
+	evmKeeper   vmtypes.Keeper
 
 	permAddrs 	map[string]types.PermissionsForAddress
 }
@@ -32,6 +34,11 @@ func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, ak account.AccountKeeper, mac
 		ak: 	ak,
 		permAddrs: permAddrs,
 	}
+}
+
+func (k Keeper) SetVMKeeper(vmkeeper vmtypes.Keeper) Keeper {
+	k.evmKeeper = vmkeeper
+	return k
 }
 
 func (k Keeper) GetModuleAccount(ctx sdk.Context, moduleName string ) exported.ModuleAccountI {
@@ -53,7 +60,6 @@ func (k Keeper) GetModuleAccountAndPermissions(ctx sdk.Context, moduleName strin
 	if addr.Empty() {
 		return nil, []string{}
 	}
-
 	acc := k.ak.GetAccount(ctx, addr)
 	if acc != nil {
 		macc, ok := acc.(exported.ModuleAccountI)
@@ -222,7 +228,7 @@ func (k Keeper) MintCoins(ctx sdk.Context, moduleName string, amt sdk.Coins) err
 	k.SetSupply(ctx, supply)
 
 	logger := k.Logger(ctx)
-	logger.Info(fmt.Sprintf("minted %s from %s module account", amt.String(), moduleName))
+	logger.Debug(fmt.Sprintf("minted %s from %s module account", amt.String(), moduleName))
 
 	return nil
 }

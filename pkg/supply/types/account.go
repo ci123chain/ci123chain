@@ -19,6 +19,10 @@ type ModuleAccount struct {
 	Permissions 	[]string `json:"permissions" yaml:"permissions"`
 }
 
+func (macc ModuleAccount) SetIsModule(flag bool) error {
+	return macc.BaseAccount.SetIsModule(flag)
+}
+
 func (macc ModuleAccount) GetName() string {
 	return macc.Name
 }
@@ -38,6 +42,7 @@ func NewModuleAddress(name string) types.AccAddress {
 func NewEmptyModuleAccount(name string, permissions ...string) *ModuleAccount {
 	moduleAddress := NewModuleAddress(name)
 	baseAcc := types2.NewBaseAccountWithAddress(moduleAddress)
+	baseAcc.SetIsModule(true)
 
 	if err := validatePermissions(permissions...); err != nil {
 		panic(err)

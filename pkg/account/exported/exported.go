@@ -22,6 +22,9 @@ type Account interface {
 	GetCoins() types.Coins
 	SetCoins(types.Coins) error
 
+	SetCodeHash(bz []byte)
+	GetCodeHash() []byte
+
 	SetContractType(contractType string) error
 	GetContractType() string
 
@@ -30,4 +33,7 @@ type Account interface {
 	SpendableCoins(blockTime time.Time) types.Coins
 	// Ensure that account implements stringer
 	String() string
+
+	SetIsModule(flag bool) error
+	GetIsModule() bool
 }

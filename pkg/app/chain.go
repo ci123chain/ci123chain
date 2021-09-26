@@ -196,15 +196,11 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer,
 
 	slashingKeeper := slashing.NewKeeper(cdc, SlashingStoreKey, stakingKeeper, c.GetSubspace(slashing.ModuleName))
 
-	gravityKeeper := gravity.NewKeeper(cdc, GravityStoreKey, c.GetSubspace(gravity.ModuleName), accountKeeper, stakingKeeper, supplyKeeper, slashingKeeper)
-
 	distrKeeper := k.NewKeeper(cdc, DisrtStoreKey, supplyKeeper, accountKeeper, auth.FeeCollectorName, c.GetSubspace(distr.ModuleName), stakingKeeper, cdb)
 
 	mintKeeper := mint.NewKeeper(cdc, MintStoreKey, c.GetSubspace(mint.ModuleName), stakingKeeper, supplyKeeper, auth.FeeCollectorName)
 
 	infrastructureKeeper := infrastructure.NewKeeper(cdc, InfrastructureStoreKey)
-	stakingKeeper.SetHooks(staking.NewMultiStakingHooks(distrKeeper.Hooks(), slashingKeeper.Hooks(), gravityKeeper.Hooks()))
-	
 
 	capabilityKeeper := capabilitykeeper.NewKeeper(cdc, CapabilityStoreKey, memKeys[capabilitytypes.MemStoreKey])
 	scopedIBCKeeper := capabilityKeeper.ScopeToModule(ibchost.ModuleName)
@@ -227,6 +223,11 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer,
 	homeDir := viper.GetString(cli.HomeFlag)
 	var wasmconfig wasm_types.WasmConfig
 	vmKeeper := vm.NewKeeper(cdc, WasmStoreKey, homeDir, wasmconfig, c.GetSubspace(vm.ModuleName), accountKeeper, stakingKeeper, cdb)
+	supplyKeeper = supplyKeeper.SetVMKeeper(vmKeeper)
+
+	gravityKeeper := gravity.NewKeeper(cdc, GravityStoreKey, c.GetSubspace(gravity.ModuleName), accountKeeper, stakingKeeper, supplyKeeper, slashingKeeper)
+
+	stakingKeeper.SetHooks(staking.NewMultiStakingHooks(distrKeeper.Hooks(), slashingKeeper.Hooks(), gravityKeeper.Hooks()))
 
 	ibcTransferModule := ibc.NewTransferModule(ibcTransferKeeper)
 	// Create static IBC router, add transfer route, then set and seal it
@@ -244,8 +245,8 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer,
 			stakingTypes.ModuleName,
 			prestaking.ModuleName,
 			slashing.ModuleName,
-			gravity.ModuleName,
 			vm.ModuleName,
+			gravity.ModuleName,
 			mint.ModuleName,
 			infrastructure.ModuleName,
 			ibc.ModuleName,
