@@ -2,6 +2,7 @@ package evmtypes
 
 import (
 	"fmt"
+	"github.com/ci123chain/ci123chain/pkg/account/exported"
 	"github.com/ci123chain/ci123chain/pkg/account/types"
 	"math/big"
 	"sort"
@@ -514,6 +515,7 @@ func (csdb *CommitStateDB) updateStateObject(so *stateObject) error {
 	}
 
 	if err := so.account.SetCoins(coins); err != nil {
+		so.account.SetCoins(coins)
 		return err
 	}
 
@@ -641,7 +643,7 @@ func (csdb *CommitStateDB) Reset(_ ethcmn.Hash) error {
 func (csdb *CommitStateDB) UpdateAccounts() {
 	for _, stateEntry := range csdb.stateObjects {
 		currAcc := csdb.accountKeeper.GetAccount(csdb.ctx, sdk.ToAccAddress(stateEntry.address.Bytes()))
-		emintAcc, ok := currAcc.(*types.BaseAccount)
+		emintAcc, ok := currAcc.(exported.Account)
 		if !ok {
 			continue
 		}

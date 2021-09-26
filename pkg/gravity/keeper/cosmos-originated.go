@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/ci123chain/ci123chain/pkg/abci/store"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
@@ -9,9 +10,9 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/gravity/types"
 )
 
-func (k Keeper) GetCosmosOriginatedDenom(ctx sdk.Context, tokenContract string) (string, bool) {
+func (k Keeper) GetMapedWlkToken(ctx sdk.Context, tokenContract string) (string, bool) {
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.GetERC20ToDenomKey(tokenContract))
+	bz := store.Get(types.GetEthToWlkKey(tokenContract))
 
 	if bz != nil {
 		return string(bz), true
@@ -19,9 +20,9 @@ func (k Keeper) GetCosmosOriginatedDenom(ctx sdk.Context, tokenContract string) 
 	return "", false
 }
 
-func (k Keeper) GetCosmosOriginatedERC20(ctx sdk.Context, denom string) (string, bool) {
+func (k Keeper) GetMapedEthToken(ctx sdk.Context, denom string) (string, bool) {
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.GetDenomToERC20Key(denom))
+	bz := store.Get(types.GetWlKToEthKey(denom))
 
 	if bz != nil {
 		return string(bz), true
@@ -29,10 +30,13 @@ func (k Keeper) GetCosmosOriginatedERC20(ctx sdk.Context, denom string) (string,
 	return "", false
 }
 
-func (k Keeper) setCosmosOriginatedDenomToERC20(ctx sdk.Context, denom string, tokenContract string) {
+func (k Keeper) setERC20Map(ctx sdk.Context, wlkContract string, ethContract string) {
+	if wlkContract == "" || ethContract == "" {
+		panic("contract address cannot be empty")
+	}
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.GetDenomToERC20Key(denom), []byte(tokenContract))
-	store.Set(types.GetERC20ToDenomKey(tokenContract), []byte(denom))
+	store.Set(types.GetWlKToEthKey(wlkContract), []byte(ethContract))
+	store.Set(types.GetEthToWlkKey(ethContract), []byte(wlkContract))
 }
 
 // DenomToERC20 returns (bool isCosmosOriginated, string ERC20, err)
@@ -45,9 +49,9 @@ func (k Keeper) DenomToERC20Lookup(ctx sdk.Context, denom string) (bool, string,
 
 	if err != nil {
 		// Look up ERC20 contract in index and error if it's not in there.
-		tc2, exists := k.GetCosmosOriginatedERC20(ctx, denom)
+		tc2, exists := k.GetMapedEthToken(ctx, denom)
 		if !exists {
-			return false, "", fmt.Errorf("denom not a gravity voucher coin: %s, and also not in cosmos-originated ERC20 index", err)
+			return false, "", fmt.Errorf("denom not a default coin: %s, and also not a ERC20 index", err)
 		}
 		// This is a cosmos-originated asset
 		return true, tc2, nil
@@ -62,7 +66,7 @@ func (k Keeper) DenomToERC20Lookup(ctx sdk.Context, denom string) (bool, string,
 // and get its corresponding denom
 func (k Keeper) ERC20ToDenomLookup(ctx sdk.Context, tokenContract string) (bool, string) {
 	// First try looking up tokenContract in index
-	dn1, exists := k.GetCosmosOriginatedDenom(ctx, tokenContract)
+	dn1, exists := k.GetMapedWlkToken(ctx, tokenContract)
 	if exists {
 		// It is a cosmos originated asset
 		return true, dn1
@@ -74,7 +78,7 @@ func (k Keeper) ERC20ToDenomLookup(ctx sdk.Context, tokenContract string) (bool,
 
 // IterateERC20ToDenom iterates over erc20 to denom relations
 func (k Keeper) IterateERC20ToDenom(ctx sdk.Context, cb func([]byte, *types.ERC20ToDenom) bool) {
-	prefixStore := store.NewPrefixStore(ctx.KVStore(k.storeKey), types.ERC20ToDenomKey)
+	prefixStore := store.NewPrefixStore(ctx.KVStore(k.storeKey), types.EthToWlkKey)
 	iter := prefixStore.Iterator(nil, nil)
 	defer iter.Close()
 
@@ -88,4 +92,8 @@ func (k Keeper) IterateERC20ToDenom(ctx sdk.Context, cb func([]byte, *types.ERC2
 			break
 		}
 	}
+}
+
+func (k Keeper) IsWlkToken(token string) bool {
+	return strings.EqualFold(token, sdk.DefaultBondDenom)
 }

@@ -2,6 +2,7 @@ package evmtypes
 
 import (
 	"fmt"
+	"github.com/ci123chain/ci123chain/pkg/vm/types"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -37,12 +38,17 @@ type GasInfo struct {
 	GasRefunded uint64
 }
 
+var _ types.VMResult = (*ExecutionResult)(nil)
 // ExecutionResult represents what's returned from a transition
 type ExecutionResult struct {
 	Logs    []*ethtypes.Log
 	Bloom   *big.Int
 	Result  *sdk.Result
 	GasInfo GasInfo
+}
+
+func (e ExecutionResult) VMResult() *sdk.Result {
+	return e.Result
 }
 
 func (st StateTransition) newEVM(ctx sdk.Context, csdb *CommitStateDB, gasLimit uint64, gasPrice *big.Int, config ChainConfig) *vm.EVM {
@@ -96,6 +102,17 @@ func (st StateTransition) TransitionDb(ctx sdk.Context, config ChainConfig) (*Ex
 	evmGasMeter := sdk.NewInfiniteGasMeter()
 	csdb.WithContext(ctx.WithGasMeter(evmGasMeter))
 
+	var gasConsumed uint64
+
+	defer func() {
+		// TODO: Refund unused gas here, if intended in future
+		// Consume gas from evm execution
+		// Out of gas check does not need to be done here since it is done within the EVM execution
+		if !ctx.IsRootMsg() {
+			ctx.WithGasMeter(currentGasMeter).GasMeter().ConsumeGas(gasConsumed, "EVM execution consumption")
+		}
+	}()
+
 	// Clear cache of accounts to handle changes outside of the EVM
 	csdb.UpdateAccounts()
 
@@ -129,11 +146,10 @@ func (st StateTransition) TransitionDb(ctx sdk.Context, config ChainConfig) (*Ex
 		recipientLog = fmt.Sprintf("recipient address %s", st.Recipient.String())
 	}
 
-	gasConsumed := gasLimit - leftOverGas
+	gasConsumed = gasLimit - leftOverGas
 
 	if err != nil {
 		// Consume gas before returning
-		ctx.GasMeter().ConsumeGas(gasConsumed, "evm execution consumption")
 		return nil, err
 	}
 
@@ -189,6 +205,11 @@ func (st StateTransition) TransitionDb(ctx sdk.Context, config ChainConfig) (*Ex
 	if contractCreation{
 		resultLog = recipientLog
 	}
+
+	//if ctx.IsRootMsg() {
+	//	gasConsumed = 0
+	//	gasLimit = 0
+	//}
 
 	executionResult := &ExecutionResult{
 		Logs:  logs,

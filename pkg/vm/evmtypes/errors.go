@@ -36,6 +36,10 @@ const (
 	CodeBloomBitOutOfBounds  CodeType = 1724
 
 	CodeContractMethodInvalid  CodeType = 1730
+	CodeEVMChainConfigInvalid  CodeType = 1731
+	CodeExecTransactionInvalid  CodeType = 1732
+	CodeContractMsgInvalid  CodeType = 1733
+
 )
 
 var (
@@ -65,6 +69,12 @@ var (
 	ErrBloomBitOutOfBounds = sdkerrors.Register(string(DefaultCodespace), uint32(CodeBloomBitOutOfBounds), "bloom bit out of bounds")
 
 	ErrContractMethodInvalid = sdkerrors.Register(string(DefaultCodespace), uint32(CodeContractMethodInvalid), "contract method invalid")
+
+	ErrEVMChainConfigInvalid = sdkerrors.Register(string(DefaultCodespace), uint32(CodeEVMChainConfigInvalid), "err chain config")
+	ErrExecTransactionInvalid = sdkerrors.Register(string(DefaultCodespace), uint32(CodeExecTransactionInvalid), "err exec transitionDb")
+	ErrContractMsgInvalid = sdkerrors.Register(string(DefaultCodespace), uint32(CodeContractMsgInvalid), "contract msg invalid")
+
+
 )
 //
 //const (

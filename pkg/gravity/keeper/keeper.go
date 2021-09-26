@@ -10,6 +10,7 @@ import (
 	"math"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	"github.com/ci123chain/ci123chain/pkg/abci/store"
@@ -31,13 +32,15 @@ type Keeper struct {
 	cdc            *codec.Codec // The wire codec for binary encoding/decoding.
 	SlashingKeeper slashing.Keeper
 
+
 	AttestationHandler interface {
 		Handle(sdk.Context, types.Attestation, types.EthereumClaim) error
 	}
 }
 
 // NewKeeper returns a new instance of the gravity keeper
-func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, paramSpace paramtypes.Subspace, accountKeeper account.AccountKeeper, stakingKeeper staking.StakingKeeper, supplyKeeper supply.Keeper, slashingKeeper slashing.Keeper) Keeper {
+func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, paramSpace paramtypes.Subspace, accountKeeper account.AccountKeeper,
+	stakingKeeper staking.StakingKeeper, supplyKeeper supply.Keeper, slashingKeeper slashing.Keeper) Keeper {
 	// set KeyTable if it has not already been set
 	if !paramSpace.HasKeyTable() {
 		paramSpace = paramSpace.WithKeyTable(types.ParamKeyTable())
@@ -47,7 +50,7 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, paramSpace paramtypes.Su
 		cdc:            cdc,
 		paramSpace:     paramSpace,
 		storeKey:       storeKey,
-		AccountKeeper: accountKeeper,
+		AccountKeeper: 	accountKeeper,
 		StakingKeeper:  stakingKeeper,
 		SupplyKeeper: 	supplyKeeper,
 		SlashingKeeper: slashingKeeper,
@@ -330,6 +333,7 @@ func (k Keeper) SetBatchConfirm(ctx sdk.Context, batch *types.MsgConfirmBatch) [
 // TODO: specify which nonce this is
 func (k Keeper) IterateBatchConfirmByNonceAndTokenContract(ctx sdk.Context, nonce uint64, tokenContract string, cb func([]byte, types.MsgConfirmBatch) bool) {
 	prefixStore := store.NewPrefixStore(ctx.KVStore(k.storeKey), types.BatchConfirmKey)
+	tokenContract = strings.ToLower(tokenContract)
 	prefix := append([]byte(tokenContract), types.UInt64Bytes(nonce)...)
 	iter := prefixStore.Iterator(prefixRange(prefix))
 	defer iter.Close()
@@ -611,7 +615,12 @@ func (k Keeper) logger(ctx sdk.Context) log.Logger {
 
 func (k Keeper) UnpackAttestationClaim(att *types.Attestation) (types.EthereumClaim, error) {
 	//var msg types.EthereumClaim
-	msg := att.Claim.GetCachedValue().(types.EthereumClaim)
+	var msg types.EthereumClaim
+	err := types.SubModuleCdc.UnpackAny(att.Claim, &msg)
+	if err != nil {
+		return nil, err
+	}
+	//msg := att.Claim.GetCachedValue().(types.EthereumClaim)
 	return msg, nil
 }
 
@@ -729,4 +738,20 @@ func prefixRange(prefix []byte) ([]byte, []byte) {
 		end = nil
 	}
 	return prefix, end
+}
+
+
+
+func (k Keeper) SetTokenMetaData(ctx sdk.Context, contract string, meta types.MetaData) {
+	ctx.KVStore(k.storeKey).Set(types.GetContractMetaDataKey(contract), k.cdc.MustMarshalBinaryBare(meta))
+}
+
+func (k Keeper) GetTokenMetaData(ctx sdk.Context, contract string) types.MetaData {
+	bz := ctx.KVStore(k.storeKey).Get(types.GetContractMetaDataKey(contract))
+	if bz == nil {
+		return types.MetaData{}
+	}
+	var md types.MetaData
+	k.cdc.MustUnmarshalBinaryBare(bz, &md)
+	return md
 }
