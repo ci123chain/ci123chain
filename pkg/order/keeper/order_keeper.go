@@ -147,7 +147,7 @@ func (ok *OrderKeeper) isReady(ctx sdk.Context, orderbook types.OrderBook, shard
 			//cdb := dbm.NewPrefixDB(ok.Cdb, []byte("s/k:"+ok.StoreKey.Name()+"/"))
 			//cdb.Set([]byte(types.OrderBookKey), orderBytes)
 			ok.SetOrderBook(ctx, orderbook)
-			return false
+			//return false
 		}
 	}
 
