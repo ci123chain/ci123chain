@@ -11,8 +11,8 @@ type MsgUndelegate struct {
 	Amount    sdk.Coin		  `json:"amount"`
 }
 
-func NewMsgUndelegate(from sdk.AccAddress, amount sdk.Coin) MsgUndelegate {
-	return MsgUndelegate{
+func NewMsgUndelegate(from sdk.AccAddress, amount sdk.Coin) *MsgUndelegate {
+	return &MsgUndelegate{
 		FromAddress: from,
 		Amount:      amount,
 	}

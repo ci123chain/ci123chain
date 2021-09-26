@@ -9,16 +9,14 @@ type MsgRedelegate struct {
 	FromAddress   sdk.AccAddress   `json:"from_address"`
 	SrcValidator  sdk.AccAddress   `json:"src_validator"`
 	DstValidator  sdk.AccAddress   `json:"dst_validator"`
-	//Amount        sdk.Coin         `json:"amount"`
 }
 
 
-func NewMsgRedelegate(from, src, dst sdk.AccAddress, amount sdk.Coin) MsgRedelegate {
-	return MsgRedelegate{
+func NewMsgRedelegate(from, src, dst sdk.AccAddress) *MsgRedelegate {
+	return &MsgRedelegate{
 		FromAddress:  from,
 		SrcValidator: src,
 		DstValidator: dst,
-		//Amount:       amount,
 	}
 }
 

@@ -27,8 +27,12 @@ func (am AppModuleBasic) RegisterInterfaces(registry codectypes.InterfaceRegistr
 
 
 func (am AppModuleBasic) DefaultGenesis(validators []tmtypes.GenesisValidator) json.RawMessage {
-	//
-	return nil
+	p := types.DefaultGenesisState(validators)
+	b, err := types.PreStakingCodec.MarshalJSONIndent(p, "", "")
+	if err != nil{
+		panic(err)
+	}
+	return b
 }
 
 

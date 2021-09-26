@@ -192,7 +192,7 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer,
 
 	c.StakingKeeper = stakingKeeper
 
-	prestakingKeeper := prestaking.NewKeeper(cdc, preStakingStorekey, accountKeeper, supplyKeeper, stakingKeeper, c.GetSubspace(prestaking.ModuleName),cdb)
+	//prestakingKeeper := prestaking.NewKeeper(cdc, preStakingStorekey, accountKeeper, supplyKeeper, stakingKeeper, c.GetSubspace(prestaking.ModuleName),cdb)
 
 	slashingKeeper := slashing.NewKeeper(cdc, SlashingStoreKey, stakingKeeper, c.GetSubspace(slashing.ModuleName))
 
@@ -227,6 +227,8 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer,
 	homeDir := viper.GetString(cli.HomeFlag)
 	var wasmconfig wasm_types.WasmConfig
 	vmKeeper := vm.NewKeeper(cdc, WasmStoreKey, homeDir, wasmconfig, c.GetSubspace(vm.ModuleName), accountKeeper, stakingKeeper, cdb)
+	supplyKeeper.SetVMKeeper(vmKeeper)
+	prestakingKeeper := prestaking.NewKeeper(cdc, preStakingStorekey, accountKeeper, supplyKeeper, stakingKeeper, c.GetSubspace(prestaking.ModuleName),cdb)
 
 	ibcTransferModule := ibc.NewTransferModule(ibcTransferKeeper)
 	// Create static IBC router, add transfer route, then set and seal it
