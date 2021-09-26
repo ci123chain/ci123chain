@@ -2,10 +2,12 @@ package keeper
 
 import (
 	"errors"
+	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/account"
 	"github.com/ci123chain/ci123chain/pkg/order/types"
 	"github.com/ci123chain/ci123chain/pkg/redis"
+	"github.com/tendermint/tendermint/libs/log"
 	"time"
 )
 
@@ -23,8 +25,13 @@ func NewOrderKeeper(cdb *redis.RedisDB, key sdk.StoreKey, ak account.AccountKeep
 	}
 }
 
+func (k OrderKeeper) Logger(ctx sdk.Context) log.Logger {
+	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
+}
+
 func (ok *OrderKeeper) WaitForReady(ctx sdk.Context) {
 	for {
+		ok.Logger(ctx).Info("Stucking on waitForReady")
 		orderbook, err := ok.GetOrderBook(ctx)
 		if err != nil {
 			if err.Error() != types.NoOrderBookErr {
@@ -147,7 +154,7 @@ func (ok *OrderKeeper) isReady(ctx sdk.Context, orderbook types.OrderBook, shard
 			//cdb := dbm.NewPrefixDB(ok.Cdb, []byte("s/k:"+ok.StoreKey.Name()+"/"))
 			//cdb.Set([]byte(types.OrderBookKey), orderBytes)
 			ok.SetOrderBook(ctx, orderbook)
-			//return false
+			return false
 		}
 	}
 
