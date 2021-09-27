@@ -1,6 +1,6 @@
 #! /bin/bash
 
-export CI_VALIDATOR_KEY="4wttMiieaewLiRYu+y05j0uslBDOX5IA3k4TY9GtQzSdTcXyd5Y982Q3CUdh+h1XcCvtpIUb+5q6rtJ8W4SEFw=="
+export CI_VALIDATOR_KEY="qS4LtbZ9nxk/5HOpGBLQaMLWjzgrfd81VbrxoiQqgZkIvOle+S28kv+u8136PAfvqRDTRnuGVlIEmbFprIRRFg=="
 export CI_PUBKEY="CLzpXvktvJL/rvNd+jwH76kQ00Z7hlZSBJmxaayEURY="
 export CI_CHAIN_ID="weelink"
 export CI_NODE_DOMAIN="localhost"

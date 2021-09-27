@@ -4,6 +4,7 @@ WORKDIR /opt/ci123chain
 
 COPY ./docker/node/build/cid-linux /opt/cid-linux
 COPY ./docker/node/build/cli-linux /opt/cli-linux
+COPY ./docker/node/build/tcptest /opt/tcptest
 COPY ./docker/node/exportFile.json /opt/exportFile.json
 
 COPY ./wasmer-go@v1.0.3-rc2 /go/pkg/mod/github.com/ci123chain/wasmer-go@v1.0.3-rc2

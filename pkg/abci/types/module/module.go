@@ -2,6 +2,7 @@ package module
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	codectypes "github.com/ci123chain/ci123chain/pkg/abci/codec/types"
 	"github.com/ci123chain/ci123chain/pkg/abci/types"
@@ -117,6 +118,7 @@ func (am AppManager) InitGenesis(ctx types.Context, data map[string]json.RawMess
 			validatorUpdates = moduleValUpdates
 		}
 	}
+	fmt.Println("****** InitGenesis Finished")
 	return abci.ResponseInitChain{
 		Validators: validatorUpdates,
 	}

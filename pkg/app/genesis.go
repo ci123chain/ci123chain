@@ -31,6 +31,7 @@ func AppGenStateJSON(validators []tmtypes.GenesisValidator) (json.RawMessage, er
 type GenesisState map[string]json.RawMessage
 
 func (c *Chain) InitChainer (ctx sdk.Context, req tmabci.RequestInitChain) tmabci.ResponseInitChain {
+	c.BaseApp.Logger.Info("Begin initChain")
 	index := viper.GetString(flagShardIndex)
 	if len(index) != 0 && index != FIRSTSHARD {
 		return tmabci.ResponseInitChain{}
@@ -44,6 +45,7 @@ func (c *Chain) InitChainer (ctx sdk.Context, req tmabci.RequestInitChain) tmabc
 			c.cdc.MustUnmarshalJSON(req.AppStateBytes, &genesisState)
 			store.Set([]byte(INITCHAINKEY), []byte("true"))
 		}
+		c.BaseApp.Logger.Info("initChain Finish")
 		return c.mm.InitGenesis(ctx, genesisState)
 	}
 }

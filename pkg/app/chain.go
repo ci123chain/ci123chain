@@ -30,7 +30,6 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
-	client "github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/module"
 	"github.com/ci123chain/ci123chain/pkg/account"
 	"github.com/ci123chain/ci123chain/pkg/account/keeper"
@@ -42,6 +41,7 @@ import (
 	authtx "github.com/ci123chain/ci123chain/pkg/auth/tx"
 	auth_types "github.com/ci123chain/ci123chain/pkg/auth/types"
 	capabilitytypes "github.com/ci123chain/ci123chain/pkg/capability/types"
+	client "github.com/ci123chain/ci123chain/pkg/client/context"
 	distr "github.com/ci123chain/ci123chain/pkg/distribution"
 	k "github.com/ci123chain/ci123chain/pkg/distribution/keeper"
 	ibctransfer "github.com/ci123chain/ci123chain/pkg/ibc/application/transfer"
@@ -131,7 +131,6 @@ var (
 type Chain struct {
 	*baseapp.BaseApp
 
-	logger log.Logger
 	cdc    *amino.Codec
 	appCodec codec.Marshaler
 	interfaceRegistry codectypes.InterfaceRegistry
