@@ -11,8 +11,10 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/pre_staking/types"
 	"github.com/gorilla/mux"
+	"math/big"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 func RegisterRestTxRoutes(cliCtx context.Context, r *mux.Router)  {
@@ -56,7 +58,18 @@ func PreDelegateRequest(cliCtx context.Context, writer http.ResponseWriter, requ
 	c := request.FormValue("contract")
 	contract := sdk.HexToAddress(c)
 
-	msg := types.NewMsgPreStaking(from, coin, contract)
+	dt := request.FormValue("delegate_time")
+	t, err := time.ParseDuration(dt)
+	if err != nil {
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid from").Error())
+		return
+	}
+	if t <= 0 {
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid from").Error())
+		return
+	}
+
+	msg := types.NewMsgPreStaking(from, coin, contract, t)
 
 	if !broadcast {
 		rest.PostProcessResponseBare(writer, cliCtx, hex.EncodeToString(msg.Bytes()))
@@ -87,28 +100,34 @@ func DelegateRequest(cliCtx context.Context, writer http.ResponseWriter, request
 		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, err.Error()).Error())
 		return
 	}
-	amount, ok := sdk.NewIntFromString(request.FormValue("amount"))
+	//amount, ok := sdk.NewIntFromString(request.FormValue("amount"))
+	//if !ok {
+	//	rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid amount").Error())
+	//	return
+	//}
+	////verify account exists
+	//err = checkAccountExist(cliCtx, from)
+	//if err != nil {
+	//	rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid from").Error())
+	//	return
+	//}
+	//
+	//denom := request.FormValue("denom")
+	//coin := sdk.NewCoin(denom, amount)
+	//if coin.IsNegative() || coin.IsZero() {
+	//	rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid amount").Error())
+	//	return
+	//}
+	id := request.FormValue("vault_id")
+	Id, ok := new(big.Int).SetString(id, 64)
 	if !ok {
-		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid amount").Error())
-		return
-	}
-	//verify account exists
-	err = checkAccountExist(cliCtx, from)
-	if err != nil {
-		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid from").Error())
-		return
-	}
-
-	denom := request.FormValue("denom")
-	coin := sdk.NewCoin(denom, amount)
-	if coin.IsNegative() || coin.IsZero() {
-		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid amount").Error())
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid vault_id").Error())
 		return
 	}
 	v := request.FormValue("validator_address")
 	validator := sdk.HexToAddress(v)
 
-	msg := types.NewMsgStaking(from, from, validator, coin)
+	msg := types.NewMsgStaking(from, from, validator, Id)
 	if !broadcast {
 		rest.PostProcessResponseBare(writer, cliCtx, hex.EncodeToString(msg.Bytes()))
 		return
@@ -179,11 +198,11 @@ func UndelegateRequest(cliCtx context.Context, writer http.ResponseWriter, reque
 		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, err.Error()).Error())
 		return
 	}
-	amount, ok := sdk.NewIntFromString(request.FormValue("amount"))
-	if !ok {
-		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid amount").Error())
-		return
-	}
+	//amount, ok := sdk.NewIntFromString(request.FormValue("amount"))
+	//if !ok {
+	//	rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid amount").Error())
+	//	return
+	//}
 	//verify account exists
 	err = checkAccountExist(cliCtx, from)
 	if err != nil {
@@ -191,13 +210,19 @@ func UndelegateRequest(cliCtx context.Context, writer http.ResponseWriter, reque
 		return
 	}
 
-	denom := request.FormValue("denom")
-	coin := sdk.NewCoin(denom, amount)
-	if coin.IsNegative() || coin.IsZero() {
-		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid amount").Error())
+	//denom := request.FormValue("denom")
+	//coin := sdk.NewCoin(denom, amount)
+	//if coin.IsNegative() || coin.IsZero() {
+	//	rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid amount").Error())
+	//	return
+	//}
+	id := request.FormValue("vault_id")
+	Id, ok := new(big.Int).SetString(id, 10)
+	if !ok {
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid vault_id").Error())
 		return
 	}
-	msg := types.NewMsgUndelegate(from, coin)
+	msg := types.NewMsgUndelegate(from, Id)
 	if !broadcast {
 		rest.PostProcessResponseBare(writer, cliCtx, hex.EncodeToString(msg.Bytes()))
 		return

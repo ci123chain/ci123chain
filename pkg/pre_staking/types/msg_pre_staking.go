@@ -3,19 +3,22 @@ package types
 import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
+	"time"
 )
 
 type MsgPreStaking struct {
-	FromAddress sdk.AccAddress `json:"from_address"`
-	Amount    sdk.Coin		  `json:"amount"`
-	Contract  sdk.AccAddress  `json:"contract"`
+	FromAddress sdk.AccAddress   `json:"from_address"`
+	Amount    sdk.Coin		     `json:"amount"`
+	Contract  sdk.AccAddress     `json:"contract"`
+	DelegateTime  time.Duration         `json:"delegate_time"`
 }
 
-func NewMsgPreStaking(from sdk.AccAddress, amount sdk.Coin, c sdk.AccAddress) *MsgPreStaking {
+func NewMsgPreStaking(from sdk.AccAddress, amount sdk.Coin, c sdk.AccAddress, dt time.Duration) *MsgPreStaking {
 	return &MsgPreStaking{
 		FromAddress: from,
 		Amount:      amount,
 		Contract:    c,
+		DelegateTime: dt,
 	}
 }
 
@@ -33,6 +36,9 @@ func (msg *MsgPreStaking) ValidateBasic() error {
 	if msg.Contract.Empty() {
 		return sdkerrors.Wrap(sdkerrors.ErrParams, "contract can not empty")
 	}
+	//if msg.DelegateTime.Seconds() <= (time.Second * 3600 * 24 * 3 ).Seconds(){
+	//	return sdkerrors.Wrap(sdkerrors.ErrParams, "delegate_time can not be zero")
+	//}
 	return nil
 }
 

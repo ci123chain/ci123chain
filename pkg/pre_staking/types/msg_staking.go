@@ -2,24 +2,23 @@ package types
 
 import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	"time"
+	"math/big"
 )
 
 type MsgStaking struct {
 	FromAddress    sdk.AccAddress   `json:"from_address"`
 	Delegator      sdk.AccAddress   `json:"delegator"`
 	Validator      sdk.AccAddress   `json:"validator"`
-	Amount         sdk.Coin         `json:"amount"`
-	StorageTime    time.Time        `json:"storage_time"`
+	VaultID        *big.Int         `json:"vault_id"`
 }
 
 func NewMsgStaking(from sdk.AccAddress, delegatorAddr sdk.AccAddress, validatorAddr sdk.AccAddress,
-	amount sdk.Coin) *MsgStaking {
+	id *big.Int) *MsgStaking {
 		return &MsgStaking{
 			FromAddress: from,
 			Delegator:   delegatorAddr,
 			Validator:   validatorAddr,
-			Amount:      amount,
+			VaultID:      id,
 		}
 }
 
@@ -29,9 +28,6 @@ func (msg *MsgStaking) ValidateBasic() error {
 	}
 	if msg.Validator.Empty() {
 		return ErrInvalidValidatorAddress
-	}
-	if !msg.Amount.Amount.IsPositive() {
-		return ErrInvalidAmount
 	}
 	if !msg.FromAddress.Equal(msg.Delegator) {
 		return ErrFromNotEqualDelegator

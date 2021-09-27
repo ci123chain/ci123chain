@@ -11,6 +11,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/supply"
 	"github.com/tendermint/tendermint/libs/log"
 	dbm "github.com/tendermint/tm-db"
+	"math/big"
 	"sort"
 	"time"
 )
@@ -43,37 +44,31 @@ func (ps PreStakingKeeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-func (ps PreStakingKeeper) SetAccountPreStaking(ctx sdk.Context, delegator sdk.AccAddress, amount sdk.Int) {
+func (ps PreStakingKeeper) SetAccountPreStaking(ctx sdk.Context, delegator sdk.AccAddress, vaults types.VaultRecord) {
 	store := ctx.KVStore(ps.storeKey)
-	bz := ps.cdc.MustMarshalBinaryLengthPrefixed(sdk.IntProto{Int:amount})
+	bz := ps.cdc.MustMarshalBinaryLengthPrefixed(vaults)
 	store.Set(types.GetPreStakingKey(delegator), bz)
 }
 
 
 
-func (ps PreStakingKeeper) GetAccountPreStaking(ctx sdk.Context, delegator sdk.AccAddress) sdk.Int {
+func (ps PreStakingKeeper) GetAccountPreStaking(ctx sdk.Context, delegator sdk.AccAddress) types.VaultRecord {
 	store := ctx.KVStore(ps.storeKey)
 	bz := store.Get(types.GetPreStakingKey(delegator))
 	if bz == nil {
-		return sdk.ZeroInt()
+		return types.NewEmptyVaultRecord()
 	}
 
-	ip := sdk.IntProto{}
-	ps.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &ip)
+	var vats types.VaultRecord
+	ps.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &vats)
 
-	return ip.Int
+	return vats
 }
 
 
-func (ps PreStakingKeeper) SetAccountStakingRecord(ctx sdk.Context, val, del sdk.AccAddress, st time.Time, amount sdk.Coin) error {
+func (ps PreStakingKeeper) SetAccountStakingRecord(ctx sdk.Context, val, del sdk.AccAddress, id *big.Int, et time.Time, amount sdk.Coin) error {
 	store := ctx.KVStore(ps.storeKey)
-	var update = ctx.BlockTime()
-	t, err := time.ParseDuration(st.String())
-	if err != nil {
-		return err
-	}
-	var end = update.Add(t)
-	var record = types.NewStakingRecord(st, update, end, amount)
+	var record = types.NewStakingRecord(id, et, amount)
 	var key = types.GetStakingRecordKey(del, val)
 
 	before := ps.GetAccountStakingRecord(ctx, val, del)
@@ -85,6 +80,13 @@ func (ps PreStakingKeeper) SetAccountStakingRecord(ctx sdk.Context, val, del sdk
 	bz := ps.cdc.MustMarshalBinaryLengthPrefixed(records)
 	store.Set(key, bz)
 	return nil
+}
+
+func (ps PreStakingKeeper) SetAccountStakingRecords(ctx sdk.Context, del, val sdk.AccAddress, records []types.StakingRecords) {
+	store := ctx.KVStore(ps.storeKey)
+	var key = types.GetStakingRecordKey(del, val)
+	bz := ps.cdc.MustMarshalBinaryLengthPrefixed(records)
+	store.Set(key, bz)
 }
 
 func (ps PreStakingKeeper) GetAccountStakingRecord(ctx sdk.Context, val, del sdk.AccAddress) []types.StakingRecord {

@@ -8,7 +8,7 @@ import (
 
 type Delegation struct {
 	StartTime     time.Time        `json:"start_time"`
-	StorageTime   time.Time        `json:"storage_time"`
+	StorageTime   time.Duration        `json:"storage_time"`
 	EndTime       time.Time        `json:"end_time"`
 	Amount        sdk.Coin         `json:"amount"`
 	Validator     sdk.AccAddress   `json:"validator"`
@@ -17,7 +17,7 @@ type Delegation struct {
 type DelegationRecord struct {
 	Delegator     sdk.AccAddress   `json:"delegator"`
 	//Validator     sdk.AccAddress   `json:"validator"`
-	Delegations   []Delegation     `json:"delegations"`
+	Delegations   map[string]Delegation     `json:"delegations"`
 	PrestakingAmount  sdk.Int           `json:"prestaking_amount"`
 }
 
