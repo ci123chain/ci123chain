@@ -3,16 +3,15 @@ package types
 import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
-	"math/big"
 )
 
 
 type MsgUndelegate struct {
 	FromAddress sdk.AccAddress `json:"from_address"`
-	VaultID     *big.Int       `json:"vault_id"`
+	VaultID     string       `json:"vault_id"`
 }
 
-func NewMsgUndelegate(from sdk.AccAddress, id *big.Int) *MsgUndelegate {
+func NewMsgUndelegate(from sdk.AccAddress, id string) *MsgUndelegate {
 	return &MsgUndelegate{
 		FromAddress: from,
 		VaultID:      id,

@@ -49,5 +49,10 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 
 
 func (am AppModule) ExportGenesis(ctx sdk.Context) json.RawMessage {
-	return nil
+	gs := pre_staking.ExportGenesis(ctx, am.Keeper)
+	by, err := json.Marshal(gs)
+	if err != nil {
+		panic(err)
+	}
+	return by
 }

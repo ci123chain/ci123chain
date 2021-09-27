@@ -2,12 +2,13 @@ package handler
 
 import (
 	"errors"
-	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/pre_staking/keeper"
 	"github.com/ci123chain/ci123chain/pkg/pre_staking/types"
 	types2 "github.com/ci123chain/ci123chain/pkg/staking/types"
 	gogotypes "github.com/gogo/protobuf/types"
+	"github.com/umbracle/go-web3"
+	"math/big"
 	"time"
 )
 
@@ -25,6 +26,8 @@ func NewHandler(k keeper.PreStakingKeeper) sdk.Handler {
 			return UndelegateHandler(ctx, k, *msg)
 		case *types.MsgRedelegate:
 			return RedelegateHandler(ctx, k, *msg)
+		case *types.MsgDeploy:
+			return ContractHandler(ctx, k, *msg)
 		default:
 			return nil, nil
 		}
@@ -52,7 +55,6 @@ func PreStakingHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.Msg
 	res := k.GetAccountPreStaking(ctx, msg.FromAddress)
 	vat := types.NewVault(ctx.BlockTime(), ctx.BlockTime().Add(msg.DelegateTime), msg.DelegateTime, msg.Amount)
 	res.AddVault(vat)
-	fmt.Println(fmt.Sprintf("result: %v", res))
 	k.SetAccountPreStaking(ctx, msg.FromAddress, res)
 
 	//events.
@@ -63,6 +65,7 @@ func PreStakingHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.Msg
 			sdk.NewAttribute([]byte(sdk.AttributeKeyAmount), []byte(msg.Amount.Amount.String())),
 			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(types.ModuleName)),
 			sdk.NewAttribute([]byte(sdk.AttributeKeySender), []byte(msg.FromAddress.String())),
+			sdk.NewAttribute([]byte(types.AttributeKeyVaultID), []byte(res.LatestVaultID.String())),
 		),
 	})
 	return &sdk.Result{Events:em.Events()}, nil
@@ -74,7 +77,11 @@ func StakingHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.MsgSta
 	if res.IsEmpty() {
 		return nil, types.ErrAccountBalanceNotEnough
 	}
-	amount, endTime, err := res.PopVaultAmountAndEndTime(msg.VaultID)
+	id, ok := new(big.Int).SetString(msg.VaultID, 10)
+	if !ok {
+		return nil, types.ErrInvalidVaultID
+	}
+	amount, endTime, err := res.PopVaultAmountAndEndTime(id)
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +93,7 @@ func StakingHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.MsgSta
 	//var end = update.Add(t)
 	//var record = types.NewStakingRecord(msg.StorageTime, update, end, msg.Amount)
 	//var key = types.GetStakingRecordKey(msg.FromAddress, msg.Validator)
-	Err := k.SetAccountStakingRecord(ctx, msg.Validator, msg.FromAddress, msg.VaultID, endTime, amount)
+	Err := k.SetAccountStakingRecord(ctx, msg.Validator, msg.FromAddress, id, endTime, amount)
 	if Err != nil {
 		return nil, Err
 	}
@@ -145,6 +152,7 @@ func StakingHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.MsgSta
 			sdk.NewAttribute([]byte(sdk.AttributeKeyAmount), []byte(amount.String())),
 			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(types.ModuleName)),
 			sdk.NewAttribute([]byte(sdk.AttributeKeySender), []byte(msg.FromAddress.String())),
+			sdk.NewAttribute([]byte(types.AttributeKeyVaultID), []byte(msg.VaultID)),
 		),
 	})
 	return &sdk.Result{Events:em.Events()}, nil
@@ -157,7 +165,14 @@ func UndelegateHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.Msg
 	if res.IsEmpty() {
 		return nil, types.ErrNoBalanceLeft
 	}
-	amount, et, err := res.PopVaultAmountAndEndTime(msg.VaultID)
+	id, ok := new(big.Int).SetString(msg.VaultID, 10)
+	if !ok {
+		return nil, types.ErrInvalidVaultID
+	}
+	if id.Uint64() < 1 {
+		return nil, types.ErrInvalidVaultID
+	}
+	amount, et, err := res.PopVaultAmountAndEndTime(id)
 	if err != nil {
 		return nil, err
 	}
@@ -252,8 +267,39 @@ func RedelegateHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.Msg
 			sdk.NewAttribute([]byte(types.AttributeKeyCompletionTime), []byte(completionTime.Format(time.RFC3339))),
 			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(types.AttributeValueCategory)),
 			sdk.NewAttribute([]byte(sdk.AttributeKeySender), []byte(msg.FromAddress.String())),
+			sdk.NewAttribute([]byte(types.AttributeKeyVaultID), []byte(msg.FromAddress.String())),
 		),
 	})
 
 	return &sdk.Result{Data: completionTimeBz, Events: em.Events()}, nil
+}
+
+
+
+func ContractHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.MsgDeploy) (*sdk.Result, error) {
+
+	addr := k.SupplyKeeper.GetModuleAccount(ctx, "preStaking")
+	a, _ := new(big.Int).SetString("10000000000000000000", 10)
+
+	v1, _ := new(big.Int).SetString("500000000000000000", 10)
+	v2, _ := new(big.Int).SetString("150000000000000000", 10)
+	v3, _ := new(big.Int).SetString("86400", 10)
+
+	zero, _ := new(big.Int).SetString("0", 10)
+
+	contractAddr, err := k.SupplyKeeper.DeployDaoContract(ctx, "preStaking", []interface{}{[]web3.Address{web3.HexToAddress(addr.GetAddress().String()), web3.HexToAddress(msg.From.String())}, []*big.Int{a}, [3]*big.Int{v1, v2, v3}, zero})
+	if err != nil {
+		return nil, err
+	}
+
+	em := sdk.NewEventManager()
+	em.EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeDeploy,
+			sdk.NewAttribute([]byte(sdk.AttributeKeyMethod), []byte(types.EventTypeDeploy)),
+			sdk.NewAttribute([]byte(types.AttributeKeyContract), []byte(contractAddr.String())),
+		),
+	})
+
+	return &sdk.Result{Events: em.Events()}, nil
 }

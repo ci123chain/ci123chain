@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"encoding/json"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	types2 "github.com/ci123chain/ci123chain/pkg/pre_staking/types"
@@ -30,7 +31,8 @@ func PreStakingRecord(ctx sdk.Context, req abci.RequestQuery, k PreStakingKeeper
 		return nil, err
 	}
 	res := k.GetAccountPreStaking(ctx, params.Delegator)
-	return types2.PreStakingCodec.MarshalJSON(res)
+	by, err := json.Marshal(res)
+	return by, err
 }
 
 func StakingRecord(ctx sdk.Context, req abci.RequestQuery, k PreStakingKeeper) ([]byte, error) {
@@ -51,5 +53,6 @@ func StakingRecord(ctx sdk.Context, req abci.RequestQuery, k PreStakingKeeper) (
 		delegation.ValidatorAddress,
 		delegation.GetShares(),
 		sdk.NewChainCoin(val.TokensFromShares(delegation.Shares).TruncateInt()),)
-	return types2.PreStakingCodec.MarshalJSON(res)
+	//return types2.PreStakingCodec.MarshalJSON(res)
+	return json.Marshal(res)
 }
