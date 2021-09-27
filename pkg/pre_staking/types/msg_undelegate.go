@@ -3,18 +3,19 @@ package types
 import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
+	"math/big"
 )
 
 
 type MsgUndelegate struct {
 	FromAddress sdk.AccAddress `json:"from_address"`
-	Amount    sdk.Coin		  `json:"amount"`
+	VaultID     *big.Int       `json:"vault_id"`
 }
 
-func NewMsgUndelegate(from sdk.AccAddress, amount sdk.Coin) *MsgUndelegate {
+func NewMsgUndelegate(from sdk.AccAddress, id *big.Int) *MsgUndelegate {
 	return &MsgUndelegate{
 		FromAddress: from,
-		Amount:      amount,
+		VaultID:      id,
 	}
 }
 
@@ -25,9 +26,6 @@ func (msg *MsgUndelegate) MsgType() string { return "pre-staking" }
 func (msg *MsgUndelegate) ValidateBasic() error {
 	if msg.FromAddress.Empty() {
 		return sdkerrors.Wrap(sdkerrors.ErrParams, "from address can not empty")
-	}
-	if !msg.Amount.IsPositive() {
-		return sdkerrors.Wrap(sdkerrors.ErrParams, "amount can not be negative")
 	}
 	return nil
 }

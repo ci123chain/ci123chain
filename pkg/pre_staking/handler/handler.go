@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"errors"
+	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/pre_staking/keeper"
 	"github.com/ci123chain/ci123chain/pkg/pre_staking/types"
@@ -48,7 +50,10 @@ func PreStakingHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.Msg
 
 	//save to keeper.
 	res := k.GetAccountPreStaking(ctx, msg.FromAddress)
-	k.SetAccountPreStaking(ctx, msg.FromAddress, msg.Amount.Amount.Add(res))
+	vat := types.NewVault(ctx.BlockTime(), ctx.BlockTime().Add(msg.DelegateTime), msg.DelegateTime, msg.Amount)
+	res.AddVault(vat)
+	fmt.Println(fmt.Sprintf("result: %v", res))
+	k.SetAccountPreStaking(ctx, msg.FromAddress, res)
 
 	//events.
 	em := sdk.NewEventManager()
@@ -66,18 +71,22 @@ func PreStakingHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.Msg
 func StakingHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.MsgStaking) (*sdk.Result, error) {
 	//check
 	res := k.GetAccountPreStaking(ctx, msg.Delegator)
-	if res.IsZero() || res.LT(msg.Amount.Amount) {
+	if res.IsEmpty() {
 		return nil, types.ErrAccountBalanceNotEnough
 	}
+	amount, endTime, err := res.PopVaultAmountAndEndTime(msg.VaultID)
+	if err != nil {
+		return nil, err
+	}
 	//update account prestaking.
-	k.SetAccountPreStaking(ctx, msg.Delegator, res.Sub(msg.Amount.Amount))
+	k.SetAccountPreStaking(ctx, msg.Delegator, res)
 
 	//var update = ctx.BlockTime()
 	//t, err := time.ParseDuration(msg.StorageTime.String())
 	//var end = update.Add(t)
 	//var record = types.NewStakingRecord(msg.StorageTime, update, end, msg.Amount)
 	//var key = types.GetStakingRecordKey(msg.FromAddress, msg.Validator)
-	Err := k.SetAccountStakingRecord(ctx, msg.Validator, msg.FromAddress, msg.StorageTime, msg.Amount)
+	Err := k.SetAccountStakingRecord(ctx, msg.Validator, msg.FromAddress, msg.VaultID, endTime, amount)
 	if Err != nil {
 		return nil, Err
 	}
@@ -87,7 +96,7 @@ func StakingHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.MsgSta
 		return nil, types.ErrNoExpectedValidator
 	}
 	denom := k.StakingKeeper.BondDenom(ctx)
-	if msg.Amount.Denom != denom {
+	if amount.Denom != denom {
 		return nil, types.ErrInvalidDenom
 	}
 
@@ -117,12 +126,12 @@ func StakingHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.MsgSta
 	}
 
 	//pay to validator account.
-	err := k.SupplyKeeper.SendCoinsFromModuleToModule(ctx, types.ModuleName, sendName, msg.Amount)
+	err = k.SupplyKeeper.SendCoinsFromModuleToModule(ctx, types.ModuleName, sendName, amount)
 	if err != nil {
 		return nil, err
 	}
 
-	validator, newShares := k.StakingKeeper.AddValidatorTokensAndShares(ctx, validator, msg.Amount.Amount)
+	validator, newShares := k.StakingKeeper.AddValidatorTokensAndShares(ctx, validator, amount.Amount)
 	//update delegation
 	delegation.Shares = delegation.Shares.Add(newShares)
 	k.StakingKeeper.SetDelegation(ctx, delegation)
@@ -133,7 +142,7 @@ func StakingHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.MsgSta
 	em.EmitEvents(sdk.Events{
 		sdk.NewEvent(types.EventMsgStaking,
 			sdk.NewAttribute([]byte(sdk.AttributeKeyMethod), []byte(types.EventMsgStaking)),
-			sdk.NewAttribute([]byte(sdk.AttributeKeyAmount), []byte(msg.Amount.Amount.String())),
+			sdk.NewAttribute([]byte(sdk.AttributeKeyAmount), []byte(amount.String())),
 			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(types.ModuleName)),
 			sdk.NewAttribute([]byte(sdk.AttributeKeySender), []byte(msg.FromAddress.String())),
 		),
@@ -145,17 +154,24 @@ func StakingHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.MsgSta
 func UndelegateHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.MsgUndelegate) (*sdk.Result, error) {
 
 	res := k.GetAccountPreStaking(ctx, msg.FromAddress)
-	if res.IsZero() {
+	if res.IsEmpty() {
 		return nil, types.ErrNoBalanceLeft
 	}
-	if res.LT(msg.Amount.Amount) {
+	amount, et, err := res.PopVaultAmountAndEndTime(msg.VaultID)
+	if err != nil {
+		return nil, err
+	}
+	if et.Before(ctx.BlockTime()) {
+		return nil, errors.New("you can only undelegate the vault after endtime")
+	}
+	if !amount.IsPositive() {
 		return nil, types.ErrNoEnoughBalanceLeft
 	}
 
-	k.SetAccountPreStaking(ctx, msg.FromAddress, res.Sub(msg.Amount.Amount))
+	k.SetAccountPreStaking(ctx, msg.FromAddress, res)
 
 	moduleAcc := k.SupplyKeeper.GetModuleAccount(ctx, types.DefaultCodespace)
-	err := k.AccountKeeper.Transfer(ctx, moduleAcc.GetAddress(), msg.FromAddress, sdk.NewCoins(msg.Amount))
+	err = k.AccountKeeper.Transfer(ctx, moduleAcc.GetAddress(), msg.FromAddress, sdk.NewCoins(amount))
 	if err != nil {
 		return nil, err
 	}
@@ -167,7 +183,7 @@ func UndelegateHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.Msg
 	em.EmitEvents(sdk.Events{
 		sdk.NewEvent(types.EventsMsgPreStaking,
 			sdk.NewAttribute([]byte(sdk.AttributeKeyMethod), []byte(types.EventUndelegate)),
-			sdk.NewAttribute([]byte(sdk.AttributeKeyAmount), []byte(msg.Amount.Amount.String())),
+			sdk.NewAttribute([]byte(sdk.AttributeKeyAmount), []byte(amount.Amount.String())),
 			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(types.ModuleName)),
 			sdk.NewAttribute([]byte(sdk.AttributeKeySender), []byte(msg.FromAddress.String())),
 		),

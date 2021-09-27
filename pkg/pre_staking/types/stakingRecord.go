@@ -2,21 +2,20 @@ package types
 
 import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"math/big"
 	"time"
 )
 
 type StakingRecord struct {
-	StorageTime  time.Time  `json:"storage_time"`
-	UpdateTime   time.Time   `json:"update_time"`
+	VaultID      *big.Int   `json:"vault_id"`
 	EndTime      time.Time  `json:"end_time"`
 	Amount       sdk.Coin   `json:"amount"`
 }
 
 
-func NewStakingRecord(st, ut, et time.Time, amount sdk.Coin) StakingRecord {
+func NewStakingRecord(id *big.Int,et time.Time, amount sdk.Coin) StakingRecord {
 	return StakingRecord{
-		StorageTime: st,
-		UpdateTime:  ut,
+		VaultID:     id,
 		EndTime:     et,
 		Amount:      amount,
 	}

@@ -30,7 +30,7 @@ func PreStakingRecord(ctx sdk.Context, req abci.RequestQuery, k PreStakingKeeper
 		return nil, err
 	}
 	res := k.GetAccountPreStaking(ctx, params.Delegator)
-	return types2.PreStakingCodec.MarshalJSON(types2.QueryPreStakingResult{Amount:res.String()})
+	return types2.PreStakingCodec.MarshalJSON(res)
 }
 
 func StakingRecord(ctx sdk.Context, req abci.RequestQuery, k PreStakingKeeper) ([]byte, error) {
