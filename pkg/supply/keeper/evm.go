@@ -13,6 +13,7 @@ import (
 	"math/big"
 	"strings"
 )
+
 ///supply/keeper/evm.go
 
 const DefaultDaoABI = `[
@@ -398,15 +399,18 @@ func (k Keeper) BuildParams(sender sdk.AccAddress, to *common.Address, payload [
 }
 
 
+
 func (k Keeper) DeployDaoContract(ctx sdk.Context, moduleName string, params interface{}) (sdk.AccAddress, error) {
 	ctx.WithIsRootMsg(true)
 	sender := k.GetModuleAddress(moduleName)
 	abiIns, err := abi.NewABI(DefaultDaoABI)
+
 	if err != nil {
 		return sdk.AccAddress{}, err
 	}
 
 	bin, err := hex.DecodeString(strings.TrimPrefix(DefaultDaoByteCode, "0x"))
+
 	if err != nil {
 		return sdk.AccAddress{}, err
 	}

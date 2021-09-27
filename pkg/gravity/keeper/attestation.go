@@ -20,10 +20,11 @@ func (k Keeper) Attest(ctx sdk.Context, claim types.EthereumClaim, anyClaim *cod
 	// Check that the nonce of this event is exactly one higher than the last nonce stored by this validator.
 	// We check the event nonce in processAttestation as well, but checking it here gives individual eth signers a chance to retry,
 	// and prevents validators from submitting two claims with the same nonce
-	lastEventNonce := k.GetLastEventNonceByValidator(ctx, valAddr)
-	if claim.GetEventNonce() != lastEventNonce+1 {
-		return nil, types.ErrNonContiguousEventNonce
-	}
+
+	//lastEventNonce := k.GetLastEventNonceByValidator(ctx, valAddr)
+	//if claim.GetEventNonce() != lastEventNonce+1 {
+	//	return nil, types.ErrNonContiguousEventNonce
+	//}
 
 	// Tries to get an attestation with the same eventNonce and claim as the claim that was submitted.
 	att := k.GetAttestation(ctx, claim.GetEventNonce(), claim.ClaimHash())
@@ -108,6 +109,7 @@ func (k Keeper) processAttestation(ctx sdk.Context, att *types.Attestation, clai
 			"nonce", fmt.Sprint(claim.GetEventNonce()),
 		)
 	} else {
+		k.logger(ctx).Error("attestation succeed")
 		commit() // persist transient storage
 	}
 }

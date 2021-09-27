@@ -30,7 +30,6 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
-	client "github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/module"
 	"github.com/ci123chain/ci123chain/pkg/account"
 	"github.com/ci123chain/ci123chain/pkg/account/keeper"
@@ -42,6 +41,7 @@ import (
 	authtx "github.com/ci123chain/ci123chain/pkg/auth/tx"
 	auth_types "github.com/ci123chain/ci123chain/pkg/auth/types"
 	capabilitytypes "github.com/ci123chain/ci123chain/pkg/capability/types"
+	client "github.com/ci123chain/ci123chain/pkg/client/context"
 	distr "github.com/ci123chain/ci123chain/pkg/distribution"
 	k "github.com/ci123chain/ci123chain/pkg/distribution/keeper"
 	ibctransfer "github.com/ci123chain/ci123chain/pkg/ibc/application/transfer"
@@ -131,7 +131,6 @@ var (
 type Chain struct {
 	*baseapp.BaseApp
 
-	logger log.Logger
 	cdc    *amino.Codec
 	appCodec codec.Marshaler
 	interfaceRegistry codectypes.InterfaceRegistry
@@ -196,15 +195,11 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer,
 
 	slashingKeeper := slashing.NewKeeper(cdc, SlashingStoreKey, stakingKeeper, c.GetSubspace(slashing.ModuleName))
 
-	gravityKeeper := gravity.NewKeeper(cdc, GravityStoreKey, c.GetSubspace(gravity.ModuleName), accountKeeper, stakingKeeper, supplyKeeper, slashingKeeper)
-
 	distrKeeper := k.NewKeeper(cdc, DisrtStoreKey, supplyKeeper, accountKeeper, auth.FeeCollectorName, c.GetSubspace(distr.ModuleName), stakingKeeper, cdb)
 
 	mintKeeper := mint.NewKeeper(cdc, MintStoreKey, c.GetSubspace(mint.ModuleName), stakingKeeper, supplyKeeper, auth.FeeCollectorName)
 
 	infrastructureKeeper := infrastructure.NewKeeper(cdc, InfrastructureStoreKey)
-	stakingKeeper.SetHooks(staking.NewMultiStakingHooks(distrKeeper.Hooks(), slashingKeeper.Hooks(), gravityKeeper.Hooks()))
-	
 
 	capabilityKeeper := capabilitykeeper.NewKeeper(cdc, CapabilityStoreKey, memKeys[capabilitytypes.MemStoreKey])
 	scopedIBCKeeper := capabilityKeeper.ScopeToModule(ibchost.ModuleName)
@@ -230,6 +225,12 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer,
 	supplyKeeper.SetVMKeeper(vmKeeper)
 	prestakingKeeper := prestaking.NewKeeper(cdc, preStakingStorekey, accountKeeper, supplyKeeper, stakingKeeper, c.GetSubspace(prestaking.ModuleName),cdb)
 
+
+	gravityKeeper := gravity.NewKeeper(cdc, GravityStoreKey, c.GetSubspace(gravity.ModuleName), accountKeeper, stakingKeeper, supplyKeeper, slashingKeeper)
+
+	stakingKeeper.SetHooks(staking.NewMultiStakingHooks(distrKeeper.Hooks(), slashingKeeper.Hooks(), gravityKeeper.Hooks()))
+
+
 	ibcTransferModule := ibc.NewTransferModule(ibcTransferKeeper)
 	// Create static IBC router, add transfer route, then set and seal it
 	ibcRouter := porttypes.NewRouter()
@@ -246,8 +247,8 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer,
 			stakingTypes.ModuleName,
 			prestaking.ModuleName,
 			slashing.ModuleName,
-			gravity.ModuleName,
 			vm.ModuleName,
+			gravity.ModuleName,
 			mint.ModuleName,
 			infrastructure.ModuleName,
 			ibc.ModuleName,

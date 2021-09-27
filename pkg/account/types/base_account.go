@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/account/exported"
-	ethcmn "github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 	"github.com/tendermint/tendermint/crypto"
 	"time"
@@ -30,6 +29,15 @@ type BaseAccount struct {
 	ContractList    []string        `json:"contract_list" yaml:"contract_list"`
 	ContractType    string         `json:"contract_type" yaml:"contract_type"`
 	CodeHash		[]byte 			`json:"code_hash" yaml:"code_hash"`
+	IsModule        bool            `json:"is_module"`
+}
+
+func (acc *BaseAccount) SetCodeHash(bz []byte) {
+	acc.CodeHash = bz
+}
+
+func (acc *BaseAccount) GetCodeHash() []byte {
+	return acc.CodeHash
 }
 
 // NewBaseAccount creates a new BaseAccount object
@@ -45,7 +53,8 @@ func NewBaseAccount(address types.AccAddress, coin types.Coins,
 	}
 }
 
-func NewBaseAccountFromExportAccount(exportAcc exported.Account, code []byte, ) *BaseAccount {
+
+func NewBaseAccountFromExportAccount(exportAcc exported.Account) *BaseAccount {
 	return &BaseAccount{
 		Address:       exportAcc.GetAddress(),
 		Coins:         exportAcc.GetCoins(),
@@ -53,8 +62,8 @@ func NewBaseAccountFromExportAccount(exportAcc exported.Account, code []byte, ) 
 		AccountNumber: exportAcc.GetAccountNumber(),
 		PubKey:        exportAcc.GetPubKey(),
 		ContractType:  exportAcc.GetContractType(),
-		CodeHash:      code,
-		//IsModule:      exportAcc.GetIsModule(),
+		CodeHash:      exportAcc.GetCodeHash(),
+		IsModule:      exportAcc.GetIsModule(),
 	}
 }
 
@@ -112,6 +121,9 @@ func (acc *BaseAccount) GetCoins() types.Coins {
 
 // SetCoins - Implements sdk.Account.
 func (acc *BaseAccount) SetCoins(coin types.Coins) error {
+	if coin == nil {
+		coin = types.Coins{types.NewChainCoin(types.NewInt(0))}
+	}
 	acc.Coins = coin
 	return nil
 }
@@ -156,24 +168,24 @@ func (acc *BaseAccount) String() string {
 }
 
 // EthAddress returns the account address ethereum format.
-func (acc *BaseAccount) EthAddress() ethcmn.Address {
-	return ethcmn.BytesToAddress(acc.Address.Bytes())
-}
+//func (acc *BaseAccount) EthAddress() ethcmn.Address {
+//	return ethcmn.BytesToAddress(acc.Address.Bytes())
+//}
 
 // Balance returns the balance of an account.
-func (acc *BaseAccount) Balance(denom string) types.Int {
-	return acc.GetCoins().AmountOf(denom)
-}
+//func (acc *BaseAccount) Balance(denom string) types.Int {
+//	return acc.GetCoins().AmountOf(denom)
+//}
 
 // SetBalance sets an account's balance of the given coin denomination.
 //
 // CONTRACT: assumes the denomination is valid.
-func (acc *BaseAccount) SetBalance(denom string, amt types.Int) {
-	newCoin := types.NewChainCoin(amt)
-	if err := acc.SetCoins(types.NewCoins(newCoin)); err != nil {
-		panic(fmt.Errorf("could not set %s coins for address %s: %w", denom, acc.EthAddress().String(), err))
-	}
-}
+//func (acc *BaseAccount) SetBalance(denom string, amt types.Int) {
+//	newCoin := types.NewChainCoin(amt)
+//	if err := acc.SetCoins(types.NewCoins(newCoin)); err != nil {
+//		panic(fmt.Errorf("could not set %s coins for address %s: %w", denom, acc.GetAddress().String(), err))
+//	}
+//}
 
 func (acc *BaseAccount) SetContractType(contractType string) error {
 	if contractType != EvmContractType && contractType != WasmContractType {
@@ -185,4 +197,13 @@ func (acc *BaseAccount) SetContractType(contractType string) error {
 
 func (acc *BaseAccount) GetContractType() string {
 	return acc.ContractType
+}
+
+func (acc *BaseAccount) SetIsModule(flag bool) error {
+	acc.IsModule = flag
+	return nil
+}
+
+func (acc *BaseAccount) GetIsModule() bool {
+	return acc.IsModule
 }

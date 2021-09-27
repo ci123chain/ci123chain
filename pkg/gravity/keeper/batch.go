@@ -99,6 +99,7 @@ func (k Keeper) OutgoingTxBatchExecuted(ctx sdk.Context, tokenContract string, n
 	// cleanup outgoing TX pool
 	for _, tx := range b.Transactions {
 		k.removePoolEntry(ctx, tx.Id)
+		k.setTxIdState(ctx, tx.Id, txIdStateDone)
 	}
 
 	// Iterate through remaining batches

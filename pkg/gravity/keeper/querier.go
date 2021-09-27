@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"encoding/hex"
+	"strconv"
 
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
@@ -92,6 +93,10 @@ const (
 
 	// Query last event nonce
 	QueryLastEventNonce = "lastEventNonce"
+
+	//
+	QueryTxId = "txId"
+	QueryEventNonce = "eventNonce"
 )
 
 // NewQuerier is the module level router for state queries
@@ -151,6 +156,11 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 		// Event
 		case QueryLastEventNonce:
 			return queryLastEventNonce(ctx, path[1], keeper)
+
+		case QueryTxId:
+			return queryTxId(ctx, path[1], keeper)
+		case QueryEventNonce:
+			return queryEventNonce(ctx, path[1], keeper)
 
 		default:
 			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unknown %s query endpoint", types.ModuleName)
@@ -558,4 +568,30 @@ func queryLastEventNonce(ctx sdk.Context, address string, k Keeper) ([]byte, err
 	lastEventNonce := k.GetLastEventNonceByValidator(ctx, validator)
 	x := types.UInt64Bytes(lastEventNonce)
 	return x, nil
+}
+
+func queryTxId(ctx sdk.Context, txIdStr string, k Keeper) ([]byte, error) {
+	txId, err := strconv.ParseUint(txIdStr, 10, 64)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrParams, err.Error())
+	}
+
+	by, err := k.getTxIdState(ctx, txId)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrKeyNotFound, "tx_id")
+	}
+	return by, nil
+}
+
+func queryEventNonce(ctx sdk.Context, eventNonceStr string, k Keeper) ([]byte, error) {
+	laseNonce, err := strconv.ParseUint(eventNonceStr, 10, 64)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrParams, err.Error())
+	}
+
+	by, err := k.getEventNonceState(ctx, laseNonce)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrKeyNotFound, "event_nonce")
+	}
+	return by, nil
 }

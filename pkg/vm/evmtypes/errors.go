@@ -39,6 +39,9 @@ const (
 	CodeExecTransactionInvalid CodeType = 1727
 
 	CodeContractMethodInvalid  CodeType = 1730
+	CodeEVMChainConfigInvalid  CodeType = 1731
+	CodeContractMsgInvalid  CodeType = 1733
+
 )
 
 var (
@@ -69,8 +72,10 @@ var (
 
 	ErrContractMethodInvalid = sdkerrors.Register(string(DefaultCodespace), uint32(CodeContractMethodInvalid), "contract method invalid")
 	ErrContractMsgInvalid = sdkerrors.Register(string(DefaultCodespace), uint32(CodeInvalidContractMsg), "invalid contract msg")
-	ErrEVMChainConfigInvalid = sdkerrors.Register(string(DefaultCodespace), uint32(CodeInvalidEVMChainConfig), "invalid evm chain config")
-	ErrExecTransactionInvalid = sdkerrors.Register(string(DefaultCodespace), uint32(CodeExecTransactionInvalid), "execute transaction failed")
+
+	ErrEVMChainConfigInvalid = sdkerrors.Register(string(DefaultCodespace), uint32(CodeEVMChainConfigInvalid), "err chain config")
+	ErrExecTransactionInvalid = sdkerrors.Register(string(DefaultCodespace), uint32(CodeExecTransactionInvalid), "err exec transitionDb")
+
 )
 //
 //const (

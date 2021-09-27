@@ -1,7 +1,6 @@
 package store
 
 import (
-	"bytes"
 	"fmt"
 	ics23 "github.com/confio/ics23/go"
 	"github.com/cosmos/iavl"
@@ -171,11 +170,11 @@ func (st *iavlStore) Set(key, value []byte) {
 func (st *iavlStore) Get(key []byte) (value []byte) {
 	remoteValue := st.parent.(KVStore).Get(key)
 	_, localValue := st.tree.Get(key)
-	if localValue != nil {
-		if !bytes.Equal(remoteValue, localValue) {
-			logger.GetLogger().Error("iavlStore get value not matched!", "store", st.key.Name(), "key", string(key))
-		}
-	}
+	//if localValue != nil {
+	//	if !bytes.Equal(remoteValue, localValue) {
+	//		logger.GetLogger().Error("iavlStore get value not matched!", "store", st.key.Name(), "key", string(key))
+	//	}
+	//}
 	switch st.mode {
 	case ModeMulti:
 		value = remoteValue
