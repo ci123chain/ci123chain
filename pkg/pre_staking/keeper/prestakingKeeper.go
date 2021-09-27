@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
@@ -46,7 +47,10 @@ func (ps PreStakingKeeper) Logger(ctx sdk.Context) log.Logger {
 
 func (ps PreStakingKeeper) SetAccountPreStaking(ctx sdk.Context, delegator sdk.AccAddress, vaults types.VaultRecord) {
 	store := ctx.KVStore(ps.storeKey)
-	bz := ps.cdc.MustMarshalBinaryLengthPrefixed(vaults)
+	bz, err := json.Marshal(vaults)
+	if err != nil {
+		panic(err)
+	}
 	store.Set(types.GetPreStakingKey(delegator), bz)
 }
 
@@ -60,9 +64,42 @@ func (ps PreStakingKeeper) GetAccountPreStaking(ctx sdk.Context, delegator sdk.A
 	}
 
 	var vats types.VaultRecord
-	ps.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &vats)
+	err := json.Unmarshal(bz, &vats)
+	if err != nil {
+		panic(err)
+	}
 
 	return vats
+}
+
+func (ps PreStakingKeeper) AccountPreStakingIterator(ctx sdk.Context) sdk.Iterator {
+	store := ctx.KVStore(ps.storeKey)
+	prefix := types.PreStakingKey
+	iterator := store.RemoteIterator(prefix, sdk.PrefixEndBytes(prefix))
+	if iterator.Valid() {
+		return iterator
+	} else {
+		iterator.Close()
+		store := ctx.KVStore(ps.storeKey)
+		return sdk.KVStorePrefixIterator(store, prefix)
+	}
+}
+
+func (ps PreStakingKeeper) GetAllAccountPreStaking(ctx sdk.Context) []types.InitPrestaking {
+	var res = make([]types.InitPrestaking, 0)
+	iterator := ps.AccountPreStakingIterator(ctx)
+	for ; iterator.Valid(); iterator.Next() {
+		key := iterator.Key()
+		del := sdk.ToAccAddress(key[1:])
+		var vr types.VaultRecord
+		_ = json.Unmarshal(iterator.Value(), &vr)
+		r := types.InitPrestaking{
+			Delegator: del,
+			Staking:   vr,
+		}
+		res = append(res, r)
+	}
+	return res
 }
 
 
@@ -77,15 +114,23 @@ func (ps PreStakingKeeper) SetAccountStakingRecord(ctx sdk.Context, val, del sdk
 		records = append(records, before...)
 	}
 	records = append(records, record)
-	bz := ps.cdc.MustMarshalBinaryLengthPrefixed(records)
+	//bz := ps.cdc.MustMarshalBinaryLengthPrefixed(records)
+	bz, err := json.Marshal(records)
+	if err != nil {
+		return err
+	}
 	store.Set(key, bz)
 	return nil
 }
 
-func (ps PreStakingKeeper) SetAccountStakingRecords(ctx sdk.Context, del, val sdk.AccAddress, records []types.StakingRecords) {
+func (ps PreStakingKeeper) SetAccountStakingRecords(ctx sdk.Context, del, val sdk.AccAddress, records []types.StakingRecord) {
 	store := ctx.KVStore(ps.storeKey)
 	var key = types.GetStakingRecordKey(del, val)
-	bz := ps.cdc.MustMarshalBinaryLengthPrefixed(records)
+	//bz := ps.cdc.MustMarshalBinaryLengthPrefixed(records)
+	bz, err := json.Marshal(records)
+	if err != nil {
+		panic(err)
+	}
 	store.Set(key, bz)
 }
 
@@ -97,7 +142,11 @@ func (ps PreStakingKeeper) GetAccountStakingRecord(ctx sdk.Context, val, del sdk
 	if bz == nil {
 		return nil
 	}
-	ps.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &res)
+	//ps.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &res)
+	err := json.Unmarshal(bz, &res)
+	if err != nil {
+		return nil
+	}
 	return res
 }
 
@@ -116,7 +165,11 @@ func (ps PreStakingKeeper) UpdateStakingRecord(ctx sdk.Context, val, del sdk.Acc
 		records = append(records, before...)
 	}
 	records = append(records, updates...)
-	bz := ps.cdc.MustMarshalBinaryLengthPrefixed(records)
+	//bz := ps.cdc.MustMarshalBinaryLengthPrefixed(records)
+	bz, err := json.Marshal(records)
+	if err != nil {
+		panic(err)
+	}
 	store.Set(key, bz)
 }
 
@@ -133,6 +186,23 @@ func (ps PreStakingKeeper) StakingRecordIterator(ctx sdk.Context) sdk.Iterator {
 	}
 }
 
+func (ps PreStakingKeeper) GetAllStakingRecords(ctx sdk.Context) []types.InitStakingRecords{
+	res := make([]types.InitStakingRecords, 0)
+	iterator := ps.StakingRecordIterator(ctx)
+	for ; iterator.Valid(); iterator.Next() {
+		val, del := getValDelFromKey(iterator.Key())
+		var sr []types.StakingRecord
+		_ = json.Unmarshal(iterator.Value(), &sr)
+		r := types.InitStakingRecords{
+			Delegator: del,
+			Validator: val,
+			Records:   sr,
+		}
+		res = append(res, r)
+	}
+	return res
+}
+
 func (ps PreStakingKeeper) UpdateDeadlineRecord(ctx sdk.Context) {
 	iterator := ps.StakingRecordIterator(ctx)
 	for ; iterator.Valid(); iterator.Next() {
@@ -141,7 +211,8 @@ func (ps PreStakingKeeper) UpdateDeadlineRecord(ctx sdk.Context) {
 		v := iterator.Value()
 		if v != nil {
 			var records types.StakingRecords
-			ps.cdc.MustUnmarshalBinaryLengthPrefixed(v, &records)
+			//ps.cdc.MustUnmarshalBinaryLengthPrefixed(v, &records)
+			_ = json.Unmarshal(v, &records)
 			sort.Sort(records)
 			for _, v := range records {
 				if v.EndTime.Before(ctx.BlockTime()) {

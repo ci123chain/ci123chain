@@ -81,7 +81,7 @@ type stateObject struct {
 func newStateObject(db *CommitStateDB, accProto accountexported.Account) *stateObject {
 	// func newStateObject(db *CommitStateDB, accProto accountexported.Account, balance sdk.Int) *stateObject {
 	ethermintAccount, ok := accProto.(*types.BaseAccount)
-	//ethermintAccount := types.NewBaseAccount(accProto.GetAddress(), accProto.GetCoins(), accProto.GetPubKey(), accProto.GetAccountNumber(), accProto.GetSequence())
+	ethermintAccount := types.NewBaseAccount(accProto.GetAddress(), accProto.GetCoins(), accProto.GetPubKey(), accProto.GetAccountNumber(), accProto.GetSequence())
 	if !ok {
 		panic(fmt.Sprintf("invalid account types for state object: %T", accProto))
 	}

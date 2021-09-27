@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"encoding/json"
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
@@ -47,8 +48,12 @@ func QueryPreStakingRecord(cliCtx context.Context) http.HandlerFunc {
 			rest.WriteErrorRes(writer, fmt.Sprintf("unexpected res: %v", res))
 			return
 		}
-		var result types.QueryPreStakingResult
-		cliCtx.Cdc.MustUnmarshalJSON(res, &result)
+		var result types.VaultRecord
+		err = json.Unmarshal(res, &result)
+		if err != nil {
+			rest.WriteErrorRes(writer, err.Error())
+			return
+		}
 		value := result
 		resp := rest.BuildQueryRes(height, isProve, value, proof)
 		rest.PostProcessResponseBare(writer, cliCtx, resp)
@@ -89,7 +94,12 @@ func QueryStakingRecord(cliCtx context.Context) http.HandlerFunc {
 			return
 		}
 		var result sktypes.DelegationResponse
-		cliCtx.Cdc.MustUnmarshalJSON(res, &result)
+		//cliCtx.Cdc.MustUnmarshalJSON(res, &result)
+		err = json.Unmarshal(res, &result)
+		if err != nil {
+			rest.WriteErrorRes(writer, err.Error())
+			return
+		}
 		value := result
 		resp := rest.BuildQueryRes(height, isProve, value, proof)
 		rest.PostProcessResponseBare(writer, cliCtx, resp)

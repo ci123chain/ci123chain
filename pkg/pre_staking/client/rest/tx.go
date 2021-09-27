@@ -11,7 +11,6 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/pre_staking/types"
 	"github.com/gorilla/mux"
-	"math/big"
 	"net/http"
 	"strconv"
 	"time"
@@ -22,6 +21,7 @@ func RegisterRestTxRoutes(cliCtx context.Context, r *mux.Router)  {
 	r.HandleFunc("/preStaking/delegator/delegate", rest.MiddleHandler(cliCtx, DelegateRequest, types.DefaultCodespace)).Methods("POST")
 	r.HandleFunc("/preStaking/delegator/redelegate", rest.MiddleHandler(cliCtx, RedelegateRequest, types.DefaultCodespace)).Methods("POST")
 	r.HandleFunc("/preStaking/delegator/undelegate", rest.MiddleHandler(cliCtx, UndelegateRequest, types.DefaultCodespace)).Methods("POST")
+	r.HandleFunc("/preStaking/deploy", rest.MiddleHandler(cliCtx, DeployRequest, types.DefaultCodespace)).Methods("POST")
 }
 
 
@@ -119,15 +119,15 @@ func DelegateRequest(cliCtx context.Context, writer http.ResponseWriter, request
 	//	return
 	//}
 	id := request.FormValue("vault_id")
-	Id, ok := new(big.Int).SetString(id, 64)
-	if !ok {
-		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid vault_id").Error())
-		return
-	}
+	//Id, ok := new(big.Int).SetString(id, 10)
+	//if !ok {
+	//	rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid vault_id").Error())
+	//	return
+	//}
 	v := request.FormValue("validator_address")
 	validator := sdk.HexToAddress(v)
 
-	msg := types.NewMsgStaking(from, from, validator, Id)
+	msg := types.NewMsgStaking(from, from, validator, id)
 	if !broadcast {
 		rest.PostProcessResponseBare(writer, cliCtx, hex.EncodeToString(msg.Bytes()))
 		return
@@ -167,6 +167,7 @@ func RedelegateRequest(cliCtx context.Context, writer http.ResponseWriter, reque
 	srcValidator := sdk.HexToAddress(src)
 	dst := request.FormValue("dst_validator_address")
 	dstValidator := sdk.HexToAddress(dst)
+
 
 	msg := types.NewMsgRedelegate(from, srcValidator, dstValidator)
 	if !broadcast {
@@ -217,12 +218,49 @@ func UndelegateRequest(cliCtx context.Context, writer http.ResponseWriter, reque
 	//	return
 	//}
 	id := request.FormValue("vault_id")
-	Id, ok := new(big.Int).SetString(id, 10)
-	if !ok {
-		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid vault_id").Error())
+	//Id, ok := new(big.Int).SetString(id, 10)
+	//if !ok {
+	//	rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid vault_id").Error())
+	//	return
+	//}
+	msg := types.NewMsgUndelegate(from, id)
+	if !broadcast {
+		rest.PostProcessResponseBare(writer, cliCtx, hex.EncodeToString(msg.Bytes()))
 		return
 	}
-	msg := types.NewMsgUndelegate(from, Id)
+
+	txByte, err := types2.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
+	if err != nil {
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, err.Error()).Error())
+		return
+	}
+	res, err := cliCtx.BroadcastSignedTx(txByte)
+	if err != nil {
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, err.Error()).Error())
+		return
+	}
+	rest.PostProcessResponseBare(writer, cliCtx, res)
+}
+
+func DeployRequest(cliCtx context.Context, writer http.ResponseWriter, request *http.Request) {
+	broadcast, err := strconv.ParseBool(request.FormValue("broadcast"))
+	if err != nil {
+		broadcast = true
+	}
+	privKey, from, nonce, gas, err := rest.GetNecessaryParams(cliCtx, request, cdc, broadcast)
+	if err != nil {
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, err.Error()).Error())
+		return
+	}
+
+	//verify account exists
+	err = checkAccountExist(cliCtx, from)
+	if err != nil {
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid from").Error())
+		return
+	}
+
+	msg := types.NewMsgDeploy(from)
 	if !broadcast {
 		rest.PostProcessResponseBare(writer, cliCtx, hex.EncodeToString(msg.Bytes()))
 		return

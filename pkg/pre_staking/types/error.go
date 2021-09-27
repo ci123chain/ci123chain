@@ -24,4 +24,5 @@ var (
 	ErrNoEnoughSharesToRedelegate = sdkerrors.Register(DefaultCodespace, 1811, "no enough shares to redelegate")
 	ErrNoBalanceLeft = sdkerrors.Register(DefaultCodespace, 1812, "no valid balance to undelegate")
 	ErrNoEnoughBalanceLeft = sdkerrors.Register(DefaultCodespace, 1813, "no enough balance to undelegate")
+	ErrInvalidVaultID  = sdkerrors.Register(DefaultCodespace, 1814, "invalid vault id")
 )

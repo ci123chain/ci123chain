@@ -9,11 +9,11 @@ type MsgStaking struct {
 	FromAddress    sdk.AccAddress   `json:"from_address"`
 	Delegator      sdk.AccAddress   `json:"delegator"`
 	Validator      sdk.AccAddress   `json:"validator"`
-	VaultID        *big.Int         `json:"vault_id"`
+	VaultID        string         `json:"vault_id"`
 }
 
 func NewMsgStaking(from sdk.AccAddress, delegatorAddr sdk.AccAddress, validatorAddr sdk.AccAddress,
-	id *big.Int) *MsgStaking {
+	id string) *MsgStaking {
 		return &MsgStaking{
 			FromAddress: from,
 			Delegator:   delegatorAddr,
@@ -32,6 +32,17 @@ func (msg *MsgStaking) ValidateBasic() error {
 	if !msg.FromAddress.Equal(msg.Delegator) {
 		return ErrFromNotEqualDelegator
 	}
+	//if msg.VaultID.Cmp(new(big.Int).SetUint64(0)) <= 1 {
+	//	return ErrInvalidVaultID
+	//}
+	id, ok := new(big.Int).SetString(msg.VaultID, 10)
+	if !ok {
+		return ErrInvalidVaultID
+	}
+	if id.Uint64() < 1 {
+		return ErrInvalidVaultID
+	}
+
 	return nil
 }
 
