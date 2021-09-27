@@ -2,11 +2,12 @@ package keeper
 
 import (
 	"errors"
+	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/account"
 	"github.com/ci123chain/ci123chain/pkg/order/types"
 	"github.com/ci123chain/ci123chain/pkg/redis"
-	dbm "github.com/tendermint/tm-db"
+	"github.com/tendermint/tendermint/libs/log"
 	"time"
 )
 
@@ -24,8 +25,13 @@ func NewOrderKeeper(cdb *redis.RedisDB, key sdk.StoreKey, ak account.AccountKeep
 	}
 }
 
+func (k OrderKeeper) Logger(ctx sdk.Context) log.Logger {
+	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
+}
+
 func (ok *OrderKeeper) WaitForReady(ctx sdk.Context) {
 	for {
+		ok.Logger(ctx).Info("Stucking on waitForReady")
 		orderbook, err := ok.GetOrderBook(ctx)
 		if err != nil {
 			if err.Error() != types.NoOrderBookErr {
@@ -35,7 +41,7 @@ func (ok *OrderKeeper) WaitForReady(ctx sdk.Context) {
 				continue
 			}
 		}
-		if ok.isReady(orderbook, ctx.ChainID(), ctx.BlockHeight()) {
+		if ok.isReady(ctx, orderbook, ctx.ChainID(), ctx.BlockHeight()) {
 			ok.UpdateOrderBook(ctx, orderbook, nil)
 			return
 		}
@@ -99,7 +105,8 @@ func (ok *OrderKeeper) UpdateOrderBook(ctx sdk.Context, orderbook types.OrderBoo
 }
 
 func (ok *OrderKeeper) GetOrderBook(ctx sdk.Context) (types.OrderBook, error) {
-	store := ctx.KVStore(ok.StoreKey).Latest([]string{types.OrderBookKey})
+	//store := ctx.KVStore(ok.StoreKey).Latest([]string{types.OrderBookKey})
+	store := ctx.KVStore(ok.StoreKey)
 	var orderbook types.OrderBook
 	isExist := ok.ExistOrderBook(ctx)
 	if !isExist {
@@ -111,7 +118,8 @@ func (ok *OrderKeeper) GetOrderBook(ctx sdk.Context) (types.OrderBook, error) {
 }
 
 func (ok *OrderKeeper) ExistOrderBook(ctx sdk.Context) bool  {
-	store := ctx.KVStore(ok.StoreKey).Latest([]string{types.OrderBookKey})
+	//store := ctx.KVStore(ok.StoreKey).Latest([]string{types.OrderBookKey})
+	store := ctx.KVStore(ok.StoreKey)
 	bz := store.Get([]byte(types.OrderBookKey))
 	if len(bz) > 0 {
 		return true
@@ -128,7 +136,7 @@ func (ok *OrderKeeper) SetOrderBook(ctx sdk.Context, orderbook types.OrderBook) 
 	store.Set([]byte(types.OrderBookKey), bz)
 }
 
-func (ok *OrderKeeper) isReady(orderbook types.OrderBook, shardID string, height int64) bool {
+func (ok *OrderKeeper) isReady(ctx sdk.Context, orderbook types.OrderBook, shardID string, height int64) bool {
 	if orderbook.Current.State == types.StateInit {
 		if orderbook.Lists[0].Name == shardID {
 			return true
@@ -142,9 +150,10 @@ func (ok *OrderKeeper) isReady(orderbook types.OrderBook, shardID string, height
 		orderbook.Current.State == types.StateCommitting {
 		if orderbook.Lists[orderbook.Current.Index].Height + 1 == height {
 			orderbook.Current.State = types.StateDone
-			orderBytes, _ :=types.ModuleCdc.MarshalJSON(orderbook)
-			cdb := dbm.NewPrefixDB(ok.Cdb, []byte("s/k:"+ok.StoreKey.Name()+"/"))
-			cdb.Set([]byte(types.OrderBookKey), orderBytes)
+			//orderBytes, _ := types.ModuleCdc.MarshalJSON(orderbook)
+			//cdb := dbm.NewPrefixDB(ok.Cdb, []byte("s/k:"+ok.StoreKey.Name()+"/"))
+			//cdb.Set([]byte(types.OrderBookKey), orderBytes)
+			ok.SetOrderBook(ctx, orderbook)
 			return false
 		}
 	}

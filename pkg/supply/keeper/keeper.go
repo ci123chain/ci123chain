@@ -37,6 +37,7 @@ func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, ak account.AccountKeeper, mac
 	}
 }
 
+
 func (k *Keeper) SetVMKeeper(vmkeeper vmtypes.Keeper) {
 	k.evmKeeper = vmkeeper
 }

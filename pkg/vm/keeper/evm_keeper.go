@@ -10,7 +10,6 @@ import (
 	"math/big"
 )
 
-///vm/keeper/evm_keeper.go
 
 var _ types.Keeper = (*Keeper)(nil)
 

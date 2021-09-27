@@ -26,6 +26,8 @@ type cacheKVStore struct {
 }
 
 var _ CacheKVStore = (*cacheKVStore)(nil)
+var _ KVStore = (*cacheKVStore)(nil)
+
 
 // nolint
 func NewCacheKVStore(parent KVStore) *cacheKVStore {

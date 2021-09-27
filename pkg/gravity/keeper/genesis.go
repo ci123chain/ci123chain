@@ -2,7 +2,6 @@ package keeper
 
 import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-
 	"github.com/ci123chain/ci123chain/pkg/gravity/types"
 )
 
@@ -44,6 +43,7 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 	// reset pool transactions in state
 	for _, tx := range data.UnbatchedTransfers {
 		k.setPoolEntry(ctx, tx)
+		k.setTxIdState(ctx, tx.Id, txIdStatePending)
 	}
 
 	// reset attestations in state
@@ -99,7 +99,7 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 
 	// populate state with cosmos originated denom-erc20 mapping
 	for _, item := range data.Erc20ToDenoms {
-		k.setCosmosOriginatedDenomToERC20(ctx, item.Denom, item.Erc20)
+		k.setERC20Map(ctx, item.Denom, item.Erc20)
 	}
 }
 

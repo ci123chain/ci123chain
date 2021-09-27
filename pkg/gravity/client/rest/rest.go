@@ -15,6 +15,8 @@ const (
 	bech32ValidatorAddress = "bech32ValidatorAddress"
 	claimType              = "claimType"
 	signType               = "signType"
+	txId                   = "tx_id"
+	eventNonce             = "event_nonce"
 )
 
 // Here are the routes that are actually queried by the rust
@@ -72,4 +74,7 @@ func RegisterRoutes(cliCtx context.Context, r *mux.Router, storeName string) {
 	// LogicCall
 	r.HandleFunc(fmt.Sprintf("/%s/outgoing_logic_calls", storeName), lastLogicCallHandler(cliCtx, storeName)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/%s/logicCall_confirm/{%s}/{%s}", storeName, nonce, tokenAddress), allBatchConfirmsHandler(cliCtx, storeName)).Methods("GET")
+
+	r.HandleFunc(fmt.Sprintf("/%s/txId/{%s}", storeName, txId), queryTxIdHandler(cliCtx, storeName)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/%s/eventNonce/{%s}", storeName, eventNonce), queryEventNonceHandler(cliCtx, storeName)).Methods("GET")
 }

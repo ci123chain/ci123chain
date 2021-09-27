@@ -148,6 +148,9 @@ func (k msgServer) RequestBatch(c context.Context, msg *types.MsgRequestBatch) (
 	if err != nil {
 		return nil, err
 	}
+	if batchID == nil {
+		return nil, types.ErrBatchIDNil
+	}
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
@@ -312,6 +315,8 @@ func (k msgServer) DepositClaim(c context.Context, msg *types.MsgDepositClaim) (
 		),
 	)
 
+	k.setEventNonceState(ctx, msg.EventNonce, eventNonceStateDone)
+
 	return &types.MsgDepositClaimResponse{}, nil
 }
 
@@ -361,9 +366,8 @@ func (k msgServer) WithdrawClaim(c context.Context, msg *types.MsgWithdrawClaim)
 // ERC20Deployed handles MsgERC20Deployed
 func (k msgServer) ERC20DeployedClaim(c context.Context, msg *types.MsgERC20DeployedClaim) (*types.MsgERC20DeployedClaimResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-
-	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
-	validator := k.GetOrchestratorValidator(ctx, orchaddr)
+	orchAddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
+	validator := k.GetOrchestratorValidator(ctx, orchAddr)
 	if validator.Empty() {
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
 	}

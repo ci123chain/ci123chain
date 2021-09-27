@@ -62,7 +62,7 @@ type stateObject struct {
 	// DB error
 	dbErr   error
 	stateDB *CommitStateDB
-	account *types.BaseAccount
+	account accountexported.Account
 
 	keyToOriginStorageIndex map[ethcmn.Hash]int
 	keyToDirtyStorageIndex  map[ethcmn.Hash]int
@@ -80,21 +80,23 @@ type stateObject struct {
 
 func newStateObject(db *CommitStateDB, accProto accountexported.Account) *stateObject {
 	// func newStateObject(db *CommitStateDB, accProto accountexported.Account, balance sdk.Int) *stateObject {
-	ethermintAccount, ok := accProto.(*types.BaseAccount)
-	ethermintAccount := types.NewBaseAccount(accProto.GetAddress(), accProto.GetCoins(), accProto.GetPubKey(), accProto.GetAccountNumber(), accProto.GetSequence())
-	if !ok {
-		panic(fmt.Sprintf("invalid account types for state object: %T", accProto))
-	}
+
+	//ethermintAccount, ok := accProto.(*types.BaseAccount)
+	//ethermintAccount := types.NewBaseAccount(accProto.GetAddress(), accProto.GetCoins(), accProto.GetPubKey(), accProto.GetAccountNumber(), accProto.GetSequence())
+	//if !ok {
+	//	panic(fmt.Sprintf("invalid account types for state object: %T", accProto))
+	//}
+	ethermintAccount := types.NewBaseAccountFromExportAccount(accProto)
 
 	// set empty code hash
-	if ethermintAccount.CodeHash == nil {
-		ethermintAccount.CodeHash = emptyCodeHash
+	if ethermintAccount.GetCodeHash() == nil {
+		ethermintAccount.SetCodeHash(emptyCodeHash)
 	}
-
+	ethAddr := ethcmn.BytesToAddress(ethermintAccount.GetAddress().Bytes())
 	return &stateObject{
 		stateDB:                 db,
 		account:                 ethermintAccount,
-		address:                 ethermintAccount.EthAddress(),
+		address:                 ethAddr,
 		originStorage:           Storage{},
 		dirtyStorage:            Storage{},
 		keyToOriginStorageIndex: make(map[ethcmn.Hash]int),
@@ -156,7 +158,7 @@ func (so *stateObject) SetCode(codeHash ethcmn.Hash, code []byte) {
 
 func (so *stateObject) setCode(codeHash ethcmn.Hash, code []byte) {
 	so.code = code
-	so.account.CodeHash = codeHash.Bytes()
+	so.account.SetCodeHash(codeHash.Bytes())
 	so.dirtyCode = true
 }
 
@@ -207,14 +209,17 @@ func (so *stateObject) SetBalance(amount *big.Int) {
 }
 
 func (so *stateObject) setBalance(denom string, amount sdk.Int) {
-	so.account.SetBalance(denom, amount)
+	err := so.account.SetCoins(sdk.Coins{sdk.NewChainCoin(amount)})
+	if err != nil {
+		panic(fmt.Errorf("could not set %s coins for address %s: %w", denom, so.account.GetAddress(), err))
+	}
 }
 
 // SetNonce sets the state object's nonce (i.e sequence number of the account).
 func (so *stateObject) SetNonce(nonce uint64) {
 	so.stateDB.journal.append(nonceChange{
 		account: &so.address,
-		prev:    so.account.Sequence,
+		prev:    so.account.GetSequence(),
 	})
 
 	so.setNonce(nonce)
@@ -224,7 +229,10 @@ func (so *stateObject) setNonce(nonce uint64) {
 	if so.account == nil {
 		panic("state object account is empty")
 	}
-	so.account.Sequence = nonce
+	err := so.account.SetSequence(nonce)
+	if err != nil {
+		panic("Set Nonce error: " + err.Error())
+	}
 }
 
 // setError remembers the first non-nil error it is called with.
@@ -289,13 +297,13 @@ func (so *stateObject) commitCode() {
 
 // Address returns the address of the state object.
 func (so stateObject) Address() ethcmn.Address {
-	return so.account.EthAddress()
+	return so.address
 }
 
 // Balance returns the state object's current balance.
 func (so *stateObject) Balance() *big.Int {
 	evmDenom := so.stateDB.GetParams().EvmDenom
-	balance := so.account.Balance(evmDenom).BigInt()
+	balance := so.account.GetCoins().AmountOf(evmDenom).BigInt()
 	if balance == nil {
 		return zeroBalance
 	}
@@ -304,10 +312,10 @@ func (so *stateObject) Balance() *big.Int {
 
 // CodeHash returns the state object's code hash.
 func (so *stateObject) CodeHash() []byte {
-	if so.account == nil || len(so.account.CodeHash) == 0 {
+	if so.account == nil || len(so.account.GetCodeHash()) == 0 {
 		return emptyCodeHash
 	}
-	return so.account.CodeHash
+	return so.account.GetCodeHash()
 }
 
 // Nonce returns the state object's current nonce (sequence number).
@@ -315,7 +323,7 @@ func (so *stateObject) Nonce() uint64 {
 	if so.account == nil {
 		return 0
 	}
-	return so.account.Sequence
+	return so.account.GetSequence()
 }
 
 // Code returns the contract code associated with this object, if any.
@@ -407,12 +415,15 @@ func (so *stateObject) deepCopy(db *CommitStateDB) *stateObject {
 // empty returns whether the account is considered empty.
 func (so *stateObject) empty() bool {
 	evmDenom := so.stateDB.GetParams().EvmDenom
-	balace := so.account.Balance(evmDenom)
+	balance := so.account.GetCoins().AmountOf(evmDenom)
+	if so.account.GetIsModule() {
+		return false
+	}
 	return so.account == nil ||
 		(so.account != nil &&
-			so.account.Sequence == 0 &&
-			(balace.BigInt() == nil || balace.IsZero()) &&
-			bytes.Equal(so.account.CodeHash, emptyCodeHash))
+			so.account.GetSequence() == 0 &&
+			(balance.BigInt() == nil || balance.IsZero()) &&
+			bytes.Equal(so.account.GetCodeHash(), emptyCodeHash))
 }
 
 // EncodeRLP implements rlp.Encoder.
