@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
@@ -70,6 +71,27 @@ func (ps PreStakingKeeper) GetAccountPreStaking(ctx sdk.Context, delegator sdk.A
 	}
 
 	return vats
+}
+
+func (ps PreStakingKeeper) UpdateAccountPreStaking(ctx sdk.Context, vaults map[string]types.Vault, delegator sdk.AccAddress) error {
+	store := ctx.KVStore(ps.storeKey)
+	bz := store.Get(types.GetPreStakingKey(delegator))
+	if bz == nil {
+		return errors.New("no vaults")
+	}
+
+	var vats types.VaultRecord
+	err := json.Unmarshal(bz, &vats)
+	if err != nil {
+		return err
+	}
+	vats.Vaults = vaults
+	bz, err = json.Marshal(vaults)
+	if err != nil {
+		return err
+	}
+	store.Set(types.GetPreStakingKey(delegator), bz)
+	return nil
 }
 
 func (ps PreStakingKeeper) AccountPreStakingIterator(ctx sdk.Context) sdk.Iterator {
@@ -208,22 +230,34 @@ func (ps PreStakingKeeper) UpdateDeadlineRecord(ctx sdk.Context) {
 	for ; iterator.Valid(); iterator.Next() {
 		k := iterator.Key()
 		del, val := getValDelFromKey(k)
-		fmt.Println(val.String())
-		fmt.Println("11111")
-		fmt.Println(del.String())
 		v := iterator.Value()
 		if v != nil {
 			var records types.StakingRecords
 			//ps.cdc.MustUnmarshalBinaryLengthPrefixed(v, &records)
 			_ = json.Unmarshal(v, &records)
 			sort.Sort(records)
-			for _, v := range records {
-				if v.EndTime.Before(ctx.BlockTime()) {
-					err := ps.RemoveDeadlineDelegationAndWithdraw(ctx, val, del, v.Amount)
+			var newrecords = make(types.StakingRecords, 0)
+			old := ps.GetAccountPreStaking(ctx, del)
+			for _, value := range records {
+				if value.EndTime.Before(ctx.BlockTime()) {
+					err := ps.RemoveDeadlineDelegationAndWithdraw(ctx, val, del, value.Amount)
 					if err != nil {
 						panic(err)
 					}
+					o := old.Vaults[value.VaultID.String()]
+					n := types.NewVault(o.StartTime, o.EndTime, o.StorageTime, value.Amount)
+					old.Vaults[value.VaultID.String()] = n
+				}else {
+					newrecords = append(newrecords, value)
 				}
+			}
+			if len(newrecords) > 0 {
+				ps.SetAccountStakingRecords(ctx, del, val, newrecords)
+			}else {
+				ps.SetAccountStakingRecords(ctx, del, val, nil)
+			}
+			if len(old.Vaults) > 0 {
+				ps.SetAccountPreStaking(ctx, del, old)
 			}
 		}
 	}
@@ -236,9 +270,35 @@ func getValDelFromKey(key []byte) (sdk.AccAddress, sdk.AccAddress) {
 }
 
 func (ps PreStakingKeeper) RemoveDeadlineDelegationAndWithdraw(ctx sdk.Context, val, del sdk.AccAddress, amount sdk.Coin) error {
-	_, err := ps.StakingKeeper.Undelegate(ctx, del, val, amount.Amount.ToDec())
+	//_, err := ps.StakingKeeper.Undelegate(ctx, del, val, amount.Amount.ToDec())
+	//if err != nil {
+	//	return err
+	//}
+
+	validator, found := ps.StakingKeeper.GetValidator(ctx, val)
+	if !found {
+		return nil
+	}
+
+	if ps.StakingKeeper.HasMaxUnbondingDelegationEntries(ctx, del, val) {
+		return nil
+	}
+
+	returnAmount, err := ps.StakingKeeper.Unbond(ctx, del, val, amount.Amount.ToDec())
 	if err != nil {
 		return err
+	}
+
+	if validator.IsBonded() {
+		err := ps.StakingKeeper.BondedTokensToMoudleAccount(ctx, returnAmount, types.ModuleName,)
+		if err != nil {
+			return err
+		}
+	}else {
+		err := ps.StakingKeeper.NotBondedTokensToModuleAccount(ctx, returnAmount, types.ModuleName,)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

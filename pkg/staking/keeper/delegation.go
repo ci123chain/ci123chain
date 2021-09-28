@@ -342,6 +342,10 @@ func (k StakingKeeper) SetUnbondingDelegationEntry(ctx sdk.Context, delegatorAdd
 	return ubd
 }
 
+func (k StakingKeeper) Unbond(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.AccAddress, shares sdk.Dec) (amount sdk.Int, err error) {
+	return k.unbond(ctx, delAddr, valAddr, shares)
+}
+
 func (k StakingKeeper) unbond(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.AccAddress, shares sdk.Dec) (amount sdk.Int, err error) {
 	delegation, found := k.GetDelegation(ctx, delAddr, valAddr)
 	if !found {

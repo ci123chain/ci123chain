@@ -17,11 +17,29 @@ func (k StakingKeeper) bondedTokensToNotBonded(ctx sdk.Context, tokens sdk.Int) 
 	return nil
 }
 
+func (k StakingKeeper) BondedTokensToMoudleAccount(ctx sdk.Context, tokens sdk.Int, moduleName string) error {
+	coin := sdk.NewChainCoin(tokens)
+	err := k.SupplyKeeper.SendCoinsFromModuleToModule(ctx, types.BondedPoolName, moduleName, coin)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (k StakingKeeper) notBondedTokensToBonded(ctx sdk.Context, tokens sdk.Int) error {
 
 	//coins:= sdk.NewCoins(sdk.NewCoin(tokens))
 	coin := sdk.NewChainCoin(tokens)
 	err := k.SupplyKeeper.SendCoinsFromModuleToModule(ctx, types.NotBondedPoolName, types.BondedPoolName, coin)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (k StakingKeeper) NotBondedTokensToModuleAccount(ctx sdk.Context, tokens sdk.Int, moduleName string) error {
+	coin := sdk.NewChainCoin(tokens)
+	err := k.SupplyKeeper.SendCoinsFromModuleToModule(ctx, types.NotBondedPoolName, moduleName, coin)
 	if err != nil {
 		return err
 	}
