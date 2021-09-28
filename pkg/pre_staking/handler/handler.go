@@ -80,7 +80,6 @@ func PreStakingHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.Msg
 }
 
 func StakingHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.MsgStaking) (*sdk.Result, error) {
-	//check
 	res := k.GetAccountPreStaking(ctx, msg.Delegator)
 	if res.IsEmpty() {
 		return nil, types.ErrAccountBalanceNotEnough
@@ -96,11 +95,6 @@ func StakingHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.MsgSta
 	//update account prestaking.
 	k.SetAccountPreStaking(ctx, msg.Delegator, res)
 
-	//var update = ctx.BlockTime()
-	//t, err := time.ParseDuration(msg.StorageTime.String())
-	//var end = update.Add(t)
-	//var record = types.NewStakingRecord(msg.StorageTime, update, end, msg.Amount)
-	//var key = types.GetStakingRecordKey(msg.FromAddress, msg.Validator)
 	Err := k.SetAccountStakingRecord(ctx, msg.Validator, msg.FromAddress, id, endTime, amount)
 	if Err != nil {
 		return nil, Err
@@ -184,7 +178,7 @@ func UndelegateHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.Msg
 	if err != nil {
 		return nil, err
 	}
-	if et.Before(ctx.BlockTime()) {
+	if !et.Before(ctx.BlockTime()) {
 		return nil, errors.New("you can only undelegate the vault after endtime")
 	}
 	if !amount.IsPositive() {
@@ -199,7 +193,7 @@ func UndelegateHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.Msg
 		return nil, err
 	}
 
-	err = k.SupplyKeeper.BurnEVMCoin(ctx, "preStaking", sdk.HexToAddress(tokenManager), msg.FromAddress, amount.Amount.BigInt())
+	err = k.SupplyKeeper.BurnEVMCoin(ctx, types.ModuleName, sdk.HexToAddress(tokenManager), msg.FromAddress, amount.Amount.BigInt())
 	if err != nil {
 		return nil, err
 	}
