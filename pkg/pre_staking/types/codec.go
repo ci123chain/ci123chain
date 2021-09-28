@@ -23,4 +23,5 @@ func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterConcrete(&Vault{}, "ci123chain/Vault", nil)
 	cdc.RegisterConcrete(&StakingRecords{}, "ci123chain/StakingRecords", nil)
 	cdc.RegisterConcrete(&MsgDeploy{}, "ci123chain/MsgDeploy", nil)
+	cdc.RegisterConcrete(&MsgPrestakingCreateValidator{}, "ci123chain/MsgPrestakingCreateValidator", nil)
 }

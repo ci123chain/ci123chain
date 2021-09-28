@@ -176,7 +176,7 @@ func (ps PreStakingKeeper) UpdateStakingRecord(ctx sdk.Context, val, del sdk.Acc
 func (ps PreStakingKeeper) StakingRecordIterator(ctx sdk.Context) sdk.Iterator {
 	store := ctx.KVStore(ps.storeKey)
 	prefix := types.StakingRecordKey
-	iterator := store.RemoteIterator(prefix, sdk.PrefixEndBytes(prefix))
+	iterator := store.RemoteIterator(prefix, prefix)
 	if iterator.Valid() {
 		return iterator
 	} else {
@@ -207,7 +207,10 @@ func (ps PreStakingKeeper) UpdateDeadlineRecord(ctx sdk.Context) {
 	iterator := ps.StakingRecordIterator(ctx)
 	for ; iterator.Valid(); iterator.Next() {
 		k := iterator.Key()
-		val, del := getValDelFromKey(k)
+		del, val := getValDelFromKey(k)
+		fmt.Println(val.String())
+		fmt.Println("11111")
+		fmt.Println(del.String())
 		v := iterator.Value()
 		if v != nil {
 			var records types.StakingRecords
@@ -238,4 +241,20 @@ func (ps PreStakingKeeper) RemoveDeadlineDelegationAndWithdraw(ctx sdk.Context, 
 		return err
 	}
 	return nil
+}
+
+func (ps PreStakingKeeper) GetWeeLinkDao(ctx sdk.Context) string {
+	store := ctx.KVStore(ps.storeKey)
+
+	bz := store.Get(types.WeeLinkDAO)
+	if bz == nil {
+		return ""
+	}
+	return sdk.ToAccAddress(bz).String()
+}
+
+func (ps PreStakingKeeper) SetWeeLinkDao(ctx sdk.Context, addr sdk.AccAddress) {
+	store := ctx.KVStore(ps.storeKey)
+
+	store.Set(types.WeeLinkDAO, addr.Bytes())
 }

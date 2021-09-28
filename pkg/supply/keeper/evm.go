@@ -6,6 +6,7 @@ import (
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/gravity/types"
+	"github.com/ci123chain/ci123chain/pkg/supply/exported"
 	"github.com/ci123chain/ci123chain/pkg/vm/evmtypes"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/umbracle/go-web3"
@@ -1167,10 +1168,16 @@ func (k Keeper) BuildParams(sender sdk.AccAddress, to *common.Address, payload [
 }
 
 
-
 func (k Keeper) DeployDaoContract(ctx sdk.Context, moduleName string, params interface{}) (sdk.AccAddress, error) {
+	ma := k.GetModuleAccount(ctx, moduleName)
+	defer func(account exported.ModuleAccountI) {
+		if err := account.SetSequence(account.GetSequence() + 1); err != nil {
+			panic(err)
+		}
+		k.ak.SetAccount(ctx, account)
+	}(ma)
 	ctx.WithIsRootMsg(true)
-	sender := k.GetModuleAddress(moduleName)
+	sender := ma.GetAddress()
 	abiIns, err := abi.NewABI(DefaultDaoABI)
 
 	if err != nil {
@@ -1189,10 +1196,7 @@ func (k Keeper) DeployDaoContract(ctx sdk.Context, moduleName string, params int
 	}
 
 	data = append(bin, data...)
-
-	ctx = ctx.WithIsRootMsg(true)
-	msg := k.BuildParams(sender, nil, data, DefaultGas,  k.getNonce(ctx, sender))
-	//msg := k.BuildParams(sender, nil, data, DefaultGas,  0)
+	msg := k.BuildParams(sender, nil, data, DefaultGas, ma.GetSequence())
 
 	result, err := k.evmKeeper.EvmTxExec(ctx, msg)
 

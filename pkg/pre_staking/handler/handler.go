@@ -5,7 +5,9 @@ import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/pre_staking/keeper"
 	"github.com/ci123chain/ci123chain/pkg/pre_staking/types"
+	staking "github.com/ci123chain/ci123chain/pkg/staking/types"
 	types2 "github.com/ci123chain/ci123chain/pkg/staking/types"
+	"github.com/ci123chain/ci123chain/pkg/util"
 	gogotypes "github.com/gogo/protobuf/types"
 	"github.com/umbracle/go-web3"
 	"math/big"
@@ -13,773 +15,7 @@ import (
 )
 
 const (
-	tokenManager = "0xC21089FC9b011217d27ad13F5C3C4d44543d4F72"
-	//tokenManager = "0xC21089FC9b011217d27ad13F5C3C4d44543d4F72"
-  //
-	//tokenManagerABI = `[
-  //  {
-  //    "anonymous": false,
-  //    "inputs": [
-  //      {
-  //        "indexed": true,
-  //        "internalType": "address",
-  //        "name": "msgsender",
-  //        "type": "address"
-  //      },
-  //      {
-  //        "indexed": true,
-  //        "internalType": "address",
-  //        "name": "thiscontract",
-  //        "type": "address"
-  //      }
-  //    ],
-  //    "name": "ACLAddr",
-  //    "type": "event"
-  //  },
-  //  {
-  //    "anonymous": false,
-  //    "inputs": [
-  //      {
-  //        "indexed": true,
-  //        "internalType": "address",
-  //        "name": "receiver",
-  //        "type": "address"
-  //      },
-  //      {
-  //        "indexed": false,
-  //        "internalType": "uint256",
-  //        "name": "vestingId",
-  //        "type": "uint256"
-  //      },
-  //      {
-  //        "indexed": false,
-  //        "internalType": "uint256",
-  //        "name": "amount",
-  //        "type": "uint256"
-  //      }
-  //    ],
-  //    "name": "NewVesting",
-  //    "type": "event"
-  //  },
-  //  {
-  //    "anonymous": false,
-  //    "inputs": [
-  //      {
-  //        "indexed": true,
-  //        "internalType": "address",
-  //        "name": "previousOwner",
-  //        "type": "address"
-  //      },
-  //      {
-  //        "indexed": true,
-  //        "internalType": "address",
-  //        "name": "newOwner",
-  //        "type": "address"
-  //      }
-  //    ],
-  //    "name": "OwnershipTransferred",
-  //    "type": "event"
-  //  },
-  //  {
-  //    "anonymous": false,
-  //    "inputs": [
-  //      {
-  //        "indexed": true,
-  //        "internalType": "address",
-  //        "name": "receiver",
-  //        "type": "address"
-  //      },
-  //      {
-  //        "indexed": false,
-  //        "internalType": "uint256",
-  //        "name": "vestingId",
-  //        "type": "uint256"
-  //      },
-  //      {
-  //        "indexed": false,
-  //        "internalType": "uint256",
-  //        "name": "nonVestedAmount",
-  //        "type": "uint256"
-  //      }
-  //    ],
-  //    "name": "RevokeVesting",
-  //    "type": "event"
-  //  },
-  //  {
-  //    "constant": true,
-  //    "inputs": [],
-  //    "name": "ASSIGN_ROLE",
-  //    "outputs": [
-  //      {
-  //        "internalType": "bytes32",
-  //        "name": "",
-  //        "type": "bytes32"
-  //      }
-  //    ],
-  //    "payable": false,
-  //    "stateMutability": "view",
-  //    "type": "function"
-  //  },
-  //  {
-  //    "constant": true,
-  //    "inputs": [],
-  //    "name": "BURN_ROLE",
-  //    "outputs": [
-  //      {
-  //        "internalType": "bytes32",
-  //        "name": "",
-  //        "type": "bytes32"
-  //      }
-  //    ],
-  //    "payable": false,
-  //    "stateMutability": "view",
-  //    "type": "function"
-  //  },
-  //  {
-  //    "constant": true,
-  //    "inputs": [],
-  //    "name": "ISSUE_ROLE",
-  //    "outputs": [
-  //      {
-  //        "internalType": "bytes32",
-  //        "name": "",
-  //        "type": "bytes32"
-  //      }
-  //    ],
-  //    "payable": false,
-  //    "stateMutability": "view",
-  //    "type": "function"
-  //  },
-  //  {
-  //    "constant": true,
-  //    "inputs": [],
-  //    "name": "MAX_VESTINGS_PER_ADDRESS",
-  //    "outputs": [
-  //      {
-  //        "internalType": "uint256",
-  //        "name": "",
-  //        "type": "uint256"
-  //      }
-  //    ],
-  //    "payable": false,
-  //    "stateMutability": "view",
-  //    "type": "function"
-  //  },
-  //  {
-  //    "constant": true,
-  //    "inputs": [],
-  //    "name": "MINT_ROLE",
-  //    "outputs": [
-  //      {
-  //        "internalType": "bytes32",
-  //        "name": "",
-  //        "type": "bytes32"
-  //      }
-  //    ],
-  //    "payable": false,
-  //    "stateMutability": "view",
-  //    "type": "function"
-  //  },
-  //  {
-  //    "constant": true,
-  //    "inputs": [],
-  //    "name": "REVOKE_VESTINGS_ROLE",
-  //    "outputs": [
-  //      {
-  //        "internalType": "bytes32",
-  //        "name": "",
-  //        "type": "bytes32"
-  //      }
-  //    ],
-  //    "payable": false,
-  //    "stateMutability": "view",
-  //    "type": "function"
-  //  },
-  //  {
-  //    "constant": true,
-  //    "inputs": [
-  //      {
-  //        "internalType": "address",
-  //        "name": "_sender",
-  //        "type": "address"
-  //      },
-  //      {
-  //        "internalType": "bytes32",
-  //        "name": "_role",
-  //        "type": "bytes32"
-  //      },
-  //      {
-  //        "internalType": "uint256[]",
-  //        "name": "_params",
-  //        "type": "uint256[]"
-  //      }
-  //    ],
-  //    "name": "canPerform",
-  //    "outputs": [
-  //      {
-  //        "internalType": "bool",
-  //        "name": "",
-  //        "type": "bool"
-  //      }
-  //    ],
-  //    "payable": false,
-  //    "stateMutability": "view",
-  //    "type": "function"
-  //  },
-  //  {
-  //    "constant": true,
-  //    "inputs": [],
-  //    "name": "getInitializationBlock",
-  //    "outputs": [
-  //      {
-  //        "internalType": "uint256",
-  //        "name": "",
-  //        "type": "uint256"
-  //      }
-  //    ],
-  //    "payable": false,
-  //    "stateMutability": "view",
-  //    "type": "function"
-  //  },
-  //  {
-  //    "constant": true,
-  //    "inputs": [],
-  //    "name": "hasInitialized",
-  //    "outputs": [
-  //      {
-  //        "internalType": "bool",
-  //        "name": "",
-  //        "type": "bool"
-  //      }
-  //    ],
-  //    "payable": false,
-  //    "stateMutability": "view",
-  //    "type": "function"
-  //  },
-  //  {
-  //    "constant": true,
-  //    "inputs": [],
-  //    "name": "isOwner",
-  //    "outputs": [
-  //      {
-  //        "internalType": "bool",
-  //        "name": "",
-  //        "type": "bool"
-  //      }
-  //    ],
-  //    "payable": false,
-  //    "stateMutability": "view",
-  //    "type": "function"
-  //  },
-  //  {
-  //    "constant": true,
-  //    "inputs": [],
-  //    "name": "isPetrified",
-  //    "outputs": [
-  //      {
-  //        "internalType": "bool",
-  //        "name": "",
-  //        "type": "bool"
-  //      }
-  //    ],
-  //    "payable": false,
-  //    "stateMutability": "view",
-  //    "type": "function"
-  //  },
-  //  {
-  //    "constant": true,
-  //    "inputs": [],
-  //    "name": "maxAccountTokens",
-  //    "outputs": [
-  //      {
-  //        "internalType": "uint256",
-  //        "name": "",
-  //        "type": "uint256"
-  //      }
-  //    ],
-  //    "payable": false,
-  //    "stateMutability": "view",
-  //    "type": "function"
-  //  },
-  //  {
-  //    "constant": true,
-  //    "inputs": [],
-  //    "name": "owner",
-  //    "outputs": [
-  //      {
-  //        "internalType": "address",
-  //        "name": "",
-  //        "type": "address"
-  //      }
-  //    ],
-  //    "payable": false,
-  //    "stateMutability": "view",
-  //    "type": "function"
-  //  },
-  //  {
-  //    "constant": false,
-  //    "inputs": [],
-  //    "name": "renounceOwnership",
-  //    "outputs": [],
-  //    "payable": false,
-  //    "stateMutability": "nonpayable",
-  //    "type": "function"
-  //  },
-  //  {
-  //    "constant": false,
-  //    "inputs": [
-  //      {
-  //        "internalType": "contract IACL",
-  //        "name": "_acl",
-  //        "type": "address"
-  //      }
-  //    ],
-  //    "name": "setACL",
-  //    "outputs": [],
-  //    "payable": false,
-  //    "stateMutability": "nonpayable",
-  //    "type": "function"
-  //  },
-  //  {
-  //    "constant": true,
-  //    "inputs": [],
-  //    "name": "token",
-  //    "outputs": [
-  //      {
-  //        "internalType": "contract MiniMeToken",
-  //        "name": "",
-  //        "type": "address"
-  //      }
-  //    ],
-  //    "payable": false,
-  //    "stateMutability": "view",
-  //    "type": "function"
-  //  },
-  //  {
-  //    "constant": false,
-  //    "inputs": [
-  //      {
-  //        "internalType": "address",
-  //        "name": "newOwner",
-  //        "type": "address"
-  //      }
-  //    ],
-  //    "name": "transferOwnership",
-  //    "outputs": [],
-  //    "payable": false,
-  //    "stateMutability": "nonpayable",
-  //    "type": "function"
-  //  },
-  //  {
-  //    "constant": true,
-  //    "inputs": [
-  //      {
-  //        "internalType": "address",
-  //        "name": "",
-  //        "type": "address"
-  //      }
-  //    ],
-  //    "name": "vestingsLengths",
-  //    "outputs": [
-  //      {
-  //        "internalType": "uint256",
-  //        "name": "",
-  //        "type": "uint256"
-  //      }
-  //    ],
-  //    "payable": false,
-  //    "stateMutability": "view",
-  //    "type": "function"
-  //  },
-  //  {
-  //    "constant": false,
-  //    "inputs": [
-  //      {
-  //        "internalType": "contract MiniMeTokenFactory",
-  //        "name": "_tokenFactory",
-  //        "type": "address"
-  //      },
-  //      {
-  //        "internalType": "bool",
-  //        "name": "_transferable",
-  //        "type": "bool"
-  //      },
-  //      {
-  //        "internalType": "uint256",
-  //        "name": "_maxAccountTokens",
-  //        "type": "uint256"
-  //      },
-  //      {
-  //        "internalType": "string",
-  //        "name": "_name",
-  //        "type": "string"
-  //      },
-  //      {
-  //        "internalType": "string",
-  //        "name": "_symbol",
-  //        "type": "string"
-  //      }
-  //    ],
-  //    "name": "initialize",
-  //    "outputs": [],
-  //    "payable": false,
-  //    "stateMutability": "nonpayable",
-  //    "type": "function"
-  //  },
-  //  {
-  //    "constant": false,
-  //    "inputs": [
-  //      {
-  //        "internalType": "address",
-  //        "name": "_receiver",
-  //        "type": "address"
-  //      },
-  //      {
-  //        "internalType": "uint256",
-  //        "name": "_amount",
-  //        "type": "uint256"
-  //      }
-  //    ],
-  //    "name": "mint",
-  //    "outputs": [],
-  //    "payable": false,
-  //    "stateMutability": "nonpayable",
-  //    "type": "function"
-  //  },
-  //  {
-  //    "constant": false,
-  //    "inputs": [
-  //      {
-  //        "internalType": "uint256",
-  //        "name": "_amount",
-  //        "type": "uint256"
-  //      }
-  //    ],
-  //    "name": "issue",
-  //    "outputs": [],
-  //    "payable": false,
-  //    "stateMutability": "nonpayable",
-  //    "type": "function"
-  //  },
-  //  {
-  //    "constant": false,
-  //    "inputs": [
-  //      {
-  //        "internalType": "address",
-  //        "name": "_receiver",
-  //        "type": "address"
-  //      },
-  //      {
-  //        "internalType": "uint256",
-  //        "name": "_amount",
-  //        "type": "uint256"
-  //      }
-  //    ],
-  //    "name": "assign",
-  //    "outputs": [],
-  //    "payable": false,
-  //    "stateMutability": "nonpayable",
-  //    "type": "function"
-  //  },
-  //  {
-  //    "constant": false,
-  //    "inputs": [
-  //      {
-  //        "internalType": "address",
-  //        "name": "_holder",
-  //        "type": "address"
-  //      },
-  //      {
-  //        "internalType": "uint256",
-  //        "name": "_amount",
-  //        "type": "uint256"
-  //      }
-  //    ],
-  //    "name": "burn",
-  //    "outputs": [],
-  //    "payable": false,
-  //    "stateMutability": "nonpayable",
-  //    "type": "function"
-  //  },
-  //  {
-  //    "constant": false,
-  //    "inputs": [
-  //      {
-  //        "internalType": "address",
-  //        "name": "_receiver",
-  //        "type": "address"
-  //      },
-  //      {
-  //        "internalType": "uint256",
-  //        "name": "_amount",
-  //        "type": "uint256"
-  //      },
-  //      {
-  //        "internalType": "uint64",
-  //        "name": "_start",
-  //        "type": "uint64"
-  //      },
-  //      {
-  //        "internalType": "uint64",
-  //        "name": "_cliff",
-  //        "type": "uint64"
-  //      },
-  //      {
-  //        "internalType": "uint64",
-  //        "name": "_vested",
-  //        "type": "uint64"
-  //      },
-  //      {
-  //        "internalType": "bool",
-  //        "name": "_revokable",
-  //        "type": "bool"
-  //      }
-  //    ],
-  //    "name": "assignVested",
-  //    "outputs": [
-  //      {
-  //        "internalType": "uint256",
-  //        "name": "",
-  //        "type": "uint256"
-  //      }
-  //    ],
-  //    "payable": false,
-  //    "stateMutability": "nonpayable",
-  //    "type": "function"
-  //  },
-  //  {
-  //    "constant": false,
-  //    "inputs": [
-  //      {
-  //        "internalType": "address",
-  //        "name": "_holder",
-  //        "type": "address"
-  //      },
-  //      {
-  //        "internalType": "uint256",
-  //        "name": "_vestingId",
-  //        "type": "uint256"
-  //      }
-  //    ],
-  //    "name": "revokeVesting",
-  //    "outputs": [],
-  //    "payable": false,
-  //    "stateMutability": "nonpayable",
-  //    "type": "function"
-  //  },
-  //  {
-  //    "constant": false,
-  //    "inputs": [
-  //      {
-  //        "internalType": "address",
-  //        "name": "_from",
-  //        "type": "address"
-  //      },
-  //      {
-  //        "internalType": "address",
-  //        "name": "_to",
-  //        "type": "address"
-  //      },
-  //      {
-  //        "internalType": "uint256",
-  //        "name": "_amount",
-  //        "type": "uint256"
-  //      }
-  //    ],
-  //    "name": "onTransfer",
-  //    "outputs": [
-  //      {
-  //        "internalType": "bool",
-  //        "name": "",
-  //        "type": "bool"
-  //      }
-  //    ],
-  //    "payable": false,
-  //    "stateMutability": "nonpayable",
-  //    "type": "function"
-  //  },
-  //  {
-  //    "constant": false,
-  //    "inputs": [
-  //      {
-  //        "internalType": "address",
-  //        "name": "",
-  //        "type": "address"
-  //      },
-  //      {
-  //        "internalType": "address",
-  //        "name": "",
-  //        "type": "address"
-  //      },
-  //      {
-  //        "internalType": "uint256",
-  //        "name": "",
-  //        "type": "uint256"
-  //      }
-  //    ],
-  //    "name": "onApprove",
-  //    "outputs": [
-  //      {
-  //        "internalType": "bool",
-  //        "name": "",
-  //        "type": "bool"
-  //      }
-  //    ],
-  //    "payable": false,
-  //    "stateMutability": "nonpayable",
-  //    "type": "function"
-  //  },
-  //  {
-  //    "constant": false,
-  //    "inputs": [
-  //      {
-  //        "internalType": "address",
-  //        "name": "",
-  //        "type": "address"
-  //      }
-  //    ],
-  //    "name": "proxyPayment",
-  //    "outputs": [
-  //      {
-  //        "internalType": "bool",
-  //        "name": "",
-  //        "type": "bool"
-  //      }
-  //    ],
-  //    "payable": true,
-  //    "stateMutability": "payable",
-  //    "type": "function"
-  //  },
-  //  {
-  //    "constant": true,
-  //    "inputs": [],
-  //    "name": "isForwarder",
-  //    "outputs": [
-  //      {
-  //        "internalType": "bool",
-  //        "name": "",
-  //        "type": "bool"
-  //      }
-  //    ],
-  //    "payable": false,
-  //    "stateMutability": "pure",
-  //    "type": "function"
-  //  },
-  //  {
-  //    "constant": true,
-  //    "inputs": [
-  //      {
-  //        "internalType": "address",
-  //        "name": "_recipient",
-  //        "type": "address"
-  //      },
-  //      {
-  //        "internalType": "uint256",
-  //        "name": "_vestingId",
-  //        "type": "uint256"
-  //      }
-  //    ],
-  //    "name": "getVesting",
-  //    "outputs": [
-  //      {
-  //        "internalType": "uint256",
-  //        "name": "amount",
-  //        "type": "uint256"
-  //      },
-  //      {
-  //        "internalType": "uint64",
-  //        "name": "start",
-  //        "type": "uint64"
-  //      },
-  //      {
-  //        "internalType": "uint64",
-  //        "name": "cliff",
-  //        "type": "uint64"
-  //      },
-  //      {
-  //        "internalType": "uint64",
-  //        "name": "vesting",
-  //        "type": "uint64"
-  //      },
-  //      {
-  //        "internalType": "bool",
-  //        "name": "revokable",
-  //        "type": "bool"
-  //      }
-  //    ],
-  //    "payable": false,
-  //    "stateMutability": "view",
-  //    "type": "function"
-  //  },
-  //  {
-  //    "constant": true,
-  //    "inputs": [
-  //      {
-  //        "internalType": "address",
-  //        "name": "_holder",
-  //        "type": "address"
-  //      }
-  //    ],
-  //    "name": "spendableBalanceOf",
-  //    "outputs": [
-  //      {
-  //        "internalType": "uint256",
-  //        "name": "",
-  //        "type": "uint256"
-  //      }
-  //    ],
-  //    "payable": false,
-  //    "stateMutability": "view",
-  //    "type": "function"
-  //  },
-  //  {
-  //    "constant": true,
-  //    "inputs": [
-  //      {
-  //        "internalType": "address",
-  //        "name": "_holder",
-  //        "type": "address"
-  //      },
-  //      {
-  //        "internalType": "uint256",
-  //        "name": "_time",
-  //        "type": "uint256"
-  //      }
-  //    ],
-  //    "name": "transferableBalance",
-  //    "outputs": [
-  //      {
-  //        "internalType": "uint256",
-  //        "name": "",
-  //        "type": "uint256"
-  //      }
-  //    ],
-  //    "payable": false,
-  //    "stateMutability": "view",
-  //    "type": "function"
-  //  },
-  //  {
-  //    "constant": true,
-  //    "inputs": [
-  //      {
-  //        "internalType": "address",
-  //        "name": "_token",
-  //        "type": "address"
-  //      }
-  //    ],
-  //    "name": "allowRecoverability",
-  //    "outputs": [
-  //      {
-  //        "internalType": "bool",
-  //        "name": "",
-  //        "type": "bool"
-  //      }
-  //    ],
-  //    "payable": false,
-  //    "stateMutability": "view",
-  //    "type": "function"
-  //  }
-  //]`
+	tokenManager = "0x5B1427075C0EF657a6F4f23A7EF7065E028cAd3b"
 )
 
 func NewHandler(k keeper.PreStakingKeeper) sdk.Handler {
@@ -797,6 +33,8 @@ func NewHandler(k keeper.PreStakingKeeper) sdk.Handler {
 			return RedelegateHandler(ctx, k, *msg)
 		case *types.MsgDeploy:
 			return ContractHandler(ctx, k, *msg)
+		case *types.MsgPrestakingCreateValidator:
+			return CreateValidatorHandler(ctx, k, *msg)
 		default:
 			return nil, nil
 		}
@@ -817,9 +55,7 @@ func PreStakingHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.Msg
 		return nil, err
 	}
 
-	//call contract.
-	//TODO
-	err = k.SupplyKeeper.Mint(ctx, sdk.HexToAddress(tokenManager), sdk.HexToAddress(msg.FromAddress.String()), "preStaking", msg.Amount.Amount.BigInt())
+	err = k.SupplyKeeper.Mint(ctx, sdk.HexToAddress(tokenManager), sdk.HexToAddress(msg.FromAddress.String()), types.ModuleName, msg.Amount.Amount.BigInt())
 	if err != nil {
 		return nil, err
 	}
@@ -962,8 +198,7 @@ func UndelegateHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.Msg
 	if err != nil {
 		return nil, err
 	}
-	//TODO
-	//call contract.
+
 	err = k.SupplyKeeper.BurnEVMCoin(ctx, "preStaking", sdk.HexToAddress(tokenManager), msg.FromAddress, amount.Amount.BigInt())
 	if err != nil {
 		return nil, err
@@ -1051,10 +286,80 @@ func RedelegateHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.Msg
 }
 
 
+func CreateValidatorHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.MsgPrestakingCreateValidator) (*sdk.Result, error) {
+	if _, found := k.StakingKeeper.GetValidator(ctx, msg.ValidatorAddress); found {
+		return nil, types.ErrNoExpectedValidator
+	}
+	pk, err := util.ParsePubKey(msg.PublicKey)
+	if err != nil {
+		return nil, types.ErrInvalidPublicKey
+	}
+
+	if _, found := k.StakingKeeper.GetValidatorByConsAddr(ctx, sdk.GetConsAddress(pk)); found {
+		return nil, types.ErrPubkeyHasBonded
+	}
+
+	if _, err := msg.Description.EnsureLength(); err != nil {
+		return nil, err
+	}
+
+	//get amount of preDelegate.
+	res := k.GetAccountPreStaking(ctx, msg.FromAddress)
+	if res.IsEmpty() {
+		return nil, types.ErrAccountBalanceNotEnough
+	}
+	id, ok := new(big.Int).SetString(msg.VaultID, 10)
+	if !ok {
+		return nil, types.ErrInvalidVaultID
+	}
+	amount, _, err := res.PopVaultAmountAndEndTime(id)
+	if err != nil {
+		return nil, err
+	}
+
+	validator, _ := staking.NewValidator(msg.ValidatorAddress, msg.PublicKey, msg.Description)
+
+	commission := staking.NewCommissionWithTime(msg.Commission.Rate,
+		msg.Commission.MaxRate, msg.Commission.MaxChangeRate, ctx.BlockHeader().Time)
+
+	validator, err = validator.SetInitialCommission(commission)
+	if err != nil {
+		return nil, err
+	}
+	validator.MinSelfDelegation = msg.MinSelfDelegation
+
+	err = k.StakingKeeper.SetValidator(ctx, validator)
+	if err != nil {
+		return nil, types.ErrSetValidatorFailed
+	}
+	k.StakingKeeper.SetValidatorByConsAddr(ctx, validator)
+	k.StakingKeeper.SetNewValidatorByPowerIndex(ctx, validator)
+
+	k.StakingKeeper.AfterValidatorCreated(ctx, validator.OperatorAddress)
+
+	_, err = k.StakingKeeper.Delegate(ctx, msg.DelegatorAddress, amount.Amount, sdk.Unbonded, validator, true)
+	if err != nil {
+		return nil, err
+	}
+
+	em := sdk.NewEventManager()
+	em.EmitEvents(sdk.Events{
+		sdk.NewEvent(types.EventTypeCreateValidator,
+			sdk.NewAttribute([]byte(sdk.AttributeKeyMethod), []byte(types.EventTypeCreateValidator)),
+			sdk.NewAttribute([]byte(sdk.AttributeKeyAmount), []byte(amount.Amount.String())),
+			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(types.AttributeValueCategory)),
+			sdk.NewAttribute([]byte(sdk.AttributeKeySender), []byte(msg.FromAddress.String())),
+			sdk.NewAttribute([]byte(sdk.AttributeKeyVaultID), []byte(msg.VaultID)),
+		),
+	})
+
+	return &sdk.Result{Events: em.Events()}, nil
+}
+
+
 
 func ContractHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.MsgDeploy) (*sdk.Result, error) {
 
-	//addr := k.SupplyKeeper.GetModuleAccount(ctx, "preStaking")
 	a, _ := new(big.Int).SetString("10000000000000000000", 10)
 
 	v1, _ := new(big.Int).SetString("500000000000000000", 10)
@@ -1063,8 +368,7 @@ func ContractHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.MsgDe
 
 	zero, _ := new(big.Int).SetString("0", 10)
 
-	//contractAddr, err := k.SupplyKeeper.DeployDaoContract(ctx, "preStaking", []interface{}{[]web3.Address{web3.HexToAddress(addr.GetAddress().String()), web3.HexToAddress(msg.From.String())}, []*big.Int{a}, [3]*big.Int{v1, v2, v3}, zero})
-	contractAddr, err := k.SupplyKeeper.DeployDaoContract(ctx, "preStaking", []interface{}{[]web3.Address{web3.HexToAddress(msg.From.String())}, []*big.Int{a}, [3]*big.Int{v1, v2, v3}, zero})
+	contractAddr, err := k.SupplyKeeper.DeployDaoContract(ctx, types.ModuleName, []interface{}{[]web3.Address{web3.HexToAddress("0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c")}, []*big.Int{a}, [3]*big.Int{v1, v2, v3}, zero})
 	if err != nil {
 		return nil, err
 	}

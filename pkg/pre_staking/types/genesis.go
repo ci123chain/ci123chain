@@ -39,19 +39,19 @@ type DelegationRecord struct {
 
 
 type GenesisState struct {
-	DaoDeployed  bool                   `json:"dao_deployed"`
+	DaoAddress   string               `json:"dao_deployed"`
 	Records      DelegationRecord     `json:"records"`
 }
 
-func NewGenesisState(records DelegationRecord, deployed bool) GenesisState {
+func NewGenesisState(records DelegationRecord, addr string) GenesisState {
 	return GenesisState{
 		Records: records,
-		DaoDeployed: deployed,
+		DaoAddress: addr,
 	}
 }
 
 func DefaultGenesisState(_ []tmtypes.GenesisValidator) GenesisState {
 	return NewGenesisState(DelegationRecord{
 		nil, nil,
-	}, false)
+	}, "")
 }
