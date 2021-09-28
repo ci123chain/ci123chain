@@ -6,6 +6,7 @@ import (
 	types2 "github.com/ci123chain/ci123chain/pkg/account/types"
 	"github.com/ci123chain/ci123chain/pkg/supply/exported"
 	"github.com/tendermint/tendermint/crypto"
+	"time"
 )
 
 // 0x2f8833FCe544807E6F2b030c758aFe1e0a16Eb29
@@ -33,6 +34,80 @@ func (macc ModuleAccount) GetPermissions() []string {
 
 func (macc ModuleAccount) HasPermission(perm string) bool {
 	return true
+}
+
+func (macc *ModuleAccount) SetAddress(acc types.AccAddress) error {
+	macc.Address = acc
+	return nil
+}
+
+func (macc ModuleAccount) GetAddress() types.AccAddress {
+	return macc.Address
+}
+
+func (macc ModuleAccount) GetPubKey() crypto.PubKey {
+	return macc.PubKey
+}
+
+func (macc *ModuleAccount) SetPubKey(key crypto.PubKey) error {
+	macc.PubKey = key
+	return nil
+}
+
+func (macc *ModuleAccount) SetAccountNumber(n uint64) error {
+	macc.AccountNumber = n
+	return nil
+}
+
+func (macc ModuleAccount) GetAccountNumber() uint64{
+	return macc.AccountNumber
+}
+
+func (macc ModuleAccount) GetSequence() uint64 {
+	return macc.Sequence
+}
+
+func (macc *ModuleAccount) SetSequence(s uint64) error {
+	macc.Sequence = s
+	return nil
+}
+
+func (macc *ModuleAccount) SetCoins(c types.Coins) error {
+	macc.Coins = c
+	return nil
+}
+
+func (macc ModuleAccount) GetCoins() types.Coins {
+	return macc.Coins
+}
+
+func (macc ModuleAccount) GetCodeHash() []byte {
+	return macc.CodeHash
+}
+
+func (macc *ModuleAccount) SetCodeHash(hash []byte) {
+	macc.CodeHash = hash
+}
+
+func (macc *ModuleAccount) SetContractType(c string) error {
+	macc.ContractType = c
+	return nil
+}
+
+func (macc ModuleAccount) GetContractType() string {
+	return macc.ContractType
+}
+
+func (macc ModuleAccount) String() string {
+	return ""
+}
+
+func (macc ModuleAccount) GetIsModule() bool {
+	return false
+}
+
+func (macc ModuleAccount) SpendableCoins(bt time.Time) types.Coins {
+	return macc.Coins
 }
 
 func NewModuleAddress(name string) types.AccAddress {

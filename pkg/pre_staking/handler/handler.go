@@ -12,6 +12,775 @@ import (
 	"time"
 )
 
+const (
+	tokenManager = "0xC21089FC9b011217d27ad13F5C3C4d44543d4F72"
+	//tokenManager = "0xC21089FC9b011217d27ad13F5C3C4d44543d4F72"
+  //
+	//tokenManagerABI = `[
+  //  {
+  //    "anonymous": false,
+  //    "inputs": [
+  //      {
+  //        "indexed": true,
+  //        "internalType": "address",
+  //        "name": "msgsender",
+  //        "type": "address"
+  //      },
+  //      {
+  //        "indexed": true,
+  //        "internalType": "address",
+  //        "name": "thiscontract",
+  //        "type": "address"
+  //      }
+  //    ],
+  //    "name": "ACLAddr",
+  //    "type": "event"
+  //  },
+  //  {
+  //    "anonymous": false,
+  //    "inputs": [
+  //      {
+  //        "indexed": true,
+  //        "internalType": "address",
+  //        "name": "receiver",
+  //        "type": "address"
+  //      },
+  //      {
+  //        "indexed": false,
+  //        "internalType": "uint256",
+  //        "name": "vestingId",
+  //        "type": "uint256"
+  //      },
+  //      {
+  //        "indexed": false,
+  //        "internalType": "uint256",
+  //        "name": "amount",
+  //        "type": "uint256"
+  //      }
+  //    ],
+  //    "name": "NewVesting",
+  //    "type": "event"
+  //  },
+  //  {
+  //    "anonymous": false,
+  //    "inputs": [
+  //      {
+  //        "indexed": true,
+  //        "internalType": "address",
+  //        "name": "previousOwner",
+  //        "type": "address"
+  //      },
+  //      {
+  //        "indexed": true,
+  //        "internalType": "address",
+  //        "name": "newOwner",
+  //        "type": "address"
+  //      }
+  //    ],
+  //    "name": "OwnershipTransferred",
+  //    "type": "event"
+  //  },
+  //  {
+  //    "anonymous": false,
+  //    "inputs": [
+  //      {
+  //        "indexed": true,
+  //        "internalType": "address",
+  //        "name": "receiver",
+  //        "type": "address"
+  //      },
+  //      {
+  //        "indexed": false,
+  //        "internalType": "uint256",
+  //        "name": "vestingId",
+  //        "type": "uint256"
+  //      },
+  //      {
+  //        "indexed": false,
+  //        "internalType": "uint256",
+  //        "name": "nonVestedAmount",
+  //        "type": "uint256"
+  //      }
+  //    ],
+  //    "name": "RevokeVesting",
+  //    "type": "event"
+  //  },
+  //  {
+  //    "constant": true,
+  //    "inputs": [],
+  //    "name": "ASSIGN_ROLE",
+  //    "outputs": [
+  //      {
+  //        "internalType": "bytes32",
+  //        "name": "",
+  //        "type": "bytes32"
+  //      }
+  //    ],
+  //    "payable": false,
+  //    "stateMutability": "view",
+  //    "type": "function"
+  //  },
+  //  {
+  //    "constant": true,
+  //    "inputs": [],
+  //    "name": "BURN_ROLE",
+  //    "outputs": [
+  //      {
+  //        "internalType": "bytes32",
+  //        "name": "",
+  //        "type": "bytes32"
+  //      }
+  //    ],
+  //    "payable": false,
+  //    "stateMutability": "view",
+  //    "type": "function"
+  //  },
+  //  {
+  //    "constant": true,
+  //    "inputs": [],
+  //    "name": "ISSUE_ROLE",
+  //    "outputs": [
+  //      {
+  //        "internalType": "bytes32",
+  //        "name": "",
+  //        "type": "bytes32"
+  //      }
+  //    ],
+  //    "payable": false,
+  //    "stateMutability": "view",
+  //    "type": "function"
+  //  },
+  //  {
+  //    "constant": true,
+  //    "inputs": [],
+  //    "name": "MAX_VESTINGS_PER_ADDRESS",
+  //    "outputs": [
+  //      {
+  //        "internalType": "uint256",
+  //        "name": "",
+  //        "type": "uint256"
+  //      }
+  //    ],
+  //    "payable": false,
+  //    "stateMutability": "view",
+  //    "type": "function"
+  //  },
+  //  {
+  //    "constant": true,
+  //    "inputs": [],
+  //    "name": "MINT_ROLE",
+  //    "outputs": [
+  //      {
+  //        "internalType": "bytes32",
+  //        "name": "",
+  //        "type": "bytes32"
+  //      }
+  //    ],
+  //    "payable": false,
+  //    "stateMutability": "view",
+  //    "type": "function"
+  //  },
+  //  {
+  //    "constant": true,
+  //    "inputs": [],
+  //    "name": "REVOKE_VESTINGS_ROLE",
+  //    "outputs": [
+  //      {
+  //        "internalType": "bytes32",
+  //        "name": "",
+  //        "type": "bytes32"
+  //      }
+  //    ],
+  //    "payable": false,
+  //    "stateMutability": "view",
+  //    "type": "function"
+  //  },
+  //  {
+  //    "constant": true,
+  //    "inputs": [
+  //      {
+  //        "internalType": "address",
+  //        "name": "_sender",
+  //        "type": "address"
+  //      },
+  //      {
+  //        "internalType": "bytes32",
+  //        "name": "_role",
+  //        "type": "bytes32"
+  //      },
+  //      {
+  //        "internalType": "uint256[]",
+  //        "name": "_params",
+  //        "type": "uint256[]"
+  //      }
+  //    ],
+  //    "name": "canPerform",
+  //    "outputs": [
+  //      {
+  //        "internalType": "bool",
+  //        "name": "",
+  //        "type": "bool"
+  //      }
+  //    ],
+  //    "payable": false,
+  //    "stateMutability": "view",
+  //    "type": "function"
+  //  },
+  //  {
+  //    "constant": true,
+  //    "inputs": [],
+  //    "name": "getInitializationBlock",
+  //    "outputs": [
+  //      {
+  //        "internalType": "uint256",
+  //        "name": "",
+  //        "type": "uint256"
+  //      }
+  //    ],
+  //    "payable": false,
+  //    "stateMutability": "view",
+  //    "type": "function"
+  //  },
+  //  {
+  //    "constant": true,
+  //    "inputs": [],
+  //    "name": "hasInitialized",
+  //    "outputs": [
+  //      {
+  //        "internalType": "bool",
+  //        "name": "",
+  //        "type": "bool"
+  //      }
+  //    ],
+  //    "payable": false,
+  //    "stateMutability": "view",
+  //    "type": "function"
+  //  },
+  //  {
+  //    "constant": true,
+  //    "inputs": [],
+  //    "name": "isOwner",
+  //    "outputs": [
+  //      {
+  //        "internalType": "bool",
+  //        "name": "",
+  //        "type": "bool"
+  //      }
+  //    ],
+  //    "payable": false,
+  //    "stateMutability": "view",
+  //    "type": "function"
+  //  },
+  //  {
+  //    "constant": true,
+  //    "inputs": [],
+  //    "name": "isPetrified",
+  //    "outputs": [
+  //      {
+  //        "internalType": "bool",
+  //        "name": "",
+  //        "type": "bool"
+  //      }
+  //    ],
+  //    "payable": false,
+  //    "stateMutability": "view",
+  //    "type": "function"
+  //  },
+  //  {
+  //    "constant": true,
+  //    "inputs": [],
+  //    "name": "maxAccountTokens",
+  //    "outputs": [
+  //      {
+  //        "internalType": "uint256",
+  //        "name": "",
+  //        "type": "uint256"
+  //      }
+  //    ],
+  //    "payable": false,
+  //    "stateMutability": "view",
+  //    "type": "function"
+  //  },
+  //  {
+  //    "constant": true,
+  //    "inputs": [],
+  //    "name": "owner",
+  //    "outputs": [
+  //      {
+  //        "internalType": "address",
+  //        "name": "",
+  //        "type": "address"
+  //      }
+  //    ],
+  //    "payable": false,
+  //    "stateMutability": "view",
+  //    "type": "function"
+  //  },
+  //  {
+  //    "constant": false,
+  //    "inputs": [],
+  //    "name": "renounceOwnership",
+  //    "outputs": [],
+  //    "payable": false,
+  //    "stateMutability": "nonpayable",
+  //    "type": "function"
+  //  },
+  //  {
+  //    "constant": false,
+  //    "inputs": [
+  //      {
+  //        "internalType": "contract IACL",
+  //        "name": "_acl",
+  //        "type": "address"
+  //      }
+  //    ],
+  //    "name": "setACL",
+  //    "outputs": [],
+  //    "payable": false,
+  //    "stateMutability": "nonpayable",
+  //    "type": "function"
+  //  },
+  //  {
+  //    "constant": true,
+  //    "inputs": [],
+  //    "name": "token",
+  //    "outputs": [
+  //      {
+  //        "internalType": "contract MiniMeToken",
+  //        "name": "",
+  //        "type": "address"
+  //      }
+  //    ],
+  //    "payable": false,
+  //    "stateMutability": "view",
+  //    "type": "function"
+  //  },
+  //  {
+  //    "constant": false,
+  //    "inputs": [
+  //      {
+  //        "internalType": "address",
+  //        "name": "newOwner",
+  //        "type": "address"
+  //      }
+  //    ],
+  //    "name": "transferOwnership",
+  //    "outputs": [],
+  //    "payable": false,
+  //    "stateMutability": "nonpayable",
+  //    "type": "function"
+  //  },
+  //  {
+  //    "constant": true,
+  //    "inputs": [
+  //      {
+  //        "internalType": "address",
+  //        "name": "",
+  //        "type": "address"
+  //      }
+  //    ],
+  //    "name": "vestingsLengths",
+  //    "outputs": [
+  //      {
+  //        "internalType": "uint256",
+  //        "name": "",
+  //        "type": "uint256"
+  //      }
+  //    ],
+  //    "payable": false,
+  //    "stateMutability": "view",
+  //    "type": "function"
+  //  },
+  //  {
+  //    "constant": false,
+  //    "inputs": [
+  //      {
+  //        "internalType": "contract MiniMeTokenFactory",
+  //        "name": "_tokenFactory",
+  //        "type": "address"
+  //      },
+  //      {
+  //        "internalType": "bool",
+  //        "name": "_transferable",
+  //        "type": "bool"
+  //      },
+  //      {
+  //        "internalType": "uint256",
+  //        "name": "_maxAccountTokens",
+  //        "type": "uint256"
+  //      },
+  //      {
+  //        "internalType": "string",
+  //        "name": "_name",
+  //        "type": "string"
+  //      },
+  //      {
+  //        "internalType": "string",
+  //        "name": "_symbol",
+  //        "type": "string"
+  //      }
+  //    ],
+  //    "name": "initialize",
+  //    "outputs": [],
+  //    "payable": false,
+  //    "stateMutability": "nonpayable",
+  //    "type": "function"
+  //  },
+  //  {
+  //    "constant": false,
+  //    "inputs": [
+  //      {
+  //        "internalType": "address",
+  //        "name": "_receiver",
+  //        "type": "address"
+  //      },
+  //      {
+  //        "internalType": "uint256",
+  //        "name": "_amount",
+  //        "type": "uint256"
+  //      }
+  //    ],
+  //    "name": "mint",
+  //    "outputs": [],
+  //    "payable": false,
+  //    "stateMutability": "nonpayable",
+  //    "type": "function"
+  //  },
+  //  {
+  //    "constant": false,
+  //    "inputs": [
+  //      {
+  //        "internalType": "uint256",
+  //        "name": "_amount",
+  //        "type": "uint256"
+  //      }
+  //    ],
+  //    "name": "issue",
+  //    "outputs": [],
+  //    "payable": false,
+  //    "stateMutability": "nonpayable",
+  //    "type": "function"
+  //  },
+  //  {
+  //    "constant": false,
+  //    "inputs": [
+  //      {
+  //        "internalType": "address",
+  //        "name": "_receiver",
+  //        "type": "address"
+  //      },
+  //      {
+  //        "internalType": "uint256",
+  //        "name": "_amount",
+  //        "type": "uint256"
+  //      }
+  //    ],
+  //    "name": "assign",
+  //    "outputs": [],
+  //    "payable": false,
+  //    "stateMutability": "nonpayable",
+  //    "type": "function"
+  //  },
+  //  {
+  //    "constant": false,
+  //    "inputs": [
+  //      {
+  //        "internalType": "address",
+  //        "name": "_holder",
+  //        "type": "address"
+  //      },
+  //      {
+  //        "internalType": "uint256",
+  //        "name": "_amount",
+  //        "type": "uint256"
+  //      }
+  //    ],
+  //    "name": "burn",
+  //    "outputs": [],
+  //    "payable": false,
+  //    "stateMutability": "nonpayable",
+  //    "type": "function"
+  //  },
+  //  {
+  //    "constant": false,
+  //    "inputs": [
+  //      {
+  //        "internalType": "address",
+  //        "name": "_receiver",
+  //        "type": "address"
+  //      },
+  //      {
+  //        "internalType": "uint256",
+  //        "name": "_amount",
+  //        "type": "uint256"
+  //      },
+  //      {
+  //        "internalType": "uint64",
+  //        "name": "_start",
+  //        "type": "uint64"
+  //      },
+  //      {
+  //        "internalType": "uint64",
+  //        "name": "_cliff",
+  //        "type": "uint64"
+  //      },
+  //      {
+  //        "internalType": "uint64",
+  //        "name": "_vested",
+  //        "type": "uint64"
+  //      },
+  //      {
+  //        "internalType": "bool",
+  //        "name": "_revokable",
+  //        "type": "bool"
+  //      }
+  //    ],
+  //    "name": "assignVested",
+  //    "outputs": [
+  //      {
+  //        "internalType": "uint256",
+  //        "name": "",
+  //        "type": "uint256"
+  //      }
+  //    ],
+  //    "payable": false,
+  //    "stateMutability": "nonpayable",
+  //    "type": "function"
+  //  },
+  //  {
+  //    "constant": false,
+  //    "inputs": [
+  //      {
+  //        "internalType": "address",
+  //        "name": "_holder",
+  //        "type": "address"
+  //      },
+  //      {
+  //        "internalType": "uint256",
+  //        "name": "_vestingId",
+  //        "type": "uint256"
+  //      }
+  //    ],
+  //    "name": "revokeVesting",
+  //    "outputs": [],
+  //    "payable": false,
+  //    "stateMutability": "nonpayable",
+  //    "type": "function"
+  //  },
+  //  {
+  //    "constant": false,
+  //    "inputs": [
+  //      {
+  //        "internalType": "address",
+  //        "name": "_from",
+  //        "type": "address"
+  //      },
+  //      {
+  //        "internalType": "address",
+  //        "name": "_to",
+  //        "type": "address"
+  //      },
+  //      {
+  //        "internalType": "uint256",
+  //        "name": "_amount",
+  //        "type": "uint256"
+  //      }
+  //    ],
+  //    "name": "onTransfer",
+  //    "outputs": [
+  //      {
+  //        "internalType": "bool",
+  //        "name": "",
+  //        "type": "bool"
+  //      }
+  //    ],
+  //    "payable": false,
+  //    "stateMutability": "nonpayable",
+  //    "type": "function"
+  //  },
+  //  {
+  //    "constant": false,
+  //    "inputs": [
+  //      {
+  //        "internalType": "address",
+  //        "name": "",
+  //        "type": "address"
+  //      },
+  //      {
+  //        "internalType": "address",
+  //        "name": "",
+  //        "type": "address"
+  //      },
+  //      {
+  //        "internalType": "uint256",
+  //        "name": "",
+  //        "type": "uint256"
+  //      }
+  //    ],
+  //    "name": "onApprove",
+  //    "outputs": [
+  //      {
+  //        "internalType": "bool",
+  //        "name": "",
+  //        "type": "bool"
+  //      }
+  //    ],
+  //    "payable": false,
+  //    "stateMutability": "nonpayable",
+  //    "type": "function"
+  //  },
+  //  {
+  //    "constant": false,
+  //    "inputs": [
+  //      {
+  //        "internalType": "address",
+  //        "name": "",
+  //        "type": "address"
+  //      }
+  //    ],
+  //    "name": "proxyPayment",
+  //    "outputs": [
+  //      {
+  //        "internalType": "bool",
+  //        "name": "",
+  //        "type": "bool"
+  //      }
+  //    ],
+  //    "payable": true,
+  //    "stateMutability": "payable",
+  //    "type": "function"
+  //  },
+  //  {
+  //    "constant": true,
+  //    "inputs": [],
+  //    "name": "isForwarder",
+  //    "outputs": [
+  //      {
+  //        "internalType": "bool",
+  //        "name": "",
+  //        "type": "bool"
+  //      }
+  //    ],
+  //    "payable": false,
+  //    "stateMutability": "pure",
+  //    "type": "function"
+  //  },
+  //  {
+  //    "constant": true,
+  //    "inputs": [
+  //      {
+  //        "internalType": "address",
+  //        "name": "_recipient",
+  //        "type": "address"
+  //      },
+  //      {
+  //        "internalType": "uint256",
+  //        "name": "_vestingId",
+  //        "type": "uint256"
+  //      }
+  //    ],
+  //    "name": "getVesting",
+  //    "outputs": [
+  //      {
+  //        "internalType": "uint256",
+  //        "name": "amount",
+  //        "type": "uint256"
+  //      },
+  //      {
+  //        "internalType": "uint64",
+  //        "name": "start",
+  //        "type": "uint64"
+  //      },
+  //      {
+  //        "internalType": "uint64",
+  //        "name": "cliff",
+  //        "type": "uint64"
+  //      },
+  //      {
+  //        "internalType": "uint64",
+  //        "name": "vesting",
+  //        "type": "uint64"
+  //      },
+  //      {
+  //        "internalType": "bool",
+  //        "name": "revokable",
+  //        "type": "bool"
+  //      }
+  //    ],
+  //    "payable": false,
+  //    "stateMutability": "view",
+  //    "type": "function"
+  //  },
+  //  {
+  //    "constant": true,
+  //    "inputs": [
+  //      {
+  //        "internalType": "address",
+  //        "name": "_holder",
+  //        "type": "address"
+  //      }
+  //    ],
+  //    "name": "spendableBalanceOf",
+  //    "outputs": [
+  //      {
+  //        "internalType": "uint256",
+  //        "name": "",
+  //        "type": "uint256"
+  //      }
+  //    ],
+  //    "payable": false,
+  //    "stateMutability": "view",
+  //    "type": "function"
+  //  },
+  //  {
+  //    "constant": true,
+  //    "inputs": [
+  //      {
+  //        "internalType": "address",
+  //        "name": "_holder",
+  //        "type": "address"
+  //      },
+  //      {
+  //        "internalType": "uint256",
+  //        "name": "_time",
+  //        "type": "uint256"
+  //      }
+  //    ],
+  //    "name": "transferableBalance",
+  //    "outputs": [
+  //      {
+  //        "internalType": "uint256",
+  //        "name": "",
+  //        "type": "uint256"
+  //      }
+  //    ],
+  //    "payable": false,
+  //    "stateMutability": "view",
+  //    "type": "function"
+  //  },
+  //  {
+  //    "constant": true,
+  //    "inputs": [
+  //      {
+  //        "internalType": "address",
+  //        "name": "_token",
+  //        "type": "address"
+  //      }
+  //    ],
+  //    "name": "allowRecoverability",
+  //    "outputs": [
+  //      {
+  //        "internalType": "bool",
+  //        "name": "",
+  //        "type": "bool"
+  //      }
+  //    ],
+  //    "payable": false,
+  //    "stateMutability": "view",
+  //    "type": "function"
+  //  }
+  //]`
+)
 
 func NewHandler(k keeper.PreStakingKeeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) (result *sdk.Result, e error) {
@@ -42,7 +811,7 @@ func PreStakingHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.Msg
 		return nil, types.ErrAccountBalanceNotEnough
 	}
 	//pay to module account.
-	moduleAcc := k.SupplyKeeper.GetModuleAccount(ctx, types.DefaultCodespace)
+	moduleAcc := k.SupplyKeeper.GetModuleAccount(ctx, types.ModuleName)
 	err := k.AccountKeeper.Transfer(ctx, msg.FromAddress, moduleAcc.GetAddress(), sdk.NewCoins(msg.Amount))
 	if err != nil {
 		return nil, err
@@ -50,7 +819,10 @@ func PreStakingHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.Msg
 
 	//call contract.
 	//TODO
-
+	err = k.SupplyKeeper.Mint(ctx, sdk.HexToAddress(tokenManager), sdk.HexToAddress(msg.FromAddress.String()), "preStaking", msg.Amount.Amount.BigInt())
+	if err != nil {
+		return nil, err
+	}
 	//save to keeper.
 	res := k.GetAccountPreStaking(ctx, msg.FromAddress)
 	vat := types.NewVault(ctx.BlockTime(), ctx.BlockTime().Add(msg.DelegateTime), msg.DelegateTime, msg.Amount)
@@ -192,6 +964,10 @@ func UndelegateHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.Msg
 	}
 	//TODO
 	//call contract.
+	err = k.SupplyKeeper.BurnEVMCoin(ctx, "preStaking", sdk.HexToAddress(tokenManager), msg.FromAddress, amount.Amount.BigInt())
+	if err != nil {
+		return nil, err
+	}
 
 	//events.
 	em := sdk.NewEventManager()
@@ -278,7 +1054,7 @@ func RedelegateHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.Msg
 
 func ContractHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.MsgDeploy) (*sdk.Result, error) {
 
-	addr := k.SupplyKeeper.GetModuleAccount(ctx, "preStaking")
+	//addr := k.SupplyKeeper.GetModuleAccount(ctx, "preStaking")
 	a, _ := new(big.Int).SetString("10000000000000000000", 10)
 
 	v1, _ := new(big.Int).SetString("500000000000000000", 10)
@@ -287,7 +1063,8 @@ func ContractHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.MsgDe
 
 	zero, _ := new(big.Int).SetString("0", 10)
 
-	contractAddr, err := k.SupplyKeeper.DeployDaoContract(ctx, "preStaking", []interface{}{[]web3.Address{web3.HexToAddress(addr.GetAddress().String()), web3.HexToAddress(msg.From.String())}, []*big.Int{a}, [3]*big.Int{v1, v2, v3}, zero})
+	//contractAddr, err := k.SupplyKeeper.DeployDaoContract(ctx, "preStaking", []interface{}{[]web3.Address{web3.HexToAddress(addr.GetAddress().String()), web3.HexToAddress(msg.From.String())}, []*big.Int{a}, [3]*big.Int{v1, v2, v3}, zero})
+	contractAddr, err := k.SupplyKeeper.DeployDaoContract(ctx, "preStaking", []interface{}{[]web3.Address{web3.HexToAddress(msg.From.String())}, []*big.Int{a}, [3]*big.Int{v1, v2, v3}, zero})
 	if err != nil {
 		return nil, err
 	}
