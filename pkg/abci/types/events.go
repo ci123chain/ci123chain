@@ -165,6 +165,7 @@ var (
 	AttributeKeyReceiver = "receiver"
 	AttributeKeyAmount = "amount"
 	AttributeKeyTotalSupply = "total_supply"
+	AttributeKeyVaultID = "vault_id"
 )
 
 type (

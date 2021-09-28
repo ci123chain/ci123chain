@@ -21,7 +21,7 @@ func RegisterRestTxRoutes(cliCtx context.Context, r *mux.Router)  {
 	r.HandleFunc("/preStaking/delegator/delegate", rest.MiddleHandler(cliCtx, DelegateRequest, types.DefaultCodespace)).Methods("POST")
 	r.HandleFunc("/preStaking/delegator/redelegate", rest.MiddleHandler(cliCtx, RedelegateRequest, types.DefaultCodespace)).Methods("POST")
 	r.HandleFunc("/preStaking/delegator/undelegate", rest.MiddleHandler(cliCtx, UndelegateRequest, types.DefaultCodespace)).Methods("POST")
-	r.HandleFunc("/preStaking/deploy", rest.MiddleHandler(cliCtx, DeployRequest, types.DefaultCodespace)).Methods("POST")
+	//r.HandleFunc("/preStaking/deploy", rest.MiddleHandler(cliCtx, DeployRequest, types.DefaultCodespace)).Methods("POST")
 }
 
 

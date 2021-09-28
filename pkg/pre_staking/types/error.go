@@ -25,4 +25,7 @@ var (
 	ErrNoBalanceLeft = sdkerrors.Register(DefaultCodespace, 1812, "no valid balance to undelegate")
 	ErrNoEnoughBalanceLeft = sdkerrors.Register(DefaultCodespace, 1813, "no enough balance to undelegate")
 	ErrInvalidVaultID  = sdkerrors.Register(DefaultCodespace, 1814, "invalid vault id")
+	ErrInvalidPublicKey = sdkerrors.Register(DefaultCodespace, 1815, "invalid public key")
+	ErrPubkeyHasBonded = sdkerrors.Register(DefaultCodespace, 1816, "pubkey has been bonded")
+	ErrSetValidatorFailed = sdkerrors.Register(DefaultCodespace, 1817, "set validator failed")
 )

@@ -7,6 +7,7 @@ const (
 	EventUndelegate     = "undelegate"
 	EventTypeRedelegate           = "redelegate"
 	EventTypeDeploy     = "deploy"
+	EventTypeCreateValidator  = "create_validator"
 
 	AttributeKeySrcValidator      = "source_validator"
 	AttributeKeyDstValidator      = "destination_validator"

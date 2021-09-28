@@ -18,6 +18,8 @@ const (
 var (
 	PreStakingKey = []byte{0x50}
 	StakingRecordKey = []byte{0x51}
+
+	WeeLinkDAO = []byte("weeLinkDAO")
 )
 
 

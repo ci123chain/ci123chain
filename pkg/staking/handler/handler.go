@@ -13,29 +13,28 @@ import (
 
 func NewHandler(k keeper.StakingKeeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
-		ctx = ctx.WithEventManager(sdk.NewEventManager())
-
-		switch msg := msg.(type) {
-		case *staking.MsgCreateValidator:
-			return handleMsgCreateValidator(ctx, k, *msg)
-		case *staking.MsgEditValidator:
-			return handleMsgEditValidator(ctx, k, *msg)
-		case *staking.MsgDelegate:
-			return handleMsgDelegate(ctx, k, *msg)
-		case *staking.MsgRedelegate:
-			return handleMsgRedelegate(ctx, k, *msg)
-		case *staking.MsgUndelegate:
-			return handleMsgUndelegate(ctx, k, *msg)
-		default:
-			//errMsg := fmt.Sprintf("unrecognized staking message type: %T", msg)
-			return nil, types.ErrInvalidTxType
-		}
+		//ctx = ctx.WithEventManager(sdk.NewEventManager())
+		//
+		//switch msg := msg.(type) {
+		//case *staking.MsgCreateValidator:
+		//	return handleMsgCreateValidator(ctx, k, *msg)
+		//case *staking.MsgEditValidator:
+		//	return handleMsgEditValidator(ctx, k, *msg)
+		//case *staking.MsgDelegate:
+		//	return handleMsgDelegate(ctx, k, *msg)
+		//case *staking.MsgRedelegate:
+		//	return handleMsgRedelegate(ctx, k, *msg)
+		//case *staking.MsgUndelegate:
+		//	return handleMsgUndelegate(ctx, k, *msg)
+		//default:
+		//	return nil, types.ErrInvalidTxType
+		//}
+		return nil, nil
 	}
 }
 
 func handleMsgCreateValidator(ctx sdk.Context, k keeper.StakingKeeper, msg staking.MsgCreateValidator) (*sdk.Result, error) {
 	if _, found := k.GetValidator(ctx, msg.ValidatorAddress); found {
-		//r := fmt.Sprintf("validator %s has existed", msg.ValidatorAddress.String())
 		return nil, types.ErrNoExpectedValidator
 	}
 	pk, err := util.ParsePubKey(msg.PublicKey)

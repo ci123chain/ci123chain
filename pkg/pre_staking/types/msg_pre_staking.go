@@ -36,7 +36,7 @@ func (msg *MsgPreStaking) ValidateBasic() error {
 	if msg.Contract.Empty() {
 		return sdkerrors.Wrap(sdkerrors.ErrParams, "contract can not empty")
 	}
-	//if msg.DelegateTime.Seconds() <= (time.Second * 3600 * 24 * 3 ).Seconds(){
+	//if msg.DelegateTime.Seconds() <= (time.Hour * 24 * 7).Seconds(){
 	//	return sdkerrors.Wrap(sdkerrors.ErrParams, "delegate_time can not be zero")
 	//}
 	return nil
