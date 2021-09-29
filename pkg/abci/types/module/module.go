@@ -118,7 +118,7 @@ func (am AppManager) InitGenesis(ctx types.Context, data map[string]json.RawMess
 			validatorUpdates = moduleValUpdates
 		}
 	}
-	fmt.Println("****** InitGenesis Finished")
+	fmt.Println("----InitGenesis Finished---")
 	return abci.ResponseInitChain{
 		Validators: validatorUpdates,
 	}
