@@ -11,9 +11,8 @@ import (
 func BeginBlock() {}
 
 func EndBlock(ctx sdk.Context, k keeper.PreStakingKeeper) {
-
-	var a = k.GetWeeLinkDao(ctx)
-	if  a == "" {
+	addr := k.GetWeeLinkDao(ctx)
+	if  addr == "" {
 		a, _ := new(big.Int).SetString("10000000000000000000", 10)
 
 		v1, _ := new(big.Int).SetString("500000000000000000", 10)
@@ -22,13 +21,14 @@ func EndBlock(ctx sdk.Context, k keeper.PreStakingKeeper) {
 
 		zero, _ := new(big.Int).SetString("0", 10)
 
+		k.Logger(ctx).Info("Deploying weeLink dao ")
 		contractAddr, err := k.SupplyKeeper.DeployDaoContract(ctx, types.ModuleName, []interface{}{[]web3.Address{web3.HexToAddress(moduleAcc)}, []*big.Int{a}, [3]*big.Int{v1, v2, v3}, zero})
 
 		if err != nil {
 			panic(err)
 		}
 		k.SetWeeLinkDao(ctx, contractAddr)
-		ctx.Logger().Info("deployed weeLink dao contract", "contract address", contractAddr)
+		k.Logger(ctx).Info("Deployed weeLink dao contract", "contract address", contractAddr)
 	}
 	k.UpdateDeadlineRecord(ctx)
 }
