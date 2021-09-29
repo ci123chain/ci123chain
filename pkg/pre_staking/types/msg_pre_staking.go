@@ -9,15 +9,13 @@ import (
 type MsgPreStaking struct {
 	FromAddress sdk.AccAddress   `json:"from_address"`
 	Amount    sdk.Coin		     `json:"amount"`
-	Contract  sdk.AccAddress     `json:"contract"`
 	DelegateTime  time.Duration         `json:"delegate_time"`
 }
 
-func NewMsgPreStaking(from sdk.AccAddress, amount sdk.Coin, c sdk.AccAddress, dt time.Duration) *MsgPreStaking {
+func NewMsgPreStaking(from sdk.AccAddress, amount sdk.Coin, dt time.Duration) *MsgPreStaking {
 	return &MsgPreStaking{
 		FromAddress: from,
 		Amount:      amount,
-		Contract:    c,
 		DelegateTime: dt,
 	}
 }
@@ -32,9 +30,6 @@ func (msg *MsgPreStaking) ValidateBasic() error {
 	}
 	if !msg.Amount.IsPositive() {
 		return sdkerrors.Wrap(sdkerrors.ErrParams, "amount can not be negative")
-	}
-	if msg.Contract.Empty() {
-		return sdkerrors.Wrap(sdkerrors.ErrParams, "contract can not empty")
 	}
 	if msg.DelegateTime.Seconds() <= (time.Hour * 24 * 7).Seconds(){
 		return sdkerrors.Wrap(sdkerrors.ErrParams, "the time should longer than 168h(1 week)")

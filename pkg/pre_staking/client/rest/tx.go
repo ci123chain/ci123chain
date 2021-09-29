@@ -55,21 +55,19 @@ func PreDelegateRequest(cliCtx context.Context, writer http.ResponseWriter, requ
 		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid amount").Error())
 		return
 	}
-	c := request.FormValue("contract")
-	contract := sdk.HexToAddress(c)
 
 	dt := request.FormValue("delegate_time")
 	t, err := time.ParseDuration(dt)
 	if err != nil {
-		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid from").Error())
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid delegate_time").Error())
 		return
 	}
 	if t <= 0 {
-		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid from").Error())
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid delegate_time").Error())
 		return
 	}
 
-	msg := types.NewMsgPreStaking(from, coin, contract, t)
+	msg := types.NewMsgPreStaking(from, coin, t)
 
 	if !broadcast {
 		rest.PostProcessResponseBare(writer, cliCtx, hex.EncodeToString(msg.Bytes()))
