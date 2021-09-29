@@ -12,6 +12,7 @@ const (
 
 	PreStakingRecordQuery = "queryPreStakingRecord"
 	StakingRecordQuery = "queryStakingRecord"
+	PreStakingDaoQuery = "queryPreStakingDao"
 )
 
 

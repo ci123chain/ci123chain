@@ -22,7 +22,7 @@ func TestTcpTls(t *testing.T)  {
 	var cert tls.Certificate
 	config := tls.Config{
 		Certificates:       []tls.Certificate{cert},
-		ServerName:         "weelinknode1c.gw002.oneitfarm.com:7443",
+		ServerName:         "weelinknode1c.gw002.oneitfarm.com",
 		InsecureSkipVerify: true,
 	}
 
