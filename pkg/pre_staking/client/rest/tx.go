@@ -10,6 +10,7 @@ import (
 	types2 "github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/pre_staking/types"
+	sSdk "github.com/ci123chain/ci123chain/sdk/staking"
 	"github.com/gorilla/mux"
 	"net/http"
 	"strconv"
@@ -21,6 +22,7 @@ func RegisterRestTxRoutes(cliCtx context.Context, r *mux.Router)  {
 	r.HandleFunc("/preStaking/delegator/delegate", rest.MiddleHandler(cliCtx, DelegateRequest, types.DefaultCodespace)).Methods("POST")
 	r.HandleFunc("/preStaking/delegator/redelegate", rest.MiddleHandler(cliCtx, RedelegateRequest, types.DefaultCodespace)).Methods("POST")
 	r.HandleFunc("/preStaking/delegator/undelegate", rest.MiddleHandler(cliCtx, UndelegateRequest, types.DefaultCodespace)).Methods("POST")
+	r.HandleFunc("/preStaking/create/validator", rest.MiddleHandler(cliCtx, CreateValidatorRequest, types.DefaultCodespace)).Methods("POST")
 	//r.HandleFunc("/preStaking/deploy", rest.MiddleHandler(cliCtx, DeployRequest, types.DefaultCodespace)).Methods("POST")
 }
 
@@ -240,6 +242,47 @@ func UndelegateRequest(cliCtx context.Context, writer http.ResponseWriter, reque
 	rest.PostProcessResponseBare(writer, cliCtx, res)
 }
 
+func CreateValidatorRequest(cliCtx context.Context, writer http.ResponseWriter, request *http.Request) {
+	delegatorAddr := cliCtx.FromAddr
+	validatorAddr := cliCtx.FromAddr
+
+	//verify account exists
+	err := checkAccountExist(cliCtx, cliCtx.FromAddr)
+	if err != nil {
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid from").Error())
+		return
+	}
+
+	msd, r, mr, mcr, moniker, identity, website, securityContact, details,
+	publicKey,err := parseOtherArgs(request)
+	if err != nil {
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, err.Error()).Error())
+		return
+	}
+
+	MSD, R, MR, MXR := sSdk.CreateParseArgs(msd, r, mr, mcr)
+	id := request.FormValue("vault_id")
+	msg := types.NewMsgCreateValidator(cliCtx.FromAddr, MSD, validatorAddr,
+		delegatorAddr, R, MR, MXR, moniker, identity, website, securityContact, details, publicKey, id)
+
+	if !cliCtx.Broadcast {
+		rest.PostProcessResponseBare(writer, cliCtx, hex.EncodeToString(msg.Bytes()))
+		return
+	}
+
+	txByte, err := types2.SignCommonTx(cliCtx.FromAddr, cliCtx.Nonce, cliCtx.Gas, []sdk.Msg{msg}, cliCtx.PrivateKey, cdc)
+	if err != nil {
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, err.Error()).Error())
+		return
+	}
+	res, err := cliCtx.BroadcastSignedTx(txByte)
+	if err != nil {
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, err.Error()).Error())
+		return
+	}
+	rest.PostProcessResponseBare(writer, cliCtx, res)
+}
+
 func DeployRequest(cliCtx context.Context, writer http.ResponseWriter, request *http.Request) {
 	broadcast, err := strconv.ParseBool(request.FormValue("broadcast"))
 	if err != nil {
@@ -285,4 +328,55 @@ func checkAccountExist(ctx context.Context, address... sdk.AccAddress) error {
 		}
 	}
 	return nil
+}
+
+func parseOtherArgs(request *http.Request) (int64, int64, int64, int64, string,
+	string, string, string, string, string, error) {
+
+	minSelfDelegation := request.FormValue("min_self_delegation")
+	msd, err := strconv.ParseInt(minSelfDelegation, 10, 64)
+	if err != nil || msd < 0 {
+		return 0, 0, 0, 0, "", "", "", "", "", "",errors.New("min_self_delegation error")
+	}
+	rate := request.FormValue("rate")
+	var r, mr, mcr int64
+	if rate == "" {
+		r = 1
+	}else {
+		r, err = strconv.ParseInt(rate, 10, 64)
+		if err != nil || r < 0 {
+			return 0, 0, 0, 0, "", "", "", "", "", "", errors.New("rate error")
+		}
+	}
+	maxRate := request.FormValue("max_rate")
+	if maxRate == "" {
+		mr = 1
+	}else {
+		mr, err = strconv.ParseInt(maxRate, 10, 64)
+		if err != nil || mr < 0 {
+			return 0, 0, 0, 0, "", "", "", "", "", "",  errors.New("max_rate error")
+		}
+	}
+
+	maxChangeRate := request.FormValue("max_change_rate")
+	if maxChangeRate == "" {
+		mcr = 1
+	}else {
+		mcr, err = strconv.ParseInt(maxChangeRate, 10, 64)
+		if err != nil || mcr < 0 {
+			return 0, 0, 0, 0, "", "", "", "", "", "",errors.New("max_change_rate error")
+		}
+	}
+	moniker := request.FormValue("moniker")
+	identity := request.FormValue("identity")
+	website := request.FormValue("website")
+	securityContact := request.FormValue("security_contact")
+	details := request.FormValue("details")
+
+	publicKey := request.FormValue("public_key")
+	if publicKey == "" {
+		return 0, 0, 0, 0, "", "", "", "", "", "", errors.New("public_key can't be empty")
+	}
+
+	return msd, r, mr, mcr, moniker, identity, website, securityContact, details, publicKey, nil
 }
