@@ -10,6 +10,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/transfer/rest/utils"
 	"github.com/ci123chain/ci123chain/pkg/util"
 	"net/http"
+	"strings"
 )
 
 type TxRequestParams struct {
@@ -20,6 +21,9 @@ type TxRequestParams struct {
 func QueryTxRequestHandlerFn(cliCtx context.Context) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		hashHexStr := request.FormValue("hash")
+		if strings.HasPrefix(hashHexStr, "0x") {
+			hashHexStr= hashHexStr[2:]
+		}
 		checkErr := util.CheckStringLength(1, 100, hashHexStr)
 		if checkErr != nil {
 			rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, fmt.Sprintf("invalid hash")).Error())

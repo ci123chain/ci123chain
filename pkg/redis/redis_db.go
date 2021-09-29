@@ -175,6 +175,9 @@ func (ri *RedisIterator) Error() error {
 }
 
 func (rdb *RedisDB) NewRedisIterator(start, end []byte, isReserve bool, withValue bool, limit int) db.Iterator {
+	if limit == 0 {
+		limit = 10
+	}
 	var results = make([]KVPair, 0)
 	res, _ := libs.RetryI(0, func(retryTimes int) (res interface{}, err error) {
 		r, err := rdb.DB.Iter(hex.EncodeToString(start), hex.EncodeToString(end), isReserve, withValue, limit)
