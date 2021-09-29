@@ -10,7 +10,6 @@ import (
 type MsgPrestakingCreateValidator struct {
 	FromAddress		  types.AccAddress	 `json:"from_address"`
 	PublicKey         string      		 `json:"public_key"`
-	Value             types.Coin         `json:"value"`
 	ValidatorAddress  types.AccAddress   `json:"validator_address"`
 	DelegatorAddress  types.AccAddress   `json:"delegator_address"`
 	MinSelfDelegation types.Int          `json:"min_self_delegation"`
@@ -19,17 +18,17 @@ type MsgPrestakingCreateValidator struct {
 	VaultID        string         `json:"vault_id"`
 }
 
-func NewMsgCreateValidator(from types.AccAddress, value types.Coin, minSelfDelegation types.Int, validatorAddr types.AccAddress, delegatorAddr types.AccAddress,
-	rate, maxRate, maxChangeRate types.Dec, moniker, identity, website, securityContact, details string, publicKey string ) *MsgPrestakingCreateValidator {
+func NewMsgCreateValidator(from types.AccAddress, minSelfDelegation types.Int, validatorAddr types.AccAddress, delegatorAddr types.AccAddress,
+	rate, maxRate, maxChangeRate types.Dec, moniker, identity, website, securityContact, details string, publicKey string, vaultID string) *MsgPrestakingCreateValidator {
 	return &MsgPrestakingCreateValidator{
 		FromAddress: from,
 		PublicKey:publicKey,
-		Value:value,
 		ValidatorAddress:validatorAddr,
 		DelegatorAddress:delegatorAddr,
 		MinSelfDelegation:minSelfDelegation,
 		Commission: stakeingtypes.NewCommissionRates(rate, maxRate, maxChangeRate),
 		Description: stakeingtypes.NewDescription(moniker, identity, website, securityContact, details),
+		VaultID: vaultID,
 	}
 }
 
@@ -51,9 +50,6 @@ func (msg *MsgPrestakingCreateValidator) ValidateBasic() error {
 	if msg.PublicKey == "" {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidPubKey, "empty publickey")
 	}
-	if !msg.Value.Amount.IsPositive() {
-		return sdkerrors.Wrap(sdkerrors.ErrParams, "amount can not be negative")
-	}
 	if msg.Description == (stakeingtypes.Description{}) {
 		return sdkerrors.Wrap(sdkerrors.ErrParams, "description can not be empty")
 	}
@@ -65,9 +61,6 @@ func (msg *MsgPrestakingCreateValidator) ValidateBasic() error {
 	}
 	if !msg.MinSelfDelegation.IsPositive() {
 		return sdkerrors.Wrap(sdkerrors.ErrParams, "invalid minSelfDelegation")
-	}
-	if msg.Value.Amount.LT(msg.MinSelfDelegation) {
-		return sdkerrors.Wrap(sdkerrors.ErrParams, "self delegation must greater than minnium")
 	}
 
 	return nil
