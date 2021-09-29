@@ -5,12 +5,12 @@ import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/module"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
+	"github.com/ci123chain/ci123chain/pkg/pre_staking"
 	"github.com/ci123chain/ci123chain/pkg/pre_staking/keeper"
 	"github.com/ci123chain/ci123chain/pkg/pre_staking/module/basic"
 	"github.com/ci123chain/ci123chain/pkg/pre_staking/types"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/ci123chain/ci123chain/pkg/pre_staking"
 )
 
 type AppModule struct {
@@ -23,6 +23,9 @@ func (am AppModule) RegisterGRPCGatewayRoutes(context.Context, *runtime.ServeMux
 
 func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.ValidatorUpdate {
 	var genesisState types.GenesisState
+	if data == nil {
+		return nil
+	}
 	err := json.Unmarshal(data, &genesisState)
 	if err != nil {
 		panic(err)
