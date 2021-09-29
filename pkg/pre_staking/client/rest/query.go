@@ -16,8 +16,32 @@ func RegisterQueryRoutes(cliCtx context.Context, r *mux.Router) {
 	// Get all validators
 	r.HandleFunc("/preStaking/Record", QueryPreStakingRecord(cliCtx), ).Methods("POST")
 	r.HandleFunc("/preStaking/stakingRecord", QueryStakingRecord(cliCtx), ).Methods("POST")
+	r.HandleFunc("/preStaking/getDao", QueryPreStakingDao(cliCtx))
 }
 
+func QueryPreStakingDao(cliCtx context.Context) http.HandlerFunc {
+	return func(writer http.ResponseWriter, req *http.Request) {
+		//
+		res, _, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.PreStakingDaoQuery, nil, false)
+		if err != nil {
+			rest.WriteErrorRes(writer, err.Error())
+			return
+		}
+		if len(res) < 1 {
+			rest.WriteErrorRes(writer, fmt.Sprintf("unexpected res: %v", res))
+			return
+		}
+		var result string
+		err = json.Unmarshal(res, &result)
+		if err != nil {
+			rest.WriteErrorRes(writer, err.Error())
+			return
+		}
+		value := result
+		resp := rest.BuildQueryRes("", false, value, nil)
+		rest.PostProcessResponseBare(writer, cliCtx, resp)
+	}
+}
 
 func QueryPreStakingRecord(cliCtx context.Context) http.HandlerFunc {
 	return func(writer http.ResponseWriter, req *http.Request) {
