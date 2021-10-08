@@ -245,7 +245,11 @@ func Handle404() http.Handler {
 
 		proxyurl, _ := url.Parse(dest)
 
-		remote_addr := "http://" + proxyurl.Host + newPath
+		prefix := util.DefaultHTTP
+		if os.Getenv(util.IDG_APPID) != "" {
+			prefix = util.DefaultHTTPS
+		}
+		remote_addr := prefix + proxyurl.Host + newPath
 
 		r, Err := http.NewRequest(req.Method, remote_addr, strings.NewReader(newData.Encode()))
 		if Err != nil {
@@ -367,7 +371,11 @@ func HealthCheckHandler(ctx context.Context) http.HandlerFunc  {
 		path := "/status"
 		proxyurl, _ := url.Parse(dest)
 
-		remote_addr := "http://" + proxyurl.Host + path
+		prefix := util.DefaultHTTP
+		if os.Getenv(util.IDG_APPID) != "" {
+			prefix = util.DefaultHTTPS
+		}
+		remote_addr := prefix + proxyurl.Host + path
 
 		r, Err := http.NewRequest(req.Method, remote_addr, strings.NewReader(newData.Encode()))
 		if Err != nil {

@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 
 	//"encoding/hex"
 	"encoding/json"
@@ -36,8 +37,6 @@ const (
 
 	//time out
 	timeOut = time.Second * 10
-
-	DefaultTCP = "tcp://"
 	DefaultRPCPort = "80"
 
 	DefaultPrefix = "tm."
@@ -120,10 +119,10 @@ func (r *PubSubRoom) SetTMConnections() (err error) {
 		}
 		addr := rpcAddress(info.Host26657)
 		if r.Connections[addr] == nil {
-			conn, ok := GetConnection(addr)
-			if !ok {
-				err = errors.New(fmt.Sprintf("connect remote addr: %s, failed", addr))
-				logger.Error(err.Error())
+			conn, err := GetConnection(addr)
+			if err != nil {
+				Err := errors.New(fmt.Sprintf("connect remote addr: %s, failed, err: %v", addr, err))
+				logger.Error(Err.Error())
 				r.RemoveAllTMConnections(err)
 				break
 			}
@@ -144,10 +143,10 @@ func (r *PubSubRoom) SetEthConnections() (err error) {
 		}
 		addr := info.Host8546
 		if r.EthConnections[addr] == nil {
-			conn, ok := GetEthConnection(addr)
-			if !ok {
-				err = errors.New(fmt.Sprintf("connect remote addr: %s, failed", addr))
-				logger.Error(err.Error())
+			conn, err := GetEthConnection(addr)
+			if err != nil {
+				Err := errors.New(fmt.Sprintf("connect remote addr: %s, failed, error: %v", addr, err))
+				logger.Error(Err.Error())
 				r.RemoveAllEthConnections()
 				break
 			}
@@ -627,11 +626,12 @@ func (r *PubSubRoom) AddShard() {
 		}
 		addr := rpcAddress(info.Host26657)
 		if r.Connections[addr] == nil {
-			conn, ok := GetConnection(addr)
-			if !ok {
-				logger.Error(fmt.Sprintf("connect remote addr: %s, failed", addr))
+			conn, err := GetConnection(addr)
+			if err != nil {
+				Err := errors.New(fmt.Sprintf("connect remote addr: %s, failed", addr))
+				logger.Error(Err.Error())
 				r.Mutex.Lock()
-				r.RemoveAllTMConnections(errors.New(fmt.Sprintf("connect remote addr: %s, failed", addr)))
+				r.RemoveAllTMConnections(Err)
 				r.Mutex.Unlock()
 				break
 			}
@@ -789,9 +789,9 @@ func (r *PubSubRoom) AddShard() {
 		}
 
 		if r.EthConnections[addr] == nil {
-			remote, OK := GetEthConnection(addr)
-			if !OK {
-				logger.Warn(fmt.Sprintf("get connection wtih addr: %v, failed", addr))
+			remote, err := GetEthConnection(addr)
+			if err != nil {
+				logger.Warn(fmt.Sprintf("get connection wtih addr: %v, failed, error: %v", addr, err))
 				r.RemoveAllEthConnections()
 				break
 			}
@@ -1081,21 +1081,21 @@ func (msg MessageContent) IsUnsubscribeAll() bool {
 	return false
 }
 
-func GetConnection(addr string) (*rpcclient.HTTP, bool){
+func GetConnection(addr string) (*rpcclient.HTTP, error){
 	client, err := rpcclient.New(addr, DefaultWSEndpoint)
 	if err != nil {
 		logger.Error("new WSEvent client failed: %s", err)
-		return nil, false
+		return nil, err
 	}
 	err = client.Start()
 	if err != nil {
 		logger.Error("connect error: %s", err)
-		return nil, false
+		return nil, err
 	}
-	return client, true
+	return client, nil
 }
 
-func GetEthConnection(addr string) (*websocket.Conn, bool) {
+func GetEthConnection(addr string) (*websocket.Conn, error) {
 	str := strings.Split(addr, "//")
 	var link string
 	if len(str) >= 2 {
@@ -1103,14 +1103,20 @@ func GetEthConnection(addr string) (*websocket.Conn, bool) {
 	}else {
 		link = strings.Split(str[0], ":")[0] + ":" + EthPort
 	}
-	u := url.URL{Scheme: "ws", Host: link,  Path: "/"}
+	u := url.URL{Scheme: util.DefaultWS, Host: link,  Path: "/"}
+	if os.Getenv(util.IDG_APPID) != "" {
+		u = url.URL{Scheme: util.DefaultWSS, Host: link,  Path: "/"}
+	}
 	dialer := websocket.DefaultDialer
 	c, _, err := dialer.Dial(u.String(), nil)
-	return c, err == nil
+	return c, err
 }
 
 func rpcAddress(host string) string {
-	res := DefaultTCP
+	res := util.DefaultTCP
+	if os.Getenv(util.IDG_APPID) != "" {
+		res = util.DefaultHTTPS
+	}
 	str := strings.Split(host, ":")
 	res = res + str[0] + ":" + TMPort
 	return res
@@ -1165,7 +1171,10 @@ func GetURL(host string) (error, *util.DomainInfo) {
 	cli := &http.Client{
 		Transport:&http.Transport{DisableKeepAlives:true},
 	}
-	reqUrl := "http://" + strings.Split(host, ":")[0] + ":" + ShardPort + "/info"
+	reqUrl := util.DefaultHTTP + strings.Split(host, ":")[0] + ":" + ShardPort + "/info"
+	if os.Getenv(util.IDG_APPID) != "" {
+		reqUrl = util.DefaultHTTPS + strings.Split(host, ":")[0] + ":" + ShardPort + "/info"
+	}
 	req2, err := http.NewRequest("GET", reqUrl, nil)
 	if err != nil || req2 == nil {
 		return err, nil

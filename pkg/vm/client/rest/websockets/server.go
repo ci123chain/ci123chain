@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/spf13/viper"
@@ -265,7 +266,11 @@ func (s *Server) httpGetAndSendResponse(conn *websocket.Conn, mb []byte) error {
 		return fmt.Errorf("failed to write message; %s", err)
 	}
 
-	req, err := http.NewRequest("POST", "http://" + addr[1], buf)
+	prefix := util.DefaultHTTP
+	if os.Getenv(util.IDG_APPID) != "" {
+		prefix = util.DefaultHTTPS
+	}
+	req, err := http.NewRequest("POST", prefix + addr[1], buf)
 	if err != nil {
 		return fmt.Errorf("failed to request; %s", err)
 	}

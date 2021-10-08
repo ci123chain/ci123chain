@@ -9,6 +9,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/config"
 	"github.com/ci123chain/ci123chain/pkg/logger"
 	"github.com/ci123chain/ci123chain/pkg/node"
+	"github.com/ci123chain/ci123chain/pkg/util"
 	val "github.com/ci123chain/ci123chain/pkg/validator"
 	"github.com/spf13/viper"
 	"github.com/tendermint/go-amino"
@@ -100,7 +101,11 @@ func configFollowMaster(master, root string) (*cfg.Config, error){
 	if len(port) == 0 {
 		port = defaultMasterPort
 	}
-	resp, err := http.Get("http://"+ master + ":" + port + "/exportConfig")
+	prefix := util.DefaultHTTP
+	if os.Getenv(util.IDG_APPID) != "" {
+		prefix = util.DefaultHTTPS
+	}
+	resp, err := http.Get(prefix + master + ":" + port + "/exportConfig")
 	if err != nil {
 		return nil, err
 	}
