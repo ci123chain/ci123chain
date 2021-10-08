@@ -2,16 +2,17 @@ package server
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/gateway/types"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 )
 
 const (
 	httpPrefix = "http://"
+	httpsPrefix = "https://"
 )
 
 type Response struct {
@@ -26,7 +27,9 @@ func SendRequest(requestUrl *url.URL,r *http.Request, RequestParams map[string]s
 		Transport:&http.Transport{DisableKeepAlives:true},
 	}
 	reqUrl := httpPrefix + requestUrl.Host  + ":"+ types.ShardPort + r.URL.Path
-	fmt.Println(reqUrl)
+	if os.Getenv("IDG_APPID") == "" {
+		reqUrl = httpsPrefix + requestUrl.Host  + ":"+ types.ShardPort + r.URL.Path
+	}
 	data := url.Values{}
 	for k, v := range RequestParams {
 		data.Set(k, v)
