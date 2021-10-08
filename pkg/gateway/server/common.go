@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"github.com/ci123chain/ci123chain/pkg/gateway/types"
+	"github.com/ci123chain/ci123chain/pkg/util"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -10,10 +11,6 @@ import (
 	"strings"
 )
 
-const (
-	httpPrefix = "http://"
-	httpsPrefix = "https://"
-)
 
 type Response struct {
 	Ret 	interface{} 	`json:"ret"`
@@ -26,9 +23,9 @@ func SendRequest(requestUrl *url.URL,r *http.Request, RequestParams map[string]s
 	cli := &http.Client{
 		Transport:&http.Transport{DisableKeepAlives:true},
 	}
-	reqUrl := httpPrefix + requestUrl.Host  + ":"+ types.ShardPort + r.URL.Path
-	if os.Getenv("IDG_APPID") == "" {
-		reqUrl = httpsPrefix + requestUrl.Host  + ":"+ types.ShardPort + r.URL.Path
+	reqUrl := util.DefaultHTTP + requestUrl.Host  + ":"+ types.ShardPort + r.URL.Path
+	if os.Getenv(util.IDG_APPID) == "" {
+		reqUrl = util.DefaultHTTPS + requestUrl.Host  + ":"+ types.ShardPort + r.URL.Path
 	}
 	data := url.Values{}
 	for k, v := range RequestParams {

@@ -14,6 +14,14 @@ import (
 )
 
 ///const CHIANID int64 = 999
+const (
+	IDG_APPID = "IDG_APPID"
+	DefaultTCP = "tcp://"
+	DefaultHTTP = "http://"
+	DefaultHTTPS = "https://"
+	DefaultWS = "ws"
+	DefaultWSS = "wss"
+)
 
 var CHAINID int64
 var IteratorLimit int
