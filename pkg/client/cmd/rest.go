@@ -246,7 +246,7 @@ func Handle404() http.Handler {
 		proxyurl, _ := url.Parse(dest)
 
 		prefix := util.DefaultHTTP
-		if os.Getenv(util.IDG_APPID) != "" {
+		if strings.HasPrefix(proxyurl.Host, "localhost") && os.Getenv(util.IDG_APPID) != "" {
 			prefix = util.DefaultHTTPS
 		}
 		remote_addr := prefix + proxyurl.Host + newPath
