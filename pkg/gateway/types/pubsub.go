@@ -1113,12 +1113,12 @@ func GetEthConnection(addr string) (*websocket.Conn, error) {
 }
 
 func rpcAddress(host string) string {
-	res := util.DefaultTCP
-	if os.Getenv(util.IDG_APPID) != "" {
-		res = util.DefaultHTTPS
-	}
+	prefix := util.SchemaPrefix()
+	//if os.Getenv(util.IDG_APPID) != "" {
+	//	res = util.DefaultHTTPS
+	//}
 	str := strings.Split(host, ":")
-	res = res + str[0] + ":" + TMPort
+	res := prefix + str[0] + ":" + TMPort
 	return res
 }
 
@@ -1171,10 +1171,9 @@ func GetURL(host string) (error, *util.DomainInfo) {
 	cli := &http.Client{
 		Transport:&http.Transport{DisableKeepAlives:true},
 	}
-	reqUrl := util.DefaultHTTP + strings.Split(host, ":")[0] + ":" + ShardPort + "/info"
-	if os.Getenv(util.IDG_APPID) != "" {
-		reqUrl = util.DefaultHTTPS + strings.Split(host, ":")[0] + ":" + ShardPort + "/info"
-	}
+	prefix := util.SchemaPrefix()
+	reqUrl := prefix + strings.Split(host, ":")[0] + ":" + ShardPort + "/info"
+
 	req2, err := http.NewRequest("GET", reqUrl, nil)
 	if err != nil || req2 == nil {
 		return err, nil

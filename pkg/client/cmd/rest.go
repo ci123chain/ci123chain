@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/types"
 	grpctypes "github.com/ci123chain/ci123chain/pkg/abci/types/grpc"
@@ -114,11 +113,13 @@ func NewRestServer() *RestServer {
 	}
 	host26657 := os.Getenv("IDG_HOST_26657")
 	if host26657 == "" {
-		panic(errors.New("env IDG_HOST_26657 can not be empty"))
+		host26657 = "localhost"
+		//panic(errors.New("env IDG_HOST_26657 can not be empty"))
 	}
 	host8546 := os.Getenv("IDG_HOST_8546")
 	if host8546 == "" {
-		panic(errors.New("env IDG_HOST_8546 can not be empty"))
+		host8546 = "localhost"
+		//panic(errors.New("env IDG_HOST_8546 can not be empty"))
 	}
 
 	r.NotFoundHandler = Handle404()
@@ -244,10 +245,10 @@ func Handle404() http.Handler {
 		}
 
 		proxyurl, _ := url.Parse(dest)
-
-		prefix := util.DefaultHTTP
-		if strings.HasPrefix(proxyurl.Host, "localhost") && os.Getenv(util.IDG_APPID) != "" {
-			prefix = util.DefaultHTTPS
+		prefix := util.SchemaPrefix()
+		// localhost redirect
+		if strings.HasPrefix(proxyurl.Host, "localhost") {
+			prefix = util.DefaultHTTP
 		}
 		remote_addr := prefix + proxyurl.Host + newPath
 
@@ -256,7 +257,6 @@ func Handle404() http.Handler {
 			panic(Err)
 		}
 		r.Body = ioutil.NopCloser(strings.NewReader(newData.Encode()))
-
 		r.URL.Host = proxyurl.Host
 		r.URL.Path = newPath
 

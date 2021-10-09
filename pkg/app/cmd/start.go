@@ -209,7 +209,7 @@ func StartInProcess(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Code
 	}
 	pv := pvm.LoadFilePV(cfg.PrivValidatorKeyFile(), cfg.PrivValidatorStateFile())
 
-	///tcp://0.0.0.0:26656
+	///tcp://0.0.0.0:26656 change to custom domain, send to other peer
 	info := strings.Split(cfg.P2P.ListenAddress, "://")
 	if len(info) == 2 {
 		cfg.P2P.ListenAddress = info[0] + "://" + nodeDomain + "#" + info[1]

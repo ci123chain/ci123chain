@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"os"
 	"strings"
 )
 
@@ -23,10 +22,10 @@ func SendRequest(requestUrl *url.URL,r *http.Request, RequestParams map[string]s
 	cli := &http.Client{
 		Transport:&http.Transport{DisableKeepAlives:true},
 	}
-	reqUrl := util.DefaultHTTP + requestUrl.Host  + ":"+ types.ShardPort + r.URL.Path
-	if os.Getenv(util.IDG_APPID) == "" {
-		reqUrl = util.DefaultHTTPS + requestUrl.Host  + ":"+ types.ShardPort + r.URL.Path
-	}
+
+	schema := util.SchemaPrefix()
+	reqUrl := schema + requestUrl.Host  + ":"+ types.ShardPort + r.URL.Path
+
 	data := url.Values{}
 	for k, v := range RequestParams {
 		data.Set(k, v)

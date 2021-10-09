@@ -68,6 +68,6 @@ fi
 
 # start
 nohup /opt/cid-linux start --home=$CI_HOME >> $CI_LOGDIR/cid-output.log 2>&1 &
-/opt/cli-linux rest-server --laddr=tcp://0.0.0.0:80 >> $CI_LOGDIR/rest-output.log 2>&1
+/opt/cli-linux rest-server --laddr=tcp://0.0.0.0:80 >> $CI_LOGDIR/rest-output.log
 
 

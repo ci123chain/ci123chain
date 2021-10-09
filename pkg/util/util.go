@@ -26,6 +26,14 @@ const (
 var CHAINID int64
 var IteratorLimit int
 
+func SchemaPrefix() string {
+	prefix := DefaultHTTP
+	if os.Getenv(IDG_APPID) != "" {
+		prefix = DefaultHTTPS
+	}
+	return prefix
+}
+
 func Setup(id int64) {
 	CHAINID = id
 }
