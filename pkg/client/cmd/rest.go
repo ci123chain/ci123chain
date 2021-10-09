@@ -372,9 +372,6 @@ func HealthCheckHandler(ctx context.Context) http.HandlerFunc  {
 		proxyurl, _ := url.Parse(dest)
 
 		prefix := util.DefaultHTTP
-		if os.Getenv(util.IDG_APPID) != "" {
-			prefix = util.DefaultHTTPS
-		}
 		remote_addr := prefix + proxyurl.Host + path
 
 		r, Err := http.NewRequest(req.Method, remote_addr, strings.NewReader(newData.Encode()))
