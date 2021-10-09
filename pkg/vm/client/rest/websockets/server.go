@@ -266,10 +266,8 @@ func (s *Server) httpGetAndSendResponse(conn *websocket.Conn, mb []byte) error {
 		return fmt.Errorf("failed to write message; %s", err)
 	}
 
-	prefix := util.DefaultHTTP
-	if os.Getenv(util.IDG_APPID) != "" {
-		prefix = util.DefaultHTTPS
-	}
+	prefix := util.SchemaPrefix()
+
 	req, err := http.NewRequest("POST", prefix + addr[1], buf)
 	if err != nil {
 		return fmt.Errorf("failed to request; %s", err)
