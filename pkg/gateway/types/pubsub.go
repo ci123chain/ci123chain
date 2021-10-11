@@ -113,8 +113,8 @@ func (r *PubSubRoom) SetTMConnections() (err error) {
 	for _, v := range r.backends {
 		err, info := GetURL(v.URL().Host)
 		if err != nil {
-			logger.Error(fmt.Sprintf("get remote node domain info: %s, failed", v.URL().Host))
-			r.RemoveAllTMConnections(errors.New(fmt.Sprintf("get remote node domain info: %s, failed", v.URL().Host)))
+			logger.Error(fmt.Sprintf("SetTMConnections: get remote node domain info: %s, failed: %v", v.URL().Host, err))
+			r.RemoveAllTMConnections(errors.New(fmt.Sprintf("SetTMConnections: get remote node domain info: %s, failed", v.URL().Host)))
 			break
 		}
 		addr := rpcAddress(info.Host26657)
@@ -137,7 +137,7 @@ func (r *PubSubRoom) SetEthConnections() (err error) {
 		var info *util.DomainInfo
 		err, info = GetURL(v.URL().Host)
 		if err != nil {
-			logger.Error(fmt.Sprintf("get remote node domain info: %s, failed", v.URL().Host))
+			logger.Error(fmt.Sprintf("SetEthConnections: get remote node domain info: %s, failed: %v", v.URL().Host, err))
 			r.RemoveAllEthConnections()
 			break
 		}
@@ -618,9 +618,9 @@ func (r *PubSubRoom) AddShard() {
 	for _, v := range r.backends {
 		err, info := GetURL(v.URL().Host)
 		if err != nil {
-			logger.Error(fmt.Sprintf("get remote node domain info: %s, failed", v.URL().Host))
+			logger.Error(fmt.Sprintf("AddShard: get remote node domain info: %s, failed: %v", v.URL().Host, err))
 			r.Mutex.Lock()
-			r.RemoveAllTMConnections(errors.New(fmt.Sprintf("get remote node domain info: %s, failed", v.URL().Host)))
+			r.RemoveAllTMConnections(errors.New(fmt.Sprintf("AddShard:get remote node domain info: %s, failed", v.URL().Host)))
 			r.Mutex.Unlock()
 			break
 		}

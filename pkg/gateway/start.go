@@ -100,17 +100,11 @@ func Start() {
 	port = viper.GetInt("port")
 	urlreg = viper.GetString("urlreg")
 	tmport := viper.GetString(flagRPCPort)
-	if tmport == "" {
-		tmport = "26657"
-	}
+
 	shardport := viper.GetString(flagShard)
-	if shardport == "" {
-		shardport = "8545"
-	}
+
 	ethport := viper.GetString(flagETHRPCPort)
-	if ethport == "" {
-		ethport = "8546"
-	}
+
 	maxConnections := viper.GetInt(flagMaxConnection)
 	if maxConnections < 1 {
 		panic(errors.New(fmt.Sprintf("invalid max_connections: %v", maxConnections)))
