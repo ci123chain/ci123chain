@@ -50,9 +50,9 @@ func Start() {
 	flag.StringVar(&urlreg, "urlreg", "http://***", "reg for url connection to node")
 	flag.IntVar(&port, "port", 3030, "Port to serve")
 
-	flag.String(flagRPCPort, "80", "tendermint port for websocket")
-	flag.String(flagShard, "80", "shard port for websocket")
-	flag.String(flagETHRPCPort, "80", "eth port for websocket")
+	flag.String(flagRPCPort, "443", "tendermint port for websocket")
+	flag.String(flagShard, "443", "shard port for websocket")
+	flag.String(flagETHRPCPort, "443", "eth port for websocket")
 	flag.String(flagCiStateDBType, "redis", "database types")
 	flag.String(flagCiStateDBHost, "", "db host")
 	flag.Uint64(flagCiStateDBPort, 7443, "db port")
@@ -100,9 +100,7 @@ func Start() {
 	port = viper.GetInt("port")
 	urlreg = viper.GetString("urlreg")
 	tmport := viper.GetString(flagRPCPort)
-
 	shardport := viper.GetString(flagShard)
-
 	ethport := viper.GetString(flagETHRPCPort)
 
 	maxConnections := viper.GetInt(flagMaxConnection)

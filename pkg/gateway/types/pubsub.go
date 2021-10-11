@@ -31,25 +31,19 @@ const (
 	DefaultSubscribeMethod = "subscribe"
 	DefaultUnsubscribeMethod = "unsubscribe"
 	DefaultUnsubscribeAllMethod = "unsubscribe_all"
-
 	//subscribe clinet
 	subscribeClient = "abci-clients"
-
 	//time out
 	timeOut = time.Second * 10
-	DefaultRPCPort = "80"
-
-	DefaultPrefix = "tm."
-	DefaultEthPrefix = "dao."
 	DefaultWSEndpoint = "/websocket"
 )
 
 var (
-	TMPort = "80"
-	EthPort = "80"
-	ShardPort = "80"
-	cdc = apptypes.GetCodec()
+	EthPort   string
+	ShardPort string
+	TMPort    string
 )
+var cdc = apptypes.GetCodec()
 func SetDefaultPort(tmport, shardport, ethport string) {
 	TMPort = tmport
 	EthPort = ethport
