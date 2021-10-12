@@ -8,8 +8,8 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/gateway/logger"
 	"github.com/ci123chain/ci123chain/pkg/libs"
 	r "github.com/ci123chain/ci123chain/pkg/redis"
+	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/go-redis/redis/v8"
-	"regexp"
 	"strings"
 )
 
@@ -18,10 +18,9 @@ const (
 	FlagNodeList   = "node-list"
 )
 
-func NewRedisSource(host, urlreg string) *RedisDBSourceImp {
+func NewRedisSource(host string) *RedisDBSourceImp {
 	imp := &RedisDBSourceImp{
 		hostStr: 	host,
-		urlreg:  	urlreg,
 	}
 	go func() {
 		libs.RetryI(0, func(retryTimes int) (interface{}, error) {
@@ -37,7 +36,6 @@ func NewRedisSource(host, urlreg string) *RedisDBSourceImp {
 
 type RedisDBSourceImp struct {
 	hostStr string
-	urlreg  string
 	conn    *r.RedisDB
 }
 
@@ -67,7 +65,8 @@ func (s *RedisDBSourceImp) FetchSource() (hostArr []string) {
 
 	var host string
 	for _, value := range node_list {
-		host = s.getAdjustHost(HostPattern, value)
+		schema := util.SchemaPrefix()
+		host = schema + value
 		if len(host) > 0 {
 			hostArr = append(hostArr, host)
 		}
@@ -145,13 +144,4 @@ func getOption(statedb string) (*redis.Options, error) {
 			}
 		}
 	}
-}
-
-func (s *RedisDBSourceImp) getAdjustHost(pattern, name string) string {
-	reg, err := regexp.Compile(pattern)
-	if err != nil {
-		return ""
-	}
-	host := reg.ReplaceAllString(s.urlreg, name)
-	return host
 }
