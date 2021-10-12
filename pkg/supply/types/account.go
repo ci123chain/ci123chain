@@ -1,6 +1,7 @@
 package types
 
 import (
+	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/account"
 	types2 "github.com/ci123chain/ci123chain/pkg/account/types"
@@ -33,7 +34,12 @@ func (macc ModuleAccount) GetPermissions() []string {
 }
 
 func (macc ModuleAccount) HasPermission(perm string) bool {
-	return true
+	for _, v := range macc.Permissions {
+		if v == perm {
+			return true
+		}
+	}
+	return false
 }
 
 func (macc *ModuleAccount) SetAddress(acc types.AccAddress) error {
@@ -99,11 +105,18 @@ func (macc ModuleAccount) GetContractType() string {
 }
 
 func (macc ModuleAccount) String() string {
-	return ""
+	return fmt.Sprintf(`Vesting Account:
+  Address:          %s
+  Pubkey:           %s
+  Coins:            %v
+  AccountNumber:    %d
+  Sequence:         %d`,
+		macc.Address, macc.PubKey, macc.Coins, macc.AccountNumber, macc.Sequence,
+	)
 }
 
 func (macc ModuleAccount) GetIsModule() bool {
-	return false
+	return macc.IsModule
 }
 
 func (macc ModuleAccount) SpendableCoins(bt time.Time) types.Coins {

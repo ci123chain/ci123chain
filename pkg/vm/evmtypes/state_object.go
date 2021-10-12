@@ -3,7 +3,6 @@ package evmtypes
 import (
 	"bytes"
 	"fmt"
-	"github.com/ci123chain/ci123chain/pkg/account/types"
 	"io"
 	"math/big"
 
@@ -78,7 +77,7 @@ type stateObject struct {
 	deleted   bool
 }
 
-func newStateObject(db *CommitStateDB, accProto accountexported.Account) *stateObject {
+func newStateObject(db *CommitStateDB, ethermintAccount accountexported.Account) *stateObject {
 	// func newStateObject(db *CommitStateDB, accProto accountexported.Account, balance sdk.Int) *stateObject {
 
 	//ethermintAccount, ok := accProto.(*types.BaseAccount)
@@ -86,7 +85,7 @@ func newStateObject(db *CommitStateDB, accProto accountexported.Account) *stateO
 	//if !ok {
 	//	panic(fmt.Sprintf("invalid account types for state object: %T", accProto))
 	//}
-	ethermintAccount := types.NewBaseAccountFromExportAccount(accProto)
+	//ethermintAccount := types.NewBaseAccountFromExportAccount(accProto)
 
 	// set empty code hash
 	if ethermintAccount.GetCodeHash() == nil {

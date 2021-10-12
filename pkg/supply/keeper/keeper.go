@@ -7,7 +7,6 @@ import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/account"
-	types2 "github.com/ci123chain/ci123chain/pkg/account/types"
 	"github.com/ci123chain/ci123chain/pkg/supply/exported"
 	"github.com/ci123chain/ci123chain/pkg/supply/types"
 	vmtypes "github.com/ci123chain/ci123chain/pkg/vm/types"
@@ -63,23 +62,15 @@ func (k Keeper) GetModuleAccountAndPermissions(ctx sdk.Context, moduleName strin
 		return nil, []string{}
 	}
 	acc := k.ak.GetAccount(ctx, addr)
-	var macc *types.ModuleAccount
 	if acc != nil {
-		baseacc := types2.NewBaseAccount(acc.GetAddress(), acc.GetCoins(), acc.GetPubKey(), acc.GetAccountNumber(), acc.GetSequence())
-		macc := &types.ModuleAccount{
-			BaseAccount: baseacc,
-			Name:        moduleName,
-			Permissions: perms,
+		macc, ok := acc.(exported.ModuleAccountI)
+		if !ok {
+			panic("account is not a module account")
 		}
-		//macc, ok := macc.(exported.ModuleAccountI)
-		//if !ok {
-		//	panic("account is not a module account")
-		//}
-		k.ak.SetAccount(ctx, macc)
 		return macc, perms
 	}
 
-	macc = types.NewEmptyModuleAccount(moduleName, perms...)
+	macc := types.NewEmptyModuleAccount(moduleName, perms...)
 	maccI := (k.ak.NewAccount(ctx, macc)).(exported.ModuleAccountI)
 	k.SetModuleAccount(ctx, maccI)
 	return maccI, perms

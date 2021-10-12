@@ -39,6 +39,9 @@ func queryAccount(ctx sdk.Context, req abci.RequestQuery, k AccountKeeper) ([]by
 	if acc == nil {
 		return nil, types.ErrAccountNotExisted
 	}
+	if acc.GetIsModule() {
+		acc = types.NewBaseAccountFromExportAccount(acc)
+	}
 	by := types.ModuleCdc.MustMarshalBinaryLengthPrefixed(acc)
 	return by, nil
 }
@@ -52,6 +55,9 @@ func queryAccountNonce(ctx sdk.Context, req abci.RequestQuery, k AccountKeeper) 
 	acc := k.GetAccount(ctx, accountParams.AccountAddress)
 	if acc == nil {
 		return nil, types.ErrAccountNotExisted
+	}
+	if acc.GetIsModule() {
+		acc = types.NewBaseAccountFromExportAccount(acc)
 	}
 	by := types.ModuleCdc.MustMarshalBinaryLengthPrefixed(acc.GetSequence())
 	return by, nil
