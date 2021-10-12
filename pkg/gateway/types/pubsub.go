@@ -568,7 +568,7 @@ func (r *PubSubRoom) Subscribe(topic string) {
 						var aa sdk.Tx
 						err = cdc.UnmarshalBinaryBare(tx.Tx, &aa)
 						if err != nil {
-							logger.Error(fmt.Sprintf("got error tx %x", tx))
+							logger.Error(fmt.Sprintf("got error tx %v", tx))
 						}
 						res, err := json.Marshal(aa)
 						if err != nil {
@@ -744,7 +744,7 @@ func (r *PubSubRoom) AddShard() {
 								var aa sdk.Tx
 								err = cdc.UnmarshalBinaryBare(tx.Tx, &aa)
 								if err != nil {
-									logger.Error(fmt.Sprintf("got error tx %x", tx))
+									logger.Error(fmt.Sprintf("got error tx %v", tx))
 								}
 								res, err := json.Marshal(aa)
 								if err != nil {
