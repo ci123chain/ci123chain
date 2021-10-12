@@ -16,7 +16,6 @@ import (
 	"github.com/spf13/viper"
 	"net/http"
 	"os"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -41,13 +40,12 @@ var pubsubRoom *types.PubSubRoom
 
 func Start() {
 	var logLevel, serverList string
-	var statedb, urlreg string
+	var statedb string
 	var port int
 	flag.String("logdir", DefaultLogDir, "log dir")
 	flag.StringVar(&logLevel, "loglevel", "DEBUG", "level for log")
 
 	flag.StringVar(&serverList, "backends", "", "Load balanced backends, use commas to separate")
-	flag.StringVar(&urlreg, "urlreg", "https://***", "reg for url connection to node")
 	flag.IntVar(&port, "port", 3030, "Port to serve")
 
 	flag.String(flagRPCPort, "443", "tendermint port for websocket")
@@ -64,8 +62,7 @@ func Start() {
 	viper.SetEnvPrefix("CI")
 	_ = viper.BindPFlags(pflag.CommandLine)
 	viper.AutomaticEnv()
-	//viper.BindEnv("statedb")
-	//viper.BindEnv("logdir")
+
 
 	dbType := viper.GetString(flagCiStateDBType)
 	if dbType == "" {
@@ -98,7 +95,6 @@ func Start() {
 	}
 	//logDir = viper.GetString("logdir")
 	port = viper.GetInt("port")
-	urlreg = viper.GetString("urlreg")
 	tmport := viper.GetString(flagRPCPort)
 	shardport := viper.GetString(flagShard)
 	ethport := viper.GetString(flagETHRPCPort)
@@ -108,9 +104,6 @@ func Start() {
 		panic(errors.New(fmt.Sprintf("invalid max_connections: %v", maxConnections)))
 	}
 
-	if ok, err := regexp.MatchString("[*]+", urlreg); !ok {
-		panic(err)
-	}
 	// 初始化logger
 	//logger.Init()
 	//dynamic.Init()
@@ -120,7 +113,7 @@ func Start() {
 	pubsubRoom.GetPubSubRoom()
 	pubsubRoom.MaxConnections = maxConnections
 
-	svr := redissource.NewRedisSource(statedb, urlreg)
+	svr := redissource.NewRedisSource(statedb)
 
 	serverPool = NewServerPool(backend.NewBackEnd, svr, 10)
 
