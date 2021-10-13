@@ -679,18 +679,44 @@ func (k *Keeper) RecordSection(ctx sdk.Context, height int64, bloom ethtypes.Blo
 func (k *Keeper) GetSectionBloom(ctx sdk.Context, index int64) (*Generator, bool) {
 	store := NewStore(ctx.KVStore(k.storeKey), evmtypes.KeyPrefixSection)
 
-	has := store.Has(evmtypes.BloomKey(index))
-	if !has {
-		return nil, false
-	}
+	//has := store.Has(evmtypes.BloomKey(index))
+	//if !has {
+	//	return nil, false
+	//}
 
 	bz := store.Get(evmtypes.BloomKey(index))
+	if len(bz) == 0 {
+		return nil, false
+	}
 	var section Generator
 	err := json.Unmarshal(bz, &section)
 	if err != nil {
 		return nil, false
 	}
 	return &section, true
+}
+
+func (k *Keeper) GetSectionBlooms(ctx sdk.Context, start, end uint64) ([]*Generator, error) {
+	store := NewStore(ctx.KVStore(k.storeKey), evmtypes.KeyPrefixSection)
+
+	iterator := store.Iterator(evmtypes.BloomKey(int64(start)), evmtypes.BloomKey(int64(end+1)))
+	defer iterator.Close()
+
+	ges := []*Generator{}
+
+	for ; iterator.Valid(); iterator.Next() {
+		if iterator.Error() != nil {
+			return nil, iterator.Error()
+		}
+
+		var ge Generator
+		err := json.Unmarshal(iterator.Value(), &ge)
+		if err != nil {
+			return nil, err
+		}
+		ges = append(ges, &ge)
+	}
+	return ges, nil
 }
 
 func (k *Keeper) SetSectionBloom(ctx sdk.Context, index int64, gen *Generator) {

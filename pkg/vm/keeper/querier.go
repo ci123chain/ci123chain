@@ -221,16 +221,20 @@ func querySectionBloom(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte
 	if err != nil {
 		return nil, types.ErrCdcUnMarshalFailed
 	}
+	if len(params.Sections) == 0 {
+		return nil, types.ErrInvalidParams
+	}
 
 	data := evmtypes.QuerySectionBloomRes{}
 
-	for _, v := range params.Sections {
-		bloom, found := k.GetSectionBloom(ctx, int64(v))
-		if !found {
-			continue
-		}
-		bloomIdx, _ := bloom.Bitset(params.Filter)
-		data[v] = bloomIdx
+	blooms, err := k.GetSectionBlooms(ctx, params.Sections[0], params.Sections[len(params.Sections) - 1])
+	if err != nil {
+		return nil, types.ErrQueryFailed
+	}
+
+	for k, v := range blooms {
+		bloomIdx, _ := v.Bitset(params.Filter)
+		data[uint64(k) + params.Sections[0]] = bloomIdx
 	}
 
 	bz, err := json.Marshal(&data)
