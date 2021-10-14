@@ -7,7 +7,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/account"
 	"github.com/ci123chain/ci123chain/pkg/gravity/types"
 	"github.com/ci123chain/ci123chain/pkg/supply"
-	supplytypes "github.com/ci123chain/ci123chain/pkg/supply/exported"
+	supplytypes "github.com/ci123chain/ci123chain/pkg/account/exported"
 	"github.com/tendermint/tendermint/libs/log"
 )
 

@@ -20,7 +20,7 @@ func NewMsgUndelegate(from sdk.AccAddress, id string) *MsgUndelegate {
 
 func (msg *MsgUndelegate) Route() string { return ModuleName }
 
-func (msg *MsgUndelegate) MsgType() string { return "pre-staking" }
+func (msg *MsgUndelegate) MsgType() string { return "undelegate" }
 
 func (msg *MsgUndelegate) ValidateBasic() error {
 	if msg.FromAddress.Empty() {

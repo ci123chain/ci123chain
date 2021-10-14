@@ -3,7 +3,7 @@ package keeper
 import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/staking/types"
-	"github.com/ci123chain/ci123chain/pkg/supply/exported"
+	"github.com/ci123chain/ci123chain/pkg/account/exported"
 )
 
 func (k StakingKeeper) bondedTokensToNotBonded(ctx sdk.Context, tokens sdk.Int) error {

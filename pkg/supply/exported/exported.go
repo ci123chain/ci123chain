@@ -2,16 +2,15 @@ package exported
 
 import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	"github.com/ci123chain/ci123chain/pkg/account/exported"
 )
 
-type ModuleAccountI interface {
-	exported.Account
-
-	GetName() string
-	GetPermissions() []string
-	HasPermission(string) bool
-}
+//type ModuleAccountI interface {
+//	exported.Account
+//
+//	GetName() string
+//	GetPermissions() []string
+//	HasPermission(string) bool
+//}
 // SupplyI defines an inflationary supply interface for modules that handle
 // token supply.
 type SupplyI interface {

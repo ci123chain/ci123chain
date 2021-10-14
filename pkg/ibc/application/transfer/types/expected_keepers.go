@@ -2,11 +2,11 @@ package types
 
 import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	supplytypes "github.com/ci123chain/ci123chain/pkg/account/exported"
 	capabilitytypes "github.com/ci123chain/ci123chain/pkg/capability/types"
 	channeltypes "github.com/ci123chain/ci123chain/pkg/ibc/core/channel/types"
 	connectiontypes "github.com/ci123chain/ci123chain/pkg/ibc/core/connection/types"
 	ibcexported "github.com/ci123chain/ci123chain/pkg/ibc/core/exported"
-	supplytypes "github.com/ci123chain/ci123chain/pkg/supply/exported"
 )
 
 // AccountKeeper defines the contract required for account APIs.

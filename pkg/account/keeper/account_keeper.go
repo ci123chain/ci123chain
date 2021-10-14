@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	"github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/account/exported"
@@ -40,6 +41,9 @@ func (ak AccountKeeper) NewAccount(ctx types.Context, acc exported.Account) expo
 }
 
 func (ak AccountKeeper) SetAccount(ctx types.Context, acc exported.Account) {
+	if acc.String() == "0x4feA76427B8345861e80A3540a8a9D936FD39391" {
+		fmt.Println(acc.GetIsModule())
+	}
 	addr := acc.GetAddress()
 	store := ctx.KVStore(ak.key)
 	//bz, err := ak.cdc.MarshalBinaryBare(acc)

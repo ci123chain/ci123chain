@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/account"
+	"github.com/ci123chain/ci123chain/pkg/account/exported"
 	types2 "github.com/ci123chain/ci123chain/pkg/account/types"
-	"github.com/ci123chain/ci123chain/pkg/supply/exported"
 	"github.com/tendermint/tendermint/crypto"
 	"time"
 )
@@ -143,4 +143,11 @@ func NewEmptyModuleAccount(name string, permissions ...string) *ModuleAccount {
 	}
 }
 
+func NewModuleAccountFromBaseAccount(acc *types2.BaseAccount, name string, permissions ...string) *ModuleAccount {
+	return &ModuleAccount{
+		BaseAccount: acc,
+		Name:        name,
+		Permissions: permissions,
+	}
+}
 

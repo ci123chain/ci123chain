@@ -23,6 +23,7 @@ type AppModule struct {
 	AppModuleBasic
 
 	AccountKeeper	keeper.AccountKeeper
+	Cdc *codec.Codec
 }
 
 func (am AppModule) EndBlock(ctx types.Context, req abci.RequestEndBlock) []abci.ValidatorUpdate {
@@ -35,13 +36,13 @@ func (am AppModule) BeginBlocker(ctx types.Context, req abci.RequestBeginBlock) 
 
 func (am AppModule) InitGenesis(ctx types.Context, data json.RawMessage) []abci.ValidatorUpdate  {
 	var genesisState acc_types.GenesisState
-	acc.ModuleCdc.MustUnmarshalJSON(data, &genesisState)
+	am.Cdc.MustUnmarshalJSON(data, &genesisState)
 	acc.InitGenesis(ctx, acc.ModuleCdc, am.AccountKeeper, genesisState)
 	return nil
 }
 
 func (am AppModule) ExportGenesis(ctx types.Context) json.RawMessage {
-	return acc.ModuleCdc.MustMarshalJSON(acc.ExportGenesis(ctx, am.AccountKeeper))
+	return am.Cdc.MustMarshalJSON(acc.ExportGenesis(ctx, am.AccountKeeper))
 }
 
 

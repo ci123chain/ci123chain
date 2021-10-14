@@ -5,6 +5,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"math/big"
 	"net"
 	"os"
 	"os/signal"
@@ -165,3 +166,12 @@ func GetLocalAddress() string {
 //		}
 //	}
 //}
+
+func AddDecimal(i *big.Int, d int, p int64) {
+	if p == 0 {
+		p = 10
+	}
+	var decimals, pow = big.NewInt(int64(d)), big.NewInt(p)
+	pow.Exp(pow, decimals, nil)
+	i.Mul(i, pow)
+}

@@ -2,8 +2,8 @@ package keeper
 
 import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/account/exported"
 	"github.com/ci123chain/ci123chain/pkg/distribution/types"
-	"github.com/ci123chain/ci123chain/pkg/supply/exported"
 )
 
 func (k DistrKeeper) GetDistributionAccount(ctx sdk.Context) exported.ModuleAccountI {

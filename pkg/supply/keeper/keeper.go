@@ -7,7 +7,8 @@ import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/account"
-	"github.com/ci123chain/ci123chain/pkg/supply/exported"
+	supply "github.com/ci123chain/ci123chain/pkg/supply/exported"
+	"github.com/ci123chain/ci123chain/pkg/account/exported"
 	"github.com/ci123chain/ci123chain/pkg/supply/types"
 	vmtypes "github.com/ci123chain/ci123chain/pkg/vm/types"
 	"github.com/tendermint/tendermint/libs/log"
@@ -62,15 +63,36 @@ func (k Keeper) GetModuleAccountAndPermissions(ctx sdk.Context, moduleName strin
 		return nil, []string{}
 	}
 	acc := k.ak.GetAccount(ctx, addr)
+	var macc exported.ModuleAccountI
 	if acc != nil {
 		macc, ok := acc.(exported.ModuleAccountI)
 		if !ok {
 			panic("account is not a module account")
 		}
 		return macc, perms
+
+		//if !ok {
+		//	nacc := types.NewModuleAccountFromBaseAccount(acc.(*account.BaseAccount), moduleName, perms...)
+		//	macc, ok = exported.Account(nacc).(exported.ModuleAccountI)
+		//	k.SetModuleAccount(ctx, macc)
+		//	return macc, perms
+		//}
+		//return macc, perms
+
+		//if !ok {
+		//	if ctx.BlockHeight() > 764650 {
+		//		nacc := types.NewModuleAccountFromBaseAccount(acc.(*account.BaseAccount), moduleName, perms...)
+		//		macc, ok = exported.Account(nacc).(exported.ModuleAccountI)
+		//		k.SetModuleAccount(ctx, macc)
+		//		return macc, perms
+		//	}else {
+		//		panic("account is not a module account")
+		//	}
+		//}
+		//return macc, perms
 	}
 
-	macc := types.NewEmptyModuleAccount(moduleName, perms...)
+	macc = types.NewEmptyModuleAccount(moduleName, perms...)
 	maccI := (k.ak.NewAccount(ctx, macc)).(exported.ModuleAccountI)
 	k.SetModuleAccount(ctx, maccI)
 	return maccI, perms
@@ -167,7 +189,7 @@ func (k Keeper) UndelegateCoinsFromModuleToAccount(
 //}
 
 // GetSupply retrieves the Supply from store
-func (k Keeper) GetSupply(ctx sdk.Context) (supply exported.SupplyI) {
+func (k Keeper) GetSupply(ctx sdk.Context) (supply supply.SupplyI) {
 	store := ctx.KVStore(k.storeKey)
 	b := store.Get(types.SupplyKey)
 	if b == nil {
@@ -178,7 +200,7 @@ func (k Keeper) GetSupply(ctx sdk.Context) (supply exported.SupplyI) {
 }
 
 // SetSupply sets the Supply to store
-func (k Keeper) SetSupply(ctx sdk.Context, supply exported.SupplyI) {
+func (k Keeper) SetSupply(ctx sdk.Context, supply supply.SupplyI) {
 	store := ctx.KVStore(k.storeKey)
 	b := k.cdc.MustMarshalBinaryLengthPrefixed(supply)
 	store.Set(types.SupplyKey, b)
