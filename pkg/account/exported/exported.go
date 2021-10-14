@@ -37,3 +37,11 @@ type Account interface {
 	SetIsModule(flag bool) error
 	GetIsModule() bool
 }
+
+type ModuleAccountI interface {
+	Account
+
+	GetName() string
+	GetPermissions() []string
+	HasPermission(string) bool
+}

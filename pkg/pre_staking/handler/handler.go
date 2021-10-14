@@ -9,7 +9,6 @@ import (
 	types2 "github.com/ci123chain/ci123chain/pkg/staking/types"
 	"github.com/ci123chain/ci123chain/pkg/util"
 	gogotypes "github.com/gogo/protobuf/types"
-	"github.com/umbracle/go-web3"
 	"math/big"
 	"time"
 )
@@ -31,8 +30,6 @@ func NewHandler(k keeper.PreStakingKeeper) sdk.Handler {
 			return UndelegateHandler(ctx, k, *msg)
 		case *types.MsgRedelegate:
 			return RedelegateHandler(ctx, k, *msg)
-		case *types.MsgDeploy:
-			return ContractHandler(ctx, k, *msg)
 		case *types.MsgPrestakingCreateValidator:
 			return CreateValidatorHandler(ctx, k, *msg)
 		default:
@@ -54,8 +51,9 @@ func PreStakingHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.Msg
 	if err != nil {
 		return nil, err
 	}
-
-	err = k.SupplyKeeper.Mint(ctx, sdk.HexToAddress(tokenManager), sdk.HexToAddress(msg.FromAddress.String()), types.ModuleName, msg.Amount.Amount.BigInt())
+	var z = msg.Amount.Amount.BigInt()
+	util.AddDecimal(z, 18, 10)
+	err = k.SupplyKeeper.Mint(ctx, sdk.HexToAddress(tokenManager), sdk.HexToAddress(msg.FromAddress.String()), types.ModuleName, z)
 	if err != nil {
 		return nil, err
 	}
@@ -193,7 +191,9 @@ func UndelegateHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.Msg
 		return nil, err
 	}
 
-	err = k.SupplyKeeper.BurnEVMCoin(ctx, types.ModuleName, sdk.HexToAddress(tokenManager), msg.FromAddress, amount.Amount.BigInt())
+	var z = amount.Amount.BigInt()
+	util.AddDecimal(z, 18, 10)
+	err = k.SupplyKeeper.BurnEVMCoin(ctx, types.ModuleName, sdk.HexToAddress(tokenManager), msg.FromAddress, z)
 	if err != nil {
 		return nil, err
 	}
@@ -344,35 +344,6 @@ func CreateValidatorHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg type
 			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(types.AttributeValueCategory)),
 			sdk.NewAttribute([]byte(sdk.AttributeKeySender), []byte(msg.FromAddress.String())),
 			sdk.NewAttribute([]byte(sdk.AttributeKeyVaultID), []byte(msg.VaultID)),
-		),
-	})
-
-	return &sdk.Result{Events: em.Events()}, nil
-}
-
-
-
-func ContractHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.MsgDeploy) (*sdk.Result, error) {
-
-	a, _ := new(big.Int).SetString("10000000000000000000", 10)
-
-	v1, _ := new(big.Int).SetString("500000000000000000", 10)
-	v2, _ := new(big.Int).SetString("150000000000000000", 10)
-	v3, _ := new(big.Int).SetString("86400", 10)
-
-	zero, _ := new(big.Int).SetString("0", 10)
-
-	contractAddr, err := k.SupplyKeeper.DeployDaoContract(ctx, types.ModuleName, []interface{}{[]web3.Address{web3.HexToAddress("0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c")}, []*big.Int{a}, [3]*big.Int{v1, v2, v3}, zero})
-	if err != nil {
-		return nil, err
-	}
-
-	em := sdk.NewEventManager()
-	em.EmitEvents(sdk.Events{
-		sdk.NewEvent(
-			types.EventTypeDeploy,
-			sdk.NewAttribute([]byte(sdk.AttributeKeyMethod), []byte(types.EventTypeDeploy)),
-			sdk.NewAttribute([]byte(types.AttributeKeyContract), []byte(contractAddr.String())),
 		),
 	})
 

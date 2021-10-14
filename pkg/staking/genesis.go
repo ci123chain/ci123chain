@@ -3,11 +3,11 @@ package staking
 import (
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/account/exported"
 	account "github.com/ci123chain/ci123chain/pkg/account/keeper"
 	"github.com/ci123chain/ci123chain/pkg/staking/keeper"
 	"github.com/ci123chain/ci123chain/pkg/staking/types"
 	"github.com/ci123chain/ci123chain/pkg/supply"
-	"github.com/ci123chain/ci123chain/pkg/supply/exported"
 	abci "github.com/tendermint/tendermint/abci/types"
 )
 

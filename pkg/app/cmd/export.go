@@ -158,7 +158,7 @@ func ExportCmd(appExporter app.AppExporter, defaultNodeHome string) *cobra.Comma
 				return err
 			}
 			_ = ioutil.WriteFile(filepath.Join(homeDir, "logs/exportFile.json"), encoded, 0755)
-			cmd.Println(string(MustSortJSON(encoded)))
+			//cmd.Println(string(MustSortJSON(encoded)))
 			return nil
 		},
 	}

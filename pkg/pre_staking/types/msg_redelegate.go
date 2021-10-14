@@ -22,7 +22,7 @@ func NewMsgRedelegate(from, src, dst sdk.AccAddress) *MsgRedelegate {
 
 func (msg *MsgRedelegate) Route() string { return ModuleName }
 
-func (msg *MsgRedelegate) MsgType() string { return "pre-staking" }
+func (msg *MsgRedelegate) MsgType() string { return "redelegate" }
 
 func (msg *MsgRedelegate) ValidateBasic() error {
 	if msg.FromAddress.Empty() {

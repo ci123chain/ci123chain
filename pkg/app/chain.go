@@ -259,7 +259,7 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer,
 		c.mm = module.NewManager(
 			moduleNameOrder,
 			auth.AppModule{AuthKeeper: c.authKeeper},
-			acc_module.AppModule{AccountKeeper: accountKeeper},
+			acc_module.AppModule{AccountKeeper: accountKeeper, Cdc: cdc},
 			supply_module.AppModule{Keeper: supplyKeeper},
 			dist_module.AppModule{DistributionKeeper: distrKeeper, AccountKeeper: accountKeeper, SupplyKeeper: supplyKeeper},
 			order_module.AppModule{OrderKeeper: &orderKeeper},

@@ -13,7 +13,7 @@ const (
 
 var (
 	//SetGenesisStateInAppState 	= types.SetGenesisStateInAppState
-	NewGenesisAccountRaw 		= types.NewGenesisAccountRaw
+	//NewGenesisAccountRaw 		= types.NewGenesisAccountRaw
 	ModuleCdc 					= types.ModuleCdc
 	NewQuerier					= keeper.NewQuerier
 	NewGensisState              = types.NewGenesisState
@@ -26,5 +26,5 @@ type (
 	BaseAccount 	= types.BaseAccount
 	AccountKeeper 	= keeper.AccountKeeper
 	GenesisAccounts = types.GenesisAccounts
-	GenesisAccount  = types.GenesisAccount
+	//GenesisAccount  = types.GenesisAccount
 )

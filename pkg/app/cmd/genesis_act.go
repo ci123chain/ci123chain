@@ -42,8 +42,12 @@ func AddGenesisAccountCmd(ctx *app.Context, cdc *codec.Codec) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			genAcc := account.NewGenesisAccountRaw(addr, types.NewCoins(coin))
-			if err := genAcc.Validate(); err != nil {
+			genAcc := acc_type.NewBaseAccountWithAddress(addr)
+			//if err := genAcc.Validate(); err != nil {
+			//	return err
+			//}
+			err = genAcc.SetCoins(types.NewCoins(coin))
+			if err != nil {
 				return err
 			}
 
@@ -58,7 +62,7 @@ func AddGenesisAccountCmd(ctx *app.Context, cdc *codec.Codec) *cobra.Command {
 				_ = fmt.Errorf("cannot add account at existing address %v", addr)
 			}
 
-			genesisAccounts = append(genesisAccounts, genAcc)
+			genesisAccounts = append(genesisAccounts, &genAcc)
 			genesisStateBz := cdc.MustMarshalJSON(account.GenesisState(genesisAccounts))
 			appState[account.ModuleName] = genesisStateBz
 

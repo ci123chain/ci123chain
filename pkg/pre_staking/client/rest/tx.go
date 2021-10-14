@@ -23,7 +23,6 @@ func RegisterRestTxRoutes(cliCtx context.Context, r *mux.Router)  {
 	r.HandleFunc("/preStaking/delegator/redelegate", rest.MiddleHandler(cliCtx, RedelegateRequest, types.DefaultCodespace)).Methods("POST")
 	r.HandleFunc("/preStaking/delegator/undelegate", rest.MiddleHandler(cliCtx, UndelegateRequest, types.DefaultCodespace)).Methods("POST")
 	r.HandleFunc("/preStaking/create/validator", rest.MiddleHandler(cliCtx, CreateValidatorRequest, types.DefaultCodespace)).Methods("POST")
-	//r.HandleFunc("/preStaking/deploy", rest.MiddleHandler(cliCtx, DeployRequest, types.DefaultCodespace)).Methods("POST")
 }
 
 
@@ -271,43 +270,6 @@ func CreateValidatorRequest(cliCtx context.Context, writer http.ResponseWriter, 
 	}
 
 	txByte, err := types2.SignCommonTx(cliCtx.FromAddr, cliCtx.Nonce, cliCtx.Gas, []sdk.Msg{msg}, cliCtx.PrivateKey, cdc)
-	if err != nil {
-		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, err.Error()).Error())
-		return
-	}
-	res, err := cliCtx.BroadcastSignedTx(txByte)
-	if err != nil {
-		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, err.Error()).Error())
-		return
-	}
-	rest.PostProcessResponseBare(writer, cliCtx, res)
-}
-
-func DeployRequest(cliCtx context.Context, writer http.ResponseWriter, request *http.Request) {
-	broadcast, err := strconv.ParseBool(request.FormValue("broadcast"))
-	if err != nil {
-		broadcast = true
-	}
-	privKey, from, nonce, gas, err := rest.GetNecessaryParams(cliCtx, request, cdc, broadcast)
-	if err != nil {
-		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, err.Error()).Error())
-		return
-	}
-
-	//verify account exists
-	err = checkAccountExist(cliCtx, from)
-	if err != nil {
-		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid from").Error())
-		return
-	}
-
-	msg := types.NewMsgDeploy(from)
-	if !broadcast {
-		rest.PostProcessResponseBare(writer, cliCtx, hex.EncodeToString(msg.Bytes()))
-		return
-	}
-
-	txByte, err := types2.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
 	if err != nil {
 		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, err.Error()).Error())
 		return
