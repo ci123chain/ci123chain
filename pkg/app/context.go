@@ -26,6 +26,8 @@ import (
 
 const (
 	flagMasterDomain   = "master_domain"
+	flagMasterPort	   = "master_port"
+	defaultMasterPort  = "443"
 	flagConfig         = "config" //config.toml
 	defaultConfigFilePath = "config.toml"
 	defaultConfigPath  = "config"
@@ -95,11 +97,15 @@ func SetupContext(ctx *Context, level string) error {
 }
 
 func configFollowMaster(master, root string) (*cfg.Config, error){
+	port := viper.GetString(flagMasterPort)
+	if len(port) == 0 {
+		port = defaultMasterPort
+	}
 	prefix := util.DefaultHTTP
 	if os.Getenv(util.IDG_APPID) != "" {
 		prefix = util.DefaultHTTPS
 	}
-	resp, err := http.Get(prefix + master + "/exportConfig")
+	resp, err := http.Get(prefix + master + ":" + port + "/exportConfig")
 	if err != nil {
 		return nil, err
 	}
