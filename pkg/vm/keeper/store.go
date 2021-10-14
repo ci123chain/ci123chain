@@ -41,6 +41,11 @@ func (s Store) Delete(key []byte) {
 	s.parent.Delete(s.key(key))
 }
 
+// Implements KVStore
+func (s Store) Iterator(start, end []byte) types.Iterator{
+	return s.parent.Iterator(s.key(start), s.key(end))
+}
+
 func (s Store) key(key []byte) (res []byte) {
 	if key == nil {
 		panic("nil key on Store")
