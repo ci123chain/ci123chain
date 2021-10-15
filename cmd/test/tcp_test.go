@@ -22,24 +22,32 @@ func TestTcpTls(t *testing.T)  {
 	var cert tls.Certificate
 	config := tls.Config{
 		Certificates:       []tls.Certificate{cert},
-		ServerName:         "weelinknode1c.gw002.oneitfarm.com",
+		ServerName: 		"dp-50qg1spow4amz-26656.gw002.oneitfarm.com",
 		InsecureSkipVerify: true,
 	}
 
-	//remote, err := tls.Dial("tcp", remoteServer, &config)
+	remoteServer := "dp-50qg1spow4amz-26656.gw002.oneitfarm.com:7443"
+	i := 0
+	for  {
+		fmt.Println("Beigin Connection times: ", i)
+		i++
+		conn, err := tls.DialWithDialer(&net.Dialer{
+			Timeout: time.Second * time.Duration(10),
+		}, "tcp", remoteServer, &config)
 
-	remoteServer := "weelinknode1c.gw002.oneitfarm.com:7443"
+		if err != nil {
+			fmt.Printf("remote tls dial fail.  %s", err.Error())
+			continue
+		}
+		_, err = conn.Write([]byte("aaaa"))
+		if err != nil {
+			fmt.Println("error: ",err)
+		}
 
-	remote, err := tls.DialWithDialer(&net.Dialer{
-		Timeout: time.Second * time.Duration(10),
-	}, "tcp", remoteServer, &config)
-
-	if err != nil {
-		fmt.Printf("remote tls dial fail.  %s", err.Error())
-		return
+		time.Sleep(time.Second * 3)
+		//defer conn.Close()
 	}
 
-	defer remote.Close()
 	select {
 	}
 }
