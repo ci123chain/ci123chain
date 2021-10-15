@@ -696,25 +696,26 @@ func (k *Keeper) GetSectionBloom(ctx sdk.Context, index int64) (*Generator, bool
 	return &section, true
 }
 
-func (k *Keeper) GetSectionBlooms(ctx sdk.Context, start, end uint64) ([]*Generator, error) {
+func (k *Keeper) GetSectionBlooms(ctx sdk.Context, start, end uint64) (map[uint64]*Generator, error) {
 	store := NewStore(ctx.KVStore(k.storeKey), evmtypes.KeyPrefixSection)
 
 	iterator := store.Iterator(evmtypes.BloomKey(int64(start)), evmtypes.BloomKey(int64(end+1)))
 	defer iterator.Close()
 
-	ges := []*Generator{}
+	ges := map[uint64]*Generator{}
 
 	for ; iterator.Valid(); iterator.Next() {
 		if iterator.Error() != nil {
 			return nil, iterator.Error()
 		}
+		key := evmtypes.BloomKeyFromByte(iterator.Key()[len(evmtypes.KeyPrefixSection):])
 
 		var ge Generator
 		err := json.Unmarshal(iterator.Value(), &ge)
 		if err != nil {
 			return nil, err
 		}
-		ges = append(ges, &ge)
+		ges[key] = &ge
 	}
 	return ges, nil
 }

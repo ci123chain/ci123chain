@@ -234,7 +234,7 @@ func querySectionBloom(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte
 
 	for k, v := range blooms {
 		bloomIdx, _ := v.Bitset(params.Filter)
-		data[uint64(k) + params.Sections[0]] = bloomIdx
+		data[k] = bloomIdx
 	}
 
 	bz, err := json.Marshal(&data)
