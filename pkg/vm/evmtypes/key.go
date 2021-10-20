@@ -28,6 +28,10 @@ func BloomKey(height int64) []byte {
 	return sdk.Uint64ToBigEndian(uint64(height))
 }
 
+func BloomKeyFromByte(by []byte) uint64 {
+	return sdk.BigEndianToUint64(by)
+}
+
 // AddressStoragePrefix returns a prefix to iterate over a given account storage.
 func AddressStoragePrefix(address ethcmn.Address) []byte {
 	return append(KeyPrefixStorage, address.Bytes()...)
