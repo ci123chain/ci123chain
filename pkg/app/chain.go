@@ -223,13 +223,11 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer,
 	var wasmconfig wasm_types.WasmConfig
 	vmKeeper := vm.NewKeeper(cdc, WasmStoreKey, homeDir, wasmconfig, c.GetSubspace(vm.ModuleName), accountKeeper, stakingKeeper, cdb)
 	supplyKeeper.SetVMKeeper(vmKeeper)
-	prestakingKeeper := prestaking.NewKeeper(cdc, preStakingStorekey, accountKeeper, supplyKeeper, stakingKeeper, c.GetSubspace(prestaking.ModuleName),cdb)
-
 
 	gravityKeeper := gravity.NewKeeper(cdc, GravityStoreKey, c.GetSubspace(gravity.ModuleName), accountKeeper, stakingKeeper, supplyKeeper, slashingKeeper)
-
 	stakingKeeper.SetHooks(staking.NewMultiStakingHooks(distrKeeper.Hooks(), slashingKeeper.Hooks(), gravityKeeper.Hooks()))
 
+	prestakingKeeper := prestaking.NewKeeper(cdc, preStakingStorekey, accountKeeper, supplyKeeper, stakingKeeper, c.GetSubspace(prestaking.ModuleName),cdb)
 
 	ibcTransferModule := ibc.NewTransferModule(ibcTransferKeeper)
 	// Create static IBC router, add transfer route, then set and seal it

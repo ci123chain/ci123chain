@@ -177,7 +177,8 @@ func handleMsgEthereumTx(ctx sdk.Context, k *Keeper, msg types.MsgEthereumTx) (*
 	if err != nil {
 		return nil, err
 	}
-
+	fmt.Printf("sender address: %s", sender.String())
+	fmt.Printf("to address: %s", msg.Data.Recipient.String())
 	txHash := tmtypes.Tx(ctx.TxBytes()).Hash()
 	ethHash := common.BytesToHash(txHash)
 

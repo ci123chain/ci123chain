@@ -13,10 +13,11 @@ COPY ./wasmer-go@v1.0.3-rc2 /opt/wasmer-go@v1.0.3-rc2
 
 COPY ./migrate.sh /opt
 
-
 ENV GOPATH /go
 
-COPY ./docker/node/2start.sh /etc/service/ci123chain/run
+COPY ./docker/node/start-cid.sh /etc/service/cid/run
+COPY ./docker/node/start-cli.sh /etc/service/cli/run
 
 WORKDIR /opt
-RUN chmod +x /etc/service/ci123chain/run
+RUN chmod +x /etc/service/cid/run
+RUN chmod +x /etc/service/cli/run

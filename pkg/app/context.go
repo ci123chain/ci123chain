@@ -124,7 +124,11 @@ func configFollowMaster(master, root string) (*cfg.Config, error){
 		return nil, err
 	}
 
-	c.P2P.PersistentPeers = configFiles.NodeID + "@" + master + ":7443@tls"
+	if os.Getenv(util.IDG_APPID) != "" {
+		c.P2P.PersistentPeers = configFiles.NodeID + "@" + master + ":7443@tls"
+	} else {
+		c.P2P.PersistentPeers = configFiles.NodeID + "@" + master + ":26656"
+	}
 
 	config.SaveConfig(c)
 

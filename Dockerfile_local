@@ -17,12 +17,15 @@ COPY --from=0 /opt/cid-linux /opt/cid-linux
 COPY --from=0 /opt/cli-linux /opt/cli-linux
 COPY --from=0 /opt/cproxy-linux /opt/cproxy-linux
 
+
 COPY --from=0 /go/pkg/mod/github.com/ci123chain/wasmer-go@v1.0.3-rc2 /go/pkg/mod/github.com/ci123chain/wasmer-go@v1.0.3-rc2
 
 
 ENV GOPATH /go
 
 COPY ./docker/node/2start.sh /opt/start.sh
+COPY ./docker/node/exportFile.json /opt/exportFile.json
+
 WORKDIR /opt
 RUN chmod +x /opt/start.sh
 CMD ./start.sh

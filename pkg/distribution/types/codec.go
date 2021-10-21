@@ -17,4 +17,8 @@ func RegisterCodec(cdc *codec.Codec)  {
 	cdc.RegisterConcrete(&MsgWithdrawDelegatorReward{}, "ci123chain/WithdrawDelegatorRewardTx", nil)
 	cdc.RegisterConcrete(&MsgWithdrawValidatorCommission{}, "ci123chain/WithdrawValidatorCommissionTx", nil)
 	cdc.RegisterConcrete(&MsgFundCommunityPool{}, "ci123chain/FundCommunityPoolTx", nil)
+	cdc.RegisterConcrete(&ValidatorCurrentRewards{}, "ci123chain/ValidatorCurrentRewards", nil)
+	cdc.RegisterConcrete(&ValidatorOutstandingRewards{}, "ci123chain/ValidatorOutstandingRewards", nil)
+	cdc.RegisterConcrete(&ValidatorAccumulatedCommission{}, "ci123chain/ValidatorAccumulatedCommission", nil)
+	cdc.RegisterConcrete(&ValidatorHistoricalRewards{}, "ci123chain/ValidatorHistoricalRewards", nil)
 }

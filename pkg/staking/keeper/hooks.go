@@ -11,7 +11,6 @@ var _ types.StakingHooks = StakingKeeper{}
 func (k StakingKeeper) AfterValidatorCreated(ctx sdk.Context, valAddr sdk.AccAddress) {
 	if k.hooks != nil {
 		k.hooks.AfterValidatorCreated(ctx, valAddr)
-
 	}
 }
 
