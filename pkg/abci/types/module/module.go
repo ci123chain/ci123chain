@@ -125,6 +125,7 @@ func (am AppManager) InitGenesis(ctx types.Context, data map[string]json.RawMess
 }
 
 func (am AppManager) BeginBlocker(ctx types.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
+	ctx = ctx.WithEventManager(types.NewEventManager())
 	o, ok := am.Modules[order.ModuleName]
 	if ok && o != nil{
 		o.BeginBlocker(ctx, req)
@@ -137,7 +138,7 @@ func (am AppManager) BeginBlocker(ctx types.Context, req abci.RequestBeginBlock)
 		m := am.Modules[name]
 		m.BeginBlocker(ctx, req)
 	}
-	return abci.ResponseBeginBlock{}
+	return abci.ResponseBeginBlock{Events: ctx.EventManager().ABCIEvents()}
 }
 
 func (am AppManager) EndBlocker(ctx types.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {

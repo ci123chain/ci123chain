@@ -113,6 +113,12 @@ func (k *DistrKeeper) GetValidatorCurrentRewards(ctx sdk.Context, val sdk.AccAdd
 
 	store := ctx.KVStore(k.storeKey)
 	b := store.Get(types.GetValidatorCurrentRewardsKey(val))
+	if b == nil {
+		return types.ValidatorCurrentRewards{
+			Rewards: sdk.NewEmptyDecCoin(),
+			Period: 0,
+		}
+	}
 	k.cdc.MustUnmarshalBinaryLengthPrefixed(b, &rewards)
 	return
 }
@@ -282,6 +288,11 @@ func (k *DistrKeeper) DeleteValidatorOutstandingRewards(ctx sdk.Context, val sdk
 func (k *DistrKeeper) GetValidatorOutstandingRewards(ctx sdk.Context, val sdk.AccAddress) (rewards types.ValidatorOutstandingRewards) {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.GetValidatorOutstandingRewardsKey(val))
+	if bz == nil {
+		return types.ValidatorOutstandingRewards{
+			Rewards: sdk.NewEmptyDecCoin(),
+		}
+	}
 	k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &rewards)
 	return
 }
