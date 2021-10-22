@@ -306,9 +306,17 @@ func CreateValidatorHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg type
 	if !ok {
 		return nil, types.ErrInvalidVaultID
 	}
-	amount, _, err := res.PopVaultAmountAndEndTime(id)
+	amount, endTime, err := res.PopVaultAmountAndEndTime(id)
 	if err != nil {
 		return nil, err
+	}
+
+	//update account prestaking.
+	k.SetAccountPreStaking(ctx, msg.FromAddress, res)
+
+	Err := k.SetAccountStakingRecord(ctx, msg.ValidatorAddress, msg.FromAddress, id, endTime, amount)
+	if Err != nil {
+		return nil, Err
 	}
 
 	validator, _ := staking.NewValidator(msg.ValidatorAddress, msg.PublicKey, msg.Description)
