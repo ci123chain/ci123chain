@@ -7,8 +7,8 @@ import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/account"
-	supply "github.com/ci123chain/ci123chain/pkg/supply/exported"
 	"github.com/ci123chain/ci123chain/pkg/account/exported"
+	supply "github.com/ci123chain/ci123chain/pkg/supply/exported"
 	"github.com/ci123chain/ci123chain/pkg/supply/types"
 	vmtypes "github.com/ci123chain/ci123chain/pkg/vm/types"
 	"github.com/tendermint/tendermint/libs/log"
@@ -68,6 +68,9 @@ func (k Keeper) GetModuleAccountAndPermissions(ctx sdk.Context, moduleName strin
 		macc, ok := acc.(exported.ModuleAccountI)
 		if !ok {
 			panic("account is not a module account")
+		}
+		if len(perms) != len(macc.GetPermissions()) {
+			macc.SetPermissions(perms)
 		}
 		return macc, perms
 

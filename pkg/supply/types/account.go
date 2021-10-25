@@ -33,6 +33,10 @@ func (macc ModuleAccount) GetPermissions() []string {
 	return macc.Permissions
 }
 
+func (macc *ModuleAccount) SetPermissions(perms []string)  {
+	macc.Permissions = perms
+}
+
 func (macc ModuleAccount) HasPermission(perm string) bool {
 	for _, v := range macc.Permissions {
 		if v == perm {

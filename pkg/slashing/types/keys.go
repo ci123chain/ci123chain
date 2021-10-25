@@ -18,6 +18,9 @@ const (
 
 	// QuerierRoute is the querier route for slashing
 	QuerierRoute = ModuleName
+
+	DefaultCodespace = ModuleName
+
 )
 
 // Keys for slashing store

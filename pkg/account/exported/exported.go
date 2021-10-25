@@ -44,4 +44,5 @@ type ModuleAccountI interface {
 	GetName() string
 	GetPermissions() []string
 	HasPermission(string) bool
+	SetPermissions([]string)
 }
