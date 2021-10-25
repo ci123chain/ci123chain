@@ -121,7 +121,7 @@ var (
 		ibc.ModuleName: nil,
 		gravity.ModuleName: {supply.Minter},
 		ibctransfer.ModuleName: nil,
-		stakingTypes.BondedPoolName: {supply.Burner, supply.Staking},
+		stakingTypes.BondedPoolName: {supply.Burner, supply.Staking, supply.Minter},
 		stakingTypes.NotBondedPoolName: {supply.Burner, supply.Staking},
 		prestaking.ModuleName: nil,
 	}
@@ -287,6 +287,7 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer,
 		c.Router().AddRoute(infrastructure.RouteKey, infrastructure.NewHandler(infrastructureKeeper))
 		c.Router().AddRoute(ibc.RouterKey, ibc.NewHandler(IBCKeeper))
 		c.Router().AddRoute(ibctransfertypes.RouterKey, ibctransfer.NewHandler(ibcTransferKeeper))
+		c.Router().AddRoute(slashing.RouteKey, slashing.NewHandler(slashingKeeper))
 	}
 	{
 		// query router

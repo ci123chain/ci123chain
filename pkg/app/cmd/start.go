@@ -63,7 +63,7 @@ func startCmd(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Codec) *co
 			util.SetLimit(limit)
 			ok := viper.GetBool(flagStartFromExport)
 			if ok {
-				by, err := ioutil.ReadFile("/opt/exportFile.json")
+				by, err := ioutil.ReadFile("./docker/node/exportFile.json")
 				if err == nil && by != nil {
 					_ = ioutil.WriteFile(filepath.Join(ctx.Config.RootDir, "config/genesis.json"), by, 0755)
 				}else {
