@@ -28,10 +28,10 @@ func GetDomain() (host string, err error) {
 func Discovery() (string, error) {
 
 	appID := os.Getenv("CI_VALIDATOR_KEY")
-	address := os.Getenv("CI_SE_NGINX_ADDRESS")
 	region := os.Getenv("IDG_SITEUID")
 	env := os.Getenv("CI_SE_ENV")
 	zone := os.Getenv("IDG_CLUSTERUID")
+	address := "service-eye-chart.chain-discovery-" + zone + ":7171"
 	if appID == "" {
 		return "", errors.New("appID is empty")
 	}
