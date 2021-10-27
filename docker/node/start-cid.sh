@@ -5,6 +5,11 @@ then
    CI_HOME="/opt/ci123chain"
 fi
 
+if [ -z $CI_ETH_CHAIN_ID ];
+then
+   CI_ETH_CHAIN_ID=7880
+fi
+
 if [ -z $CI_TOKENNAME ];
 then
    CI_TOKENNAME="WLK"
@@ -35,9 +40,6 @@ if [ ! -f $CI_HOME/config/genesis.json ]; then
 
         CI_VALIDATOR_KEY=$(cat $CI_HOME/config/priv_validator_key.json | jq -r '.priv_key.value')
         CI_PUBKEY=$(cat $CI_HOME/config/priv_validator_key.json | jq -r '.pub_key.value')
-        echo "export CI_VALIDATOR_KEY=$CI_VALIDATOR_KEY" >> /etc/profile
-        echo "export CI_PUBKEY=$CI_PUBKEY" >> /etc/profile
-        source /etc/profile
 
         /opt/cid-linux add-genesis-account 0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c 10000000000000000000000000000 --home=$CI_HOME
 
@@ -59,17 +61,19 @@ if [ ! -f $CI_HOME/config/genesis.json ]; then
     else # second node
         echo "---Create Validator----"
         /opt/cid-linux gen-validator --home=$CI_HOME
-        CI_VALIDATOR_KEY=$(cat $CI_HOME/config/priv_validator_key.json | jq -r '.priv_key.value')
-        CI_PUBKEY=$(cat $CI_HOME/config/priv_validator_key.json | jq -r '.pub_key.value')
-        echo "export CI_VALIDATOR_KEY=$CI_VALIDATOR_KEY" >> /etc/profile
-        echo "export CI_PUBKEY=$CI_PUBKEY" >> /etc/profile
-        source /etc/profile
     fi
 else
     echo "---Found genesis file----"
     cat $CI_HOME/config/genesis.json
     echo "----------"
 fi
+
+CI_VALIDATOR_KEY=$(cat $CI_HOME/config/priv_validator_key.json | jq -r '.priv_key.value')
+CI_PUBKEY=$(cat $CI_HOME/config/priv_validator_key.json | jq -r '.pub_key.value')
+echo "export CI_VALIDATOR_KEY=$CI_VALIDATOR_KEY" >> /etc/profile
+echo "export CI_PUBKEY=$CI_PUBKEY" >> /etc/profile
+echo "export CI_ETH_CHAIN_ID=$CI_ETH_CHAIN_ID" >> /etc/profile
+source /etc/profile
 
 if [ -f $CI_HOME/config/config.toml ]; then
     sed "s/max_subscriptions_per_client = 5/max_subscriptions_per_client = 20/" $CI_HOME/config/config.toml
