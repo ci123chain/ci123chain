@@ -59,6 +59,8 @@ type InitConfig struct{
 	GenTxsDir 	string
 	Overwrite 	bool
 	GenesisTime time.Time
+	Export 		bool
+	ValidatorKey	string
 }
 
 type ValidatorAccount struct {
@@ -122,28 +124,31 @@ func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Com
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 
-			fmt.Println("validator_key:", viper.GetString(FlagWithValidator))
-			fmt.Println("home:", viper.GetString(tmcli.HomeFlag))
-			fmt.Println("chainid:", viper.GetString(FlagChainID))
-
-			denom := viper.GetString(FlagCoinName)
-			if denom != "" {
+			if denom := viper.GetString(FlagCoinName); denom != "" {
 				abcitypes.SetCoinDenom(viper.GetString(FlagCoinName))
+			}
+
+			chainID1 := viper.GetString(FlagChainID);
+			if chainID1 == "" {
+				panic(errors.New("chain id can not be empty"))
+			}
+
+			exportMode := viper.GetBool(flagStartFromExport)
+			validatorKey := viper.GetString(FlagWithValidator)
+			if exportMode && len(validatorKey) == 0 {
+				panic("validator key should provide for export mode")
 			}
 
 			ctxConfig := ctx.Config
 			ctxConfig.SetRoot(viper.GetString(tmcli.HomeFlag))
 
 			initConfig := InitConfig{
-				ChainID: viper.GetString(FlagChainID),
-				//viper.GetBool(FlagWithTxs),
-				//filepath.Join(configs.RootDir, "configs", "gentx"),
+				ChainID: chainID1,
 				Overwrite: viper.GetBool(FlagOverwrite),
-				//tmtime.Now(),
+				Export: exportMode,
+				ValidatorKey: validatorKey,
 			}
-			if initConfig.ChainID == "" {
-				panic(errors.New("chain id can not be empty"))
-			}
+
 			chainID, nodeID, appMessage, pubKey, err := InitWithConfig(cdc, appInit, ctxConfig, initConfig)
 			if err != nil {
 				return sdkerrors.Wrap(sdkerrors.ErrParams, fmt.Sprintf("invalid params: %v", err.Error()))
@@ -181,204 +186,29 @@ func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Com
 	cmd.Flags().String(FlagCoinName, "stake",  "coin name")
 	return cmd
 }
-//
-//func gentxWithConfig(cdc *amino.Codec, appInit app.AppInit, configs *cfg.Config, genTxConfig configs.GenTx) (
-//	cliPrint json.RawMessage, genTxFile json.RawMessage, err error ) {
-//
-//	pv := validator.GenFilePV(
-//		configs.PrivValidatorKeyFile(),
-//		configs.PrivValidatorStateFile(),
-//		secp256k1.GenPrivKey(),
-//		)
-//	nodeKey, err := node.GenNodeKeyByPrivKey(configs.NodeKeyFile(), pv.Key.PrivKey)
-//
-//	if err != nil {
-//		return
-//	}
-//	nodeID := string(nodeKey.ID())
-//	pkey, err := pv.GetPubKey()
-//	if err != nil {
-//		return
-//	}
-//
-//	appGenTx, cliPrint, val, err := appInit.AppGenTx(cdc, pkey, genTxConfig)
-//	if err != nil {
-//		return
-//	}
-//	tx := app.GenesisTx{
-//		NodeID:    nodeID,
-//		IP:        genTxConfig.IP,
-//		Validator: val,
-//		AppGenTx:  appGenTx,
-//	}
-//
-//	bz, err := types.MarshalJSONIndent(cdc, tx)
-//	if err != nil {
-//		return
-//	}
-//
-//	/*genTxFile = json.RawMessage(bz)
-//	if err != nil {
-//		return
-//	}*/
-//
-//	genTxFile = json.RawMessage(bz)
-//	name := fmt.Sprintf("gentx-%v.json", nodeID)
-//	writePath := filepath.Join(configs.RootDir, "configs", "gentx")
-//	file := filepath.Join(writePath, name)
-//	err = cmn.EnsureDir(writePath, 0700)
-//	if err != nil {
-//		return
-//	}
-//	err = cmn.WriteFile(file, bz, 0644)
-//	if err != nil {
-//		return
-//	}
-//	// Write updated configs with moniker
-//	//configs.Moniker = genTxConfig.Name
-//	configFilePath := filepath.Join(configs.RootDir, "configs", "configs.toml")
-//	cfg.WriteConfigFile(configFilePath, configs)
-//	return
-//}
-
-/*
-func GetChainID() (string, error){
-
-	var id string
-
-	statedb := viper.GetString(FlagStateDB)
-	db, err := app.GetStateDB("", statedb)
-	key := ortypes.ModuleName + "//" + order.OrderBookKey
-	var ob order.OrderBook
-
-	res := db.Get([]byte(key))
-
-	err = order.ModuleCdc.UnmarshalBinaryLengthPrefixed(res, &ob)
-	if err != nil {
-		return "", errors.New("failed to unmarshal")
-	}
-	if len(ob.Actions) == 1{
-		if ob.Actions[0].Type == order.OpADD {
-			id = ob.Actions[0].Name
-		}
-	}else {
-		for i := 0; i < len(ob.Actions) - 1; i++ {
-			if ob.Actions[i].Type == order.OpADD {
-				id = ob.Actions[i].Name
-				break
-			}
-		}
-	}
-	return id, nil
-}
-*/
-
-/*
-func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initConfig InitConfig)(
-	chainID string, nodeID string, appMessage json.RawMessage, pubKey string, err error) {
-	var validatorKey secp256k1.PrivKeySecp256k1
-	var privStr string
-	nodeKey, err := node.LoadNodeKey(c.NodeKeyFile())
-	privBz := viper.GetString(FlagWithValidator)
-	if len(privBz) > 0 {
-		//1.match length
-		priByt := []byte(privBz)
-		length := len(priByt)
-		if length != 44 {
-			panic(errors.New(fmt.Sprintf("length of validator key does not match, expected %d, got %d",44 ,length)))
-		}
-
-		//2.regex match
-		rule := `=$`
-		reg := regexp.MustCompile(rule)
-		if !reg.MatchString(privBz) {
-			panic(errors.New("the end of the validator key string should be an equal sign"))
-		}
-
-		//3.match base64 encoding
-		_,err := base64.StdEncoding.DecodeString(privBz)
-		if err != nil {
-			panic(err)
-		}
-
-		privStr = fmt.Sprintf(`{"type":"%s","value":"%s"}`, secp256k1.PrivKeyAminoName, privBz)
-		err = cdc.UnmarshalJSON([]byte(privStr), &validatorKey)
-		if err != nil {
-			panic(err)
-		}
-	}else {
-
-		panic(errors.New("validator key can not be empty"))
-	}
-
-	pv := validator.GenFilePV(
-		c.PrivValidatorKeyFile(),
-		c.PrivValidatorStateFile(),
-		validatorKey,
-	)
-
-	nodeKey, err = node.GenNodeKeyByPrivKey(c.NodeKeyFile(), pv.Key.PrivKey)
-	if err != nil {
-		panic(err)
-	}
-	nodeID = string(nodeKey.ID())
 
 
-	chainID = initConfig.ChainID
-
-	genFile := c.GenesisFile()
-	if !initConfig.Overwrite && cmn.FileExists(genFile) {
-		err = fmt.Errorf("genesis.json file already exists: %v", genFile)
-		return
-	}
-
-	validator := appInit.GetValidator(nodeKey.PubKey(), viper.GetString(FlagName))
-	validators := []tmtypes.GenesisValidator{validator}
-
-	appState, err := appInit.AppGenState(validators)
-
-	if err != nil {
-		return
-	}
-	err = writeGenesisFile(cdc, genFile, initConfig.ChainID, validators, appState, initConfig.GenesisTime)
-	if err != nil {
-		return
-	}
-	return
-}
-
-*/
 func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initConfig InitConfig)(
 	chainID string, nodeID string, appMessage json.RawMessage, pubKey crypto.PubKey, err error) {
 	var validatorKey ed25519.PrivKey
 	var privStr string
 	nodeKey, err := node.LoadNodeKey(c.NodeKeyFile())
-	privBz := viper.GetString(FlagWithValidator)
-	if viper.GetBool(flagStartFromExport) {
-		privBz = "qS4LtbZ9nxk/5HOpGBLQaMLWjzgrfd81VbrxoiQqgZkIvOle+S28kv+u8136PAfvqRDTRnuGVlIEmbFprIRRFg=="
-	}
-	if len(privBz) > 0 {
-		//1.match length
-		//priByt := []byte(privBz)
-		//length := len(priByt)
-		//if length != 44 {
-		//	panic(errors.New(fmt.Sprintf("length of validator key does not match, expected %d, got %d",44 ,length)))
-		//}
 
+	if len(initConfig.ValidatorKey) > 0 {
 		//2.regex match
 		rule := `=$`
 		reg := regexp.MustCompile(rule)
-		if !reg.MatchString(privBz) {
+		if !reg.MatchString(initConfig.ValidatorKey) {
 			panic(errors.New("the end of the validator key string should be an equal sign"))
 		}
 
 		//3.match base64 encoding
-		_,err := base64.StdEncoding.DecodeString(privBz)
+		_,err := base64.StdEncoding.DecodeString(initConfig.ValidatorKey)
 		if err != nil {
 			panic(err)
 		}
 
-		privStr = fmt.Sprintf(`{"type":"%s","value":"%s"}`, ed25519.PrivKeyName, privBz)
+		privStr = fmt.Sprintf(`{"type":"%s","value":"%s"}`, ed25519.PrivKeyName, initConfig.ValidatorKey)
 		err = cdc.UnmarshalJSON([]byte(privStr), &validatorKey)
 		if err != nil {
 			panic(err)

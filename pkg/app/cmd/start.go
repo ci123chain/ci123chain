@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"encoding/base64"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	"github.com/ci123chain/ci123chain/pkg/abci/types"
@@ -41,15 +40,13 @@ const (
 	flagCiNodeDomain   = "IDG_HOST_80"
 	flagMasterDomain   = "master_domain"
 	flagShardIndex     = "shardIndex"
-	flagGenesis        = "genesis" //genesis.json
-	flagNodeKey        = "nodeKey" //node_key.json
-	flagPvs            = "pvs" //priv_validator_state.json
-	flagPvk            = "pvk" //priv_validator_key.json
-	version 		   = "CiChain v1.4.15"
+
+	version 		   = "cichain v1.5.72"
 	flagETHChainID     = "eth_chain_id"
 	flagIteratorLimit  = "iterator_limit"
 	flagRunMode		   = "mode"
 	flagStartFromExport = "export"
+	flagStartFromExportFile = "export_file"
 )
 
 func startCmd(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Codec) *cobra.Command {
@@ -62,8 +59,9 @@ func startCmd(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Codec) *co
 			util.Setup(id)
 			util.SetLimit(limit)
 			ok := viper.GetBool(flagStartFromExport)
+			exportFile := viper.GetString(flagStartFromExportFile)
 			if ok {
-				by, err := ioutil.ReadFile("./docker/node/exportFile.json")
+				by, err := ioutil.ReadFile(exportFile)
 				if err == nil && by != nil {
 					_ = ioutil.WriteFile(filepath.Join(ctx.Config.RootDir, "config/genesis.json"), by, 0755)
 				}else {
@@ -76,9 +74,7 @@ func startCmd(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Codec) *co
 			}
 			ctx.Logger.Info(version)
 			ctx.Logger.Info("Starting ABCI with Tendermint")
-			if len(viper.GetString(flagMasterDomain)) == 0 && len(viper.GetString(flagGenesis)) != 0 {
-				preSetConfig(ctx)
-			}
+
 			_, err := StartInProcess(ctx, appCreator, cdc)
 			if err != nil {
 				return err
@@ -103,6 +99,7 @@ func startCmd(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Codec) *co
 	cmd.Flags().String(FlagWithValidator, "", "validator_key")
 	cmd.Flags().String(flagRunMode, "single", "run chain mode")
 	cmd.Flags().Bool(flagStartFromExport, false, "start with export file")
+	cmd.Flags().String(flagStartFromExportFile, "/opt/exportFile.json", "start with export file")
 
 	//cmd.Flags().String(flagLogLevel, "debug", "Run abci app with different log level")
 	tcmd.AddNodeFlags(cmd)
@@ -250,20 +247,4 @@ func StartInProcess(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Code
 	})
 
 	return tmNode, nil
-}
-
-func preSetConfig(ctx *app.Context) {
-	cfg := ctx.Config
-	genesis := viper.GetString(flagGenesis)
-	nodeKey := viper.GetString(flagNodeKey)
-	pvs := viper.GetString(flagPvs)
-	pvk := viper.GetString(flagPvk)
-	genesisBytes, _ := base64.StdEncoding.DecodeString(genesis)
-	ioutil.WriteFile(cfg.GenesisFile(), genesisBytes, os.ModePerm)
-	nodeKeyBytes, _ := base64.StdEncoding.DecodeString(nodeKey)
-	ioutil.WriteFile(cfg.NodeKeyFile(), nodeKeyBytes, os.ModePerm)
-	pvsBytes, _ := base64.StdEncoding.DecodeString(pvs)
-	ioutil.WriteFile(cfg.PrivValidatorStateFile(), pvsBytes, os.ModePerm)
-	pvkBytes, _ := base64.StdEncoding.DecodeString(pvk)
-	ioutil.WriteFile(cfg.PrivValidatorKeyFile(), pvkBytes, os.ModePerm)
 }

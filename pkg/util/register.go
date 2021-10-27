@@ -27,7 +27,7 @@ func GetDomain() (host string, err error) {
 
 func Discovery() (string, error) {
 
-	appID := os.Getenv("CI_VALIDATOR_KEY")
+	appID := os.Getenv("CI_UNIQUE_KEY")
 	region := os.Getenv("IDG_SITEUID")
 	env := os.Getenv("CI_SE_ENV")
 	zone := os.Getenv("IDG_CLUSTERUID")

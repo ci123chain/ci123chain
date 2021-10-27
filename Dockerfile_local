@@ -26,6 +26,8 @@ ENV GOPATH /go
 COPY ./docker/node/2start.sh /opt/start.sh
 COPY ./docker/node/exportFile.json /opt/exportFile.json
 
+RUN apt-get update -y && apt-get install jq -y
+
 WORKDIR /opt
 RUN chmod +x /opt/start.sh
 CMD ./start.sh

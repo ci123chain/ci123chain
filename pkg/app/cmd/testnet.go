@@ -149,11 +149,11 @@ func testnetGenWithConfig(c *cfg.Config, cdc *amino.Codec, appInit app.AppInit) 
 	for i := 0; i < numValidators; i++ {
 		di := getDirsInfo(rootDir, i)
 		initConfig := InitConfig{
-			chainID,
-			true,
-			di.GenTxsDir(),
-			true,
-			genTime,
+			ChainID: chainID,
+			Overwrite: true,
+			GenTxsDir: di.GenTxsDir(),
+			GenTxs:true,
+			GenesisTime: genTime,
 		}
 		c.Moniker = di.DirName()
 		c.SetRoot(di.NodeDir())

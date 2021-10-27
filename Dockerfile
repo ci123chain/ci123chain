@@ -18,6 +18,8 @@ ENV GOPATH /go
 COPY ./docker/node/start-cid.sh /etc/service/cid/run
 COPY ./docker/node/start-cli.sh /etc/service/cli/run
 
+RUN apt-get update -y && apt-get install jq -y
+
 WORKDIR /opt
 RUN chmod +x /etc/service/cid/run
 RUN chmod +x /etc/service/cli/run

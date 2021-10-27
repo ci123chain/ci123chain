@@ -3,21 +3,17 @@ package app
 import (
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
-	"github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/client/cmd"
 	"github.com/ci123chain/ci123chain/pkg/config"
 	"github.com/ci123chain/ci123chain/pkg/logger"
 	"github.com/ci123chain/ci123chain/pkg/node"
 	"github.com/ci123chain/ci123chain/pkg/util"
-	val "github.com/ci123chain/ci123chain/pkg/validator"
 	"github.com/spf13/viper"
-	"github.com/tendermint/go-amino"
 	cfg "github.com/tendermint/tendermint/config"
-	"github.com/tendermint/tendermint/crypto/ed25519"
 	"github.com/tendermint/tendermint/libs/cli"
 	"github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/libs/rand"
+	pvm "github.com/tendermint/tendermint/privval"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -135,28 +131,8 @@ func configFollowMaster(master, root string) (*cfg.Config, error){
 	if err := ioutil.WriteFile(c.GenesisFile(), configFiles.GenesisFile, os.ModePerm); err != nil {
 		panic(err)
 	}
-
-	var valKey ed25519.PrivKey
-	//validator := ed25519.GenPrivKey()
-	cdc := amino.NewCodec()
-	//keyByte, err := cdc.MarshalJSON(validator)
-	//if err != nil {
-	//	return nil, err
-	//}
-	validatorKey := viper.GetString(flagValidatorKey)
-	privStr := fmt.Sprintf(`{"type":"%s","value":"%s"}`, ed25519.PrivKeyName, validatorKey)
-	cdc = types.GetCodec()
-	err = cdc.UnmarshalJSON([]byte(privStr), &valKey)
-	if err != nil {
-		return nil, err
-	}
-
-	pv := val.GenFilePV(
-		c.PrivValidatorKeyFile(),
-		c.PrivValidatorStateFile(),
-		valKey,
-	)
-
+	
+	pv := pvm.LoadOrGenFilePV(c.PrivValidatorKeyFile(), c.PrivValidatorStateFile())
 	//create node_key.json
 	_, err = node.GenNodeKeyByPrivKey(c.NodeKeyFile(), pv.Key.PrivKey)
 	if err != nil {
