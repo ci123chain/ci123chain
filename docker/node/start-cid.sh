@@ -2,12 +2,12 @@
 
 if [ -z $CI_HOME ];
 then
-   CI_HOME="/root/cid"
+   CI_HOME="/opt/ci123chain"
 fi
 
 if [ -z $CI_TOKENNAME ];
 then
-   CI_TOKENNAME="stake"
+   CI_TOKENNAME="WLK"
 fi
 
 CI_LOGDIR=$CI_HOME/logs
@@ -31,14 +31,15 @@ if [ ! -f $CI_HOME/config/genesis.json ]; then
     if [ -z $CI_MASTER_DOMAIN ]; then
         echo "---Not found genesis file, Creating----"
 
-        #./cid-linux init
-        /opt/cid-linux init --home=$CI_HOME --chain_id=$CI_CHAIN_ID --validator_key=$CI_VALIDATOR_KEY --denom=$CI_TOKENNAME
+        /opt/cid-linux init --home=$CI_HOME --chain_id=$CI_CHAIN_ID --denom=$CI_TOKENNAME
 
-        /opt/cid-linux add-genesis-account 0x204bCC42559Faf6DFE1485208F7951aaD800B313 10000000000000000000000000000 --home=$CI_HOME
-        # a78a8a281d160847f1ed7881e5497e1a98ccd4fe6ba9ce918630f93a44e09793
+        CI_VALIDATOR_KEY=$(cat $CI_HOME/config/priv_validator_key.json | jq -r '.priv_key.value')
+        CI_PUBKEY=$(cat $CI_HOME/config/priv_validator_key.json | jq -r '.pub_key.value')
+        echo "export CI_VALIDATOR_KEY=$CI_VALIDATOR_KEY" >> /etc/profile
+        echo "export CI_PUBKEY=$CI_PUBKEY" >> /etc/profile
+        source /etc/profile
+
         /opt/cid-linux add-genesis-account 0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c 10000000000000000000000000000 --home=$CI_HOME
-        # 2b452434ac4f7cf9c5d61d62f23834f34e851fb6efdb8d4a8c6e214a8bc93d70
-
 
         if [ $CI_VALIDATOR_ADDRESS ]; then
           if [ -z $CI_GENESIS_AMOUNT ];then
@@ -55,6 +56,14 @@ if [ ! -f $CI_HOME/config/genesis.json ]; then
             #./cid-linux add-genesis-shard "ci0:0;ci1:0;ci2:0"
         fi
 
+    else # second node
+        echo "---Create Validator----"
+        /opt/cid-linux gen-validator --home=$CI_HOME
+        CI_VALIDATOR_KEY=$(cat $CI_HOME/config/priv_validator_key.json | jq -r '.priv_key.value')
+        CI_PUBKEY=$(cat $CI_HOME/config/priv_validator_key.json | jq -r '.pub_key.value')
+        echo "export CI_VALIDATOR_KEY=$CI_VALIDATOR_KEY" >> /etc/profile
+        echo "export CI_PUBKEY=$CI_PUBKEY" >> /etc/profile
+        source /etc/profile
     fi
 else
     echo "---Found genesis file----"

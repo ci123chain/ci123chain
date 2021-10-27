@@ -38,6 +38,7 @@ func AddServerCommands(
 		AddGenesisAccountCmd(ctx, cdc),
 		AddGenesisValidatorCmd(ctx, cdc),
 		AddGenesisShardCmd(ctx, cdc),
+		genValidatorCmd(ctx),
 		testnetGenCmd(ctx, cdc, appInit),
 		testnetAddCmd(ctx, cdc, appInit),
 		bootstrapGenCmd(ctx, cdc, appInit),

@@ -1,12 +1,12 @@
 #!/bin/bash
 if [ -z $CI_HOME ];
 then
-   CI_HOME="/root/cid"
+   CI_HOME="/opt/ci123chain"
 fi
 
 if [ -z $CI_TOKENNAME ];
 then
-   CI_TOKENNAME="stake"
+   CI_TOKENNAME="WLK"
 fi
 
 CI_LOGDIR=$CI_HOME/logs

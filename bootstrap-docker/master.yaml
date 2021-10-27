@@ -20,17 +20,16 @@ services:
       CI_EXPORT: 1
 
       CI_CHAIN_ID: weelink
-      CI_ETH_CHAIN_ID: 1234
       IDG_HOST_26657: ci1
       IDG_HOST_8546: ci1
       IDG_HOST_80: ci1
       CI_STATEDB_HOST: raftleveldb_dev
       CI_STATEDB_PORT: 80
       CI_STATEDB_TLS: "false"
-      CI_HOME: /root/cid
+      CI_HOME: /opt/ci123chain
       CI_TOKENNAME: stake
       CI_VALIDATOR_KEY: qS4LtbZ9nxk/5HOpGBLQaMLWjzgrfd81VbrxoiQqgZkIvOle+S28kv+u8136PAfvqRDTRnuGVlIEmbFprIRRFg==
-      CI_PUBKEY: CLzpXvktvJL/rvNd+jwH76kQ00Z7hlZSBJmxaayEURY=
+#      CI_PUBKEY: CLzpXvktvJL/rvNd+jwH76kQ00Z7hlZSBJmxaayEURY=
     ports:
       - 26656:26656
       - 1310:80
