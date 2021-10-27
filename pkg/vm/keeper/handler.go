@@ -175,10 +175,13 @@ func handleMsgEthereumTx(ctx sdk.Context, k *Keeper, msg types.MsgEthereumTx) (*
 	// Verify signature and retrieve sender address
 	sender, err := msg.VerifySig(chainIDEpoch)
 	if err != nil {
+		k.Logger(ctx).Info("Handler evm invalid tx signature")
 		return nil, err
 	}
-	fmt.Printf("sender address: %s", sender.String())
-	fmt.Printf("to address: %s", msg.Data.Recipient.String())
+	k.Logger(ctx).Info("Handler evm tx", "sender", sender.String())
+	if msg.Data.Recipient != nil {
+		k.Logger(ctx).Info("Handler evm tx", "to", msg.Data.Recipient.String())
+	}
 	txHash := tmtypes.Tx(ctx.TxBytes()).Hash()
 	ethHash := common.BytesToHash(txHash)
 
@@ -213,6 +216,7 @@ func handleMsgEthereumTx(ctx sdk.Context, k *Keeper, msg types.MsgEthereumTx) (*
 
 	executionResult, err := st.TransitionDb(ctx, config)
 	if err != nil {
+		k.Logger(ctx).Error("Handler evm TransitionDb ", "err",  err.Error())
 		return nil, errors.New(fmt.Sprintf("err transitionDb: %s", err.Error()))
 	}
 
@@ -223,6 +227,7 @@ func handleMsgEthereumTx(ctx sdk.Context, k *Keeper, msg types.MsgEthereumTx) (*
 		// update transaction logs in KVStore
 		err = k.SetLogs(ctx, common.BytesToHash(txHash), executionResult.Logs)
 		if err != nil {
+			k.Logger(ctx).Error("Handler evm SetLogs ", "err",  err.Error())
 			panic(err)
 		}
 	}
