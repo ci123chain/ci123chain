@@ -73,26 +73,6 @@ func (k Keeper) GetModuleAccountAndPermissions(ctx sdk.Context, moduleName strin
 			macc.SetPermissions(perms)
 		}
 		return macc, perms
-
-		//if !ok {
-		//	nacc := types.NewModuleAccountFromBaseAccount(acc.(*account.BaseAccount), moduleName, perms...)
-		//	macc, ok = exported.Account(nacc).(exported.ModuleAccountI)
-		//	k.SetModuleAccount(ctx, macc)
-		//	return macc, perms
-		//}
-		//return macc, perms
-
-		//if !ok {
-		//	if ctx.BlockHeight() > 764650 {
-		//		nacc := types.NewModuleAccountFromBaseAccount(acc.(*account.BaseAccount), moduleName, perms...)
-		//		macc, ok = exported.Account(nacc).(exported.ModuleAccountI)
-		//		k.SetModuleAccount(ctx, macc)
-		//		return macc, perms
-		//	}else {
-		//		panic("account is not a module account")
-		//	}
-		//}
-		//return macc, perms
 	}
 
 	macc = types.NewEmptyModuleAccount(moduleName, perms...)
