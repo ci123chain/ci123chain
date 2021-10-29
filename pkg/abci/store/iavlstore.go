@@ -90,6 +90,11 @@ func newIAVLStore(db dbm.DB, tree *iavl.MutableTree, numRecent int64, storeEvery
 	return st
 }
 
+func (st *iavlStore) localMode() bool {
+	return st.mode == ModeSingle
+}
+
+
 // Implements Committer.
 func (st *iavlStore) Commit() CommitID {
 	// Save a new version.
@@ -175,19 +180,19 @@ func (st *iavlStore) Get(key []byte) (value []byte) {
 	//		logger.GetLogger().Error("iavlStore get value not matched!", "store", st.key.Name(), "key", string(key))
 	//	}
 	//}
-	switch st.mode {
-	case ModeMulti:
+
+	if !st.localMode() {
 		value = remoteValue
 		return
-	default:
-		if localValue != nil {
-			value = localValue
-		} else {
-			value = remoteValue
-		}
-		return
 	}
+	if localValue != nil {
+		value = localValue
+	} else {
+		value = remoteValue
+	}
+	return
 }
+
 
 // Implements KVStore.
 func (st *iavlStore) Has(key []byte) (exists bool) {
@@ -222,6 +227,9 @@ func (st *iavlStore) Parent() KVStore {
 
 // Implements KVStore.
 func (st *iavlStore) RemoteIterator(start, end []byte) Iterator {
+	if st.localMode() {
+		return st.Iterator(start, end)
+	}
 	p := st.Parent()
 	for {
 		if reflect.TypeOf(p) != reflect.TypeOf(dbStoreAdapter{}) {
