@@ -106,16 +106,18 @@ func replayBlock(ctx *app.Context) {
 	state, genDoc, err := node.LoadStateFromDBOrGenesisDocProvider(stateStoreDB, genesisDocProvider)
 	panicError(err)
 
-
 	// If startBlockHeight == 0 it means that we are at genesis and hence should initChain.
 	if currentBlockHeight == 0 {
 		err := initChain(state, stateStore, genDoc, proxyApp)
 		panicError(err)
 		state, _ = stateStore.Load()
+		// blockchain start at no-zero height
 		if state.InitialHeight > 0 {
 			currentBlockHeight = state.InitialHeight - 1
 		}
 	}
+	log.Println("current block height", "height", currentBlockHeight)
+	log.Println("current app hash", "appHash", fmt.Sprintf("%X", currentAppHash))
 
 	// replay
 	doReplay(ctx, state, stateStore, proxyApp, currentAppHash, currentBlockHeight)
@@ -206,9 +208,6 @@ func doReplay(ctx *app.Context, state sm.State, stateStoreDB sm.Store,
 		//blockExec.SetIsAsyncDeliverTx(viper.GetBool(sm.FlagParalleledTx))
 		state, _, err = blockExec.ApplyBlock(state, meta.BlockID, block)
 		panicError(err)
-		//if needSaveBlock {
-		//	SaveBlock(ctx, originBlockStore, height)
-		//}
 	}
 }
 
@@ -259,8 +258,6 @@ func initChain(state sm.State, stateStore sm.Store, genDoc *types.GenesisDoc, pr
 	}
 	return nil
 }
-
-
 
 func newMockProxyApp(appHash []byte, abciResponses *proto_type.ABCIResponses) proxy.AppConnConsensus {
 	clientCreator := proxy.NewLocalClientCreator(&mockProxyApp{
