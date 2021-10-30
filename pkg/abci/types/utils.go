@@ -3,6 +3,8 @@ package types
 import (
 	"encoding/binary"
 	"encoding/json"
+	"fmt"
+	dbm "github.com/tendermint/tm-db"
 	"time"
 
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
@@ -10,8 +12,21 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
+var (
+	// This is set at compile time. Could be cleveldb, defaults is goleveldb.
+	DBBackend = ""
+	backend   = dbm.GoLevelDBBackend
+)
 
-
+// NewLevelDB instantiate a new LevelDB instance according to DBBackend.
+func NewLevelDB(name, dir string) (db dbm.DB, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("couldn't create db: %v", r)
+		}
+	}()
+	return dbm.NewDB(name, backend, dir)
+}
 
 // SortedJSON takes any JSON and returns it sorted by keys. Also, all white-spaces
 // are removed.

@@ -17,6 +17,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/ibc"
 	porttypes "github.com/ci123chain/ci123chain/pkg/ibc/core/port/types"
 	infrastructure_module "github.com/ci123chain/ci123chain/pkg/infrastructure/module"
+	"github.com/ci123chain/ci123chain/pkg/logger"
 	mint_module "github.com/ci123chain/ci123chain/pkg/mint/module"
 	order_module "github.com/ci123chain/ci123chain/pkg/order/module"
 	ordertypes "github.com/ci123chain/ci123chain/pkg/order/types"
@@ -26,6 +27,7 @@ import (
 	supply_module "github.com/ci123chain/ci123chain/pkg/supply/module"
 	"github.com/ci123chain/ci123chain/pkg/util"
 	vm_module "github.com/ci123chain/ci123chain/pkg/vm/module"
+	"github.com/tendermint/tendermint/config"
 	tmtypes "github.com/tendermint/tendermint/proto/tendermint/types"
 	"io/ioutil"
 	"path/filepath"
@@ -89,7 +91,10 @@ const (
 )
 
 var (
-	// default home directories for expected binaries
+
+	GasPriceConfig 	*config.GasPriceConfig
+
+// default home directories for expected binaries
 	MainStoreKey     = sdk.NewKVStoreKey("main")
 	ContractStoreKey = sdk.NewKVStoreKey("contract")
 	TxIndexStoreKey  = sdk.NewTransientStoreKey("tx_index")
@@ -441,6 +446,9 @@ type AppGenTx struct {
 }
 
 func toRedisdb(cdb tmdb.DB) *redis.RedisDB {
+	if cdb == nil {
+		return nil
+	}
 	//odb := cdb.(*couchdb.GoCouchDB)
 	var nodeList []string
 	odb := cdb.(*redis.RedisDB)
@@ -469,6 +477,9 @@ func toRedisdb(cdb tmdb.DB) *redis.RedisDB {
 
 
 func handleCache(cdb tmdb.DB, cache string, cdc *codec.Codec, app *baseapp.BaseApp) error{
+	if cdb == nil {
+		return nil
+	}
 	var cacheMap []store.CacheMap
 	cacheFile, _ := ioutil.ReadFile(cache)
 	err := json.Unmarshal(cacheFile, &cacheMap)
@@ -510,3 +521,10 @@ func (app *Chain) RegisterTxService(clientCtx client.Context) {
 }
 
 var _ Application = (*Chain)(nil)
+
+
+
+func NewApp(lg log.Logger, ldb tmdb.DB, cdb tmdb.DB,traceStore io.Writer) Application{
+	logger.SetLogger(lg)
+	return NewChain(lg, ldb, cdb, traceStore, baseapp.SetGasPriceConfig(GasPriceConfig))
+}
