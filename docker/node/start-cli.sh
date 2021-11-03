@@ -9,6 +9,7 @@ then
    CI_ETH_CHAIN_ID=7880
 fi
 
+
 if [ -z $CI_TOKENNAME ];
 then
    CI_TOKENNAME="WLK"
@@ -20,6 +21,7 @@ if [ ! -d $CI_LOGDIR ]; then
 fi
 
 echo "export CI_ETH_CHAIN_ID=$CI_ETH_CHAIN_ID" >> /etc/profile
+echo "export CI_HOME=$CI_HOME" >> /etc/profile
 source /etc/profile
 
 /opt/cli-linux rest-server --laddr=tcp://0.0.0.0:80 >> $CI_LOGDIR/rest-output.log 2>&1
