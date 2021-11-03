@@ -621,7 +621,26 @@ func (b *EthBackend) GetBlockByNumber(blockNum rpctypes.BlockNumber, fullTx bool
 
 // GetBlockByHash returns the block identified by hash.
 func (b *EthBackend) GetBlockByHash(hash common.Hash, fullTx bool) (map[string]interface{}, error) {
-	return nil, nil
+	res, _, _, err := b.clientCtx.Query(fmt.Sprintf("custom/%s/%s/%s", evmtypes.ModuleName, evmtypes.QueryHashToHeight, hash.Hex()), nil, false)
+	if err != nil {
+		return nil, err
+	}
+
+	var out evmtypes.QueryResBlockNumber
+	if err := cdc.UnmarshalJSON(res, &out); err != nil {
+		return nil, err
+	}
+
+	resBlock, err := b.clientCtx.Client.Block(b.ctx, &out.Number)
+	if err != nil {
+		return nil, nil
+	}
+
+	var transactions []common.Hash
+	for _, tx := range resBlock.Block.Txs {
+		transactions = append(transactions, common.BytesToHash(tx.Hash()))
+	}
+	return rpctypes.EthBlockFromTendermint(b.clientCtx, resBlock.Block, transactions)
 }
 
 // HeaderByNumber returns the block header identified by height.
