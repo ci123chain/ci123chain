@@ -20,8 +20,8 @@ if [ ! -d $CI_LOGDIR ]; then
     mkdir -p $CI_LOGDIR
 fi
 # delay 1 second for cid
-sleep 1s
-echo "Loading CLI ENV"
+sleep 2s
+echo "---Loading CLI ENV---"
 echo "export CI_ETH_CHAIN_ID=$CI_ETH_CHAIN_ID" >> /etc/profile
 echo "export CI_HOME=$CI_HOME" >> /etc/profile
 source /etc/profile
