@@ -71,7 +71,7 @@ fi
 CI_VALIDATOR_KEY=$(cat $CI_HOME/config/priv_validator_key.json | jq -r '.priv_key.value')
 CI_PUBKEY=$(cat $CI_HOME/config/priv_validator_key.json | jq -r '.pub_key.value')
 
-echo "Loading CID ENV"
+echo "---Loading CID ENV---"
 echo "export CI_VALIDATOR_KEY=$CI_VALIDATOR_KEY" >> /etc/profile
 echo "export CI_PUBKEY=$CI_PUBKEY" >> /etc/profile
 echo "export CI_ETH_CHAIN_ID=$CI_ETH_CHAIN_ID" >> /etc/profile
