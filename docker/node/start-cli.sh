@@ -19,11 +19,12 @@ CI_LOGDIR=$CI_HOME/logs
 if [ ! -d $CI_LOGDIR ]; then
     mkdir -p $CI_LOGDIR
 fi
-
+# delay 1 second for cid
+sleep 1s
+echo "Loading CLI ENV"
 echo "export CI_ETH_CHAIN_ID=$CI_ETH_CHAIN_ID" >> /etc/profile
 echo "export CI_HOME=$CI_HOME" >> /etc/profile
 source /etc/profile
 
-# delay 1 second for cid
-sleep 1s
+
 /opt/cli-linux rest-server --laddr=tcp://0.0.0.0:80 >> $CI_LOGDIR/rest-output.log 2>&1
