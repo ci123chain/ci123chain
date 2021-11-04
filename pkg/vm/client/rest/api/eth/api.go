@@ -241,6 +241,31 @@ func (api *PublicEthereumAPI) GetBlockByNumber(blockNum BlockNumber, fullTx bool
 	return EthBlockFromTendermint(api.clientCtx, resBlock.Block, transactions)
 }
 
+// GetBlockByHash returns the block identified by hash.
+func (api *PublicEthereumAPI) GetBlockByHash(hash common.Hash, fullTx bool) (interface{}, error) {
+	api.logger.Debug("eth_getBlockByHash", "hash", hash, "full", fullTx)
+	res, _, _, err := api.clientCtx.Query(fmt.Sprintf("custom/%s/%s/%s", vmmodule.ModuleName, evmtypes.QueryHashToHeight, hash.Hex()), nil, false)
+	if err != nil {
+		return nil, err
+	}
+
+	var out evmtypes.QueryResBlockNumber
+	if err := cdc.UnmarshalJSON(res, &out); err != nil {
+		return nil, err
+	}
+
+	resBlock, err := api.clientCtx.Client.Block(api.ctx, &out.Number)
+	if err != nil {
+		return nil, nil
+	}
+
+	var transactions []common.Hash
+	for _, tx := range resBlock.Block.Txs {
+		transactions = append(transactions, common.BytesToHash(tx.Hash()))
+	}
+	return EthBlockFromTendermint(api.clientCtx, resBlock.Block, transactions)
+}
+
 // Accounts returns the list of accounts available to this node.
 func (api *PublicEthereumAPI) Accounts() ([]common.Address, error) {
 	api.logger.Debug("eth_accounts")
@@ -798,7 +823,7 @@ func (api *PublicEthereumAPI) EstimateGas(args CallArgs) (hexutil.Uint64, error)
 	// TODO: change 1000 buffer for more accurate buffer (eg: SDK's gasAdjusted)
 	estimatedGas := simResponse.GasUsed
 	api.logger.Debug("eth_estimateGas")
-	gas := estimatedGas + 10000000
+	gas := estimatedGas
 
 	return hexutil.Uint64(gas), nil
 }
