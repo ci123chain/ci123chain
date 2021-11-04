@@ -10,14 +10,14 @@ services:
       - master-slave
 
   ci0:
-    image: cichain:v0.0.1
-#    image: harbor.oneitfarm.com/itfarm-test/sal20000ad4588ae211027eaemv927i1:1.5.72
+#    image: cichain:v0.0.1
+    image: harbor.oneitfarm.com/itfarm-test/sal20000ad4588ae211103eaepwy48kt:1.5.75
     container_name: ci1
     hostname: ci1
     depends_on:
       - raftleveldb_dev
     environment:
-      CI_EXPORT: 1
+#      CI_EXPORT: 1
 
       CI_CHAIN_ID: weelink
       IDG_HOST_26657: ci1
@@ -27,7 +27,7 @@ services:
       CI_STATEDB_PORT: 80
       CI_STATEDB_TLS: "false"
       CI_TOKENNAME: stake
-      CI_VALIDATOR_KEY: qS4LtbZ9nxk/5HOpGBLQaMLWjzgrfd81VbrxoiQqgZkIvOle+S28kv+u8136PAfvqRDTRnuGVlIEmbFprIRRFg==
+#      CI_VALIDATOR_KEY: qS4LtbZ9nxk/5HOpGBLQaMLWjzgrfd81VbrxoiQqgZkIvOle+S28kv+u8136PAfvqRDTRnuGVlIEmbFprIRRFg==
 #      CI_PUBKEY: CLzpXvktvJL/rvNd+jwH76kQ00Z7hlZSBJmxaayEURY=
     ports:
       - 26656:26656
