@@ -86,4 +86,5 @@ if [ -f $CI_HOME/config/config.toml ]; then
 fi
 
 # start
+echo "---Start cid---"
 /opt/cid-linux start --home=$CI_HOME >> $CI_LOGDIR/cid-output.log 2>&1
