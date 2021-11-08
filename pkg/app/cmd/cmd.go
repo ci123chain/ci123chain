@@ -35,6 +35,8 @@ func AddServerCommands(
 		//createCmd(ctx),
 		ExportCmd(appExport, ctx.Config.RootDir),
 		startCmd(ctx, appCreator, cdc),
+		replayCmd(ctx),
+		repairStateCmd(ctx),
 		AddGenesisAccountCmd(ctx, cdc),
 		AddGenesisValidatorCmd(ctx, cdc),
 		AddGenesisShardCmd(ctx, cdc),
