@@ -59,6 +59,7 @@ if [ ! -f $CI_HOME/config/genesis.json ]; then
         fi
 
     else # second node
+        echo "---Second node----"
         echo "---Create Validator----"
         /opt/cid-linux gen-validator --home=$CI_HOME
     fi
