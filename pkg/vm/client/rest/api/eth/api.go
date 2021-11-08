@@ -24,6 +24,7 @@ import (
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/ethereum/go-ethereum/rpc"
+	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/log"
 	coretypes "github.com/tendermint/tendermint/rpc/core/types"
 	tmtypes "github.com/tendermint/tendermint/types"
@@ -497,6 +498,10 @@ func (api *PublicEthereumAPI) SendRawTransaction(data hexutil.Bytes) (common.Has
 		api.logger.Debug("eth_sendRawTransaction", "err", err)
 		return common.Hash{}, err
 	}
+	if res.Code != abci.CodeTypeOK {
+		return common.Hash{}, errors.New(res.RawLog)
+	}
+
 	api.logger.Debug("sendRawTransaction response log", "log", res.RawLog)
 
 	api.logger.Debug("return Transaction hash", "hash", res.TxHash)
