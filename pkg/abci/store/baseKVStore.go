@@ -115,7 +115,8 @@ func (ks *baseKVStore) CacheWrapWithTrace(w io.Writer, tc TraceContext) CacheWra
 
 // Implements KVStore.
 func (ks *baseKVStore) RemoteIterator(start, end []byte) Iterator {
-	return ks.iterator(start, end, true)
+	return ks.parent.RemoteIterator(start, end)
+	//return ks.iterator(start, end, true)
 }
 
 // Implements KVStore.

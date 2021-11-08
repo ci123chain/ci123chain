@@ -76,19 +76,26 @@ type iavlStore struct {
 
 // CONTRACT: tree should be fully loaded.
 // nolint: unparam
-func newIAVLStore(db dbm.DB, tree *iavl.MutableTree, numRecent int64, storeEvery int64, key sdk.StoreKey) *iavlStore {
+func newIAVLStore(remoteDB dbm.DB, tree *iavl.MutableTree, numRecent int64, storeEvery int64, key sdk.StoreKey) *iavlStore {
 	logger := logger.GetLogger()
 	st := &iavlStore{
 		tree:       tree,
 		numRecent:  numRecent,
 		storeEvery: storeEvery,
-		parent: 	NewBaseKVStore(dbStoreAdapter{db}, storeEvery, numRecent, key),
 		lg:         logger,
 		key:        key,
 		mode: 		viper.GetString(FlagRunMode),
 	}
+	if remoteDB != nil {
+		st.parent = NewBaseKVStore(dbStoreAdapter{remoteDB}, storeEvery, numRecent, key)
+	}
 	return st
 }
+
+func (st *iavlStore) localMode() bool {
+	return st.mode == ModeSingle || st.mode == ""
+}
+
 
 // Implements Committer.
 func (st *iavlStore) Commit() CommitID {
@@ -162,41 +169,38 @@ func (st *iavlStore) CacheWrapWithTrace(w io.Writer, tc TraceContext) CacheWrap 
 
 // Implements KVStore.
 func (st *iavlStore) Set(key, value []byte) {
-	st.parent.(KVStore).Set(key, value)
+	if st.parent != nil {
+		st.parent.(KVStore).Set(key, value)
+	}
 	st.tree.Set(key, value)
 }
 
 // Implements KVStore.
-func (st *iavlStore) Get(key []byte) (value []byte) {
-	remoteValue := st.parent.(KVStore).Get(key)
+func (st *iavlStore) Get(key []byte) []byte {
 	_, localValue := st.tree.Get(key)
-	//if localValue != nil {
-	//	if !bytes.Equal(remoteValue, localValue) {
-	//		logger.GetLogger().Error("iavlStore get value not matched!", "store", st.key.Name(), "key", string(key))
-	//	}
-	//}
-	switch st.mode {
-	case ModeMulti:
-		value = remoteValue
-		return
-	default:
-		if localValue != nil {
-			value = localValue
-		} else {
-			value = remoteValue
-		}
-		return
+
+	if !st.localMode() {
+		remoteValue := st.parent.(KVStore).Get(key)
+		return remoteValue
 	}
+
+	return localValue
 }
+
 
 // Implements KVStore.
 func (st *iavlStore) Has(key []byte) (exists bool) {
-	return st.parent.(KVStore).Has(key)
+	if st.parent != nil {
+		return st.parent.(KVStore).Has(key)
+	}
+	return false
 }
 
 // Implements KVStore.
 func (st *iavlStore) Delete(key []byte) {
-	st.parent.(KVStore).Delete(key)
+	if st.parent != nil {
+		st.parent.(KVStore).Delete(key)
+	}
 	st.tree.Remove(key)
 }
 
@@ -217,12 +221,18 @@ func (st *iavlStore) Latest(keys []string) KVStore {
 
 // Implements KVStore
 func (st *iavlStore) Parent() KVStore {
+	if st.parent == nil {
+		return nil
+	}
 	return st.parent.(KVStore)
 }
 
 // Implements KVStore.
 func (st *iavlStore) RemoteIterator(start, end []byte) Iterator {
 	p := st.Parent()
+	if st.localMode() || p == nil {
+		return st.Iterator(start, end)
+	}
 	for {
 		if reflect.TypeOf(p) != reflect.TypeOf(dbStoreAdapter{}) {
 			p = p.Parent()

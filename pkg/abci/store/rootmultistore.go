@@ -228,7 +228,11 @@ func (rs *rootMultiStore) Commit() CommitID {
 	if _, err := os.Stat(cacheName); os.IsNotExist(err) {
 		for _, store := range rs.stores {
 			if reflect.TypeOf(store).Elem() == reflect.TypeOf(iavlStore{}){
-				s := store.(*iavlStore).Parent().(*baseKVStore).GetCache()
+				remote := store.(*iavlStore).Parent()
+				if remote == nil {
+					continue
+				}
+				s := remote.(*baseKVStore).GetCache()
 				for k, v := range s{
 					cacheMap = append(cacheMap, CacheMap{
 						Key:   []byte(k),
@@ -263,13 +267,16 @@ func (rs *rootMultiStore) Commit() CommitID {
 	os.Remove(cacheName)
 
 	//done
-	var orderBook order.OrderBook
-	cdb := dbm.NewPrefixDB(rs.cdb, []byte("s/k:"+order.StoreKey+"/"))
-	orderBytes, _ := cdb.Get([]byte(order.OrderBookKey))
-	order.ModuleCdc.UnmarshalJSON(orderBytes, &orderBook)
-	orderBook.Current.State = order.StateDone
-	orderBytes, _ = order.ModuleCdc.MarshalJSON(orderBook)
-	cdb.Set([]byte(order.OrderBookKey), orderBytes)
+	if rs.cdb != nil {
+		var orderBook order.OrderBook
+		cdb := dbm.NewPrefixDB(rs.cdb, []byte("s/k:"+order.StoreKey+"/"))
+		orderBytes, _ := cdb.Get([]byte(order.OrderBookKey))
+		order.ModuleCdc.UnmarshalJSON(orderBytes, &orderBook)
+		orderBook.Current.State = order.StateDone
+		orderBytes, _ = order.ModuleCdc.MarshalJSON(orderBook)
+		cdb.Set([]byte(order.OrderBookKey), orderBytes)
+	}
+
 
 	// Prepare for next version.
 	commitID := CommitID{
@@ -411,7 +418,9 @@ func (rs *rootMultiStore) loadCommitStoreFromParams(key sdk.StoreKey, id CommitI
 		cdb = rs.cdb
 	} else {
 		ldb = dbm.NewPrefixDB(rs.ldb, []byte("s/k:"+params.key.Name()+"/"))
-		cdb = dbm.NewPrefixDB(rs.cdb, []byte("s/k:"+params.key.Name()+"/"))
+		if rs.cdb != nil {
+			cdb = dbm.NewPrefixDB(rs.cdb, []byte("s/k:"+params.key.Name()+"/"))
+		}
 	}
 
 	switch params.typ {
@@ -619,6 +628,9 @@ func (rs *rootMultiStore) commitStores(version int64, storeMap map[StoreKey]Comm
 }
 
 func (rs *rootMultiStore) commitSharedDB(cacheMap []CacheMap) {
+	if rs.cdb == nil {
+		return
+	}
 	batch := rs.cdb.NewBatch()
 	defer batch.Close()
 	for _, cache := range cacheMap {

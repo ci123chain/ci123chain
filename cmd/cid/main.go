@@ -1,26 +1,19 @@
 package main
 
 import (
-	"github.com/ci123chain/ci123chain/pkg/abci/baseapp"
 	"github.com/ci123chain/ci123chain/pkg/app"
 	"github.com/ci123chain/ci123chain/pkg/app/cmd"
 	types2 "github.com/ci123chain/ci123chain/pkg/app/types"
-	"github.com/ci123chain/ci123chain/pkg/logger"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/tendermint/tendermint/config"
 	"github.com/tendermint/tendermint/libs/cli"
-	"github.com/tendermint/tendermint/libs/log"
-	"github.com/tendermint/tm-db"
-	"io"
 	"os"
 )
 
 const (
-	appName = "ci123"
+
 	DefaultConfDir = "$HOME/.ci123"
 	flagLogLevel = "log_level"
-	HomeFlag     = "home"
 	//logDEBUG     = "main:debug,state:debug,ibc:debug,*:error"
 	logINFO      = "state:debug,x/staking:info,x/preStaking:info,x/ibc/client:info,x/ibc/connection:info,x/ibc/channel:info,x/gravity:info,x/supply:info,*:error"
 	logDEBUG      = "*:debug"
@@ -29,12 +22,11 @@ const (
 	logNONE      = "*:none"
 )
 
-var gasPriceConfig *config.GasPriceConfig
 
 func main()  {
 	cobra.EnableCommandSorting = false
 	ctx := app.NewDefaultContext()
-	gasPriceConfig = ctx.Config.GasPrice
+	app.GasPriceConfig = ctx.Config.GasPrice
 	rootCmd := &cobra.Command{
 		Use: 	 "ci123",
 		Short:  "ci123 node",
@@ -52,22 +44,19 @@ func main()  {
 			return app.SetupContext(ctx, logINFO)
 		},
 	}
-	rootCmd.Flags().String(HomeFlag, "", "directory for configs and data")
+	rootCmd.Flags().String(app.HomeFlag, DefaultConfDir, "directory for configs and data")
 	rootCmd.Flags().String(flagLogLevel, "info", "Run abci app with different log level")
 	rootCmd.PersistentFlags().String("log_level", ctx.Config.LogLevel, "log level")
 
-	rootDir := os.ExpandEnv(DefaultConfDir)
-	if len(viper.GetString(HomeFlag)) > 0 {
-		rootDir = os.ExpandEnv(viper.GetString(HomeFlag))
-	}
+	rootDir := os.ExpandEnv(viper.GetString(app.HomeFlag))
 	ctx.Config.SetRoot(rootDir)
 	cmd.AddServerCommands(
 		ctx,
 		types2.GetCodec(),
 		rootCmd,
 		app.NewAppInit(),
-		app.ConstructAppCreator(newApp, appName),
-		app.ConstructAppExporter(appName),
+		app.ConstructAppCreator(app.NewApp, app.AppName),
+		app.ConstructAppExporter(app.AppName),
 		)
 	viper.SetEnvPrefix("CI")
 	viper.BindPFlags(rootCmd.Flags())
@@ -81,10 +70,6 @@ func main()  {
 	exector.Execute()
 }
 
-func newApp(lg log.Logger, ldb db.DB, cdb db.DB,traceStore io.Writer) app.Application{
-	logger.SetLogger(lg)
-	return app.NewChain(lg, ldb, cdb, traceStore, baseapp.SetGasPriceConfig(gasPriceConfig))
-}
 
 //func exportAppState(lg log.Logger, ldb db.DB, cdb db.DB, traceStore io.Writer) (json.RawMessage, []types.GenesisValidator, error) {
 //	logger.SetLogger(lg)
