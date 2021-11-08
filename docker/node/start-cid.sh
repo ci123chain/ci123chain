@@ -78,12 +78,17 @@ echo "export CI_VALIDATOR_KEY=$CI_VALIDATOR_KEY" >> /etc/profile
 echo "export CI_PUBKEY=$CI_PUBKEY" >> /etc/profile
 echo "export CI_ETH_CHAIN_ID=$CI_ETH_CHAIN_ID" >> /etc/profile
 echo "export CI_NODE_ADDRESS=$CI_NODE_ADDRESS" >> /etc/profile
+echo "export CI_HOME=$CI_HOME" >> /etc/profile
+
 source /etc/profile
 
 
 if [ -f $CI_HOME/config/config.toml ]; then
     sed "s/max_subscriptions_per_client = 5/max_subscriptions_per_client = 20/" $CI_HOME/config/config.toml
 fi
+
+echo "---Start cli---"
+nohup /opt/cli-linux rest-server --laddr=tcp://0.0.0.0:80 >> $CI_LOGDIR/rest-output.log 2>&1 &
 
 # start
 echo "---Start cid---"
