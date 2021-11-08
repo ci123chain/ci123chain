@@ -40,7 +40,6 @@ if [ ! -f $CI_HOME/config/genesis.json ]; then
 
         CI_VALIDATOR_KEY=$(cat $CI_HOME/config/priv_validator_key.json | jq -r '.priv_key.value')
         CI_PUBKEY=$(cat $CI_HOME/config/priv_validator_key.json | jq -r '.pub_key.value')
-        CI_NODE_ADDRESS=$(cat $CI_HOME/config/priv_validator_key.json | jq -r '.address')
 
         /opt/cid-linux add-genesis-account 0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c 10000000000000000000000000000 --home=$CI_HOME
 
@@ -71,6 +70,7 @@ fi
 
 CI_VALIDATOR_KEY=$(cat $CI_HOME/config/priv_validator_key.json | jq -r '.priv_key.value')
 CI_PUBKEY=$(cat $CI_HOME/config/priv_validator_key.json | jq -r '.pub_key.value')
+CI_NODE_ADDRESS=$(cat $CI_HOME/config/priv_validator_key.json | jq -r '.address')
 
 echo "---Loading CID ENV---"
 echo "export CI_VALIDATOR_KEY=$CI_VALIDATOR_KEY" >> /etc/profile
