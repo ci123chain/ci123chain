@@ -113,7 +113,10 @@ func NewResponseResultTx(res *ctypes.ResultTx, tx Tx, timestamp string) TxRespon
 		return TxResponse{}
 	}
 
-	parsedLogs, _ := ParseABCILogs(res.TxResult.Log)
+	parsedLogs, err := ParseABCILogs(res.TxResult.Log)
+	if err != nil {
+		parsedLogs = []ABCIMessageLog{NewABCIMessageLog(0, false, res.TxResult.Log, nil)}
+	}
 	var code = res.TxResult.Code
 
 	return TxResponse{

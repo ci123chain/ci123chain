@@ -32,11 +32,11 @@ func NewMsgCreateValidator(from types.AccAddress, minSelfDelegation types.Int, v
 	}
 }
 
-func (msg *MsgPrestakingCreateValidator) Route() string {return RouteKey}
+func (msg MsgPrestakingCreateValidator) Route() string {return RouteKey}
 
-func (msg *MsgPrestakingCreateValidator) MsgType() string {return "create-validator"}
+func (msg MsgPrestakingCreateValidator) MsgType() string {return "create-validator"}
 
-func (msg *MsgPrestakingCreateValidator) ValidateBasic() error {
+func (msg MsgPrestakingCreateValidator) ValidateBasic() error {
 	// note that unmarshaling from bech32 ensures either empty or valid
 	if msg.DelegatorAddress.Empty() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "empty delegator address")
@@ -66,9 +66,9 @@ func (msg *MsgPrestakingCreateValidator) ValidateBasic() error {
 	return nil
 }
 
-func (msg *MsgPrestakingCreateValidator) GetFromAddress() types.AccAddress { return msg.FromAddress}
+func (msg MsgPrestakingCreateValidator) GetFromAddress() types.AccAddress { return msg.FromAddress}
 
-func (msg *MsgPrestakingCreateValidator) Bytes() []byte {
+func (msg MsgPrestakingCreateValidator) Bytes() []byte {
 	bytes, err := PreStakingCodec.MarshalBinaryLengthPrefixed(msg)
 	if err != nil {
 		panic(err)
