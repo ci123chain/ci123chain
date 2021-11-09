@@ -20,11 +20,11 @@ func NewMsgPreStaking(from sdk.AccAddress, amount sdk.Coin, dt time.Duration) *M
 	}
 }
 
-func (msg *MsgPreStaking) Route() string { return ModuleName }
+func (msg MsgPreStaking) Route() string { return ModuleName }
 
-func (msg *MsgPreStaking) MsgType() string { return "pre-staking" }
+func (msg MsgPreStaking) MsgType() string { return "pre-staking" }
 
-func (msg *MsgPreStaking) ValidateBasic() error {
+func (msg MsgPreStaking) ValidateBasic() error {
 	if msg.FromAddress.Empty() {
 		return sdkerrors.Wrap(sdkerrors.ErrParams, "from address can not empty")
 	}
@@ -38,9 +38,9 @@ func (msg *MsgPreStaking) ValidateBasic() error {
 }
 
 
-func (msg *MsgPreStaking) GetFromAddress() sdk.AccAddress { return msg.FromAddress}
+func (msg MsgPreStaking) GetFromAddress() sdk.AccAddress { return msg.FromAddress}
 
-func (msg *MsgPreStaking) Bytes() []byte{
+func (msg MsgPreStaking) Bytes() []byte{
 	bytes, err := PreStakingCodec.MarshalBinaryLengthPrefixed(msg)
 	if err != nil {
 		panic(err)

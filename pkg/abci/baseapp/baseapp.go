@@ -32,6 +32,7 @@ import (
 	distypes "github.com/ci123chain/ci123chain/pkg/distribution/types"
 	iftypes "github.com/ci123chain/ci123chain/pkg/infrastructure/types"
 	ordertypes "github.com/ci123chain/ci123chain/pkg/order/types"
+	prestakingtype "github.com/ci123chain/ci123chain/pkg/pre_staking/types"
 	"github.com/ci123chain/ci123chain/pkg/snapshots"
 	snapshottypes "github.com/ci123chain/ci123chain/pkg/snapshots/types"
 	staktypes "github.com/ci123chain/ci123chain/pkg/staking/types"
@@ -1183,22 +1184,22 @@ func allMsgAttributes(msgs []sdk.Msg) [][]sdk.Attribute {
 		case *staktypes.MsgEditValidator:
 			operation = "edit_validator"
 			module = staktypes.AttributeValueCategory
-		case *staktypes.MsgCreateValidator:
-			operation = "create_validator"
-			amount = vt.Value.Amount.String()
-			module = staktypes.AttributeValueCategory
-		case *staktypes.MsgDelegate:
-			operation = "delegate"
-			amount = vt.Amount.Amount.String()
-			module = staktypes.AttributeValueCategory
-		case *staktypes.MsgRedelegate:
-			operation = "redelegate"
-			amount = vt.Amount.Amount.String()
-			module = staktypes.AttributeValueCategory
-		case *staktypes.MsgUndelegate:
-			operation = "undelegate"
-			amount = vt.Amount.Amount.String()
-			module = staktypes.AttributeValueCategory
+		//case *staktypes.MsgCreateValidator:
+		//	operation = "create_validator"
+		//	amount = vt.Value.Amount.String()
+		//	module = staktypes.AttributeValueCategory
+		//case *staktypes.MsgDelegate:
+		//	operation = "delegate"
+		//	amount = vt.Amount.Amount.String()
+		//	module = staktypes.AttributeValueCategory
+		//case *staktypes.MsgRedelegate:
+		//	operation = "redelegate"
+		//	amount = vt.Amount.Amount.String()
+		//	module = staktypes.AttributeValueCategory
+		//case *staktypes.MsgUndelegate:
+		//	operation = "undelegate"
+		//	amount = vt.Amount.Amount.String()
+		//	module = staktypes.AttributeValueCategory
 		case *wasmtypes.MsgExecuteContract:
 			operation = "invoke_contract"
 			receiver = vt.Contract.String()
@@ -1239,6 +1240,18 @@ func allMsgAttributes(msgs []sdk.Msg) [][]sdk.Attribute {
 			if r != nil {
 				receiver = r.String()
 			}
+		case *prestakingtype.MsgPreStaking:
+			operation = "pre_staking"
+			module = prestakingtype.StoreKey
+		case *prestakingtype.MsgPrestakingCreateValidator:
+			operation = "create_validator"
+			module = prestakingtype.StoreKey
+		case *prestakingtype.MsgRedelegate:
+			operation = "redelegate"
+			module = prestakingtype.StoreKey
+		case *prestakingtype.MsgStaking:
+			operation = "staking"
+			module = prestakingtype.StoreKey
 		}
 
 		attrs = sdk.NewAttributes(attrs,
