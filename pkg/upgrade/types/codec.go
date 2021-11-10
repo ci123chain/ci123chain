@@ -14,4 +14,6 @@ func init(){
 func RegisterCodec(cdc *codec.Codec) {
 	//
 	cdc.RegisterConcrete(&Plan{}, "ci123chain/Plan", nil)
+	cdc.RegisterConcrete(&SoftwareUpgradeProposal{}, "ci123chain/SoftwareUpgradeProposal", nil)
+	cdc.RegisterConcrete(&CancelSoftwareUpgradeProposal{}, "ci123chain/CancelSoftwareUpgradeProposal", nil)
 }

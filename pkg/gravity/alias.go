@@ -1,8 +1,8 @@
 package gravity
 
 import (
-	"github.com/ci123chain/ci123chain/pkg/gravity/types"
 	k "github.com/ci123chain/ci123chain/pkg/gravity/keeper"
+	"github.com/ci123chain/ci123chain/pkg/gravity/types"
 )
 
 const (
@@ -14,4 +14,8 @@ const (
 var (
 	NewKeeper = k.NewKeeper
 	NewQuerier = k.NewQuerier
+)
+
+type (
+	Keeper = k.Keeper
 )

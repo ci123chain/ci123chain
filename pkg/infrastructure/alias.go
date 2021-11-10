@@ -31,4 +31,5 @@ var (
 
 type (
 	GenesisState = types.GenesisState
+	Keeper = keeper.InfrastructureKeeper
 )

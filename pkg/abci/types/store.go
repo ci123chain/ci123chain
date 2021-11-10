@@ -326,6 +326,16 @@ func NewKVStoreKey(name string) *KVStoreKey {
 	}
 }
 
+// NewKVStoreKeys returns a map of new  pointers to KVStoreKey's.
+// Uses pointers so keys don't collide.
+func NewKVStoreKeys(names ...string) map[string]*KVStoreKey {
+	keys := make(map[string]*KVStoreKey)
+	for _, name := range names {
+		keys[name] = NewKVStoreKey(name)
+	}
+	return keys
+}
+
 func (key *KVStoreKey) Name() string {
 	return key.name
 }
@@ -379,6 +389,17 @@ func NewTransientStoreKey(name string) *TransientStoreKey {
 		name: name,
 	}
 }
+
+// NewTransientStoreKeys constructs a new map of TransientStoreKey's
+// Must return pointers according to the ocap principle
+func NewTransientStoreKeys(names ...string) map[string]*TransientStoreKey {
+	keys := make(map[string]*TransientStoreKey)
+	for _, name := range names {
+		keys[name] = NewTransientStoreKey(name)
+	}
+	return keys
+}
+
 
 // Implements StoreKey
 func (key *TransientStoreKey) Name() string {

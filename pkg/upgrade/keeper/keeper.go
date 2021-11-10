@@ -113,8 +113,8 @@ func (k Keeper) ApplyUpgrade(ctx sdk.Context, plan types.Plan) {
 	if handler == nil {
 		panic("ApplyUpgrade should never be called without first checking HasHandler")
 	}
-
-	handler(ctx, plan)
+	bz := k.cdc.MustMarshalJSON(plan)
+	handler(ctx, bz)
 
 	k.ClearUpgradePlan(ctx)
 	k.setDone(ctx, plan.Name)

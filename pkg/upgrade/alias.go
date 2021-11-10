@@ -5,6 +5,8 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/upgrade/types"
 )
 
+
+
 const (
 	ModuleName                        = types.ModuleName
 	RouterKey                         = types.RouterKey
@@ -12,6 +14,8 @@ const (
 	QuerierKey                        = types.QuerierKey
 	PlanByte                          = types.PlanByte
 	DoneByte                          = types.DoneByte
+
+	InnerAccount 					 = "0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c"
 )
 
 var (

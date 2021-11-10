@@ -24,12 +24,19 @@ func NewSoftwareUpgradeProposalHandler(k Keeper) sdk.Handler {
 }
 
 func handleSoftwareUpgradeProposal(ctx sdk.Context, k Keeper, p types.SoftwareUpgradeProposal) (*sdk.Result, error) {
+	if p.Proposer.String() != InnerAccount {
+		return nil, types.ErrPermission
+	}
 	err := k.ScheduleUpgrade(ctx, p.Plan)
-	return nil, err
+	return &sdk.Result{}, err
 }
 
 func handleCancelSoftwareUpgradeProposal(ctx sdk.Context, k Keeper, p types.CancelSoftwareUpgradeProposal) (*sdk.Result, error) {
+	if p.Proposer.String() != InnerAccount {
+		return nil, types.ErrPermission
+	}
+
 	k.ClearUpgradePlan(ctx)
-	return nil, nil
+	return &sdk.Result{}, nil
 }
 

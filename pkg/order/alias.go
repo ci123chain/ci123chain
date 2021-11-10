@@ -12,7 +12,6 @@ var (
 	RegisterTxRoutes 		= rest.RegisterTxRoutes
 	//ErrQueryTx				= types.ErrQueryTx
 	NewMsgUpgrade           = types.NewMsgUpgrade
-	StoreKey				= types.StoreKey
 
 	//EventType                = types.EventType
 	//AttributeValueCategory  = types.AttributeValueCategory
@@ -20,6 +19,7 @@ var (
 )
 
 const (
+	StoreKey  = types.ModuleName
 	ModuleName = types.ModuleName
 	RouteKey = types.ModuleName
 )

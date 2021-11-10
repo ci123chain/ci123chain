@@ -7,6 +7,7 @@ import (
 )
 
 const (
+	StoreKey = "distr"
 	DefaultCodespace = types.DefaultParamspace
 	ModuleName = types.ModuleName
 	RouteKey = types.ModuleName
@@ -18,9 +19,11 @@ var (
 	ModuleCdc 	= types.DistributionCdc
 	NewQuerier = keeper.NewQuerier
 	NewHandler = h.NewHandler
+	NewKeeper = keeper.NewKeeper
 )
 
 type (
+	Keeper = keeper.DistrKeeper
 	GenesisState 	= types.GenesisState
 )
 
