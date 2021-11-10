@@ -42,6 +42,7 @@ import (
 	pRest "github.com/ci123chain/ci123chain/pkg/pre_staking/client/rest"
 	slashRest "github.com/ci123chain/ci123chain/pkg/slashing/client/rest"
 	sRest "github.com/ci123chain/ci123chain/pkg/staking/client/rest"
+	upRest "github.com/ci123chain/ci123chain/pkg/upgrade/client/rest"
 	wRest "github.com/ci123chain/ci123chain/pkg/vm/client/rest"
 	"github.com/gorilla/mux"
 
@@ -143,7 +144,7 @@ func NewRestServer() *RestServer {
 	gRest.RegisterRoutes(cliCtx, r, gravity.StoreKey)
 	pRest.RegisterRoutes(cliCtx, r)
 	slashRest.RegisterRoutes(cliCtx, r)
-
+	upRest.RegisterRoutes(cliCtx, r)
 	ibctransferRest.RegisterRoutes(cliCtx, r)
 	ibccore.RegisterRoutes(cliCtx, r)
 

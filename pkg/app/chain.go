@@ -240,6 +240,8 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer,
 	ibcRouter.AddRoute(ibctransfertypes.ModuleName, ibcTransferModule)
 	IBCKeeper.SetRouter(ibcRouter)
 
+	
+
 	{ // setup module
 		moduleNameOrder := []string{
 			auth_types.ModuleName,
