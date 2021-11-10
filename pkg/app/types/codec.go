@@ -11,6 +11,7 @@ import (
 	infratypes "github.com/ci123chain/ci123chain/pkg/infrastructure/types"
 	"github.com/ci123chain/ci123chain/pkg/transaction"
 	"github.com/ci123chain/ci123chain/pkg/transfer"
+	"github.com/ci123chain/ci123chain/pkg/upgrade"
 	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/crypto/encoding/amino"
 )
@@ -42,6 +43,7 @@ func GetCodec() *codec.Codec {
 		transfer.RegisterCodec(cdc)
 		module.ModuleBasics.RegisterCodec(cdc)
 		infratypes.RegisterCodec(cdc)
+		upgrade.RegisterCodec(cdc)
 		cryptoAmino.RegisterAmino(cdc)
 	}
 	return cdc

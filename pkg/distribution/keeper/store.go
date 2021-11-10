@@ -31,7 +31,6 @@ type DistrKeeper struct {
 var (
 	ValidatorCurrentRewardsPrefix = []byte("val")
 	ValidatorsInfoPrefix = []byte("vals")
-	DisrtKey = "distr"
 )
 
 // create a new keeper

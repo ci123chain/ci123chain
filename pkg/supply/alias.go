@@ -10,18 +10,15 @@ type (
 	GenesisState = types.GenesisState
 )
 
-var (
+var  (
 	NewKeeper = keeper.NewKeeper
-	StoreKey  = types.ModuleName
-
-	ModuleName = types.ModuleName
-
 	RegisterCodec = types.RegisterCodec
-
 	ModuleCdc   = types.ModuleCdc
 )
 
 const (
+	StoreKey  = types.ModuleName
+	ModuleName = types.ModuleName
 	Minter   = types.Minter
 	Burner   = types.Burner
 	Staking  = types.Staking

@@ -25,3 +25,7 @@ var (
 	NewExecuteTx = types.NewMsgExecuteContract
 	NewMigrateTx = types.NewMsgMigrateContract
 )
+
+type (
+	Keeper = keeper.Keeper
+)

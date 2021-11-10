@@ -14,6 +14,7 @@ import (
 	types2 "github.com/ci123chain/ci123chain/pkg/account/types"
 	"github.com/ci123chain/ci123chain/pkg/params"
 	keeper2 "github.com/ci123chain/ci123chain/pkg/staking/keeper"
+	"github.com/ci123chain/ci123chain/pkg/upgrade"
 	"github.com/ci123chain/ci123chain/pkg/vm/evmtypes"
 	vmmodule "github.com/ci123chain/ci123chain/pkg/vm/moduletypes"
 	"github.com/ci123chain/ci123chain/pkg/vm/moduletypes/utils"
@@ -24,7 +25,6 @@ import (
 	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/pkg/errors"
 	"github.com/tendermint/tendermint/libs/log"
-	dbm "github.com/tendermint/tm-db"
 	"github.com/wasmerio/wasmer-go/wasmer"
 	"io/ioutil"
 	"math/big"
@@ -45,6 +45,7 @@ type Keeper struct {
 	homeDir				string
 	AccountKeeper 		account.AccountKeeper
 	StakingKeeper       keeper2.StakingKeeper
+	UpgradeKeeper 		upgrade.Keeper
 	// Ethermint concrete implementation on the EVM StateDB interface
 	CommitStateDB 		*evmtypes.CommitStateDB
 	// Transaction counter in a block. Used on StateSB's Prepare function.
@@ -52,11 +53,10 @@ type Keeper struct {
 	// on the KVStore or adding it as a field on the EVM genesis state.
 	TxCount 			int
 	Bloom   			*big.Int
-	cdb					dbm.DB
 }
 
-func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, homeDir string, wasmConfig types.WasmConfig, paramSpace params.Subspace, accountKeeper account.AccountKeeper, stakingKeeper keeper2.StakingKeeper, cdb dbm.DB) Keeper {
-	wasmer, err := NewWasmer(homeDir, wasmConfig)
+func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, homeDir string, paramSpace params.Subspace, accountKeeper account.AccountKeeper, stakingKeeper keeper2.StakingKeeper, upgradeKeeper upgrade.Keeper) Keeper {
+	wasmer, err := NewWasmer(homeDir)
 	if err != nil {
 		panic(err)
 	}
@@ -72,12 +72,14 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, homeDir string, wasmConf
 		homeDir:       homeDir,
 		AccountKeeper: accountKeeper,
 		StakingKeeper: stakingKeeper,
+		UpgradeKeeper: upgradeKeeper,
 		CommitStateDB: evmtypes.NewCommitStateDB(sdk.Context{}, storeKey, paramSpace, accountKeeper),
 		TxCount:       0,
 		Bloom:         big.NewInt(0),
-		cdb:		   cdb,
 	}
-
+	upgradeKeeper.SetUpgradeHandler("v1.2.2", func(ctx sdk.Context, plan []byte) {
+		fmt.Println("v1.2.2 upgarad ok", plan)
+	})
 	return wk
 }
 

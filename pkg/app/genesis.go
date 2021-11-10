@@ -37,7 +37,7 @@ func (c *Chain) InitChainer (ctx sdk.Context, req tmabci.RequestInitChain) tmabc
 		return tmabci.ResponseInitChain{}
 	} else {
 		var genesisState GenesisState
-		store := ctx.KVStore(c.capKeyMainStore)
+		store := ctx.KVStore(keys[StoreKey])
 		isInitChain := store.Get([]byte(INITCHAINKEY))
 		if isInitChain != nil {
 			return tmabci.ResponseInitChain{}

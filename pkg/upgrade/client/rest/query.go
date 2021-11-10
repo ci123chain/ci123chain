@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"encoding/binary"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
@@ -42,7 +43,7 @@ func upgradeCurrentQueryHandleFn(cliCtx context.Context, r *mux.Router) http.Han
 			return
 		}
 		if len(res) < 1 {
-			rest.WriteErrorRes(writer, fmt.Sprintf("unexpected res: %v", res))
+			rest.WriteErrorRes(writer, fmt.Sprintf("current no plan "))
 			return
 		}
 		var plan types.Plan
@@ -78,20 +79,24 @@ func upgradeAppliedQueryHandleFn(cliCtx context.Context, r *mux.Router) http.Han
 		}
 		param := types.QueryAppliedParams{Name: name}
 		b := cliCtx.Cdc.MustMarshalJSON(param)
-		res, _, proof, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryCurrent, b, isProve)
+		res, _, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.QueryApplied, b, isProve)
 		if err != nil {
 			rest.WriteErrorRes(writer, err.Error())
 			return
 		}
-		if len(res) < 1 {
-			rest.WriteErrorRes(writer, fmt.Sprintf("unexpected res: %v", res))
+
+		if len(res) == 0 {
+			http.NotFound(writer, request)
 			return
 		}
-		var plan types.Plan
-		cliCtx.Cdc.MustUnmarshalJSON(res, &plan)
-		value := plan
-		resp := rest.BuildQueryRes(height, isProve, value, proof)
-		rest.PostProcessResponseBare(writer, cliCtx, resp)
+		if len(res) != 8 {
+			rest.WriteErrorRes(writer, "unknown format for applied-upgrade")
+		}
+
+		applied := int64(binary.BigEndian.Uint64(res))
+		fmt.Println(applied)
+		rest.PostProcessResponseBare(writer, cliCtx, applied)
+
 	}
 }
 

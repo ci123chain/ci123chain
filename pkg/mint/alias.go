@@ -25,6 +25,6 @@ var (
 )
 
 type (
-	Keeper keeper.MinterKeeper
+	Keeper = keeper.MinterKeeper
 	GenesisState types.GenesisState
 )

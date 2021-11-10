@@ -291,6 +291,15 @@ func (app *BaseApp) MountStoresIAVL(keys ...*sdk.KVStoreKey) {
 	}
 }
 
+// MountStores mounts all IAVL or DB stores to the provided keys in the BaseApp
+// multistore.
+func (app *BaseApp) MountKVStores(keys map[string]*sdk.KVStoreKey) {
+	for _, key := range keys {
+		app.MountStore(key, sdk.StoreTypeIAVL)
+	}
+}
+
+
 func (app *BaseApp) MountStoreMemory(keys map[string]*sdk.MemoryStoreKey) {
 	for _, key := range keys {
 		app.MountStore(key, sdk.StoreTypeMemory)
@@ -298,7 +307,7 @@ func (app *BaseApp) MountStoreMemory(keys map[string]*sdk.MemoryStoreKey) {
 }
 
 // Mount stores to the provided keys in the BaseApp multistore
-func (app *BaseApp) MountStoresTransient(keys ...*sdk.TransientStoreKey) {
+func (app *BaseApp) MountKVStoresTransient(keys map[string]*sdk.TransientStoreKey) {
 	for _, key := range keys {
 		app.MountStore(key, sdk.StoreTypeTransient)
 	}

@@ -89,7 +89,7 @@ type Wasmer struct {
 	LastFileID   int				`json:"last_file_id"`
 }
 
-func NewWasmer(homeDir string, _ types.WasmConfig) (*Wasmer, error){
+func NewWasmer(homeDir string) (*Wasmer, error){
 	dir := filepath.Join(homeDir, types.FolderName)
 	err := os.MkdirAll(dir, os.ModePerm)
 	if err != nil {
