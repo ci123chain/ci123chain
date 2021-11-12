@@ -31,7 +31,7 @@ func Discovery() (string, error) {
 	region := os.Getenv("IDG_SITEUID")
 	env := os.Getenv("CI_SE_ENV")
 	zone := os.Getenv("IDG_CLUSTERUID")
-	address := "service-eye-chart.chain-discovery-" + zone + ":7171"
+	address := "chain-discovery-service-eye.chain-discovery:7171"
 	if appID == "" {
 		return "", errors.New("appID is empty")
 	}
