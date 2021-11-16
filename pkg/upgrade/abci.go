@@ -46,9 +46,9 @@ func BeginBlock(k Keeper, ctx sdk.Context) {
 
 	// if we have a pending upgrade, but it is not yet time, make sure we did not
 	// set the handler already
-	if k.HasHandler(plan.Name) {
-		downgradeMsg := fmt.Sprintf("BINARY UPDATED BEFORE TRIGGER! UPGRADE \"%s\" - in binary but not executed on chain", plan.Name)
-		ctx.Logger().Error(downgradeMsg)
-		panic(downgradeMsg)
-	}
+	//if k.HasHandler(plan.Name) {
+	//	downgradeMsg := fmt.Sprintf("BINARY UPDATED BEFORE TRIGGER! UPGRADE \"%s\" - in binary but not executed on chain", plan.Name)
+	//	ctx.Logger().Error(downgradeMsg)
+	//	panic(downgradeMsg)
+	//}
 }
