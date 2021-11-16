@@ -15,7 +15,7 @@ const (
 	DefaultConfDir = "$HOME/.ci123"
 	flagLogLevel = "log_level"
 	//logDEBUG     = "main:debug,state:debug,ibc:debug,*:error"
-	logINFO      = "state:debug,x/staking:info,x/preStaking:info,x/ibc/client:info,x/ibc/connection:info,x/ibc/channel:info,x/gravity:info,x/supply:info,*:error"
+	logINFO      = "x/registry:info,state:debug,x/staking:info,x/preStaking:info,x/ibc/client:info,x/ibc/connection:info,x/ibc/channel:info,x/gravity:info,x/supply:info,*:error"
 	logDEBUG      = "*:debug"
 	//logINFO      = "*:info"
 	logERROR     = "*:error"

@@ -11,6 +11,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/pre_staking/types"
 	"github.com/ci123chain/ci123chain/pkg/staking/keeper"
 	"github.com/ci123chain/ci123chain/pkg/supply"
+	"github.com/ci123chain/ci123chain/pkg/upgrade"
 	"github.com/tendermint/tendermint/libs/log"
 	dbm "github.com/tendermint/tm-db"
 	"math/big"
@@ -26,19 +27,23 @@ type PreStakingKeeper struct {
 	StakingKeeper       keeper.StakingKeeper
 	paramstore          params.Subspace
 	cdb				    dbm.DB
+
+	UpgradeKeeper 		upgrade.Keeper
 }
 
-func NewPreStakingKeeper(cdc *codec.Codec, key sdk.StoreKey, ak account.AccountKeeper, sk supply.Keeper, stakingKeeper keeper.StakingKeeper,
+func NewPreStakingKeeper(cdc *codec.Codec, key sdk.StoreKey, ak account.AccountKeeper, sk supply.Keeper, stakingKeeper keeper.StakingKeeper, upgradeKeeper upgrade.Keeper,
 	ps params.Subspace, cdb dbm.DB) PreStakingKeeper{
-		return PreStakingKeeper{
-			storeKey:key,
-			cdc: cdc,
-			AccountKeeper: ak,
-			SupplyKeeper: sk,
-			StakingKeeper:stakingKeeper,
-			paramstore: ps,
-			cdb:  cdb,
-		}
+	p := PreStakingKeeper{
+		storeKey:key,
+		cdc: cdc,
+		AccountKeeper: ak,
+		SupplyKeeper: sk,
+		StakingKeeper: stakingKeeper,
+		UpgradeKeeper: upgradeKeeper,
+		paramstore: ps,
+		cdb:  cdb,
+	}
+	return p
 }
 
 

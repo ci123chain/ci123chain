@@ -23,6 +23,7 @@ import (
 	order_module "github.com/ci123chain/ci123chain/pkg/order/module"
 	ordertypes "github.com/ci123chain/ci123chain/pkg/order/types"
 	"github.com/ci123chain/ci123chain/pkg/redis"
+	"github.com/ci123chain/ci123chain/pkg/registry"
 	keeper2 "github.com/ci123chain/ci123chain/pkg/staking/keeper"
 	staking_module "github.com/ci123chain/ci123chain/pkg/staking/module"
 	supply_module "github.com/ci123chain/ci123chain/pkg/supply/module"
@@ -124,7 +125,7 @@ var (
 	keys = sdk.NewKVStoreKeys(StoreKey, account.StoreKey, params.StoreKey, auth.StoreKey,
 		supply.StoreKey, order.StoreKey, ibchost.StoreKey, distr.StoreKey, staking.StoreKey,
 		prestaking.StoreKey, slashing.StoreKey, gravity.StoreKey, vm.StoreKey, mint.StoreKey,
-		infrastructure.StoreKey, ibctransfertypes.StoreKey, capabilitytypes.StoreKey, upgrade.StoreKey,
+		infrastructure.StoreKey, ibctransfertypes.StoreKey, capabilitytypes.StoreKey, upgrade.StoreKey, registry.StoreKey,
 	)
 	tkeys = sdk.NewTransientStoreKeys(params.TStoreKey)
 	memKeys = sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -138,6 +139,7 @@ var (
 		stakingTypes.BondedPoolName: {supply.Burner, supply.Staking, supply.Minter},
 		stakingTypes.NotBondedPoolName: {supply.Burner, supply.Staking},
 		prestaking.ModuleName: nil,
+		registry.ModuleName: nil,
 	}
 )
 
@@ -165,6 +167,7 @@ type Chain struct {
 	ScopedIBCKeeper  capabilitykeeper.ScopedKeeper
 	ScopedTransferKeeper capabilitykeeper.ScopedKeeper
 	PrestakingKeeper prestaking.Keeper
+	RegistryKeeper  registry.Keeper
 	IBCKeeper 		ibc.Keeper
 	VMKeeper 		vm.Keeper
 	GravityKeeper   gravity.Keeper
@@ -237,7 +240,9 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer,
 	c.GravityKeeper = gravity.NewKeeper(cdc, keys[gravity.StoreKey], c.GetSubspace(gravity.ModuleName), c.AccountKeeper, c.StakingKeeper, c.SupplyKeeper, c.SlashingKeeper)
 	c.StakingKeeper.SetHooks(staking.NewMultiStakingHooks(c.DistrKeeper.Hooks(), c.SlashingKeeper.Hooks(), c.GravityKeeper.Hooks()))
 
-	c.PrestakingKeeper = prestaking.NewKeeper(cdc, keys[prestaking.StoreKey], c.AccountKeeper, c.SupplyKeeper, c.StakingKeeper, c.GetSubspace(prestaking.ModuleName),cdb)
+	c.PrestakingKeeper = prestaking.NewKeeper(cdc, keys[prestaking.StoreKey], c.AccountKeeper, c.SupplyKeeper, c.StakingKeeper, c.UpgradeKeeper, c.GetSubspace(prestaking.ModuleName),cdb)
+
+	c.RegistryKeeper = registry.NewKeeper(cdc, keys[registry.StoreKey], c.SupplyKeeper, c.UpgradeKeeper)
 
 	// Create Transfer Keepers
 	ibcTransferKeeper := ibctransferkeeper.NewKeeper(
@@ -250,7 +255,6 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer,
 	ibcRouter := porttypes.NewRouter()
 	ibcRouter.AddRoute(ibctransfertypes.ModuleName, ibcTransferModule)
 	c.IBCKeeper.SetRouter(ibcRouter)
-
 
 
 	{ // setup module
