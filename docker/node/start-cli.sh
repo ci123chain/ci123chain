@@ -20,11 +20,19 @@ if [ ! -d $CI_LOGDIR ]; then
     mkdir -p $CI_LOGDIR
 fi
 # delay 3 second for cid
-sleep 3s
+sleep 1s
+
+source /etc/profile
+if [ -z $CI_VALIDATOR_KEY ];
+then
+  echo "CI_VALIDATOR_KEY not exist"
+  exit 0
+fi
+
 echo "---Loading CLI ENV---"
 echo "export CI_ETH_CHAIN_ID=$CI_ETH_CHAIN_ID" >> /etc/profile
 echo "export CI_HOME=$CI_HOME" >> /etc/profile
 source /etc/profile
 
-
-/opt/cli-linux rest-server --laddr=tcp://0.0.0.0:80 >> $CI_LOGDIR/rest-output.log 2>&1
+#echo "---Start cli---"
+/opt/cli-linux rest-server --laddr=tcp://0.0.0.0:80
