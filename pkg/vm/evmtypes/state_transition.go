@@ -1,8 +1,12 @@
 package evmtypes
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/vm/types"
+	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/pkg/errors"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -151,7 +155,7 @@ func (st StateTransition) TransitionDb(ctx sdk.Context, config ChainConfig) (*Ex
 
 	if err != nil {
 		// Consume gas before returning
-		return nil, err
+		return nil, newRevertError(ret, err)
 	}
 
 	// Resets nonce to value pre state transition
@@ -233,4 +237,27 @@ func (st StateTransition) TransitionDb(ctx sdk.Context, config ChainConfig) (*Ex
 	//ctx.WithGasMeter(currentGasMeter).GasMeter().ConsumeGas(gasConsumed, "EVM execution consumption")
 
 	return executionResult, nil
+}
+
+func newRevertError(data []byte, e error) error {
+	var resultError []string
+	if data == nil || e.Error() != vm.ErrExecutionReverted.Error() {
+		return e
+	}
+	resultError = append(resultError, e.Error())
+	reason, errUnpack := abi.UnpackRevert(data)
+	if errUnpack == nil {
+		resultError = append(resultError, vm.ErrExecutionReverted.Error()+":"+reason)
+	} else {
+		resultError = append(resultError, hexutil.Encode(data))
+	}
+	resultError = append(resultError, ErrorHexData)
+	resultError = append(resultError, hexutil.Encode(data))
+	ret, error := json.Marshal(resultError)
+
+	//failed to marshal, return original data in error
+	if error != nil {
+		return fmt.Errorf(e.Error()+"[%v]", hexutil.Encode(data))
+	}
+	return errors.New(string(ret))
 }
