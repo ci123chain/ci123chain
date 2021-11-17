@@ -3,10 +3,11 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	grpctypes "github.com/ci123chain/ci123chain/pkg/abci/types/grpc"
 	accountRpc "github.com/ci123chain/ci123chain/pkg/account/rest"
 	"github.com/ci123chain/ci123chain/pkg/app/module"
+	"github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/client"
 	"github.com/ci123chain/ci123chain/pkg/client/cmd/rpc"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
@@ -16,10 +17,11 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/gogo/gateway"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/libs/log"
+	"github.com/tendermint/tendermint/node"
 	"github.com/tendermint/tendermint/privval"
+	"github.com/tendermint/tendermint/rpc/client/local"
 	rpcserver "github.com/tendermint/tendermint/rpc/jsonrpc/server"
 	"io/ioutil"
 	"net"
@@ -58,46 +60,41 @@ const (
 	FlagWebsocket		   = "wsport"
 	GenesisFile			   = "genesis.json"
 	PrivValidatorKey	   = "priv_validator_key.json"
-	flagETHChainID         = "eth_chain_id"
 	flagTokenName		   = "tokenname"
 )
 
-type ConfigFiles struct {
-	GenesisFile []byte `json:"genesis_file"`
-	NodeID 		string `json:"node_id"`
-}
-
-func init() {
-	rootCmd.AddCommand(rpcCmd)
-	rpcCmd.Flags().String(FlagListenAddr, "tcp://0.0.0.0:1317", "The address for the server to listen on")
-	rpcCmd.Flags().Uint(FlagMaxOpenConnections, 1000, "The number of maximum open connections")
-	rpcCmd.Flags().Uint(FlagRPCReadTimeout, 10, "The RPC read timeout")
-	rpcCmd.Flags().Uint(FlagRPCWriteTimeout, 10, "The RPC write timeout")
-	rpcCmd.Flags().String(FlagWebsocket, "8546", "websocket port to listen to")
-	rpcCmd.Flags().Int64(flagETHChainID, 1, "eth_chain_id")
-	rpcCmd.Flags().String(flagTokenName, "stake", "Chain token name")
-
-	_ = viper.BindPFlags(rpcCmd.Flags())
-}
-
-var rpcCmd = &cobra.Command{
-	Use: "rest-server",
-	Short: "Start rpc server",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		id := viper.GetInt64(flagETHChainID)
-		util.Setup(id)
-		denom := viper.GetString(flagTokenName)
-		types.SetCoinDenom(denom)
-		rs := NewRestServer()
-		err := rs.Start(
-			viper.GetString(FlagListenAddr),
-			viper.GetInt(FlagMaxOpenConnections),
-			uint(viper.GetInt(FlagRPCReadTimeout)),
-			uint(viper.GetInt(FlagRPCWriteTimeout)),
-			)
-		return err
-	},
-}
+//
+//func init() {
+//	cmd.rootCmd.AddCommand(rpcCmd)
+//	rpcCmd.Flags().String(FlagListenAddr, "tcp://0.0.0.0:1317", "The address for the server to listen on")
+//	rpcCmd.Flags().Uint(FlagMaxOpenConnections, 1000, "The number of maximum open connections")
+//	rpcCmd.Flags().Uint(FlagRPCReadTimeout, 10, "The RPC read timeout")
+//	rpcCmd.Flags().Uint(FlagRPCWriteTimeout, 10, "The RPC write timeout")
+//	rpcCmd.Flags().String(FlagWebsocket, "8546", "websocket port to listen to")
+//	rpcCmd.Flags().Int64(flagETHChainID, 1, "eth_chain_id")
+//	rpcCmd.Flags().String(flagTokenName, "stake", "Chain token name")
+//
+//	_ = viper.BindPFlags(rpcCmd.Flags())
+//}
+//
+//var rpcCmd = &cobra.Command{
+//	Use: "rest-server",
+//	Short: "Start rpc server",
+//	RunE: func(cmd *cobra.Command, args []string) error {
+//		id := viper.GetInt64(flagETHChainID)
+//		util.Setup(id)
+//		denom := viper.GetString(flagTokenName)
+//		types.SetCoinDenom(denom)
+//		rs := NewRestServer()
+//		err := rs.Start(
+//			viper.GetString(FlagListenAddr),
+//			viper.GetInt(FlagMaxOpenConnections),
+//			uint(viper.GetInt(FlagRPCReadTimeout)),
+//			uint(viper.GetInt(FlagRPCWriteTimeout)),
+//			)
+//		return err
+//	},
+//}
 
 // RestServer represents the Light Client Rest server
 type RestServer struct {
@@ -105,14 +102,21 @@ type RestServer struct {
 	GRPCGatewayRouter *runtime.ServeMux
 	CliCtx  context.Context
 	listener net.Listener
+	log      log.Logger
 }
 
-func NewRestServer() *RestServer {
+func NewRestServer(cdc *codec.Codec, tmNode *node.Node) *RestServer {
 	r := mux.NewRouter()
 	cliCtx, err := client.NewClientContextFromViper(cdc)
 	if err != nil {
 		return nil
 	}
+	logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", "rest-server")
+	if tmNode != nil {
+		cliCtx.Client = local.New(tmNode)
+		logger = tmNode.Logger.With("module", "rest-server")
+	}
+
 	host26657 := os.Getenv("IDG_HOST_26657")
 	if host26657 == "" {
 		host26657 = "localhost"
@@ -175,6 +179,7 @@ func NewRestServer() *RestServer {
 		Mux: r,
 		GRPCGatewayRouter: grpcRoute,
 		CliCtx: cliCtx,
+		log: logger,
 	}
 }
 
@@ -199,7 +204,7 @@ type HeightParams struct {
 }
 
 type QueryParams struct {
-	Data    HeightParams  `json:"data"`
+	Data HeightParams `json:"data"`
 }
 
 type Response struct {
@@ -456,13 +461,13 @@ func ExportConfigHandler(ctx context.Context) http.HandlerFunc  {
 			return
 		}
 		var key *privval.FilePVKey
-		err = cdc.UnmarshalJSON(pv, &key)
+		err = ctx.Cdc.UnmarshalJSON(pv, &key)
 		if err != nil {
 			_, _ = w.Write([]byte(err.Error()))
 			return
 		}
 		nodeID := strings.ToLower(key.Address.String())
-		configFile := &ConfigFiles{
+		configFile := &types.ConfigFiles{
 			GenesisFile: gen,
 			NodeID:      nodeID,
 		}
