@@ -46,20 +46,21 @@ func ExportCmd(appExporter app.AppExporter, defaultNodeHome string) *cobra.Comma
 			if dbType == "" {
 				dbType = "redis"
 			}
-			dbHost := viper.GetString(flagCiStateDBHost)
-			if dbHost == "" {
-				var err error
-				dbHost, err = util.GetDomain()
-				if err != nil {
-					return err
-				}
-			}
-			dbTls := viper.GetBool(flagCiStateDBTls)
-			dbPort := viper.GetUint64(flagCiStateDBPort)
-			p := strconv.FormatUint(dbPort, 10)
 
 			switch dbType {
 			case "redis":
+				dbHost := viper.GetString(flagCiStateDBHost)
+
+				if dbHost == "" {
+					var err error
+					dbHost, err = util.GetDomain()
+					if err != nil {
+						return err
+					}
+				}
+				dbTls := viper.GetBool(flagCiStateDBTls)
+				dbPort := viper.GetUint64(flagCiStateDBPort)
+				p := strconv.FormatUint(dbPort, 10)
 				stateDB = "redisdb://" + dbHost + ":" + p
 				if dbTls {
 					stateDB += "#tls"

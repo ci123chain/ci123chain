@@ -87,9 +87,9 @@ if [ -f $CI_HOME/config/config.toml ]; then
     sed "s/max_subscriptions_per_client = 5/max_subscriptions_per_client = 20/" $CI_HOME/config/config.toml
 fi
 
-echo "---Start cli---"
-nohup /opt/cli-linux rest-server --laddr=tcp://0.0.0.0:80 >> $CI_LOGDIR/rest-output.log 2>&1 &
+#echo "---Start cli---"
+#nohup /opt/cli-linux rest-server --laddr=tcp://0.0.0.0:80 >> $CI_LOGDIR/rest-output.log 2>&1 &
 
 # start
 echo "---Start cid---"
-/opt/cid-linux start --home=$CI_HOME >> $CI_LOGDIR/cid-output.log 2>&1
+/opt/cid-linux start --home=$CI_HOME

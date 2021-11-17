@@ -41,7 +41,7 @@ func (k Keeper)upgradeForOnlineRegister()  {
 }
 
 func (k Keeper)SetupRegistry(ctx sdk.Context)  {
-
+	// default registry address: 0xB2076659C4ba32B72DdA4f8640BA837Ef044eC45
 	registryAddr, err := k.SupplyKeeper.DeployRegistryContract(ctx, types.ModuleName, nil)
 	k.Logger(ctx).Info("OnlineRegisty", "address", registryAddr.String())
 	if err != nil {

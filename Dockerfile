@@ -16,10 +16,10 @@ COPY ./migrate.sh /opt
 ENV GOPATH /go
 
 COPY ./docker/node/start-cid.sh /etc/service/cid/run
-#COPY ./docker/node/start-cli.sh /etc/service/cli/run
+COPY ./docker/node/start-cli.sh /etc/service/cli/run
 
 RUN curl -L -o /usr/bin/jq https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 && chmod +x /usr/bin/jq
 
 WORKDIR /opt
 RUN chmod +x /etc/service/cid/run
-#RUN chmod +x /etc/service/cli/run
+RUN chmod +x /etc/service/cli/run
