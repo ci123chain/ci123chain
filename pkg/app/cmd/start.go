@@ -6,6 +6,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/app"
 	"github.com/ci123chain/ci123chain/pkg/client"
+	"github.com/ci123chain/ci123chain/pkg/client/helper"
 	hnode "github.com/ci123chain/ci123chain/pkg/node"
 	staking "github.com/ci123chain/ci123chain/pkg/staking/types"
 	"github.com/ci123chain/ci123chain/pkg/util"
@@ -84,7 +85,9 @@ func startCmd(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Codec) *co
 	}
 
 	cmd.Flags().Bool(flagWithTendermint, true, "Run abci app embedded in-process with tendermint")
-	cmd.Flags().String(flagAddress, "tcp://0.0.0.0:26658", "Listen address")
+	cmd.Flags().String(FlagListenAddr, "tcp://0.0.0.0:1317", "The address for the server to listen on")
+	//cmd.Flags().String(flagAddress, "tcp://0.0.0.0:26658", "Listen address")
+	cmd.Flags().String(helper.FlagNode, "tcp://localhost:26657", "<host>:<port> to tendermint rpc interface for this chain")
 	cmd.Flags().String(flagTraceStore, "", "Enable KVStore tracing to an output file")
 	cmd.Flags().String(flagPruning, "syncable", "Pruning strategy: syncable, nothing, everything")
 	cmd.Flags().String(flagCiStateDBType, "redis", "database types")
@@ -240,6 +243,13 @@ func StartInProcess(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Code
 	}
 	cliCtx.WithClient(local.New(tmNode))
 	app.RegisterTxService(cliCtx)
+
+	go func() {
+		for {
+			err := StartRestServer(cdc, tmNode, viper.GetString(FlagListenAddr))
+			ctx.Logger.Error("Rest-Server ", "err", err.Error())
+		}
+	}()
 
 	// Sleep forever and then...
 	tos.TrapSignal(ctx.Logger, func() {

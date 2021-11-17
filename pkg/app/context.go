@@ -3,7 +3,7 @@ package app
 import (
 	"encoding/base64"
 	"encoding/json"
-	"github.com/ci123chain/ci123chain/pkg/client/cmd"
+	"github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/config"
 	"github.com/ci123chain/ci123chain/pkg/logger"
 	"github.com/ci123chain/ci123chain/pkg/node"
@@ -114,7 +114,7 @@ func configFollowMaster(master, root string) (*cfg.Config, error){
 	if err != nil {
 		return nil, err
 	}
-	var configFiles cmd.ConfigFiles
+	var configFiles types.ConfigFiles
 	err = json.Unmarshal(res, &configFiles)
 	if err != nil {
 		return nil, err
