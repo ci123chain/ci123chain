@@ -266,7 +266,7 @@ func Handle404() http.Handler {
 
 		rep, err := cli.Do(r)
 		if err != nil  || rep.StatusCode != http.StatusOK {
-			http.Error(w, rep.Status, rep.StatusCode)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		resBody, err := ioutil.ReadAll(rep.Body)

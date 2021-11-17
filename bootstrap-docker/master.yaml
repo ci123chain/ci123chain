@@ -11,7 +11,7 @@ services:
 
   ci0:
 #    image: cichain:v0.0.1
-    image: harbor.oneitfarm.com/itfarm-test/sal20000ad4588ae211108eaekr427az:1.5.84
+    image: harbor.oneitfarm.com/itfarm-test/sal20000ad4588ae211117eaeoav279p:1.6.4.1
     container_name: ci1
     hostname: ci1
     depends_on:

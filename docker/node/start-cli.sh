@@ -34,5 +34,5 @@ echo "export CI_ETH_CHAIN_ID=$CI_ETH_CHAIN_ID" >> /etc/profile
 echo "export CI_HOME=$CI_HOME" >> /etc/profile
 source /etc/profile
 
-#echo "---Start cli---"
+echo "---Start cli---"
 /opt/cli-linux rest-server --laddr=tcp://0.0.0.0:80
