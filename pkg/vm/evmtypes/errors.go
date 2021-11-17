@@ -75,6 +75,7 @@ var (
 
 	ErrEVMChainConfigInvalid = sdkerrors.Register(string(DefaultCodespace), uint32(CodeEVMChainConfigInvalid), "err chain config")
 	ErrExecTransactionInvalid = sdkerrors.Register(string(DefaultCodespace), uint32(CodeExecTransactionInvalid), "err exec transitionDb")
+	ErrorHexData = "HexData"
 
 )
 //
