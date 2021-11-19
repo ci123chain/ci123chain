@@ -98,7 +98,7 @@ func startCmd(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Codec) *co
 	cmd.Flags().String(flagShardIndex, "", "index of shard")
 	cmd.Flags().String(flagMasterDomain, "", "master node")
 	cmd.Flags().Int64(flagETHChainID, 1, "eth chain id")
-	cmd.Flags().Int(flagIteratorLimit, 10, "eth chain id")
+	cmd.Flags().Int(flagIteratorLimit, 10, "iterator limit")
 	cmd.Flags().String(FlagWithValidator, "", "validator_key")
 	cmd.Flags().String(flagRunMode, "single", "run chain mode")
 	cmd.Flags().Bool(flagStartFromExport, false, "start with export file")
