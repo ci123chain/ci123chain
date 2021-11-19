@@ -93,7 +93,6 @@ func startCmd(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Codec) *co
 
 	cmd.Flags().Bool(flagWithTendermint, true, "Run abci app embedded in-process with tendermint")
 	cmd.Flags().String(FlagListenAddr, "tcp://0.0.0.0:1317", "The address for the server to listen on")
-	//cmd.Flags().String(flagAddress, "tcp://0.0.0.0:26658", "Listen address")
 	cmd.Flags().String(helper.FlagNode, "tcp://localhost:26657", "<host>:<port> to tendermint rpc interface for this chain")
 	cmd.Flags().String(flagTraceStore, "", "Enable KVStore tracing to an output file")
 	cmd.Flags().String(flagPruning, "syncable", "Pruning strategy: syncable, nothing, everything")
@@ -110,6 +109,12 @@ func startCmd(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Codec) *co
 	cmd.Flags().String(flagRunMode, "single", "run chain mode")
 	cmd.Flags().Bool(flagStartFromExport, false, "start with export file")
 	cmd.Flags().String(flagStartFromExportFile, "/opt/exportFile.json", "start with export file")
+	cmd.Flags().String(FlagWebsocket, "8546", "websocket port to listen to")
+	cmd.Flags().Uint(FlagMaxOpenConnections, 1000, "The number of maximum open connections")
+	cmd.Flags().Uint(FlagRPCReadTimeout, 10, "The RPC read timeout")
+	cmd.Flags().Uint(FlagRPCWriteTimeout, 10, "The RPC write timeout")
+	cmd.Flags().String(flagTokenName, "stake", "Chain token name")
+
 
 	//cmd.Flags().String(flagLogLevel, "debug", "Run abci app with different log level")
 	tcmd.AddNodeFlags(cmd)
