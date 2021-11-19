@@ -16,11 +16,9 @@ COPY ./migrate.sh /opt
 ENV GOPATH /go
 
 COPY ./docker/node/start-cid.sh /etc/service/cid/run
-COPY ./docker/node/start-cli.sh /etc/service/cli/run
 COPY ./jq-linux64 /usr/bin/jq
 
 RUN chmod +x /usr/bin/jq
 
 WORKDIR /opt
 RUN chmod +x /etc/service/cid/run
-RUN chmod +x /etc/service/cli/run
