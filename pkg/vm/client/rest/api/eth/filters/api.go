@@ -437,6 +437,13 @@ func (api *PublicFilterAPI) GetLogs(ctx context.Context, crit filters.FilterCrit
 		begin := rpc.LatestBlockNumber.Int64()
 		if crit.FromBlock != nil {
 			begin = crit.FromBlock.Int64()
+			if crit.FromBlock.Int64() == 1 {
+				status, err := api.clientCtx.Client.Status(ctx)
+				if err != nil {
+					return nil, err
+				}
+				begin = status.SyncInfo.EarliestBlockHeight
+			}
 		}
 		end := rpc.LatestBlockNumber.Int64()
 		if crit.ToBlock != nil {
