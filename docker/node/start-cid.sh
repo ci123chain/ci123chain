@@ -92,4 +92,4 @@ fi
 
 # start
 echo "---Start cid---"
-/opt/cid-linux start --home=$CI_HOME
+/opt/cid-linux start --laddr=tcp://0.0.0.0:80 --home=$CI_HOME
