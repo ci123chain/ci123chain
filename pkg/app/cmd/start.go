@@ -20,11 +20,14 @@ import (
 	pvm "github.com/tendermint/tendermint/privval"
 	"github.com/tendermint/tendermint/proxy"
 	"github.com/tendermint/tendermint/rpc/client/local"
+	"io"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 )
 
 const (
@@ -59,14 +62,18 @@ func startCmd(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Codec) *co
 			limit := viper.GetInt(flagIteratorLimit)
 			util.Setup(id)
 			util.SetLimit(limit)
-			ok := viper.GetBool(flagStartFromExport)
+			loadExport := viper.GetBool(flagStartFromExport)
 			exportFile := viper.GetString(flagStartFromExportFile)
-			if ok {
-				by, err := ioutil.ReadFile(exportFile)
-				if err == nil && by != nil {
-					_ = ioutil.WriteFile(filepath.Join(ctx.Config.RootDir, "config/genesis.json"), by, 0755)
-				}else {
-					ctx.Logger.Warn("start node with export genesis file, but no exportFile.json found in /opt")
+			if loadExport {
+				filePath := filepath.Join(ctx.Config.RootDir, "config/genesis.json")
+				err := downloadGenesis(exportFile, filePath)
+
+				//by, err := ioutil.ReadFile(exportFile)
+				if err != nil {
+					ctx.Logger.Error("start node with export genesis file, but download fail ", "path", exportFile, "err", err.Error())
+					panic(err)
+				} else {
+					ctx.Logger.Info("Load Export Genesis OK", "path", exportFile)
 				}
 			}
 			if !viper.GetBool(flagWithTendermint) {
@@ -107,6 +114,22 @@ func startCmd(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Codec) *co
 	//cmd.Flags().String(flagLogLevel, "debug", "Run abci app with different log level")
 	tcmd.AddNodeFlags(cmd)
 	return cmd
+}
+
+func downloadGenesis(genesisUrl string, filepath string) error {
+	client := http.DefaultClient;
+	client.Timeout = time.Second * 60 //设置超时时间
+	resp, err := client.Get(genesisUrl)
+	if resp.StatusCode != http.StatusOK {
+		ret, _ := ioutil.ReadAll(resp.Body)
+		return errors.New(string(ret))
+	}
+	file, err := os.Create(filepath)
+	if err != nil {
+		panic(err)
+	}
+	_, err = io.Copy(file, resp.Body)
+	return err
 }
 
 func startStandAlone(ctx *app.Context, appCreator app.AppCreator) error {
