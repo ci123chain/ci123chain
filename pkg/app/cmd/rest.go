@@ -270,8 +270,12 @@ func Handle404() http.Handler {
 		r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 		rep, err := cli.Do(r)
-		if err != nil  || rep.StatusCode != http.StatusOK {
+		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if rep != nil && rep.StatusCode != http.StatusOK {
+			http.Error(w, "Request Error: " + rep.Status + remote_addr, rep.StatusCode)
 			return
 		}
 		resBody, err := ioutil.ReadAll(rep.Body)
