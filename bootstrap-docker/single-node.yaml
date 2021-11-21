@@ -5,12 +5,8 @@ services:
     image: harbor.oneitfarm.com/itfarm-test/sal20000ad4588ae210811eaen9l27v4:0.0.9
     hostname: raftleveldb_dev
     container_name: raftleveldb_dev
-    ports:
-      - 5001:80
     networks:
       - bootstrap-node-single
-
-
 
   ci1:
     image: cichain:v0.0.1

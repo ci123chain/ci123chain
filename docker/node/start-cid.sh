@@ -85,7 +85,7 @@ source /etc/profile
 
 
 if [ -f $CI_HOME/config/config.toml ]; then
-    sed "s/max_subscriptions_per_client = 5/max_subscriptions_per_client = 20/" $CI_HOME/config/config.toml
+    sed -i "s/max_subscriptions_per_client = 5/max_subscriptions_per_client = 20/" $CI_HOME/config/config.toml
 fi
 
 #echo "---Start cli---"
