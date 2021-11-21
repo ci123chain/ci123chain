@@ -72,12 +72,11 @@ if [ ! -f $CI_HOME/config/genesis.json ]; then # first create
     fi
 else
     echo "---Found genesis file----"
-    cat $CI_HOME/config/genesis.json
     echo "----------"
 fi
 
 if [ -f $CI_HOME/config/config.toml ]; then
-    sed "s/max_subscriptions_per_client = 5/max_subscriptions_per_client = 20/" $CI_HOME/config/config.toml
+    sed -i "s/max_subscriptions_per_client = 5/max_subscriptions_per_client = 20/" $CI_HOME/config/config.toml
 fi
 
 CI_VALIDATOR_KEY=$(cat $CI_HOME/config/priv_validator_key.json | jq -r '.priv_key.value')
@@ -86,13 +85,9 @@ echo "export CI_VALIDATOR_KEY=$CI_VALIDATOR_KEY" >> /etc/profile
 echo "export CI_PUBKEY=$CI_PUBKEY" >> /etc/profile
 echo "export CI_ETH_CHAIN_ID=$CI_ETH_CHAIN_ID" >> /etc/profile
 echo "export CI_HOME=$CI_HOME" >> /etc/profile
-
 source /etc/profile
 
-
-# start
-nohup /opt/cli-linux rest-server --laddr=tcp://0.0.0.0:80 >> $CI_LOGDIR/rest-output.log &
-
-/opt/cid-linux start --home=$CI_HOME
+echo "---Start cid---"
+/opt/cid-linux start --laddr=tcp://0.0.0.0:80 --home=$CI_HOME
 
 

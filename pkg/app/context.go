@@ -1,14 +1,19 @@
 package app
 
 import (
+	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/config"
 	"github.com/ci123chain/ci123chain/pkg/logger"
 	"github.com/ci123chain/ci123chain/pkg/node"
 	"github.com/ci123chain/ci123chain/pkg/util"
+	"github.com/pkg/errors"
 	"github.com/spf13/viper"
+	"github.com/tendermint/go-amino"
 	cfg "github.com/tendermint/tendermint/config"
+	"github.com/tendermint/tendermint/crypto/ed25519"
 	"github.com/tendermint/tendermint/libs/cli"
 	"github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/libs/rand"
@@ -16,6 +21,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"regexp"
 )
 
 const (
@@ -26,7 +32,7 @@ const (
 	defaultConfigFilePath = "config.toml"
 	defaultConfigPath  = "config"
 	defaultDataPath    = "data"
-	flagValidatorKey   = "VALIDATOR_KEY"
+	FlagValidatorKey   = "validator_key"
 )
 
 type Context struct {
@@ -116,7 +122,7 @@ func configFollowMaster(master, root string) (*cfg.Config, error){
 	if err := ioutil.WriteFile(c.GenesisFile(), configFiles.GenesisFile, os.ModePerm); err != nil {
 		panic(err)
 	}
-	
+
 	pv := pvm.LoadOrGenFilePV(c.PrivValidatorKeyFile(), c.PrivValidatorStateFile())
 	//create node_key.json
 	_, err = node.GenNodeKeyByPrivKey(c.NodeKeyFile(), pv.Key.PrivKey)
@@ -125,4 +131,31 @@ func configFollowMaster(master, root string) (*cfg.Config, error){
 	}
 
 	return c, nil
+}
+
+func CreatePVWithKey(cdc *amino.Codec, validatorKeyStr string) (ed25519.PrivKey, error) {
+	//2.regex match
+	rule := `=$`
+	reg := regexp.MustCompile(rule)
+	if !reg.MatchString(validatorKeyStr) {
+		panic(errors.New("the end of the validator key string should be an equal sign"))
+	}
+	//3.match base64 encoding
+	_,err := base64.StdEncoding.DecodeString(validatorKeyStr)
+	if err != nil {
+		return nil, err
+	}
+	var validatorKey ed25519.PrivKey
+	privStr := fmt.Sprintf(`{"type":"%s","value":"%s"}`, ed25519.PrivKeyName, validatorKeyStr)
+	err = cdc.UnmarshalJSON([]byte(privStr), &validatorKey)
+	if err != nil {
+		return nil, err
+	}
+	////create priv_validator_key.json
+	//pv := validator.GenFilePV(
+	//	c.PrivValidatorKeyFile(),
+	//	c.PrivValidatorStateFile(),
+	//	validatorKey,
+	//)
+	return validatorKey, nil
 }

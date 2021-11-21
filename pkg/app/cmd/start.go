@@ -42,7 +42,6 @@ const (
 	flagCiStateDBTls   = "statedb_tls"
 	flagCiStateDBPort  = "statedb_port"
 	flagCiNodeDomain   = "IDG_HOST_80"
-	flagMasterDomain   = "master_domain"
 	flagShardIndex     = "shardIndex"
 
 	version 		   = "cichain v1.5.72"
@@ -102,10 +101,9 @@ func startCmd(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Codec) *co
 	cmd.Flags().Bool(flagCiStateDBTls, true, "use tls")
 	cmd.Flags().String(flagCiNodeDomain, "", "node domain")
 	cmd.Flags().String(flagShardIndex, "", "index of shard")
-	cmd.Flags().String(flagMasterDomain, "", "master node")
 	cmd.Flags().Int64(flagETHChainID, 1, "eth chain id")
 	cmd.Flags().Int(flagIteratorLimit, 10, "iterator limit")
-	cmd.Flags().String(FlagWithValidator, "", "validator_key")
+	cmd.Flags().String(app.FlagValidatorKey, "", "validator_key")
 	cmd.Flags().String(flagRunMode, "single", "run chain mode")
 	cmd.Flags().Bool(flagStartFromExport, false, "start with export file")
 	cmd.Flags().String(flagStartFromExportFile, "/opt/exportFile.json", "start with export file")
@@ -125,6 +123,12 @@ func downloadGenesis(genesisUrl string, filepath string) error {
 	client := http.DefaultClient;
 	client.Timeout = time.Second * 60 //设置超时时间
 	resp, err := client.Get(genesisUrl)
+	if err != nil {
+		return err
+	}
+	if resp == nil {
+		return errors.New("unKnownError: " + genesisUrl)
+	}
 	if resp.StatusCode != http.StatusOK {
 		ret, _ := ioutil.ReadAll(resp.Body)
 		return errors.New(string(ret))
