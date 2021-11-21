@@ -77,6 +77,8 @@ fi
 
 if [ -f $CI_HOME/config/config.toml ]; then
     sed -i "s/max_subscriptions_per_client = 5/max_subscriptions_per_client = 20/" $CI_HOME/config/config.toml
+    sed -i 's/timeout_propose = "3s"/timeout_propose = "2s"/' $CI_HOME/config/config.toml
+    sed -i 's/timeout_commit = "3s"/timeout_commit = "2s"/' $CI_HOME/config/config.toml
 fi
 
 CI_VALIDATOR_KEY=$(cat $CI_HOME/config/priv_validator_key.json | jq -r '.priv_key.value')
