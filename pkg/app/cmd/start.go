@@ -112,7 +112,7 @@ func startCmd(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Codec) *co
 	cmd.Flags().Uint(FlagRPCReadTimeout, 10, "The RPC read timeout")
 	cmd.Flags().Uint(FlagRPCWriteTimeout, 10, "The RPC write timeout")
 	cmd.Flags().String(flagTokenName, "stake", "Chain token name")
-
+	cmd.Flags().String(app.FlagMasterDomain, "", "master node")
 
 	//cmd.Flags().String(flagLogLevel, "debug", "Run abci app with different log level")
 	tcmd.AddNodeFlags(cmd)
