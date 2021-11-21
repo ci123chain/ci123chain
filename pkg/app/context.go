@@ -1,7 +1,6 @@
 package app
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/config"
@@ -17,7 +16,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"path/filepath"
 )
 
 const (
@@ -62,24 +60,11 @@ func SetupContext(ctx *Context, level string) error {
 				return err
 			}
 		} else {
-			configEnv := viper.GetString(flagConfig)
-			if len(configEnv) != 0 {
-				os.MkdirAll(filepath.Join(root, defaultConfigPath), os.ModePerm)
-				os.MkdirAll(filepath.Join(root, defaultDataPath), os.ModePerm)
-				configBytes, _ := base64.StdEncoding.DecodeString(configEnv)
-				ioutil.WriteFile(filepath.Join(root, defaultConfigPath, defaultConfigFilePath), configBytes, os.ModePerm)
-				viper.ReadInConfig()
-				c, err = config.GetConfig(root)
-				if err != nil {
-					return config.ErrGetConfig
-				}
-			} else {
-				c, err = config.CreateConfig(rand.Str(8), root)
-				if err != nil {
-					return config.ErrGetConfig
-				}
-				config.SaveConfig(c)
+			c, err = config.CreateConfig(rand.Str(8), root)
+			if err != nil {
+				return config.ErrGetConfig
 			}
+			config.SaveConfig(c)
 		}
 	}
 	if err != nil {

@@ -34,8 +34,8 @@ func SaveConfig(c *cfg.Config) {
 	configDir := filepath.Join(c.RootDir, "config")
 	configFilePath := filepath.Join(configDir, "config.toml")
 	c.Instrumentation.Prometheus = true
-	c.Consensus.TimeoutPropose = 5 * time.Second
-	c.Consensus.TimeoutCommit = 5 * time.Second
+	c.Consensus.TimeoutPropose = 3 * time.Second
+	c.Consensus.TimeoutCommit = 3 * time.Second
 	c.RPC.ListenAddress = "tcp://0.0.0.0:26657"
 	cfg.EnsureRoot(c.RootDir)
 	cfg.WriteConfigFile(configFilePath, c)
@@ -45,10 +45,9 @@ func CreateConfig(moniker, root string) (*cfg.Config, error) {
 	c := cfg.DefaultConfig()
 	c.SetRoot(root)
 	c.Moniker = moniker
-	//c.RPC.ListenAddress = "localhost:6060"
 	c.P2P.RecvRate = 5120000
 	c.P2P.SendRate = 5120000
-	c.Consensus.TimeoutCommit = 5000 * time.Millisecond
+	//c.Consensus.TimeoutCommit = 3 * time.Second
 	c.TxIndex.Indexer = "kv"
 	return c, unmarshalWithViper(viper.GetViper(), c)
 }
