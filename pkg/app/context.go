@@ -25,7 +25,7 @@ import (
 )
 
 const (
-	flagMasterDomain   = "master_domain"
+	FlagMasterDomain   = "master_domain"
 	flagMasterPort	   = "master_port"
 	defaultMasterPort  = "443"
 	flagConfig         = "config" //config.toml
@@ -56,7 +56,7 @@ func SetupContext(ctx *Context, level string) error {
 	root := viper.GetString(cli.HomeFlag)
 	c, err := config.GetConfig(root)
 	if err == config.ErrConfigNotFound {
-		master := viper.GetString(flagMasterDomain)
+		master := viper.GetString(FlagMasterDomain)
 		if len(master) != 0 {
 			//if os.Getenv("IDG_APPID") == "" {
 			//	return errors.New("Can't use master domain in normal environment")
