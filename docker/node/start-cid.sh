@@ -59,12 +59,13 @@ if [ ! -f $CI_HOME/config/genesis.json ]; then
         fi
 
     else # second node
-        echo "---Second node----"
+        echo "---Second node OR Export Mode----"
         echo "---Create Validator----"
         /opt/cid-linux gen-validator --home=$CI_HOME
+        cat $CI_HOME/config/priv_validator_key.json
     fi
 else
-    echo "---Found genesis file----"
+    echo "---Restart: Found genesis file----"
 #    cat $CI_HOME/config/genesis.json
     echo "----------"
 fi

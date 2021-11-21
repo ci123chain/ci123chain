@@ -20,11 +20,11 @@ services:
     depends_on:
       - raftleveldb
     environment:
-      CI_MASTER_DOMAIN: 192.168.1.196
+      CI_MASTER_DOMAIN: 192.168.31.157
       CI_MASTER_PORT: 1317
 
       CI_CHAIN_ID: weelink
-      CI_ETH_CHAIN_ID: 1234
+#      CI_ETH_CHAIN_ID: 1234
       IDG_HOST_26657: ci1
       IDG_HOST_8546: ci1
       IDG_HOST_80: ci1
@@ -36,12 +36,10 @@ services:
 #      IDG_APPID: abcdefg  # 设置之后 使用 中台log 输出到redis
 #      CI_CLIHOME: /root/client
       CI_VALIDATOR_KEY: 4wttMiieaewLiRYu+y05j0uslBDOX5IA3k4TY9GtQzSdTcXyd5Y982Q3CUdh+h1XcCvtpIUb+5q6rtJ8W4SEFw==
-      CI_PUBKEY: nU3F8neWPfNkNwlHYfodV3Ar7aSFG/uauq7SfFuEhBc=
+#      CI_PUBKEY: nU3F8neWPfNkNwlHYfodV3Ar7aSFG/uauq7SfFuEhBc=
     ports:
       - 26456:26656
       - 26457:26657
-      - 8446:8546
-      - 1310:80
     networks:
       - bootstrap-node-single
 

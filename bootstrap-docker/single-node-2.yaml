@@ -18,8 +18,8 @@ services:
     depends_on:
       - raftleveldb2
     environment:
-      CI_MASTER_DOMAIN: 192.168.1.152
-      CI_MASTER_PORT: 1310
+      CI_MASTER_DOMAIN: 192.168.31.157
+      CI_MASTER_PORT: 1317
 
       CI_CHAIN_ID: weelink
       IDG_HOST_26657: ci2
@@ -31,7 +31,7 @@ services:
       CI_TOKENNAME: stake
 #      IDG_APPID: abcdefg  # 设置之后 使用 中台log 输出到redis
 #      CI_CLIHOME: /root/client
-#      CI_VALIDATOR_KEY: xglI/otc3uAGEObTM60xwqVSoMNojqSKAb5u90vqK07B8mO2HacOZ6V020Vjtx2RxbNtTkktVGwkUfFxxwFs/w==
+      CI_VALIDATOR_KEY: xglI/otc3uAGEObTM60xwqVSoMNojqSKAb5u90vqK07B8mO2HacOZ6V020Vjtx2RxbNtTkktVGwkUfFxxwFs/w==
 #      CI_PUBKEY: wfJjth2nDmeldNtFY7cdkcWzbU5JLVRsJFHxcccBbP8=
     ports:
       - 26356:26656

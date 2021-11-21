@@ -16,7 +16,7 @@ GO_BUILD_CMD=$(GO_BIN) build
 PROXY=https://goproxy.cn,direct
 
 .PHONY: build
-build: server cli
+build: server
 server:
 	GOPROXY=$(PROXY) $(GO_BUILD_CMD) -o $(CID) ./cmd/cid
 cli:
@@ -30,7 +30,6 @@ local-stop:
 #.PHONY:release, build all
 release:
 	$(GO_BUILD_CMD) -o ./docker/node/build/cid-linux ./cmd/cid
-	$(GO_BUILD_CMD) -o ./docker/node/build/cli-linux ./cmd/cicli
 	$(GO_BUILD_CMD) -o ./docker/node/build/tcptest ./cmd/test
 	mv /go/pkg/mod/github.com/ci123chain/wasmer-go@v1.0.3-rc2 ./wasmer-go@v1.0.3-rc2
 

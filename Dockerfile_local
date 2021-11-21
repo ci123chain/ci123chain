@@ -8,13 +8,11 @@ RUN go env -w GO111MODULE=on && \
   go env -w GONOSUMDB=gitlab.oneitfarm.com/*
 
 RUN go build -o /opt/cid-linux ./cmd/cid
-RUN go build -o /opt/cli-linux ./cmd/cicli
 RUN go build -o /opt/cproxy-linux ./cmd/gateway
 
 FROM ubuntu:18.04
 
 COPY --from=0 /opt/cid-linux /opt/cid-linux
-COPY --from=0 /opt/cli-linux /opt/cli-linux
 COPY --from=0 /opt/cproxy-linux /opt/cproxy-linux
 
 
@@ -26,7 +24,8 @@ ENV GOPATH /go
 COPY ./docker/node/2start.sh /opt/start.sh
 COPY ./docker/node/exportFile.json /opt/exportFile.json
 
-RUN apt-get update -y && apt-get install jq -y
+COPY ./jq-linux64 /usr/bin/jq
+RUN chmod +x /usr/bin/jq
 
 WORKDIR /opt
 RUN chmod +x /opt/start.sh

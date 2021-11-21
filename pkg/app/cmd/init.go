@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"encoding/base64"
 	///"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -22,7 +21,6 @@ import (
 	tmpro "github.com/tendermint/tendermint/proto/tendermint/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 	"net"
-	"regexp"
 	"time"
 	//"regexp"
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
@@ -39,9 +37,7 @@ var (
 	FlagWithTxs = "with-txs"
 	FlagIP = "ip"
 	FlagChainID = "chain_id"
-	FlagStateDB = "statedb"
 	//FlagDBName = "dbname"
-	FlagWithValidator = "validator_key"
 	FlagCoinName = "denom"
 )
 
@@ -134,7 +130,7 @@ func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Com
 			}
 
 			exportMode := viper.GetBool(flagStartFromExport)
-			validatorKey := viper.GetString(FlagWithValidator)
+			validatorKey := viper.GetString(app.FlagValidatorKey)
 			if exportMode && len(validatorKey) == 0 {
 				panic("validator key should provide for export mode")
 			}
@@ -177,12 +173,7 @@ func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Com
 
 	cmd.Flags().BoolP(FlagOverwrite, "o", false, "overwrite the genesis.json file")
 	cmd.Flags().String(FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")
-	//cmd.Flags().Bool(FlagWithTxs, false, "apply existing genesis transactions from [--home]/configs/gentx/")
-	//cmd.Flags().AddFlagSet(appInit.FlagsAppGenState)
-	//cmd.Flags().AddFlagSet(appInit.FlagsAppGenTx) // need to add this flagset for when no GenTx's provided
-	//cmd.AddCommand(GenTxCmd(ctx, cdc, appInit))
-	cmd.Flags().String(FlagStateDB, "couchdb://couchdb-service:5984/ci123", "fetch new shard from db")
-	cmd.Flags().String(FlagWithValidator, "", "the validator key")
+	cmd.Flags().String(app.FlagValidatorKey, "", "the validator key")
 	cmd.Flags().String(FlagCoinName, "stake",  "coin name")
 	return cmd
 }
@@ -190,26 +181,11 @@ func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Com
 
 func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initConfig InitConfig)(
 	chainID string, nodeID string, appMessage json.RawMessage, pubKey crypto.PubKey, err error) {
+
 	var validatorKey ed25519.PrivKey
-	var privStr string
-	nodeKey, err := node.LoadNodeKey(c.NodeKeyFile())
 
 	if len(initConfig.ValidatorKey) > 0 {
-		//2.regex match
-		rule := `=$`
-		reg := regexp.MustCompile(rule)
-		if !reg.MatchString(initConfig.ValidatorKey) {
-			panic(errors.New("the end of the validator key string should be an equal sign"))
-		}
-
-		//3.match base64 encoding
-		_,err := base64.StdEncoding.DecodeString(initConfig.ValidatorKey)
-		if err != nil {
-			panic(err)
-		}
-
-		privStr = fmt.Sprintf(`{"type":"%s","value":"%s"}`, ed25519.PrivKeyName, initConfig.ValidatorKey)
-		err = cdc.UnmarshalJSON([]byte(privStr), &validatorKey)
+		validatorKey, err = app.CreatePVWithKey(cdc, initConfig.ValidatorKey)
 		if err != nil {
 			panic(err)
 		}
@@ -217,8 +193,6 @@ func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initCo
 		//panic(errors.New("validator key can not be empty"))
 		validatorKey = ed25519.GenPrivKey()
 	}
-
-	//create priv_validator_key.json
 	pv := validator.GenFilePV(
 		c.PrivValidatorKeyFile(),
 		c.PrivValidatorStateFile(),
@@ -226,7 +200,7 @@ func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initCo
 	)
 
 	//create node_key.json
-	nodeKey, err = node.GenNodeKeyByPrivKey(c.NodeKeyFile(), pv.Key.PrivKey)
+	nodeKey, err := node.GenNodeKeyByPrivKey(c.NodeKeyFile(), pv.Key.PrivKey)
 	if err != nil {
 		panic(err)
 	}

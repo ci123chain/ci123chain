@@ -64,7 +64,7 @@ Example:
 		"Number of nodes")
 	cmd.Flags().StringP(outputDir, "o", "./mytestnet",
 		"Directory to store initialization data for the testnet")
-	cmd.Flags().String(FlagWithValidator, "", "the validator key")
+	cmd.Flags().String(app.FlagValidatorKey, "", "the validator key")
 	//cmd.Flags().AddFlagSet(appInit.FlagsAppGenTx)
 	return cmd
 }
@@ -114,7 +114,7 @@ func bootstrapGenWithConfig(c *cfg.Config, cdc *amino.Codec, appInit app.AppInit
 	var genFilePath string
 	var validatorKey secp256k1.PrivKey
 	var privStr string
-	privBz := viper.GetString(FlagWithValidator)
+	privBz := viper.GetString(app.FlagValidatorKey)
 	if len(privBz) > 0 {
 		privStr = fmt.Sprintf(`{"type":"%s","value":"%s"}`, secp256k1.PrivKeyName, privBz)
 		err := cdc.UnmarshalJSON([]byte(privStr), &validatorKey)
