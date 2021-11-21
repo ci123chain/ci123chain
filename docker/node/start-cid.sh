@@ -65,7 +65,7 @@ if [ ! -f $CI_HOME/config/genesis.json ]; then
     fi
 else
     echo "---Found genesis file----"
-    cat $CI_HOME/config/genesis.json
+#    cat $CI_HOME/config/genesis.json
     echo "----------"
 fi
 
