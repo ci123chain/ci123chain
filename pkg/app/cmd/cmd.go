@@ -31,6 +31,7 @@ func AddServerCommands(
 		)
 
 	rootCmd.AddCommand(
+		pureStateCmd(ctx),
 		initCmd(ctx, cdc, appInit),
 		//createCmd(ctx),
 		ExportCmd(appExport, ctx.Config.RootDir),
