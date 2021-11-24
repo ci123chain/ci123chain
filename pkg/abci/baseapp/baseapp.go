@@ -371,7 +371,7 @@ func (app *BaseApp) initFromStore(mainKey sdk.StoreKey) error {
 	// main store should exist.
 	// TODO: we don't actually need the main store here
 	main := app.cms.GetKVStore(mainKey)
-		if main == nil {
+	if main == nil {
 		return errors.New("baseapp expects MultiStore with 'main' KVStore")
 	}
 	// Needed for `gaiad export`, which inits from store but never calls initchain

@@ -43,12 +43,12 @@ func LoadIAVLStore(ldb, cdb dbm.DB, id CommitID, pruning sdk.PruningStrategy, ke
 
 //----------------------------------------
 
-var _ KVStore = (*iavlStore)(nil)
-var _ CommitStore = (*iavlStore)(nil)
-var _ Queryable = (*iavlStore)(nil)
+var _ KVStore = (*IavlStore)(nil)
+var _ CommitStore = (*IavlStore)(nil)
+var _ Queryable = (*IavlStore)(nil)
 
 // iavlStore Implements KVStore and CommitStore.
-type iavlStore struct {
+type IavlStore struct {
 
 	// The underlying tree.
 	tree *iavl.MutableTree
@@ -76,9 +76,9 @@ type iavlStore struct {
 
 // CONTRACT: tree should be fully loaded.
 // nolint: unparam
-func newIAVLStore(remoteDB dbm.DB, tree *iavl.MutableTree, numRecent int64, storeEvery int64, key sdk.StoreKey) *iavlStore {
+func newIAVLStore(remoteDB dbm.DB, tree *iavl.MutableTree, numRecent int64, storeEvery int64, key sdk.StoreKey) *IavlStore {
 	logger := logger.GetLogger()
-	st := &iavlStore{
+	st := &IavlStore{
 		tree:       tree,
 		numRecent:  numRecent,
 		storeEvery: storeEvery,
@@ -92,13 +92,13 @@ func newIAVLStore(remoteDB dbm.DB, tree *iavl.MutableTree, numRecent int64, stor
 	return st
 }
 
-func (st *iavlStore) localMode() bool {
+func (st *IavlStore) localMode() bool {
 	return st.mode == ModeSingle || st.mode == ""
 }
 
 
 // Implements Committer.
-func (st *iavlStore) Commit() CommitID {
+func (st *IavlStore) Commit() CommitID {
 	// Save a new version.
 	//st.parent.Commit()
 	hash, version, err := st.tree.SaveVersion()
@@ -126,7 +126,7 @@ func (st *iavlStore) Commit() CommitID {
 }
 
 // Implements Committer.
-func (st *iavlStore) LastCommitID() CommitID {
+func (st *IavlStore) LastCommitID() CommitID {
 	return CommitID{
 		Version: st.tree.Version(),
 		Hash:    st.tree.Hash(),
@@ -134,7 +134,7 @@ func (st *iavlStore) LastCommitID() CommitID {
 }
 
 // Implements Committer.
-func (st *iavlStore) SetPruning(pruning sdk.PruningStrategy) {
+func (st *IavlStore) SetPruning(pruning sdk.PruningStrategy) {
 	switch pruning {
 	case sdk.PruneEverything:
 		st.numRecent = 0
@@ -147,28 +147,33 @@ func (st *iavlStore) SetPruning(pruning sdk.PruningStrategy) {
 	}
 }
 
+func (st *IavlStore) DeleteVersions(from int64, to int64) error {
+	err := st.tree.DeleteVersionsRange(from, to)
+	return err
+}
+
 // VersionExists returns whether or not a given version is stored.
-func (st *iavlStore) VersionExists(version int64) bool {
+func (st *IavlStore) VersionExists(version int64) bool {
 	return st.tree.VersionExists(version)
 }
 
 // Implements Store.
-func (st *iavlStore) GetStoreType() StoreType {
+func (st *IavlStore) GetStoreType() StoreType {
 	return sdk.StoreTypeIAVL
 }
 
 // Implements Store.
-func (st *iavlStore) CacheWrap() CacheWrap {
+func (st *IavlStore) CacheWrap() CacheWrap {
 	return NewCacheKVStore(st)
 }
 
 // CacheWrapWithTrace implements the Store interface.
-func (st *iavlStore) CacheWrapWithTrace(w io.Writer, tc TraceContext) CacheWrap {
+func (st *IavlStore) CacheWrapWithTrace(w io.Writer, tc TraceContext) CacheWrap {
 	return NewCacheKVStore(NewTraceKVStore(st, w, tc))
 }
 
 // Implements KVStore.
-func (st *iavlStore) Set(key, value []byte) {
+func (st *IavlStore) Set(key, value []byte) {
 	if st.parent != nil {
 		st.parent.(KVStore).Set(key, value)
 	}
@@ -176,7 +181,7 @@ func (st *iavlStore) Set(key, value []byte) {
 }
 
 // Implements KVStore.
-func (st *iavlStore) Get(key []byte) []byte {
+func (st *IavlStore) Get(key []byte) []byte {
 	_, localValue := st.tree.Get(key)
 
 	if !st.localMode() {
@@ -189,7 +194,7 @@ func (st *iavlStore) Get(key []byte) []byte {
 
 
 // Implements KVStore.
-func (st *iavlStore) Has(key []byte) (exists bool) {
+func (st *IavlStore) Has(key []byte) (exists bool) {
 	if st.parent != nil {
 		return st.parent.(KVStore).Has(key)
 	}
@@ -197,7 +202,7 @@ func (st *iavlStore) Has(key []byte) (exists bool) {
 }
 
 // Implements KVStore.
-func (st *iavlStore) Delete(key []byte) {
+func (st *IavlStore) Delete(key []byte) {
 	if st.parent != nil {
 		st.parent.(KVStore).Delete(key)
 	}
@@ -205,22 +210,22 @@ func (st *iavlStore) Delete(key []byte) {
 }
 
 // Implements KVStore
-func (st *iavlStore) Prefix(prefix []byte) KVStore {
+func (st *IavlStore) Prefix(prefix []byte) KVStore {
 	return prefixStore{st, prefix}
 }
 
 // Implements KVStore
-func (st *iavlStore) Gas(meter GasMeter, config GasConfig) KVStore {
+func (st *IavlStore) Gas(meter GasMeter, config GasConfig) KVStore {
 	return NewGasKVStore(meter, config, st)
 }
 
 // Implements KVStore
-func (st *iavlStore) Latest(keys []string) KVStore {
+func (st *IavlStore) Latest(keys []string) KVStore {
 	return NewlatestStore(st, keys)
 }
 
 // Implements KVStore
-func (st *iavlStore) Parent() KVStore {
+func (st *IavlStore) Parent() KVStore {
 	if st.parent == nil {
 		return nil
 	}
@@ -228,7 +233,7 @@ func (st *iavlStore) Parent() KVStore {
 }
 
 // Implements KVStore.
-func (st *iavlStore) RemoteIterator(start, end []byte) Iterator {
+func (st *IavlStore) RemoteIterator(start, end []byte) Iterator {
 	p := st.Parent()
 	if st.localMode() || p == nil {
 		return st.Iterator(start, end)
@@ -248,12 +253,12 @@ func (st *iavlStore) RemoteIterator(start, end []byte) Iterator {
 }
 
 // Implements KVStore.
-func (st *iavlStore) Iterator(start, end []byte) Iterator {
+func (st *IavlStore) Iterator(start, end []byte) Iterator {
 	return newIAVLIterator(st.tree.ImmutableTree, start, end, true)
 }
 
 // Implements KVStore.
-func (st *iavlStore) ReverseIterator(start, end []byte) Iterator {
+func (st *IavlStore) ReverseIterator(start, end []byte) Iterator {
 	return newIAVLIterator(st.tree.ImmutableTree, start, end, false)
 }
 
@@ -279,7 +284,7 @@ func getHeight(tree *iavl.MutableTree, req abci.RequestQuery) int64 {
 // If latest-1 is not present, use latest (which must be present)
 // if you care to have the latest data to see a tx results, you must
 // explicitly set the height you want to see
-func (st *iavlStore) Query(req abci.RequestQuery) (res abci.ResponseQuery) {
+func (st *IavlStore) Query(req abci.RequestQuery) (res abci.ResponseQuery) {
 	if len(req.Data) == 0 {
 		msg := "Query cannot be zero length"
 		return sdkerrors.QueryResult(sdkerrors.Wrap(sdkerrors.ErrParams, msg))

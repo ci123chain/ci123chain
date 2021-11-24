@@ -103,6 +103,8 @@ type CommitMultiStore interface {
 	// Panics on a nil types.
 	GetCommitKVStore(key StoreKey) CommitKVStore
 
+	GetStores() map[StoreKey]CommitStore
+
 	// Get latest version
 	GetLatestVersion() int64
 

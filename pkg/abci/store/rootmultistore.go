@@ -227,8 +227,8 @@ func (rs *rootMultiStore) Commit() CommitID {
 	cacheName := filepath.Join(rs.cacheDir, CacheName)
 	if _, err := os.Stat(cacheName); os.IsNotExist(err) {
 		for _, store := range rs.stores {
-			if reflect.TypeOf(store).Elem() == reflect.TypeOf(iavlStore{}){
-				remote := store.(*iavlStore).Parent()
+			if reflect.TypeOf(store).Elem() == reflect.TypeOf(IavlStore{}){
+				remote := store.(*IavlStore).Parent()
 				if remote == nil {
 					continue
 				}
@@ -308,6 +308,10 @@ func (rs *rootMultiStore) CacheMultiStore() CacheMultiStore {
 // Implements MultiStore.
 func (rs *rootMultiStore) GetStore(key StoreKey) Store {
 	return rs.stores[key]
+}
+
+func (rs *rootMultiStore) GetStores() map[StoreKey]CommitStore {
+	return rs.stores
 }
 
 // GetKVStore implements the MultiStore interface. If tracing is enabled on the

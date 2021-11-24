@@ -530,3 +530,7 @@ func NewApp(lg log.Logger, ldb tmdb.DB, cdb tmdb.DB,traceStore io.Writer) Applic
 	logger.SetLogger(lg)
 	return NewChain(lg, ldb, cdb, traceStore, baseapp.SetGasPriceConfig(GasPriceConfig))
 }
+
+func (app *Chain) LoadStartVersion(height int64) error {
+	return app.LoadVersion(height, keys[StoreKey])
+}
