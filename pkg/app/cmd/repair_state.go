@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/baseapp"
 	"github.com/ci123chain/ci123chain/pkg/app"
+	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/cosmos/iavl"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -30,12 +31,18 @@ func repairStateCmd(ctx *app.Context) *cobra.Command {
 		Short: "Repair the SMB(state machine broken) data of node",
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Println("--------- repair data start ---------")
+			id := viper.GetInt64(flagETHChainID)
+			limit := viper.GetInt(flagIteratorLimit)
+			util.Setup(id)
+			util.SetLimit(limit)
 
 			repairState(ctx)
 			fmt.Println("--------- repair data success ---------")
 		},
 	}
 	cmd.Flags().Int64(FlagStartHeight, 0, "Set the start block height for repair")
+	cmd.Flags().Int64(flagETHChainID, 1, "eth chain id")
+	cmd.Flags().Int(flagIteratorLimit, 10, "iterator limit")
 	return cmd
 }
 

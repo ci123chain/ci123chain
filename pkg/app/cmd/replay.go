@@ -4,6 +4,7 @@ import (
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/app"
+	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -47,13 +48,18 @@ func replayCmd(ctx *app.Context) *cobra.Command {
 			//		fmt.Println(err)
 			//	}
 			//}()
+			id := viper.GetInt64(flagETHChainID)
+			limit := viper.GetInt(flagIteratorLimit)
+			util.Setup(id)
+			util.SetLimit(limit)
 
 			replayBlock(ctx)
 			log.Println("--------- replay success ---------")
 		},
 	}
 	cmd.Flags().IntP(flagHaltHeight, "", 0, "height for stop replaying")
-
+	cmd.Flags().Int64(flagETHChainID, 1, "eth chain id")
+	cmd.Flags().Int(flagIteratorLimit, 10, "iterator limit")
 	//cmd.Flags().StringP(pprofAddrFlag, "p", "0.0.0.0:26661", "Address and port of pprof HTTP server listening")
 	//cmd.Flags().BoolVarP(&state.IgnoreSmbCheck, "ignore-smb", "i", false, "ignore state machine broken")
 	//cmd.Flags().String(server.FlagPruning, storetypes.PruningOptionNothing, "Pruning strategy (default|nothing|everything|custom)")
@@ -202,12 +208,13 @@ func doReplay(ctx *app.Context, state sm.State, stateStoreDB sm.Store,
 	//}
 	//needSaveBlock := viper.GetBool(saveBlock)
 	for height := lastBlockHeight + 1; height <= haltheight; height++ {
-		log.Println("replaying ", height)
+
 		block := originBlockStore.LoadBlock(height)
 		meta := originBlockStore.LoadBlockMeta(height)
 		//blockExec.SetIsAsyncDeliverTx(viper.GetBool(sm.FlagParalleledTx))
 		state, _, err = blockExec.ApplyBlock(state, meta.BlockID, block)
 		panicError(err)
+		log.Println("replaying: ", height, " apphash: ", fmt.Sprintf("%X", state.AppHash))
 	}
 }
 

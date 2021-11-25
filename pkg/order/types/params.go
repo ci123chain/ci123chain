@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-const SleepTime = 1 * time.Second
+const SleepTime = 1 * time.Millisecond
 const StateDone = "Done"
 const StateCommitting = "Committing"
 const StateInit = "Init"
