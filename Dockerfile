@@ -17,7 +17,7 @@ ENV GOPATH /go
 
 COPY ./docker/node/start-cid.sh /etc/service/cid/run
 COPY ./jq-linux64 /usr/bin/jq
-COPY ./file_server /usr/bin/file_server
+COPY ./serve_linux_amd64 /usr/bin/file_server
 RUN chmod +x /usr/bin/jq
 RUN chmod +x /usr/bin/file_server
 
