@@ -8,7 +8,6 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/order/types"
 	"github.com/ci123chain/ci123chain/pkg/redis"
 	"github.com/tendermint/tendermint/libs/log"
-	"time"
 )
 
 type OrderKeeper struct {
@@ -37,7 +36,7 @@ func (ok *OrderKeeper) WaitForReady(ctx sdk.Context) {
 			if err.Error() != types.NoOrderBookErr {
 				panic(err)
 			} else {
-				time.Sleep(types.SleepTime)
+				//time.Sleep(types.SleepTime)
 				continue
 			}
 		}
@@ -45,7 +44,7 @@ func (ok *OrderKeeper) WaitForReady(ctx sdk.Context) {
 			ok.UpdateOrderBook(ctx, orderbook, nil)
 			return
 		}
-		time.Sleep(types.SleepTime)
+		//time.Sleep(types.SleepTime)
 		if err != nil {
 			panic(err)
 		}
