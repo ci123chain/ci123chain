@@ -2,10 +2,10 @@ package rpc
 
 import (
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
-	types2 "github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/client/types"
 	"github.com/gorilla/mux"
+	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	"net/http"
 	"strconv"
 )
@@ -23,7 +23,7 @@ func LatestBlockRequestHandlerFn(ctx context.Context) http.HandlerFunc {
 	}
 }
 
-func getBlock(clientCtx context.Context, height *int64) ([]byte, error) {
+func getBlock(clientCtx context.Context, height *int64) (*ctypes.ResultBlock, error) {
 	// get the node
 	node, err := clientCtx.GetNode()
 	if err != nil {
@@ -34,11 +34,12 @@ func getBlock(clientCtx context.Context, height *int64) ([]byte, error) {
 	// header, tx -> Block
 	// results -> BlockResults
 	res, err := node.Block(clientCtx.Context(), height)
-	if err != nil {
-		return nil, err
-	}
-
-	return types2.GetCodec().MarshalJSON(res)
+	return res, err
+	//if err != nil {
+	//	return nil, err
+	//}
+	////return json.Marshal(res)
+	//return types2.GetCodec().MarshalJSON(res)
 }
 
 // get the current blockchain height

@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-const SleepTime = 1 * time.Millisecond
+const SleepTime = 1 * time.Second
 const StateDone = "Done"
 const StateCommitting = "Committing"
 const StateInit = "Init"
@@ -13,7 +13,6 @@ const OpADD = "ADD"
 const NoOrderBookErr = "No OrderBook"
 
 var (
-	KeyOrderBook	= []byte("OrderBook")
 	StoreKey		= "order"
 )
 
