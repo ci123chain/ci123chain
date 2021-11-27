@@ -65,54 +65,6 @@ type ValidatorAccount struct {
 	PrivateKey  string    `json:"private_key"`
 }
 
-//
-//func GenTxCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Command {
-//	cmd := &cobra.Command{
-//		Use:   "gen-tx",
-//		Short: "Create genesis transfer file (under [--home]/configs/gentx/gentx-[nodeID].json)",
-//		Args:  cobra.NoArgs,
-//		RunE: func(_ *cobra.Command, args []string) error {
-//			c := ctx.Config
-//			c.SetRoot(viper.GetString(tmcli.HomeFlag))
-//
-//			ip := viper.GetString(FlagIP)
-//			if len(ip) == 0 {
-//				eip, err := externalIP()
-//				if err != nil {
-//					return err
-//				}
-//				ip = eip
-//			}
-//			genTxConfig := configs.GenTx{
-//				viper.GetString(FlagName),
-//				viper.GetString(FlagClientHome),
-//				viper.GetBool(FlagOWK),
-//				ip,
-//			}
-//			cliPrint, genTxFile, err := gentxWithConfig(cdc, appInit, c, genTxConfig)
-//			if err != nil {
-//				return err
-//			}
-//			toPrint := struct {
-//				AppMessage 	json.RawMessage `json:"app_message"`
-//				GenTxFile 	json.RawMessage `json:"gen_tx_file"`
-//			}{
-//				cliPrint,
-//				genTxFile,
-//			}
-//			out, err := app.MarshalJSONIndent(cdc, toPrint)
-//			if err != nil {
-//				return err
-//			}
-//			fmt.Println(string(out))
-//			return nil
-//		},
-//	}
-//	cmd.Flags().String(FlagIP, "", "external facing IP to use if left blank IP will be retrieved from this machine")
-//	cmd.Flags().AddFlagSet(appInit.FlagsAppGenTx)
-//	return cmd
-//}
-
 func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Command {
 	cmd := &cobra.Command{
 		Use: "init",
@@ -204,6 +156,7 @@ func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initCo
 	if err != nil {
 		panic(err)
 	}
+
 	nodeID = string(nodeKey.ID())
 
 	chainID = initConfig.ChainID
@@ -217,15 +170,12 @@ func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initCo
 	val := appInit.GetValidator(nodeKey.PubKey(), viper.GetString(FlagName))
 	validators := []tmtypes.GenesisValidator{val}
 
-
 	pubKey = nodeKey.PubKey()//hex.EncodeToString(cdc.MustMarshalJSON(nodeKey.PubKey()))
 
 	appState, err := appInit.AppGenState(validators)
-
 	if err != nil {
 		return
 	}
-
 	//create genesis.json
 	err = writeGenesisFile(cdc, genFile, initConfig.ChainID, validators, appState, initConfig.GenesisTime)
 	if err != nil {

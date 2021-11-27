@@ -16,6 +16,7 @@ const (
 	DefaultCodespace = ModuleName
 )
 
+const UpgradePlanForGravity = "UpgradeGravity"
 
 
 const (
