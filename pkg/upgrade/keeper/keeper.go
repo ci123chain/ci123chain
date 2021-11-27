@@ -20,12 +20,16 @@ type Keeper struct {
 
 // NewKeeper constructs an upgrade Keeper
 func NewKeeper(skipUpgradeHeights map[int64]bool, storeKey sdk.StoreKey, cdc *codec.Codec) Keeper {
-	return Keeper{
+	k := Keeper{
 		skipUpgradeHeights: skipUpgradeHeights,
 		storeKey:           storeKey,
 		cdc:                cdc,
 		upgradeHandlers:    map[string]types.UpgradeHandler{},
 	}
+	k.SetUpgradeHandler(types.UpgradePlanForGravity, func(ctx sdk.Context, info []byte) {
+		k.Logger(ctx).Info("Upgrade successful:", "proposal", types.UpgradePlanForGravity)
+	})
+	return k
 }
 
 // SetUpgradeHandler sets an UpgradeHandler for the upgrade specified by name. This handler will be called when the upgrade
