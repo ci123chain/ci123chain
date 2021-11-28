@@ -66,13 +66,14 @@ func (k Keeper) GetModuleAccountAndPermissions(ctx sdk.Context, moduleName strin
 	var macc exported.ModuleAccountI
 	if acc != nil {
 		macc, ok := acc.(exported.ModuleAccountI)
-		if !ok {
-			panic("account is not a module account")
+		if ok {
+			if len(perms) != len(macc.GetPermissions()) {
+				macc.SetPermissions(perms)
+			}
+			return macc, perms
+		} else {
+			k.Logger(ctx).Error("ModuleAccount not found ", "ModuleName", moduleName)
 		}
-		if len(perms) != len(macc.GetPermissions()) {
-			macc.SetPermissions(perms)
-		}
-		return macc, perms
 	}
 
 	macc = types.NewEmptyModuleAccount(moduleName, perms...)
