@@ -58,6 +58,7 @@ func (k Keeper) TryAttestation(ctx sdk.Context, att *types.Attestation) {
 	// If the attestation has not yet been Observed, sum up the votes and see if it is ready to apply to the state.
 	// This conditional stops the attestation from accidentally being applied twice.
 	if !att.Observed {
+		k.Logger(ctx).Info("----- TryAttestation --- ")
 		// Sum the current powers of all validators who have voted and see if it passes the current threshold
 		// TODO: The different integer types and math here needs a careful review
 		totalPower := k.StakingKeeper.GetLastTotalPower(ctx)
@@ -82,7 +83,7 @@ func (k Keeper) TryAttestation(ctx sdk.Context, att *types.Attestation) {
 
 				att.Observed = true
 				k.SetAttestation(ctx, claim.GetEventNonce(), claim.ClaimHash(), att)
-
+				k.Logger(ctx).Info("----- ProcessAttestation --- ")
 				k.processAttestation(ctx, att, claim)
 				k.emitObservedEvent(ctx, att, claim)
 				break
