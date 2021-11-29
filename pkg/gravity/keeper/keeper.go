@@ -424,6 +424,7 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context) *types.Valset {
 			// todo move to set method
 			bridgeValidators[i].EthereumAddress = val.String()
 			k.SetEthAddress(ctx, val, val.String())
+			k.SetOrchestratorValidator(ctx, val, val)
 		}
 	}
 	// normalize power values
