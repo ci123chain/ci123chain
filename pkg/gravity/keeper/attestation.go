@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"encoding/hex"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	"strconv"
@@ -25,6 +26,8 @@ func (k Keeper) Attest(ctx sdk.Context, claim types.EthereumClaim, anyClaim *cod
 	//if claim.GetEventNonce() != lastEventNonce+1 {
 	//	return nil, types.ErrNonContiguousEventNonce
 	//}
+
+	k.Logger(ctx).Info("Attest", "EventNonce", claim.GetEventNonce(), "ClaimHash", hex.EncodeToString(claim.ClaimHash()))
 
 	// Tries to get an attestation with the same eventNonce and claim as the claim that was submitted.
 	att := k.GetAttestation(ctx, claim.GetEventNonce(), claim.ClaimHash())
