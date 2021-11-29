@@ -77,4 +77,6 @@ func RegisterRoutes(cliCtx context.Context, r *mux.Router, storeName string) {
 
 	r.HandleFunc(fmt.Sprintf("/%s/txId/{%s}", storeName, txId), queryTxIdHandler(cliCtx, storeName)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/%s/eventNonce/{%s}", storeName, eventNonce), queryEventNonceHandler(cliCtx, storeName)).Methods("GET")
+
+	r.HandleFunc(fmt.Sprintf("/%s/observedEventNonce", storeName), queryObservedEventNonceHandler(cliCtx, storeName)).Methods("GET")
 }
