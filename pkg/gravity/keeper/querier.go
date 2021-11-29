@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"encoding/binary"
 	"encoding/hex"
 	"strconv"
 
@@ -97,6 +98,8 @@ const (
 	//
 	QueryTxId = "txId"
 	QueryEventNonce = "eventNonce"
+
+	QueryObservedEventNonce = "observedEventNonce"
 )
 
 // NewQuerier is the module level router for state queries
@@ -161,11 +164,20 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return queryTxId(ctx, path[1], keeper)
 		case QueryEventNonce:
 			return queryEventNonce(ctx, path[1], keeper)
+		case QueryObservedEventNonce:
+			return queryObservedEventNonce(ctx, keeper)
 
 		default:
 			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unknown %s query endpoint", types.ModuleName)
 		}
 	}
+}
+
+func queryObservedEventNonce(ctx sdk.Context, keeper Keeper) ([]byte, error) {
+	nonce := keeper.GetLastObservedEventNonce(ctx)
+	var buf = make([]byte, 8)
+	binary.BigEndian.PutUint64(buf, nonce)
+	return buf, nil
 }
 
 func queryValsetRequest(ctx sdk.Context, path []string, keeper Keeper) ([]byte, error) {

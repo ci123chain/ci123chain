@@ -64,6 +64,11 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, paramSpace paramtypes.Su
 	return k
 }
 
+// Logger returns a module-specific logger.
+func (k Keeper) Logger(ctx sdk.Context) log.Logger {
+	return ctx.Logger().With("module", "x/"+ types.ModuleName)
+}
+
 /////////////////////////////
 //     VALSET REQUESTS     //
 /////////////////////////////
@@ -415,6 +420,10 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context) *types.Valset {
 		bridgeValidators[i] = &types.BridgeValidator{Power: p}
 		if ethAddr := k.GetEthAddress(ctx, val); ethAddr != "" {
 			bridgeValidators[i].EthereumAddress = ethAddr
+		} else {
+			// todo move to set method
+			bridgeValidators[i].EthereumAddress = val.String()
+			k.SetEthAddress(ctx, val, val.String())
 		}
 	}
 	// normalize power values

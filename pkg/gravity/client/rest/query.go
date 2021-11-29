@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"encoding/binary"
 	"fmt"
 	"net/http"
 
@@ -274,5 +275,17 @@ func queryEventNonceHandler(cliCtx context.Context, storeName string) http.Handl
 			return
 		}
 		rest.PostProcessResponseBare(w, cliCtx.WithHeight(height), string(res))
+	}
+}
+
+func queryObservedEventNonceHandler(cliCtx context.Context, storeName string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		res, height, _, err := cliCtx.Query(fmt.Sprintf("custom/%s/observedEventNonce", storeName), nil, false)
+		if err != nil {
+			rest.WriteErrorRes(w, err.Error())
+			return
+		}
+		rest.PostProcessResponseBare(w, cliCtx.WithHeight(height), int64(binary.BigEndian.Uint64(res)))
 	}
 }
