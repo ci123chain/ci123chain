@@ -58,17 +58,19 @@ func (k Keeper) TryAttestation(ctx sdk.Context, att *types.Attestation) {
 	// If the attestation has not yet been Observed, sum up the votes and see if it is ready to apply to the state.
 	// This conditional stops the attestation from accidentally being applied twice.
 	if !att.Observed {
-		k.Logger(ctx).Info("----- TryAttestation --- ")
+
 		// Sum the current powers of all validators who have voted and see if it passes the current threshold
 		// TODO: The different integer types and math here needs a careful review
 		totalPower := k.StakingKeeper.GetLastTotalPower(ctx)
 		requiredPower := types.AttestationVotesPowerThreshold.Mul(totalPower).Quo(sdk.NewInt(100))
+		k.Logger(ctx).Info("----- TryAttestation --- ", "totalPower", totalPower, "requiredPower", requiredPower)
 		attestationPower := sdk.NewInt(0)
 		for _, validator := range att.Votes {
 			val:= sdk.HexToAddress(validator)
 			validatorPower := k.StakingKeeper.GetLastValidatorPower(ctx, val)
 			// Add it to the attestation power's sum
 			attestationPower = attestationPower.Add(sdk.NewInt(validatorPower))
+			k.Logger(ctx).Info("----- Power Detail --- ", "validator", validator, "validatorPower", validatorPower, "AccumlateAttestationPower", attestationPower)
 			// If the power of all the validators that have voted on the attestation is higher or equal to the threshold,
 			// process the attestation, set Observed to true, and break
 			if attestationPower.GTE(requiredPower) {
@@ -103,14 +105,14 @@ func (k Keeper) processAttestation(ctx sdk.Context, att *types.Attestation, clai
 		// If the attestation fails, something has gone wrong and we can't recover it. Log and move on
 		// The attestation will still be marked "Observed", and validators can still be slashed for not
 		// having voted for it.
-		k.logger(ctx).Error("attestation failed",
+		k.logger(ctx).Error("Attestation failed",
 			"cause", err.Error(),
 			"claim type", claim.GetType(),
 			"id", types.GetAttestationKey(claim.GetEventNonce(), claim.ClaimHash()),
 			"nonce", fmt.Sprint(claim.GetEventNonce()),
 		)
 	} else {
-		k.logger(ctx).Error("attestation succeed")
+		k.logger(ctx).Error("Attestation succeed")
 		commit() // persist transient storage
 	}
 }
