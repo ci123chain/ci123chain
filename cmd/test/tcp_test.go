@@ -22,11 +22,11 @@ func TestTcpTls(t *testing.T)  {
 	var cert tls.Certificate
 	config := tls.Config{
 		Certificates:       []tls.Certificate{cert},
-		ServerName: 		"weelinknode2c.gw002.oneitfarm.com",
+		ServerName: 		"weelinknode1b.gw002.oneitfarm.com",
 		InsecureSkipVerify: true,
 	}
 
-	remoteServer := "weelinknode2c.gw002.oneitfarm.com:7443"
+	remoteServer := "weelinknode1b.gw002.oneitfarm.com:7443"
 	i := 0
 	for  {
 		fmt.Println("Beigin Connection times: ", i)
