@@ -19,8 +19,7 @@ CI_LOGDIR=$CI_HOME/logs
 if [ ! -d $CI_LOGDIR ]; then
     mkdir -p $CI_LOGDIR
 fi
-# delay 3 second for cid
-sleep 1s
+
 
 source /etc/profile
 if [ -z $CI_VALIDATOR_KEY ];

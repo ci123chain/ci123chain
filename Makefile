@@ -29,6 +29,7 @@ local-stop:
 
 #.PHONY:release, build all
 release:
+	$(GO_BUILD_CMD) -o ./docker/node/build/cli-linux ./cmd/cicli
 	$(GO_BUILD_CMD) -o ./docker/node/build/cid-linux ./cmd/cid
 	$(GO_BUILD_CMD) -o ./docker/node/build/tcptest ./cmd/test
 	mv /go/pkg/mod/github.com/ci123chain/wasmer-go@v1.0.3-rc2 ./wasmer-go@v1.0.3-rc2
