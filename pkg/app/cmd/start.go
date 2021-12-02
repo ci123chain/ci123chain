@@ -14,6 +14,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	abcis "github.com/tendermint/tendermint/abci/server"
+	v0 "github.com/tendermint/tendermint/blockchain/v0"
 	tcmd "github.com/tendermint/tendermint/cmd/tendermint/commands"
 	tos "github.com/tendermint/tendermint/libs/os"
 	"github.com/tendermint/tendermint/node"
@@ -50,6 +51,8 @@ const (
 	flagRunMode		   = "mode"
 	flagStartFromExport = "export"
 	flagStartFromExportFile = "export_file"
+
+	flagSkipWAL  = "skipwal"
 )
 
 func startCmd(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Codec) *cobra.Command {
@@ -61,6 +64,7 @@ func startCmd(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Codec) *co
 			limit := viper.GetInt(flagIteratorLimit)
 			util.Setup(id)
 			util.SetLimit(limit)
+			v0.SetSkipWAL(viper.GetBool(flagSkipWAL))
 			loadExport := viper.GetBool(flagStartFromExport)
 			exportFile := viper.GetString(flagStartFromExportFile)
 			if loadExport {
@@ -113,6 +117,8 @@ func startCmd(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Codec) *co
 	cmd.Flags().Uint(FlagRPCWriteTimeout, 10, "The RPC write timeout")
 	cmd.Flags().String(flagTokenName, "stake", "Chain token name")
 	cmd.Flags().String(app.FlagMasterDomain, "", "master node")
+
+	cmd.Flags().Bool(flagSkipWAL, false, "start with skipWAL")
 
 	//cmd.Flags().String(flagLogLevel, "debug", "Run abci app with different log level")
 	tcmd.AddNodeFlags(cmd)

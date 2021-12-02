@@ -30,6 +30,7 @@ require (
 	github.com/prometheus/client_golang v1.10.0
 	github.com/prometheus/common v0.23.0
 	github.com/rjeczalik/notify v0.9.2 // indirect
+	github.com/shopspring/decimal v1.3.1
 	github.com/spf13/cobra v1.1.3
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.7.1
@@ -52,8 +53,7 @@ require (
 replace (
 	github.com/cosmos/iavl => github.com/ci123chain/iavl v0.16.0-ci0
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
-	//github.com/tendermint/tendermint => ../tendermint-ci
-	github.com/tendermint/tendermint => github.com/ci123chain/tendermint v0.32.7-ci22
-
+	//github.com/tendermint/tendermint => ../ci-tendermint
+	github.com/tendermint/tendermint => github.com/ci123chain/tendermint v0.32.7-ci23
 	github.com/wasmerio/wasmer-go => github.com/ci123chain/wasmer-go v1.0.3-rc2
 )
