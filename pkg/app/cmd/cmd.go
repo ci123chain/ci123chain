@@ -31,6 +31,7 @@ func AddServerCommands(
 		)
 
 	rootCmd.AddCommand(
+		iaviewerCmd(cdc),
 		pureStateCmd(ctx),
 		initCmd(ctx, cdc, appInit),
 		//createCmd(ctx),

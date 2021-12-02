@@ -1085,7 +1085,9 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 	// multi-store in case message processing fails.
 
 	//all_attributes = allMsgAttributes(msgs)
-
+	if ctx.BlockHeight() == 1247976 {
+		fmt.Println("Break")
+	}
 	runMsgCtx, msCache := app.cacheTxContext(ctx, txBytes)
 	result, err = app.runMsgs(runMsgCtx, msgs, mode)
 
