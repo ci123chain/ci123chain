@@ -1,6 +1,9 @@
 package types
 
-import "math"
+import (
+	"fmt"
+	"math"
+)
 // Gas consumption descriptors.
 const (
 	GasIterNextCostFlatDesc = "IterNextFlat"
@@ -78,7 +81,12 @@ func calculateGas(gas Gas) Gas{
 	return Gas(math.Ceil(float64(gas)*gasPrice))
 }
 
+var DebugHeight bool
+
 func (g *basicGasMeter) ConsumeGas(amount Gas, descriptor string) {
+	if DebugHeight {
+		fmt.Println("------ConsumeGas ", amount, " desc ", descriptor)
+	}
 	var overflow bool
 	//amount /= unit
 	// TODO: Should we set the consumed field after overflow checking?

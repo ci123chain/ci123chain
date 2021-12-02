@@ -803,6 +803,12 @@ func handleQueryCustom(app *BaseApp, path []string, req abci.RequestQuery) (res 
 
 // BeginBlock implements the ABCI application interface.
 func (app *BaseApp) BeginBlock(req abci.RequestBeginBlock) (res abci.ResponseBeginBlock) {
+	if req.Header.Height == 1247976  {
+		fmt.Println("Break")
+		sdk.DebugHeight = true
+	} else {
+		sdk.DebugHeight = false
+	}
 
 	if app.cms.TracingEnabled() {
 		app.cms.ResetTraceContext()
@@ -1085,9 +1091,6 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 	// multi-store in case message processing fails.
 
 	//all_attributes = allMsgAttributes(msgs)
-	if ctx.BlockHeight() == 1247976 {
-		fmt.Println("Break")
-	}
 	runMsgCtx, msCache := app.cacheTxContext(ctx, txBytes)
 	result, err = app.runMsgs(runMsgCtx, msgs, mode)
 
