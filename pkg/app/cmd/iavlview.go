@@ -8,7 +8,9 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	"github.com/ci123chain/ci123chain/pkg/account/exported"
 	acc_types "github.com/ci123chain/ci123chain/pkg/account/types"
+	"github.com/ci123chain/ci123chain/pkg/vm/evmtypes"
 	"github.com/cosmos/iavl"
+	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/spf13/cobra"
 	dbm "github.com/tendermint/tm-db"
 	"log"
@@ -21,9 +23,10 @@ import (
 
 const (
 	KeyAcc          = "accounts"
+	KeyEVM 			= "vm"
 )
 var printKeysDict = map[string]printKey{
-	//KeyEvm:          evmPrintKey,
+	KeyEVM:          evmPrintKey,
 	KeyAcc:          accPrintKey,
 	//KeyParams:       paramsPrintKey,
 	//KeyStaking:      stakingPrintKey,
@@ -182,6 +185,70 @@ func printByKey(cdc *codec.Codec, tree *iavl.MutableTree, module string, key []b
 		//digest := hex.EncodeToString(value)
 		//log.Println(fmt.Sprintf("%s:%s\n", printKey, digest))
 	}
+}
+
+var log1 *ethtypes.Log
+var log2 *ethtypes.Log
+func evmPrintKey(cdc *codec.Codec, key []byte, value []byte) {
+	switch key[0] {
+	case evmtypes.KeyPrefixBlockHash[0]:
+		log.Println(fmt.Sprintf("blockHash:%s; height:%s\n", hex.EncodeToString(key[1:]), hex.EncodeToString(value)))
+		return
+	case evmtypes.KeyPrefixBloom[0]:
+		log.Println(fmt.Sprintf("bloomHeight:%s; data:%s\n", hex.EncodeToString(key[1:]), hex.EncodeToString(value)))
+		return
+	case evmtypes.KeyPrefixLogs[0]:
+		log.Println(fmt.Sprintf("log:%s; data:%s\n", hex.EncodeToString(key[1:]), hex.EncodeToString(value)))
+		logs, _ := evmtypes.UnmarshalLogs(value)
+
+		if log1 == nil {
+			log1 = logs[0]
+		} else {
+			log2 = logs[0]
+		}
+
+		return
+	case evmtypes.KeyPrefixCode[0]:
+		log.Println(fmt.Sprintf("code:%s; data:%s\n", hex.EncodeToString(key[1:]), hex.EncodeToString(value)))
+		return
+	case evmtypes.KeyPrefixStorage[0]:
+		log.Println(fmt.Sprintf("stroageHash:%s; keyHash:%s;data:%s\n", hex.EncodeToString(key[1:40]), hex.EncodeToString(key[41:]), hex.EncodeToString(value)))
+		return
+	case evmtypes.KeyPrefixChainConfig[0]:
+		bz := value
+		var config evmtypes.ChainConfig
+		cdc.MustUnmarshalBinaryBare(bz, &config)
+		log.Println(fmt.Sprintf("chainCofig:%s\n", config.String()))
+		return
+
+	default:
+		printKey := parseWeaveKey(key)
+		digest := hex.EncodeToString(value)
+		log.Println(fmt.Sprintf("%s:%s\n", printKey, digest))
+	}
+}
+
+
+// parseWeaveKey assumes a separating : where all in front should be ascii,
+// and all afterwards may be ascii or binary
+func parseWeaveKey(key []byte) string {
+	cut := bytes.IndexRune(key, ':')
+	if cut == -1 {
+		return encodeID(key)
+	}
+	prefix := key[:cut]
+	id := key[cut+1:]
+	return fmt.Sprintf("%s:%s", encodeID(prefix), encodeID(id))
+}
+
+// casts to a string if it is printable ascii, hex-encodes otherwise
+func encodeID(id []byte) string {
+	for _, b := range id {
+		if b < 0x20 || b >= 0x80 {
+			return strings.ToUpper(hex.EncodeToString(id))
+		}
+	}
+	return string(id)
 }
 
 
