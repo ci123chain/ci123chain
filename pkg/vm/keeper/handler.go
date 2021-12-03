@@ -225,11 +225,11 @@ func handleMsgEthereumTx(ctx sdk.Context, k *Keeper, msg types.MsgEthereumTx) (*
 		k.Bloom.Or(k.Bloom, executionResult.Bloom)
 
 		// update transaction logs in KVStore
-		err = k.SetLogs(ctx, common.BytesToHash(txHash), executionResult.Logs)
-		if err != nil {
-			k.Logger(ctx).Error("Handler evm SetLogs ", "err",  err.Error())
-			panic(err)
-		}
+		//err = k.SetLogs(ctx, common.BytesToHash(txHash), executionResult.Logs)
+		//if err != nil {
+		//	k.Logger(ctx).Error("Handler evm SetLogs ", "err",  err.Error())
+		//	panic(err)
+		//}
 	}
 
 	// log successful execution
