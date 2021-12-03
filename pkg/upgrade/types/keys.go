@@ -17,7 +17,7 @@ const (
 )
 
 const UpgradePlanForGravity = "UpgradeGravity"
-
+const UpgradePlanForVM = "UpgradeVM"
 
 const (
 	// PlanByte specifies the Byte under which a pending upgrade plan is stored in the store
