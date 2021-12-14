@@ -15,6 +15,7 @@ import (
 
 const (
 	tokenManager = "0x5B1427075C0EF657a6F4f23A7EF7065E028cAd3b"
+	baseMonth = 720
 )
 
 func NewHandler(k keeper.PreStakingKeeper) sdk.Handler {
@@ -40,7 +41,6 @@ func NewHandler(k keeper.PreStakingKeeper) sdk.Handler {
 
 
 func PreStakingHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.MsgPreStaking) (*sdk.Result, error) {
-
 	balance := k.AccountKeeper.GetBalance(ctx, msg.FromAddress).AmountOf(sdk.ChainCoinDenom)
 	if balance.LT(msg.Amount.Amount) {
 		return nil, types.ErrAccountBalanceNotEnough
@@ -51,12 +51,14 @@ func PreStakingHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.Msg
 	if err != nil {
 		return nil, err
 	}
-	var z = msg.Amount.Amount.BigInt()
-	util.AddDecimal(z, 18, 10)
-	err = k.SupplyKeeper.Mint(ctx, sdk.HexToAddress(tokenManager), sdk.HexToAddress(msg.FromAddress.String()), types.ModuleName, z)
+	z := msg.Amount.Amount.BigInt()
+	base := int64(msg.DelegateTime.Hours()) / baseMonth
+	mintTokens := z.Mul(z, big.NewInt(base))
+	err = k.SupplyKeeper.Mint(ctx, sdk.HexToAddress(tokenManager), sdk.HexToAddress(msg.FromAddress.String()), types.ModuleName, mintTokens)
 	if err != nil {
 		return nil, err
 	}
+
 	//save to keeper.
 	res := k.GetAccountPreStaking(ctx, msg.FromAddress)
 	vat := types.NewVault(ctx.BlockTime(), ctx.BlockTime().Add(msg.DelegateTime), msg.DelegateTime, msg.Amount)
