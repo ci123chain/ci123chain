@@ -192,10 +192,10 @@ func UndelegateHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.Msg
 	if err != nil {
 		return nil, err
 	}
-
 	var z = amount.Amount.BigInt()
-	util.AddDecimal(z, 18, 10)
-	err = k.SupplyKeeper.BurnEVMCoin(ctx, types.ModuleName, sdk.HexToAddress(tokenManager), msg.FromAddress, z)
+	base := int64(res.Vaults[msg.VaultID].StorageTime.Hours()) / baseMonth
+	burnTokens := z.Mul(z, big.NewInt(base))
+	err = k.SupplyKeeper.BurnEVMCoin(ctx, types.ModuleName, sdk.HexToAddress(tokenManager), msg.FromAddress, burnTokens)
 	if err != nil {
 		return nil, err
 	}
