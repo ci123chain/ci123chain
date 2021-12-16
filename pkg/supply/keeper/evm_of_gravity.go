@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"encoding/hex"
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/supply/meta"
@@ -8,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/umbracle/go-web3/abi"
 	"math/big"
+	"strings"
 )
 
 func (k Keeper) SendCoinsFromModuleToEVMAccount(ctx sdk.Context, to sdk.AccAddress,
@@ -104,4 +106,28 @@ func (k Keeper) WRC20DenomValueForFunc(ctx sdk.Context, moduleName string, contr
 	}
 
 	return nil, errors.New(fmt.Sprintf("Empty result for func: %s", funcName))
+}
+
+func (k Keeper) DeployWRC20ForGivenERC20(ctx sdk.Context, moduleName string, params interface{}) (address sdk.AccAddress, err error) {
+	ma := k.GetModuleAccount(ctx, moduleName)
+	sender := ma.GetAddress()
+	abiIns, err := abi.NewABI(meta.DefaultERC20ABI)
+	if err != nil {
+		return sdk.AccAddress{}, err
+	}
+	data, err := abi.Encode(params, abiIns.Constructor.Inputs)
+	if err != nil {
+		return sdk.AccAddress{}, err
+	}
+	bin, err := hex.DecodeString(strings.TrimPrefix(meta.DefaultERC20Bytecode, "0x"))
+	data = append(bin, data...)
+	msg := k.BuildParams(sender, nil, data, DefaultGas, ma.GetSequence())
+
+	result, err := k.evmKeeper.EvmTxExec(ctx, msg)
+
+	if result != nil && err == nil{
+		addStr := result.VMResult().Log
+		return sdk.HexToAddress(addStr), err
+	}
+	return sdk.AccAddress{}, err
 }
