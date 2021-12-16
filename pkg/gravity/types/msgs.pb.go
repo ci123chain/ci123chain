@@ -720,10 +720,13 @@ type MsgDepositClaim struct {
 	EventNonce     uint64                                 `protobuf:"varint,1,opt,name=event_nonce,json=eventNonce,proto3" json:"event_nonce,omitempty"`
 	BlockHeight    uint64                                 `protobuf:"varint,2,opt,name=block_height,json=blockHeight,proto3" json:"block_height,omitempty"`
 	TokenContract  string                                 `protobuf:"bytes,3,opt,name=token_contract,json=tokenContract,proto3" json:"token_contract,omitempty"`
-	Amount         sdk.Int `protobuf:"bytes,4,opt,name=amount,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"amount"`
-	EthereumSender string                                 `protobuf:"bytes,5,opt,name=ethereum_sender,json=ethereumSender,proto3" json:"ethereum_sender,omitempty"`
-	CosmosReceiver string                                 `protobuf:"bytes,6,opt,name=cosmos_receiver,json=cosmosReceiver,proto3" json:"cosmos_receiver,omitempty"`
-	Orchestrator   string                                 `protobuf:"bytes,7,opt,name=orchestrator,proto3" json:"orchestrator,omitempty"`
+	TokenName	   string								  `protobuf:"bytes,4,opt,name=token_name,json=tokenName,proto3" json:"token_name,omitempty"`
+	TokenDecimals  uint64								  `protobuf:"bytes,5,opt,name=token_decimals,json=tokenDecimals,proto3" json:"token_decimals,omitempty"`
+	TokenSymbol	   string								  `protobuf:"bytes,6,opt,name=token_symbol,json=tokenSymbol,proto3" json:"token_symbol,omitempty"`
+ 	Amount         sdk.Int `protobuf:"bytes,7,opt,name=amount,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"amount"`
+	EthereumSender string                                 `protobuf:"bytes,8,opt,name=ethereum_sender,json=ethereumSender,proto3" json:"ethereum_sender,omitempty"`
+	CosmosReceiver string                                 `protobuf:"bytes,9,opt,name=cosmos_receiver,json=cosmosReceiver,proto3" json:"cosmos_receiver,omitempty"`
+	Orchestrator   string                                 `protobuf:"bytes,10,opt,name=orchestrator,proto3" json:"orchestrator,omitempty"`
 }
 
 func (m *MsgDepositClaim) Reset()         { *m = MsgDepositClaim{} }
