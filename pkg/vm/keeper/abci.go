@@ -35,17 +35,17 @@ func (k *Keeper) EndBlock(ctx sdk.Context, req abci.RequestEndBlock) []abci.Vali
 	// Gas costs are handled within msg handler so costs should be ignored
 	ctx = ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
 
-	// Update account balances before committing other parts of state
-	k.UpdateAccounts(ctx)
+	//// Update account balances before committing other parts of state
+	//k.UpdateAccounts(ctx)
 
 	// Commit state objects to KV store
-	_, err := k.Commit(ctx, true)
-	if err != nil {
-		panic(err)
-	}
+	//_, err := k.Commit(ctx, true)
+	//if err != nil {
+	//	panic(err)
+	//}
 
-	// Clear accounts cache after account data has been committed
-	k.ClearStateObjects(ctx)
+	//// Clear accounts cache after account data has been committed
+	//k.ClearStateObjects(ctx)
 
 	// set the block bloom filter bytes to store
 	bloom := ethtypes.BytesToBloom(k.Bloom.Bytes())

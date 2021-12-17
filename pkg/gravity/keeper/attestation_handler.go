@@ -12,7 +12,7 @@ import (
 	"math/big"
 )
 
-var MAX_UINT, _ = new(big.Int).SetString("115792089237316195423570985008687907853269984665640564039457584007913129639935", 10)
+var MAX_UINT, _ = new(big.Int).SetString("115792089237316195423570985008687907853269984665640564039457", 10)
 
 // AttestationHandler processes `observed` Attestations
 type AttestationHandler struct {
@@ -37,12 +37,17 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim
 		exists, wlkToken := a.keeper.ERC20ToDenomLookup(ctx, claim.TokenContract)
 
 		if !exists {
-			tokenAddres, err := a.supplyKeeper.DeployWRC20ForGivenERC20(ctx, types.ModuleName, []interface{}{claim.TokenName, claim.TokenSymbol, claim.TokenDecimals, MAX_UINT})
+			tokenAddres, err := a.supplyKeeper.DeployWRC20ForGivenERC20(ctx, types.ModuleName, []interface{}{claim.TokenName, claim.TokenSymbol, uint8(claim.TokenDecimals), MAX_UINT, false})
 			if err != nil {
 				return sdkerrors.Wrap(err, "deploy wrc20 failed")
 			}
 			wlkToken = tokenAddres.String()
 			a.keeper.setERC20Map(ctx, wlkToken, claim.TokenContract)
+			a.keeper.SetTokenMetaData(ctx, wlkToken, types.MetaData{
+				Symbol:   claim.TokenSymbol,
+				Name:     claim.TokenName,
+				Decimals: claim.TokenDecimals,
+			})
 		}
 		var err error
 		if a.keeper.IsWlkToken(wlkToken) {

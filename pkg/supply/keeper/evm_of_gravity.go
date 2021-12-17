@@ -16,8 +16,6 @@ func (k Keeper) SendCoinsFromModuleToEVMAccount(ctx sdk.Context, to sdk.AccAddre
 	moduleName string, wlkContract sdk.AccAddress, amount *big.Int) error {
 
 	from := k.GetModuleAddress(moduleName)
-
-
 	abiIns, err := abi.NewABI(meta.DefaultERC20ABI)
 	if err != nil {
 		return err
@@ -115,6 +113,7 @@ func (k Keeper) DeployWRC20ForGivenERC20(ctx sdk.Context, moduleName string, par
 	if err != nil {
 		return sdk.AccAddress{}, err
 	}
+	ctx = ctx.WithIsRootMsg(true)
 	data, err := abi.Encode(params, abiIns.Constructor.Inputs)
 	if err != nil {
 		return sdk.AccAddress{}, err
