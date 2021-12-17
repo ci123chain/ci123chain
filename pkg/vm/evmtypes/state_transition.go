@@ -185,6 +185,11 @@ func (st StateTransition) TransitionDb(ctx sdk.Context, config ChainConfig) (*Ex
 		if err := csdb.Finalise(true); err != nil {
 			return nil, err
 		}
+		_, err := csdb.Commit(true)
+		if err != nil {
+			return nil, err
+		}
+
 		if err := csdb.Reset(csdb.thash); err != nil {
 			return nil, err
 		}
