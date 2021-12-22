@@ -187,7 +187,12 @@ func (k Keeper) IterateAttestaions(ctx sdk.Context, cb func([]byte, types.Attest
 
 	for ; iter.Valid(); iter.Next() {
 		att := types.Attestation{}
-		codec.GetLegacyAminoByCodec(k.cdc).MustUnmarshalBinaryBare(iter.Value(), &att)
+		// todo fix for old data
+		err := codec.GetLegacyAminoByCodec(k.cdc).UnmarshalBinaryBare(iter.Value(), &att)
+		if err != nil {
+			k.Logger(ctx).Warn("unmarshal attention error: ", err)
+			continue
+		}
 		// cb returns true to stop early
 		if cb(iter.Key(), att) {
 			return
