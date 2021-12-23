@@ -7,7 +7,7 @@ fi
 
 if [ -z $CI_ETH_CHAIN_ID ];
 then
-   CI_ETH_CHAIN_ID=7880
+   CI_ETH_CHAIN_ID=444900
 fi
 
 if [ -z $CI_TOKENNAME ];
