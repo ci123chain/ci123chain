@@ -28,10 +28,6 @@ const (
 	FlagMasterDomain   = "master_domain"
 	flagMasterPort	   = "master_port"
 	defaultMasterPort  = "443"
-	flagConfig         = "config" //config.toml
-	defaultConfigFilePath = "config.toml"
-	defaultConfigPath  = "config"
-	defaultDataPath    = "data"
 	FlagValidatorKey   = "validator_key"
 )
 
@@ -130,6 +126,7 @@ func configFollowMaster(master, root string) (*cfg.Config, error){
 		return nil, err
 	}
 
+	util.Setup(configFiles.ETHChainID)
 	return c, nil
 }
 

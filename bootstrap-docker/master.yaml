@@ -17,9 +17,10 @@ services:
     depends_on:
       - raftleveldb_dev
     environment:
-      CI_EXPORT: 1
-      CI_EXPORT_FILE: https://s2-cdn.oneitfarm.com/lg8qTEAI07inw02HwY86sU8trqFy?attname=exportFile-11-19.json
+#      CI_EXPORT: 1
+#      CI_EXPORT_FILE: https://s2-cdn.oneitfarm.com/lg8qTEAI07inw02HwY86sU8trqFy?attname=exportFile-11-19.json
 
+      CI_ETH_CHAIN_ID: 444901
       CI_CHAIN_ID: weelink
       IDG_HOST_26657: ci1
       IDG_HOST_8546: ci1
@@ -32,6 +33,7 @@ services:
 #      CI_PUBKEY: CLzpXvktvJL/rvNd+jwH76kQ00Z7hlZSBJmxaayEURY=
     ports:
       - 26655:26656
+      - 1309:80
     networks:
       - master-slave
 
