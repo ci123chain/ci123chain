@@ -8,6 +8,7 @@ import (
 	abcitypes "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/app"
 	"github.com/ci123chain/ci123chain/pkg/app/types"
+	"github.com/ci123chain/ci123chain/pkg/config"
 	"github.com/ci123chain/ci123chain/pkg/node"
 	"github.com/ci123chain/ci123chain/pkg/validator"
 	"github.com/spf13/cobra"
@@ -27,60 +28,64 @@ import (
 )
 
 var (
-	FlagName = "name"
+	FlagName       = "name"
 	FlagClientHome = "home-client"
-	FlagOWK = "owk"
+	FlagOWK        = "owk"
 )
 
 var (
-	FlagOverwrite = "overwrite"
-	FlagWithTxs = "with-txs"
-	FlagIP = "ip"
-	FlagChainID = "chain_id"
+	FlagOverwrite  = "overwrite"
+	FlagWithTxs    = "with-txs"
+	FlagIP         = "ip"
+	FlagChainID    = "chain_id"
+	FlagEthChainID = "eth_chain_id"
 	//FlagDBName = "dbname"
 	FlagCoinName = "denom"
 )
 
-
-type GenesisTx struct{
-	NodeID 	string	`json:"node_id"`
-	IP 		string	`json:"ip"`
+type GenesisTx struct {
+	NodeID    string                   `json:"node_id"`
+	IP        string                   `json:"ip"`
 	Validator tmtypes.GenesisValidator `json:"validator"`
-	AppGenTx json.RawMessage  `json:"app_gen_tx"`
+	AppGenTx  json.RawMessage          `json:"app_gen_tx"`
 }
 
-type InitConfig struct{
-	ChainID 	string
-	GenTxs 		bool
-	GenTxsDir 	string
-	Overwrite 	bool
-	GenesisTime time.Time
-	Export 		bool
-	ValidatorKey	string
+type InitConfig struct {
+	ChainID      string
+	EthChainID   uint64
+	GenTxs       bool
+	GenTxsDir    string
+	Overwrite    bool
+	GenesisTime  time.Time
+	Export       bool
+	ValidatorKey string
 }
 
 type ValidatorAccount struct {
-	Address     string    `json:"address"`
-	PublicKey   string     `json:"public_key"`
-	PrivateKey  string    `json:"private_key"`
+	Address    string `json:"address"`
+	PublicKey  string `json:"public_key"`
+	PrivateKey string `json:"private_key"`
 }
 
 func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "init",
+		Use:   "init",
 		Short: "Initialize genesis configs, priv-validator file, and p2p-node file",
-		Args: cobra.NoArgs,
+		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			if denom := viper.GetString(FlagCoinName); denom != "" {
 				abcitypes.SetCoinDenom(viper.GetString(FlagCoinName))
 			}
 
-			chainID1 := viper.GetString(FlagChainID);
+			chainID1 := viper.GetString(FlagChainID)
 			if chainID1 == "" {
 				panic(errors.New("chain id can not be empty"))
 			}
-
+			ethChainID1 := viper.GetUint64(FlagEthChainID)
+			if ethChainID1 == 0 {
+				panic(errors.New("eth chain id can not be empty"))
+			}
 			exportMode := viper.GetBool(flagStartFromExport)
 			validatorKey := viper.GetString(app.FlagValidatorKey)
 			if exportMode && len(validatorKey) == 0 {
@@ -88,16 +93,19 @@ func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Com
 			}
 
 			ctxConfig := ctx.Config
+			ctxConfig.BaseConfig.EthChainID = ethChainID1
 			ctxConfig.SetRoot(viper.GetString(tmcli.HomeFlag))
+			config.SaveConfig(ctxConfig)
 
 			initConfig := InitConfig{
-				ChainID: chainID1,
-				Overwrite: viper.GetBool(FlagOverwrite),
-				Export: exportMode,
+				ChainID:      chainID1,
+				EthChainID:   ethChainID1,
+				Overwrite:    viper.GetBool(FlagOverwrite),
+				Export:       exportMode,
 				ValidatorKey: validatorKey,
 			}
 
-			chainID, nodeID, appMessage, pubKey, err := InitWithConfig(cdc, appInit, ctxConfig, initConfig)
+			chainID, ethChainID, nodeID, appMessage, pubKey, err := InitWithConfig(cdc, appInit, ctxConfig, initConfig)
 			if err != nil {
 				return sdkerrors.Wrap(sdkerrors.ErrParams, fmt.Sprintf("invalid params: %v", err.Error()))
 			}
@@ -105,11 +113,13 @@ func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Com
 			// print out some types information
 			toPrint := struct {
 				ChainID    string          `json:"chain_id"`
+				EthChainID uint64 		   `json:"eth_chain_id"`
 				NodeID     string          `json:"node_id"`
 				AppMessage json.RawMessage `json:"app_message"`
-				PubKey     crypto.PubKey          `json:"pub_key"`
+				PubKey     crypto.PubKey   `json:"pub_key"`
 			}{
 				chainID,
+				ethChainID,
 				nodeID,
 				appMessage,
 				pubKey,
@@ -125,14 +135,14 @@ func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Com
 
 	cmd.Flags().BoolP(FlagOverwrite, "o", false, "overwrite the genesis.json file")
 	cmd.Flags().String(FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")
+	cmd.Flags().String(FlagEthChainID, "", "genesis file chain-id, if left blank will be randomly created")
 	cmd.Flags().String(app.FlagValidatorKey, "", "the validator key")
-	cmd.Flags().String(FlagCoinName, "stake",  "coin name")
+	cmd.Flags().String(FlagCoinName, "stake", "coin name")
 	return cmd
 }
 
-
-func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initConfig InitConfig)(
-	chainID string, nodeID string, appMessage json.RawMessage, pubKey crypto.PubKey, err error) {
+func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initConfig InitConfig) (
+	chainID string, ethChainID uint64, nodeID string, appMessage json.RawMessage, pubKey crypto.PubKey, err error) {
 
 	var validatorKey ed25519.PrivKey
 
@@ -141,7 +151,7 @@ func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initCo
 		if err != nil {
 			panic(err)
 		}
-	}else {
+	} else {
 		//panic(errors.New("validator key can not be empty"))
 		validatorKey = ed25519.GenPrivKey()
 	}
@@ -161,6 +171,8 @@ func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initCo
 
 	chainID = initConfig.ChainID
 
+	ethChainID = initConfig.EthChainID
+
 	genFile := c.GenesisFile()
 	if !initConfig.Overwrite && cmn.FileExists(genFile) {
 		err = fmt.Errorf("genesis.json file already exists: %v", genFile)
@@ -170,7 +182,7 @@ func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initCo
 	val := appInit.GetValidator(nodeKey.PubKey(), viper.GetString(FlagName))
 	validators := []tmtypes.GenesisValidator{val}
 
-	pubKey = nodeKey.PubKey()//hex.EncodeToString(cdc.MustMarshalJSON(nodeKey.PubKey()))
+	pubKey = nodeKey.PubKey() //hex.EncodeToString(cdc.MustMarshalJSON(nodeKey.PubKey()))
 
 	appState, err := appInit.AppGenState(validators)
 	if err != nil {
@@ -188,13 +200,13 @@ func writeGenesisFile(cdc *amino.Codec, genesisFile string, chainID string,
 	validators []tmtypes.GenesisValidator, appState json.RawMessage, genesisTime time.Time) error {
 
 	genDoc := tmtypes.GenesisDoc{
-		GenesisTime: 	genesisTime,
-		ChainID: 		chainID,
-		Validators: 	validators,
-		AppState:		appState,
+		GenesisTime: genesisTime,
+		ChainID:     chainID,
+		Validators:  validators,
+		AppState:    appState,
 		ConsensusParams: &tmpro.ConsensusParams{
-			Block: tmtypes.DefaultBlockParams(),
-			Evidence: tmtypes.DefaultEvidenceParams(),
+			Block:     tmtypes.DefaultBlockParams(),
+			Evidence:  tmtypes.DefaultEvidenceParams(),
 			Validator: tmpro.ValidatorParams{PubKeyTypes: []string{tmtypes.ABCIPubKeyTypeEd25519}},
 		},
 	}

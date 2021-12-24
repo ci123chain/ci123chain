@@ -60,9 +60,8 @@ func startCmd(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Codec) *co
 		Use: "start",
 		Short: "Run the full node",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			id := viper.GetInt64(flagETHChainID)
 			limit := viper.GetInt(flagIteratorLimit)
-			util.Setup(id)
+			util.Setup(int64(ctx.Config.EthChainID))
 			util.SetLimit(limit)
 			v0.SetSkipWAL(viper.GetBool(flagSkipWAL))
 			loadExport := viper.GetBool(flagStartFromExport)
@@ -105,7 +104,6 @@ func startCmd(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Codec) *co
 	cmd.Flags().Bool(flagCiStateDBTls, true, "use tls")
 	cmd.Flags().String(flagCiNodeDomain, "", "node domain")
 	cmd.Flags().String(flagShardIndex, "", "index of shard")
-	cmd.Flags().Int64(flagETHChainID, 1, "eth chain id")
 	cmd.Flags().Int(flagIteratorLimit, 10, "iterator limit")
 	cmd.Flags().String(app.FlagValidatorKey, "", "validator_key")
 	cmd.Flags().String(flagRunMode, "single", "run chain mode")
