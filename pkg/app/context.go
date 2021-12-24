@@ -126,7 +126,6 @@ func configFollowMaster(master, root string) (*cfg.Config, error){
 		return nil, err
 	}
 
-	util.Setup(configFiles.ETHChainID)
 	return c, nil
 }
 
