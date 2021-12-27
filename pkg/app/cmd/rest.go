@@ -474,6 +474,7 @@ func ExportConfigHandler(ctx context.Context) http.HandlerFunc  {
 		configFile := &types.ConfigFiles{
 			GenesisFile: gen,
 			NodeID:      nodeID,
+			ETHChainID:  uint64(util.CHAINID),
 		}
 		configBytes, err := json.Marshal(configFile)
 		if err != nil {
