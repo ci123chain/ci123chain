@@ -36,7 +36,7 @@ if [ ! -f $CI_HOME/config/genesis.json ]; then
     if [ -z $CI_MASTER_DOMAIN ]; then
         echo "---Not found genesis file, Creating----"
 
-        /opt/cid-linux init --home=$CI_HOME --chain_id=$CI_CHAIN_ID --denom=$CI_TOKENNAME
+        /opt/cid-linux init --home=$CI_HOME --eth_chain_id=$CI_ETH_CHAIN_ID --chain_id=$CI_CHAIN_ID --denom=$CI_TOKENNAME
 
         CI_VALIDATOR_KEY=$(cat $CI_HOME/config/priv_validator_key.json | jq -r '.priv_key.value')
         CI_PUBKEY=$(cat $CI_HOME/config/priv_validator_key.json | jq -r '.pub_key.value')

@@ -107,6 +107,8 @@ func configFollowMaster(master, root string) (*cfg.Config, error){
 		return nil, err
 	}
 
+	c.EthChainID = configFiles.ETHChainID
+
 	if os.Getenv(util.IDG_APPID) != "" {
 		c.P2P.PersistentPeers = configFiles.NodeID + "@" + master + ":7443@tls"
 	} else {
