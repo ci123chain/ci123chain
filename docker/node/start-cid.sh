@@ -77,7 +77,6 @@ CI_NODE_ADDRESS=$(cat $CI_HOME/config/priv_validator_key.json | jq -r '.address'
 echo "---Loading CID ENV---"
 echo "export CI_VALIDATOR_KEY=$CI_VALIDATOR_KEY" >> /etc/profile
 echo "export CI_PUBKEY=$CI_PUBKEY" >> /etc/profile
-echo "export CI_ETH_CHAIN_ID=$CI_ETH_CHAIN_ID" >> /etc/profile
 echo "export CI_NODE_ADDRESS=$CI_NODE_ADDRESS" >> /etc/profile
 echo "export CI_HOME=$CI_HOME" >> /etc/profile
 
