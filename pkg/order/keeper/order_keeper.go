@@ -30,7 +30,7 @@ func (k OrderKeeper) Logger(ctx sdk.Context) log.Logger {
 
 func (ok *OrderKeeper) WaitForReady(ctx sdk.Context) {
 	for {
-		ok.Logger(ctx).Info("Stucking on waitForReady")
+		//ok.Logger(ctx).Info("Stucking on waitForReady")
 		orderbook, err := ok.GetOrderBook(ctx)
 		if err != nil {
 			if err.Error() != types.NoOrderBookErr {
