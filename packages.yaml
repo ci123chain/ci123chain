@@ -7,11 +7,11 @@ binary:
     cmd_args: ["--port=5002 --data-dir=/opt/raftdb"]
 
   - name: "服务proxy"
-    image: harbor.oneitfarm.com/itfarm-test/sal20000ad4588ae21123043it89279q:1.5.43
+    image: harbor.oneitfarm.com/itfarm-test/sal20000ad4588ae2112304erlcs27xp:1.5.44
     workdir: "/etc/service/cproxy-linux"
     port: 3030
     cmd_paths: ["/etc/service/cproxy-linux/run"]
-    cmd_args: ["--port=3030 --statedb_host=127.0.0.1 --statedb_tls=false --statedb_port=5002"]
+    cmd_args: ["--port=3030 --statedb_host=127.0.0.1 --statedb_tls=false --statedb_port=5002 --port_tm=26657 --port_shard=80 --port_eth=8546"]
 
   - name: "服务ci123chain"
     image: harbor.oneitfarm.com/itfarm-test/sal20000ad4588ae21123043moq32748:1.6.12
