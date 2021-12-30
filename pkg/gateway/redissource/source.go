@@ -10,6 +10,7 @@ import (
 	r "github.com/ci123chain/ci123chain/pkg/redis"
 	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/go-redis/redis/v8"
+	"os"
 	"strings"
 )
 
@@ -65,7 +66,7 @@ func (s *RedisDBSourceImp) FetchSource() (hostArr []string) {
 
 	var host string
 	for _, value := range node_list {
-		schema := util.SchemaPrefix()
+		schema := SchemaPrefix()
 		host = schema + value
 		if len(host) > 0 {
 			hostArr = append(hostArr, host)
@@ -73,6 +74,14 @@ func (s *RedisDBSourceImp) FetchSource() (hostArr []string) {
 	}
 	logger.Debug("End fetch from redis")
 	return
+}
+
+func SchemaPrefix() string {
+	prefix := util.DefaultHTTP
+	if os.Getenv("CI_UNIQUE_KEY") != "" {
+		prefix = util.DefaultHTTPS
+	}
+	return prefix
 }
 
 func (s *RedisDBSourceImp) GetDBConnection() (db *r.RedisDB, err error) {
