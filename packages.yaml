@@ -7,16 +7,16 @@ binary:
     cmd_args: ["--port=5002 --data-dir=/opt/raftdb"]
 
   - name: "服务proxy"
-    image: harbor.oneitfarm.com/itfarm-test/sal20000ad4588ae211112eaekg927o0:1.5.41
+    image: harbor.oneitfarm.com/itfarm-test/sal20000ad4588ae2112303k8jb62790:1.5.42
     workdir: "/etc/service/cproxy-linux"
     port: 3030
     cmd_paths: ["/etc/service/cproxy-linux/run"]
     cmd_args: ["--port=3030 --statedb_host=127.0.0.1 --statedb_tls=false --statedb_port=5002"]
 
   - name: "服务ci123chain"
-    image: harbor.oneitfarm.com/itfarm-test/sal20000ad4588ae2112294qdh4e271k:1.6.10 
+    image: harbor.oneitfarm.com/itfarm-test/sal20000ad4588ae2112302c35jp277r:1.6.11
     workdir: "/opt" # 除二进制外的其他程序
-    ports: [1317, 8546, 26657, 26656]
+    ports: [8546, 26657, 26656]
     init_scripts: [ "./migrate.sh" ] # init 阶段执行的程序
     cmd_paths: [ "/opt/cid-linux"] # 程序文件路径
-    cmd_args: [ "start --statedb_host=127.0.0.1 --statedb_tls=false --statedb_port=5002 --master_domain=weelinknode1.gw103.oneitfarm.com --home=/opt/ci123chain"] # 程序执行参数
+    cmd_args: [ "start --laddr=tcp://0.0.0.0:80 --statedb_host=127.0.0.1 --statedb_tls=false --statedb_port=5002 --master_domain=weelinknode1.gw103.oneitfarm.com --home=/opt/ci123chain"] # 程序执行参数
