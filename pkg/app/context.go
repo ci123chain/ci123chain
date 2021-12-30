@@ -88,7 +88,8 @@ func configFollowMaster(master, root string) (*cfg.Config, error){
 	if os.Getenv(util.IDG_APPID) != "" {
 		prefix = util.DefaultHTTPS
 	}
-	resp, err := http.Get(prefix + master + ":" + port + "/exportConfig")
+	url := prefix + master + ":" + port + "/exportConfig"
+	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err
 	}
@@ -104,7 +105,7 @@ func configFollowMaster(master, root string) (*cfg.Config, error){
 	var configFiles types.ConfigFiles
 	err = json.Unmarshal(res, &configFiles)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "fetch config from remote: %s", url)
 	}
 
 	c.EthChainID = configFiles.ETHChainID

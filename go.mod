@@ -53,6 +53,6 @@ replace (
 	github.com/cosmos/iavl => github.com/ci123chain/iavl v0.16.0-ci0
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 	//github.com/tendermint/tendermint => ../tendermint-ci
-	github.com/tendermint/tendermint => github.com/ci123chain/tendermint v0.32.7-ci30
+	github.com/tendermint/tendermint => github.com/ci123chain/tendermint v0.32.7-ci31
 	github.com/wasmerio/wasmer-go => github.com/ci123chain/wasmer-go v1.0.3-rc2
 )
