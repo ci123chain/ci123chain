@@ -7,14 +7,14 @@ binary:
     cmd_args: ["--port=5002 --data-dir=/opt/raftdb"]
 
   - name: "服务proxy"
-    image: harbor.oneitfarm.com/itfarm-test/sal20000ad4588ae2112303k8jb62790:1.5.42
+    image: harbor.oneitfarm.com/itfarm-test/sal20000ad4588ae21123043it89279q:1.5.43
     workdir: "/etc/service/cproxy-linux"
     port: 3030
     cmd_paths: ["/etc/service/cproxy-linux/run"]
     cmd_args: ["--port=3030 --statedb_host=127.0.0.1 --statedb_tls=false --statedb_port=5002"]
 
   - name: "服务ci123chain"
-    image: harbor.oneitfarm.com/itfarm-test/sal20000ad4588ae2112302c35jp277r:1.6.11
+    image: harbor.oneitfarm.com/itfarm-test/sal20000ad4588ae21123043moq32748:1.6.12
     workdir: "/opt" # 除二进制外的其他程序
     ports: [8546, 26657, 26656]
     init_scripts: [ "./migrate.sh" ] # init 阶段执行的程序
