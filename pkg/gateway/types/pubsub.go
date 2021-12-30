@@ -2,6 +2,7 @@ package types
 
 import (
 	"context"
+	"github.com/ci123chain/ci123chain/pkg/gateway/redissource"
 	"github.com/ci123chain/ci123chain/pkg/util"
 	"io/ioutil"
 	"net/http"
@@ -1107,7 +1108,7 @@ func GetEthConnection(addr string) (*websocket.Conn, error) {
 }
 
 func rpcAddress(host string) string {
-	prefix := util.SchemaPrefix()
+	prefix := redissource.SchemaPrefix()
 	//if os.Getenv(util.IDG_APPID) != "" {
 	//	res = util.DefaultHTTPS
 	//}
@@ -1165,7 +1166,7 @@ func GetURL(host string) (error, *util.DomainInfo) {
 	cli := &http.Client{
 		Transport:&http.Transport{DisableKeepAlives:true},
 	}
-	prefix := util.SchemaPrefix()
+	prefix := redissource.SchemaPrefix()
 	reqUrl := prefix + strings.Split(host, ":")[0] + ":" + ShardPort + "/info"
 
 	req2, err := http.NewRequest("GET", reqUrl, nil)

@@ -2,8 +2,8 @@ package server
 
 import (
 	"encoding/json"
+	"github.com/ci123chain/ci123chain/pkg/gateway/redissource"
 	"github.com/ci123chain/ci123chain/pkg/gateway/types"
-	"github.com/ci123chain/ci123chain/pkg/util"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -23,7 +23,7 @@ func SendRequest(requestUrl *url.URL,r *http.Request, RequestParams map[string]s
 		Transport:&http.Transport{DisableKeepAlives:true},
 	}
 
-	schema := util.SchemaPrefix()
+	schema := redissource.SchemaPrefix()
 	reqUrl := schema + requestUrl.Host  + ":"+ types.ShardPort + r.URL.Path
 
 	data := url.Values{}
