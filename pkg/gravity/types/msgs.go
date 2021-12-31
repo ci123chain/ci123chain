@@ -6,6 +6,7 @@ import (
 
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
+	proto "github.com/gogo/protobuf/proto"
 	"github.com/tendermint/tendermint/crypto/tmhash"
 )
 
@@ -16,11 +17,49 @@ var (
 	_ sdk.Msg = &MsgRequestBatch{}
 	_ sdk.Msg = &MsgConfirmBatch{}
 	_ sdk.Msg = &MsgERC20DeployedClaim{}
+	_ sdk.Msg = &MsgERC721DeployedClaim{}
 	_ sdk.Msg = &MsgConfirmLogicCall{}
 	_ sdk.Msg = &MsgLogicCallExecutedClaim{}
 	_ sdk.Msg = &MsgDepositClaim{}
+	_ sdk.Msg = &MsgDeposit721Claim{}
 	_ sdk.Msg = &MsgWithdrawClaim{}
 )
+
+type MsgDeposit721Claim struct {
+	EventNonce     uint64  `protobuf:"varint,1,opt,name=event_nonce,json=eventNonce,proto3" json:"event_nonce,omitempty"`
+	BlockHeight    uint64  `protobuf:"varint,2,opt,name=block_height,json=blockHeight,proto3" json:"block_height,omitempty"`
+	TokenContract  string  `protobuf:"bytes,3,opt,name=token_contract,json=tokenContract,proto3" json:"token_contract,omitempty"`
+	TokenName      string  `protobuf:"bytes,4,opt,name=token_name,json=tokenName,proto3" json:"token_name,omitempty"`
+	TokenSymbol    string  `protobuf:"bytes,5,opt,name=token_symbol,json=tokenSymbol,proto3" json:"token_symbol,omitempty"`
+	TokenID        sdk.Int `protobuf:"bytes,6,opt,name=token_id,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"token_id"`
+	EthereumSender string  `protobuf:"bytes,7,opt,name=ethereum_sender,json=ethereumSender,proto3" json:"ethereum_sender,omitempty"`
+	CosmosReceiver string  `protobuf:"bytes,8,opt,name=cosmos_receiver,json=cosmosReceiver,proto3" json:"cosmos_receiver,omitempty"`
+	Orchestrator   string  `protobuf:"bytes,9,opt,name=orchestrator,proto3" json:"orchestrator,omitempty"`
+}
+
+type MsgDeposit721ClaimResponse struct {
+}
+
+func (m *MsgDeposit721ClaimResponse) Reset()         { *m = MsgDeposit721ClaimResponse{} }
+func (m *MsgDeposit721ClaimResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgDeposit721ClaimResponse) ProtoMessage()    {}
+
+type MsgERC721DeployedClaim struct {
+	EventNonce    uint64 `protobuf:"varint,1,opt,name=event_nonce,json=eventNonce,proto3" json:"event_nonce,omitempty"`
+	BlockHeight   uint64 `protobuf:"varint,2,opt,name=block_height,json=blockHeight,proto3" json:"block_height,omitempty"`
+	CosmosDenom   string `protobuf:"bytes,3,opt,name=cosmos_denom,json=cosmosDenom,proto3" json:"cosmos_denom,omitempty"`
+	TokenContract string `protobuf:"bytes,4,opt,name=token_contract,json=tokenContract,proto3" json:"token_contract,omitempty"`
+	Name          string `protobuf:"bytes,5,opt,name=name,proto3" json:"name,omitempty"`
+	Symbol        string `protobuf:"bytes,6,opt,name=symbol,proto3" json:"symbol,omitempty"`
+	Orchestrator  string `protobuf:"bytes,7,opt,name=orchestrator,proto3" json:"orchestrator,omitempty"`
+}
+
+type MsgERC721DeployedClaimResponse struct {
+}
+
+func (m *MsgERC721DeployedClaimResponse) Reset()         { *m = MsgERC721DeployedClaimResponse{} }
+func (m *MsgERC721DeployedClaimResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgERC721DeployedClaimResponse) ProtoMessage()    {}
 
 // NewMsgSetOrchestratorAddress returns a new msgSetOrchestratorAddress
 func NewMsgSetOrchestratorAddress(val sdk.AccAddress, oper sdk.AccAddress, eth string) *MsgSetOrchestratorAddress {
@@ -34,7 +73,7 @@ func NewMsgSetOrchestratorAddress(val sdk.AccAddress, oper sdk.AccAddress, eth s
 // Route should return the name of the module
 func (msg *MsgSetOrchestratorAddress) Route() string { return RouterKey }
 
-// Type should return the action
+// MsgType should return the action
 func (msg *MsgSetOrchestratorAddress) MsgType() string { return "set_operator_address" }
 
 // ValidateBasic performs stateless checks
@@ -65,7 +104,7 @@ func (msg *MsgSetOrchestratorAddress) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(acc)}
 }
 
-// GetSigners defines whose signature is required
+// GetFromAddress defines whose signature is required
 func (msg *MsgSetOrchestratorAddress) GetFromAddress() sdk.AccAddress {
 	acc, err := sdk.AccAddressFromBech32(msg.Validator)
 	if err != nil {
@@ -91,7 +130,7 @@ func NewMsgValsetConfirm(nonce uint64, ethAddress string, validator sdk.AccAddre
 // Route should return the name of the module
 func (msg *MsgValsetConfirm) Route() string { return RouterKey }
 
-// Type should return the action
+// MsgType should return the action
 func (msg *MsgValsetConfirm) MsgType() string { return "valset_confirm" }
 
 // ValidateBasic performs stateless checks
@@ -145,7 +184,7 @@ func NewMsgSendToEth(sender sdk.AccAddress, destAddress string, send sdk.Coin, b
 // Route should return the name of the module
 func (msg MsgSendToEth) Route() string { return RouterKey }
 
-// Type should return the action
+// MsgType should return the action
 func (msg MsgSendToEth) MsgType() string { return "send_to_eth" }
 
 func (msg *MsgSendToEth) Bytes() []byte {
@@ -211,7 +250,7 @@ func NewMsgRequestBatch(orchestrator sdk.AccAddress) *MsgRequestBatch {
 // Route should return the name of the module
 func (msg MsgRequestBatch) Route() string { return RouterKey }
 
-// Type should return the action
+// MsgType should return the action
 func (msg MsgRequestBatch) MsgType() string { return "request_batch" }
 
 // ValidateBasic performs stateless checks
@@ -253,7 +292,7 @@ func (msg MsgRequestBatch) GetFromAddress() sdk.AccAddress {
 // Route should return the name of the module
 func (msg MsgConfirmBatch) Route() string { return RouterKey }
 
-// Type should return the action
+// MsgType should return the action
 func (msg MsgConfirmBatch) MsgType() string { return "confirm_batch" }
 
 // ValidateBasic performs stateless checks
@@ -304,7 +343,7 @@ func (msg MsgConfirmBatch) GetFromAddress() sdk.AccAddress {
 // Route should return the name of the module
 func (msg MsgConfirmLogicCall) Route() string { return RouterKey }
 
-// Type should return the action
+// MsgType should return the action
 func (msg MsgConfirmLogicCall) MsgType() string { return "confirm_logic" }
 
 // ValidateBasic performs stateless checks
@@ -355,21 +394,21 @@ func (msg MsgConfirmLogicCall) GetFromAddress() sdk.AccAddress {
 
 // EthereumClaim represents a claim on ethereum state
 type EthereumClaim interface {
-	// All Ethereum claims that we relay from the Gravity contract and into the module
+	// GetEventNonce All Ethereum claims that we relay from the Gravity contract and into the module
 	// have a nonce that is monotonically increasing and unique, since this nonce is
 	// issued by the Ethereum contract it is immutable and must be agreed on by all validators
 	// any disagreement on what claim goes to what nonce means someone is lying.
 	GetEventNonce() uint64
-	// The block height that the claimed event occurred on. This EventNonce provides sufficient
+	// GetBlockHeight The block height that the claimed event occurred on. This EventNonce provides sufficient
 	// ordering for the execution of all claims. The block height is used only for batchTimeouts + logicTimeouts
 	// when we go to create a new batch we set the timeout some number of batches out from the last
 	// known height plus projected block progress since then.
 	GetBlockHeight() uint64
-	// the delegate address of the claimer, for MsgDepositClaim and MsgWithdrawClaim
+	// GetClaimer the delegate address of the claimer, for MsgDepositClaim and MsgWithdrawClaim
 	// this is sent in as the sdk.AccAddress of the delegated key. it is up to the user
 	// to disambiguate this into a sdk.ValAddress
 	GetClaimer() sdk.AccAddress
-	// Which type of claim this is
+	// GetType Which type of claim this is
 	GetType() ClaimType
 	ValidateBasic() error
 	ClaimHash() []byte
@@ -377,6 +416,7 @@ type EthereumClaim interface {
 
 var (
 	_ EthereumClaim = &MsgDepositClaim{}
+	_ EthereumClaim = &MsgDeposit721Claim{}
 	_ EthereumClaim = &MsgWithdrawClaim{}
 	_ EthereumClaim = &MsgERC20DeployedClaim{}
 	_ EthereumClaim = &MsgLogicCallExecutedClaim{}
@@ -432,7 +472,7 @@ func (msg MsgDepositClaim) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{acc}
 }
 
-// Type should return the action
+// MsgType should return the action
 func (msg MsgDepositClaim) MsgType() string { return "deposit_claim" }
 
 // Route should return the name of the module
@@ -451,15 +491,108 @@ func (msg MsgDepositClaim) GetFromAddress() sdk.AccAddress {
 	return acc
 }
 
+// ClaimHash implements BridgeDeposit.Hash
+func (msg *MsgDepositClaim) ClaimHash() []byte {
+	path := fmt.Sprintf("%s/%s/%s/", msg.TokenContract, string(msg.EthereumSender), msg.CosmosReceiver)
+	return tmhash.Sum([]byte(path))
+}
+
+func (m *MsgDeposit721Claim) Reset()         { *m = MsgDeposit721Claim{} }
+func (m *MsgDeposit721Claim) String() string { return proto.CompactTextString(m) }
+func (*MsgDeposit721Claim) ProtoMessage()    {}
+
+// GetType returns the type of the claim
+func (e *MsgDeposit721Claim) GetType() ClaimType {
+	return CLAIM_TYPE_DEPOSIT721
+}
+
+// ValidateBasic performs stateless checks
+func (e *MsgDeposit721Claim) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(e.CosmosReceiver); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, e.CosmosReceiver)
+	}
+	if err := ValidateEthAddress(e.EthereumSender); err != nil {
+		return sdkerrors.Wrap(err, "eth sender")
+	}
+	if err := ValidateEthAddress(e.TokenContract); err != nil {
+		return sdkerrors.Wrap(err, "erc20 token")
+	}
+	if _, err := sdk.AccAddressFromBech32(e.Orchestrator); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, e.Orchestrator)
+	}
+	if e.EventNonce == 0 {
+		return fmt.Errorf("nonce == 0")
+	}
+	return nil
+}
+
+// GetSignBytes encodes the message for signing
+func (msg MsgDeposit721Claim) GetSignBytes() []byte {
+	return sdk.MustSortJSON(GravityCodec.MustMarshalJSON(msg))
+}
+
+func (msg MsgDeposit721Claim) GetClaimer() sdk.AccAddress {
+	err := msg.ValidateBasic()
+	if err != nil {
+		panic("MsgDepositClaim failed ValidateBasic! Should have been handled earlier")
+	}
+
+	val, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
+	return val
+}
+
+// GetSigners defines whose signature is required
+func (msg MsgDeposit721Claim) GetSigners() []sdk.AccAddress {
+	acc, err := sdk.AccAddressFromBech32(msg.Orchestrator)
+	if err != nil {
+		panic(err)
+	}
+
+	return []sdk.AccAddress{acc}
+}
+
+// MsgType should return the action
+func (msg MsgDeposit721Claim) MsgType() string { return "deposit721_claim" }
+
+// Route should return the name of the module
+func (msg MsgDeposit721Claim) Route() string { return RouterKey }
+
+func (msg *MsgDeposit721Claim) Bytes() []byte {
+	return sdk.MustSortJSON(GravityCodec.MustMarshalJSON(msg))
+}
+
+func (msg MsgDeposit721Claim) GetFromAddress() sdk.AccAddress {
+	acc, err := sdk.AccAddressFromBech32(msg.Orchestrator)
+	if err != nil {
+		panic(err)
+	}
+
+	return acc
+}
+
+// ClaimHash implements BridgeDeposit.Hash
+func (msg *MsgDeposit721Claim) ClaimHash() []byte {
+	path := fmt.Sprintf("%s/%s/%s/", msg.TokenContract, string(msg.EthereumSender), msg.CosmosReceiver)
+	return tmhash.Sum([]byte(path))
+}
+
+func (m *MsgDeposit721Claim) GetEventNonce() uint64 {
+	if m != nil {
+		return m.EventNonce
+	}
+	return 0
+}
+
+func (m *MsgDeposit721Claim) GetBlockHeight() uint64 {
+	if m != nil {
+		return m.BlockHeight
+	}
+	return 0
+}
+
 const (
 	TypeMsgWithdrawClaim = "withdraw_claim"
 )
-
-// Hash implements BridgeDeposit.Hash
-func (b *MsgDepositClaim) ClaimHash() []byte {
-	path := fmt.Sprintf("%s/%s/%s/", b.TokenContract, string(b.EthereumSender), b.CosmosReceiver)
-	return tmhash.Sum([]byte(path))
-}
 
 // GetType returns the claim type
 func (e *MsgWithdrawClaim) GetType() ClaimType {
@@ -483,7 +616,7 @@ func (e *MsgWithdrawClaim) ValidateBasic() error {
 	return nil
 }
 
-// Hash implements WithdrawBatch.Hash
+// ClaimHash implements WithdrawBatch.Hash
 func (b *MsgWithdrawClaim) ClaimHash() []byte {
 	path := fmt.Sprintf("%s/%d/", b.TokenContract, b.BatchNonce)
 	return tmhash.Sum([]byte(path))
@@ -525,7 +658,7 @@ func (msg MsgWithdrawClaim) GetSigners() []sdk.AccAddress {
 // Route should return the name of the module
 func (msg MsgWithdrawClaim) Route() string { return RouterKey }
 
-// Type should return the action
+// MsgType should return the action
 func (msg MsgWithdrawClaim) MsgType() string { return "withdraw_claim" }
 
 func (msg *MsgWithdrawClaim) Bytes() []byte {
@@ -580,7 +713,7 @@ func (msg MsgERC20DeployedClaim) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{acc}
 }
 
-// Type should return the action
+// MsgType should return the action
 func (msg MsgERC20DeployedClaim) MsgType() string { return "ERC20_deployed_claim" }
 
 func (msg *MsgERC20DeployedClaim) Bytes() []byte {
@@ -590,9 +723,9 @@ func (msg *MsgERC20DeployedClaim) Bytes() []byte {
 // Route should return the name of the module
 func (msg MsgERC20DeployedClaim) Route() string { return RouterKey }
 
-// Hash implements BridgeDeposit.Hash
-func (b *MsgERC20DeployedClaim) ClaimHash() []byte {
-	path := fmt.Sprintf("%s/%s/%s/%s/%d/", b.CosmosDenom, b.TokenContract, b.Name, b.Symbol, b.Decimals)
+// ClaimHash implements BridgeDeposit.Hash
+func (msg *MsgERC20DeployedClaim) ClaimHash() []byte {
+	path := fmt.Sprintf("%s/%s/%s/%s/%d/", msg.CosmosDenom, msg.TokenContract, msg.Name, msg.Symbol, msg.Decimals)
 	return tmhash.Sum([]byte(path))
 }
 
@@ -603,6 +736,93 @@ func (msg MsgERC20DeployedClaim) GetFromAddress() sdk.AccAddress {
 	}
 
 	return acc
+}
+
+func (m *MsgERC721DeployedClaim) Reset()         { *m = MsgERC721DeployedClaim{} }
+func (m *MsgERC721DeployedClaim) String() string { return proto.CompactTextString(m) }
+func (*MsgERC721DeployedClaim) ProtoMessage()    {}
+
+// GetType returns the type of the claim
+func (e *MsgERC721DeployedClaim) GetType() ClaimType {
+	return CLAIM_TYPE_ERC721_DEPLOYED
+}
+
+// ValidateBasic performs stateless checks
+func (e *MsgERC721DeployedClaim) ValidateBasic() error {
+	if err := ValidateEthAddress(e.TokenContract); err != nil {
+		return sdkerrors.Wrap(err, "erc20 token")
+	}
+	if _, err := sdk.AccAddressFromBech32(e.Orchestrator); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, e.Orchestrator)
+	}
+	if e.EventNonce == 0 {
+		return fmt.Errorf("nonce == 0")
+	}
+	return nil
+}
+
+// GetSignBytes encodes the message for signing
+func (msg MsgERC721DeployedClaim) GetSignBytes() []byte {
+	return sdk.MustSortJSON(GravityCodec.MustMarshalJSON(msg))
+}
+
+func (msg MsgERC721DeployedClaim) GetClaimer() sdk.AccAddress {
+	err := msg.ValidateBasic()
+	if err != nil {
+		panic("MsgERC20DeployedClaim failed ValidateBasic! Should have been handled earlier")
+	}
+
+	val, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
+	return val
+}
+
+// GetSigners defines whose signature is required
+func (msg MsgERC721DeployedClaim) GetSigners() []sdk.AccAddress {
+	acc, err := sdk.AccAddressFromBech32(msg.Orchestrator)
+	if err != nil {
+		panic(err)
+	}
+
+	return []sdk.AccAddress{acc}
+}
+
+// MsgType should return the action
+func (msg MsgERC721DeployedClaim) MsgType() string { return "ERC721_deployed_claim" }
+
+func (msg *MsgERC721DeployedClaim) Bytes() []byte {
+	return sdk.MustSortJSON(GravityCodec.MustMarshalJSON(msg))
+}
+
+// Route should return the name of the module
+func (msg MsgERC721DeployedClaim) Route() string { return RouterKey }
+
+// ClaimHash implements BridgeDeposit.Hash
+func (msg *MsgERC721DeployedClaim) ClaimHash() []byte {
+	path := fmt.Sprintf("%s/%s/%s/%s/", msg.CosmosDenom, msg.TokenContract, msg.Name, msg.Symbol)
+	return tmhash.Sum([]byte(path))
+}
+
+func (msg MsgERC721DeployedClaim) GetFromAddress() sdk.AccAddress {
+	acc, err := sdk.AccAddressFromBech32(msg.Orchestrator)
+	if err != nil {
+		panic(err)
+	}
+
+	return acc
+}
+
+func (m *MsgERC721DeployedClaim) GetEventNonce() uint64 {
+	if m != nil {
+		return m.EventNonce
+	}
+	return 0
+}
+
+func (m *MsgERC721DeployedClaim) GetBlockHeight() uint64 {
+	if m != nil {
+		return m.BlockHeight
+	}
+	return 0
 }
 
 // GetType returns the type of the claim
@@ -646,7 +866,7 @@ func (msg MsgLogicCallExecutedClaim) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{acc}
 }
 
-// Type should return the action
+// MsgType should return the action
 func (msg MsgLogicCallExecutedClaim) MsgType() string { return "Logic_Call_Executed_Claim" }
 
 // Route should return the name of the module
@@ -656,9 +876,9 @@ func (msg *MsgLogicCallExecutedClaim) Bytes() []byte {
 	return sdk.MustSortJSON(GravityCodec.MustMarshalJSON(msg))
 }
 
-// Hash implements BridgeDeposit.Hash
-func (b *MsgLogicCallExecutedClaim) ClaimHash() []byte {
-	path := fmt.Sprintf("%s/%d/", b.InvalidationId, b.InvalidationNonce)
+// ClaimHash implements BridgeDeposit.Hash
+func (msg *MsgLogicCallExecutedClaim) ClaimHash() []byte {
+	path := fmt.Sprintf("%s/%d/", msg.InvalidationId, msg.InvalidationNonce)
 	return tmhash.Sum([]byte(path))
 }
 
@@ -681,7 +901,7 @@ func NewMsgCancelSendToEth(val sdk.AccAddress, id uint64) *MsgCancelSendToEth {
 // Route should return the name of the module
 func (msg *MsgCancelSendToEth) Route() string { return RouterKey }
 
-// Type should return the action
+// MsgType should return the action
 func (msg *MsgCancelSendToEth) MsgType() string { return "cancel_send_to_eth" }
 
 // ValidateBasic performs stateless checks

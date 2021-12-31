@@ -1313,10 +1313,14 @@ func init() {
 	proto.RegisterType((*MsgConfirmLogicCallResponse)(nil), "gravity.v1.MsgConfirmLogicCallResponse")
 	proto.RegisterType((*MsgDepositClaim)(nil), "gravity.v1.MsgDepositClaim")
 	proto.RegisterType((*MsgDepositClaimResponse)(nil), "gravity.v1.MsgDepositClaimResponse")
+	proto.RegisterType((*MsgDeposit721Claim)(nil), "gravity.v1.MsgDeposit721Claim")
+	proto.RegisterType((*MsgDeposit721ClaimResponse)(nil), "gravity.v1.MsgDeposit721ClaimResponse")
 	proto.RegisterType((*MsgWithdrawClaim)(nil), "gravity.v1.MsgWithdrawClaim")
 	proto.RegisterType((*MsgWithdrawClaimResponse)(nil), "gravity.v1.MsgWithdrawClaimResponse")
 	proto.RegisterType((*MsgERC20DeployedClaim)(nil), "gravity.v1.MsgERC20DeployedClaim")
 	proto.RegisterType((*MsgERC20DeployedClaimResponse)(nil), "gravity.v1.MsgERC20DeployedClaimResponse")
+	proto.RegisterType((*MsgERC721DeployedClaim)(nil), "gravity.v1.MsgERC721DeployedClaim")
+	proto.RegisterType((*MsgERC721DeployedClaimResponse)(nil), "gravity.v1.MsgERC721DeployedClaimResponse")
 	proto.RegisterType((*MsgLogicCallExecutedClaim)(nil), "gravity.v1.MsgLogicCallExecutedClaim")
 	proto.RegisterType((*MsgLogicCallExecutedClaimResponse)(nil), "gravity.v1.MsgLogicCallExecutedClaimResponse")
 	proto.RegisterType((*MsgCancelSendToEth)(nil), "gravity.v1.MsgCancelSendToEth")
@@ -1549,8 +1553,10 @@ type MsgServer interface {
 	ConfirmBatch(context.Context, *MsgConfirmBatch) (*MsgConfirmBatchResponse, error)
 	ConfirmLogicCall(context.Context, *MsgConfirmLogicCall) (*MsgConfirmLogicCallResponse, error)
 	DepositClaim(context.Context, *MsgDepositClaim) (*MsgDepositClaimResponse, error)
+	Deposit721Claim(context.Context, *MsgDeposit721Claim) (*MsgDeposit721ClaimResponse, error)
 	WithdrawClaim(context.Context, *MsgWithdrawClaim) (*MsgWithdrawClaimResponse, error)
 	ERC20DeployedClaim(context.Context, *MsgERC20DeployedClaim) (*MsgERC20DeployedClaimResponse, error)
+	ERC721DeployedClaim(context.Context, *MsgERC721DeployedClaim) (*MsgERC721DeployedClaimResponse, error)
 	LogicCallExecutedClaim(context.Context, *MsgLogicCallExecutedClaim) (*MsgLogicCallExecutedClaimResponse, error)
 	SetOrchestratorAddress(context.Context, *MsgSetOrchestratorAddress) (*MsgSetOrchestratorAddressResponse, error)
 	CancelSendToEth(context.Context, *MsgCancelSendToEth) (*MsgCancelSendToEthResponse, error)
@@ -1578,11 +1584,17 @@ func (*UnimplementedMsgServer) ConfirmLogicCall(ctx context.Context, req *MsgCon
 func (*UnimplementedMsgServer) DepositClaim(ctx context.Context, req *MsgDepositClaim) (*MsgDepositClaimResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DepositClaim not implemented")
 }
+func (*UnimplementedMsgServer) Deposit721Claim(ctx context.Context, req *MsgDeposit721Claim) (*MsgDeposit721ClaimResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Deposit721Claim not implemented")
+}
 func (*UnimplementedMsgServer) WithdrawClaim(ctx context.Context, req *MsgWithdrawClaim) (*MsgWithdrawClaimResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method WithdrawClaim not implemented")
 }
 func (*UnimplementedMsgServer) ERC20DeployedClaim(ctx context.Context, req *MsgERC20DeployedClaim) (*MsgERC20DeployedClaimResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ERC20DeployedClaim not implemented")
+}
+func (*UnimplementedMsgServer) ERC721DeployedClaim(ctx context.Context, req *MsgERC721DeployedClaim) (*MsgERC721DeployedClaimResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ERC721DeployedClaim not implemented")
 }
 func (*UnimplementedMsgServer) LogicCallExecutedClaim(ctx context.Context, req *MsgLogicCallExecutedClaim) (*MsgLogicCallExecutedClaimResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method LogicCallExecutedClaim not implemented")

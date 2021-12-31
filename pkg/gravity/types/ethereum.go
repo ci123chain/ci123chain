@@ -103,3 +103,20 @@ func GravityDenomToERC20(denom string) (string, error) {
 		return contract, nil
 	}
 }
+
+func GravityDenomToERC721(denom string) (string, error) {
+	fullPrefix := GravityDenomPrefix + GravityDenomSeparator
+	if !strings.HasPrefix(denom, fullPrefix) {
+		return "", fmt.Errorf("denom prefix(%s) not equal to expected(%s)", denom, fullPrefix)
+	}
+	contract := strings.TrimPrefix(denom, fullPrefix)
+	err := ValidateEthAddress(contract)
+	switch {
+	case err != nil:
+		return "", fmt.Errorf("error(%s) validating ethereum contract address", err)
+	case len(denom) != GravityDenomLen:
+		return "", fmt.Errorf("len(denom)(%d) not equal to GravityDenomLen(%d)", len(denom), GravityDenomLen)
+	default:
+		return contract, nil
+	}
+}

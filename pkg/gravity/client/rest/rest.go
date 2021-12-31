@@ -63,10 +63,14 @@ func RegisterRoutes(cliCtx context.Context, r *mux.Router, storeName string) {
 
 	/// Cosmos originated assets
 
-	// This handler lets you retrieve the ERC20 contract corresponding to a given denom
 	r.HandleFunc(fmt.Sprintf("/%s/denom_to_erc20/{%s}", storeName, denom), denomToERC20Handler(cliCtx, storeName)).Methods("GET")
 	// This handler lets you retrieve the denom corresponding to a given ERC20 contract
 	r.HandleFunc(fmt.Sprintf("/%s/erc20_to_denom/{%s}", storeName, tokenAddress), ERC20ToDenomHandler(cliCtx, storeName)).Methods("GET")
+
+	r.HandleFunc(fmt.Sprintf("/%s/denom_to_erc721/{%s}", storeName, denom), denomToERC721Handler(cliCtx, storeName)).Methods("GET")
+	// This handler lets you retrieve the denom corresponding to a given ERC721 contract
+	r.HandleFunc(fmt.Sprintf("/%s/erc721_to_denom/{%s}", storeName, tokenAddress), ERC721ToDenomHandler(cliCtx, storeName)).Methods("GET")
+
 
 	// Event
 	r.HandleFunc(fmt.Sprintf("/%s/last_event_nonce/{%s}", storeName, bech32ValidatorAddress), lastEventNonceByAddressHandler(cliCtx, storeName)).Methods("GET")

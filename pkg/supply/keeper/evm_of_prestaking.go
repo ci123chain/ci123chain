@@ -19,8 +19,7 @@ import (
 ///supply/keeper/evm_of_prestaking.go
 const (
 	DefaultGas = math.MaxUint64 / 2
-	)
-
+)
 
 // MintCoinsFromModuleToEvmAccount transfers coins from a ModuleAccount to an AccAddress
 func (k Keeper) MintCoinsFromModuleToEvmAccount(ctx sdk.Context,
@@ -40,19 +39,24 @@ func (k Keeper) TransferFromModuleToEvmAccount(ctx sdk.Context,
 	return k.SendCoinsFromModuleToEVMAccount(ctx, recipientAddr, types.ModuleName, sdk.HexToAddress(wlkContract), amt)
 }
 
+// Transfer721FromModuleToEvmAccount transfers coins from a ModuleAccount to an AccAddress
+func (k Keeper) Transfer721FromModuleToEvmAccount(ctx sdk.Context,
+	recipientAddr sdk.AccAddress, wlkContract string, tokenId *big.Int) error {
+	return k.Send721CoinsFromModuleToEVMAccount(ctx, recipientAddr, types.ModuleName, sdk.HexToAddress(wlkContract), tokenId)
+}
+
 func (k Keeper) BuildParams(sender sdk.AccAddress, to *common.Address, payload []byte, gasLimit, nonce uint64) evmtypes.MsgEvmTx {
 	return evmtypes.MsgEvmTx{
 		From: sender,
 		Data: evmtypes.TxData{
-			Payload: payload,
-			Amount: big.NewInt(0),
-			Recipient: to,
-			GasLimit: gasLimit,
+			Payload:      payload,
+			Amount:       big.NewInt(0),
+			Recipient:    to,
+			GasLimit:     gasLimit,
 			AccountNonce: nonce,
 		},
 	}
 }
-
 
 func (k Keeper) DeployDaoContract(ctx sdk.Context, moduleName string, params interface{}) (sdk.AccAddress, error) {
 	ma := k.GetModuleAccount(ctx, moduleName)
@@ -86,14 +90,12 @@ func (k Keeper) DeployDaoContract(ctx sdk.Context, moduleName string, params int
 
 	result, err := k.evmKeeper.EvmTxExec(ctx, msg)
 
-	if result != nil && err == nil{
+	if result != nil && err == nil {
 		addStr := result.VMResult().Log
 		return sdk.HexToAddress(addStr), err
 	}
 	return sdk.AccAddress{}, err
 }
-
-
 
 func (k Keeper) BurnEVMCoin(ctx sdk.Context, moduleName string, wlkContract, to sdk.AccAddress, amount *big.Int) error {
 	from := k.GetModuleAddress(moduleName)
@@ -135,14 +137,13 @@ func (k Keeper) Mint(ctx sdk.Context, contract, to sdk.AccAddress, moduleName st
 	data = append(m.ID(), data...)
 
 	ctx = ctx.WithIsRootMsg(true)
-	msg := k.BuildParams(sender, &contract.Address, data, DefaultGas,  k.getNonce(ctx, sender))
+	msg := k.BuildParams(sender, &contract.Address, data, DefaultGas, k.getNonce(ctx, sender))
 
 	result, err := k.evmKeeper.EvmTxExec(ctx, msg)
 	k.Logger(ctx).Info("Mint action result", "value", result)
 	return err
 }
 
-
-func (k Keeper)getNonce(ctx sdk.Context, address sdk.AccAddress) uint64 {
+func (k Keeper) getNonce(ctx sdk.Context, address sdk.AccAddress) uint64 {
 	return k.ak.GetAccount(ctx, address).GetSequence()
 }

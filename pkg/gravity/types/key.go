@@ -120,6 +120,12 @@ var (
 	TxIdKey = []byte{0xfa}
 
 	EventNonceKey = []byte{0xfb}
+
+	// WlkToEthKey prefixes the index of wlk asset to eth ERC20s
+	WRC721ToEth721Key = []byte{0xfc}
+
+	// EthToWlkKey prefixes the index of eth originated assets ERC20s to wlk
+	ERC721ToWRC721Key = []byte{0xfd}
 )
 
 // GetOrchestratorAddressKey returns the following key format
@@ -271,6 +277,16 @@ func GetWlKToEthKey(denom string) []byte {
 func GetEthToWlkKey(erc20 string) []byte {
 	erc20 = strings.ToLower(erc20)
 	return append(EthToWlkKey, []byte(erc20)...)
+}
+
+func GetWRC721ToERC721Key(wrc721 string) []byte {
+	wrc721 = strings.ToLower(wrc721)
+	return append(WRC721ToEth721Key, []byte(wrc721)...)
+}
+
+func GetERC721ToWRC721Key(erc721 string) []byte {
+	erc721 = strings.ToLower(erc721)
+	return append(ERC721ToWRC721Key, []byte(erc721)...)
 }
 
 func GetContractMetaDataKey(contract string) []byte {

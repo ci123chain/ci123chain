@@ -1490,6 +1490,11 @@ type QueryERC20ToDenomResponse struct {
 	CosmosOriginated bool   `protobuf:"varint,2,opt,name=cosmos_originated,json=cosmosOriginated,proto3" json:"cosmos_originated,omitempty"`
 }
 
+type QueryERC721ToDenomResponse struct {
+	Denom            string `protobuf:"bytes,1,opt,name=denom,proto3" json:"denom,omitempty"`
+	CosmosOriginated bool   `protobuf:"varint,2,opt,name=cosmos_originated,json=cosmosOriginated,proto3" json:"cosmos_originated,omitempty"`
+}
+
 func (m *QueryERC20ToDenomResponse) Reset()         { *m = QueryERC20ToDenomResponse{} }
 func (m *QueryERC20ToDenomResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryERC20ToDenomResponse) ProtoMessage()    {}
@@ -1583,6 +1588,11 @@ func (m *QueryDenomToERC20Request) GetDenom() string {
 
 type QueryDenomToERC20Response struct {
 	Erc20            string `protobuf:"bytes,1,opt,name=erc20,proto3" json:"erc20,omitempty"`
+	CosmosOriginated bool   `protobuf:"varint,2,opt,name=cosmos_originated,json=cosmosOriginated,proto3" json:"cosmos_originated,omitempty"`
+}
+
+type QueryDenomToERC721Response struct {
+	Erc721            string `protobuf:"bytes,1,opt,name=erc721,proto3" json:"erc721,omitempty"`
 	CosmosOriginated bool   `protobuf:"varint,2,opt,name=cosmos_originated,json=cosmosOriginated,proto3" json:"cosmos_originated,omitempty"`
 }
 
