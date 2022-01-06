@@ -10,6 +10,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
 	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/rlp"
 )
 
 type CommonTx struct {
@@ -117,7 +118,7 @@ func DefaultTxDecoder(cdc *codec.Codec) types2.TxDecoder {
 			err = GetEncodingConfig().Marshaler.UnmarshalBinaryBare(txBytes, &pbTx)
 			if err != nil {
 				var ethTx *MsgEthereumTx
-				err := cdc.UnmarshalBinaryBare(txBytes, &ethTx)
+				err := rlp.DecodeBytes(txBytes, &ethTx)
 				if err != nil {
 					return nil, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("decode msg failed: %v", err.Error()))
 				}

@@ -469,9 +469,14 @@ func (api *PublicEthereumAPI) SendTransaction(args SendTxArgs) (common.Hash, err
 	tx.Data.R = r
 	tx.Data.S = s
 
+	// Encode transaction by RLP encoder
+	txBytes, err := rlp.EncodeToBytes(tx)
+	if err != nil {
+		return common.Hash{}, err
+	}
 	// Broadcast transaction in async mode (default)
 	// NOTE: If error is encountered on the node, the broadcast will not return an error
-	res, err := api.clientCtx.BroadcastSignedTx(tx.Bytes())
+	res, err := api.clientCtx.BroadcastSignedTx(txBytes)
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -483,17 +488,8 @@ func (api *PublicEthereumAPI) SendTransaction(args SendTxArgs) (common.Hash, err
 // SendRawTransaction send a raw Ethereum transaction.
 func (api *PublicEthereumAPI) SendRawTransaction(data hexutil.Bytes) (common.Hash, error) {
 	api.logger.Debug("eth_sendRawTransaction", "data", data)
-	tx := new(types.MsgEthereumTx)
 
-	// RLP decode raw transaction bytes
-	if err := rlp.DecodeBytes(data, tx); err != nil {
-		// Return nil is for when gasLimit overflows uint64
-		return common.Hash{}, nil
-	}
-
-	//// TODO: Possibly log the contract creation address (if recipient address is nil) or tx data
-	//// If error is encountered on the node, the broadcast will not return an error
-	res, err := api.clientCtx.BroadcastSignedDataAsync(tx.Bytes())
+	res, err := api.clientCtx.BroadcastSignedDataAsync(data)
 	if err != nil {
 		api.logger.Debug("eth_sendRawTransaction", "err", err)
 		return common.Hash{}, err
