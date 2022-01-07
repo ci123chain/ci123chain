@@ -216,7 +216,7 @@ func handleMsgEthereumTx(ctx sdk.Context, k *Keeper, msg types.MsgEthereumTx) (*
 
 	executionResult, err := st.TransitionDb(ctx, config)
 	if err != nil {
-		k.Logger(ctx).Error("Handler evm TransitionDb ", "err",  err.Error())
+		k.Logger(ctx).Warn("Handler evm TransitionDb ", "err",  err.Error())
 		return nil, errors.New(fmt.Sprintf("err transitionDb: %s", err.Error()))
 	}
 
