@@ -15,6 +15,7 @@ func TestFixFile(t *testing.T) {
 	cdc := app_types.GetCodec()
 	rawFile, err := types.GenesisDocFromFile("./genesis.json")
 
+
 	exportFile, err := types.GenesisDocFromFile("./exportFile.json")
 	if err != nil {
 		t.Log(err)
@@ -100,4 +101,5 @@ func isFactory(code string) bool {
 		return true
 	}
 	return false
+
 }
