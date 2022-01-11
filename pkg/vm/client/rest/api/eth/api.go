@@ -26,7 +26,6 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/log"
-	coretypes "github.com/tendermint/tendermint/rpc/core/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 	"math/big"
 	"os"
@@ -222,17 +221,15 @@ func (api *PublicEthereumAPI) GetBlockByNumber(blockNum BlockNumber, fullTx bool
 		}
 		height = int64(num)
 	}
+
+
 	api.logger.Debug("height", "h", height)
 
-	r, _ := libs.RetryI(0, func(retryTimes int) (res interface{}, err error) {
-		res, err = api.clientCtx.Client.Block(api.ctx, &height)
-		if err != nil {
-			api.logger.Warn("eth_getBlockByNumber", "error", err.Error())
-			return nil, err
-		}
-		return res, nil
-	})
-	resBlock := r.(*coretypes.ResultBlock)
+	resBlock, err := api.clientCtx.Client.Block(api.ctx, &height)
+	if err != nil {
+		api.logger.Warn("eth_getBlockByNumber", "error", err.Error())
+		return nil, nil
+	}
 
 	var transactions []common.Hash
 	for _, tx := range resBlock.Block.Txs {
