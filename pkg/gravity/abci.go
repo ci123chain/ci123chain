@@ -1,6 +1,7 @@
 package gravity
 
 import (
+	"encoding/json"
 	"sort"
 
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
@@ -85,11 +86,14 @@ func attestationTally(ctx sdk.Context, k keeper.Keeper) {
 			// If no attestation becomes observed, when we get to the next nonce, every attestation in
 			// it will be skipped. The same will happen for every nonce after that.
 			lastEventNonce := k.GetLastObservedEventNonce(ctx)
+			claim, _ := k.UnpackAttestationClaim(&att)
+			claimbz, _ := json.Marshal(claim)
+
 			if nonce == uint64(lastEventNonce)+1 {
-				k.Logger(ctx).Info("TryAttestation", "Nonce", nonce, "lastEventNonce", lastEventNonce)
+				k.Logger(ctx).Info("TryAttestation", "Nonce", nonce, "lastEventNonce", lastEventNonce, "ClaimJson", string(claimbz))
 				k.TryAttestation(ctx, &att)
 			} else {
-				k.Logger(ctx).Info("Try Not Attestation", "Nonce", nonce, "lastEventNonce", lastEventNonce)
+				k.Logger(ctx).Info("Try Not Attestation", "Nonce", nonce, "lastEventNonce", lastEventNonce, "ClaimJson", string(claimbz))
 			}
 		}
 	}
