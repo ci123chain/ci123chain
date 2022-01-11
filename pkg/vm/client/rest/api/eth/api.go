@@ -332,13 +332,12 @@ func (api *PublicEthereumAPI) GetTransactionReceipt(hash common.Hash) (map[strin
 		return nil, nil
 	}
 
-	var sdkTx sdk.Tx
-	err = cdc.UnmarshalBinaryBare(tx.Tx, &sdkTx)
+	rawTx, err := types.DefaultTxDecoder(cdc)(tx.Tx)
 	if err != nil {
 		return nil, err
 	}
 
-	ethTx, ok := sdkTx.(*types.MsgEthereumTx)
+	ethTx, ok := rawTx.(*types.MsgEthereumTx)
 	if !ok {
 		return nil, errors.New("not msg ethereumTx")
 	}
