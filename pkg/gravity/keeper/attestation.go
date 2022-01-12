@@ -112,7 +112,7 @@ func (k Keeper) processAttestation(ctx sdk.Context, att *types.Attestation, clai
 			"nonce", fmt.Sprint(claim.GetEventNonce()),
 		)
 	} else {
-		k.logger(ctx).Error("Attestation succeed")
+		k.logger(ctx).Info("Attestation succeed")
 		commit() // persist transient storage
 	}
 }
