@@ -93,5 +93,6 @@ fi
 #nohup /opt/cli-linux rest-server --laddr=tcp://0.0.0.0:80 >> $CI_LOGDIR/rest-output.log 2>&1 &
 
 # start
+sleep 5s # for NFS Err
 echo "---Start cid---"
 /opt/cid-linux start --laddr=tcp://0.0.0.0:80 --home=$CI_HOME
