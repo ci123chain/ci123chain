@@ -2,8 +2,11 @@ package cmd
 
 import (
 	"fmt"
+	abcitypes "github.com/ci123chain/ci123chain/pkg/abci/types"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/app"
+	types2 "github.com/ci123chain/ci123chain/pkg/app/types"
+	staking "github.com/ci123chain/ci123chain/pkg/staking/types"
 	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -48,10 +51,17 @@ func replayCmd(ctx *app.Context) *cobra.Command {
 			//		fmt.Println(err)
 			//	}
 			//}()
-			id := viper.GetInt64(flagETHChainID)
 			limit := viper.GetInt(flagIteratorLimit)
-			util.Setup(id)
 			util.SetLimit(limit)
+			util.Setup(int64(ctx.Config.EthChainID))
+			{
+				cfg := ctx.Config
+				cdc := types2.GetCodec()
+				appState, _, _ := app.GenesisStateFromGenFile(cdc, cfg.GenesisFile())
+				var stakingGenesisState staking.GenesisState
+				cdc.MustUnmarshalJSON(appState[staking.ModuleName], &stakingGenesisState)
+				abcitypes.SetCoinDenom(stakingGenesisState.Params.BondDenom)
+			}
 
 			replayBlock(ctx)
 			log.Println("--------- replay success ---------")
