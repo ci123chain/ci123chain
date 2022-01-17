@@ -16,7 +16,7 @@ func TestFixFile(t *testing.T) {
 	rawFile, err := types.GenesisDocFromFile("./genesis.json")
 
 
-	exportFile, err := types.GenesisDocFromFile("./exportFile.json")
+	exportFile, err := types.GenesisDocFromFile("/Users/tanhui/Desktop/exportFile.json")
 	if err != nil {
 		t.Log(err)
 	}
@@ -44,6 +44,7 @@ func TestFixFile(t *testing.T) {
 	evmtypes.ModuleCdc.MustUnmarshalJSON(genesisState["vm"], &newVmGenesisState)
 	newVmGenesisState.Accounts = []evmtypes.GenesisAccount{}
 	for _, vmAcc := range vmGenesisState.Accounts {
+
 		if isContain(address, vmAcc.Address.String()) {
 			newVmGenesisState.Accounts = append(newVmGenesisState.Accounts, vmAcc)
 		}
@@ -63,9 +64,9 @@ func TestFixFile(t *testing.T) {
 		if isContain(address, gs.GetAddress().String()) {
 			newAccGenesisState = append(newAccGenesisState, gs)
 		}
-		//if gs.GetContractType() != "" {
-		//	newAccGenesisState = append(newAccGenesisState, gs)
-		//}
+		if gs.GetContractType() == "" {
+			newAccGenesisState = append(newAccGenesisState, gs)
+		}
 	}
 	newAccGenesisStateBz := cdc.MustMarshalJSON(newAccGenesisState)
 

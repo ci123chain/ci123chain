@@ -13,7 +13,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	apptypes "github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/gateway/logger"
 	vmtypes "github.com/ci123chain/ci123chain/pkg/vm/client/rest/websockets"
@@ -566,8 +565,7 @@ func (r *PubSubRoom) Subscribe(topic string) {
 					switch e.Data.(type) {
 					case types.EventDataTx:
 						tx := e.Data.(types.EventDataTx)
-						var aa sdk.Tx
-						err = cdc.UnmarshalBinaryBare(tx.Tx, &aa)
+						aa, err := apptypes.DefaultTxDecoder(cdc)(tx.Tx)
 						if err != nil {
 							logger.Error(fmt.Sprintf("got error tx %v", tx))
 						}
@@ -742,8 +740,7 @@ func (r *PubSubRoom) AddShard() {
 								//	continue
 								//}
 								tx := e.Data.(types.EventDataTx)
-								var aa sdk.Tx
-								err = cdc.UnmarshalBinaryBare(tx.Tx, &aa)
+								aa, err := apptypes.DefaultTxDecoder(cdc)(tx.Tx)
 								if err != nil {
 									logger.Error(fmt.Sprintf("got error tx %v", tx))
 								}
