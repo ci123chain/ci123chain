@@ -41,6 +41,9 @@ func NewDeferHandler( ak account.AccountKeeper) sdk.DeferHandler {
 		}
 
 		acc := ak.GetAccount(ctx, signer)
+		if acc == nil {
+			return
+		}
 
 		gasused = ctx.GasMeter().GasConsumed()
 

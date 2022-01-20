@@ -70,8 +70,10 @@ func BeginBlock(ctx sdk.Context, req abci.RequestBeginBlock, distr k.DistrKeeper
 
 		for _, vote := range previousVotes {
 			//拿到validator.
-			validator, _ := distr.StakingKeeper.GetValidatorByConsAddr(ctx, sdk.ToAccAddress(vote.Validator.Address))
-
+			validator, found := distr.StakingKeeper.GetValidatorByConsAddr(ctx, sdk.ToAccAddress(vote.Validator.Address))
+			if !found {
+				continue
+			}
 			powerFraction := sdk.NewDec(vote.Validator.Power).QuoTruncate(sdk.NewDec(previousTotalPower))
 			reward := feeCollected.MulDecTruncate(voteMultiplier).MulDecTruncate(powerFraction)
 			distr.AllocateTokensToValidator(ctx, validator, reward)

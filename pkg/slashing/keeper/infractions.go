@@ -14,13 +14,15 @@ func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr sdk.AccAddress, p
 	// fetch the validator public key
 	consAddr := addr
 	if _, err := k.GetPubkey(ctx, addr); err != nil {
-		panic(fmt.Sprintf("Validator consensus-address %s not found", consAddr))
+		return
+		//panic(fmt.Sprintf("Validator consensus-address %s not found", consAddr))
 	}
 
 	// fetch signing info
 	signInfo, found := k.GetValidatorSigningInfo(ctx, consAddr)
 	if !found {
-		panic(fmt.Sprintf("Expected signing info for validator %s but not found", consAddr))
+		return
+		//panic(fmt.Sprintf("Expected signing info for validator %s but not found", consAddr))
 	}
 
 	// this is a relative index, so it counts blocks the validator *should* have signed
