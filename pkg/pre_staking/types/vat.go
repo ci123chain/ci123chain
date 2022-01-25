@@ -69,6 +69,7 @@ func (vr *VaultRecord) PopVaultAmountAndEndTime(id *big.Int) (sdk.Coin, time.Tim
 		return sdk.NewEmptyCoin(), time.Time{}, errors.New("no balance to un_delegate in this vault")
 	}
 	oldVault := vr.Vaults[id.String()]
+	//delete(vr.Vaults, id.String())
 	vr.Vaults[id.String()] = NewVault(oldVault.StartTime, oldVault.EndTime, oldVault.StorageTime, sdk.NewEmptyCoin())
 	return oldVault.Amount, oldVault.EndTime, nil
 }

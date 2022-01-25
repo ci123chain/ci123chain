@@ -6,14 +6,14 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/pre_staking/types"
 )
 
-const (
-	moduleAcc = "0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c"
-)
-
 func InitGenesis(ctx sdk.Context, k keeper.PreStakingKeeper, data GenesisState) {
 
-	if data.DaoAddress != "" {
-		k.SetWeeLinkDao(ctx, sdk.HexToAddress(data.DaoAddress))
+	if data.StakingToken != "" {
+		k.SetTokenManager(ctx, sdk.HexToAddress(data.StakingToken))
+	}
+
+	if data.Owner != "" {
+		k.SetTokenManagerOwner(ctx, sdk.HexToAddress(data.Owner))
 	}
 
 	for _, v := range data.Records.PrestakingRecord {
@@ -32,5 +32,5 @@ func ExportGenesis(ctx sdk.Context, k keeper.PreStakingKeeper) types.GenesisStat
 	sr := k.GetAllStakingRecords(ctx)
 	records.PrestakingRecord = pr
 	records.DelStakingRecords = sr
-	return types.NewGenesisState(records, k.GetWeeLinkDao(ctx))
+	return types.NewGenesisState(records, k.GetTokenManager(ctx), k.GetTokenManagerOwner(ctx))
 }

@@ -22,7 +22,7 @@ func RegisterQueryRoutes(cliCtx context.Context, r *mux.Router) {
 func QueryPreStakingDao(cliCtx context.Context) http.HandlerFunc {
 	return func(writer http.ResponseWriter, req *http.Request) {
 		//
-		res, _, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.PreStakingDaoQuery, nil, false)
+		res, _, _, err := cliCtx.Query("/custom/" + types.ModuleName + "/" + types.PreStakingTokenQuery, nil, false)
 		if err != nil {
 			rest.WriteErrorRes(writer, err.Error())
 			return

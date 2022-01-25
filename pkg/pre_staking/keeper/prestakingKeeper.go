@@ -60,7 +60,10 @@ func (ps PreStakingKeeper) SetAccountPreStaking(ctx sdk.Context, delegator sdk.A
 	store.Set(types.GetPreStakingKey(delegator), bz)
 }
 
-
+func (ps PreStakingKeeper) DelAccountPreStaking(ctx sdk.Context, delegator sdk.AccAddress, vaults types.VaultRecord) {
+	store := ctx.KVStore(ps.storeKey)
+	store.Delete(types.GetPreStakingKey(delegator))
+}
 
 func (ps PreStakingKeeper) GetAccountPreStaking(ctx sdk.Context, delegator sdk.AccAddress) types.VaultRecord {
 	store := ctx.KVStore(ps.storeKey)
@@ -308,18 +311,49 @@ func (ps PreStakingKeeper) RemoveDeadlineDelegationAndWithdraw(ctx sdk.Context, 
 	return nil
 }
 
-func (ps PreStakingKeeper) GetWeeLinkDao(ctx sdk.Context) string {
+//func (ps PreStakingKeeper) GetWeeLinkDao(ctx sdk.Context) string {
+//	store := ctx.KVStore(ps.storeKey)
+//
+//	bz := store.Get(types.WeeLinkDAO)
+//	if bz == nil {
+//		return ""
+//	}
+//	return sdk.ToAccAddress(bz).String()
+//}
+//
+//func (ps PreStakingKeeper) SetWeeLinkDao(ctx sdk.Context, addr sdk.AccAddress) {
+//	store := ctx.KVStore(ps.storeKey)
+//	store.Set(types.WeeLinkDAO, addr.Bytes())
+//}
+
+func (ps PreStakingKeeper) GetTokenManager(ctx sdk.Context) string {
 	store := ctx.KVStore(ps.storeKey)
 
-	bz := store.Get(types.WeeLinkDAO)
+	bz := store.Get(types.TokenManager)
 	if bz == nil {
 		return ""
 	}
 	return sdk.ToAccAddress(bz).String()
 }
 
-func (ps PreStakingKeeper) SetWeeLinkDao(ctx sdk.Context, addr sdk.AccAddress) {
+
+func (ps PreStakingKeeper) SetTokenManager(ctx sdk.Context, addr sdk.AccAddress) {
+	store := ctx.KVStore(ps.storeKey)
+	store.Set(types.TokenManager, addr.Bytes())
+}
+
+func (ps PreStakingKeeper) GetTokenManagerOwner(ctx sdk.Context) string {
 	store := ctx.KVStore(ps.storeKey)
 
-	store.Set(types.WeeLinkDAO, addr.Bytes())
+	bz := store.Get(types.TokenManagerOwner)
+	if bz == nil {
+		return ""
+	}
+	return sdk.ToAccAddress(bz).String()
+}
+
+
+func (ps PreStakingKeeper) SetTokenManagerOwner(ctx sdk.Context, addr sdk.AccAddress) {
+	store := ctx.KVStore(ps.storeKey)
+	store.Set(types.TokenManagerOwner, addr.Bytes())
 }

@@ -17,8 +17,8 @@ func NewQuerier(k PreStakingKeeper) sdk.Querier {
 			return PreStakingRecord(ctx, req, k)
 		case types2.StakingRecordQuery:
 			return StakingRecord(ctx, req, k)
-		case types2.PreStakingDaoQuery:
-			return PreStakingDao(ctx, req, k)
+		case types2.PreStakingTokenQuery:
+			return PreStakingToken(ctx, req, k)
 		default:
 			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "unknown request endpoint")
 		}
@@ -37,8 +37,8 @@ func PreStakingRecord(ctx sdk.Context, req abci.RequestQuery, k PreStakingKeeper
 	return by, err
 }
 
-func PreStakingDao(ctx sdk.Context, req abci.RequestQuery, k PreStakingKeeper) ([]byte, error) {
-	res := k.GetWeeLinkDao(ctx)
+func PreStakingToken(ctx sdk.Context, req abci.RequestQuery, k PreStakingKeeper) ([]byte, error) {
+	res := k.GetTokenManager(ctx)
 	by, err := json.Marshal(res)
 	return by, err
 }
