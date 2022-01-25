@@ -17,18 +17,6 @@ import (
 const DefaultGas = math.MaxUint64 / 2
 
 
-//// MintCoinsFromModuleToEvmAccount transfers coins from a ModuleAccount to an AccAddress
-//func (k Keeper) MintCoinsFromModuleToEvmAccount(ctx sdk.Context,
-//	recipientAddr sdk.AccAddress, wlkContract string, amt *big.Int) error {
-//	//param := []interface{}{metaData.Name, metaData.Symbol, metaData.Symbol, 0, true}
-//	//denomAddr, err := a.DeployERC20Contract(ctx, owner, param)
-//	//if err != nil {
-//	//	return err
-//	//}
-//	err := k.Mint(ctx, sdk.HexToAddress(wlkContract), recipientAddr, types.ModuleName, amt)
-//	return err
-//}
-
 // TransferFromModuleToEvmAccount transfers coins from a ModuleAccount to an AccAddress
 func (k Keeper) TransferFromModuleToEvmAccount(ctx sdk.Context,
 	recipientAddr sdk.AccAddress, wlkContract string, amt *big.Int) error {
@@ -47,86 +35,6 @@ func (k Keeper) BuildParams(sender sdk.AccAddress, to *common.Address, payload [
 		},
 	}
 }
-//
-//func (k Keeper) QueryTokenManagerAddress (ctx sdk.Context, weelinkDao sdk.AccAddress, moduleName string, params interface{}) (sdk.AccAddress, error) {
-//	sender := k.GetModuleAddress(moduleName)
-//	abiIns, err := abi.NewABI(meta.DefaultDaoABI)
-//	if err != nil {
-//		return sdk.AccAddress{}, err
-//	}
-//	m, ok := abiIns.Methods["tokenManager"]
-//	if !ok {
-//		return sdk.AccAddress{}, fmt.Errorf("invalid method")
-//	}
-//	data, err := abi.Encode(nil, m.Inputs)
-//
-//	data = append(m.ID(), data...)
-//
-//	msg := k.BuildParams(sender, &weelinkDao.Address, data, DefaultGas,  k.getNonce(ctx, sender))
-//
-//	// for simulator
-//	ctx.WithIsCheckTx(true)
-//	result, err := k.evmKeeper.EvmTxExec(ctx, msg)
-//	if err != nil {
-//		return sdk.AccAddress{}, err
-//	}
-//	resData, err := evmtypes.DecodeResultData(result.VMResult().Data)
-//	if err != nil {
-//		return sdk.AccAddress{}, err
-//	}
-//	if len(resData.Ret) > 0 {
-//		respInterface, err := abi.Decode(m.Outputs, resData.Ret)
-//		if err != nil {
-//			return sdk.AccAddress{}, err
-//		}
-//		resp := respInterface.(map[string]interface{})
-//		v, ok := resp["0"].(web3.Address)
-//		if ok {
-//			return sdk.HexToAddress(v.String()), nil
-//		}
-//		return sdk.AccAddress{}, err
-//	}
-//	return sdk.AccAddress{}, err
-//}
-//
-//func (k Keeper) DeployDaoContract(ctx sdk.Context, moduleName string, params interface{}) (sdk.AccAddress, error) {
-//	ma := k.GetModuleAccount(ctx, moduleName)
-//	defer func(account exported.ModuleAccountI) {
-//		if err := account.SetSequence(account.GetSequence() + 1); err != nil {
-//			panic(err)
-//		}
-//		k.ak.SetAccount(ctx, account)
-//	}(ma)
-//	ctx.WithIsRootMsg(true)
-//	sender := ma.GetAddress()
-//	abiIns, err := abi.NewABI(meta.DefaultDaoABI)
-//
-//	if err != nil {
-//		return sdk.AccAddress{}, err
-//	}
-//
-//	bin, err := hex.DecodeString(strings.TrimPrefix(DefaultDaoByteCode, "0x"))
-//
-//	if err != nil {
-//		return sdk.AccAddress{}, err
-//	}
-//
-//	data, err := abi.Encode(params, abiIns.Constructor.Inputs)
-//	if err != nil {
-//		return sdk.AccAddress{}, err
-//	}
-//
-//	data = append(bin, data...)
-//	msg := k.BuildParams(sender, nil, data, DefaultGas, ma.GetSequence())
-//
-//	result, err := k.evmKeeper.EvmTxExec(ctx, msg)
-//
-//	if result != nil && err == nil{
-//		addStr := result.VMResult().Log
-//		return sdk.HexToAddress(addStr), err
-//	}
-//	return sdk.AccAddress{}, err
-//}
 
 
 func (k Keeper) BurnEVMCoin(ctx sdk.Context, moduleName string, wlkContract, to sdk.AccAddress, amount *big.Int) error {
