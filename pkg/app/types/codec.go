@@ -9,6 +9,7 @@ import (
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/app/module"
 	infratypes "github.com/ci123chain/ci123chain/pkg/infrastructure/types"
+	prestakingtype "github.com/ci123chain/ci123chain/pkg/pre_staking/types"
 	"github.com/ci123chain/ci123chain/pkg/transaction"
 	"github.com/ci123chain/ci123chain/pkg/transfer"
 	"github.com/ci123chain/ci123chain/pkg/upgrade"
@@ -45,6 +46,7 @@ func GetCodec() *codec.Codec {
 		infratypes.RegisterCodec(cdc)
 		upgrade.RegisterCodec(cdc)
 		cryptoAmino.RegisterAmino(cdc)
+		prestakingtype.RegisterCodec(cdc)
 	}
 	return cdc
 }
