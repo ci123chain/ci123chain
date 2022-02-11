@@ -20,7 +20,7 @@ const OutgoingTxBatchSize = 100
 // - select available transactions from the outgoing transaction pool sorted by fee desc
 // - persist an outgoing batch object with an incrementing ID = nonce
 // - emit an event
-func (k Keeper) BuildOutgoingTXBatch(ctx sdk.Context, contractAddress string, maxElements int) (*types.OutgoingTxBatch, error) {
+func (k Keeper) BuildOutgoingTXBatch(ctx sdk.Context, contractAddress string, maxElements int, tokenType uint64) (*types.OutgoingTxBatch, error) {
 	if maxElements == 0 {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "max elements value")
 	}
@@ -53,6 +53,7 @@ func (k Keeper) BuildOutgoingTXBatch(ctx sdk.Context, contractAddress string, ma
 		BatchTimeout:  k.getBatchTimeoutHeight(ctx),
 		Transactions:  selectedTx,
 		TokenContract: contractAddress,
+		TokenType: tokenType,
 	}
 	k.StoreBatch(ctx, batch)
 

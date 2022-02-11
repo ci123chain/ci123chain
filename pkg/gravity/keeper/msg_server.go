@@ -17,6 +17,11 @@ type msgServer struct {
 	Keeper
 }
 
+const (
+	ERC20 = iota
+	ERC721
+)
+
 // NewMsgServerImpl returns an implementation of the gov MsgServer interface
 // for the provided Keeper.
 func NewMsgServerImpl(keeper Keeper) types.MsgServer {
@@ -139,12 +144,22 @@ func (k msgServer) RequestBatch(c context.Context, msg *types.MsgRequestBatch) (
 
 	// Check if the denom is a gravity coin, if not, check if there is a deployed ERC20 representing it.
 	// If not, error out
-	_, tokenContract, err := k.DenomToERC20Lookup(ctx, msg.Denom)
-	if err != nil {
-		return nil, err
+	var tokenContract string
+	if msg.TokenType == ERC20 {
+		_, token, err := k.DenomToERC20Lookup(ctx, msg.Denom)
+		if err != nil {
+			return nil, err
+		}
+		tokenContract = token
+	} else if msg.TokenType == ERC721 {
+		_, token, err := k.DenomToERC721Lookup(ctx, msg.Denom)
+		if err != nil {
+			return nil, err
+		}
+		tokenContract = token
 	}
 
-	batchID, err := k.BuildOutgoingTXBatch(ctx, tokenContract, OutgoingTxBatchSize)
+	batchID, err := k.BuildOutgoingTXBatch(ctx, tokenContract, OutgoingTxBatchSize, msg.TokenType)
 	if err != nil {
 		return nil, err
 	}

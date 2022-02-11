@@ -15,7 +15,10 @@ var (
 	_ sdk.Msg = &MsgValsetConfirm{}
 	_ sdk.Msg = &MsgSendToEth{}
 	_ sdk.Msg = &MsgRequestBatch{}
+	_ sdk.Msg = &MsgSend721ToEth{}
+	_ sdk.Msg = &MsgRequest721Batch{}
 	_ sdk.Msg = &MsgConfirmBatch{}
+	_ sdk.Msg = &MsgConfirm721Batch{}
 	_ sdk.Msg = &MsgERC20DeployedClaim{}
 	_ sdk.Msg = &MsgERC721DeployedClaim{}
 	_ sdk.Msg = &MsgConfirmLogicCall{}
@@ -23,7 +26,54 @@ var (
 	_ sdk.Msg = &MsgDepositClaim{}
 	_ sdk.Msg = &MsgDeposit721Claim{}
 	_ sdk.Msg = &MsgWithdrawClaim{}
+	_ sdk.Msg = &MsgWithdraw721Claim{}
 )
+
+type MsgSend721ToEth struct {
+	Sender    string     `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
+	EthDest   string     `protobuf:"bytes,2,opt,name=eth_dest,json=ethDest,proto3" json:"eth_dest,omitempty"`
+	Amount    sdk.Coin `protobuf:"bytes,3,opt,name=amount,proto3" json:"amount"`
+	BridgeFee sdk.Coin `protobuf:"bytes,4,opt,name=bridge_fee,json=bridgeFee,proto3" json:"bridge_fee"`
+}
+
+type MsgSend721ToEthResponse struct {
+}
+
+func (m *MsgSend721ToEthResponse) Reset()         { *m = MsgSend721ToEthResponse{} }
+func (m *MsgSend721ToEthResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgSend721ToEthResponse) ProtoMessage()    {}
+
+type MsgRequest721Batch struct {
+	Sender string `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
+	Denom  string `protobuf:"bytes,2,opt,name=denom,proto3" json:"denom,omitempty"`
+}
+func (m *MsgRequest721Batch) Reset()         { *m = MsgRequest721Batch{} }
+func (m *MsgRequest721Batch) String() string { return proto.CompactTextString(m) }
+func (*MsgRequest721Batch) ProtoMessage()    {}
+
+type MsgRequest721BatchResponse struct {
+}
+
+func (m *MsgRequest721BatchResponse) Reset()         { *m = MsgRequest721BatchResponse{} }
+func (m *MsgRequest721BatchResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgRequest721BatchResponse) ProtoMessage()    {}
+
+type MsgConfirm721Batch struct {
+	Nonce         uint64 `protobuf:"varint,1,opt,name=nonce,proto3" json:"nonce,omitempty"`
+	TokenContract string `protobuf:"bytes,2,opt,name=token_contract,json=tokenContract,proto3" json:"token_contract,omitempty"`
+	EthSigner     string `protobuf:"bytes,3,opt,name=eth_signer,json=ethSigner,proto3" json:"eth_signer,omitempty"`
+	Orchestrator  string `protobuf:"bytes,4,opt,name=orchestrator,proto3" json:"orchestrator,omitempty"`
+	Signature     string `protobuf:"bytes,5,opt,name=signature,proto3" json:"signature,omitempty"`
+}
+func (m *MsgConfirm721Batch) Reset()         { *m = MsgConfirm721Batch{} }
+func (m *MsgConfirm721Batch) String() string { return proto.CompactTextString(m) }
+func (*MsgConfirm721Batch) ProtoMessage()    {}
+type MsgConfirm721BatchResponse struct {
+}
+
+func (m *MsgConfirm721BatchResponse) Reset()         { *m = MsgConfirm721BatchResponse{} }
+func (m *MsgConfirm721BatchResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgConfirm721BatchResponse) ProtoMessage()    {}
 
 type MsgDeposit721Claim struct {
 	EventNonce     uint64  `protobuf:"varint,1,opt,name=event_nonce,json=eventNonce,proto3" json:"event_nonce,omitempty"`
@@ -43,6 +93,14 @@ type MsgDeposit721ClaimResponse struct {
 func (m *MsgDeposit721ClaimResponse) Reset()         { *m = MsgDeposit721ClaimResponse{} }
 func (m *MsgDeposit721ClaimResponse) String() string { return proto.CompactTextString(m) }
 func (*MsgDeposit721ClaimResponse) ProtoMessage()    {}
+
+type MsgWithdraw721Claim struct {
+	EventNonce    uint64 `protobuf:"varint,1,opt,name=event_nonce,json=eventNonce,proto3" json:"event_nonce,omitempty"`
+	BlockHeight   uint64 `protobuf:"varint,2,opt,name=block_height,json=blockHeight,proto3" json:"block_height,omitempty"`
+	BatchNonce    uint64 `protobuf:"varint,3,opt,name=batch_nonce,json=batchNonce,proto3" json:"batch_nonce,omitempty"`
+	TokenContract string `protobuf:"bytes,4,opt,name=token_contract,json=tokenContract,proto3" json:"token_contract,omitempty"`
+	Orchestrator  string `protobuf:"bytes,5,opt,name=orchestrator,proto3" json:"orchestrator,omitempty"`
+}
 
 type MsgERC721DeployedClaim struct {
 	EventNonce    uint64 `protobuf:"varint,1,opt,name=event_nonce,json=eventNonce,proto3" json:"event_nonce,omitempty"`
@@ -240,6 +298,65 @@ func (msg MsgSendToEth) GetFromAddress() sdk.AccAddress {
 	return acc
 }
 
+// Route should return the name of the module
+func (msg MsgSend721ToEth) Route() string { return RouterKey }
+
+// MsgType should return the action
+func (msg MsgSend721ToEth) MsgType() string { return "send_721_to_eth" }
+
+func (msg *MsgSend721ToEth) Bytes() []byte {
+	return sdk.MustSortJSON(GravityCodec.MustMarshalJSON(msg))
+}
+
+// ValidateBasic runs stateless checks on the message
+// Checks if the Eth address is valid
+func (msg MsgSend721ToEth) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Sender)
+	}
+
+	// fee and send must be of the same denom
+	if msg.Amount.Denom != msg.BridgeFee.Denom {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, fmt.Sprintf("fee and amount must be the same type %s != %s", msg.Amount.Denom, msg.BridgeFee.Denom))
+	}
+
+	if !msg.Amount.IsValid() || msg.Amount.IsZero() {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "amount")
+	}
+	if !msg.BridgeFee.IsValid() {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "fee")
+	}
+	if err := ValidateEthAddress(msg.EthDest); err != nil {
+		return sdkerrors.Wrap(err, "ethereum address")
+	}
+	// TODO validate fee is sufficient, fixed fee to start
+	return nil
+}
+
+// GetSignBytes encodes the message for signing
+func (msg MsgSend721ToEth) GetSignBytes() []byte {
+	return sdk.MustSortJSON(GravityCodec.MustMarshalJSON(msg))
+}
+
+// GetSigners defines whose signature is required
+func (msg MsgSend721ToEth) GetSigners() []sdk.AccAddress {
+	acc, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		panic(err)
+	}
+
+	return []sdk.AccAddress{acc}
+}
+
+func (msg MsgSend721ToEth) GetFromAddress() sdk.AccAddress {
+	acc, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		panic(err)
+	}
+
+	return acc
+}
+
 // NewMsgRequestBatch returns a new msgRequestBatch
 func NewMsgRequestBatch(orchestrator sdk.AccAddress) *MsgRequestBatch {
 	return &MsgRequestBatch{
@@ -281,6 +398,48 @@ func (msg MsgRequestBatch) GetSigners() []sdk.AccAddress {
 }
 
 func (msg MsgRequestBatch) GetFromAddress() sdk.AccAddress {
+	acc, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		panic(err)
+	}
+
+	return acc
+}
+
+// Route should return the name of the module
+func (msg MsgRequest721Batch) Route() string { return RouterKey }
+
+// MsgType should return the action
+func (msg MsgRequest721Batch) MsgType() string { return "request_721_batch" }
+
+// ValidateBasic performs stateless checks
+func (msg MsgRequest721Batch) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Sender)
+	}
+	return nil
+}
+
+func (msg *MsgRequest721Batch) Bytes() []byte {
+	return sdk.MustSortJSON(GravityCodec.MustMarshalJSON(msg))
+}
+
+// GetSignBytes encodes the message for signing
+func (msg MsgRequest721Batch) GetSignBytes() []byte {
+	return sdk.MustSortJSON(GravityCodec.MustMarshalJSON(msg))
+}
+
+// GetSigners defines whose signature is required
+func (msg MsgRequest721Batch) GetSigners() []sdk.AccAddress {
+	acc, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		panic(err)
+	}
+
+	return []sdk.AccAddress{acc}
+}
+
+func (msg MsgRequest721Batch) GetFromAddress() sdk.AccAddress {
 	acc, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
 		panic(err)
@@ -332,6 +491,57 @@ func (msg MsgConfirmBatch) GetSigners() []sdk.AccAddress {
 }
 
 func (msg MsgConfirmBatch) GetFromAddress() sdk.AccAddress {
+	acc, err := sdk.AccAddressFromBech32(msg.Orchestrator)
+	if err != nil {
+		panic(err)
+	}
+
+	return acc
+}
+
+// Route should return the name of the module
+func (msg MsgConfirm721Batch) Route() string { return RouterKey }
+
+// MsgType should return the action
+func (msg MsgConfirm721Batch) MsgType() string { return "confirm_721_batch" }
+
+// ValidateBasic performs stateless checks
+func (msg MsgConfirm721Batch) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.Orchestrator); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Orchestrator)
+	}
+	if err := ValidateEthAddress(msg.EthSigner); err != nil {
+		return sdkerrors.Wrap(err, "eth signer")
+	}
+	if err := ValidateEthAddress(msg.TokenContract); err != nil {
+		return sdkerrors.Wrap(err, "token contract")
+	}
+	_, err := hex.DecodeString(msg.Signature)
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "Could not decode hex string %s", msg.Signature)
+	}
+	return nil
+}
+
+func (msg *MsgConfirm721Batch) Bytes() []byte {
+	return sdk.MustSortJSON(GravityCodec.MustMarshalJSON(msg))
+}
+
+// GetSignBytes encodes the message for signing
+func (msg MsgConfirm721Batch) GetSignBytes() []byte {
+	return sdk.MustSortJSON(GravityCodec.MustMarshalJSON(msg))
+}
+
+// GetSigners defines whose signature is required
+func (msg MsgConfirm721Batch) GetSigners() []sdk.AccAddress {
+	acc, err := sdk.AccAddressFromBech32(msg.Orchestrator)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{acc}
+}
+
+func (msg MsgConfirm721Batch) GetFromAddress() sdk.AccAddress {
 	acc, err := sdk.AccAddressFromBech32(msg.Orchestrator)
 	if err != nil {
 		panic(err)
@@ -418,7 +628,9 @@ var (
 	_ EthereumClaim = &MsgDepositClaim{}
 	_ EthereumClaim = &MsgDeposit721Claim{}
 	_ EthereumClaim = &MsgWithdrawClaim{}
+	_ EthereumClaim = &MsgWithdraw721Claim{}
 	_ EthereumClaim = &MsgERC20DeployedClaim{}
+	_ EthereumClaim = &MsgERC721DeployedClaim{}
 	_ EthereumClaim = &MsgLogicCallExecutedClaim{}
 )
 
@@ -662,6 +874,81 @@ func (msg MsgWithdrawClaim) Route() string { return RouterKey }
 func (msg MsgWithdrawClaim) MsgType() string { return "withdraw_claim" }
 
 func (msg *MsgWithdrawClaim) Bytes() []byte {
+	return sdk.MustSortJSON(GravityCodec.MustMarshalJSON(msg))
+}
+
+const (
+	TypeMsgWithdraw721Claim = "withdraw_721_claim"
+)
+
+// GetType returns the claim type
+func (e *MsgWithdraw721Claim) GetType() ClaimType {
+	return CLAIM_TYPE_WITHDRAW
+}
+
+// ValidateBasic performs stateless checks
+func (e *MsgWithdraw721Claim) ValidateBasic() error {
+	if e.EventNonce == 0 {
+		return fmt.Errorf("event_nonce == 0")
+	}
+	if e.BatchNonce == 0 {
+		return fmt.Errorf("batch_nonce == 0")
+	}
+	if err := ValidateEthAddress(e.TokenContract); err != nil {
+		return sdkerrors.Wrap(err, "erc20 token")
+	}
+	if _, err := sdk.AccAddressFromBech32(e.Orchestrator); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, e.Orchestrator)
+	}
+	return nil
+}
+
+// ClaimHash implements WithdrawBatch.Hash
+func (b *MsgWithdraw721Claim) ClaimHash() []byte {
+	path := fmt.Sprintf("%s/%d/", b.TokenContract, b.BatchNonce)
+	return tmhash.Sum([]byte(path))
+}
+
+// GetSignBytes encodes the message for signing
+func (msg MsgWithdraw721Claim) GetSignBytes() []byte {
+	return sdk.MustSortJSON(GravityCodec.MustMarshalJSON(msg))
+}
+
+func (msg MsgWithdraw721Claim) GetClaimer() sdk.AccAddress {
+	err := msg.ValidateBasic()
+	if err != nil {
+		panic("MsgWithdrawClaim failed ValidateBasic! Should have been handled earlier")
+	}
+	val, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
+	return val
+}
+
+func (msg MsgWithdraw721Claim) GetFromAddress() sdk.AccAddress {
+	acc, err := sdk.AccAddressFromBech32(msg.Orchestrator)
+	if err != nil {
+		panic(err)
+	}
+
+	return acc
+}
+
+// GetSigners defines whose signature is required
+func (msg MsgWithdraw721Claim) GetSigners() []sdk.AccAddress {
+	acc, err := sdk.AccAddressFromBech32(msg.Orchestrator)
+	if err != nil {
+		panic(err)
+	}
+
+	return []sdk.AccAddress{acc}
+}
+
+// Route should return the name of the module
+func (msg MsgWithdraw721Claim) Route() string { return RouterKey }
+
+// MsgType should return the action
+func (msg MsgWithdraw721Claim) MsgType() string { return "withdraw_721_claim" }
+
+func (msg *MsgWithdraw721Claim) Bytes() []byte {
 	return sdk.MustSortJSON(GravityCodec.MustMarshalJSON(msg))
 }
 

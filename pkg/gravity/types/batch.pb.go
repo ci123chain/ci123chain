@@ -29,6 +29,7 @@ type OutgoingTxBatch struct {
 	Transactions  []*OutgoingTransferTx `protobuf:"bytes,3,rep,name=transactions,proto3" json:"transactions,omitempty"`
 	TokenContract string                `protobuf:"bytes,4,opt,name=token_contract,json=tokenContract,proto3" json:"token_contract,omitempty"`
 	Block         uint64                `protobuf:"varint,5,opt,name=block,proto3" json:"block,omitempty"`
+	TokenType 	  uint64				`protobuf:"bytes,6,opt,name=token_type,json=tokenType,proto3" json:"token_type"`
 }
 
 func (m *OutgoingTxBatch) Reset()         { *m = OutgoingTxBatch{} }
