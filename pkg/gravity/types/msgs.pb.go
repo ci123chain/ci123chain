@@ -524,6 +524,7 @@ type MsgConfirmBatch struct {
 	EthSigner     string `protobuf:"bytes,3,opt,name=eth_signer,json=ethSigner,proto3" json:"eth_signer,omitempty"`
 	Orchestrator  string `protobuf:"bytes,4,opt,name=orchestrator,proto3" json:"orchestrator,omitempty"`
 	Signature     string `protobuf:"bytes,5,opt,name=signature,proto3" json:"signature,omitempty"`
+	TokenType 	  uint64 `protobuf:"bytes,6,opt,name=token_type,json=tokenType,proto3" json:"token_type"`
 }
 
 func (m *MsgConfirmBatch) Reset()         { *m = MsgConfirmBatch{} }

@@ -122,7 +122,7 @@ func (k msgServer) SendToEth(c context.Context, msg *types.MsgSendToEth) (*types
 	if err != nil {
 		return nil, err
 	}
-	txID, err := k.AddToOutgoingPool(ctx, sender, msg.EthDest, msg.Amount, msg.BridgeFee)
+	txID, err := k.AddToOutgoingPool(ctx, sender, msg.EthDest, msg.Amount, msg.BridgeFee, msg.TokenType)
 	if err != nil {
 		return nil, err
 	}
@@ -189,7 +189,7 @@ func (k msgServer) ConfirmBatch(c context.Context, msg *types.MsgConfirmBatch) (
 	}
 
 	gravityID := k.GetGravityID(ctx)
-	checkpoint, err := batch.GetCheckpoint(gravityID)
+	checkpoint, err := batch.GetCheckpoint(gravityID, msg.TokenType)
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "checkpoint generation")
 	}

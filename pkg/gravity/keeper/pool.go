@@ -19,41 +19,57 @@ import (
 // - burns the voucher for transfer amount and fees
 // - persists an OutgoingTx
 // - adds the TX to the `available` TX pool via a second index
-func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, counterpartReceiver string, amount sdk.Coin, fee sdk.Coin) (uint64, error) {
-	totalAmount := amount.Add(fee)
-	totalInVouchers := sdk.Coins{totalAmount}
-
+func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, counterpartReceiver string, amount sdk.Coin, fee sdk.Coin, tokenType uint64) (uint64, error) {
 	// If the coin is a gravity voucher, burn the coins. If not, check if there is a deployed ERC20 contract representing it.
 	// If there is, lock the coins.
-	_, counterPartContract, err := k.DenomToERC20Lookup(ctx, totalAmount.Denom)
-	if err != nil {
+	var counterPartContract, wlkContract string
+	if tokenType == ERC20 {
+		_, counter, err := k.DenomToERC20Lookup(ctx, amount.Denom)
+		if err != nil {
+			return 0, err
+		}
+		contract, exist := k.GetMapedWlkToken(ctx, counter)
+		if !exist {
+			return 0, types.ErrMappedContractNotFound
+		}
+		wlkContract = contract
+		counterPartContract = counter
+		if k.IsWlkToken(wlkContract) {
+			// lock coins in module
+			if err := k.SupplyKeeper.SendCoinsFromAccountToModule(ctx, sender, types.ModuleName, sdk.Coins{amount}); err != nil {
+				return 0, err
+			}
+		} else {
+			// If it is an ethereum-originated asset we burn it
+			// send coins to module in prep for burn
+			if err := k.SupplyKeeper.SendCoinsFromEVMAccountToModule(ctx, sender, types.ModuleName, sdk.HexToAddress(wlkContract), amount.Amount.BigInt()); err != nil {
+				return 0, err
+			}
+			// burn vouchers to send them back to ETH
+			//if err := k.SupplyKeeper.BurnEVMCoin(ctx, types.ModuleName, sdk.HexToAddress(wlkContract), totalAmount.Amount.BigInt()); err != nil {
+			//	panic(err)
+			//}
+		}
+	} else if tokenType == ERC721 {
+		_, counter, err := k.DenomToERC721Lookup(ctx, amount.Denom)
+		if err != nil {
+			return 0, err
+		}
+		contract, exist := k.GetMapedWRC721Token(ctx, counter)
+		if !exist {
+			return 0, types.ErrMappedContractNotFound
+		}
+		wlkContract = contract
+		counterPartContract = counter
+		if err := k.SupplyKeeper.Send721CoinsFromEVMAccountToModule(ctx, sender, types.ModuleName, sdk.HexToAddress(wlkContract), amount.Amount.BigInt()); err != nil {
+			return 0, err
+		}
+	}
+
+	//fee
+	if err := k.SupplyKeeper.SendCoinsFromAccountToModule(ctx, sender, types.ModuleName, sdk.Coins{fee}); err != nil {
 		return 0, err
 	}
-
-	wlkContract, exist := k.GetMapedWlkToken(ctx, counterPartContract)
-	if !exist {
-		return 0, types.ErrMappedContractNotFound
-	}
-	//isCosmosOriginated, tokenContract, err := k.WlkToEthLookup(ctx, totalAmount.Denom)
-
-	// If it is a cosmos-originated asset we lock it
-	if k.IsWlkToken(wlkContract) {
-		// lock coins in module
-		if err := k.SupplyKeeper.SendCoinsFromAccountToModule(ctx, sender, types.ModuleName, totalInVouchers); err != nil {
-			return 0, err
-		}
-	} else {
-		// If it is an ethereum-originated asset we burn it
-		// send coins to module in prep for burn
-		if err := k.SupplyKeeper.SendCoinsFromEVMAccountToModule(ctx, sender, types.ModuleName, sdk.HexToAddress(wlkContract), totalAmount.Amount.BigInt()); err != nil {
-			return 0, err
-		}
-		// burn vouchers to send them back to ETH
-		//if err := k.SupplyKeeper.BurnEVMCoin(ctx, types.ModuleName, sdk.HexToAddress(wlkContract), totalAmount.Amount.BigInt()); err != nil {
-		//	panic(err)
-		//}
-	}
-
 	// get next tx id from keeper
 	nextID := k.autoIncrementID(ctx, types.KeyLastTXPoolID)
 
