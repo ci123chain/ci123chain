@@ -26,7 +26,6 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/log"
-	coretypes "github.com/tendermint/tendermint/rpc/core/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 	"math/big"
 	"os"
@@ -222,17 +221,15 @@ func (api *PublicEthereumAPI) GetBlockByNumber(blockNum BlockNumber, fullTx bool
 		}
 		height = int64(num)
 	}
+
+
 	api.logger.Debug("height", "h", height)
 
-	r, _ := libs.RetryI(0, func(retryTimes int) (res interface{}, err error) {
-		res, err = api.clientCtx.Client.Block(api.ctx, &height)
-		if err != nil {
-			api.logger.Warn("eth_getBlockByNumber", "error", err.Error())
-			return nil, err
-		}
-		return res, nil
-	})
-	resBlock := r.(*coretypes.ResultBlock)
+	resBlock, err := api.clientCtx.Client.Block(api.ctx, &height)
+	if err != nil {
+		api.logger.Warn("eth_getBlockByNumber", "error", err.Error())
+		return nil, nil
+	}
 
 	var transactions []common.Hash
 	for _, tx := range resBlock.Block.Txs {
@@ -335,13 +332,12 @@ func (api *PublicEthereumAPI) GetTransactionReceipt(hash common.Hash) (map[strin
 		return nil, nil
 	}
 
-	var sdkTx sdk.Tx
-	err = cdc.UnmarshalBinaryBare(tx.Tx, &sdkTx)
+	rawTx, err := types.DefaultTxDecoder(cdc)(tx.Tx)
 	if err != nil {
 		return nil, err
 	}
 
-	ethTx, ok := sdkTx.(*types.MsgEthereumTx)
+	ethTx, ok := rawTx.(*types.MsgEthereumTx)
 	if !ok {
 		return nil, errors.New("not msg ethereumTx")
 	}
@@ -469,9 +465,14 @@ func (api *PublicEthereumAPI) SendTransaction(args SendTxArgs) (common.Hash, err
 	tx.Data.R = r
 	tx.Data.S = s
 
+	// Encode transaction by RLP encoder
+	txBytes, err := rlp.EncodeToBytes(tx)
+	if err != nil {
+		return common.Hash{}, err
+	}
 	// Broadcast transaction in async mode (default)
 	// NOTE: If error is encountered on the node, the broadcast will not return an error
-	res, err := api.clientCtx.BroadcastSignedTx(tx.Bytes())
+	res, err := api.clientCtx.BroadcastSignedTx(txBytes)
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -483,17 +484,8 @@ func (api *PublicEthereumAPI) SendTransaction(args SendTxArgs) (common.Hash, err
 // SendRawTransaction send a raw Ethereum transaction.
 func (api *PublicEthereumAPI) SendRawTransaction(data hexutil.Bytes) (common.Hash, error) {
 	api.logger.Debug("eth_sendRawTransaction", "data", data)
-	tx := new(types.MsgEthereumTx)
 
-	// RLP decode raw transaction bytes
-	if err := rlp.DecodeBytes(data, tx); err != nil {
-		// Return nil is for when gasLimit overflows uint64
-		return common.Hash{}, nil
-	}
-
-	//// TODO: Possibly log the contract creation address (if recipient address is nil) or tx data
-	//// If error is encountered on the node, the broadcast will not return an error
-	res, err := api.clientCtx.BroadcastSignedDataAsync(tx.Bytes())
+	res, err := api.clientCtx.BroadcastSignedDataAsync(data)
 	if err != nil {
 		api.logger.Debug("eth_sendRawTransaction", "err", err)
 		return common.Hash{}, err

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
+	apptypes "github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/transfer/types"
 	"time"
@@ -126,17 +127,6 @@ func formatTxResult(cdc *codec.Codec, resTx *ctypes.ResultTx, resBlock *ctypes.R
 
 
 func parseTx(cdc *codec.Codec, txBytes []byte) (sdk.Tx, error) {
-
-	// todo: only TransferTx implement
-
-	//tx := new(transfer.TransferTx)
-	var tx sdk.Tx
-	//rlp.DecodeBytes(txBytes, &tx)
-	err := cdc.UnmarshalBinaryBare(txBytes, &tx)
-	if err != nil {
-		return nil, err
-	}
-
-	return tx, nil
+	return apptypes.DefaultTxDecoder(cdc)(txBytes)
 }
 

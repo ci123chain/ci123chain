@@ -1,0 +1,299 @@
+{
+  "genesis_time": "2022-01-25T07:32:59.120445Z",
+  "chain_id": "weelink",
+  "initial_height": "1",
+  "consensus_params": {
+    "block": {
+      "max_bytes": "22020096",
+      "max_gas": "-1",
+      "time_iota_ms": "1000"
+    },
+    "evidence": {
+      "max_age_num_blocks": "100000",
+      "max_age_duration": "172800000000000",
+      "max_bytes": "1048576"
+    },
+    "validator": {
+      "pub_key_types": [
+        "ed25519"
+      ]
+    },
+    "version": {}
+  },
+  "validators": [
+    {
+      "address": "ACB1DF6106BCA5A54AADE3B5803042301C85CA8F",
+      "pub_key": {
+        "type": "tendermint/PubKeyEd25519",
+        "value": "CLzpXvktvJL/rvNd+jwH76kQ00Z7hlZSBJmxaayEURY="
+      },
+      "power": "1",
+      "name": ""
+    }
+  ],
+  "app_hash": "",
+  "app_state": {
+    "distribution": {
+      "params": {
+        "community_tax": "0.020000000000000000",
+        "base_proposer_reward": "0.010000000000000000",
+        "bounse_proposer_reward": "0.040000000000000000",
+        "withdraw_addr_enable": true
+      },
+      "fee_pool": {
+        "community_pool": {
+          "denom": "WLK",
+          "amount": "0.000000000000000000"
+        }
+      },
+      "delegator_withdraw_infos": null,
+      "previous_proposer": null,
+      "outstanding_rewards": [
+        {
+          "validator_address": "0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c",
+          "outstanding_rewards": {
+            "denom": "WLK",
+            "amount": "0.000000000000000000"
+          }
+        }
+      ],
+      "validator_accumulated_commissions": null,
+      "validator_historical_rewards": null,
+      "validator_current_rewards": [
+        {
+          "validator_address": "0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c",
+          "rewards": {
+            "rewards": {
+              "denom": "WLK",
+              "amount": "0.000000000000000000"
+            },
+            "period": "0"
+          }
+        }
+      ],
+      "delegator_starting_infos": null,
+      "validator_slash_events": null
+    },
+    "supply": {
+      "supply": [
+        {
+          "denom": "WLK",
+          "amount": "100000000000"
+        }
+      ]
+    },
+    "ibc": {
+      "client_genesis": {
+        "clients": [],
+        "clients_consensus": [],
+        "clients_metadata": null,
+        "params": {
+          "allowed_clients": [
+            "06-solomachine",
+            "07-tendermint"
+          ]
+        }
+      },
+      "connection_genesis": {
+        "connections": [],
+        "client_connection_paths": []
+      },
+      "channel_genesis": {
+        "channels": [],
+        "acknowledgements": [],
+        "commitments": [],
+        "receipts": [],
+        "send_sequences": [],
+        "recv_sequences": [],
+        "ack_sequences": []
+      }
+    },
+    "mint": {
+      "minter": {
+        "inflation": "0.130000000000000000",
+        "annual_provisions": "0.010000000000000000"
+      },
+      "params": {
+        "mint_denom": "WLK",
+        "inflation_rate_change": "0.130000000000000000",
+        "inflation_max": "0.200000000000000000",
+        "inflation_min": "0.070000000000000000",
+        "goal_bonded": "0.670000000000000000",
+        "blocks_per_year": "6311520"
+      }
+    },
+    "transfer": {
+      "port_id": "transfer",
+      "denom_traces": [],
+      "params": {
+        "send_enabled": true,
+        "receive_enabled": true
+      }
+    },
+    "gravity": {
+      "params": {
+        "gravity_id": "defaultgravityid",
+        "signed_valsets_window": 10000,
+        "signed_batches_window": 10000,
+        "signed_claims_window": 10000,
+        "target_batch_timeout": 43200000,
+        "average_block_time": 5000,
+        "average_ethereum_block_time": 15000,
+        "slash_fraction_valset": "0.001000000000000000",
+        "slash_fraction_batch": "0.001000000000000000",
+        "slash_fraction_claim": "0.001000000000000000",
+        "slash_fraction_conflicting_claim": "0.001000000000000000",
+        "unbond_slashing_valsets_window": 10000
+      },
+      "batch_confirms": null,
+      "logic_call_confirms": null,
+      "attestations": null,
+      "delegate_keys": [
+        {
+          "validator": "0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c",
+          "orchestrator": "0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c",
+          "eth_address": "0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c"
+        }
+      ]
+    },
+    "slashing": {
+      "params": {
+        "signed_blocks_window": "100",
+        "min_signed_per_window": "0.500000000000000000",
+        "downtime_jail_duration": "600000000000",
+        "slash_fraction_double_sign": "0.050000000000000000",
+        "slash_fraction_downtime": "0.010000000000000000"
+      },
+      "signing_infos": [],
+      "missed_blocks": []
+    },
+    "preStaking": {
+      "staking_token": "",
+      "owner": "",
+      "records": {
+        "prestaking_record": null,
+        "del_staking_records": null
+      }
+    },
+    "accounts": [
+      {
+        "type": "ci123chain/Account",
+        "value": {
+          "address": "0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c",
+          "coins": [
+            {
+              "denom": "WLK",
+              "amount": "10000000000000000000000000000"
+            }
+          ],
+          "sequence_number": "0",
+          "account_number": "0",
+          "pub_key": null,
+          "contract_list": null,
+          "contract_type": "",
+          "code_hash": null,
+          "is_module": false
+        }
+      }
+    ],
+    "staking": {
+      "params": {
+        "unbonding_time": "1209600000000000",
+        "max_validators": 100,
+        "max_entries": 9,
+        "historical_entries": 10000,
+        "bond_denom": "WLK"
+      },
+      "last_total_power": "0",
+      "last_validator_powers": null,
+      "validators": [
+        {
+          "operator_address": "0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c",
+          "pub_key": "CLzpXvktvJL/rvNd+jwH76kQ00Z7hlZSBJmxaayEURY=",
+          "consensus_address": "ACB1DF6106BCA5A54AADE3B5803042301C85CA8F",
+          "jailed": false,
+          "tokens": "800000000",
+          "status": 1,
+          "delegator_shares": "800000000.000000000000000000",
+          "description": {
+            "moniker": "Q5RtenzS",
+            "identity": "",
+            "website": "",
+            "security_contact": "",
+            "details": ""
+          },
+          "unbonding_height": "-1",
+          "unbonding_time": "0001-01-01T00:00:00Z",
+          "bonded_height": "0",
+          "commission": {
+            "commission_rates": {
+              "rate": "0.010000000000000000",
+              "max_rate": "0.400000000000000000",
+              "max_change_rate": "0.050000000000000000"
+            },
+            "update_time": "2022-01-25T07:32:59.202541Z"
+          },
+          "min_self_delegation": "800000000"
+        }
+      ],
+      "delegations": [
+        {
+          "delegator_address": "0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c",
+          "validator_address": "0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c",
+          "shares": "800000000.000000000000000000"
+        }
+      ],
+      "unbonding_delegations": null,
+      "redelegations": null,
+      "exported": false
+    },
+    "vm": {
+      "accounts": [],
+      "txs_logs": [],
+      "chain_config": {
+        "homestead_block": "0",
+        "dao_fork_block": "0",
+        "dao_fork_support": true,
+        "eip150_block": "0",
+        "eip150_hash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "eip155_block": "0",
+        "eip158_block": "0",
+        "byzantium_block": "0",
+        "constantinople_block": "0",
+        "petersburg_block": "0",
+        "istanbul_block": "0",
+        "muir_glacier_block": "-1",
+        "yoloV1_block": "-1",
+        "ewasm_block": "-1"
+      },
+      "params": {
+        "evm_denom": "WLK"
+      }
+    },
+    "auth": {
+      "params": {
+        "max_memo_characters": "256",
+        "tx_size_cost_per_byte": "10",
+        "sig_verify_cost_ed_25519": "590",
+        "sig_verify_cost_secp_256_k_1": "1000"
+      }
+    },
+    "order": {
+      "params": {
+        "orderBook": {
+          "lists": [
+            {
+              "name": "",
+              "height": "0"
+            }
+          ],
+          "current": {
+            "index": "0",
+            "state": "Init"
+          },
+          "actions": null
+        }
+      }
+    }
+  }
+}

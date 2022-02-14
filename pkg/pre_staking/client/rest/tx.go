@@ -23,6 +23,8 @@ func RegisterRestTxRoutes(cliCtx context.Context, r *mux.Router)  {
 	r.HandleFunc("/preStaking/delegator/redelegate", rest.MiddleHandler(cliCtx, RedelegateRequest, types.DefaultCodespace)).Methods("POST")
 	r.HandleFunc("/preStaking/delegator/undelegate", rest.MiddleHandler(cliCtx, UndelegateRequest, types.DefaultCodespace)).Methods("POST")
 	r.HandleFunc("/preStaking/create/validator", rest.MiddleHandler(cliCtx, CreateValidatorRequest, types.DefaultCodespace)).Methods("POST")
+	r.HandleFunc("/preStaking/SetTokenAddress", rest.MiddleHandler(cliCtx, SetStakingTokenRequest, types.DefaultCodespace)).Methods("POST")
+
 }
 
 
@@ -227,6 +229,35 @@ func UndelegateRequest(cliCtx context.Context, writer http.ResponseWriter, reque
 		rest.PostProcessResponseBare(writer, cliCtx, hex.EncodeToString(msg.Bytes()))
 		return
 	}
+
+	txByte, err := types2.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
+	if err != nil {
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, err.Error()).Error())
+		return
+	}
+	res, err := cliCtx.BroadcastSignedTx(txByte)
+	if err != nil {
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, err.Error()).Error())
+		return
+	}
+	rest.PostProcessResponseBare(writer, cliCtx, res)
+}
+
+func SetStakingTokenRequest(cliCtx context.Context, writer http.ResponseWriter, request *http.Request)  {
+	from := cliCtx.FromAddr
+	err := checkAccountExist(cliCtx, cliCtx.FromAddr)
+	if err != nil {
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid from").Error())
+		return
+	}
+	tokenAddress := request.FormValue("token_address")
+	if sdk.HexToAddress(tokenAddress).Empty() {
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "invalid token_address").Error())
+		return
+	}
+	privKey, from, nonce, gas, err := rest.GetNecessaryParams(cliCtx, request, cdc, true)
+
+	msg := types.NewMsgSetStakingToken(from, sdk.HexToAddress(tokenAddress))
 
 	txByte, err := types2.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
 	if err != nil {

@@ -112,7 +112,7 @@ func (k Keeper) processAttestation(ctx sdk.Context, att *types.Attestation, clai
 			"nonce", fmt.Sprint(claim.GetEventNonce()),
 		)
 	} else {
-		k.logger(ctx).Error("Attestation succeed")
+		k.logger(ctx).Info("Attestation succeed")
 		commit() // persist transient storage
 	}
 }
@@ -190,7 +190,7 @@ func (k Keeper) IterateAttestaions(ctx sdk.Context, cb func([]byte, types.Attest
 		// todo fix for old data
 		err := codec.GetLegacyAminoByCodec(k.cdc).UnmarshalBinaryBare(iter.Value(), &att)
 		if err != nil {
-			k.Logger(ctx).Warn("unmarshal attention error: ", err)
+			//k.Logger(ctx).Warn("unmarshal attention error: ", err)
 			continue
 		}
 		// cb returns true to stop early

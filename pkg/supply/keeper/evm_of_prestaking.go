@@ -1,37 +1,20 @@
 package keeper
 
 import (
-	"encoding/hex"
 	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	"github.com/ci123chain/ci123chain/pkg/account/exported"
 	"github.com/ci123chain/ci123chain/pkg/gravity/types"
 	"github.com/ci123chain/ci123chain/pkg/supply/meta"
 	"github.com/ci123chain/ci123chain/pkg/vm/evmtypes"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/umbracle/go-web3"
+	web3 "github.com/umbracle/go-web3"
 	"github.com/umbracle/go-web3/abi"
 	"math"
 	"math/big"
-	"strings"
 )
 
 ///supply/keeper/evm_of_prestaking.go
-const (
-	DefaultGas = math.MaxUint64 / 2
-)
-
-// MintCoinsFromModuleToEvmAccount transfers coins from a ModuleAccount to an AccAddress
-func (k Keeper) MintCoinsFromModuleToEvmAccount(ctx sdk.Context,
-	recipientAddr sdk.AccAddress, wlkContract string, amt *big.Int) error {
-	//param := []interface{}{metaData.Name, metaData.Symbol, metaData.Symbol, 0, true}
-	//denomAddr, err := a.DeployERC20Contract(ctx, owner, param)
-	//if err != nil {
-	//	return err
-	//}
-	err := k.Mint(ctx, sdk.HexToAddress(wlkContract), recipientAddr, types.ModuleName, amt)
-	return err
-}
+const DefaultGas = math.MaxUint64 / 2
 
 // TransferFromModuleToEvmAccount transfers coins from a ModuleAccount to an AccAddress
 func (k Keeper) TransferFromModuleToEvmAccount(ctx sdk.Context,
@@ -58,44 +41,6 @@ func (k Keeper) BuildParams(sender sdk.AccAddress, to *common.Address, payload [
 	}
 }
 
-func (k Keeper) DeployDaoContract(ctx sdk.Context, moduleName string, params interface{}) (sdk.AccAddress, error) {
-	ma := k.GetModuleAccount(ctx, moduleName)
-	defer func(account exported.ModuleAccountI) {
-		if err := account.SetSequence(account.GetSequence() + 1); err != nil {
-			panic(err)
-		}
-		k.ak.SetAccount(ctx, account)
-	}(ma)
-	ctx.WithIsRootMsg(true)
-	sender := ma.GetAddress()
-	abiIns, err := abi.NewABI(meta.DefaultDaoABI)
-
-	if err != nil {
-		return sdk.AccAddress{}, err
-	}
-
-	bin, err := hex.DecodeString(strings.TrimPrefix(DefaultDaoByteCode, "0x"))
-
-	if err != nil {
-		return sdk.AccAddress{}, err
-	}
-
-	data, err := abi.Encode(params, abiIns.Constructor.Inputs)
-	if err != nil {
-		return sdk.AccAddress{}, err
-	}
-
-	data = append(bin, data...)
-	msg := k.BuildParams(sender, nil, data, DefaultGas, ma.GetSequence())
-
-	result, err := k.evmKeeper.EvmTxExec(ctx, msg)
-
-	if result != nil && err == nil {
-		addStr := result.VMResult().Log
-		return sdk.HexToAddress(addStr), err
-	}
-	return sdk.AccAddress{}, err
-}
 
 func (k Keeper) BurnEVMCoin(ctx sdk.Context, moduleName string, wlkContract, to sdk.AccAddress, amount *big.Int) error {
 	from := k.GetModuleAddress(moduleName)
@@ -121,6 +66,7 @@ func (k Keeper) BurnEVMCoin(ctx sdk.Context, moduleName string, wlkContract, to 
 
 func (k Keeper) Mint(ctx sdk.Context, contract, to sdk.AccAddress, moduleName string, amount *big.Int) error {
 	sender := k.GetModuleAddress(moduleName)
+	fmt.Println(sender.String())
 	abiIns, err := abi.NewABI(meta.DefaultTokenManagerABI)
 	if err != nil {
 		return err
@@ -139,8 +85,10 @@ func (k Keeper) Mint(ctx sdk.Context, contract, to sdk.AccAddress, moduleName st
 	ctx = ctx.WithIsRootMsg(true)
 	msg := k.BuildParams(sender, &contract.Address, data, DefaultGas, k.getNonce(ctx, sender))
 
-	result, err := k.evmKeeper.EvmTxExec(ctx, msg)
-	k.Logger(ctx).Info("Mint action result", "value", result)
+	_, err = k.evmKeeper.EvmTxExec(ctx, msg)
+	if err != nil {
+		k.Logger(ctx).Error("Mint action result", "error", err.Error())
+	}
 	return err
 }
 

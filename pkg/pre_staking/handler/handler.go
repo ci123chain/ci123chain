@@ -14,7 +14,6 @@ import (
 )
 
 const (
-	tokenManager = "0x5B1427075C0EF657a6F4f23A7EF7065E028cAd3b"
 	baseMonth = 720
 )
 
@@ -33,18 +32,29 @@ func NewHandler(k keeper.PreStakingKeeper) sdk.Handler {
 			return RedelegateHandler(ctx, k, *msg)
 		case *types.MsgPrestakingCreateValidator:
 			return CreateValidatorHandler(ctx, k, *msg)
+		case *types.MsgSetStakingToken:
+			return SetStakingTokenHandler(ctx, k, *msg)
 		default:
 			return nil, nil
 		}
 	}
 }
 
+func SetStakingTokenHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.MsgSetStakingToken) (*sdk.Result, error) {
+	if msg.FromAddress.String() == k.GetTokenManagerOwner(ctx) || k.GetTokenManager(ctx) == "" {
+		k.SetTokenManager(ctx, msg.TokenAddress)
+		k.SetTokenManagerOwner(ctx, msg.FromAddress)
+		return &sdk.Result{}, nil
+	}
+	return nil, types.ErrSetStakingTokenFailed
+}
 
 func PreStakingHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.MsgPreStaking) (*sdk.Result, error) {
 	balance := k.AccountKeeper.GetBalance(ctx, msg.FromAddress).AmountOf(sdk.ChainCoinDenom)
 	if balance.LT(msg.Amount.Amount) {
 		return nil, types.ErrAccountBalanceNotEnough
 	}
+
 	//pay to module account.
 	moduleAcc := k.SupplyKeeper.GetModuleAccount(ctx, types.ModuleName)
 	err := k.AccountKeeper.Transfer(ctx, msg.FromAddress, moduleAcc.GetAddress(), sdk.NewCoins(msg.Amount))
@@ -54,9 +64,13 @@ func PreStakingHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.Msg
 	z := msg.Amount.Amount.BigInt()
 	base := int64(msg.DelegateTime.Hours()) / baseMonth
 	mintTokens := z.Mul(z, big.NewInt(base))
-	err = k.SupplyKeeper.Mint(ctx, sdk.HexToAddress(tokenManager), sdk.HexToAddress(msg.FromAddress.String()), types.ModuleName, mintTokens)
-	if err != nil {
-		return nil, err
+	if tokenmanager := k.GetTokenManager(ctx); len(tokenmanager) > 0 {
+		err = k.SupplyKeeper.Mint(ctx, sdk.HexToAddress(tokenmanager), sdk.HexToAddress(msg.FromAddress.String()), types.ModuleName, mintTokens)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		ctx.Logger().Warn("StakingToken Address not set")
 	}
 
 	//save to keeper.
@@ -195,9 +209,14 @@ func UndelegateHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.Msg
 	var z = amount.Amount.BigInt()
 	base := int64(res.Vaults[msg.VaultID].StorageTime.Hours()) / baseMonth
 	burnTokens := z.Mul(z, big.NewInt(base))
-	err = k.SupplyKeeper.BurnEVMCoin(ctx, types.ModuleName, sdk.HexToAddress(tokenManager), msg.FromAddress, burnTokens)
-	if err != nil {
-		return nil, err
+
+	if tokenmanager := k.GetTokenManager(ctx); len(tokenmanager) > 0 {
+		err = k.SupplyKeeper.BurnEVMCoin(ctx, types.ModuleName, sdk.HexToAddress(tokenmanager), msg.FromAddress, burnTokens)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		ctx.Logger().Warn("StakingToken Address not set")
 	}
 
 	//events.

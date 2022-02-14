@@ -28,4 +28,6 @@ var (
 	ErrInvalidPublicKey = sdkerrors.Register(DefaultCodespace, 1815, "invalid public key")
 	ErrPubkeyHasBonded = sdkerrors.Register(DefaultCodespace, 1816, "pubkey has been bonded")
 	ErrSetValidatorFailed = sdkerrors.Register(DefaultCodespace, 1817, "set validator failed")
+	ErrSetStakingTokenFailed = sdkerrors.Register(DefaultCodespace, 1818, "no permission change token address")
+
 )

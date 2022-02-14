@@ -12,7 +12,7 @@ const (
 
 	PreStakingRecordQuery = "queryPreStakingRecord"
 	StakingRecordQuery = "queryStakingRecord"
-	PreStakingDaoQuery = "queryPreStakingDao"
+	PreStakingTokenQuery = "queryPreStakingToken"
 )
 
 
@@ -20,7 +20,8 @@ var (
 	PreStakingKey = []byte{0x50}
 	StakingRecordKey = []byte{0x51}
 
-	WeeLinkDAO = []byte("weeLinkDAO")
+	TokenManager = []byte("tokenManager")
+	TokenManagerOwner = []byte("tokenManagerOwner")
 )
 
 
