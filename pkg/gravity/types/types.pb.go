@@ -202,6 +202,11 @@ type ERC20ToDenom struct {
 	Denom string `protobuf:"bytes,2,opt,name=denom,proto3" json:"denom,omitempty"`
 }
 
+type ERC721ToDenom struct {
+	Erc721 string `protobuf:"bytes,1,opt,name=erc721,proto3" json:"erc20,omitempty"`
+	Denom string `protobuf:"bytes,2,opt,name=denom,proto3" json:"denom,omitempty"`
+}
+
 func (m *ERC20ToDenom) Reset()         { *m = ERC20ToDenom{} }
 func (m *ERC20ToDenom) String() string { return proto.CompactTextString(m) }
 func (*ERC20ToDenom) ProtoMessage()    {}

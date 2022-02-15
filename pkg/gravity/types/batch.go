@@ -10,8 +10,18 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
+const (
+	ERC20 = iota
+	ERC721
+)
+
+type RequestBatch struct {
+	//Fee *big.Int
+	Requestor gethcommon.Address
+}
+
 // GetCheckpoint gets the checkpoint signature from the given outgoing tx batch
-func (b OutgoingTxBatch) GetCheckpoint(gravityIDstring string) ([]byte, error) {
+func (b OutgoingTxBatch) GetCheckpoint(gravityIDstring string, tokenType uint64) ([]byte, error) {
 
 	abi, err := abi.JSON(strings.NewReader(OutgoingBatchTxCheckpointABIJSON))
 	if err != nil {
@@ -45,21 +55,39 @@ func (b OutgoingTxBatch) GetCheckpoint(gravityIDstring string) ([]byte, error) {
 	// the methodName needs to be the same as the 'name' above in the checkpointAbiJson
 	// but other than that it's a constant that has no impact on the output. This is because
 	// it gets encoded as a function name which we must then discard.
-	abiEncodedBatch, err := abi.Pack("submitBatch",
-		gravityID,
-		batchMethodName,
-		txAmounts,
-		txDestinations,
-		txFees,
-		big.NewInt(int64(b.BatchNonce)),
-		gethcommon.HexToAddress(b.TokenContract),
-		big.NewInt(int64(b.BatchTimeout)),
-	)
-
-	// this should never happen outside of test since any case that could crash on encoding
-	// should be filtered above.
-	if err != nil {
-		return nil, sdkerrors.Wrap(err, "packing checkpoint")
+	var abiEncodedBatch []byte
+	if tokenType == ERC20 {
+		encodedBatch, err := abi.Pack("submitBatch",
+			gravityID,
+			batchMethodName,
+			txAmounts,
+			txDestinations,
+			big.NewInt(int64(b.BatchNonce)),
+			gethcommon.HexToAddress(b.TokenContract),
+			big.NewInt(int64(b.BatchTimeout)),
+		)
+		// this should never happen outside of test since any case that could crash on encoding
+		// should be filtered above.
+		if err != nil {
+			return nil, sdkerrors.Wrap(err, "packing checkpoint")
+		}
+		abiEncodedBatch = encodedBatch
+	} else if tokenType == ERC721 {
+		encodedBatch, err := abi.Pack("submitBatch",
+			gravityID,
+			batchMethodName,
+			txAmounts,
+			txDestinations,
+			big.NewInt(int64(b.BatchNonce)),
+			gethcommon.HexToAddress(b.TokenContract),
+			big.NewInt(int64(b.BatchTimeout)),
+		)
+		// this should never happen outside of test since any case that could crash on encoding
+		// should be filtered above.
+		if err != nil {
+			return nil, sdkerrors.Wrap(err, "packing checkpoint")
+		}
+		abiEncodedBatch = encodedBatch
 	}
 
 	// we hash the resulting encoded bytes discarding the first 4 bytes these 4 bytes are the constant

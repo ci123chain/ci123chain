@@ -275,6 +275,7 @@ type MsgSendToEth struct {
 	EthDest   string     `protobuf:"bytes,2,opt,name=eth_dest,json=ethDest,proto3" json:"eth_dest,omitempty"`
 	Amount    sdk.Coin `protobuf:"bytes,3,opt,name=amount,proto3" json:"amount"`
 	BridgeFee sdk.Coin `protobuf:"bytes,4,opt,name=bridge_fee,json=bridgeFee,proto3" json:"bridge_fee"`
+	TokenType uint64	`protobuf:"bytes,5,opt,name=token_type,json=tokenType,proto3" json:"token_type"`
 }
 
 func (m *MsgSendToEth) Reset()         { *m = MsgSendToEth{} }
@@ -338,6 +339,43 @@ func (m *MsgSendToEth) GetBridgeFee() sdk.Coin {
 	return sdk.Coin{}
 }
 
+func (m *MsgSend721ToEth) Reset()         { *m = MsgSend721ToEth{} }
+func (m *MsgSend721ToEth) String() string { return proto.CompactTextString(m) }
+func (*MsgSend721ToEth) ProtoMessage()    {}
+func (*MsgSend721ToEth) Descriptor() ([]byte, []int) {
+	return fileDescriptor_2f8523f2f6feb451, []int{4}
+}
+
+var xxx_messageInfo_MsgSend721ToEth proto.InternalMessageInfo
+
+func (m *MsgSend721ToEth) GetSender() string {
+	if m != nil {
+		return m.Sender
+	}
+	return ""
+}
+
+func (m *MsgSend721ToEth) GetEthDest() string {
+	if m != nil {
+		return m.EthDest
+	}
+	return ""
+}
+
+func (m *MsgSend721ToEth) GetAmount() sdk.Coin {
+	if m != nil {
+		return m.Amount
+	}
+	return sdk.Coin{}
+}
+
+func (m *MsgSend721ToEth) GetBridgeFee() sdk.Coin {
+	if m != nil {
+		return m.BridgeFee
+	}
+	return sdk.Coin{}
+}
+
 type MsgSendToEthResponse struct {
 }
 
@@ -386,6 +424,7 @@ var xxx_messageInfo_MsgSendToEthResponse proto.InternalMessageInfo
 type MsgRequestBatch struct {
 	Sender string `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
 	Denom  string `protobuf:"bytes,2,opt,name=denom,proto3" json:"denom,omitempty"`
+	TokenType uint64 `protobuf:"bytes,3,opt,name=token_type,proto3" json:"token_type,omitempty"`
 }
 
 func (m *MsgRequestBatch) Reset()         { *m = MsgRequestBatch{} }
@@ -485,6 +524,7 @@ type MsgConfirmBatch struct {
 	EthSigner     string `protobuf:"bytes,3,opt,name=eth_signer,json=ethSigner,proto3" json:"eth_signer,omitempty"`
 	Orchestrator  string `protobuf:"bytes,4,opt,name=orchestrator,proto3" json:"orchestrator,omitempty"`
 	Signature     string `protobuf:"bytes,5,opt,name=signature,proto3" json:"signature,omitempty"`
+	TokenType 	  uint64 `protobuf:"bytes,6,opt,name=token_type,json=tokenType,proto3" json:"token_type"`
 }
 
 func (m *MsgConfirmBatch) Reset()         { *m = MsgConfirmBatch{} }
@@ -918,6 +958,41 @@ func (m *MsgWithdrawClaim) GetOrchestrator() string {
 	return ""
 }
 
+func (m *MsgWithdraw721Claim) GetEventNonce() uint64 {
+	if m != nil {
+		return m.EventNonce
+	}
+	return 0
+}
+
+func (m *MsgWithdraw721Claim) GetBlockHeight() uint64 {
+	if m != nil {
+		return m.BlockHeight
+	}
+	return 0
+}
+
+func (m *MsgWithdraw721Claim) GetBatchNonce() uint64 {
+	if m != nil {
+		return m.BatchNonce
+	}
+	return 0
+}
+
+func (m *MsgWithdraw721Claim) GetTokenContract() string {
+	if m != nil {
+		return m.TokenContract
+	}
+	return ""
+}
+
+func (m *MsgWithdraw721Claim) GetOrchestrator() string {
+	if m != nil {
+		return m.Orchestrator
+	}
+	return ""
+}
+
 type MsgWithdrawClaimResponse struct {
 }
 
@@ -953,6 +1028,13 @@ func (m *MsgWithdrawClaimResponse) XXX_DiscardUnknown() {
 }
 
 var xxx_messageInfo_MsgWithdrawClaimResponse proto.InternalMessageInfo
+
+type MsgWithdraw721ClaimResponse struct {
+}
+
+func (m *MsgWithdraw721ClaimResponse) Reset()         { *m = MsgWithdraw721ClaimResponse{} }
+func (m *MsgWithdraw721ClaimResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgWithdraw721ClaimResponse) ProtoMessage()    {}
 
 // ERC20DeployedClaim allows the Cosmos module
 // to learn about an ERC20 that someone deployed
@@ -1305,18 +1387,28 @@ func init() {
 	proto.RegisterType((*MsgValsetConfirmResponse)(nil), "gravity.v1.MsgValsetConfirmResponse")
 	proto.RegisterType((*MsgSendToEth)(nil), "gravity.v1.MsgSendToEth")
 	proto.RegisterType((*MsgSendToEthResponse)(nil), "gravity.v1.MsgSendToEthResponse")
+	proto.RegisterType((*MsgSend721ToEth)(nil), "gravity.v1.MsgSend721ToEth")
+	proto.RegisterType((*MsgSend721ToEthResponse)(nil), "gravity.v1.MsgSend721ToEthResponse")
 	proto.RegisterType((*MsgRequestBatch)(nil), "gravity.v1.MsgRequestBatch")
 	proto.RegisterType((*MsgRequestBatchResponse)(nil), "gravity.v1.MsgRequestBatchResponse")
+	proto.RegisterType((*MsgRequest721Batch)(nil), "gravity.v1.MsgRequest721Batch")
+	proto.RegisterType((*MsgRequest721BatchResponse)(nil), "gravity.v1.MsgRequest721BatchResponse")
 	proto.RegisterType((*MsgConfirmBatch)(nil), "gravity.v1.MsgConfirmBatch")
 	proto.RegisterType((*MsgConfirmBatchResponse)(nil), "gravity.v1.MsgConfirmBatchResponse")
+	proto.RegisterType((*MsgConfirm721Batch)(nil), "gravity.v1.MsgConfirm721Batch")
+	proto.RegisterType((*MsgConfirm721BatchResponse)(nil), "gravity.v1.MsgConfirm721BatchResponse")
 	proto.RegisterType((*MsgConfirmLogicCall)(nil), "gravity.v1.MsgConfirmLogicCall")
 	proto.RegisterType((*MsgConfirmLogicCallResponse)(nil), "gravity.v1.MsgConfirmLogicCallResponse")
 	proto.RegisterType((*MsgDepositClaim)(nil), "gravity.v1.MsgDepositClaim")
 	proto.RegisterType((*MsgDepositClaimResponse)(nil), "gravity.v1.MsgDepositClaimResponse")
+	proto.RegisterType((*MsgDeposit721Claim)(nil), "gravity.v1.MsgDeposit721Claim")
+	proto.RegisterType((*MsgDeposit721ClaimResponse)(nil), "gravity.v1.MsgDeposit721ClaimResponse")
 	proto.RegisterType((*MsgWithdrawClaim)(nil), "gravity.v1.MsgWithdrawClaim")
 	proto.RegisterType((*MsgWithdrawClaimResponse)(nil), "gravity.v1.MsgWithdrawClaimResponse")
 	proto.RegisterType((*MsgERC20DeployedClaim)(nil), "gravity.v1.MsgERC20DeployedClaim")
 	proto.RegisterType((*MsgERC20DeployedClaimResponse)(nil), "gravity.v1.MsgERC20DeployedClaimResponse")
+	proto.RegisterType((*MsgERC721DeployedClaim)(nil), "gravity.v1.MsgERC721DeployedClaim")
+	proto.RegisterType((*MsgERC721DeployedClaimResponse)(nil), "gravity.v1.MsgERC721DeployedClaimResponse")
 	proto.RegisterType((*MsgLogicCallExecutedClaim)(nil), "gravity.v1.MsgLogicCallExecutedClaim")
 	proto.RegisterType((*MsgLogicCallExecutedClaimResponse)(nil), "gravity.v1.MsgLogicCallExecutedClaimResponse")
 	proto.RegisterType((*MsgCancelSendToEth)(nil), "gravity.v1.MsgCancelSendToEth")
@@ -1549,8 +1641,10 @@ type MsgServer interface {
 	ConfirmBatch(context.Context, *MsgConfirmBatch) (*MsgConfirmBatchResponse, error)
 	ConfirmLogicCall(context.Context, *MsgConfirmLogicCall) (*MsgConfirmLogicCallResponse, error)
 	DepositClaim(context.Context, *MsgDepositClaim) (*MsgDepositClaimResponse, error)
+	Deposit721Claim(context.Context, *MsgDeposit721Claim) (*MsgDeposit721ClaimResponse, error)
 	WithdrawClaim(context.Context, *MsgWithdrawClaim) (*MsgWithdrawClaimResponse, error)
 	ERC20DeployedClaim(context.Context, *MsgERC20DeployedClaim) (*MsgERC20DeployedClaimResponse, error)
+	ERC721DeployedClaim(context.Context, *MsgERC721DeployedClaim) (*MsgERC721DeployedClaimResponse, error)
 	LogicCallExecutedClaim(context.Context, *MsgLogicCallExecutedClaim) (*MsgLogicCallExecutedClaimResponse, error)
 	SetOrchestratorAddress(context.Context, *MsgSetOrchestratorAddress) (*MsgSetOrchestratorAddressResponse, error)
 	CancelSendToEth(context.Context, *MsgCancelSendToEth) (*MsgCancelSendToEthResponse, error)
@@ -1563,13 +1657,16 @@ type UnimplementedMsgServer struct {
 func (*UnimplementedMsgServer) ValsetConfirm(ctx context.Context, req *MsgValsetConfirm) (*MsgValsetConfirmResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ValsetConfirm not implemented")
 }
-func (*UnimplementedMsgServer) SendToEth(ctx context.Context, req *MsgSendToEth) (*MsgSendToEthResponse, error) {
+func (*UnimplementedMsgServer) Send721ToEth(ctx context.Context, req *MsgSendToEth) (*MsgSendToEthResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendToEth not implemented")
 }
-func (*UnimplementedMsgServer) RequestBatch(ctx context.Context, req *MsgRequestBatch) (*MsgRequestBatchResponse, error) {
+func (*UnimplementedMsgServer) Request721Batch(ctx context.Context, req *MsgRequestBatch) (*MsgRequestBatchResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RequestBatch not implemented")
 }
 func (*UnimplementedMsgServer) ConfirmBatch(ctx context.Context, req *MsgConfirmBatch) (*MsgConfirmBatchResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ConfirmBatch not implemented")
+}
+func (*UnimplementedMsgServer) Confirm721Batch(ctx context.Context, req *MsgConfirmBatch) (*MsgConfirmBatchResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ConfirmBatch not implemented")
 }
 func (*UnimplementedMsgServer) ConfirmLogicCall(ctx context.Context, req *MsgConfirmLogicCall) (*MsgConfirmLogicCallResponse, error) {
@@ -1578,11 +1675,20 @@ func (*UnimplementedMsgServer) ConfirmLogicCall(ctx context.Context, req *MsgCon
 func (*UnimplementedMsgServer) DepositClaim(ctx context.Context, req *MsgDepositClaim) (*MsgDepositClaimResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DepositClaim not implemented")
 }
+func (*UnimplementedMsgServer) Deposit721Claim(ctx context.Context, req *MsgDeposit721Claim) (*MsgDeposit721ClaimResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Deposit721Claim not implemented")
+}
 func (*UnimplementedMsgServer) WithdrawClaim(ctx context.Context, req *MsgWithdrawClaim) (*MsgWithdrawClaimResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method WithdrawClaim not implemented")
 }
+func (*UnimplementedMsgServer) Withdraw721Claim(ctx context.Context, req *MsgWithdraw721Claim) (*MsgWithdraw721ClaimResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Withdraw721Claim not implemented")
+}
 func (*UnimplementedMsgServer) ERC20DeployedClaim(ctx context.Context, req *MsgERC20DeployedClaim) (*MsgERC20DeployedClaimResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ERC20DeployedClaim not implemented")
+}
+func (*UnimplementedMsgServer) ERC721DeployedClaim(ctx context.Context, req *MsgERC721DeployedClaim) (*MsgERC721DeployedClaimResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ERC721DeployedClaim not implemented")
 }
 func (*UnimplementedMsgServer) LogicCallExecutedClaim(ctx context.Context, req *MsgLogicCallExecutedClaim) (*MsgLogicCallExecutedClaimResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method LogicCallExecutedClaim not implemented")

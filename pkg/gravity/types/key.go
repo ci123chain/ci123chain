@@ -61,6 +61,9 @@ var (
 	// OutgoingTXBatchKey indexes outgoing tx batches under a nonce and token address
 	OutgoingTXBatchKey = []byte{0xa}
 
+	// OutgoingTXRequestBatchKey indexes outgoing tx batches under a nonce and token address
+	OutgoingTXRequestBatchKey = []byte{0xc}
+
 	// OutgoingTXBatchBlockKey indexes outgoing tx batches under a block height and token address
 	OutgoingTXBatchBlockKey = []byte{0xb}
 
@@ -120,6 +123,12 @@ var (
 	TxIdKey = []byte{0xfa}
 
 	EventNonceKey = []byte{0xfb}
+
+	// WlkToEthKey prefixes the index of wlk asset to eth ERC20s
+	WRC721ToEth721Key = []byte{0xfc}
+
+	// EthToWlkKey prefixes the index of eth originated assets ERC20s to wlk
+	ERC721ToWRC721Key = []byte{0xfd}
 )
 
 // GetOrchestratorAddressKey returns the following key format
@@ -220,6 +229,11 @@ func GetOutgoingTxBatchKey(tokenContract string, nonce uint64) []byte {
 	return append(append(OutgoingTXBatchKey, []byte(tokenContract)...), UInt64Bytes(nonce)...)
 }
 
+func GetOutgoingTxRequestBatchKey(tokenContract string, nonce uint64) []byte {
+	tokenContract = strings.ToLower(tokenContract)
+	return append(append(OutgoingTXRequestBatchKey, []byte(tokenContract)...), UInt64Bytes(nonce)...)
+}
+
 // GetOutgoingTxBatchBlockKey returns the following key format
 // prefix     blockheight
 // [0xb][0 0 0 0 2 1 4 3]
@@ -271,6 +285,16 @@ func GetWlKToEthKey(denom string) []byte {
 func GetEthToWlkKey(erc20 string) []byte {
 	erc20 = strings.ToLower(erc20)
 	return append(EthToWlkKey, []byte(erc20)...)
+}
+
+func GetWRC721ToERC721Key(wrc721 string) []byte {
+	wrc721 = strings.ToLower(wrc721)
+	return append(WRC721ToEth721Key, []byte(wrc721)...)
+}
+
+func GetERC721ToWRC721Key(erc721 string) []byte {
+	erc721 = strings.ToLower(erc721)
+	return append(ERC721ToWRC721Key, []byte(erc721)...)
 }
 
 func GetContractMetaDataKey(contract string) []byte {

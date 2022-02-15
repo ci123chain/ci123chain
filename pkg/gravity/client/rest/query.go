@@ -250,6 +250,34 @@ func ERC20ToDenomHandler(cliCtx context.Context, storeName string) http.HandlerF
 	}
 }
 
+func denomToERC721Handler(cliCtx context.Context, storeName string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		denom := vars[denom]
+
+		res, height, _, err := cliCtx.Query(fmt.Sprintf("custom/%s/DenomToERC721/%s", storeName, denom), nil, false)
+		if err != nil {
+			rest.WriteErrorRes(w, err.Error())
+			return
+		}
+		rest.PostProcessResponseBare(w, cliCtx.WithHeight(height), res)
+	}
+}
+
+func ERC721ToDenomHandler(cliCtx context.Context, storeName string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		ERC721 := vars[tokenAddress]
+
+		res, height, _, err := cliCtx.Query(fmt.Sprintf("custom/%s/ERC721ToDenom/%s", storeName, ERC721), nil, false)
+		if err != nil {
+			rest.WriteErrorRes(w, err.Error())
+			return
+		}
+		rest.PostProcessResponseBare(w, cliCtx.WithHeight(height), res)
+	}
+}
+
 func queryTxIdHandler(cliCtx context.Context, storeName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)

@@ -79,6 +79,37 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim
 			err = a.supplyKeeper.TransferFromModuleToEvmAccount(ctx, receiverAddr, wlkToken, claim.Amount.BigInt())
 		}
 		return err
+	case *types.MsgDeposit721Claim:
+		// Check if coin is Cosmos-originated asset and get denom
+		exists, wlkToken := a.keeper.ERC721ToDenomLookup(ctx, claim.TokenContract)
+
+		if !exists {
+			tokenAddres, err := a.supplyKeeper.DeployWRC721ForGivenERC721(ctx, types.ModuleName, []interface{}{claim.TokenName, claim.TokenSymbol})
+			if err != nil {
+				return sdkerrors.Wrap(err, "deploy wrc20 failed")
+			}
+			wlkToken = tokenAddres.String()
+			a.keeper.setERC721Map(ctx, wlkToken, claim.TokenContract)
+			a.keeper.SetTokenMetaData(ctx, wlkToken, types.MetaData{
+				Symbol:   claim.TokenSymbol,
+				Name:     claim.TokenName,
+			})
+		}
+		var err error
+		// erc20 代币
+		receiverAddr, err := sdk.AccAddressFromBech32(claim.CosmosReceiver)
+		if err != nil {
+			return sdkerrors.Wrap(err, "invalid reciever address")
+		}
+
+		metaData := a.keeper.GetTokenMetaData(ctx, wlkToken)
+		if metaData.Symbol == "" {
+			return types.ErrNoContractMetaData
+		}
+
+		//err = a.supplyKeeper.MintCoinsFromModuleToEvmAccount(ctx, receiverAddr, wlkToken, claim.Amount.BigInt())
+		err = a.supplyKeeper.Transfer721FromModuleToEvmAccount(ctx, receiverAddr, wlkToken, claim.TokenID.BigInt())
+		return err
 	case *types.MsgWithdrawClaim:
 		a.keeper.OutgoingTxBatchExecuted(ctx, claim.TokenContract, claim.BatchNonce)
 	case *types.MsgERC20DeployedClaim:
@@ -104,6 +135,29 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim
 		// Add to wrc20-erc20 mapping
 		a.keeper.setERC20Map(ctx, wlkToken, claim.TokenContract)
 		a.logger(ctx).Info("ERC20-WRC20 Mapped for ", "ETH:", claim.TokenContract, " Weelink:", wlkToken)
+	case *types.MsgERC721DeployedClaim:
+		wlkToken := claim.CosmosDenom
+		// Check if it already exists
+		existERC721, exists := a.keeper.GetMapedERC721Token(ctx, wlkToken)
+		if exists {
+			return sdkerrors.Wrap(
+				types.ErrInvalid,
+				fmt.Sprintf("WRC721 %s in weelink already exists for eth %s", wlkToken, existERC721))
+		}
+
+		existingWRC721, exists := a.keeper.GetMapedWRC721Token(ctx, claim.TokenContract)
+		if exists {
+			return sdkerrors.Wrap(
+				types.ErrInvalid,
+				fmt.Sprintf("ERC721 %s in eth already exists for weelink %s", claim.TokenContract, existingWRC721))
+		}
+
+		if err := a.validateAndSetWRC721(ctx, wlkToken, claim.Name, claim.Symbol); err != nil {
+			return err
+		}
+		// Add to wrc20-erc20 mapping
+		a.keeper.setERC721Map(ctx, wlkToken, claim.TokenContract)
+		a.logger(ctx).Info("ERC721-WRC721 Mapped for ", "ETH:", claim.TokenContract, " Weelink:", wlkToken)
 	default:
 		return sdkerrors.Wrapf(types.ErrInvalid, "event type: %s", claim.GetType())
 	}
@@ -157,6 +211,38 @@ func (a AttestationHandler) validateAndSetWRC20(ctx sdk.Context, denom, name, sy
 		Symbol:   symbol,
 		Name:     name,
 		Decimals: decimals,
+	})
+	return nil
+}
+
+func (a AttestationHandler) validateAndSetWRC721(ctx sdk.Context, denom, name, symbol string) error {
+	if err := types.ValidateEthAddress(denom); err != nil {
+		return err
+	}
+	name2, err := a.supplyKeeper.WRC20DenomValueForFunc(ctx, types.ModuleName, sdk.HexToAddress(denom), "name")
+	if err != nil {
+		return types.ErrQueryDenom.Wrap(err.Error())
+	}
+	symbol2, err := a.supplyKeeper.WRC20DenomValueForFunc(ctx, types.ModuleName, sdk.HexToAddress(denom), "symbol")
+	if err != nil {
+		return types.ErrQueryDenom.Wrap(err.Error())
+	}
+	nameS, ok := name2.(string)
+	if !ok {
+		return types.ErrQueryDenom.Wrap("invalid name type expected string")
+	}
+	symbolS, ok := symbol2.(string)
+	if !ok {
+		return types.ErrQueryDenom.Wrap("invalid symbol type expected string")
+	}
+	if nameS != name ||
+		symbolS != symbol {
+		return types.ErrQueryDenomMismatch.Wrapf("expect name:%s, symbol:%s, got name:%s, symbol:%s", name2, symbol2, name, symbol)
+	}
+
+	a.keeper.SetTokenMetaData(ctx, denom, types.MetaData{
+		Symbol:   symbol,
+		Name:     name,
 	})
 	return nil
 }

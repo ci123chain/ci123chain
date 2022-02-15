@@ -31,8 +31,10 @@ func RegisterCodec(cdc *codec.Codec)  {
 	cdc.RegisterConcrete(&MsgConfirmLogicCall{}, "gravity/MsgConfirmLogicCall", nil)
 	cdc.RegisterConcrete(&Valset{}, "gravity/Valset", nil)
 	cdc.RegisterConcrete(&MsgDepositClaim{}, "gravity/MsgDepositClaim", nil)
+	cdc.RegisterConcrete(&MsgDeposit721Claim{}, "gravity/MsgDeposit721Claim", nil)
 	cdc.RegisterConcrete(&MsgWithdrawClaim{}, "gravity/MsgWithdrawClaim", nil)
 	cdc.RegisterConcrete(&MsgERC20DeployedClaim{}, "gravity/MsgERC20DeployedClaim", nil)
+	cdc.RegisterConcrete(&MsgERC721DeployedClaim{}, "gravity/MsgERC721DeployedClaim", nil)
 	cdc.RegisterConcrete(&MsgLogicCallExecutedClaim{}, "gravity/MsgLogicCallExecutedClaim", nil)
 	cdc.RegisterConcrete(&OutgoingTxBatch{}, "gravity/OutgoingTxBatch", nil)
 	cdc.RegisterConcrete(&MsgCancelSendToEth{}, "gravity/MsgCancelSendToEth", nil)
@@ -51,8 +53,10 @@ func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 	registry.RegisterImplementations(
 		(*EthereumClaim)(nil),
 		&MsgDepositClaim{},
+		&MsgDeposit721Claim{},
 		&MsgWithdrawClaim{},
 		&MsgERC20DeployedClaim{},
+		&MsgERC721DeployedClaim{},
 		&MsgLogicCallExecutedClaim{},
 	)
 	registry.RegisterImplementations(
@@ -64,8 +68,10 @@ func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 		&MsgConfirmBatch{},
 		&MsgConfirmLogicCall{},
 		&MsgDepositClaim{},
+		&MsgDeposit721Claim{},
 		&MsgWithdrawClaim{},
 		&MsgERC20DeployedClaim{},
+		&MsgERC721DeployedClaim{},
 		&MsgLogicCallExecutedClaim{},
 		&MsgCancelSendToEth{},
 	)

@@ -13,7 +13,6 @@ import (
 // NewHandler returns a handler for "Gravity" type messages.
 func NewHandler(k keeper.Keeper) sdk.Handler {
 	msgServer := keeper.NewMsgServerImpl(k)
-
 	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 		switch msg := msg.(type) {
@@ -38,16 +37,21 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 		case *types.MsgDepositClaim:
 			res, err := msgServer.DepositClaim(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
+		case *types.MsgDeposit721Claim:
+			res, err := msgServer.Deposit721Claim(sdk.WrapSDKContext(ctx), msg)
+			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgWithdrawClaim:
 			res, err := msgServer.WithdrawClaim(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgERC20DeployedClaim:
 			res, err := msgServer.ERC20DeployedClaim(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
+		case *types.MsgERC721DeployedClaim:
+			res, err := msgServer.ERC721DeployedClaim(sdk.WrapSDKContext(ctx), msg)
+			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgLogicCallExecutedClaim:
 			res, err := msgServer.LogicCallExecutedClaim(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
-
 		default:
 			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, fmt.Sprintf("Unrecognized Gravity Msg type: %v", msg.MsgType()))
 		}
