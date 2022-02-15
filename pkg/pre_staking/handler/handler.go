@@ -26,12 +26,16 @@ func NewHandler(k keeper.PreStakingKeeper) sdk.Handler {
 			return PreStakingHandler(ctx, k, *msg)
 		case *types.MsgStaking:
 			return StakingHandler(ctx, k, *msg)
+		case *types.MsgStakingDirect:
+			return StakingDirectHandler(ctx, k, *msg)
 		case *types.MsgUndelegate:
 			return UndelegateHandler(ctx, k, *msg)
 		case *types.MsgRedelegate:
 			return RedelegateHandler(ctx, k, *msg)
 		case *types.MsgPrestakingCreateValidator:
 			return CreateValidatorHandler(ctx, k, *msg)
+		case *types.MsgPrestakingCreateValidatorDirect:
+			return CreateValidatorDirectHandler(ctx, k, *msg)
 		case *types.MsgSetStakingToken:
 			return SetStakingTokenHandler(ctx, k, *msg)
 		default:
@@ -88,6 +92,48 @@ func PreStakingHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.Msg
 			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(types.ModuleName)),
 			sdk.NewAttribute([]byte(sdk.AttributeKeySender), []byte(msg.FromAddress.String())),
 			sdk.NewAttribute([]byte(types.AttributeKeyVaultID), []byte(res.LatestVaultID.String())),
+		),
+	})
+	return &sdk.Result{Events:em.Events()}, nil
+}
+
+func StakingDirectHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.MsgStakingDirect) (*sdk.Result, error) {
+
+	//update account prestaking.
+	res := k.GetAccountPreStaking(ctx, msg.Delegator)
+	vat := types.NewVault(ctx.BlockTime(), ctx.BlockTime().Add(msg.DelegateTime), msg.DelegateTime, msg.Amount)
+	res.AddVault(vat)
+
+	amount, endTime, err := res.PopVaultAmountAndEndTime(res.LatestVaultID)
+	k.SetAccountPreStaking(ctx, msg.FromAddress, res)
+
+	err = k.SetAccountStakingRecord(ctx, msg.Validator, msg.FromAddress, res.LatestVaultID, endTime, amount)
+	if err != nil {
+		return nil, err
+	}
+
+	validator, found := k.StakingKeeper.GetValidator(ctx, msg.Validator)
+	if !found {
+		return nil, types.ErrNoExpectedValidator
+	}
+	denom := k.StakingKeeper.BondDenom(ctx)
+	if amount.Denom != denom {
+		return nil, types.ErrInvalidDenom
+	}
+
+	// sub delegator's amount directly
+	k.StakingKeeper.Delegate(ctx, msg.Delegator, amount.Amount, sdk.Unbonded, validator, true)
+
+
+
+	em := sdk.NewEventManager()
+	em.EmitEvents(sdk.Events{
+		sdk.NewEvent(types.EventMsgStaking,
+			sdk.NewAttribute([]byte(sdk.AttributeKeyMethod), []byte(types.EventMsgStaking)),
+			sdk.NewAttribute([]byte(sdk.AttributeKeyAmount), []byte(amount.String())),
+			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(types.ModuleName)),
+			sdk.NewAttribute([]byte(sdk.AttributeKeySender), []byte(msg.FromAddress.String())),
+			sdk.NewAttribute([]byte(sdk.AttributeKeyAmount), []byte(msg.Amount.Amount.String())),
 		),
 	})
 	return &sdk.Result{Events:em.Events()}, nil
@@ -300,6 +346,76 @@ func RedelegateHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.Msg
 	return &sdk.Result{Data: completionTimeBz, Events: em.Events()}, nil
 }
 
+func CreateValidatorDirectHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.MsgPrestakingCreateValidatorDirect) (*sdk.Result, error) {
+	if _, found := k.StakingKeeper.GetValidator(ctx, msg.ValidatorAddress); found {
+		return nil, types.ErrNoExpectedValidator
+	}
+	pk, err := util.ParsePubKey(msg.PublicKey)
+	if err != nil {
+		return nil, types.ErrInvalidPublicKey
+	}
+
+	if _, found := k.StakingKeeper.GetValidatorByConsAddr(ctx, sdk.GetConsAddress(pk)); found {
+		return nil, types.ErrPubkeyHasBonded
+	}
+
+	if _, err := msg.Description.EnsureLength(); err != nil {
+		return nil, err
+	}
+
+
+
+	//update account prestaking.
+	res := k.GetAccountPreStaking(ctx, msg.FromAddress)
+	vat := types.NewVault(ctx.BlockTime(), ctx.BlockTime().Add(msg.DelegateTime), msg.DelegateTime, msg.Amount)
+	res.AddVault(vat)
+
+	amount, endTime, err := res.PopVaultAmountAndEndTime(res.LatestVaultID)
+	k.SetAccountPreStaking(ctx, msg.FromAddress, res)
+
+	err = k.SetAccountStakingRecord(ctx, msg.ValidatorAddress, msg.FromAddress, res.LatestVaultID, endTime, amount)
+	if err != nil {
+		return nil, err
+	}
+
+	validator, _ := staking.NewValidator(msg.ValidatorAddress, msg.PublicKey, msg.Description)
+
+	commission := staking.NewCommissionWithTime(msg.Commission.Rate,
+		msg.Commission.MaxRate, msg.Commission.MaxChangeRate, ctx.BlockHeader().Time)
+
+	validator, err = validator.SetInitialCommission(commission)
+	if err != nil {
+		return nil, err
+	}
+	validator.MinSelfDelegation = msg.MinSelfDelegation
+
+	err = k.StakingKeeper.SetValidator(ctx, validator)
+	if err != nil {
+		return nil, types.ErrSetValidatorFailed
+	}
+	k.StakingKeeper.SetValidatorByConsAddr(ctx, validator)
+	k.StakingKeeper.SetNewValidatorByPowerIndex(ctx, validator)
+
+	k.StakingKeeper.AfterValidatorCreated(ctx, validator.OperatorAddress)
+
+	_, err = k.StakingKeeper.Delegate(ctx, msg.DelegatorAddress, amount.Amount, sdk.Unbonded, validator, true)
+	if err != nil {
+		return nil, err
+	}
+
+	em := sdk.NewEventManager()
+	em.EmitEvents(sdk.Events{
+		sdk.NewEvent(types.EventTypeCreateValidator,
+			sdk.NewAttribute([]byte(sdk.AttributeKeyMethod), []byte(types.EventTypeCreateValidator)),
+			sdk.NewAttribute([]byte(sdk.AttributeKeyAmount), []byte(amount.Amount.String())),
+			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(types.AttributeValueCategory)),
+			sdk.NewAttribute([]byte(sdk.AttributeKeySender), []byte(msg.FromAddress.String())),
+			sdk.NewAttribute([]byte(sdk.AttributeKeyAmount), []byte(msg.Amount.Amount.String())),
+		),
+	})
+
+	return &sdk.Result{Events: em.Events()}, nil
+}
 
 func CreateValidatorHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.MsgPrestakingCreateValidator) (*sdk.Result, error) {
 	if _, found := k.StakingKeeper.GetValidator(ctx, msg.ValidatorAddress); found {

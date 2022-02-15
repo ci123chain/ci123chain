@@ -20,9 +20,13 @@ import (
 func RegisterRestTxRoutes(cliCtx context.Context, r *mux.Router)  {
 	r.HandleFunc("/preStaking/preDelegate", rest.MiddleHandler(cliCtx, PreDelegateRequest, types.DefaultCodespace)).Methods("POST")
 	r.HandleFunc("/preStaking/delegator/delegate", rest.MiddleHandler(cliCtx, DelegateRequest, types.DefaultCodespace)).Methods("POST")
+	r.HandleFunc("/preStaking/delegator/delegateDirect", rest.MiddleHandler(cliCtx, DelegateDirectRequest, types.DefaultCodespace)).Methods("POST")
+
 	r.HandleFunc("/preStaking/delegator/redelegate", rest.MiddleHandler(cliCtx, RedelegateRequest, types.DefaultCodespace)).Methods("POST")
 	r.HandleFunc("/preStaking/delegator/undelegate", rest.MiddleHandler(cliCtx, UndelegateRequest, types.DefaultCodespace)).Methods("POST")
 	r.HandleFunc("/preStaking/create/validator", rest.MiddleHandler(cliCtx, CreateValidatorRequest, types.DefaultCodespace)).Methods("POST")
+	r.HandleFunc("/preStaking/create/validatorDirect", rest.MiddleHandler(cliCtx, CreateValidatorDirectRequest, types.DefaultCodespace)).Methods("POST")
+
 	r.HandleFunc("/preStaking/SetTokenAddress", rest.MiddleHandler(cliCtx, SetStakingTokenRequest, types.DefaultCodespace)).Methods("POST")
 
 }
@@ -129,6 +133,68 @@ func DelegateRequest(cliCtx context.Context, writer http.ResponseWriter, request
 	validator := sdk.HexToAddress(v)
 
 	msg := types.NewMsgStaking(from, from, validator, id)
+	if !broadcast {
+		rest.PostProcessResponseBare(writer, cliCtx, hex.EncodeToString(msg.Bytes()))
+		return
+	}
+
+	txByte, err := types2.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
+	if err != nil {
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, err.Error()).Error())
+		return
+	}
+	res, err := cliCtx.BroadcastSignedTx(txByte)
+	if err != nil {
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, err.Error()).Error())
+		return
+	}
+	rest.PostProcessResponseBare(writer, cliCtx, res)
+}
+
+
+func DelegateDirectRequest(cliCtx context.Context, writer http.ResponseWriter, request *http.Request) {
+	broadcast, err := strconv.ParseBool(request.FormValue("broadcast"))
+	if err != nil {
+		broadcast = true
+	}
+	privKey, from, nonce, gas, err := rest.GetNecessaryParams(cliCtx, request, cdc, broadcast)
+	if err != nil {
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, err.Error()).Error())
+		return
+	}
+	amount, ok := sdk.NewIntFromString(request.FormValue("amount"))
+	if !ok {
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid amount").Error())
+		return
+	}
+	//verify account exists
+	err = checkAccountExist(cliCtx, from)
+	if err != nil {
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid from").Error())
+		return
+	}
+
+	denom := request.FormValue("denom")
+	coin := sdk.NewCoin(denom, amount)
+	if coin.IsNegative() || coin.IsZero() {
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid amount").Error())
+		return
+	}
+	dt := request.FormValue("delegate_time")
+	t, err := time.ParseDuration(dt)
+	if err != nil {
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid delegate_time").Error())
+		return
+	}
+	if t <= 0 {
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid delegate_time").Error())
+		return
+	}
+
+	v := request.FormValue("validator_address")
+	validator := sdk.HexToAddress(v)
+
+	msg := types.NewMsgStakingDirect(from, from, validator, coin, t)
 	if !broadcast {
 		rest.PostProcessResponseBare(writer, cliCtx, hex.EncodeToString(msg.Bytes()))
 		return
@@ -260,6 +326,71 @@ func SetStakingTokenRequest(cliCtx context.Context, writer http.ResponseWriter, 
 	msg := types.NewMsgSetStakingToken(from, sdk.HexToAddress(tokenAddress))
 
 	txByte, err := types2.SignCommonTx(from, nonce, gas, []sdk.Msg{msg}, privKey, cdc)
+	if err != nil {
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, err.Error()).Error())
+		return
+	}
+	res, err := cliCtx.BroadcastSignedTx(txByte)
+	if err != nil {
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, err.Error()).Error())
+		return
+	}
+	rest.PostProcessResponseBare(writer, cliCtx, res)
+}
+
+
+func CreateValidatorDirectRequest(cliCtx context.Context, writer http.ResponseWriter, request *http.Request) {
+	delegatorAddr := cliCtx.FromAddr
+	validatorAddr := cliCtx.FromAddr
+
+	//verify account exists
+	err := checkAccountExist(cliCtx, cliCtx.FromAddr)
+	if err != nil {
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid from").Error())
+		return
+	}
+
+	amount, ok := sdk.NewIntFromString(request.FormValue("amount"))
+	if !ok {
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid amount").Error())
+		return
+	}
+	denom := request.FormValue("denom")
+	coin := sdk.NewCoin(denom, amount)
+	if coin.IsNegative() || coin.IsZero() {
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, "invalid amount").Error())
+		return
+	}
+
+	dt := request.FormValue("delegate_time")
+	t, err := time.ParseDuration(dt)
+	if err != nil {
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid delegate_time").Error())
+		return
+	}
+	if t <= 0 {
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid delegate_time").Error())
+		return
+	}
+
+
+	msd, r, mr, mcr, moniker, identity, website, securityContact, details,
+	publicKey,err := parseOtherArgs(request)
+	if err != nil {
+		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrParams, err.Error()).Error())
+		return
+	}
+
+	MSD, R, MR, MXR := sSdk.CreateParseArgs(msd, r, mr, mcr)
+	msg := types.NewMsgCreateValidatorDirect(cliCtx.FromAddr, MSD, validatorAddr,
+		delegatorAddr, R, MR, MXR, moniker, identity, website, securityContact, details, publicKey, coin, t)
+
+	if !cliCtx.Broadcast {
+		rest.PostProcessResponseBare(writer, cliCtx, hex.EncodeToString(msg.Bytes()))
+		return
+	}
+
+	txByte, err := types2.SignCommonTx(cliCtx.FromAddr, cliCtx.Nonce, cliCtx.Gas, []sdk.Msg{msg}, cliCtx.PrivateKey, cdc)
 	if err != nil {
 		rest.WriteErrorRes(writer, sdkerrors.Wrap(sdkerrors.ErrInternal, err.Error()).Error())
 		return
