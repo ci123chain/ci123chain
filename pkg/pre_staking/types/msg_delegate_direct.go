@@ -41,7 +41,7 @@ func (msg *MsgStakingDirect) ValidateBasic() error {
 	if !msg.Amount.IsPositive() {
 		return sdkerrors.Wrap(sdkerrors.ErrParams, "amount can not be negative")
 	}
-	if msg.DelegateTime.Seconds() <= (time.Second * 60).Seconds(){
+	if msg.DelegateTime.Seconds() <= (time.Hour * 24 * 7).Seconds(){
 		return sdkerrors.Wrap(sdkerrors.ErrParams, "the time should longer than 168h(1 week)")
 	}
 
