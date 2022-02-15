@@ -15,6 +15,11 @@ const (
 	ERC721
 )
 
+type RequestBatch struct {
+	//Fee *big.Int
+	Requestor gethcommon.Address
+}
+
 // GetCheckpoint gets the checkpoint signature from the given outgoing tx batch
 func (b OutgoingTxBatch) GetCheckpoint(gravityIDstring string, tokenType uint64) ([]byte, error) {
 

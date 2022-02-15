@@ -159,7 +159,7 @@ func (k msgServer) RequestBatch(c context.Context, msg *types.MsgRequestBatch) (
 		tokenContract = token
 	}
 
-	batchID, err := k.BuildOutgoingTXBatch(ctx, tokenContract, OutgoingTxBatchSize, msg.TokenType)
+	batchID, err := k.BuildOutgoingTXBatch(ctx, tokenContract, OutgoingTxBatchSize, msg.TokenType, msg.GetFromAddress().Address)
 	if err != nil {
 		return nil, err
 	}

@@ -61,6 +61,9 @@ var (
 	// OutgoingTXBatchKey indexes outgoing tx batches under a nonce and token address
 	OutgoingTXBatchKey = []byte{0xa}
 
+	// OutgoingTXRequestBatchKey indexes outgoing tx batches under a nonce and token address
+	OutgoingTXRequestBatchKey = []byte{0xc}
+
 	// OutgoingTXBatchBlockKey indexes outgoing tx batches under a block height and token address
 	OutgoingTXBatchBlockKey = []byte{0xb}
 
@@ -224,6 +227,11 @@ func GetOutgoingTxPoolKey(id uint64) []byte {
 func GetOutgoingTxBatchKey(tokenContract string, nonce uint64) []byte {
 	tokenContract = strings.ToLower(tokenContract)
 	return append(append(OutgoingTXBatchKey, []byte(tokenContract)...), UInt64Bytes(nonce)...)
+}
+
+func GetOutgoingTxRequestBatchKey(tokenContract string, nonce uint64) []byte {
+	tokenContract = strings.ToLower(tokenContract)
+	return append(append(OutgoingTXRequestBatchKey, []byte(tokenContract)...), UInt64Bytes(nonce)...)
 }
 
 // GetOutgoingTxBatchBlockKey returns the following key format

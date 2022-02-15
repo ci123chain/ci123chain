@@ -2,6 +2,8 @@ package keeper
 
 import (
 	"fmt"
+	"github.com/ethereum/go-ethereum/common"
+	"math/big"
 	"strconv"
 
 	"github.com/ci123chain/ci123chain/pkg/abci/store"
@@ -20,7 +22,7 @@ const OutgoingTxBatchSize = 100
 // - select available transactions from the outgoing transaction pool sorted by fee desc
 // - persist an outgoing batch object with an incrementing ID = nonce
 // - emit an event
-func (k Keeper) BuildOutgoingTXBatch(ctx sdk.Context, contractAddress string, maxElements int, tokenType uint64) (*types.OutgoingTxBatch, error) {
+func (k Keeper) BuildOutgoingTXBatch(ctx sdk.Context, contractAddress string, maxElements int, tokenType uint64, requestor common.Address) (*types.OutgoingTxBatch, error) {
 	if maxElements == 0 {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "max elements value")
 	}
@@ -55,7 +57,7 @@ func (k Keeper) BuildOutgoingTXBatch(ctx sdk.Context, contractAddress string, ma
 		TokenContract: contractAddress,
 		TokenType: tokenType,
 	}
-	k.StoreBatch(ctx, batch)
+	k.StoreBatch(ctx, batch, requestor)
 
 	batchEvent := sdk.NewEvent(
 		types.EventTypeOutgoingBatch,
@@ -96,6 +98,17 @@ func (k Keeper) OutgoingTxBatchExecuted(ctx sdk.Context, tokenContract string, n
 	if b == nil {
 		return sdkerrors.Wrap(types.ErrUnknown, "nonce")
 	}
+	r := k.GetRequestBatch(ctx, tokenContract, nonce)
+	if r == nil {
+		return sdkerrors.Wrap(types.ErrUnknown, "nonce")
+	}
+	totalFee := new(big.Int)
+	for _, tx := range b.Transactions {
+		totalFee = totalFee.Add(totalFee, tx.Erc20Fee.Amount.BigInt())
+	}
+	if err := k.SupplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, sdk.AccAddress{r.Requestor}, sdk.NewCoins(sdk.NewChainCoin(sdk.NewIntFromBigInt(totalFee)))); err != nil {
+		return err
+	}
 
 	// cleanup outgoing TX pool
 	for _, tx := range b.Transactions {
@@ -118,13 +131,17 @@ func (k Keeper) OutgoingTxBatchExecuted(ctx sdk.Context, tokenContract string, n
 }
 
 // StoreBatch stores a transaction batch
-func (k Keeper) StoreBatch(ctx sdk.Context, batch *types.OutgoingTxBatch) {
+func (k Keeper) StoreBatch(ctx sdk.Context, batch *types.OutgoingTxBatch, requestor common.Address) {
 	store := ctx.KVStore(k.storeKey)
 	// set the current block height when storing the batch
 	batch.Block = uint64(ctx.BlockHeight())
+	requestBatch := &types.RequestBatch{
+		Requestor: requestor,
+	}
 	key := types.GetOutgoingTxBatchKey(batch.TokenContract, batch.BatchNonce)
 	store.Set(key, k.cdc.MustMarshalBinaryBare(batch))
-
+	requestKey := types.GetOutgoingTxRequestBatchKey(batch.TokenContract, batch.BatchNonce)
+	store.Set(requestKey, k.cdc.MustMarshalBinaryBare(requestBatch))
 	blockKey := types.GetOutgoingTxBatchBlockKey(batch.Block)
 	store.Set(blockKey, k.cdc.MustMarshalBinaryBare(batch))
 }
@@ -137,6 +154,19 @@ func (k Keeper) StoreBatchUnsafe(ctx sdk.Context, batch *types.OutgoingTxBatch) 
 
 	blockKey := types.GetOutgoingTxBatchBlockKey(batch.Block)
 	store.Set(blockKey, k.cdc.MustMarshalBinaryBare(batch))
+}
+
+// GetRequestBatch loads a batch object. Returns nil when not exists.
+func (k Keeper) GetRequestBatch(ctx sdk.Context, tokenContract string, nonce uint64) *types.RequestBatch {
+	store := ctx.KVStore(k.storeKey)
+	key := types.GetOutgoingTxRequestBatchKey(tokenContract, nonce)
+	bz := store.Get(key)
+	if len(bz) == 0 {
+		return nil
+	}
+	var b types.RequestBatch
+	k.cdc.MustUnmarshalBinaryBare(bz, &b)
+	return &b
 }
 
 // DeleteBatch deletes an outgoing transaction batch
@@ -254,7 +284,6 @@ func (k Keeper) SetLastSlashedBatchBlock(ctx sdk.Context, blockHeight uint64) {
 func (k Keeper) GetLastSlashedBatchBlock(ctx sdk.Context) uint64 {
 	store := ctx.KVStore(k.storeKey)
 	bytes := store.Get(types.LastSlashedBatchBlock)
-
 	if len(bytes) == 0 {
 		return 0
 	}
