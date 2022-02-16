@@ -1267,6 +1267,12 @@ func allMsgAttributes(msgs []sdk.Msg) [][]sdk.Attribute {
 		case *prestakingtype.MsgStaking:
 			operation = "staking"
 			module = prestakingtype.StoreKey
+		case *prestakingtype.MsgStakingDirect:
+			operation = "pre_staking_direct"
+			module = prestakingtype.StoreKey
+		case *prestakingtype.MsgPrestakingCreateValidatorDirect:
+			operation = "create_validator_direct"
+			module = prestakingtype.StoreKey
 		}
 
 		attrs = sdk.NewAttributes(attrs,
