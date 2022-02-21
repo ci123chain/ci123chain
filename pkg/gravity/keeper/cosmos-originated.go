@@ -131,7 +131,7 @@ func (k Keeper) DenomToERC721Lookup(ctx sdk.Context, denom string) (bool, string
 		// Look up ERC20 contract in index and error if it's not in there.
 		tc2, exists := k.GetMapedERC721Token(ctx, denom)
 		if !exists {
-			return false, "", fmt.Errorf("denom not a default coin: %s, and also not a ERC20 index", err)
+			return false, "", fmt.Errorf("denom not a ERC721 index", err)
 		}
 		// This is a cosmos-originated asset
 		return true, tc2, nil
