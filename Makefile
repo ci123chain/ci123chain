@@ -12,15 +12,17 @@ LB?=$(BUILD_DIR)/cproxy
 
 GO_BUILD_CMD=$(GO_BIN) build
 
+VERSION := $(shell echo $(shell git describe --always --match "v*") | sed 's/^v//')
+ldflags = -X github.com/ci123chain/ci123chain/pkg/abci/version.Name=ci123chain \
+        -X github.com/ci123chain/ci123chain/pkg/abci/version.Version=$(VERSION)
+BUILD_FLAGS := -ldflags '$(ldflags)'
 
 PROXY=https://goproxy.cn,direct
 
 .PHONY: build
 build: server
 server:
-	GOPROXY=$(PROXY) $(GO_BUILD_CMD) -o $(CID) ./cmd/cid
-cli:
-	GOPROXY=$(PROXY) $(GO_BUILD_CMD) -o $(CLI) ./cmd/cicli
+	GOPROXY=$(PROXY) $(GO_BUILD_CMD) $(BUILD_FLAGS) -o $(CID) ./cmd/cid
 
 local-start:
 	docker-compose -f bootstrap-docker/single-node.yaml up -d
@@ -29,8 +31,8 @@ local-stop:
 
 #.PHONY:release, build all
 release:
-	$(GO_BUILD_CMD) -o ./docker/node/build/cid-linux ./cmd/cid
-	$(GO_BUILD_CMD) -o ./docker/node/build/tcptest ./cmd/test
+	$(GO_BUILD_CMD) $(BUILD_FLAGS) -o ./docker/node/build/cid-linux ./cmd/cid
+	$(GO_BUILD_CMD) $(BUILD_FLAGS) -o ./docker/node/build/tcptest ./cmd/test
 	mv /go/pkg/mod/github.com/ci123chain/wasmer-go@v1.0.3-rc2 ./wasmer-go@v1.0.3-rc2
 
 release-build:

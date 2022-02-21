@@ -14,7 +14,6 @@ import (
 	"github.com/tendermint/go-amino"
 	cfg "github.com/tendermint/tendermint/config"
 	"github.com/tendermint/tendermint/crypto/ed25519"
-	"github.com/tendermint/tendermint/libs/cli"
 	"github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/libs/rand"
 	pvm "github.com/tendermint/tendermint/privval"
@@ -49,7 +48,7 @@ func NewContext(config *cfg.Config, logger log.Logger) *Context {
 }
 
 func SetupContext(ctx *Context, level string) error {
-	root := viper.GetString(cli.HomeFlag)
+	root := viper.GetString(HomeFlag)
 	c, err := config.GetConfig(root)
 	if err == config.ErrConfigNotFound {
 		master := viper.GetString(FlagMasterDomain)

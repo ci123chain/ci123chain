@@ -51,9 +51,6 @@ type (
 	AppExporterInit func(logger log.Logger, ldb dbm.DB, cdb dbm.DB, writer io.Writer) (json.RawMessage, []tmtypes.GenesisValidator, error)
 )
 
-var (
-	flagHome = "home"
-)
 
 func ConstructAppCreator(appFn AppCreatorInit, name string) AppCreator {
 
@@ -87,7 +84,7 @@ func ConstructAppCreator(appFn AppCreatorInit, name string) AppCreator {
 func ConstructAppExporter(name string) AppExporter {
 	return func(lg log.Logger, stateDB string, traceStore io.Writer, height int64, forZeroHeight bool, jailAllowedAddrs []string,
 		appOpts AppOptions) (ExportedApp, error) {
-			home := viper.GetString(flagHome)
+			home := viper.GetString(HomeFlag)
 		dataDir := filepath.Join(home, "data")
 		ldb, err := dbm.NewGoLevelDB(name, dataDir)
 		if err != nil {

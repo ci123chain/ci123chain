@@ -49,6 +49,7 @@ func AddServerCommands(
 		bootstrapAddCmd(ctx, cdc, appInit),
 		tendermintCmd,
 		LineBreak,
-		versionCmd,
+		versionCmd(),
+		storeHeight(ctx),
 		)
 }

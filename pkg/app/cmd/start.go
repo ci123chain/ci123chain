@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	"github.com/ci123chain/ci123chain/pkg/abci/types"
+	"github.com/ci123chain/ci123chain/pkg/abci/version"
 	"github.com/ci123chain/ci123chain/pkg/app"
 	"github.com/ci123chain/ci123chain/pkg/client"
 	"github.com/ci123chain/ci123chain/pkg/client/helper"
@@ -45,7 +46,6 @@ const (
 	flagCiNodeDomain   = "IDG_HOST_80"
 	flagShardIndex     = "shardIndex"
 
-	version 		   = "cichain v1.5.72"
 	flagETHChainID     = "eth_chain_id"
 	flagIteratorLimit  = "iterator_limit"
 	flagRunMode		   = "mode"
@@ -82,7 +82,7 @@ func startCmd(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Codec) *co
 				ctx.Logger.Info("Starting ABCI Without Tendermint")
 				return startStandAlone(ctx, appCreator)
 			}
-			ctx.Logger.Info(version)
+			ctx.Logger.Info("Version: ", version.NewInfo().Version)
 			ctx.Logger.Info("Starting ABCI with Tendermint")
 
 			_, err := StartInProcess(ctx, appCreator, cdc)
