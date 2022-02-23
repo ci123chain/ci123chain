@@ -46,6 +46,44 @@ func newCacheMultiStoreFromRMS(rms *rootMultiStore) cacheMultiStore {
 	return cms
 }
 
+func newCacheMultiStoreWithVersion(rms *rootMultiStore, version int64) (cacheMultiStore, error) {
+	cms := cacheMultiStore{
+		ldb:          NewCacheKVStore(dbStoreAdapter{rms.ldb}),
+		cdb:		  NewCacheKVStore(dbStoreAdapter{rms.cdb}),
+		stores:       make(map[StoreKey]CacheWrap, len(rms.stores)),
+		keysByName:   rms.keysByName,
+		traceWriter:  rms.traceWriter,
+		traceContext: rms.traceContext,
+	}
+
+	for key, store := range rms.stores {
+		switch store.GetStoreType() {
+		case sdk.StoreTypeIAVL:
+			// If the store is wrapped with an inter-block cache, we must first unwrap
+			// it to get the underlying IAVL store.
+			store = rms.GetCommitKVStore(key)
+
+			// Attempt to lazy-load an already saved IAVL store version. If the
+			// version does not exist or is pruned, an error should be returned.
+			iavlStore, err := store.(*IavlStore).GetImmutable(version)
+			if err != nil {
+				return cacheMultiStore{}, err
+			}
+
+			cms.stores[key] = iavlStore.CacheWrap()
+		default:
+			cms.stores[key] = store.CacheWrap()
+		}
+		//if cms.TracingEnabled() {
+		//	cms.stores[key] = store.CacheWrapWithTrace(cms.traceWriter, cms.traceContext)
+		//} else {
+		//	cms.stores[key] = store.CacheWrap()
+		//}
+	}
+
+	return cms, nil
+}
+
 func newCacheMultiStoreFromCMS(cms cacheMultiStore) cacheMultiStore {
 	cms2 := cacheMultiStore{
 		ldb:           NewCacheKVStore(cms.ldb),
@@ -127,6 +165,10 @@ func (cms cacheMultiStore) CacheWrapWithTrace(_ io.Writer, _ TraceContext) Cache
 // Implements MultiStore.
 func (cms cacheMultiStore) CacheMultiStore() CacheMultiStore {
 	return newCacheMultiStoreFromCMS(cms)
+}
+
+func (cms cacheMultiStore) CacheMultiStoreWithVersion(version int64) (CacheMultiStore,error) {
+	panic("not implement")
 }
 
 // Implements MultiStore.

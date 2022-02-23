@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
@@ -16,8 +17,15 @@ func getValsetRequestHandler(cliCtx context.Context, storeName string) http.Hand
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		nonce := vars[nonce]
+		heightvar := vars[height]
 
-		res, height, _, err := cliCtx.Query(fmt.Sprintf("custom/%s/valsetRequest/%s", storeName, nonce), nil, false)
+		height, err := strconv.ParseInt(heightvar, 10, 64)
+		if err != nil {
+			rest.WriteErrorRes(w, err.Error())
+			return
+		}
+
+		res, height, _, err := cliCtx.WithHeight(height).Query(fmt.Sprintf("custom/%s/valsetRequest/%s", storeName, nonce), nil, false)
 		if err != nil {
 			rest.WriteErrorRes(w, err.Error())
 			return

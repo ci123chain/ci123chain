@@ -125,6 +125,26 @@ func (st *IavlStore) Commit() CommitID {
 	}
 }
 
+// GetImmutable returns a reference to a new store backed by an immutable IAVL
+// tree at a specific version (height) without any pruning options. This should
+// be used for querying and iteration only. If the version does not exist or has
+// been pruned, an empty immutable IAVL tree will be used.
+// Any mutable operations executed will result in a panic.
+func (st *IavlStore) GetImmutable(version int64) (*IavlStore, error) {
+	if !st.VersionExists(version) {
+		return &IavlStore{tree: &iavl.MutableTree{}}, errors.New(fmt.Sprintf("version not exist %d", version))
+	}
+
+	iTree, err := st.tree.GetImmutable(version)
+	if err != nil {
+		return nil, err
+	}
+
+	return &IavlStore{
+		tree: &iavl.MutableTree{ImmutableTree: iTree},
+	}, nil
+}
+
 // Implements Committer.
 func (st *IavlStore) LastCommitID() CommitID {
 	return CommitID{

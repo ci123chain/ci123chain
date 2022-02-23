@@ -62,6 +62,8 @@ type MultiStore interface { //nolint
 	// call CacheMultiStore.Write().
 	CacheMultiStore() CacheMultiStore
 
+	CacheMultiStoreWithVersion(version int64) (CacheMultiStore,error)
+
 	// Convenience for fetching substores.
 	GetStore(StoreKey) Store
 	GetKVStore(StoreKey) KVStore

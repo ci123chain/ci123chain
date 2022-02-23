@@ -587,14 +587,14 @@ func (app *BaseApp) createQueryContext(height int64, prove bool) (sdk.Context, e
 			)
 	}
 
-	cacheMS := app.cms.CacheMultiStore()
-	//if err != nil {
-	//	return sdk.Context{},
-	//		sdkerrors.Wrapf(
-	//			sdkerrors.ErrInvalidRequest,
-	//			"failed to load state at height %d; %s (latest height: %d)", height, err, app.LastBlockHeight(),
-	//		)
-	//}
+	cacheMS, err := app.cms.CacheMultiStoreWithVersion(height)
+	if err != nil {
+		return sdk.Context{},
+			sdkerrors.Wrapf(
+				sdkerrors.ErrInvalidRequest,
+				"failed to load state at height %d; %s (latest height: %d)", height, err, app.LastBlockHeight(),
+			)
+	}
 
 	// branch the commit-multistore for safety
 	ctx := sdk.NewContext(
@@ -782,8 +782,11 @@ func handleQueryCustom(app *BaseApp, path []string, req abci.RequestQuery) (res 
 	}
 
 	// Cache wrap the commit-multistore for safety.
-	ctx := sdk.NewContext(app.cms, app.checkState.ctx.BlockHeader(), true, app.Logger)
-
+	//ctx := sdk.NewContext(app.cms, app.checkState.ctx.BlockHeader(), true, app.Logger)
+	ctx, err := app.createQueryContext(req.Height, req.Prove)
+	if err != nil {
+		return sdkerrors.QueryResult(err)
+	}
 	// Passes the rest of the path as an argument to the querier.
 	// For example, in the path "custom/gov/proposal/test", the gov querier gets []string{"proposal", "test"} as the path
 	resBytes, err := querier(ctx, path[2:], req)
@@ -800,6 +803,8 @@ func handleQueryCustom(app *BaseApp, path []string, req abci.RequestQuery) (res 
 		Value: resBytes,
 	}
 }
+
+
 
 // BeginBlock implements the ABCI application interface.
 func (app *BaseApp) BeginBlock(req abci.RequestBeginBlock) (res abci.ResponseBeginBlock) {

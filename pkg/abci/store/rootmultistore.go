@@ -306,6 +306,11 @@ func (rs *rootMultiStore) CacheMultiStore() CacheMultiStore {
 }
 
 // Implements MultiStore.
+func (rs *rootMultiStore) CacheMultiStoreWithVersion(version int64) (CacheMultiStore, error) {
+	return newCacheMultiStoreWithVersion(rs, version)
+}
+
+// Implements MultiStore.
 func (rs *rootMultiStore) GetStore(key StoreKey) Store {
 	return rs.stores[key]
 }

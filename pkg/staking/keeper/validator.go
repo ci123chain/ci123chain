@@ -281,6 +281,7 @@ func (k StakingKeeper) ValidatorQueueIterator(ctx sdk.Context, endTime time.Time
 	store := ctx.KVStore(k.storeKey)
 	iterator := store.RemoteIterator(types.ValidatorQueueKey, sdk.PrefixEndBytes(prefix))
 	if iterator.Valid() {
+
 		return iterator
 	} else {
 		iterator.Close()

@@ -25,7 +25,9 @@ func (k StakingKeeper) BlockValidatorUpdates(ctx sdk.Context) []abcitypes.Valida
 	validatorUpdates := k.ApplyAndReturnValidatorSetUpdates(ctx)
 
 	//fmt.Printf("validatorUpdates is %v\n", validatorUpdates)
-
+	if len(validatorUpdates) > 0 {
+		fmt.Println(validatorUpdates)
+	}
 	k.UnbondAllMatureValidatorQueue(ctx)
 
 	matureUnbonds := k.DequeueAllMatureUBDQueue(ctx, ctx.BlockHeader().Time)

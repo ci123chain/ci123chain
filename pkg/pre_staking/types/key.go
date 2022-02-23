@@ -2,6 +2,7 @@ package types
 
 import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
+	"time"
 )
 
 const (
@@ -15,6 +16,7 @@ const (
 	PreStakingTokenQuery = "queryPreStakingToken"
 )
 
+var MinPreStakingTime = time.Minute * 1
 
 var (
 	PreStakingKey = []byte{0x50}

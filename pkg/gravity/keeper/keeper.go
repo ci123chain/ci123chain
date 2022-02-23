@@ -77,6 +77,7 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 // i.e. {"nonce": 1, "memebers": [{"eth_addr": "foo", "power": 11223}]}
 func (k Keeper) SetValsetRequest(ctx sdk.Context) *types.Valset {
 	valset := k.GetCurrentValset(ctx)
+	valset.Nonce += 1
 	k.StoreValset(ctx, valset)
 
 	ctx.EventManager().EmitEvent(
@@ -422,9 +423,9 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context) *types.Valset {
 			bridgeValidators[i].EthereumAddress = ethAddr
 		} else {
 			// todo move to set method
-			//bridgeValidators[i].EthereumAddress = val.String()
-			//k.SetEthAddress(ctx, val, val.String())
-			//k.SetOrchestratorValidator(ctx, val, val)
+			bridgeValidators[i].EthereumAddress = val.String()
+			k.SetEthAddress(ctx, val, val.String())
+			k.SetOrchestratorValidator(ctx, val, val)
 		}
 	}
 	// normalize power values
@@ -433,8 +434,11 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context) *types.Valset {
 	}
 
 	// TODO: make the nonce an incrementing one (i.e. fetch last nonce from state, increment, set here)
-	return types.NewValset(k.GetLatestValsetNonce(ctx)+1, uint64(ctx.BlockHeight()), bridgeValidators)
+	return types.NewValset(k.GetLatestValsetNonce(ctx), uint64(ctx.BlockHeight()), bridgeValidators)
 }
+
+
+
 
 /////////////////////////////
 //       LOGICCALLS        //

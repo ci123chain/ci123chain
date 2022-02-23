@@ -16,10 +16,9 @@ import (
 
 func (ctx Context) Query(path string, key bytes.HexBytes, isProve bool) ([]byte, int64, *merkle.Proof, error) {
 	var res []byte
-	var height int64
 	node, err := ctx.GetNode()
 	if err != nil {
-		return res, height, nil, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("get node failed:%v", err.Error()))
+		return res, 0, nil, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("get node failed:%v", err.Error()))
 	}
 
 	opt := rpcclient.ABCIQueryOptions{
@@ -30,7 +29,7 @@ func (ctx Context) Query(path string, key bytes.HexBytes, isProve bool) ([]byte,
 	}
    	result, err := node.ABCIQueryWithOptions(ctx.Context(), path, key, opt)
 	if err != nil {
-		return res, height, nil, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("query failed: %v", err.Error()))
+		return res, ctx.Height, nil, sdkerrors.Wrap(sdkerrors.ErrInternal, fmt.Sprintf("query failed: %v", err.Error()))
 
 	}
 

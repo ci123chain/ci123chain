@@ -223,6 +223,11 @@ func (bs *baseMultiStore) CacheMultiStore() CacheMultiStore {
 	return nbs
 }
 
+func (bs *baseMultiStore) CacheMultiStoreWithVersion(version int64) (CacheMultiStore,error) {
+	panic("not implement")
+}
+
+
 func (bs *baseMultiStore) loadCommitStoreFromParams(key sdk.StoreKey, id CommitID, params storeParams) error {
 	_, ok := bs.stores[key]
 	if !ok {
