@@ -4,16 +4,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/hashicorp/go-getter"
+	"github.com/otiai10/copy"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strconv"
 	"strings"
-
-	"github.com/hashicorp/go-getter"
-	"github.com/otiai10/copy"
 )
 
 // DoUpgrade will be called after the log message has been parsed and the process has terminated.
@@ -53,26 +51,21 @@ func DownloadBinary(cfg *Config, height uint64, version string, binPath string) 
 	}
 
 	if url != "" {
-		err = os.Remove(binPath)
+		newBinPath := cfg.NewBin()
+		_ = os.Remove(newBinPath)
+		err = getter.GetFile(newBinPath, url)
 		if err != nil {
-
+			return err
 		}
-		err = getter.GetFile(binPath, url)
-		// if this fails, let's see if it is a zipped directory
+
+		err = HealthCheck(newBinPath)
 		if err != nil {
-			dirPath := cfg.UpgradeDir()
-			err = getter.Get(dirPath, url)
-			if err != nil {
-				return err
-			}
-			err = EnsureBinary(binPath)
-			// copy binary to binPath from dirPath if zipped directory don't contain bin directory to wrap the binary
-			if err != nil {
-				err = copy.Copy(filepath.Join(dirPath, cfg.Name), binPath)
-				if err != nil {
-					return err
-				}
-			}
+			return err
+		}
+
+		err = copy.Copy(newBinPath, binPath)
+		if err != nil {
+			return err
 		}
 	}
 
@@ -179,4 +172,18 @@ func GetVersion(cfg *Config, bin string) (string, error) {
 		return "", err
 	}
 	return strings.Split(out.String(), "-")[0], nil
+}
+
+func HealthCheck(bin string) error {
+	err := MarkExecutable(bin)
+	if err != nil {
+		return err
+	}
+
+	cmd := exec.Command(bin)
+	err = cmd.Run()
+	if err != nil {
+		return err
+	}
+	return nil
 }
