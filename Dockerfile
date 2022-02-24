@@ -5,6 +5,7 @@ WORKDIR /opt/ci123chain
 COPY ./docker/node/build/cid-linux /opt/cid-linux
 #COPY ./docker/node/build/cli-linux /opt/cli-linux
 COPY ./docker/node/build/tcptest /opt/tcptest
+COPY ./docker/node/build/upgrade /opt/upgrade
 COPY ./docker/node/exportFile.json /opt/exportFile.json
 
 COPY ./wasmer-go@v1.0.3-rc2 /go/pkg/mod/github.com/ci123chain/wasmer-go@v1.0.3-rc2
@@ -14,6 +15,7 @@ COPY ./wasmer-go@v1.0.3-rc2 /opt/wasmer-go@v1.0.3-rc2
 COPY ./migrate.sh /opt
 
 ENV GOPATH /go
+ENV DAEMON_NAME cid-linux
 
 COPY ./docker/node/start-cid.sh /etc/service/cid/run
 COPY ./jq-linux64 /usr/bin/jq

@@ -20,6 +20,13 @@ if [ ! -d $CI_LOGDIR ]; then
     mkdir -p $CI_LOGDIR
 fi
 
+if [ ! -f $CI_HOME/bin/cid-linux ]; then
+    if [ ! -f $CI_HOME/bin ]; then
+        mkdir $CI_HOME/bin
+    fi
+    cp -f /opt/cid-linux $CI_HOME/bin/cid-linux
+fi
+
 
 if [ $LITECLIENT ]; then
     if [ -z $CONNECT_NODE_ADDRESS ] || [ -z $CONNECT_CHAIN_ID ]; then
@@ -95,4 +102,4 @@ fi
 # start
 sleep 5s # for NFS Err
 echo "---Start cid---"
-/opt/cid-linux start --laddr=tcp://0.0.0.0:80 --home=$CI_HOME
+/opt/upgrade start --laddr=tcp://0.0.0.0:80 --home=$CI_HOME

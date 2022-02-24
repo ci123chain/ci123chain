@@ -34,7 +34,10 @@ release:
 	$(GO_BUILD_CMD) $(BUILD_FLAGS) -o ./docker/node/build/cid-linux ./cmd/cid
 	$(GO_BUILD_CMD) $(BUILD_FLAGS) -o ./docker/node/build/tcptest ./cmd/test
 	mv /go/pkg/mod/github.com/ci123chain/wasmer-go@v1.0.3-rc2 ./wasmer-go@v1.0.3-rc2
+	cd ./cmd/upgrade && $(GO_BUILD_CMD) $(BUILD_FLAGS) -o ../../docker/node/build/upgrade .
 
 release-build:
 	docker build -f Dockerfile_local -t cichain:$(Tag) .
 
+upgrade-build:
+	docker build -f Dockerfile_upgrade -t cichainupgrade:v0.0.1 .

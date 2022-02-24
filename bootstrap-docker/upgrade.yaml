@@ -1,0 +1,42 @@
+version: "3"
+services:
+  raftleveldb_upgrade:
+    image: harbor.oneitfarm.com/itfarm-test/sal20000ad4588ae210811eaen9l27v4:0.0.9
+    hostname: raftleveldb_upgrade
+    container_name: raftleveldb_upgrade
+    ports:
+      - 5005:80
+    networks:
+      - upgrade-slave
+
+  upgradeci1:
+    image: cichainupgrade:v0.0.1
+#    image: harbor.oneitfarm.com/itfarm-test/sal20000ad4588ae211117eaeoav279p:1.6.4.1
+    container_name: upgradeci1
+    hostname: upgradeci1
+    depends_on:
+      - raftleveldb_upgrade
+    environment:
+#      CI_EXPORT: 1
+#      CI_EXPORT_FILE: https://s2-cdn.oneitfarm.com/lg8qTEAI07inw02HwY86sU8trqFy?attname=exportFile-11-19.json
+
+      CI_ETH_CHAIN_ID: 444900
+      CI_CHAIN_ID: weelink
+      IDG_HOST_26657: ci1
+      IDG_HOST_8546: ci1
+      IDG_HOST_80: ci1
+      CI_STATEDB_HOST: raftleveldb_upgrade
+      CI_STATEDB_PORT: 80
+      CI_STATEDB_TLS: "false"
+      CI_TOKENNAME: stake
+      CI_VALIDATOR_KEY: qS4LtbZ9nxk/5HOpGBLQaMLWjzgrfd81VbrxoiQqgZkIvOle+S28kv+u8136PAfvqRDTRnuGVlIEmbFprIRRFg==
+      UPGRADE_URL: "https://ws-uf1mtgg4n91qi.gw002.oneitfarm.com"
+#      CI_PUBKEY: CLzpXvktvJL/rvNd+jwH76kQ00Z7hlZSBJmxaayEURY=
+    ports:
+      - 26556:26656
+      - 1310:80
+    networks:
+      - upgrade-slave
+
+networks: ##定义网络组
+  upgrade-slave: ## 网络组名称
