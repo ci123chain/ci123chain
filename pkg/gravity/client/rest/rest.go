@@ -18,6 +18,7 @@ const (
 	signType               = "signType"
 	txId                   = "tx_id"
 	eventNonce             = "event_nonce"
+	valsetConfirmNonce     = "valset_confirm_nonce"
 )
 
 // Here are the routes that are actually queried by the rust
@@ -45,7 +46,7 @@ func RegisterRoutes(cliCtx context.Context, r *mux.Router, storeName string) {
 	r.HandleFunc(fmt.Sprintf("/%s/pending_valset_requests/{%s}", storeName, bech32ValidatorAddress), lastValsetRequestsByAddressHandler(cliCtx, storeName)).Methods("GET")
 	// gets valset request by nonce, used to look up a specific valset. This is needed to lookup data about the current validator set on the contract
 	// and determine what can or can not be submitted as a relayer
-	r.HandleFunc(fmt.Sprintf("/%s/valset_request/{%s}/{%s}", storeName, nonce, height), getValsetRequestHandler(cliCtx, storeName)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/%s/valset_request/{%s}", storeName, nonce), getValsetRequestHandler(cliCtx, storeName)).Methods("GET")
 	// Provides the current validator set with powers and eth addresses, useful to check the current validator state
 	// used to deploy the contract by the contract deployer script
 	r.HandleFunc(fmt.Sprintf("/%s/current_valset", storeName), currentValsetHandler(cliCtx, storeName)).Methods("GET")
@@ -75,6 +76,9 @@ func RegisterRoutes(cliCtx context.Context, r *mux.Router, storeName string) {
 
 	// Event
 	r.HandleFunc(fmt.Sprintf("/%s/last_event_nonce/{%s}", storeName, bech32ValidatorAddress), lastEventNonceByAddressHandler(cliCtx, storeName)).Methods("GET")
+
+	// Valsets
+	r.HandleFunc(fmt.Sprintf("/%s/last_valset_confirm_nonce", storeName), lastValsetConfirmNonceHandler(cliCtx, storeName)).Methods("GET")
 
 	// LogicCall
 	r.HandleFunc(fmt.Sprintf("/%s/outgoing_logic_calls", storeName), lastLogicCallHandler(cliCtx, storeName)).Methods("GET")

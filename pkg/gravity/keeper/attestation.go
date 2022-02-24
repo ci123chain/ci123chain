@@ -211,6 +211,17 @@ func (k Keeper) GetLastObservedEventNonce(ctx sdk.Context) uint64 {
 	return types.UInt64FromBytes(bytes)
 }
 
+// GetLastValsetConfirmNonce returns the latest observed valset confirm nonce
+func (k Keeper) GetLastValsetConfirmNonce(ctx sdk.Context) uint64 {
+	store := ctx.KVStore(k.storeKey)
+	bytes := store.Get(types.LastValsetConfirmNonceKey)
+
+	if len(bytes) == 0 {
+		return 0
+	}
+	return types.UInt64FromBytes(bytes)
+}
+
 // GetLastObservedEthereumBlockHeight height gets the block height to of the last observed attestation from
 // the store
 func (k Keeper) GetLastObservedEthereumBlockHeight(ctx sdk.Context) types.LastObservedEthereumBlockHeight {
@@ -242,6 +253,12 @@ func (k Keeper) SetLastObservedEthereumBlockHeight(ctx sdk.Context, ethereumHeig
 func (k Keeper) setLastObservedEventNonce(ctx sdk.Context, nonce uint64) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(types.LastObservedEventNonceKey, types.UInt64Bytes(nonce))
+}
+
+// setLastValsetsConfirmNonce sets the latest observed valset confirm nonce
+func (k Keeper) setLastValsetsConfirmNonce(ctx sdk.Context, nonce uint64) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(types.LastValsetConfirmNonceKey, types.UInt64Bytes(nonce))
 }
 
 // GetLastEventNonceByValidator returns the latest event nonce for a given validator
