@@ -20,6 +20,43 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 }
 
 func cleanupConfirmedValsets(ctx sdk.Context, k keeper.Keeper) {
+	// Auto signerset tx creation.
+	// 1. If there are no signer set requests, create a new one.
+	// 2. If there is at least one validator who started unbonding in current block. (we persist last unbonded block height in hooks.go)
+	//      This will make sure the unbonding validator has to provide an ethereum signature to a new signer set tx
+	//	    that excludes him before he completely Unbonds.  Otherwise he will be slashed
+	// 3. If power change between validators of Current signer set and latest signer set request is > 5%
+	valsets := k.GetValsets(ctx)
+	if len(valsets) == 0 {
+		k.SetValsetRequest(ctx)
+		return
+	}
+
+	latestConfirmNonce := k.GetLastValsetConfirmNonce(ctx)
+	if latestConfirmNonce == 0 {
+		return
+	}
+
+	lastConfirmValset := k.GetValset(ctx, latestConfirmNonce)
+
+	lastUnbondingHeight := k.GetLastUnBondingBlockHeight(ctx)
+	blockHeight := uint64(ctx.BlockHeight())
+	powerDiff := types.BridgeValidators(k.GetCurrentValset(ctx).Members).PowerDiff(lastConfirmValset.Members)
+
+	shouldCreate := (lastUnbondingHeight == blockHeight) || (powerDiff > 0.05)
+	k.Logger(ctx).Info(
+		"considering signer set tx creation",
+		"blockHeight", blockHeight,
+		"lastUnbondingHeight", lastUnbondingHeight,
+		"latestSignerSetTx.Nonce", latestConfirmNonce,
+		"powerDiff", powerDiff,
+		"shouldCreate", shouldCreate,
+	)
+
+	if shouldCreate {
+		k.SetValsetRequest(ctx)
+	}
+
 	lastConfirmed := k.GetLastValsetConfirmNonce(ctx)
 	if lastConfirmed > 0 {
 		k.DeleteValset(ctx, lastConfirmed-1)
@@ -31,10 +68,10 @@ func slashing(ctx sdk.Context, k keeper.Keeper) {
 	currentBondedSet := k.StakingKeeper.GetBondedValidatorsByPower(ctx)
 
 	//valsets are sorted so the most recent one is first
-	valsets := k.GetValsets(ctx)
-	if len(valsets) == 0 {
-		k.SetValsetRequest(ctx)
-	}
+	//valsets := k.GetValsets(ctx)
+	//if len(valsets) == 0 {
+	//	k.SetValsetRequest(ctx)
+	//}
 	//
 	//for i, vs := range valsets {
 	//	signedWithinWindow := uint64(ctx.BlockHeight()) > params.SignedValsetsWindow && uint64(ctx.BlockHeight())-params.SignedValsetsWindow > vs.Height
