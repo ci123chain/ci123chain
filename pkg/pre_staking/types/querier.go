@@ -13,6 +13,5 @@ type QueryPreStakingResult struct {
 }
 
 type QueryStakingRecord struct {
-	DelegatorAddr   sdk.AccAddress   `json:"delegator_addr"`
-	ValidatorAddr   sdk.AccAddress   `json:"validator_addr"`
+	DelegatorAddr sdk.AccAddress `json:"delegator_addr"`
 }

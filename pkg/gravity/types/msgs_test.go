@@ -1,75 +1,28 @@
 package types
 
 import (
-	"bytes"
-	"testing"
-
+	"encoding/base64"
+	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func TestValidateMsgSetOrchestratorAddress(t *testing.T) {
-	var (
-		ethAddress                   = "0xb462864E395d88d6bc7C5dd5F3F5eb4cc2599255"
-		cosmosAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, sdk.AddrLen)
-		valAddress    sdk.AccAddress = bytes.Repeat([]byte{0x1}, sdk.AddrLen)
-	)
-	specs := map[string]struct {
-		srcCosmosAddr sdk.AccAddress
-		srcValAddr    sdk.AccAddress
-		srcETHAddr    string
-		expErr        bool
-	}{
-		"all good": {
-			srcCosmosAddr: cosmosAddress,
-			srcValAddr:    valAddress,
-			srcETHAddr:    ethAddress,
+	msg := MsgSendToEth{
+		Sender: "0x55CA7bfdE29227D166b719Bc0FA7C0c7D2650528",
+		EthDest: "0x55CA7bfdE29227D166b719Bc0FA7C0c7D2650528",
+		Amount: sdk.Coin{
+			Denom: "wlk",
+			Amount: sdk.NewInt(1000),
 		},
-		"empty validator address": {
-			srcETHAddr:    ethAddress,
-			srcCosmosAddr: cosmosAddress,
-			expErr:        true,
+		BridgeFee: sdk.Coin{
+			Denom: "wlk",
+			Amount: sdk.NewInt(5),
 		},
-		"invalid validator address": {
-			srcValAddr:    []byte{0x1},
-			srcCosmosAddr: cosmosAddress,
-			srcETHAddr:    ethAddress,
-			expErr:        true,
-		},
-		"empty cosmos address": {
-			srcValAddr: valAddress,
-			srcETHAddr: ethAddress,
-			expErr:     true,
-		},
-		"invalid cosmos address": {
-			srcCosmosAddr: []byte{0x1},
-			srcValAddr:    valAddress,
-			srcETHAddr:    ethAddress,
-			expErr:        true,
-		},
-		"empty eth address": {
-			srcValAddr:    valAddress,
-			srcCosmosAddr: cosmosAddress,
-			expErr:        true,
-		},
-		"invalid eth address": {
-			srcValAddr:    valAddress,
-			srcCosmosAddr: cosmosAddress,
-			srcETHAddr:    "invalid",
-			expErr:        true,
-		},
+		TokenType: 1,
 	}
-	for msg, spec := range specs {
-		t.Run(msg, func(t *testing.T) {
-			msg := NewMsgSetOrchestratorAddress(spec.srcValAddr, spec.srcCosmosAddr, spec.srcETHAddr)
-			// when
-			err := msg.ValidateBasic()
-			if spec.expErr {
-				assert.Error(t, err)
-				return
-			}
-			assert.NoError(t, err)
-		})
-	}
-
+	bz,_ := GravityCodec.MarshalBinaryBare(msg)
+	fmt.Println(bz)
+	sEnc := base64.StdEncoding.EncodeToString(bz)
+	fmt.Println(sEnc)
 }

@@ -16,21 +16,15 @@ func InitGenesis(ctx sdk.Context, k keeper.PreStakingKeeper, data GenesisState) 
 		k.SetTokenManagerOwner(ctx, sdk.HexToAddress(data.Owner))
 	}
 
-	for _, v := range data.Records.PrestakingRecord {
-		k.SetAccountPreStaking(ctx, v.Delegator, v.Staking)
-	}
-
-	for _, v := range data.Records.DelStakingRecords {
-		k.SetAccountStakingRecords(ctx, v.Delegator, v.Validator, v.Records)
+	for _, v := range data.Records.StakingRecord {
+		k.SetStakingVault(ctx, v.Validator, v.Delegator, v.EndTime, v.StorageTime, v.Amount)
 	}
 }
 
 
 func ExportGenesis(ctx sdk.Context, k keeper.PreStakingKeeper) types.GenesisState {
 	var records types.DelegationRecord
-	pr := k.GetAllAccountPreStaking(ctx)
-	sr := k.GetAllStakingRecords(ctx)
-	records.PrestakingRecord = pr
-	records.DelStakingRecords = sr
+	sr := k.GetAllStakingVault(ctx)
+	records.StakingRecord = sr
 	return types.NewGenesisState(records, k.GetTokenManager(ctx), k.GetTokenManagerOwner(ctx))
 }

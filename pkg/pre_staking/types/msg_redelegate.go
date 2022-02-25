@@ -9,14 +9,16 @@ type MsgRedelegate struct {
 	FromAddress   sdk.AccAddress   `json:"from_address"`
 	SrcValidator  sdk.AccAddress   `json:"src_validator"`
 	DstValidator  sdk.AccAddress   `json:"dst_validator"`
+	RecordID 	  uint64			`json:"record_id"`
 }
 
 
-func NewMsgRedelegate(from, src, dst sdk.AccAddress) *MsgRedelegate {
+func NewMsgRedelegate(from, src, dst sdk.AccAddress, recordID uint64) *MsgRedelegate {
 	return &MsgRedelegate{
 		FromAddress:  from,
 		SrcValidator: src,
 		DstValidator: dst,
+		RecordID:     recordID,
 	}
 }
 
@@ -33,6 +35,9 @@ func (msg *MsgRedelegate) ValidateBasic() error {
 	}
 	if msg.DstValidator.Empty() {
 		return sdkerrors.Wrap(sdkerrors.ErrParams, "dst_validator address can not empty")
+	}
+	if msg.RecordID < 1 {
+		return sdkerrors.Wrap(sdkerrors.ErrParams, "record id invalid")
 	}
 	//if !msg.Amount.IsPositive() {
 	//	return sdkerrors.Wrap(sdkerrors.ErrParams, "amount can not be negative")

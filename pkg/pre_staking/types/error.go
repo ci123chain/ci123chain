@@ -20,7 +20,7 @@ var (
 	ErrDelegatorShareExRateInvalid = sdkerrors.Register(DefaultCodespace, 1807, "invalid delegator share exchange rate")
 	ErrTimestampProto = sdkerrors.Register(DefaultCodespace, 1808, "new timestampproto failed")
 	ErrRedelegateFailed = sdkerrors.Register(DefaultCodespace, 1809, "redelegate failed")
-	ErrNoExpectedDelegation = sdkerrors.Register(DefaultCodespace, 1810, "no expected delegation")
+	ErrNoExpectedDelegation = sdkerrors.Register(DefaultCodespace, 1810, "delegation not exist or expired")
 	ErrNoEnoughSharesToRedelegate = sdkerrors.Register(DefaultCodespace, 1811, "no enough shares to redelegate")
 	ErrNoBalanceLeft = sdkerrors.Register(DefaultCodespace, 1812, "no valid balance to undelegate")
 	ErrNoEnoughBalanceLeft = sdkerrors.Register(DefaultCodespace, 1813, "no enough balance to undelegate")
