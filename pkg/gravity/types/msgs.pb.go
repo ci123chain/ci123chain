@@ -1411,6 +1411,8 @@ func init() {
 	proto.RegisterType((*MsgERC721DeployedClaimResponse)(nil), "gravity.v1.MsgERC721DeployedClaimResponse")
 	proto.RegisterType((*MsgLogicCallExecutedClaim)(nil), "gravity.v1.MsgLogicCallExecutedClaim")
 	proto.RegisterType((*MsgLogicCallExecutedClaimResponse)(nil), "gravity.v1.MsgLogicCallExecutedClaimResponse")
+	proto.RegisterType((*MsgValsetConfirmNonceClaim)(nil), "gravity.v1.MsgValsetConfirmNonceClaim")
+	proto.RegisterType((*MsgValsetConfirmNonceClaimResponse)(nil), "gravity.v1.MsgValsetConfirmNonceClaimResponse")
 	proto.RegisterType((*MsgCancelSendToEth)(nil), "gravity.v1.MsgCancelSendToEth")
 	proto.RegisterType((*MsgCancelSendToEthResponse)(nil), "gravity.v1.MsgCancelSendToEthResponse")
 }
@@ -1646,6 +1648,7 @@ type MsgServer interface {
 	ERC20DeployedClaim(context.Context, *MsgERC20DeployedClaim) (*MsgERC20DeployedClaimResponse, error)
 	ERC721DeployedClaim(context.Context, *MsgERC721DeployedClaim) (*MsgERC721DeployedClaimResponse, error)
 	LogicCallExecutedClaim(context.Context, *MsgLogicCallExecutedClaim) (*MsgLogicCallExecutedClaimResponse, error)
+	ValsetConfirmNonceClaim(context.Context, *MsgValsetConfirmNonceClaim) (*MsgValsetConfirmNonceClaimResponse, error)
 	SetOrchestratorAddress(context.Context, *MsgSetOrchestratorAddress) (*MsgSetOrchestratorAddressResponse, error)
 	CancelSendToEth(context.Context, *MsgCancelSendToEth) (*MsgCancelSendToEthResponse, error)
 }

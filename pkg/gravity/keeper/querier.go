@@ -100,6 +100,9 @@ const (
 	// Query last event nonce
 	QueryLastEventNonce = "lastEventNonce"
 
+	// Query last valset confirm nonce
+	QueryLastValsetConfirmNonce = "lastValsetConfirmNonce"
+
 	//
 	QueryTxId = "txId"
 	QueryEventNonce = "eventNonce"
@@ -168,6 +171,9 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 		// Event
 		case QueryLastEventNonce:
 			return queryLastEventNonce(ctx, path[1], keeper)
+
+		case QueryLastValsetConfirmNonce:
+			return queryLastValsetConfirmNonce(ctx, keeper)
 
 		case QueryTxId:
 			return queryTxId(ctx, path[1], keeper)
@@ -619,6 +625,13 @@ func queryLastEventNonce(ctx sdk.Context, address string, k Keeper) ([]byte, err
 	x := types.UInt64Bytes(lastEventNonce)
 	return x, nil
 }
+
+func queryLastValsetConfirmNonce(ctx sdk.Context, k Keeper) ([]byte, error) {
+	lastValsetConfirmNonce := k.GetLastValsetConfirmNonce(ctx)
+	x := types.UInt64Bytes(lastValsetConfirmNonce)
+	return x, nil
+}
+
 
 func queryTxId(ctx sdk.Context, txIdStr string, k Keeper) ([]byte, error) {
 	txId, err := strconv.ParseUint(txIdStr, 10, 64)

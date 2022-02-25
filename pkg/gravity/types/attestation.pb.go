@@ -37,6 +37,7 @@ const (
 	CLAIM_TYPE_ERC20_DEPLOYED      ClaimType = 4
 	CLAIM_TYPE_ERC721_DEPLOYED     ClaimType = 5
 	CLAIM_TYPE_LOGIC_CALL_EXECUTED ClaimType = 6
+	CLAIM_TYPE_VALSET_CONFIRM_NONCE ClaimType = 7
 )
 
 var ClaimType_name = map[int32]string{
@@ -47,6 +48,7 @@ var ClaimType_name = map[int32]string{
 	4: "CLAIM_TYPE_ERC20_DEPLOYED",
 	5: "CLAIM_TYPE_ERC721_DEPLOYED",
 	6: "CLAIM_TYPE_LOGIC_CALL_EXECUTED",
+	7: "CLAIM_TYPE_VALSET_CONFIRM_NONCE",
 }
 
 var ClaimType_value = map[string]int32{
@@ -57,6 +59,7 @@ var ClaimType_value = map[string]int32{
 	"CLAIM_TYPE_ERC20_DEPLOYED":      4,
 	"CLAIM_TYPE_ERC721_DEPLOYED":     5,
 	"CLAIM_TYPE_LOGIC_CALL_EXECUTED": 6,
+	"CLAIM_TYPE_VALSET_CONFIRM_NONCE": 7,
 }
 
 func (x ClaimType) String() string {

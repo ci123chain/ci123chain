@@ -3,12 +3,10 @@ package rest
 import (
 	"encoding/binary"
 	"fmt"
-	"net/http"
-	"strconv"
-
 	"github.com/ci123chain/ci123chain/pkg/abci/types/rest"
 	"github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/gorilla/mux"
+	"net/http"
 
 	"github.com/ci123chain/ci123chain/pkg/gravity/types"
 )
@@ -17,15 +15,15 @@ func getValsetRequestHandler(cliCtx context.Context, storeName string) http.Hand
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		nonce := vars[nonce]
-		heightvar := vars[height]
+		//heightvar := vars[height]
 
-		height, err := strconv.ParseInt(heightvar, 10, 64)
-		if err != nil {
-			rest.WriteErrorRes(w, err.Error())
-			return
-		}
+		//height, err := strconv.ParseInt(heightvar, 10, 64)
+		//if err != nil {
+		//	rest.WriteErrorRes(w, err.Error())
+		//	return
+		//}
 
-		res, height, _, err := cliCtx.WithHeight(height).Query(fmt.Sprintf("custom/%s/valsetRequest/%s", storeName, nonce), nil, false)
+		res, height, _, err := cliCtx.Query(fmt.Sprintf("custom/%s/valsetRequest/%s", storeName, nonce), nil, false)
 		if err != nil {
 			rest.WriteErrorRes(w, err.Error())
 			return
@@ -195,6 +193,19 @@ func lastEventNonceByAddressHandler(cliCtx context.Context, storeName string) ht
 		operatorAddr := vars[bech32ValidatorAddress]
 
 		res, height, _, err := cliCtx.Query(fmt.Sprintf("custom/%s/lastEventNonce/%s", storeName, operatorAddr), nil, false)
+		if err != nil {
+			rest.WriteErrorRes(w, err.Error())
+			return
+		}
+
+		out := types.UInt64FromBytes(res)
+		rest.PostProcessResponseBare(w, cliCtx.WithHeight(height), out)
+	}
+}
+
+func lastValsetConfirmNonceHandler(cliCtx context.Context, storeName string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		res, height, _, err := cliCtx.Query(fmt.Sprintf("custom/%s/lastValsetConfirmNonce/%s", storeName), nil, false)
 		if err != nil {
 			rest.WriteErrorRes(w, err.Error())
 			return

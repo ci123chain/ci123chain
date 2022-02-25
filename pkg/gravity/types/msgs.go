@@ -119,6 +119,103 @@ func (m *MsgERC721DeployedClaimResponse) Reset()         { *m = MsgERC721Deploye
 func (m *MsgERC721DeployedClaimResponse) String() string { return proto.CompactTextString(m) }
 func (*MsgERC721DeployedClaimResponse) ProtoMessage()    {}
 
+type MsgValsetConfirmNonceClaim struct {
+	ValsetNonce     uint64  `protobuf:"varint,1,opt,name=valset_nonce,json=valset_nonce,proto3" json:"valset_nonce,omitempty"`
+	EventNonce		uint64  `protobuf:"varint,2,opt,name=event_nonce,json=event_nonce,proto3" json:"event_nonce,omitempty"`
+	Orchestrator  string `protobuf:"bytes,3,opt,name=orchestrator,proto3" json:"orchestrator,omitempty"`
+}
+
+func (m *MsgValsetConfirmNonceClaim) Reset()         { *m = MsgValsetConfirmNonceClaim{} }
+func (m *MsgValsetConfirmNonceClaim) String() string { return proto.CompactTextString(m) }
+func (*MsgValsetConfirmNonceClaim) ProtoMessage()    {}
+
+type MsgValsetConfirmNonceClaimResponse struct {
+}
+
+func (m *MsgValsetConfirmNonceClaimResponse) Reset()         { *m = MsgValsetConfirmNonceClaimResponse{} }
+func (m *MsgValsetConfirmNonceClaimResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgValsetConfirmNonceClaimResponse) ProtoMessage()    {}
+
+func (m *MsgValsetConfirmNonceClaim) GetEventNonce() uint64 {
+	if m != nil {
+		return m.EventNonce
+	}
+	return 0
+}
+
+func (m *MsgValsetConfirmNonceClaim) GetBlockHeight() uint64 {
+	if m != nil {
+		return 0
+	}
+	return 0
+}
+
+// GetType returns the type of the claim
+func (e *MsgValsetConfirmNonceClaim) GetType() ClaimType {
+	return CLAIM_TYPE_VALSET_CONFIRM_NONCE
+}
+
+// ValidateBasic performs stateless checks
+func (e *MsgValsetConfirmNonceClaim) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(e.Orchestrator); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, e.Orchestrator)
+	}
+	if e.EventNonce == 0 {
+		return fmt.Errorf("nonce == 0")
+	}
+	return nil
+}
+
+// GetSignBytes encodes the message for signing
+func (msg MsgValsetConfirmNonceClaim) GetSignBytes() []byte {
+	return sdk.MustSortJSON(GravityCodec.MustMarshalJSON(msg))
+}
+
+func (msg MsgValsetConfirmNonceClaim) GetClaimer() sdk.AccAddress {
+	err := msg.ValidateBasic()
+	if err != nil {
+		panic("MsgValsetConfirmNonceClaim failed ValidateBasic! Should have been handled earlier")
+	}
+
+	val, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
+	return val
+}
+
+// GetSigners defines whose signature is required
+func (msg MsgValsetConfirmNonceClaim) GetSigners() []sdk.AccAddress {
+	acc, err := sdk.AccAddressFromBech32(msg.Orchestrator)
+	if err != nil {
+		panic(err)
+	}
+
+	return []sdk.AccAddress{acc}
+}
+
+// MsgType should return the action
+func (msg MsgValsetConfirmNonceClaim) MsgType() string { return "valset_confirm_nonce_claim" }
+
+func (msg *MsgValsetConfirmNonceClaim) Bytes() []byte {
+	return sdk.MustSortJSON(GravityCodec.MustMarshalJSON(msg))
+}
+
+// Route should return the name of the module
+func (msg MsgValsetConfirmNonceClaim) Route() string { return RouterKey }
+
+// ClaimHash implements BridgeDeposit.Hash
+func (msg *MsgValsetConfirmNonceClaim) ClaimHash() []byte {
+	path := fmt.Sprintf("%d", msg.ValsetNonce)
+	return tmhash.Sum([]byte(path))
+}
+
+func (msg MsgValsetConfirmNonceClaim) GetFromAddress() sdk.AccAddress {
+	acc, err := sdk.AccAddressFromBech32(msg.Orchestrator)
+	if err != nil {
+		panic(err)
+	}
+
+	return acc
+}
+
 // NewMsgSetOrchestratorAddress returns a new msgSetOrchestratorAddress
 func NewMsgSetOrchestratorAddress(val sdk.AccAddress, oper sdk.AccAddress, eth string) *MsgSetOrchestratorAddress {
 	return &MsgSetOrchestratorAddress{

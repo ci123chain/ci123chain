@@ -158,6 +158,12 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim
 		// Add to wrc20-erc20 mapping
 		a.keeper.setERC721Map(ctx, wlkToken, claim.TokenContract)
 		a.logger(ctx).Info("ERC721-WRC721 Mapped for ", "ETH:", claim.TokenContract, " Weelink:", wlkToken)
+	case *types.MsgValsetConfirmNonceClaim:
+		// TODO here we should check the contents of the validator set against
+		// the store, if they differ we should take some action to indicate to the
+		// user that bridge highjacking has occurred
+		a.keeper.setLastValsetsConfirmNonce(ctx, claim.ValsetNonce)
+		return nil
 	default:
 		return sdkerrors.Wrapf(types.ErrInvalid, "event type: %s", claim.GetType())
 	}

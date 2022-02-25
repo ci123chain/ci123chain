@@ -557,3 +557,41 @@ func (k msgServer) ERC721DeployedClaim(c context.Context, msg *types.MsgERC721De
 
 	return &types.MsgERC721DeployedClaimResponse{}, nil
 }
+
+func (k msgServer) ValsetConfirmNonceClaim(c context.Context, msg *types.MsgValsetConfirmNonceClaim) (*types.MsgValsetConfirmNonceClaimResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	orchAddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
+	validator := k.GetOrchestratorValidator(ctx, orchAddr)
+	if validator.Empty() {
+		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
+	}
+
+	// return an error if the validator isn't in the active set
+	val := k.StakingKeeper.Validator(ctx, validator)
+	if val == nil || !val.IsBonded() {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrorInvalidSigner, "validator not in acitve set")
+	}
+
+	any, err := codectypes.NewAnyWithValue(msg)
+	if err != nil {
+		return nil, err
+	}
+
+	// Add the claim to the store
+	_, err = k.Attest(ctx, msg, any)
+	if err != nil {
+		return nil, sdkerrors.Wrap(err, "create attestation")
+	}
+
+	// Emit the handle message event
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(msg.MsgType())),
+			// TODO: maybe return something better here? is this the right string representation?
+			sdk.NewAttribute([]byte(types.AttributeKeyAttestationID), types.GetAttestationKey(msg.ValsetNonce, msg.ClaimHash())),
+		),
+	)
+
+	return &types.MsgValsetConfirmNonceClaimResponse{}, nil
+}

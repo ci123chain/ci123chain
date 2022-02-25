@@ -16,56 +16,97 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 	attestationTally(ctx, k)
 	cleanupTimedOutBatches(ctx, k)
 	cleanupTimedOutLogicCalls(ctx, k)
+	cleanupConfirmedValsets(ctx, k)
+}
+
+func cleanupConfirmedValsets(ctx sdk.Context, k keeper.Keeper) {
+	// Auto signerset tx creation.
+	// 1. If there are no signer set requests, create a new one.
+	// 2. If there is at least one validator who started unbonding in current block. (we persist last unbonded block height in hooks.go)
+	//      This will make sure the unbonding validator has to provide an ethereum signature to a new signer set tx
+	//	    that excludes him before he completely Unbonds.  Otherwise he will be slashed
+	// 3. If power change between validators of Current signer set and latest signer set request is > 5%
+	valsets := k.GetValsets(ctx)
+	if len(valsets) == 0 {
+		k.SetValsetRequest(ctx)
+		return
+	}
+
+	latestConfirmNonce := k.GetLastValsetConfirmNonce(ctx)
+	if latestConfirmNonce == 0 {
+		return
+	}
+
+	lastUnbondingHeight := k.GetLastUnBondingBlockHeight(ctx)
+	blockHeight := uint64(ctx.BlockHeight())
+	
+	powerDiff := types.BridgeValidators(k.GetCurrentValset(ctx).Members).PowerDiff(valsets[0].Members)
+
+	shouldCreate := (lastUnbondingHeight == blockHeight) || (powerDiff > 0.05)
+	k.Logger(ctx).Info(
+		"considering signer set tx creation",
+		"blockHeight", blockHeight,
+		"lastUnbondingHeight", lastUnbondingHeight,
+		"latestSignerSetTx.Nonce", latestConfirmNonce,
+		"powerDiff", powerDiff,
+		"shouldCreate", shouldCreate,
+	)
+
+	if shouldCreate {
+		k.SetValsetRequest(ctx)
+	}
+
+	k.DeleteValset(ctx, latestConfirmNonce-1)
 }
 
 func slashing(ctx sdk.Context, k keeper.Keeper) {
 	params := k.GetParams(ctx)
 	currentBondedSet := k.StakingKeeper.GetBondedValidatorsByPower(ctx)
 
-	// valsets are sorted so the most recent one is first
-	valsets := k.GetValsets(ctx)
-	if len(valsets) == 0 {
-		k.SetValsetRequest(ctx)
-	}
-
-	for i, vs := range valsets {
-		signedWithinWindow := uint64(ctx.BlockHeight()) > params.SignedValsetsWindow && uint64(ctx.BlockHeight())-params.SignedValsetsWindow > vs.Height
-		switch {
-		// #1 condition
-		// We look through the full bonded validator set (not just the active set, include unbonding validators)
-		// and we slash users who haven't signed a valset that is currentHeight - signedBlocksWindow old
-		case signedWithinWindow:
-			// keep the latest valset
-			// first we need to see which validators in the active set // haven't signed the valdiator set and slash them,
-			confirms := k.GetValsetConfirms(ctx, vs.Nonce)
-
-			// do nothing for only one validator
-			for _, val := range currentBondedSet {
-				found := false
-				for _, conf := range confirms {
-					if conf.EthAddress == k.GetEthAddress(ctx, val.GetOperator()) {
-						found = true
-						break
-					}
-				}
-				if !found {
-					cons := val.GetConsAddr()
-					k.StakingKeeper.Slash(ctx, cons,
-						ctx.BlockHeight(), val.ConsensusPower(),
-						params.SlashFractionValset)
-					//k.StakingKeeper.Jail(ctx, cons)
-				}
-			}
-			// then we prune the valset from state
-			k.DeleteValset(ctx, vs.Nonce)
-		}
-		// on the latest validator set, check for change in power against
-		// current, and emit a new validator set if the change in power >5%
-		//case i == 0:
-		if i == 0 && types.BridgeValidators(k.GetCurrentValset(ctx).Members).PowerDiff(vs.Members) > 0.05 {
-			k.SetValsetRequest(ctx)
-		}
-	}
+	//valsets are sorted so the most recent one is first
+	//valsets := k.GetValsets(ctx)
+	//if len(valsets) == 0 {
+	//	k.SetValsetRequest(ctx)
+	//}
+	//
+	//for i, vs := range valsets {
+	//	signedWithinWindow := uint64(ctx.BlockHeight()) > params.SignedValsetsWindow && uint64(ctx.BlockHeight())-params.SignedValsetsWindow > vs.Height
+	//	switch {
+	//	// #1 condition
+	//	// We look through the full bonded validator set (not just the active set, include unbonding validators)
+	//	// and we slash users who haven't signed a valset that is currentHeight - signedBlocksWindow old
+	//	case signedWithinWindow:
+	//		// keep the latest valset
+	//		// first we need to see which validators in the active set // haven't signed the valdiator set and slash them,
+	//		confirms := k.GetValsetConfirms(ctx, vs.Nonce)
+	//
+	//		// do nothing for only one validator
+	//		for _, val := range currentBondedSet {
+	//			found := false
+	//			for _, conf := range confirms {
+	//				if conf.EthAddress == k.GetEthAddress(ctx, val.GetOperator()) {
+	//					found = true
+	//					break
+	//				}
+	//			}
+	//			if !found {
+	//				cons := val.GetConsAddr()
+	//				k.StakingKeeper.Slash(ctx, cons,
+	//					ctx.BlockHeight(), val.ConsensusPower(),
+	//					params.SlashFractionValset)
+	//				//k.StakingKeeper.Jail(ctx, cons)
+	//			}
+	//		}
+	//		// then we prune the valset from state
+	//		k.DeleteValset(ctx, vs.Nonce)
+	//	}
+	//	// on the latest validator set, check for change in power against
+	//	// current, and emit a new validator set if the change in power >5%
+	//	//case i == 0:
+	//	if i == 0 && types.BridgeValidators(k.GetCurrentValset(ctx).Members).PowerDiff(vs.Members) > 0.05 {
+	//		k.SetValsetRequest(ctx)
+	//	}
+	//}
 
 
 	// #2 condition

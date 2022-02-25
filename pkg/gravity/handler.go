@@ -52,6 +52,9 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 		case *types.MsgLogicCallExecutedClaim:
 			res, err := msgServer.LogicCallExecutedClaim(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
+		case *types.MsgValsetConfirmNonceClaim:
+			res, err := msgServer.ValsetConfirmNonceClaim(sdk.WrapSDKContext(ctx), msg)
+			return sdk.WrapServiceResult(ctx, res, err)
 		default:
 			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, fmt.Sprintf("Unrecognized Gravity Msg type: %v", msg.MsgType()))
 		}
