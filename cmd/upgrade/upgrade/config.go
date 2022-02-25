@@ -23,11 +23,6 @@ func (cfg *Config) Root() string {
 	return filepath.Join(cfg.Home, "bin")
 }
 
-// UpgradeDir is the directory named upgrade
-func (cfg *Config) UpgradeDir() string {
-	return filepath.Join(cfg.Root())
-}
-
 func (cfg *Config) GetUpgradeUrl(height uint64) string {
 	return cfg.UpgradeUrl + fmt.Sprintf("/api/v1/version/getUrlByHeight?height=%d", height)
 }
@@ -41,6 +36,10 @@ func (cfg *Config) CurrentBin() (string, error) {
 		return "", err
 	}
 	return cur, nil
+}
+
+func (cfg *Config) NewBin() string {
+	return filepath.Join(cfg.Root(), "temporary", cfg.Name)
 }
 
 // GetConfigFromEnv will read the environmental variables into a config
