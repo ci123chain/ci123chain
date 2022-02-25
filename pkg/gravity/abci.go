@@ -37,11 +37,10 @@ func cleanupConfirmedValsets(ctx sdk.Context, k keeper.Keeper) {
 		return
 	}
 
-	lastConfirmValset := k.GetValset(ctx, latestConfirmNonce)
-
 	lastUnbondingHeight := k.GetLastUnBondingBlockHeight(ctx)
 	blockHeight := uint64(ctx.BlockHeight())
-	powerDiff := types.BridgeValidators(k.GetCurrentValset(ctx).Members).PowerDiff(lastConfirmValset.Members)
+	
+	powerDiff := types.BridgeValidators(k.GetCurrentValset(ctx).Members).PowerDiff(valsets[0].Members)
 
 	shouldCreate := (lastUnbondingHeight == blockHeight) || (powerDiff > 0.05)
 	k.Logger(ctx).Info(
@@ -57,10 +56,7 @@ func cleanupConfirmedValsets(ctx sdk.Context, k keeper.Keeper) {
 		k.SetValsetRequest(ctx)
 	}
 
-	lastConfirmed := k.GetLastValsetConfirmNonce(ctx)
-	if lastConfirmed > 0 {
-		k.DeleteValset(ctx, lastConfirmed-1)
-	}
+	k.DeleteValset(ctx, latestConfirmNonce-1)
 }
 
 func slashing(ctx sdk.Context, k keeper.Keeper) {
