@@ -45,6 +45,7 @@ const (
 	flagCiStateDBPort  = "statedb_port"
 	flagCiNodeDomain   = "IDG_HOST_80"
 	flagShardIndex     = "shardIndex"
+	flagLight = "light"
 
 	flagETHChainID     = "eth_chain_id"
 	flagIteratorLimit  = "iterator_limit"
@@ -102,6 +103,7 @@ func startCmd(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Codec) *co
 	cmd.Flags().String(flagCiStateDBHost, "", "db host")
 	cmd.Flags().Uint64(flagCiStateDBPort, 7443, "db port")
 	cmd.Flags().Bool(flagCiStateDBTls, true, "use tls")
+	cmd.Flags().Bool(flagLight, false, "light mode")
 	cmd.Flags().String(flagCiNodeDomain, "", "node domain")
 	cmd.Flags().String(flagShardIndex, "", "index of shard")
 	cmd.Flags().Int(flagIteratorLimit, 10, "iterator limit")
@@ -150,8 +152,9 @@ func startStandAlone(ctx *app.Context, appCreator app.AppCreator) error {
 	home := viper.GetString("home")
 	traceStore := viper.GetString(flagTraceStore)
 	stateDB := viper.GetString(flagStateDB)
+	lightMode := viper.GetBool(flagLight)
 
-	app, err := appCreator(home, ctx.Logger, stateDB, traceStore)
+	app, err := appCreator(home, ctx.Logger, stateDB, traceStore, lightMode)
 	if err != nil {
 		return err
 	}
@@ -234,7 +237,7 @@ func StartInProcess(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Code
 	types.SetCoinDenom(stakingGenesisState.Params.BondDenom)
 	viper.Set("ShardID", gendoc.ChainID)
 
-	app, err := appCreator(home, ctx.Logger, stateDB, traceStore)
+	app, err := appCreator(home, ctx.Logger, stateDB, traceStore, viper.GetBool(flagLight))
 	if err != nil {
 		return nil, err
 	}

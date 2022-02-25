@@ -24,7 +24,7 @@ import (
 	"path/filepath"
 )
 type (
-	AppCreator func(home string, logger log.Logger, statedb, traceStore string) (Application, error)
+	AppCreator func(home string, logger log.Logger, statedb, traceStore string, lightMode bool) (Application, error)
 
 	AppOptions interface {
 		Get(string) interface{}
@@ -54,14 +54,17 @@ type (
 
 func ConstructAppCreator(appFn AppCreatorInit, name string) AppCreator {
 
-	return func(rootDir string, logger log.Logger, statedb, traceStore string) (Application, error) {
+	return func(rootDir string, logger log.Logger, statedb, traceStore string, lightMode bool) (Application, error) {
 		dataDir := filepath.Join(rootDir, "data")
 		ldb, err := dbm.NewGoLevelDB(name, dataDir)
 		if err != nil {
 			return nil, err
 		}
 		//cdb, err := GetCDB(statedb)
-		rdb, err := GetRDB(statedb, logger)
+		var rdb dbm.DB = nil
+		if !lightMode {
+			rdb, err = GetRDB(statedb, logger)
+		}
 		if err != nil {
 			return nil, types.ErrNewDB(types.DefaultCodespace, err)
 		}
@@ -90,7 +93,8 @@ func ConstructAppExporter(name string) AppExporter {
 		if err != nil {
 			return ExportedApp{}, types.ErrNewDB(types.DefaultCodespace, err)
 		}
-		rdb, err := GetRDB(stateDB, lg)
+		var rdb dbm.DB = nil
+		rdb, err = GetRDB(stateDB, lg)
 		if err != nil {
 			return ExportedApp{}, types.ErrNewDB(types.DefaultCodespace, err)
 		}
