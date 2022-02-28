@@ -41,3 +41,4 @@ release-build:
 
 upgrade-build:
 	docker build -f Dockerfile_upgrade -t cichainupgrade:v0.0.1 .
+	docker run -v $(PWD)/bin:/opt/temp cichainupgrade:v0.0.1 bash -c "cp /opt/cid-linux /opt/temp"

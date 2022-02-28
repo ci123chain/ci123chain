@@ -41,5 +41,5 @@ func StakingRecord(ctx sdk.Context, req abci.RequestQuery, k PreStakingKeeper) (
 			results = append(results, r)
 		}
 	}
-	return k.Cdc.MarshalBinaryBare(records)
+	return k.Cdc.MarshalBinaryBare(results)
 }

@@ -3,7 +3,6 @@ FROM harbor.oneitfarm.com/zhirenyun/baseimage:bionic-1.0.0
 WORKDIR /opt/ci123chain
 
 COPY ./docker/node/build/cid-linux /opt/cid-linux
-#COPY ./docker/node/build/cli-linux /opt/cli-linux
 COPY ./docker/node/build/tcptest /opt/tcptest
 COPY ./docker/node/build/upgrade /opt/upgrade
 COPY ./docker/node/exportFile.json /opt/exportFile.json
