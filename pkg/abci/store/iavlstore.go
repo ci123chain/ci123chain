@@ -23,6 +23,7 @@ const (
 	FlagRunMode = "mode"
 	ModeSingle = "single"
 	ModeMulti = "multi"
+	ModeLight = "light"
 	defaultIAVLCacheSize = 10000
 )
 
@@ -93,7 +94,7 @@ func newIAVLStore(remoteDB dbm.DB, tree *iavl.MutableTree, numRecent int64, stor
 }
 
 func (st *IavlStore) localMode() bool {
-	return st.mode == ModeSingle || st.mode == ""
+	return st.mode != ModeMulti
 }
 
 

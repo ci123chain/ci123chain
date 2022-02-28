@@ -2,6 +2,7 @@ package util
 
 import (
 	"errors"
+	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/libs"
 	"gitlab.oneitfarm.com/bifrost/sesdk/discovery"
 	"os"
@@ -19,6 +20,7 @@ func GetDomain() (host string, err error) {
 	_, _ = libs.RetryI(15, func(retryTimes int) (interface{}, error) {
 		host, err = Discovery()
 		if err != nil {
+			fmt.Println(err.Error())
 		}
 		return host, err
 	})
@@ -26,14 +28,14 @@ func GetDomain() (host string, err error) {
 }
 
 func Discovery() (string, error) {
-
-	appID := os.Getenv("CI_UNIQUE_KEY")
+	fmt.Println("---Discoverying---")
+	uniqueID := os.Getenv("CI_UNIQUE_KEY")
 	region := os.Getenv("IDG_SITEUID")
 	env := os.Getenv("CI_SE_ENV")
 	zone := os.Getenv("IDG_CLUSTERUID")
 	address := "chain-discovery-service-eye.chain-discovery:7171"
-	if appID == "" {
-		return "", errors.New("appID is empty")
+	if uniqueID == "" {
+		return "", errors.New("CI_UNIQUE_KEY is empty")
 	}
 	hn := os.Getenv("PODNAME")
 	// 注册中心自身，初始化配置
@@ -53,7 +55,7 @@ func Discovery() (string, error) {
 		return "", err
 	}
 	// 服务发现：目标服务的唯一识别号
-	ep, err := dis.GetEndpoint(appID)
+	ep, err := dis.GetEndpoint(uniqueID)
 	if err != nil {
 		return "", err
 	}

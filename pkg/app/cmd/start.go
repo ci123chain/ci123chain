@@ -183,7 +183,7 @@ func StartInProcess(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Code
 	stateDB := ""
 
 	lightMode := viper.GetString(flagRunMode)
-	if lightMode == store.ModeMulti {
+	if lightMode != store.ModeLight {
 		dbType := viper.GetString(flagCiStateDBType)
 		if dbType == "" {
 			dbType = "redis"
