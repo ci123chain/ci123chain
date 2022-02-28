@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
+	"github.com/ci123chain/ci123chain/pkg/abci/store"
 	"github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/abci/version"
 	"github.com/ci123chain/ci123chain/pkg/app"
@@ -150,9 +151,8 @@ func startStandAlone(ctx *app.Context, appCreator app.AppCreator) error {
 	home := viper.GetString("home")
 	traceStore := viper.GetString(flagTraceStore)
 	stateDB := viper.GetString(flagStateDB)
-	lightMode := viper.GetString(flagRunMode)
 
-	app, err := appCreator(home, ctx.Logger, stateDB, traceStore, lightMode)
+	app, err := appCreator(home, ctx.Logger, stateDB, traceStore)
 	if err != nil {
 		return err
 	}
@@ -182,36 +182,41 @@ func StartInProcess(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Code
 	traceStore := viper.GetString(flagTraceStore)
 	stateDB := ""
 
-	dbType := viper.GetString(flagCiStateDBType)
-	if dbType == "" {
-		dbType = "redis"
-	}
-	dbHost := viper.GetString(flagCiStateDBHost)
-	if dbHost == "" {
-		var err error
-		dbHost, err = util.GetDomain()
-		if err != nil {
-			ctx.Logger.Error("get remote db host failed", "err", err.Error())
-			return nil, err
+	lightMode := viper.GetString(flagRunMode)
+	if lightMode == store.ModeMulti {
+		dbType := viper.GetString(flagCiStateDBType)
+		if dbType == "" {
+			dbType = "redis"
 		}
-	}
-	ctx.Logger.Info("discovery remote db host", "host", dbHost)
-	if dbHost == "" {
-		return nil, errors.New(fmt.Sprintf("%s can not be empty", flagCiStateDBHost))
-	}
-	dbTls := viper.GetBool(flagCiStateDBTls)
-	dbPort := viper.GetUint64(flagCiStateDBPort)
-	p := strconv.FormatUint(dbPort, 10)
+		dbHost := viper.GetString(flagCiStateDBHost)
+		if dbHost == "" {
+			var err error
+			dbHost, err = util.GetDomain()
+			if err != nil {
+				ctx.Logger.Error("get remote db host failed", "err", err.Error())
+				return nil, err
+			}
+		}
+		ctx.Logger.Info("discovery remote db host", "host", dbHost)
+		if dbHost == "" {
+			return nil, errors.New(fmt.Sprintf("%s can not be empty", flagCiStateDBHost))
+		}
+		dbTls := viper.GetBool(flagCiStateDBTls)
+		dbPort := viper.GetUint64(flagCiStateDBPort)
+		p := strconv.FormatUint(dbPort, 10)
 
-	switch dbType {
-	case "redis":
-		stateDB = "redisdb://" + dbHost + ":" + p
-		if dbTls {
-			stateDB += "#tls"
+		switch dbType {
+		case "redis":
+			stateDB = "redisdb://" + dbHost + ":" + p
+			if dbTls {
+				stateDB += "#tls"
+			}
+		default:
+			return nil, errors.New(fmt.Sprintf("types of db: %s, which is not reids not implement yet", dbType))
 		}
-	default:
-		return nil, errors.New(fmt.Sprintf("types of db: %s, which is not reids not implement yet", dbType))
 	}
+
+
 
 	//nodeDomain := viper.GetString(flagCiNodeDomain)
 	nodeDomain := os.Getenv(flagCiNodeDomain)
@@ -235,8 +240,7 @@ func StartInProcess(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Code
 	types.SetCoinDenom(stakingGenesisState.Params.BondDenom)
 	viper.Set("ShardID", gendoc.ChainID)
 
-	lightMode := viper.GetString(flagRunMode)
-	app, err := appCreator(home, ctx.Logger, stateDB, traceStore, lightMode)
+	app, err := appCreator(home, ctx.Logger, stateDB, traceStore)
 	if err != nil {
 		return nil, err
 	}

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/ci123chain/ci123chain/pkg/abci/store"
 	"github.com/ci123chain/ci123chain/pkg/app/types"
 	client "github.com/ci123chain/ci123chain/pkg/client/context"
 	"github.com/ci123chain/ci123chain/pkg/libs"
@@ -25,7 +24,7 @@ import (
 	"path/filepath"
 )
 type (
-	AppCreator func(home string, logger log.Logger, statedb, traceStore string, lightMode string) (Application, error)
+	AppCreator func(home string, logger log.Logger, statedb, traceStore string) (Application, error)
 
 	AppOptions interface {
 		Get(string) interface{}
@@ -55,7 +54,7 @@ type (
 
 func ConstructAppCreator(appFn AppCreatorInit, name string) AppCreator {
 
-	return func(rootDir string, logger log.Logger, statedb, traceStore string, lightMode string) (Application, error) {
+	return func(rootDir string, logger log.Logger, statedb, traceStore string) (Application, error) {
 		dataDir := filepath.Join(rootDir, "data")
 		ldb, err := dbm.NewGoLevelDB(name, dataDir)
 		if err != nil {
@@ -63,7 +62,7 @@ func ConstructAppCreator(appFn AppCreatorInit, name string) AppCreator {
 		}
 		//cdb, err := GetCDB(statedb)
 		var rdb dbm.DB = nil
-		if lightMode == store.ModeMulti {
+		if statedb != "" {
 			rdb, err = GetRDB(statedb, logger)
 		}
 		if err != nil {
