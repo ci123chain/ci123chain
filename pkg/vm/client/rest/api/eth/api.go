@@ -23,7 +23,6 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/rlp"
-	"github.com/ethereum/go-ethereum/rpc"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/log"
 	tmtypes "github.com/tendermint/tendermint/types"
@@ -278,7 +277,7 @@ func (api *PublicEthereumAPI) Accounts() ([]common.Address, error) {
 }
 
 // GetTransactionCount returns the number of transactions at the given address up to the given block number.
-func (api *PublicEthereumAPI) GetTransactionCount(address common.Address, blockNum rpc.BlockNumber) (*hexutil.Uint64, error) {
+func (api *PublicEthereumAPI) GetTransactionCount(address common.Address, blockNum BlockNumber) (*hexutil.Uint64, error) {
 	api.logger.Debug("eth_getTransactionCount", "address", address, "block number", blockNum)
 	clientCtx := api.clientCtx.WithHeight(blockNum.Int64())
 
