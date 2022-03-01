@@ -4,9 +4,13 @@ import (
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/pre_staking/keeper"
 	"github.com/ci123chain/ci123chain/pkg/pre_staking/types"
+	"math/big"
 )
 
-const CheckRecordWindow = 20000
+const (
+	CheckRecordWindow = 20000
+	baseMonth = 720
+)
 
 func BeginBlock() {}
 
@@ -25,6 +29,7 @@ func UpdateDeadlineRecord(ctx sdk.Context, ps keeper.PreStakingKeeper) {
 			var sv types.StakingVault
 			ps.Cdc.MustUnmarshalBinaryBare(iterator.Value(), &sv)
 			if sv.EndTime.Before(ctx.BlockTime()) && !sv.Processed {
+
 				amount, err := ps.RemoveDeadlineDelegationAndWithdraw(ctx, sv.Validator, sv.Delegator, sv.Amount)
 				if err != nil {
 					panic(err)
@@ -34,7 +39,18 @@ func UpdateDeadlineRecord(ctx sdk.Context, ps keeper.PreStakingKeeper) {
 				if err != nil {
 					panic(err)
 				}
+				var z = sv.Amount.Amount.BigInt()
+				base := int64(sv.StorageTime.Hours()) / baseMonth
+				burnTokens := z.Mul(z, big.NewInt(base))
 
+				if tokenmanager := ps.GetTokenManager(ctx); len(tokenmanager) > 0 {
+					err = ps.SupplyKeeper.BurnEVMCoin(ctx, types.ModuleName, sdk.HexToAddress(tokenmanager), sv.Delegator, burnTokens)
+					if err != nil {
+						ctx.Logger().Warn("Burn evm coin failed")
+					}
+				} else {
+					ctx.Logger().Warn("StakingToken Address not set")
+				}
 				ps.UpdateStakingRecordProcessed(ctx, iterator.Key())
 			}
 
