@@ -27,6 +27,9 @@ func NewKeeper(skipUpgradeHeights map[int64]bool, storeKey sdk.StoreKey, cdc *co
 		upgradeHandlers:    map[string]types.UpgradeHandler{},
 	}
 	// registe some upgrade here
+	k.SetUpgradeHandler("remove DeleteStakingVault", func(ctx sdk.Context, info []byte) {
+		k.Logger(ctx).Info("Upgrade successful:", "proposal", "remove DeleteStakingVault")
+	})
 	return k
 }
 
