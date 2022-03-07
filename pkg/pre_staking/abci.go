@@ -9,7 +9,7 @@ import (
 
 const (
 	CheckRecordWindow = 20000
-	baseMonth = 720
+	baseMonth         = 720
 )
 
 func BeginBlock() {}
@@ -18,10 +18,9 @@ func EndBlock(ctx sdk.Context, k keeper.PreStakingKeeper) {
 	UpdateDeadlineRecord(ctx, k)
 }
 
-
 func UpdateDeadlineRecord(ctx sdk.Context, ps keeper.PreStakingKeeper) {
 	iterator := ps.Iter(ctx)
-	prune :=  ctx.BlockHeight() % CheckRecordWindow == 0
+	prune := ctx.BlockHeight()%CheckRecordWindow == 0
 
 	for ; iterator.Valid(); iterator.Next() {
 		v := iterator.Value()
@@ -55,10 +54,8 @@ func UpdateDeadlineRecord(ctx sdk.Context, ps keeper.PreStakingKeeper) {
 			}
 
 			if prune {
-				ps.DeleteStakingVault(ctx, iterator.Key())
+				//ps.DeleteStakingVault(ctx, iterator.Key())
 			}
 		}
 	}
 }
-
-
