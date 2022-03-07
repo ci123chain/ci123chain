@@ -11,6 +11,7 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	abci "github.com/tendermint/tendermint/abci/types"
 	tmtypes "github.com/tendermint/tendermint/types"
+	"math/big"
 )
 
 var (
@@ -65,9 +66,12 @@ func (am AppModule) EndBlock(ctx abci_types.Context, req abci.RequestEndBlock) [
 func (am AppModule) BeginBlocker(ctx abci_types.Context, req abci.RequestBeginBlock) {
 	//do you want to do
 	numTxs := am.AuthKeeper.GetNumTxs(ctx)
-	gasPrice := ctx.GasPriceConfig().BaseGasPrice + float64(numTxs * numTxs)/ctx.GasPriceConfig().GasPriceTxBase
 
-	abci_types.SetGasPrice(gasPrice)
+	basePrice := abci_types.NewDecFromBigIntWithPrec(big.NewInt(int64(ctx.GasPriceConfig().BaseGasPrice)), abci_types.Precision/2).BigInt()
+	delta := big.NewInt(numTxs).Mul(big.NewInt(numTxs), big.NewInt(int64(ctx.GasPriceConfig().GasPriceTxBase)))
+	gasPrice := basePrice.Add(basePrice, delta)
+
+	abci_types.SetGasPrice(gasPrice.Uint64())
 }
 
 func (am AppModule) Committer(ctx abci_types.Context) {

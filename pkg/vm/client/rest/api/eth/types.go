@@ -1,15 +1,15 @@
 package eth
 
 import (
-"fmt"
+	"fmt"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 	"math"
-"math/big"
-"strings"
+	"math/big"
+	"strings"
 
-"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 )
 
 // BlockNumber represents decoding hex string to block values
@@ -27,6 +27,8 @@ const (
 func NewBlockNumber(n *big.Int) BlockNumber {
 	return BlockNumber(n.Int64())
 }
+
+
 
 // UnmarshalJSON parses the given JSON fragment into a BlockNumber. It supports:
 // - "latest", "earliest" or "pending" as string arguments

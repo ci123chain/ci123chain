@@ -12,3 +12,6 @@ package types
 //	VMResult() *sdk.Result
 //}
 
+const DefaultGasPrice =  1
+
+const MiniGasPriceFlag = "minimum-gas-prices"

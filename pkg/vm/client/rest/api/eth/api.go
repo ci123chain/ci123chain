@@ -195,8 +195,9 @@ func (api *PublicEthereumAPI) Hashrate() hexutil.Uint64 {
 // GasPrice returns the current gas price based on Eth's gas price oracle.
 func (api *PublicEthereumAPI) GasPrice() *hexutil.Big {
 	api.logger.Debug("eth_gasPrice")
-	out := big.NewInt(1)
-	return (*hexutil.Big)(out)
+	gas := sdk.GetGasPrice()
+
+	return (*hexutil.Big)(sdk.NewUint(gas).BigInt())
 }
 
 func (api *PublicEthereumAPI) BlockNumber() (hexutil.Uint64, error) {

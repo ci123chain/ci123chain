@@ -72,13 +72,17 @@ func addUint64Overflow(a, b uint64) (uint64, bool) {
 	return a + b, false
 }
 
-var gasPrice float64
-func SetGasPrice(gp float64) {
+var gasPrice Gas
+func SetGasPrice(gp Gas) {
 	gasPrice = gp
 }
 
+func GetGasPrice() Gas {
+	return gasPrice
+}
+
 func calculateGas(gas Gas) Gas{
-	return Gas(math.Ceil(float64(gas)*gasPrice))
+	return gas * gasPrice
 }
 
 var DebugHeight bool
