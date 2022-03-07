@@ -342,7 +342,7 @@ func (msg MsgSendToEth) Route() string { return RouterKey }
 // MsgType should return the action
 func (msg MsgSendToEth) MsgType() string { return "send_to_eth" }
 
-func (msg *MsgSendToEth) Bytes() []byte {
+func (msg MsgSendToEth) Bytes() []byte {
 	return sdk.MustSortJSON(GravityCodec.MustMarshalJSON(msg))
 }
 

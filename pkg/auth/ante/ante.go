@@ -6,7 +6,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/account/exported"
 	types2 "github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/auth"
-	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
+	"github.com/ci123chain/ci123chain/pkg/cryptosuite"
 	"math/big"
 
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
@@ -39,8 +39,8 @@ func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, sk su
 			}
 			signer = sdk.HexToAddress(from.String())
 		} else {
-			eth := cryptosuit.NewETHSignIdentity()
-			valid, err := eth.Verifier(tx.GetSignBytes(), tx.GetSignature(), nil, tx.GetFromAddress().Bytes())
+			eth := cryptosuite.NewEccK1()
+			valid, err := eth.Verify(tx.GetFromAddress().Bytes(), tx.GetSignBytes(), tx.GetSignature())
 			if !valid || err != nil {
 				return newCtx, sdk.Result{}, sdkerrors.ErrorInvalidSigner, true
 			}
@@ -56,7 +56,7 @@ func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, sk su
 		txNonce := tx.GetNonce()
 		if txNonce != accountSequence {
 			newCtx := ctx.WithGasMeter(sdk.NewGasMeter(0))
-			return newCtx, sdk.Result{}, sdkerrors.ErrInvalidParam, true
+			return newCtx, sdk.Result{}, sdkerrors.ErrInvalidParam.Wrap("nonce dismatch"), true
 		}
 
 		params := authKeeper.GetParams(ctx)

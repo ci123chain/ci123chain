@@ -7,7 +7,7 @@ import (
 	codectypes "github.com/ci123chain/ci123chain/pkg/abci/codec/types"
 	types2 "github.com/ci123chain/ci123chain/pkg/abci/types"
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
-	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
+	"github.com/ci123chain/ci123chain/pkg/cryptosuite"
 	"github.com/ci123chain/ci123chain/pkg/util"
 )
 
@@ -95,11 +95,11 @@ func SignPbTx(from types2.AccAddress, nonce, gas uint64, msgs []types2.PbMsg, pr
 	tx := NewPbTx(from, nonce, gas, msgs)
 	var signature []byte
 	privPub, err := hex.DecodeString(priv)
-	eth := cryptosuit.NewETHSignIdentity()
+	eth := cryptosuite.NewEccK1()
 	if !IsValidPrivateKey(from, privPub){
 		return nil, errors.New("invalid private_key, the private key does not match the from account")
 	}
-	signature, err = eth.Sign(tx.GetSignBytes(), privPub)
+	signature, err = eth.Sign(privPub, tx.GetSignBytes())
 	if err != nil {
 		return nil, err
 	}

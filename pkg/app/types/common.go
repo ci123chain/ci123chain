@@ -7,8 +7,7 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
 	types2 "github.com/ci123chain/ci123chain/pkg/abci/types"
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
-	"github.com/ci123chain/ci123chain/pkg/cryptosuit"
-	"github.com/ci123chain/ci123chain/pkg/util"
+	"github.com/ci123chain/ci123chain/pkg/cryptosuite"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/rlp"
 )
@@ -61,7 +60,7 @@ func (tx *CommonTx) SetPubKey(pub []byte) {
 func (msg *CommonTx) GetSignBytes() []byte{
 	ntx := *msg
 	ntx.SetSignature(nil)
-	return util.TxHash(ntx.Bytes())
+	return cryptosuite.Hash(ntx.Bytes())
 }
 
 func (msg *CommonTx) Bytes() []byte {
@@ -96,15 +95,19 @@ func SignCommonTx(from types2.AccAddress, nonce, gas uint64, msgs []types2.Msg, 
 	}
 	var signature []byte
 	privPub, err := hex.DecodeString(priv)
-	eth := cryptosuit.NewETHSignIdentity()
+	eth := cryptosuite.NewEccK1()
 	if !IsValidPrivateKey(from, privPub){
 		return nil, ErrInvalidParam("invalid private_key, the private key does not match the from account")
 	}
-	signature, err = eth.Sign(tx.GetSignBytes(), privPub)
+	signature, err = eth.Sign(privPub, tx.GetSignBytes())
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println("signature", string(signature))
+
 	tx.SetSignature(signature)
+
+
 	return cdc.MarshalBinaryBare(tx)
 }
 
