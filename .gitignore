@@ -4,6 +4,6 @@ vendor
 go.sum
 data_dir
 testdata
-
+bin
 bootstrap-docker/node*
 bootstrap-docker/gateway
