@@ -53,8 +53,8 @@ func UpdateDeadlineRecord(ctx sdk.Context, ps keeper.PreStakingKeeper) {
 				ps.UpdateStakingRecordProcessed(ctx, iterator.Key())
 			}
 
-			if prune {
-				//ps.DeleteStakingVault(ctx, iterator.Key())
+			if prune && sv.Processed{
+				ps.DeleteStakingVault(ctx, iterator.Key())
 			}
 		}
 	}
