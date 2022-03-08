@@ -60,7 +60,8 @@ func (tx *CommonTx) SetPubKey(pub []byte) {
 func (msg *CommonTx) GetSignBytes() []byte{
 	ntx := *msg
 	ntx.SetSignature(nil)
-	return cryptosuite.Hash(ntx.Bytes())
+	hexstr := hex.EncodeToString(ntx.Bytes())
+	return cryptosuite.Hash([]byte(hexstr))
 }
 
 func (msg *CommonTx) Bytes() []byte {
@@ -103,7 +104,7 @@ func SignCommonTx(from types2.AccAddress, nonce, gas uint64, msgs []types2.Msg, 
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("signature", string(signature))
+	fmt.Println("signature", hex.EncodeToString(signature))
 
 	tx.SetSignature(signature)
 
