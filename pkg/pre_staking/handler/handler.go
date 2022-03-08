@@ -112,7 +112,7 @@ func RedelegateHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.Msg
 
 	completionTime, err := k.StakingKeeper.Redelegate(ctx, msg.FromAddress, msg.SrcValidator, msg.DstValidator, delegation.Shares)
 	if err != nil {
-		return nil, types.ErrRedelegateFailed
+		return nil, err
 	}
 
 	//Update staking record.

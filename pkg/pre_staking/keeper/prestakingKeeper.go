@@ -64,8 +64,7 @@ func (ps PreStakingKeeper) GetAllStakingVault(ctx sdk.Context) (res []types.Stak
 	store := ctx.KVStore(ps.storeKey)
 	iterator := sdk.KVStorePrefixIterator(store, types.StakingRecordKey)
 	for ; iterator.Valid(); iterator.Next() {
-		var sv types.StakingVault
-		ps.Cdc.MustUnmarshalBinaryBare(iterator.Value(), &sv)
+		sv := ps.UnmarshalStakingVault(iterator.Value())
 		res = append(res, sv)
 	}
 	return res
@@ -103,13 +102,13 @@ func (ps PreStakingKeeper) ChangeStakingRecordToNewValidator(ctx sdk.Context, re
 	key := types.GetStakingRecordKeyByID(recordID)
 	store := ctx.KVStore(ps.storeKey)
 	bz := store.Get(key)
-	var sv types.StakingVault
-	ps.Cdc.MustUnmarshalBinaryBare(bz, &sv)
+	sv := ps.UnmarshalStakingVault(bz)
 
 	if !bytes.Equal(sv.Validator.Bytes(), srcValidator.Bytes()) {
 		return types.ErrInvalidDelegatorAddress
 	}
-	sv.TransLogs = append(sv.TransLogs, sv.Validator)
+	lg := types.NewTransLog(srcValidator, dstValidator, ctx.BlockTime())
+	sv.TransLogs = append(sv.TransLogs, lg)
 	sv.Validator = dstValidator
 
 	bz = ps.Cdc.MustMarshalBinaryBare(sv)
@@ -189,18 +188,29 @@ func (ps PreStakingKeeper) SetTokenManagerOwner(ctx sdk.Context, addr sdk.AccAdd
 func (ps PreStakingKeeper) getStakingRecord(ctx sdk.Context, key []byte) types.StakingVault {
 	store := ctx.KVStore(ps.storeKey)
 	bz := store.Get(key)
-	var sv types.StakingVault
-	ps.Cdc.MustUnmarshalBinaryBare(bz, &sv)
+	sv := ps.UnmarshalStakingVault(bz)
 	return sv
 }
 func (ps PreStakingKeeper) saveStakingRecord(ctx sdk.Context, key []byte, vault types.StakingVault)  {
 	store := ctx.KVStore(ps.storeKey)
 	bz := ps.Cdc.MustMarshalBinaryBare(vault)
 	store.Set(key, bz)
+
 }
 
 func (ps PreStakingKeeper)Iter(ctx sdk.Context) sdk.Iterator {
 	store := ctx.KVStore(ps.storeKey)
 	iterator := sdk.KVStorePrefixIterator(store, types.StakingRecordKey)
 	return iterator
+}
+
+func (ps PreStakingKeeper) UnmarshalStakingVault(bz []byte) types.StakingVault {
+	var sv types.StakingVault
+	err := ps.Cdc.UnmarshalBinaryBare(bz, &sv)
+	if err != nil {
+		var svo types.StakingVaultOld
+		ps.Cdc.MustUnmarshalBinaryBare(bz, &svo)
+		return types.StakingVaultFrom(svo)
+	}
+	return sv
 }

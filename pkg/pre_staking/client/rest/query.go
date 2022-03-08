@@ -72,6 +72,7 @@ func QueryStakingRecord(cliCtx context.Context) http.HandlerFunc {
 			rest.WriteErrorRes(writer, fmt.Sprintf("unexpected res: %v", res))
 			return
 		}
+
 		var result []types.StakingVault
 		err = types.PreStakingCodec.UnmarshalBinaryBare(res, &result)
 		if err != nil {

@@ -25,8 +25,8 @@ func UpdateDeadlineRecord(ctx sdk.Context, ps keeper.PreStakingKeeper) {
 	for ; iterator.Valid(); iterator.Next() {
 		v := iterator.Value()
 		if v != nil {
-			var sv types.StakingVault
-			ps.Cdc.MustUnmarshalBinaryBare(iterator.Value(), &sv)
+			sv := ps.UnmarshalStakingVault(iterator.Value())
+
 			if sv.EndTime.Before(ctx.BlockTime()) && !sv.Processed {
 
 				amount, err := ps.RemoveDeadlineDelegationAndWithdraw(ctx, sv.Validator, sv.Delegator, sv.Amount)

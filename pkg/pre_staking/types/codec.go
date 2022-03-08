@@ -22,7 +22,9 @@ func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterConcrete(&MsgRedelegate{}, "ci123chain/MsgPreStakingRedelegate", nil)
 	cdc.RegisterConcrete(&MsgUndelegate{}, "ci123chain/MsgPreStakingUndelegate", nil)
 	cdc.RegisterConcrete(&MsgSetStakingToken{}, "ci123chain/MsgSetStakingToken", nil)
-	cdc.RegisterConcrete(&StakingVault{}, "ci123chain/StakingVault", nil)
+	cdc.RegisterConcrete(&StakingVaultOld{}, "ci123chain/StakingVault", nil)
+	cdc.RegisterConcrete(&StakingVault{}, "ci123chain/StakingVaultNew", nil)
+	cdc.RegisterConcrete(&TransLog{}, "ci123chain/TransLog", nil)
 
 	cdc.RegisterConcrete(&MsgPrestakingCreateValidator{}, "ci123chain/MsgPrestakingCreateValidator", nil)
 	cdc.RegisterConcrete(&MsgPrestakingCreateValidatorDirect{}, "ci123chain/MsgPrestakingCreateValidatorDirect", nil)

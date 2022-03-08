@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-type StakingVault struct {
+type StakingVaultOld struct {
 	ID 			 uint64		  `json:"id"`
 	StartTime    time.Time    `json:"start_time"`
 	StorageTime  time.Duration    `json:"storage_time"`
@@ -15,6 +15,46 @@ type StakingVault struct {
 	Delegator 	 sdk.AccAddress	`json:"delegator"`
 	TransLogs 	 []sdk.AccAddress `json:"trans_logs"`
 	Processed 	 bool		   `json:"processed"`
+}
+
+type StakingVault struct {
+	ID 			 uint64		  `json:"id"`
+	StartTime    time.Time    `json:"start_time"`
+	StorageTime  time.Duration    `json:"storage_time"`
+	EndTime      time.Time    `json:"end_time"`
+	Amount       sdk.Coin     `json:"amount"`
+	Validator 	 sdk.AccAddress	`json:"validator"`
+	Delegator 	 sdk.AccAddress	`json:"delegator"`
+	TransLogs 	 []TransLog `json:"trans_logs"`
+	Processed 	 bool		   `json:"processed"`
+}
+
+type TransLog struct {
+	Src sdk.AccAddress	`json:"src"`
+	Dst sdk.AccAddress	`json:"dst"`
+	LogTime time.Time	`json:"log_time"`
+}
+
+func StakingVaultFrom(svo StakingVaultOld) StakingVault {
+
+	return StakingVault{
+		ID: svo.ID,
+		StartTime: svo.StartTime,
+		StorageTime: svo.StorageTime,
+		EndTime: svo.EndTime,
+		Amount: svo.Amount,
+		Validator: svo.Validator,
+		Delegator: svo.Delegator,
+		Processed: svo.Processed,
+	}
+}
+
+func NewTransLog(src, dst sdk.AccAddress, logTime time.Time) TransLog {
+	return TransLog{
+		Src: src,
+		Dst: dst,
+		LogTime: logTime,
+	}
 }
 
 func NewStakingVault(id uint64,sta, et time.Time, st time.Duration, amount sdk.Coin, val, del sdk.AccAddress) StakingVault {
