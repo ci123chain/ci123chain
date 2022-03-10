@@ -32,6 +32,7 @@ import (
 
 const (
 	DefaultRPCGasLimit = 10000000
+	ETHMinGas = 21000
 )
 
 var cdc = types.GetCodec()
@@ -809,7 +810,6 @@ func formatBlock(
 	return res
 }
 
-
 func (api *PublicEthereumAPI) EstimateGas(args CallArgs) (hexutil.Uint64, error) {
 	api.logger.Debug("eth_estimateGas")
 	simResponse, err := api.doCall(args, big.NewInt(DefaultRPCGasLimit))
@@ -818,9 +818,11 @@ func (api *PublicEthereumAPI) EstimateGas(args CallArgs) (hexutil.Uint64, error)
 	}
 
 	// TODO: change 1000 buffer for more accurate buffer (eg: SDK's gasAdjusted)
-	estimatedGas := simResponse.GasUsed
+	estimatedGas := simResponse.GasUsed / sdk.GetGasPrice() * 150 / 100
 	api.logger.Debug("eth_estimateGas")
 	gas := estimatedGas
-
+	if gas < ETHMinGas {
+		gas = ETHMinGas
+	}
 	return hexutil.Uint64(gas), nil
 }
