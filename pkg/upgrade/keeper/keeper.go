@@ -26,7 +26,10 @@ func NewKeeper(skipUpgradeHeights map[int64]bool, storeKey sdk.StoreKey, cdc *co
 		cdc:                cdc,
 		upgradeHandlers:    map[string]types.UpgradeHandler{},
 	}
-	// registe some upgrade here
+	// register some upgrade here
+	k.SetUpgradeHandler("UpgradeV1.6.32", func(ctx sdk.Context, info []byte) {
+		k.Logger(ctx).Info("Upgrade successful:", "proposal", "upgrade v1.6.32")
+	})
 	return k
 }
 
