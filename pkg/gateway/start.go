@@ -32,6 +32,7 @@ const (
 	flagETHRPCPort     = "port_eth"
 	AppID			   = "hedlzgp1u48kjf50xtcvwdklminbqe9a"
 	flagMaxConnection  = "max_connection"
+	flagMode		   = "mode"
 )
 
 var serverPool *ServerPool
@@ -48,6 +49,7 @@ func Start() {
 	flag.StringVar(&serverList, "backends", "", "Load balanced backends, use commas to separate")
 	flag.IntVar(&port, "port", 3030, "Port to serve")
 
+	flag.String(flagMode, "lite", "gateway run mode")
 	flag.String(flagRPCPort, "443", "tendermint port for websocket")
 	flag.String(flagShard, "443", "shard port for websocket")
 	flag.String(flagETHRPCPort, "443", "eth port for websocket")
@@ -63,36 +65,49 @@ func Start() {
 	_ = viper.BindPFlags(pflag.CommandLine)
 	viper.AutomaticEnv()
 
+	runMode := viper.GetString(flagMode)
+	if runMode == "" {
+		runMode = "lite"
+	}
 
 	dbType := viper.GetString(flagCiStateDBType)
 	if dbType == "" {
 		dbType = "redis"
 	}
-	dbHost := viper.GetString(flagCiStateDBHost)
-	if dbHost == "" {
-		var err error
-		dbHost, err = util.GetDomain()
-		if err != nil {
-			logger.Error("get remote db host failed", "err", err.Error())
-			return
-		}
-	}
-	if dbHost == "" {
-		panic(errors.New(fmt.Sprintf("%s can not be empty", "ci-statedb-host")))
-	}
-	dbTls := viper.GetBool(flagCiStateDBTls)
-	dbPort := viper.GetUint64(flagCiStateDBPort)
-	p := strconv.FormatUint(dbPort, 10)
 
-	switch dbType {
-	case "redis":
-		statedb = "redisdb://" + dbHost + ":" + p
-		if dbTls {
-			statedb += "#tls"
-		}
+	svr := types.ServerSource(nil)
+	switch runMode {
+	case "lite":
+		break
 	default:
-		panic(errors.New(fmt.Sprintf("types of db which is not reids not implement yet")))
+		dbHost := viper.GetString(flagCiStateDBHost)
+		if dbHost == "" {
+			var err error
+			dbHost, err = util.GetDomain()
+			if err != nil {
+				logger.Error("get remote db host failed", "err", err.Error())
+				return
+			}
+		}
+		if dbHost == "" {
+			panic(errors.New(fmt.Sprintf("%s can not be empty", "ci-statedb-host")))
+		}
+
+		dbTls := viper.GetBool(flagCiStateDBTls)
+		dbPort := viper.GetUint64(flagCiStateDBPort)
+		p := strconv.FormatUint(dbPort, 10)
+		switch dbType {
+		case "redis":
+			statedb = "redisdb://" + dbHost + ":" + p
+			if dbTls {
+				statedb += "#tls"
+			}
+		default:
+			panic(errors.New(fmt.Sprintf("types of db which is not reids not implement yet")))
+		}
+		svr = redissource.NewRedisSource(statedb)
 	}
+
 	//logDir = viper.GetString("logdir")
 	port = viper.GetInt("port")
 	tmport := viper.GetString(flagRPCPort)
@@ -113,8 +128,6 @@ func Start() {
 	pubsubRoom.GetPubSubRoom()
 	pubsubRoom.MaxConnections = maxConnections
 
-	svr := redissource.NewRedisSource(statedb)
-
 	serverPool = NewServerPool(backend.NewBackEnd, svr, 10)
 
 	list := strings.Split(serverList, ",")
@@ -134,7 +147,10 @@ func Start() {
 	// start health checking
 	go healthCheck()
 
-	go fetchSharedRoutine()
+	if runMode != "lite" {
+		go fetchSharedRoutine()
+	}
+
 	//check pubsub backends.
 	go checkBackend()
 
