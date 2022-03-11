@@ -33,6 +33,7 @@ const (
 	AppID			   = "hedlzgp1u48kjf50xtcvwdklminbqe9a"
 	flagMaxConnection  = "max_connection"
 	flagMode		   = "mode"
+	flagServerList	   = "server_list"
 )
 
 var serverPool *ServerPool
@@ -45,9 +46,8 @@ func Start() {
 	var port int
 	flag.String("logdir", DefaultLogDir, "log dir")
 	flag.StringVar(&logLevel, "loglevel", "DEBUG", "level for log")
-
-	flag.StringVar(&serverList, "backends", "", "Load balanced backends, use commas to separate")
 	flag.IntVar(&port, "port", 3030, "Port to serve")
+	flag.String(flagServerList, "", "Load balanced backends, use commas to separate")
 
 	flag.String(flagMode, "lite", "gateway run mode")
 	flag.String(flagRPCPort, "443", "tendermint port for websocket")
@@ -129,7 +129,7 @@ func Start() {
 	pubsubRoom.MaxConnections = maxConnections
 
 	serverPool = NewServerPool(backend.NewBackEnd, svr, 10)
-
+	serverList = viper.GetString(flagServerList)
 	list := strings.Split(serverList, ",")
 	serverPool.ConfigServerPool(list)
 
