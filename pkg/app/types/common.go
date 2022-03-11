@@ -104,7 +104,6 @@ func SignCommonTx(from types2.AccAddress, nonce, gas uint64, msgs []types2.Msg, 
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("signature", hex.EncodeToString(signature))
 
 	tx.SetSignature(signature)
 

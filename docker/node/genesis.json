@@ -1,5 +1,5 @@
 {
-  "genesis_time": "2022-01-25T07:32:59.120445Z",
+  "genesis_time": "2022-03-11T04:29:16.113175Z",
   "chain_id": "weelink",
   "initial_height": "1",
   "consensus_params": {
@@ -33,6 +33,128 @@
   ],
   "app_hash": "",
   "app_state": {
+    "staking": {
+      "params": {
+        "unbonding_time": "1209600000000000",
+        "max_validators": 100,
+        "max_entries": 9,
+        "historical_entries": 10000,
+        "bond_denom": "WLK"
+      },
+      "last_total_power": "0",
+      "last_validator_powers": null,
+      "validators": [
+        {
+          "operator_address": "0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c",
+          "pub_key": "CLzpXvktvJL/rvNd+jwH76kQ00Z7hlZSBJmxaayEURY=",
+          "consensus_address": "ACB1DF6106BCA5A54AADE3B5803042301C85CA8F",
+          "jailed": false,
+          "tokens": "800000000",
+          "status": 1,
+          "delegator_shares": "800000000.000000000000000000",
+          "description": {
+            "moniker": "Pf94EMLj",
+            "identity": "",
+            "website": "",
+            "security_contact": "",
+            "details": ""
+          },
+          "unbonding_height": "-1",
+          "unbonding_time": "0001-01-01T00:00:00Z",
+          "bonded_height": "0",
+          "commission": {
+            "commission_rates": {
+              "rate": "0.010000000000000000",
+              "max_rate": "0.400000000000000000",
+              "max_change_rate": "0.050000000000000000"
+            },
+            "update_time": "2022-03-11T04:29:16.195567Z"
+          },
+          "min_self_delegation": "800000000"
+        }
+      ],
+      "delegations": [
+        {
+          "delegator_address": "0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c",
+          "validator_address": "0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c",
+          "shares": "800000000.000000000000000000"
+        }
+      ],
+      "unbonding_delegations": null,
+      "redelegations": null,
+      "exported": false
+    },
+    "supply": {
+      "supply": [
+        {
+          "denom": "WLK",
+          "amount": "100000000000"
+        }
+      ]
+    },
+    "vm": {
+      "accounts": [],
+      "txs_logs": [],
+      "chain_config": {
+        "homestead_block": "0",
+        "dao_fork_block": "0",
+        "dao_fork_support": true,
+        "eip150_block": "0",
+        "eip150_hash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "eip155_block": "0",
+        "eip158_block": "0",
+        "byzantium_block": "0",
+        "constantinople_block": "0",
+        "petersburg_block": "0",
+        "istanbul_block": "0",
+        "muir_glacier_block": "-1",
+        "yoloV1_block": "-1",
+        "ewasm_block": "-1"
+      },
+      "params": {
+        "evm_denom": "WLK"
+      }
+    },
+    "transfer": {
+      "port_id": "transfer",
+      "denom_traces": [],
+      "params": {
+        "send_enabled": true,
+        "receive_enabled": true
+      }
+    },
+    "auth": {
+      "params": {
+        "max_memo_characters": "256",
+        "tx_size_cost_per_byte": "10",
+        "sig_verify_cost_ed_25519": "590",
+        "sig_verify_cost_secp_256_k_1": "1000"
+      }
+    },
+    "order": {
+      "params": {
+        "orderBook": {
+          "lists": [
+            {
+              "name": "",
+              "height": "0"
+            }
+          ],
+          "current": {
+            "index": "0",
+            "state": "Init"
+          },
+          "actions": null
+        }
+      }
+    },
+    "preStaking": {
+      "staking_token": "",
+      "owner": "",
+      "records": {
+        "prestaking_record": null
+      }
+    },
     "distribution": {
       "params": {
         "community_tax": "0.020000000000000000",
@@ -74,13 +196,16 @@
       "delegator_starting_infos": null,
       "validator_slash_events": null
     },
-    "supply": {
-      "supply": [
-        {
-          "denom": "WLK",
-          "amount": "100000000000"
-        }
-      ]
+    "slashing": {
+      "params": {
+        "signed_blocks_window": "100",
+        "min_signed_per_window": "0.500000000000000000",
+        "downtime_jail_duration": "600000000000",
+        "slash_fraction_double_sign": "0.050000000000000000",
+        "slash_fraction_downtime": "0.010000000000000000"
+      },
+      "signing_infos": [],
+      "missed_blocks": []
     },
     "ibc": {
       "client_genesis": {
@@ -106,28 +231,6 @@
         "send_sequences": [],
         "recv_sequences": [],
         "ack_sequences": []
-      }
-    },
-    "mint": {
-      "minter": {
-        "inflation": "0.130000000000000000",
-        "annual_provisions": "0.010000000000000000"
-      },
-      "params": {
-        "mint_denom": "WLK",
-        "inflation_rate_change": "0.130000000000000000",
-        "inflation_max": "0.200000000000000000",
-        "inflation_min": "0.070000000000000000",
-        "goal_bonded": "0.670000000000000000",
-        "blocks_per_year": "6311520"
-      }
-    },
-    "transfer": {
-      "port_id": "transfer",
-      "denom_traces": [],
-      "params": {
-        "send_enabled": true,
-        "receive_enabled": true
       }
     },
     "gravity": {
@@ -156,23 +259,18 @@
         }
       ]
     },
-    "slashing": {
-      "params": {
-        "signed_blocks_window": "100",
-        "min_signed_per_window": "0.500000000000000000",
-        "downtime_jail_duration": "600000000000",
-        "slash_fraction_double_sign": "0.050000000000000000",
-        "slash_fraction_downtime": "0.010000000000000000"
+    "mint": {
+      "minter": {
+        "inflation": "0.130000000000000000",
+        "annual_provisions": "0.010000000000000000"
       },
-      "signing_infos": [],
-      "missed_blocks": []
-    },
-    "preStaking": {
-      "staking_token": "",
-      "owner": "",
-      "records": {
-        "prestaking_record": null,
-        "del_staking_records": null
+      "params": {
+        "mint_denom": "WLK",
+        "inflation_rate_change": "0.130000000000000000",
+        "inflation_max": "0.200000000000000000",
+        "inflation_min": "0.070000000000000000",
+        "goal_bonded": "0.670000000000000000",
+        "blocks_per_year": "6311520"
       }
     },
     "accounts": [
@@ -195,105 +293,6 @@
           "is_module": false
         }
       }
-    ],
-    "staking": {
-      "params": {
-        "unbonding_time": "1209600000000000",
-        "max_validators": 100,
-        "max_entries": 9,
-        "historical_entries": 10000,
-        "bond_denom": "WLK"
-      },
-      "last_total_power": "0",
-      "last_validator_powers": null,
-      "validators": [
-        {
-          "operator_address": "0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c",
-          "pub_key": "CLzpXvktvJL/rvNd+jwH76kQ00Z7hlZSBJmxaayEURY=",
-          "consensus_address": "ACB1DF6106BCA5A54AADE3B5803042301C85CA8F",
-          "jailed": false,
-          "tokens": "800000000",
-          "status": 1,
-          "delegator_shares": "800000000.000000000000000000",
-          "description": {
-            "moniker": "Q5RtenzS",
-            "identity": "",
-            "website": "",
-            "security_contact": "",
-            "details": ""
-          },
-          "unbonding_height": "-1",
-          "unbonding_time": "0001-01-01T00:00:00Z",
-          "bonded_height": "0",
-          "commission": {
-            "commission_rates": {
-              "rate": "0.010000000000000000",
-              "max_rate": "0.400000000000000000",
-              "max_change_rate": "0.050000000000000000"
-            },
-            "update_time": "2022-01-25T07:32:59.202541Z"
-          },
-          "min_self_delegation": "800000000"
-        }
-      ],
-      "delegations": [
-        {
-          "delegator_address": "0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c",
-          "validator_address": "0x3F43E75Aaba2c2fD6E227C10C6E7DC125A93DE3c",
-          "shares": "800000000.000000000000000000"
-        }
-      ],
-      "unbonding_delegations": null,
-      "redelegations": null,
-      "exported": false
-    },
-    "vm": {
-      "accounts": [],
-      "txs_logs": [],
-      "chain_config": {
-        "homestead_block": "0",
-        "dao_fork_block": "0",
-        "dao_fork_support": true,
-        "eip150_block": "0",
-        "eip150_hash": "0x0000000000000000000000000000000000000000000000000000000000000000",
-        "eip155_block": "0",
-        "eip158_block": "0",
-        "byzantium_block": "0",
-        "constantinople_block": "0",
-        "petersburg_block": "0",
-        "istanbul_block": "0",
-        "muir_glacier_block": "-1",
-        "yoloV1_block": "-1",
-        "ewasm_block": "-1"
-      },
-      "params": {
-        "evm_denom": "WLK"
-      }
-    },
-    "auth": {
-      "params": {
-        "max_memo_characters": "256",
-        "tx_size_cost_per_byte": "10",
-        "sig_verify_cost_ed_25519": "590",
-        "sig_verify_cost_secp_256_k_1": "1000"
-      }
-    },
-    "order": {
-      "params": {
-        "orderBook": {
-          "lists": [
-            {
-              "name": "",
-              "height": "0"
-            }
-          ],
-          "current": {
-            "index": "0",
-            "state": "Init"
-          },
-          "actions": null
-        }
-      }
-    }
+    ]
   }
 }

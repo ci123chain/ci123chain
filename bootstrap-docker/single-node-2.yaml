@@ -18,7 +18,7 @@ services:
     depends_on:
       - raftleveldb2
     environment:
-      CI_MASTER_DOMAIN: 192.168.31.157
+      CI_MASTER_DOMAIN: 192.168.31.173
       CI_MASTER_PORT: 1317
 
       CI_CHAIN_ID: weelink
