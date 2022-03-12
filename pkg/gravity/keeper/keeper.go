@@ -368,16 +368,16 @@ func (k Keeper) GetBatchConfirmByNonceAndTokenContract(ctx sdk.Context, nonce ui
 /////////////////////////////
 
 // SetOrchestratorValidator sets the Orchestrator key for a given validator
-func (k Keeper) SetOrchestratorValidator(ctx sdk.Context, val sdk.AccAddress, orch sdk.AccAddress) {
-	store := ctx.KVStore(k.storeKey)
-	store.Set(types.GetOrchestratorAddressKey(orch), val.Bytes())
-}
+//func (k Keeper) SetOrchestratorValidator(ctx sdk.Context, val sdk.AccAddress, orch sdk.AccAddress) {
+//	store := ctx.KVStore(k.storeKey)
+//	store.Set(types.GetOrchestratorAddressKey(orch), val.Bytes())
+//}
 
 // GetOrchestratorValidator returns the validator key associated with an orchestrator key
-func (k Keeper) GetOrchestratorValidator(ctx sdk.Context, orch sdk.AccAddress) sdk.AccAddress {
-	store := ctx.KVStore(k.storeKey)
-	return sdk.ToAccAddress(store.Get(types.GetOrchestratorAddressKey(orch)))
-}
+//func (k Keeper) GetOrchestratorValidator(ctx sdk.Context, orch sdk.AccAddress) sdk.AccAddress {
+//	store := ctx.KVStore(k.storeKey)
+//	return sdk.ToAccAddress(store.Get(types.GetOrchestratorAddressKey(orch)))
+//}
 
 /////////////////////////////
 //       ETH ADDRESS       //
@@ -419,14 +419,7 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context) *types.Valset {
 		totalPower += p
 
 		bridgeValidators[i] = &types.BridgeValidator{Power: p}
-		if ethAddr := k.GetEthAddress(ctx, val); ethAddr != "" {
-			bridgeValidators[i].EthereumAddress = ethAddr
-		} else {
-			// todo move to set method
-			bridgeValidators[i].EthereumAddress = val.String()
-			k.SetEthAddress(ctx, val, val.String())
-			k.SetOrchestratorValidator(ctx, val, val)
-		}
+		bridgeValidators[i].EthereumAddress = val.String()
 	}
 	// normalize power values
 	for i := range bridgeValidators {

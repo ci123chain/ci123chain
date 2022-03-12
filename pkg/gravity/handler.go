@@ -16,9 +16,9 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 		switch msg := msg.(type) {
-		case *types.MsgSetOrchestratorAddress:
-			res, err := msgServer.SetOrchestratorAddress(sdk.WrapSDKContext(ctx), msg)
-			return sdk.WrapServiceResult(ctx, res, err)
+		//case *types.MsgSetOrchestratorAddress:
+		//	res, err := msgServer.SetOrchestratorAddress(sdk.WrapSDKContext(ctx), msg)
+		//	return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgValsetConfirm:
 			res, err := msgServer.ValsetConfirm(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
