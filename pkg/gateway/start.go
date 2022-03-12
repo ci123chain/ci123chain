@@ -203,7 +203,7 @@ func healthCheckHandlerFn(w http.ResponseWriter, _ *http.Request) {
 	}
 	resultResponse := client.HealthcheckResponse{
 		State: 200,
-		Data:  "all backends health or no backends now",
+		Data:  serverPool.backends,
 	}
 	resultByte, _ := json.Marshal(resultResponse)
 	w.Header().Set("Content-Type", "application/json")

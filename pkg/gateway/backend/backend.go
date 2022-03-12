@@ -8,7 +8,7 @@ import (
 
 // Backend holds the data about a server
 type Backend struct {
-	url          *url.URL
+	Url          *url.URL
 	Alive        bool
 	mux          sync.RWMutex
 	retry 		 int
@@ -35,7 +35,7 @@ func (b *Backend) IsAlive() (alive bool) {
 }
 
 func (b *Backend) URL() *url.URL{
-	return b.url
+	return b.Url
 }
 
 func (b *Backend) FailTime() int {
@@ -44,7 +44,7 @@ func (b *Backend) FailTime() int {
 
 func NewBackEnd(url *url.URL, alive bool) types.Instance {
 	return &Backend{
-		url:          url,
+		Url:          url,
 		Alive:        alive,
 		retry: 		  0,
 	}
