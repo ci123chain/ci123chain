@@ -241,9 +241,10 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer,
 
 	c.PrestakingKeeper = prestaking.NewKeeper(cdc, keys[prestaking.StoreKey], c.AccountKeeper, c.SupplyKeeper, c.StakingKeeper, c.UpgradeKeeper, c.GetSubspace(prestaking.ModuleName),cdb)
 
+	c.UpgradeKeeper = upgrade.NewKeeper(nil, keys[upgrade.StoreKey], cdc, c.GravityKeeper)
+
 	c.RegistryKeeper = registry.NewKeeper(cdc, keys[registry.StoreKey], c.SupplyKeeper, c.UpgradeKeeper)
 
-	c.UpgradeKeeper = upgrade.NewKeeper(nil, keys[upgrade.StoreKey], cdc, c.GravityKeeper)
 
 	// Create Transfer Keepers
 	ibcTransferKeeper := ibctransferkeeper.NewKeeper(
