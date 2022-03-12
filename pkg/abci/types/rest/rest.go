@@ -149,6 +149,11 @@ func PostProcessResponseBare(w http.ResponseWriter, ctx context.Context, body in
 				Message: b.Log,
 			}
 		}
+	case []byte:
+		res = Response{
+			Ret:     1,
+			Data:    body.([]byte),
+		}
 	default:
 		dataJson, _ := json.Marshal(body)
 		res = Response{

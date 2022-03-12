@@ -172,5 +172,5 @@ func (k Keeper) IterateERC721ToDenom(ctx sdk.Context, cb func([]byte, *types.ERC
 }
 
 func (k Keeper) IsWlkToken(token string) bool {
-	return strings.EqualFold(token, sdk.DefaultBondDenom)
+	return strings.EqualFold(token, sdk.ChainCoinDenom)
 }

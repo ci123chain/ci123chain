@@ -174,8 +174,8 @@ func (a AttestationHandler) validateAndSetWRC20(ctx sdk.Context, denom, name, sy
 	// todo validate denom from erc20
 	if a.keeper.IsWlkToken(denom){
 		// chain coin
-		if decimals != 0 {
-			return types.ErrDenomDecimal.Wrapf("decimals for weelink expect zero, got %d", decimals)
+		if decimals != 18 {
+			return types.ErrDenomDecimal.Wrapf("decimals for weelink expect 18, got %d", decimals)
 		}
 	} else {
 		//

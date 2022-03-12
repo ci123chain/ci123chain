@@ -58,7 +58,7 @@ func relayBatches(
 
 		hash := types.EncodeTxBatchConfirmHashed(gravityId, batch)
 		if _, err := currentValSet.OrderSigs(hash, confirm); err != nil{
-			lg.Error("Batch can not be submitted yet, waiting for more signatures")
+			lg.Info("Batch can not be submitted yet, waiting for more signatures")
 			return
 		}
 
