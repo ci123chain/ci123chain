@@ -34,6 +34,9 @@ const (
 	flagMaxConnection  = "max_connection"
 	flagMode		   = "mode"
 	flagServerList	   = "server_list"
+
+
+	ModeValueLight  	= "light"
 )
 
 var serverPool *ServerPool
@@ -49,7 +52,7 @@ func Start() {
 	flag.IntVar(&port, "port", 3030, "Port to serve")
 	flag.String(flagServerList, "", "Load balanced backends, use commas to separate")
 
-	flag.String(flagMode, "lite", "gateway run mode")
+	flag.String(flagMode, ModeValueLight, "gateway run mode")
 	flag.String(flagRPCPort, "443", "tendermint port for websocket")
 	flag.String(flagShard, "443", "shard port for websocket")
 	flag.String(flagETHRPCPort, "443", "eth port for websocket")
@@ -67,7 +70,7 @@ func Start() {
 
 	runMode := viper.GetString(flagMode)
 	if runMode == "" {
-		runMode = "lite"
+		runMode = ModeValueLight
 	}
 
 	dbType := viper.GetString(flagCiStateDBType)
@@ -77,7 +80,7 @@ func Start() {
 
 	svr := types.ServerSource(nil)
 	switch runMode {
-	case "lite":
+	case ModeValueLight:
 		break
 	default:
 		dbHost := viper.GetString(flagCiStateDBHost)
@@ -147,7 +150,7 @@ func Start() {
 	// start health checking
 	go healthCheck()
 
-	if runMode != "lite" {
+	if runMode != ModeValueLight {
 		go fetchSharedRoutine()
 	}
 
@@ -200,7 +203,7 @@ func healthCheckHandlerFn(w http.ResponseWriter, _ *http.Request) {
 	}
 	resultResponse := client.HealthcheckResponse{
 		State: 200,
-		Data:  "all backends health or no backends now",
+		Data:  serverPool.backends,
 	}
 	resultByte, _ := json.Marshal(resultResponse)
 	w.Header().Set("Content-Type", "application/json")

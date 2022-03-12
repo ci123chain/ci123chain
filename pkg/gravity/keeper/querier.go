@@ -537,10 +537,13 @@ func queryDenomToERC20(ctx sdk.Context, denom string, keeper Keeper) ([]byte, er
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
+	if !cosmos_originated {
+		return nil, sdkerrors.Wrap(types.ErrQueryERC20, "erc20 not found")
+	}
 	var response types.QueryDenomToERC20Response
 	response.CosmosOriginated = cosmos_originated
 	response.Erc20 = erc20
-	bytes, err := codec.MarshalJSONIndent(types.GravityCodec, response)
+	bytes, err := types.GravityCodec.MarshalJSON(response)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	} else {
@@ -550,10 +553,13 @@ func queryDenomToERC20(ctx sdk.Context, denom string, keeper Keeper) ([]byte, er
 
 func queryERC20ToDenom(ctx sdk.Context, ERC20 string, keeper Keeper) ([]byte, error) {
 	cosmos_originated, denom := keeper.ERC20ToDenomLookup(ctx, ERC20)
+	if !cosmos_originated {
+		return nil, sdkerrors.Wrap(types.ErrQueryDenom, "denom not found")
+	}
 	var response types.QueryERC20ToDenomResponse
 	response.CosmosOriginated = cosmos_originated
 	response.Denom = denom
-	bytes, err := codec.MarshalJSONIndent(types.GravityCodec, response)
+	bytes, err := types.GravityCodec.MarshalJSON(response)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	} else {
@@ -563,13 +569,16 @@ func queryERC20ToDenom(ctx sdk.Context, ERC20 string, keeper Keeper) ([]byte, er
 
 func queryDenomToERC721(ctx sdk.Context, denom string, keeper Keeper) ([]byte, error) {
 	cosmos_originated, erc721, err := keeper.DenomToERC721Lookup(ctx, denom)
+	if !cosmos_originated {
+		return nil, sdkerrors.Wrap(types.ErrQueryDenom, "721 not found")
+	}
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
 	var response types.QueryDenomToERC721Response
 	response.CosmosOriginated = cosmos_originated
 	response.Erc721 = erc721
-	bytes, err := codec.MarshalJSONIndent(types.GravityCodec, response)
+	bytes, err := types.GravityCodec.MarshalJSON(response)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	} else {
@@ -579,10 +588,13 @@ func queryDenomToERC721(ctx sdk.Context, denom string, keeper Keeper) ([]byte, e
 
 func queryERC721ToDenom(ctx sdk.Context, ERC20 string, keeper Keeper) ([]byte, error) {
 	cosmos_originated, denom := keeper.ERC721ToDenomLookup(ctx, ERC20)
+	if !cosmos_originated {
+		return nil, sdkerrors.Wrap(types.ErrQueryDenom, "denom721 not found")
+	}
 	var response types.QueryERC721ToDenomResponse
 	response.CosmosOriginated = cosmos_originated
 	response.Denom = denom
-	bytes, err := codec.MarshalJSONIndent(types.GravityCodec, response)
+	bytes, err := types.GravityCodec.MarshalJSON(response)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	} else {

@@ -25,4 +25,6 @@ var (
 	ErrQueryDenom 			   = sdkerrors.Register(ModuleName, 16, "denom query failed")
 	ErrQueryDenomMismatch 	   = sdkerrors.Register(ModuleName, 17, "denom query mismatch")
 
+	ErrQueryERC20 			   = sdkerrors.Register(ModuleName, 18, "erc20 query failed")
+
 )

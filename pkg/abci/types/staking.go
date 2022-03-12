@@ -21,7 +21,7 @@ func TokensFromConsensusPower(power int64) Int {
 const (
 
 	// default bond denomination
-	DefaultBondDenom = "stake"
+	DefaultBondDenom = "WLK"
 
 	ValidatorUpdateDelay int64 = 1
 
