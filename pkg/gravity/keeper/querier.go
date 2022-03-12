@@ -617,11 +617,7 @@ func queryPendingSendToEth(ctx sdk.Context, senderAddr string, k Keeper) ([]byte
 
 func queryLastEventNonce(ctx sdk.Context, address string, k Keeper) ([]byte, error) {
 	addr := sdk.HexToAddress(address)
-	validator := k.GetOrchestratorValidator(ctx, addr)
-	if validator.Empty() {
-		return nil, sdkerrors.Wrap(types.ErrUnknown, "address")
-	}
-	lastEventNonce := k.GetLastEventNonceByValidator(ctx, validator)
+	lastEventNonce := k.GetLastEventNonceByValidator(ctx, addr)
 	x := types.UInt64Bytes(lastEventNonce)
 	return x, nil
 }

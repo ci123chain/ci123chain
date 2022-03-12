@@ -1649,7 +1649,7 @@ type MsgServer interface {
 	ERC721DeployedClaim(context.Context, *MsgERC721DeployedClaim) (*MsgERC721DeployedClaimResponse, error)
 	LogicCallExecutedClaim(context.Context, *MsgLogicCallExecutedClaim) (*MsgLogicCallExecutedClaimResponse, error)
 	ValsetConfirmNonceClaim(context.Context, *MsgValsetConfirmNonceClaim) (*MsgValsetConfirmNonceClaimResponse, error)
-	SetOrchestratorAddress(context.Context, *MsgSetOrchestratorAddress) (*MsgSetOrchestratorAddressResponse, error)
+	//SetOrchestratorAddress(context.Context, *MsgSetOrchestratorAddress) (*MsgSetOrchestratorAddressResponse, error)
 	CancelSendToEth(context.Context, *MsgCancelSendToEth) (*MsgCancelSendToEthResponse, error)
 }
 
@@ -1869,24 +1869,6 @@ func _Msg_LogicCallExecutedClaim_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Msg_SetOrchestratorAddress_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MsgSetOrchestratorAddress)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MsgServer).SetOrchestratorAddress(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/gravity.v1.Msg/SetOrchestratorAddress",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgServer).SetOrchestratorAddress(ctx, req.(*MsgSetOrchestratorAddress))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _Msg_CancelSendToEth_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(MsgCancelSendToEth)
 	if err := dec(in); err != nil {
@@ -1944,10 +1926,6 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "LogicCallExecutedClaim",
 			Handler:    _Msg_LogicCallExecutedClaim_Handler,
-		},
-		{
-			MethodName: "SetOrchestratorAddress",
-			Handler:    _Msg_SetOrchestratorAddress_Handler,
 		},
 		{
 			MethodName: "CancelSendToEth",

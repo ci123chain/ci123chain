@@ -14,7 +14,7 @@ import (
 
 // TODO-JT: carefully look at atomicity of this function
 func (k Keeper) Attest(ctx sdk.Context, claim types.EthereumClaim, anyClaim *codectypes.Any) (*types.Attestation, error) {
-	valAddr := k.GetOrchestratorValidator(ctx, claim.GetClaimer())
+	valAddr := claim.GetClaimer()
 	if valAddr.Empty() {
 		panic("Could not find ValAddr for delegate key, should be checked by now")
 	}
