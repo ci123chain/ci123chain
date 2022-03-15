@@ -390,11 +390,8 @@ func (k msgServer) LogicCallExecutedClaim(c context.Context, msg *types.MsgLogic
 
 func (k msgServer) CancelSendToEth(c context.Context, msg *types.MsgCancelSendToEth) (*types.MsgCancelSendToEthResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	sender, err := sdk.AccAddressFromBech32(msg.Sender)
-	if err != nil {
-		return nil, err
-	}
-	err = k.RemoveFromOutgoingPoolAndRefund(ctx, msg.TransactionId, sender)
+	sender := sdk.HexToAddress(msg.Sender)
+	err := k.RemoveFromOutgoingPoolAndRefund(ctx, msg.TransactionId, sender)
 	if err != nil {
 		return nil, err
 	}

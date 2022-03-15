@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/ci123chain/ci123chain/pkg/abci/store"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
@@ -134,6 +135,10 @@ func (k Keeper) RemoveFromOutgoingPoolAndRefund(ctx sdk.Context, txId uint64, se
 		return sdkerrors.Wrapf(types.ErrInvalid, "Id %d is in a batch", txId)
 	}
 
+	if strings.ToLower(tx.Sender) != strings.ToLower(sender.String()) {
+		return sdkerrors.Wrapf(types.ErrInvalid, "Msg.Sender not Tx.Sender %d", txId)
+	}
+
 	// An inconsistent entry should never enter the store, but this is the ideal place to exploit
 	// it such a bug if it did ever occur, so we should double check to be really sure
 	if tx.Erc20Fee.Contract != tx.Erc20Token.Contract {
@@ -148,27 +153,25 @@ func (k Keeper) RemoveFromOutgoingPoolAndRefund(ctx sdk.Context, txId uint64, se
 
 	// reissue the amount and the fee
 
-	totalToRefund := tx.Erc20Token.GravityCoin()
-	totalToRefund.Amount = totalToRefund.Amount.Add(tx.Erc20Fee.Amount)
-	totalToRefundCoins := sdk.NewCoins(totalToRefund)
-
-	isCosmosOriginated, _ := k.ERC20ToDenomLookup(ctx, tx.Erc20Token.Contract)
+	totalToRefund, _ := k.GetMapedWlkToken(ctx, tx.Erc20Token.Contract)
+	feeToRefundCoins := sdk.NewCoins(sdk.NewChainCoin(tx.Erc20Fee.Amount))
+	//totalToRefundCoins := sdk.NewCoins(totalToRefund)
+	//
+	//isCosmosOriginated, _ := k.ERC20ToDenomLookup(ctx, tx.Erc20Token.Contract)
 
 	// If it is a cosmos-originated the coins are in the module (see AddToOutgoingPool) so we can just take them out
-	if isCosmosOriginated {
-		if err := k.SupplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, sender, totalToRefundCoins); err != nil {
+	//if isCosmosOriginated {
+	//	if err := k.SupplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, sender, totalToRefundCoins); err != nil {
+	//		return err
+	//	}
+	//} else {
+		if err := k.SupplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, sender, feeToRefundCoins); err != nil {
 			return err
 		}
-	} else {
-		// If it is an ethereum-originated asset we have to mint it (see Handle in attestation_handler.go)
-		// mint coins in module for prep to send
-		if err := k.SupplyKeeper.MintCoins(ctx, types.ModuleName, totalToRefundCoins); err != nil {
-			return sdkerrors.Wrapf(err, "mint vouchers coins: %s", totalToRefundCoins)
-		}
-		if err = k.SupplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, sender, totalToRefundCoins); err != nil {
+		if err = k.SupplyKeeper.SendCoinsFromModuleToEVMAccount(ctx, sender, types.ModuleName, sdk.HexToAddress(totalToRefund), tx.Erc20Token.Amount.BigInt()); err != nil {
 			return sdkerrors.Wrap(err, "transfer vouchers")
 		}
-	}
+	//}
 
 	poolEvent := sdk.NewEvent(
 		types.EventTypeBridgeWithdrawCanceled,
@@ -245,7 +248,7 @@ func (k Keeper) getPoolEntry(ctx sdk.Context, id uint64) (*types.OutgoingTransfe
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.GetOutgoingTxPoolKey(id))
 	if bz == nil {
-		return nil, types.ErrUnknown
+		return nil, types.ErrUnknown.Wrap("Can not find this txid")
 	}
 	var r types.OutgoingTransferTx
 	k.cdc.UnmarshalBinaryBare(bz, &r)

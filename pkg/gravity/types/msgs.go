@@ -14,6 +14,7 @@ var (
 	_ sdk.Msg = &MsgSetOrchestratorAddress{}
 	_ sdk.Msg = &MsgValsetConfirm{}
 	_ sdk.Msg = &MsgSendToEth{}
+	_ sdk.Msg = &MsgCancelSendToEth{}
 	_ sdk.Msg = &MsgRequestBatch{}
 	_ sdk.Msg = &MsgSend721ToEth{}
 	_ sdk.Msg = &MsgRequest721Batch{}
