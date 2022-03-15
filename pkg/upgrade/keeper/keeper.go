@@ -38,6 +38,10 @@ func NewKeeper(skipUpgradeHeights map[int64]bool, storeKey sdk.StoreKey, cdc *co
 		k.GravityKeeper.Reset(ctx)
 		k.Logger(ctx).Info("Upgrade successful:", "proposal", "upgrade v1.6.42")
 	})
+	k.SetUpgradeHandler("UpgradeV1.6.43", func(ctx sdk.Context, info []byte) {
+		k.GravityKeeper.Reset(ctx)
+		k.Logger(ctx).Info("Upgrade successful:", "proposal", "upgrade v1.6.43")
+	})
 	return k
 }
 
