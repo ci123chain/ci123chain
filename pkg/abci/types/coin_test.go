@@ -18,6 +18,11 @@ func TestNewUInt64Coin(t *testing.T) {
 	require.Equal(t, Coin{Amount:NewInt(100)}, c)
 }
 
+func TestNewUInt64CoinInvalid(t *testing.T)  {
+	c := NewUInt64Coin(ChainCoinDenom, 14050478933725151232)
+	require.Equal(t, true, c.IsValid())
+}
+
 func TestCoin_String(t *testing.T) {
 
 	c := NewChainCoin(NewInt(0))

@@ -33,7 +33,7 @@ func UpdateDeadlineRecord(ctx sdk.Context, ps keeper.PreStakingKeeper) {
 				if err != nil {
 					panic(err)
 				}
-				moduleAcc := ps.SupplyKeeper.GetModuleAccount(ctx, types.DefaultCodespace)
+				moduleAcc := ps.SupplyKeeper.GetModuleAccount(ctx, types.ModuleName)
 				err = ps.AccountKeeper.Transfer(ctx, moduleAcc.GetAddress(), sv.Delegator, sdk.NewCoins(sdk.NewChainCoin(amount)))
 				if err != nil {
 					panic(err)
