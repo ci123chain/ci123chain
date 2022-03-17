@@ -46,8 +46,11 @@ func (k Keeper) BuildOutgoingTXBatch(ctx sdk.Context, contractAddress string, ma
 	}
 
 	selectedTx, err := k.pickUnbatchedTX(ctx, contractAddress, maxElements)
-	if len(selectedTx) == 0 || err != nil {
+	if err != nil {
 		return nil, err
+	}
+	if len(selectedTx) == 0 {
+		return nil, types.ErrNoTxToRelay
 	}
 	nextID := k.autoIncrementID(ctx, types.KeyLastOutgoingBatchID)
 	batch := &types.OutgoingTxBatch{
