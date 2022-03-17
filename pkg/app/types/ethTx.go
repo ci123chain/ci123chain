@@ -282,7 +282,7 @@ func (msg *MsgEthereumTx) VerifySig(chainID *big.Int) (ethcmn.Address, error) {
 
 // GetGas implements the GasTx interface. It returns the GasLimit of the transaction.
 func (msg MsgEthereumTx) GetGas() uint64 {
-	total := msg.Data.GasLimit * msg.Data.Price.Uint64()
+	total := msg.Data.GasLimit
 	return total
 }
 

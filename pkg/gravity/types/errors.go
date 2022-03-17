@@ -26,5 +26,6 @@ var (
 	ErrQueryDenomMismatch 	   = sdkerrors.Register(ModuleName, 17, "denom query mismatch")
 
 	ErrQueryERC20 			   = sdkerrors.Register(ModuleName, 18, "erc20 query failed")
+	ErrNoTxToRelay 			   = sdkerrors.Register(ModuleName, 19, "no such tx to request batch")
 
 )

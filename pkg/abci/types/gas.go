@@ -1,7 +1,6 @@
 package types
 
 import (
-	"fmt"
 	"math"
 )
 // Gas consumption descriptors.
@@ -21,6 +20,7 @@ var (
 	cachedKVGasConfig        = KVGasConfig()
 	cachedTransientGasConfig = TransientGasConfig()
 )
+
 
 // Gas measured by the SDK
 type Gas = uint64
@@ -45,6 +45,22 @@ type GasMeter interface {
 	GasConsumed() Gas
 	ConsumeGas(amount Gas, descriptor string)
 }
+
+
+
+var gasPrice Gas
+func SetGasPrice(gp Gas) {
+	gasPrice = gp
+}
+
+func GetGasPrice() Gas {
+	return gasPrice
+}
+
+func CalculateGas(gas Gas) Int {
+	return NewIntFromUint64(gas).Mul(NewIntFromUint64(gasPrice))
+}
+
 
 type basicGasMeter struct {
 	limit    Gas
@@ -72,33 +88,12 @@ func addUint64Overflow(a, b uint64) (uint64, bool) {
 	return a + b, false
 }
 
-var gasPrice Gas
-func SetGasPrice(gp Gas) {
-	gasPrice = gp
-}
-
-func GetGasPrice() Gas {
-	return gasPrice
-}
-
-func calculateGas(gas Gas) Gas{
-	return gas * gasPrice
-}
-
-var DebugHeight bool
-
 func (g *basicGasMeter) ConsumeGas(amount Gas, descriptor string) {
-	if DebugHeight {
-		fmt.Println("------ConsumeGas ", amount, " desc ", descriptor)
-	}
 	var overflow bool
-	//amount /= unit
-	// TODO: Should we set the consumed field after overflow checking?
-	g.consumed, overflow = addUint64Overflow(g.consumed, calculateGas(amount))
+	g.consumed, overflow = addUint64Overflow(g.consumed, amount)
 	if overflow {
 		panic(ErrorGasOverflow{descriptor})
 	}
-
 	if g.consumed > g.limit {
 		panic(ErrorOutOfGas{descriptor})
 	}
@@ -123,7 +118,7 @@ func (g *infiniteGasMeter) ConsumeGas(amount Gas, descriptor string) {
 	var overflow bool
 
 	// TODO: Should we set the consumed field after overflow checking?
-	g.consumed, overflow = addUint64Overflow(g.consumed, calculateGas(amount))
+	g.consumed, overflow = addUint64Overflow(g.consumed, amount)
 	if overflow {
 		panic(ErrorGasOverflow{descriptor})
 	}

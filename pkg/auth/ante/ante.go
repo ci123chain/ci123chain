@@ -1,9 +1,9 @@
 package ante
 
 import (
+	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/account"
-	"github.com/ci123chain/ci123chain/pkg/account/exported"
 	types2 "github.com/ci123chain/ci123chain/pkg/app/types"
 	"github.com/ci123chain/ci123chain/pkg/auth"
 	"github.com/ci123chain/ci123chain/pkg/cryptosuite"
@@ -14,7 +14,6 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/util"
 )
 const (
-	Price uint64 = 1
 	GasSimulateCost sdk.Gas = 200
 )
 var simSecp256k1Sig [65]byte
@@ -70,63 +69,26 @@ func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, sk su
 			}
 		}
 		gas := tx.GetGas()//用户期望的gas值 g.limit
+		newCtx = SetGasMeter(simulate, ctx, gas)//设置为GasMeter的gasLimit,成为用户可承受的gas上限.
+
 		//检查是否足够支付gas limit, 并预先扣除
-		if acc.GetCoins().AmountOf(sdk.ChainCoinDenom).LT(sdk.NewIntFromBigInt(big.NewInt(int64(gas)))) {
-			return newCtx, sdk.Result{}, sdkerrors.ErrInsufficientFunds,true
-		}
-		err = DeductFees(acc,sdk.NewUInt64Coin(sdk.ChainCoinDenom, gas),ak,ctx)
-		if err != nil {
+		gasTotal := sdk.CalculateGas(gas)
+
+		if err := sk.SendCoinsFromAccountToModule(newCtx, signer, auth.FeeCollectorName, sdk.NewCoins(sdk.NewChainCoin(gasTotal))); err != nil {
 			return newCtx, sdk.Result{}, err, true
 		}
-		newCtx = SetGasMeter(simulate, ctx, gas)//设置为GasMeter的gasLimit,成为用户可承受的gas上限.
-		//pms.TxSizeCostPerByte*sdk.Gas(len(newCtx.TxBytes()))
-		
-		// AnteHandlers must have their own defer/recover in order for the BaseApp
-		// to know how much gas was used! This is because the GasMeter is created in
-		// the AnteHandler, but if it panics the context won't be set properly in
-		// runTx's recover call.
-		/*defer func() {
-			if r := recover(); r != nil {
-				switch rType := r.(types) {
-				case sdk.ErrorOutOfGas:
-					log := fmt.Sprintf(
-						"out of gas in location: %v; gasWanted: %d, gasUsed: %d",
-						rType.Descriptor, gas, newCtx.GasMeter().GasConsumed(),
-					)
-					res = sdk.ErrOutOfGas(log).Result()
+		fmt.Println("Pay Fees: ", gasTotal.String())
 
-					res.GasWanted = gas
-					res.GasUsed = newCtx.GasMeter().GasConsumed()
-					fmt.Println("-------- last ----------")
-					fmt.Println(newCtx.GasMeter().GasConsumed())
-					abort = true
-				default:
-					panic(r)
-				}
-			}
-		}()*/
-		//计算fee
-		gasPrice := Price
-		newCtx.GasMeter().ConsumeGas(params.TxSizeCostPerByte*sdk.Gas(len(newCtx.TxBytes())), "txSize")
-		fee := newCtx.GasMeter().GasConsumed() * gasPrice
-		getFee := sdk.NewUInt64Coin(sdk.ChainCoinDenom, fee)
 
-		//存储奖励金到feeCollector Module账户
-		feeCollectorModuleAccount := sk.GetModuleAccount(ctx, auth.FeeCollectorName)
-		newFee := feeCollectorModuleAccount.GetCoins().Add(sdk.NewCoins(getFee))
-		err = feeCollectorModuleAccount.SetCoins(newFee)
+		//Calculate fee of tx size
+		newCtx.GasMeter().ConsumeGas(params.TxSizeCostPerByte * sdk.Gas(len(newCtx.TxBytes())), "txSize")
 
-		if err != nil {
-			return newCtx, sdk.Result{}, sdkerrors.ErrModuleAccountSetCoinFailed, true
-		}
-		ak.SetAccount(ctx, feeCollectorModuleAccount)
-		//fck.AddCollectedFees(newCtx, getFee)
-
-		//account sequence + 1
+		// account sequence{nonce} + 1
+		acc = ak.GetAccount(ctx, signer)
 		nowSequence := accountSequence + 1
 		_ = acc.SetSequence(nowSequence)
-		ak.SetAccount(ctx, acc)
-		return newCtx, sdk.Result{GasWanted:gas,GasUsed:fee}, nil, false
+		ak.SetAccount(newCtx, acc)
+		return newCtx, sdk.Result{GasWanted:gas, GasUsed: newCtx.GasMeter().GasConsumed()}, nil, false
 	}
 }
 
@@ -162,30 +124,30 @@ func EnsureSufficientMempoolFees() sdk.Result {
 	return sdk.Result{}
 }
 
-
-func DeductFees(acc exported.Account, fee sdk.Coin, ak account.AccountKeeper, ctx sdk.Context) error{
-	coin := acc.GetCoins()
-	newCoins, hasNeg := coin.SafeSub(sdk.NewCoins(fee))
-	if hasNeg {
-		return sdkerrors.ErrInsufficientFunds
-	}
-
-	if err := acc.SetCoins(newCoins); err != nil {
-		return sdkerrors.ErrAccountSetCoinFailed
-	}
-	ak.SetAccount(ctx, acc)
-
-	return nil
-}
-
-func ReturnFees(acc exported.Account, restFee sdk.Coins, ak account.AccountKeeper, ctx sdk.Context) error {
-	coin := acc.GetCoins()
-	newCoins:= coin.Add(restFee)
-
-	if err := acc.SetCoins(newCoins); err != nil {
-		return sdkerrors.ErrAccountSetCoinFailed
-	}
-	ak.SetAccount(ctx, acc)
-
-	return nil
-}
+//
+//func DeductFees(acc exported.Account, fee sdk.Coin, ak account.AccountKeeper, ctx sdk.Context) error{
+//	coin := acc.GetCoins()
+//	newCoins, hasNeg := coin.SafeSub(sdk.NewCoins(fee))
+//	if hasNeg {
+//		return sdkerrors.ErrInsufficientFunds
+//	}
+//
+//	if err := acc.SetCoins(newCoins); err != nil {
+//		return sdkerrors.ErrAccountSetCoinFailed
+//	}
+//	ak.SetAccount(ctx, acc)
+//
+//	return nil
+//}
+//
+//func ReturnFees(acc exported.Account, restFee sdk.Coins, ak account.AccountKeeper, ctx sdk.Context) error {
+//	coin := acc.GetCoins()
+//	newCoins:= coin.Add(restFee)
+//
+//	if err := acc.SetCoins(newCoins); err != nil {
+//		return sdkerrors.ErrAccountSetCoinFailed
+//	}
+//	ak.SetAccount(ctx, acc)
+//
+//	return nil
+//}

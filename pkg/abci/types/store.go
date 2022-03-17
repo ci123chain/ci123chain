@@ -440,7 +440,7 @@ func (key MemoryStoreKey) Name() string {
 }
 
 func (key MemoryStoreKey) String() string {
-	return fmt.Sprintf("MemoryStoreKey{%p, %s}", key, key.name)
+	return fmt.Sprintf("MemoryStoreKey{%s}", key.name)
 }
 
 //----------------------------------------

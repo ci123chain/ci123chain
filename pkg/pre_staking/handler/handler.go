@@ -58,9 +58,9 @@ func StakingDirectHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.
 		return nil, types.ErrNoExpectedValidator
 	}
 	// sub delegator's amount directly
-	k.StakingKeeper.Delegate(ctx, msg.Delegator, msg.Amount.Amount, sdk.Unbonded, validator, true)
-	moduleAcc := k.SupplyKeeper.GetModuleAccount(ctx, types.ModuleName)
-	err := k.AccountKeeper.Transfer(ctx, msg.FromAddress, moduleAcc.GetAddress(), sdk.NewCoins(msg.Amount))
+	_, err := k.StakingKeeper.Delegate(ctx, msg.Delegator, msg.Amount.Amount, sdk.Unbonded, validator, true)
+	//moduleAcc := k.SupplyKeeper.GetModuleAccount(ctx, types.ModuleName)
+	//err := k.AccountKeeper.Transfer(ctx, msg.FromAddress, moduleAcc.GetAddress(), sdk.NewCoins(msg.Amount))
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +69,7 @@ func StakingDirectHandler(ctx sdk.Context, k keeper.PreStakingKeeper, msg types.
 	base := int64(msg.DelegateTime.Hours()) / baseMonth
 	mintTokens := z.Mul(z, big.NewInt(base))
 	if tokenmanager := k.GetTokenManager(ctx); len(tokenmanager) > 0 {
-		err = k.SupplyKeeper.Mint(ctx, sdk.HexToAddress(tokenmanager), sdk.HexToAddress(msg.FromAddress.String()), types.ModuleName, mintTokens)
+		err := k.SupplyKeeper.Mint(ctx, sdk.HexToAddress(tokenmanager), sdk.HexToAddress(msg.FromAddress.String()), types.ModuleName, mintTokens)
 		if err != nil {
 			return nil, err
 		}
