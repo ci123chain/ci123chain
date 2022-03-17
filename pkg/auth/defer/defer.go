@@ -1,31 +1,33 @@
 package _defer
 
 import (
+	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/account"
 	types2 "github.com/ci123chain/ci123chain/pkg/app/types"
-	"github.com/ci123chain/ci123chain/pkg/auth/ante"
+	"github.com/ci123chain/ci123chain/pkg/auth"
+	"github.com/ci123chain/ci123chain/pkg/supply"
 	"github.com/ci123chain/ci123chain/pkg/transaction"
 	"github.com/ci123chain/ci123chain/pkg/util"
 	"math/big"
 )
 
 //const unit = 1000
-func NewDeferHandler( ak account.AccountKeeper) sdk.DeferHandler {
+func NewDeferHandler( ak account.AccountKeeper, sk supply.Keeper) sdk.DeferHandler {
 	return func(ctx sdk.Context, tx sdk.Tx, out bool, simulate bool) (res sdk.Result) {
 		if out || simulate{
 			return
 		}
 
 		//返还剩余gas
-		var gasused uint64
+		var gasUsed uint64
 		var signer sdk.AccAddress
 		stdTx := tx.(transaction.Transaction)
-		gaswanted := stdTx.GetGas()
+		gasWanted := stdTx.GetGas()
 
 		defer func() {
 			if r := recover(); r != nil {
-				res.GasUsed = gaswanted
+				res.GasUsed = gasWanted
 				return
 			}
 		}()
@@ -45,18 +47,19 @@ func NewDeferHandler( ak account.AccountKeeper) sdk.DeferHandler {
 			return
 		}
 
-		gasused = ctx.GasMeter().GasConsumed()
-
-		restgas := gaswanted - gasused
+		gasUsed = ctx.GasMeter().GasConsumed()
+		restgas := gasWanted - gasUsed
 		if restgas == 0 {
 			return 
 		}
-		restfee := sdk.NewUInt64Coin(sdk.ChainCoinDenom, restgas)
-		err := ante.ReturnFees(acc, sdk.NewCoins(restfee), ak, ctx)
+		calculateGas := sdk.CalculateGas(restgas)
+		restFee := sdk.NewChainCoin(calculateGas)
+		fmt.Println("return rest fee: ", calculateGas.String())
+		err := sk.SendCoinsFromModuleToAccount(ctx, auth.FeeCollectorName, signer, sdk.NewCoins(restFee))
 		if err != nil {
 			return
 		}
-		res.GasUsed = gasused
+		res.GasUsed = gasUsed
 		return
 	}
 }

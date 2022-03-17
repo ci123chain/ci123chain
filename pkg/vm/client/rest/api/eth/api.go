@@ -819,7 +819,7 @@ func (api *PublicEthereumAPI) EstimateGas(args CallArgs) (hexutil.Uint64, error)
 	}
 
 	// TODO: change 1000 buffer for more accurate buffer (eg: SDK's gasAdjusted)
-	estimatedGas := simResponse.GasUsed / sdk.GetGasPrice() * 150 / 100
+	estimatedGas := simResponse.GasUsed * 150 / 100
 	api.logger.Debug("eth_estimateGas")
 	gas := estimatedGas
 	if gas < ETHMinGas {

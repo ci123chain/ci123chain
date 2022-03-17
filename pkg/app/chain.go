@@ -332,7 +332,7 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer,
 	}
 
 	c.SetAnteHandler(ante.NewAnteHandler(c.AuthKeeper, c.AccountKeeper, c.SupplyKeeper))
-	c.SetDeferHandler(_defer.NewDeferHandler(c.AccountKeeper))
+	c.SetDeferHandler(_defer.NewDeferHandler(c.AccountKeeper, c.SupplyKeeper))
 	c.SetBeginBlocker(c.BeginBlocker)
 	c.SetInitChainer(c.InitChainer)
 	c.SetEndBlocker(c.EndBlocker)
