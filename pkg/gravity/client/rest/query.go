@@ -336,3 +336,17 @@ func queryObservedEventNonceHandler(cliCtx context.Context, storeName string) ht
 		rest.PostProcessResponseBare(w, cliCtx.WithHeight(height), int64(binary.BigEndian.Uint64(res)))
 	}
 }
+
+func queryPendingSendToEthHandler(cliCtx context.Context, storeName string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		params := r.URL.Query()
+		sender := params.Get("sender")
+		wlk_contract := params.Get("wlkContract")
+		res, height, _, err := cliCtx.Query(fmt.Sprintf("custom/%s/PendingSendToEth/%s/%s", storeName, sender, wlk_contract), nil, false)
+		if err != nil {
+			rest.WriteErrorRes(w, err.Error())
+			return
+		}
+		rest.PostProcessResponseBare(w, cliCtx.WithHeight(height), string(res))
+	}
+}
