@@ -88,4 +88,6 @@ func RegisterRoutes(cliCtx context.Context, r *mux.Router, storeName string) {
 	r.HandleFunc(fmt.Sprintf("/%s/eventNonce/{%s}", storeName, eventNonce), queryEventNonceHandler(cliCtx, storeName)).Methods("GET")
 
 	r.HandleFunc(fmt.Sprintf("/%s/observedEventNonce", storeName), queryObservedEventNonceHandler(cliCtx, storeName)).Methods("GET")
+
+	r.HandleFunc(fmt.Sprintf("/%s/pendingSendToEth", storeName), queryPendingSendToEthHandler(cliCtx, storeName)).Methods("GET")
 }

@@ -3,6 +3,7 @@ package keeper
 import (
 	"encoding/binary"
 	"encoding/hex"
+	"fmt"
 	"strconv"
 
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
@@ -166,7 +167,7 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 
 		// Pending transactions
 		case QueryPendingSendToEth:
-			return queryPendingSendToEth(ctx, path[1], keeper)
+			return queryPendingSendToEth(ctx, path[1], path[2], keeper)
 
 		// Event
 		case QueryLastEventNonce:
@@ -602,20 +603,42 @@ func queryERC721ToDenom(ctx sdk.Context, ERC20 string, keeper Keeper) ([]byte, e
 	}
 }
 
-func queryPendingSendToEth(ctx sdk.Context, senderAddr string, k Keeper) ([]byte, error) {
-	batches := k.GetOutgoingTxBatches(ctx)
+func queryPendingSendToEth(ctx sdk.Context, senderAddr, wlkContract string, k Keeper) ([]byte, error) {
+	//batches := k.GetOutgoingTxBatches(ctx)
 	unbatched_tx := k.GetPoolTransactions(ctx)
 	sender_address := senderAddr
-	res := types.QueryPendingSendToEthResponse{}
-	for _, batch := range batches {
-		for _, tx := range batch.Transactions {
-			if tx.Sender == sender_address {
-				res.TransfersInBatches = append(res.TransfersInBatches, tx)
-			}
+	wlk_contract_address := wlkContract
+	var eth_contract_address string
+	if len(wlkContract) != 0 {
+		contract_address, exists := k.GetMapedEthToken(ctx, wlk_contract_address)
+		if !exists {
+			return nil, fmt.Errorf("denom not a default coin: %s, and also not a ERC20 index", wlk_contract_address)
 		}
+		eth_contract_address = contract_address
 	}
+
+	res := types.QueryPendingSendToEthResponse{}
+	//for _, batch := range batches {
+	//	for _, tx := range batch.Transactions {
+	//		if tx.Sender == sender_address {
+	//			res.TransfersInBatches = append(res.TransfersInBatches, tx)
+	//		}
+	//	}
+	//}
 	for _, tx := range unbatched_tx {
-		if tx.Sender == sender_address {
+		if len(sender_address) != 0 && len(eth_contract_address) != 0 {
+			if (tx.Sender == sender_address) && (tx.Erc20Token.Contract == eth_contract_address) {
+				res.UnbatchedTransfers = append(res.UnbatchedTransfers, tx)
+			}
+		} else if len(sender_address) != 0 {
+			if tx.Sender == sender_address {
+				res.UnbatchedTransfers = append(res.UnbatchedTransfers, tx)
+			}
+		} else if len(eth_contract_address) != 0 {
+			if tx.Erc20Token.Contract == eth_contract_address {
+				res.UnbatchedTransfers = append(res.UnbatchedTransfers, tx)
+			}
+		} else {
 			res.UnbatchedTransfers = append(res.UnbatchedTransfers, tx)
 		}
 	}
