@@ -10,6 +10,12 @@ then
    CI_ETH_CHAIN_ID=444900
 fi
 
+if [ -z $CI_CHAIN_ID ];
+then
+   CI_CHAIN_ID="WeeLink"
+fi
+
+
 if [ -z $CI_TOKENNAME ];
 then
    CI_TOKENNAME="WLK"
