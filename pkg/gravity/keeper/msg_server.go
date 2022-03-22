@@ -35,13 +35,15 @@ var _ types.MsgServer = msgServer{}
 // TODO: check msgValsetConfirm to have an Orchestrator field instead of a Validator field
 func (k msgServer) ValsetConfirm(c context.Context, msg *types.MsgValsetConfirm) (*types.MsgValsetConfirmResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
+
 	valset := k.GetValset(ctx, msg.Nonce)
 	if valset == nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "couldn't find valset")
 	}
 
-	gravityID := k.GetGravityID(ctx)
-	checkpoint := valset.GetCheckpoint(gravityID)
+	gravityID2 := k.GetGravityID(ctx)
+	//gravityID := msg.GravityID
+	checkpoint := valset.GetCheckpoint(gravityID2)
 	sigBytes, err := hex.DecodeString(msg.Signature)
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "signature decoding")

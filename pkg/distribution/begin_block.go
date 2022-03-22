@@ -24,7 +24,6 @@ func BeginBlock(ctx sdk.Context, req abci.RequestBeginBlock, distr k.DistrKeeper
 		feeCollector := distr.SupplyKeeper.GetModuleAccount(ctx, distr.FeeCollectorName)
 		feeCollectedInt := sdk.NewChainCoin(distr.AccountKeeper.GetBalance(ctx, feeCollector.GetAddress()).AmountOf(sdk.ChainCoinDenom))
 		feeCollected := sdk.NewDecCoinFromCoin(feeCollectedInt)
-		fmt.Println("Transfer from feecollector to distribution:", feeCollectedInt)
 		err := distr.SupplyKeeper.SendCoinsFromModuleToModule(ctx, distr.FeeCollectorName, ModuleName, feeCollectedInt)
 		if err != nil {
 			panic(err)

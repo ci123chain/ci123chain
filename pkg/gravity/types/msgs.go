@@ -297,6 +297,9 @@ func (msg *MsgValsetConfirm) ValidateBasic() (err error) {
 	if err := ValidateEthAddress(msg.EthAddress); err != nil {
 		return sdkerrors.Wrap(err, "ethereum address")
 	}
+	if len(msg.GravityID) < 1 {
+		return ErrEmpty.Wrap(" gravityid")
+	}
 	if msg.Orchestrator != msg.EthAddress {
 		return sdkerrors.Wrap(err, "ethereum and orchestrator address should equal")
 	}

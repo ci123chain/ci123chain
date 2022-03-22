@@ -32,6 +32,7 @@ type Keeper struct {
 	cdc            *codec.Codec // The wire codec for binary encoding/decoding.
 	SlashingKeeper slashing.Keeper
 
+	currentGID 		string
 
 	AttestationHandler interface {
 		Handle(sdk.Context, types.Attestation, types.EthereumClaim) error
@@ -94,9 +95,22 @@ func (k Keeper) SetValsetRequest(ctx sdk.Context) *types.Valset {
 	return valset
 }
 
+func (k Keeper) getGidStore(ctx sdk.Context) store.KVStore {
+	if k.currentGID == "" {
+		panic("GravityID should not empty")
+	}
+	store := ctx.KVStore(k.storeKey).Prefix([]byte(k.currentGID))
+	return store
+}
+
+func (k Keeper) getCommonStore(ctx sdk.Context) store.KVStore {
+	store := ctx.KVStore(k.storeKey)
+	return store
+}
+
 // StoreValset is for storing a valiator set at a given height
 func (k Keeper) StoreValset(ctx sdk.Context, valset *types.Valset) {
-	store := ctx.KVStore(k.storeKey)
+	store := k.getCommonStore(ctx)
 	valset.Height = uint64(ctx.BlockHeight())
 	store.Set(types.GetValsetKey(valset.Nonce), k.cdc.MustMarshalBinaryBare(valset))
 	k.SetLatestValsetNonce(ctx, valset.Nonce)
@@ -104,31 +118,31 @@ func (k Keeper) StoreValset(ctx sdk.Context, valset *types.Valset) {
 
 //  SetLatestValsetNonce sets the latest valset nonce
 func (k Keeper) SetLatestValsetNonce(ctx sdk.Context, nonce uint64) {
-	store := ctx.KVStore(k.storeKey)
+	store := k.getGidStore(ctx)
 	store.Set(types.LatestValsetNonce, types.UInt64Bytes(nonce))
 }
 
 // StoreValsetUnsafe is for storing a valiator set at a given height
 func (k Keeper) StoreValsetUnsafe(ctx sdk.Context, valset *types.Valset) {
-	store := ctx.KVStore(k.storeKey)
+	store := k.getCommonStore(ctx)
 	store.Set(types.GetValsetKey(valset.Nonce), k.cdc.MustMarshalBinaryBare(valset))
 	k.SetLatestValsetNonce(ctx, valset.Nonce)
 }
 
 // HasValsetRequest returns true if a valset defined by a nonce exists
 func (k Keeper) HasValsetRequest(ctx sdk.Context, nonce uint64) bool {
-	store := ctx.KVStore(k.storeKey)
+	store := k.getCommonStore(ctx)
 	return store.Has(types.GetValsetKey(nonce))
 }
 
 // DeleteValset deletes the valset at a given nonce from state
 func (k Keeper) DeleteValset(ctx sdk.Context, nonce uint64) {
-	ctx.KVStore(k.storeKey).Delete(types.GetValsetKey(nonce))
+	k.getCommonStore(ctx).Delete(types.GetValsetKey(nonce))
 }
 
 // GetLatestValsetNonce returns the latest valset nonce
 func (k Keeper) GetLatestValsetNonce(ctx sdk.Context) uint64 {
-	store := ctx.KVStore(k.storeKey)
+	store := k.getCommonStore(ctx)
 	bytes := store.Get(types.LatestValsetNonce)
 
 	if len(bytes) == 0 {
@@ -139,7 +153,7 @@ func (k Keeper) GetLatestValsetNonce(ctx sdk.Context) uint64 {
 
 // GetValset returns a valset by nonce
 func (k Keeper) GetValset(ctx sdk.Context, nonce uint64) *types.Valset {
-	store := ctx.KVStore(k.storeKey)
+	store := k.getCommonStore(ctx)
 	bz := store.Get(types.GetValsetKey(nonce))
 	if bz == nil {
 		return nil
@@ -181,22 +195,22 @@ func (k Keeper) GetLatestValset(ctx sdk.Context) (out *types.Valset) {
 	return
 }
 
-// setLastSlashedValsetNonce sets the latest slashed valset nonce
-func (k Keeper) SetLastSlashedValsetNonce(ctx sdk.Context, nonce uint64) {
-	store := ctx.KVStore(k.storeKey)
-	store.Set(types.LastSlashedValsetNonce, types.UInt64Bytes(nonce))
-}
-
-// GetLastSlashedValsetNonce returns the latest slashed valset nonce
-func (k Keeper) GetLastSlashedValsetNonce(ctx sdk.Context) uint64 {
-	store := ctx.KVStore(k.storeKey)
-	bytes := store.Get(types.LastSlashedValsetNonce)
-
-	if len(bytes) == 0 {
-		return 0
-	}
-	return types.UInt64FromBytes(bytes)
-}
+//// setLastSlashedValsetNonce sets the latest slashed valset nonce
+//func (k Keeper) SetLastSlashedValsetNonce(ctx sdk.Context, nonce uint64) {
+//	store := ctx.KVStore(k.storeKey)
+//	store.Set(types.LastSlashedValsetNonce, types.UInt64Bytes(nonce))
+//}
+//
+//// GetLastSlashedValsetNonce returns the latest slashed valset nonce
+//func (k Keeper) GetLastSlashedValsetNonce(ctx sdk.Context) uint64 {
+//	store := ctx.KVStore(k.storeKey)
+//	bytes := store.Get(types.LastSlashedValsetNonce)
+//
+//	if len(bytes) == 0 {
+//		return 0
+//	}
+//	return types.UInt64FromBytes(bytes)
+//}
 
 // SetLastUnBondingBlockHeight sets the last unbonding block height
 func (k Keeper) SetLastUnBondingBlockHeight(ctx sdk.Context, unbondingBlockHeight uint64) {
@@ -216,40 +230,40 @@ func (k Keeper) GetLastUnBondingBlockHeight(ctx sdk.Context) uint64 {
 }
 
 // GetUnSlashedValsets returns all the unslashed validator sets in state
-func (k Keeper) GetUnSlashedValsets(ctx sdk.Context, maxHeight uint64) (out []*types.Valset) {
-	lastSlashedValsetNonce := k.GetLastSlashedValsetNonce(ctx)
-	k.IterateValsetBySlashedValsetNonce(ctx, lastSlashedValsetNonce, maxHeight, func(_ []byte, valset *types.Valset) bool {
-		if valset.Nonce > lastSlashedValsetNonce {
-			out = append(out, valset)
-		}
-		return false
-	})
-	return
-}
+//func (k Keeper) GetUnSlashedValsets(ctx sdk.Context, maxHeight uint64) (out []*types.Valset) {
+//	lastSlashedValsetNonce := k.GetLastSlashedValsetNonce(ctx)
+//	k.IterateValsetBySlashedValsetNonce(ctx, lastSlashedValsetNonce, maxHeight, func(_ []byte, valset *types.Valset) bool {
+//		if valset.Nonce > lastSlashedValsetNonce {
+//			out = append(out, valset)
+//		}
+//		return false
+//	})
+//	return
+//}
 
 // IterateValsetBySlashedValsetNonce iterates through all valset by last slashed valset nonce in ASC order
-func (k Keeper) IterateValsetBySlashedValsetNonce(ctx sdk.Context, lastSlashedValsetNonce uint64, maxHeight uint64, cb func([]byte, *types.Valset) bool) {
-	prefixStore := store.NewPrefixStore(ctx.KVStore(k.storeKey), types.ValsetRequestKey)
-	iter := prefixStore.Iterator(types.UInt64Bytes(lastSlashedValsetNonce), types.UInt64Bytes(maxHeight))
-	defer iter.Close()
-
-	for ; iter.Valid(); iter.Next() {
-		var valset types.Valset
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &valset)
-		// cb returns true to stop early
-		if cb(iter.Key(), &valset) {
-			break
-		}
-	}
-}
+//func (k Keeper) IterateValsetBySlashedValsetNonce(ctx sdk.Context, lastSlashedValsetNonce uint64, maxHeight uint64, cb func([]byte, *types.Valset) bool) {
+//	prefixStore := store.NewPrefixStore(ctx.KVStore(k.storeKey), types.ValsetRequestKey)
+//	iter := prefixStore.Iterator(types.UInt64Bytes(lastSlashedValsetNonce), types.UInt64Bytes(maxHeight))
+//	defer iter.Close()
+//
+//	for ; iter.Valid(); iter.Next() {
+//		var valset types.Valset
+//		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &valset)
+//		// cb returns true to stop early
+//		if cb(iter.Key(), &valset) {
+//			break
+//		}
+//	}
+//}
 
 /////////////////////////////
 //     VALSET CONFIRMS     //
 /////////////////////////////
 
 // GetValsetConfirm returns a valset confirmation by a nonce and validator address
-func (k Keeper) GetValsetConfirm(ctx sdk.Context, nonce uint64, validator sdk.AccAddress) *types.MsgValsetConfirm {
-	store := ctx.KVStore(k.storeKey)
+func (k Keeper) GetValsetConfirmByGID(ctx sdk.Context, nonce uint64, validator sdk.AccAddress) *types.MsgValsetConfirm {
+	store := k.getGidStore(ctx)
 	entity := store.Get(types.GetValsetConfirmKey(nonce, validator))
 	if entity == nil {
 		return nil
@@ -260,8 +274,8 @@ func (k Keeper) GetValsetConfirm(ctx sdk.Context, nonce uint64, validator sdk.Ac
 }
 
 // SetValsetConfirm sets a valset confirmation
-func (k Keeper) SetValsetConfirm(ctx sdk.Context, valsetConf types.MsgValsetConfirm) []byte {
-	store := ctx.KVStore(k.storeKey)
+func (k Keeper) SetValsetConfirmByGID(ctx sdk.Context, valsetConf types.MsgValsetConfirm) []byte {
+	store := k.getGidStore(ctx)
 	addr, err := sdk.AccAddressFromBech32(valsetConf.Orchestrator)
 	if err != nil {
 		panic(err)
@@ -272,8 +286,8 @@ func (k Keeper) SetValsetConfirm(ctx sdk.Context, valsetConf types.MsgValsetConf
 }
 
 // GetValsetConfirms returns all validator set confirmations by nonce
-func (k Keeper) GetValsetConfirms(ctx sdk.Context, nonce uint64) (confirms []*types.MsgValsetConfirm) {
-	prefixStore := store.NewPrefixStore(ctx.KVStore(k.storeKey), types.ValsetConfirmKey)
+func (k Keeper) GetValsetConfirmsByGID(ctx sdk.Context, nonce uint64) (confirms []*types.MsgValsetConfirm) {
+	prefixStore := store.NewPrefixStore(k.getGidStore(ctx), types.ValsetConfirmKey)
 	start, end := prefixRange(types.UInt64Bytes(nonce))
 	iterator := prefixStore.Iterator(start, end)
 
@@ -291,8 +305,8 @@ func (k Keeper) GetValsetConfirms(ctx sdk.Context, nonce uint64) (confirms []*ty
 // IterateValsetConfirmByNonce iterates through all valset confirms by nonce in ASC order
 // MARK finish-batches: this is where the key is iterated in the old (presumed working) code
 // TODO: specify which nonce this is
-func (k Keeper) IterateValsetConfirmByNonce(ctx sdk.Context, nonce uint64, cb func([]byte, types.MsgValsetConfirm) bool) {
-	prefixStore := store.NewPrefixStore(ctx.KVStore(k.storeKey), types.ValsetConfirmKey)
+func (k Keeper) IterateValsetConfirmByNonceWithGID(ctx sdk.Context, nonce uint64, cb func([]byte, types.MsgValsetConfirm) bool) {
+	prefixStore := store.NewPrefixStore(k.getGidStore(ctx), types.ValsetConfirmKey)
 	iter := prefixStore.Iterator(prefixRange(types.UInt64Bytes(nonce)))
 	defer iter.Close()
 
@@ -311,8 +325,8 @@ func (k Keeper) IterateValsetConfirmByNonce(ctx sdk.Context, nonce uint64, cb fu
 /////////////////////////////
 
 // GetBatchConfirm returns a batch confirmation given its nonce, the token contract, and a validator address
-func (k Keeper) GetBatchConfirm(ctx sdk.Context, nonce uint64, tokenContract string, validator sdk.AccAddress) *types.MsgConfirmBatch {
-	store := ctx.KVStore(k.storeKey)
+func (k Keeper) GetBatchConfirmWithGID(ctx sdk.Context, nonce uint64, tokenContract string, validator sdk.AccAddress) *types.MsgConfirmBatch {
+	store := k.getGidStore(ctx)
 	entity := store.Get(types.GetBatchConfirmKey(tokenContract, nonce, validator))
 	if entity == nil {
 		return nil
@@ -323,8 +337,8 @@ func (k Keeper) GetBatchConfirm(ctx sdk.Context, nonce uint64, tokenContract str
 }
 
 // SetBatchConfirm sets a batch confirmation by a validator
-func (k Keeper) SetBatchConfirm(ctx sdk.Context, batch *types.MsgConfirmBatch) []byte {
-	store := ctx.KVStore(k.storeKey)
+func (k Keeper) SetBatchConfirmWithGID(ctx sdk.Context, batch *types.MsgConfirmBatch) []byte {
+	store := k.getGidStore(ctx)
 	acc, err := sdk.AccAddressFromBech32(batch.Orchestrator)
 	if err != nil {
 		panic(err)
@@ -337,8 +351,8 @@ func (k Keeper) SetBatchConfirm(ctx sdk.Context, batch *types.MsgConfirmBatch) [
 // IterateBatchConfirmByNonceAndTokenContract iterates through all batch confirmations
 // MARK finish-batches: this is where the key is iterated in the old (presumed working) code
 // TODO: specify which nonce this is
-func (k Keeper) IterateBatchConfirmByNonceAndTokenContract(ctx sdk.Context, nonce uint64, tokenContract string, cb func([]byte, types.MsgConfirmBatch) bool) {
-	prefixStore := store.NewPrefixStore(ctx.KVStore(k.storeKey), types.BatchConfirmKey)
+func (k Keeper) IterateBatchConfirmByNonceAndTokenContractWithGID(ctx sdk.Context, nonce uint64, tokenContract string, cb func([]byte, types.MsgConfirmBatch) bool) {
+	prefixStore := store.NewPrefixStore(k.getGidStore(ctx), types.BatchConfirmKey)
 	tokenContract = strings.ToLower(tokenContract)
 	prefix := append([]byte(tokenContract), types.UInt64Bytes(nonce)...)
 	iter := prefixStore.Iterator(prefixRange(prefix))
@@ -355,8 +369,8 @@ func (k Keeper) IterateBatchConfirmByNonceAndTokenContract(ctx sdk.Context, nonc
 }
 
 // GetBatchConfirmByNonceAndTokenContract returns the batch confirms
-func (k Keeper) GetBatchConfirmByNonceAndTokenContract(ctx sdk.Context, nonce uint64, tokenContract string) (out []types.MsgConfirmBatch) {
-	k.IterateBatchConfirmByNonceAndTokenContract(ctx, nonce, tokenContract, func(_ []byte, msg types.MsgConfirmBatch) bool {
+func (k Keeper) GetBatchConfirmByNonceAndTokenContractWithGID(ctx sdk.Context, nonce uint64, tokenContract string) (out []types.MsgConfirmBatch) {
+	k.IterateBatchConfirmByNonceAndTokenContractWithGID(ctx, nonce, tokenContract, func(_ []byte, msg types.MsgConfirmBatch) bool {
 		out = append(out, msg)
 		return false
 	})

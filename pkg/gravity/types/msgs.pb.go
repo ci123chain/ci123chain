@@ -159,6 +159,7 @@ type MsgValsetConfirm struct {
 	Orchestrator string `protobuf:"bytes,2,opt,name=orchestrator,proto3" json:"orchestrator,omitempty"`
 	EthAddress   string `protobuf:"bytes,3,opt,name=eth_address,json=ethAddress,proto3" json:"eth_address,omitempty"`
 	Signature    string `protobuf:"bytes,4,opt,name=signature,proto3" json:"signature,omitempty"`
+	GravityID 	 string `json:"gravity_id"`
 }
 
 func (m *MsgValsetConfirm) Reset()         { *m = MsgValsetConfirm{} }
