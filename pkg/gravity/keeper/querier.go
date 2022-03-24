@@ -64,8 +64,8 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 		case types.QueryLastEventNonce:
 			return queryLastEventNonce(ctx, path[1], path[2], keeper)
 
-		//case types.QueryLastValsetConfirmNonce:
-		//	return queryLastValsetConfirmNonce(ctx, keeper)
+		case types.QueryLastValsetConfirmNonce:
+			return queryLastValsetConfirmNonce(ctx, path[1], keeper)
 
 		//case QueryTxId:
 		//	return queryTxId(ctx, path[1], keeper)
@@ -471,12 +471,12 @@ func queryLastEventNonce(ctx sdk.Context, gravityID string, address string, k Ke
 	return x, nil
 }
 
-//func queryLastValsetConfirmNonce(ctx sdk.Context, gravityID string, k Keeper) ([]byte, error) {
-//	k.currentGID = gravityID
-//	lastValsetConfirmNonce := k.GetLastValsetConfirmNonce(ctx)
-//	x := types.UInt64Bytes(lastValsetConfirmNonce)
-//	return x, nil
-//}
+func queryLastValsetConfirmNonce(ctx sdk.Context, gravityID string, k Keeper) ([]byte, error) {
+	k.currentGID = gravityID
+	lastValsetConfirmNonce := k.GetLastValsetConfirmNonce(ctx)
+	x := types.UInt64Bytes(lastValsetConfirmNonce)
+	return x, nil
+}
 
 
 func queryTxId(ctx sdk.Context, txIdStr string, k Keeper) ([]byte, error) {

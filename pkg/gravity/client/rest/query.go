@@ -202,18 +202,20 @@ func lastEventNonceByAddressHandler(cliCtx context.Context, storeName string) ht
 	}
 }
 
-//func lastValsetConfirmNonceHandler(cliCtx context.Context, storeName string) http.HandlerFunc {
-//	return func(w http.ResponseWriter, r *http.Request) {
-//		res, height, _, err := cliCtx.Query(fmt.Sprintf("custom/%s/lastValsetConfirmNonce/%s", storeName), nil, false)
-//		if err != nil {
-//			rest.WriteErrorRes(w, err.Error())
-//			return
-//		}
-//
-//		out := types.UInt64FromBytes(res)
-//		rest.PostProcessResponseBare(w, cliCtx.WithHeight(height), out)
-//	}
-//}
+func lastValsetConfirmNonceHandler(cliCtx context.Context, storeName string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		gravityID := vars[gravity_id]
+		res, height, _, err := cliCtx.Query(fmt.Sprintf("custom/%s/lastValsetConfirmNonce/%s", storeName, gravityID), nil, false)
+		if err != nil {
+			rest.WriteErrorRes(w, err.Error())
+			return
+		}
+
+		out := types.UInt64FromBytes(res)
+		rest.PostProcessResponseBare(w, cliCtx.WithHeight(height), out)
+	}
+}
 
 
 func currentValsetHandler(cliCtx context.Context, storeName string) http.HandlerFunc {

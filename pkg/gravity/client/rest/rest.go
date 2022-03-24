@@ -51,7 +51,6 @@ func RegisterRoutes(cliCtx context.Context, r *mux.Router, storeName string) {
 	r.HandleFunc(fmt.Sprintf("/%s/current_valset", storeName), currentValsetHandler(cliCtx, storeName)).Methods("GET")
 
 	/// Batches
-
 	// The Ethereum signer queries this endpoint and signs whatever it returns once per loop iteration
 	r.HandleFunc(fmt.Sprintf("/%s/pending_batch_requests/{%s}/{%s}", storeName, gravity_id, bech32ValidatorAddress), lastBatchesByAddressHandler(cliCtx, storeName)).Methods("GET")
 	// Gets all outgoing batches in the batch queue, up to 100
@@ -61,8 +60,6 @@ func RegisterRoutes(cliCtx context.Context, r *mux.Router, storeName string) {
 	// This endpoint gets all of the batch confirmations for a given nonce and denom In order to determine if a batch is complete
 	// the relayer will compare the valset power on the contract to the number of signatures
 	r.HandleFunc(fmt.Sprintf("/%s/batch_confirm/{%s}/{%s}/{%s}", storeName, gravity_id, nonce, tokenAddress), allBatchConfirmsHandler(cliCtx, storeName)).Methods("GET")
-
-	/// Cosmos originated assets
 
 	r.HandleFunc(fmt.Sprintf("/%s/denom_to_erc20/{%s}/{%s}", storeName, gravity_id, denom), denomToERC20Handler(cliCtx, storeName)).Methods("GET")
 	// This handler lets you retrieve the denom corresponding to a given ERC20 contract
@@ -76,8 +73,8 @@ func RegisterRoutes(cliCtx context.Context, r *mux.Router, storeName string) {
 	// Event
 	r.HandleFunc(fmt.Sprintf("/%s/last_event_nonce/{%s}/{%s}", storeName, gravity_id, bech32ValidatorAddress), lastEventNonceByAddressHandler(cliCtx, storeName)).Methods("GET")
 
-	// Valsets
-	//r.HandleFunc(fmt.Sprintf("/%s/last_valset_confirm_nonce", storeName), lastValsetConfirmNonceHandler(cliCtx, storeName)).Methods("GET")
+	// LastValsetsConfirmNonce
+	r.HandleFunc(fmt.Sprintf("/%s/last_valset_confirm_nonce/{%s}", storeName, gravity_id), lastValsetConfirmNonceHandler(cliCtx, storeName)).Methods("GET")
 
 
 	r.HandleFunc(fmt.Sprintf("/%s/txId/{%s}", storeName, txId), queryTxIdHandler(cliCtx, storeName)).Methods("GET")
