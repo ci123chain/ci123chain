@@ -21,7 +21,7 @@ const (
 	AttributeKeyNonce             = "nonce"
 	AttributeKeyValsetNonce       = "valset_nonce"
 	AttributeKeyBatchNonce        = "batch_nonce"
-	AttributeKeyBridgeChainID     = "bridge_chain_id"
+	AttributeKeyBridgeChainID     = "gravity_id"
 	AttributeKeySetOperatorAddr   = "set_operator_address"
 	AttributeKeyInvalidationID    = "logic_call_invalidation_id"
 	AttributeKeyInvalidationNonce = "logic_call_invalidation_nonce"

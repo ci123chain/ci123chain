@@ -23,13 +23,15 @@ type AttestationHandler struct {
 
 // Handle is the entry point for Attestation processing.
 // TODO-JT add handler for ERC20DeployedEvent
-func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim types.EthereumClaim) error {
+func (a AttestationHandler) Handle(ctx sdk.Context, gravityID string, att types.Attestation, claim types.EthereumClaim) error {
 	ma := a.supplyKeeper.GetModuleAccount(ctx, types.ModuleName)
+	a.keeper.SetCurrentGid(gravityID)
 	defer func(account supplytypes.ModuleAccountI) {
 		if err := account.SetSequence(account.GetSequence() + 1); err != nil {
 			panic(err)
 		}
 		a.accountKeeper.SetAccount(ctx, account)
+		a.keeper.SetCurrentGid("")
 	}(ma)
 	switch claim := claim.(type) {
 	case *types.MsgDepositClaim:
@@ -162,7 +164,7 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim
 		// TODO here we should check the contents of the validator set against
 		// the store, if they differ we should take some action to indicate to the
 		// user that bridge highjacking has occurred
-		a.keeper.setLastValsetsConfirmNonce(ctx, claim.ValsetNonce)
+		a.keeper.setLastValsetConfirmNonce(ctx, claim.ValsetNonce)
 		return nil
 	default:
 		return sdkerrors.Wrapf(types.ErrInvalid, "event type: %s", claim.GetType())

@@ -3,17 +3,12 @@ package keeper
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/ci123chain/ci123chain/pkg/abci/codec"
-	"strconv"
-
-	codectypes "github.com/ci123chain/ci123chain/pkg/abci/codec/types"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-
 	"github.com/ci123chain/ci123chain/pkg/gravity/types"
 )
 
 // TODO-JT: carefully look at atomicity of this function
-func (k Keeper) Attest(ctx sdk.Context, claim types.EthereumClaim, anyClaim *codectypes.Any) (*types.Attestation, error) {
+func (k Keeper) Attest(ctx sdk.Context, claim types.EthereumClaim) (*types.Attestation, error) {
 	valAddr := claim.GetClaimer()
 	if valAddr.Empty() {
 		panic("Could not find ValAddr for delegate key, should be checked by now")
@@ -21,11 +16,6 @@ func (k Keeper) Attest(ctx sdk.Context, claim types.EthereumClaim, anyClaim *cod
 	// Check that the nonce of this event is exactly one higher than the last nonce stored by this validator.
 	// We check the event nonce in processAttestation as well, but checking it here gives individual eth signers a chance to retry,
 	// and prevents validators from submitting two claims with the same nonce
-
-	//lastEventNonce := k.GetLastEventNonceByValidator(ctx, valAddr)
-	//if claim.GetEventNonce() != lastEventNonce+1 {
-	//	return nil, types.ErrNonContiguousEventNonce
-	//}
 
 	k.Logger(ctx).Info("Attest", "EventNonce", claim.GetEventNonce(), "ClaimHash", hex.EncodeToString(claim.ClaimHash()))
 
@@ -37,7 +27,7 @@ func (k Keeper) Attest(ctx sdk.Context, claim types.EthereumClaim, anyClaim *cod
 		att = &types.Attestation{
 			Observed: false,
 			Height:   uint64(ctx.BlockHeight()),
-			Claim:    anyClaim,
+			Claim:    claim,
 		}
 	}
 
@@ -54,7 +44,7 @@ func (k Keeper) Attest(ctx sdk.Context, claim types.EthereumClaim, anyClaim *cod
 // and has not already been marked Observed, then calls processAttestation to actually apply it to the state,
 // and then marks it Observed and emits an event.
 func (k Keeper) TryAttestation(ctx sdk.Context, att *types.Attestation) {
-	claim, err := k.UnpackAttestationClaim(att)
+	claim, err := k.GetAttestationClaim(att)
 	if err != nil {
 		panic("could not cast to claim")
 	}
@@ -75,13 +65,13 @@ func (k Keeper) TryAttestation(ctx sdk.Context, att *types.Attestation) {
 			// If the power of all the validators that have voted on the attestation is higher or equal to the threshold,
 			// process the attestation, set Observed to true, and break
 			if attestationPower.GTE(requiredPower) {
-				lastEventNonce := k.GetLastObservedEventNonce(ctx)
+				lastEventNonce := k.GetLastObservedEventNonceWithGid(ctx)
 				// this check is performed at the next level up so this should never panic
 				// outside of programmer error.
 				if claim.GetEventNonce() != uint64(lastEventNonce)+1 {
 					panic("attempting to apply events to state out of order")
 				}
-				k.setLastObservedEventNonce(ctx, claim.GetEventNonce())
+				k.setLastObservedEventNonceWithGid(ctx, claim.GetEventNonce())
 				k.SetLastObservedEthereumBlockHeight(ctx, claim.GetBlockHeight())
 
 				att.Observed = true
@@ -101,13 +91,14 @@ func (k Keeper) TryAttestation(ctx sdk.Context, att *types.Attestation) {
 func (k Keeper) processAttestation(ctx sdk.Context, att *types.Attestation, claim types.EthereumClaim) {
 	// then execute in a new Tx so that we can store state on failure
 	xCtx, commit := ctx.CacheContext()
-	if err := k.AttestationHandler.Handle(xCtx, *att, claim); err != nil { // execute with a transient storage
+	if err := k.AttestationHandler.Handle(xCtx, k.currentGID, *att, claim); err != nil { // execute with a transient storage
 		// If the attestation fails, something has gone wrong and we can't recover it. Log and move on
 		// The attestation will still be marked "Observed", and validators can still be slashed for not
 		// having voted for it.
 		k.logger(ctx).Error("Attestation failed",
 			"cause", err.Error(),
 			"claim type", claim.GetType(),
+			"gravityid", k.currentGID,
 			"id", types.GetAttestationKey(claim.GetEventNonce(), claim.ClaimHash()),
 			"nonce", fmt.Sprint(claim.GetEventNonce()),
 		)
@@ -124,8 +115,8 @@ func (k Keeper) emitObservedEvent(ctx sdk.Context, att *types.Attestation, claim
 		types.EventTypeObservation,
 		sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(types.ModuleName)),
 		sdk.NewAttribute([]byte(types.AttributeKeyAttestationType), []byte(string(claim.GetType()))),
-		sdk.NewAttribute([]byte(types.AttributeKeyContract), []byte(k.GetBridgeContractAddress(ctx))),
-		sdk.NewAttribute([]byte(types.AttributeKeyBridgeChainID), []byte(strconv.Itoa(int(k.GetBridgeChainID(ctx))))),
+		//sdk.NewAttribute([]byte(types.AttributeKeyContract), []byte(k.GetBridgeContractAddress(ctx))),
+		sdk.NewAttribute([]byte(types.AttributeKeyBridgeChainID), []byte(k.currentGID)),
 		sdk.NewAttribute([]byte(types.AttributeKeyAttestationID), []byte(string(types.GetAttestationKey(claim.GetEventNonce(), claim.ClaimHash())))), // todo: serialize with hex/ base64 ?
 		sdk.NewAttribute([]byte(types.AttributeKeyNonce), []byte(fmt.Sprint(claim.GetEventNonce()))),
 		// TODO: do we want to emit more information?
@@ -135,27 +126,27 @@ func (k Keeper) emitObservedEvent(ctx sdk.Context, att *types.Attestation, claim
 
 // SetAttestation sets the attestation in the store
 func (k Keeper) SetAttestation(ctx sdk.Context, eventNonce uint64, claimHash []byte, att *types.Attestation) {
-	store := ctx.KVStore(k.storeKey)
+	store := k.getGidStore(ctx)
 	aKey := types.GetAttestationKey(eventNonce, claimHash)
-	store.Set(aKey, codec.GetLegacyAminoByCodec(k.cdc).MustMarshalBinaryBare(att))
+	store.Set(aKey, types.GravityCodec.MustMarshalBinaryBare(att))
 }
 
 // GetAttestation return an attestation given a nonce
 func (k Keeper) GetAttestation(ctx sdk.Context, eventNonce uint64, claimHash []byte) *types.Attestation {
-	store := ctx.KVStore(k.storeKey)
+	store := k.getGidStore(ctx)
 	aKey := types.GetAttestationKey(eventNonce, claimHash)
 	bz := store.Get(aKey)
 	if len(bz) == 0 {
 		return nil
 	}
 	var att types.Attestation
-	codec.GetLegacyAminoByCodec(k.cdc).MustUnmarshalBinaryBare(bz, &att)
+	types.GravityCodec.MustUnmarshalBinaryBare(bz, &att)
 	return &att
 }
 
 // DeleteAttestation deletes an attestation given an event nonce and claim
 func (k Keeper) DeleteAttestation(ctx sdk.Context, eventNonce uint64, claimHash []byte, att *types.Attestation) {
-	store := ctx.KVStore(k.storeKey)
+	store := k.getGidStore(ctx)
 	store.Delete(types.GetAttestationKeyWithHash(eventNonce, claimHash))
 }
 
@@ -163,7 +154,7 @@ func (k Keeper) DeleteAttestation(ctx sdk.Context, eventNonce uint64, claimHash 
 func (k Keeper) GetAttestationMapping(ctx sdk.Context) (out map[uint64][]types.Attestation) {
 	out = make(map[uint64][]types.Attestation)
 	k.IterateAttestaions(ctx, func(_ []byte, att types.Attestation) bool {
-		claim, err := k.UnpackAttestationClaim(&att)
+		claim, err := k.GetAttestationClaim(&att)
 		if err != nil {
 			panic("couldn't cast to claim")
 		}
@@ -180,15 +171,15 @@ func (k Keeper) GetAttestationMapping(ctx sdk.Context) (out map[uint64][]types.A
 
 // IterateAttestaions iterates through all attestations
 func (k Keeper) IterateAttestaions(ctx sdk.Context, cb func([]byte, types.Attestation) bool) {
-	store := ctx.KVStore(k.storeKey)
-	prefix := []byte(types.OracleAttestationKey)
+	store := k.getGidStore(ctx)
+	prefix := types.OracleAttestationKey
 	iter := store.Iterator(prefixRange(prefix))
 	defer iter.Close()
 
 	for ; iter.Valid(); iter.Next() {
 		att := types.Attestation{}
 		// todo fix for old data
-		err := codec.GetLegacyAminoByCodec(k.cdc).UnmarshalBinaryBare(iter.Value(), &att)
+		err := types.GravityCodec.UnmarshalBinaryBare(iter.Value(), &att)
 		if err != nil {
 			//k.Logger(ctx).Warn("unmarshal attention error: ", err)
 			continue
@@ -201,8 +192,8 @@ func (k Keeper) IterateAttestaions(ctx sdk.Context, cb func([]byte, types.Attest
 }
 
 // GetLastObservedEventNonce returns the latest observed event nonce
-func (k Keeper) GetLastObservedEventNonce(ctx sdk.Context) uint64 {
-	store := ctx.KVStore(k.storeKey)
+func (k Keeper) GetLastObservedEventNonceWithGid(ctx sdk.Context) uint64 {
+	store := k.getGidStore(ctx)
 	bytes := store.Get(types.LastObservedEventNonceKey)
 
 	if len(bytes) == 0 {
@@ -213,7 +204,7 @@ func (k Keeper) GetLastObservedEventNonce(ctx sdk.Context) uint64 {
 
 // GetLastValsetConfirmNonce returns the latest observed valset confirm nonce
 func (k Keeper) GetLastValsetConfirmNonce(ctx sdk.Context) uint64 {
-	store := ctx.KVStore(k.storeKey)
+	store := k.getGidStore(ctx)
 	bytes := store.Get(types.LastValsetConfirmNonceKey)
 
 	if len(bytes) == 0 {
@@ -250,20 +241,20 @@ func (k Keeper) SetLastObservedEthereumBlockHeight(ctx sdk.Context, ethereumHeig
 }
 
 // setLastObservedEventNonce sets the latest observed event nonce
-func (k Keeper) setLastObservedEventNonce(ctx sdk.Context, nonce uint64) {
-	store := ctx.KVStore(k.storeKey)
+func (k Keeper) setLastObservedEventNonceWithGid(ctx sdk.Context, nonce uint64) {
+	store := k.getGidStore(ctx)
 	store.Set(types.LastObservedEventNonceKey, types.UInt64Bytes(nonce))
 }
 
 // setLastValsetsConfirmNonce sets the latest observed valset confirm nonce
-func (k Keeper) setLastValsetsConfirmNonce(ctx sdk.Context, nonce uint64) {
-	store := ctx.KVStore(k.storeKey)
+func (k Keeper) setLastValsetConfirmNonce(ctx sdk.Context, nonce uint64) {
+	store := k.getGidStore(ctx)
 	store.Set(types.LastValsetConfirmNonceKey, types.UInt64Bytes(nonce))
 }
 
 // GetLastEventNonceByValidator returns the latest event nonce for a given validator
 func (k Keeper) GetLastEventNonceByValidator(ctx sdk.Context, validator sdk.AccAddress) uint64 {
-	store := ctx.KVStore(k.storeKey)
+	store := k.getGidStore(ctx)
 	bytes := store.Get(types.GetLastEventNonceByValidatorKey(validator))
 
 	if len(bytes) == 0 {
@@ -281,7 +272,7 @@ func (k Keeper) GetLastEventNonceByValidator(ctx sdk.Context, validator sdk.AccA
 		// just the lowest observed event in the store. If no claims have been submitted in for
 		// params.SignedClaimsWindow we may have no attestations in our nonce. At which point
 		// the last observed which is a persistant and never cleaned counter will suffice.
-		lowest_observed := k.GetLastObservedEventNonce(ctx)
+		lowest_observed := k.GetLastObservedEventNonceWithGid(ctx)
 		attmap := k.GetAttestationMapping(ctx)
 		// no new claims in params.SignedClaimsWindow, we can return the current value
 		// because the validator can't be slashed for an event that has already passed.
@@ -310,6 +301,6 @@ func (k Keeper) GetLastEventNonceByValidator(ctx sdk.Context, validator sdk.AccA
 
 // setLastEventNonceByValidator sets the latest event nonce for a give validator
 func (k Keeper) setLastEventNonceByValidator(ctx sdk.Context, validator sdk.AccAddress, nonce uint64) {
-	store := ctx.KVStore(k.storeKey)
+	store := k.getGidStore(ctx)
 	store.Set(types.GetLastEventNonceByValidatorKey(validator), types.UInt64Bytes(nonce))
 }

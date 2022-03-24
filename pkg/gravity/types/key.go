@@ -21,6 +21,84 @@ const (
 	WlKTokenAddress = "0x0000000000000000000000ffff"
 )
 
+const (
+
+	// Valsets
+
+	// This retrieves a specific validator set by it's nonce
+	// used to compare what's on Ethereum with what's in Cosmos
+	// to perform slashing / validation of system consistency
+	QueryValsetRequest = "valsetRequest"
+	// Gets all the confirmation signatures for a given validator
+	// set, used by the relayer to package the validator set and
+	// it's signatures into an Ethereum transaction
+	QueryValsetConfirmsByNonce = "valsetConfirms"
+	// Gets the last N (where N is currently 5) validator sets that
+	// have been produced by the chain. Useful to see if any recently
+	// signed requests can be submitted.
+	QueryLastValsetRequests = "lastValsetRequests"
+	// Gets a list of unsigned valsets for a given validators delegate
+	// orchestrator address. Up to 100 are sent at a time
+	QueryLastPendingValsetRequestByAddr = "lastPendingValsetRequest"
+
+	QueryCurrentValset = "currentValset"
+	// TODO remove this, it's not used, getting one confirm at a time
+	// is mostly useless
+	QueryValsetConfirm = "valsetConfirm"
+
+	// Batches
+	// note the current logic here constrains batch throughput to one
+	// batch (of any type) per Cosmos block.
+
+	// This retrieves a specific batch by it's nonce and token contract
+	// or in the case of a Cosmos originated address it's denom
+	QueryBatch = "batch"
+	// Get the last unsigned batch (of any denom) for the validators
+	// orchestrator to sign
+	QueryLastPendingBatchRequestByAddr = "lastPendingBatchRequest"
+	// gets the last 100 outgoing batches, regardless of denom, useful
+	// for a relayer to see what is available to relay
+	QueryLatestTxBatches = "lastBatches"
+	// Used by the relayer to package a batch with signatures required
+	// to submit to Ethereum
+	QueryBatchConfirms = "batchConfirms"
+	// Used to query all pending SendToEth transactions and fees available for each
+	// token type, a relayer can then estimate their potential profit when requesting
+	// a batch
+	QueryBatchFees = "batchFees"
+
+	// Logic calls
+	// note the current logic here constrains logic call throughput to one
+	// call (of any type) per Cosmos block.
+
+	// Token mapping
+	// This retrieves the denom which is represented by a given ERC20 contract
+	QueryERC20ToDenom = "ERC20ToDenom"
+	// This retrieves the ERC20 contract which represents a given denom
+	QueryDenomToERC20 = "DenomToERC20"
+
+	// This retrieves the denom which is represented by a given ERC721 contract
+	QueryERC721ToDenom = "ERC721ToDenom"
+	// This retrieves the ERC721 contract which represents a given denom
+	QueryDenomToERC721 = "DenomToERC721"
+
+	// Query pending transactions
+	QueryPendingSendToEths = "PendingSendToEth"
+
+	// Query last event nonce
+	QueryLastEventNonce = "lastEventNonce"
+
+	// Query last valset confirm nonce
+	QueryLastValsetConfirmNonce = "lastValsetConfirmNonce"
+
+	//
+	QueryTxId = "txId"
+	QueryEventNonce = "eventNonce"
+
+	QueryObservedEventNonce = "observedEventNonce"
+)
+
+
 var (
 	// EthAddressKey indexes cosmos validator account addresses
 	// i.e. cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn
@@ -52,6 +130,10 @@ var (
 	// OutgoingTXPoolKey indexes the last nonce for the outgoing tx pool
 	OutgoingTXPoolKey = []byte{0x6}
 
+
+	// SequenceKeyPrefix indexes different txids
+	SequenceKeyPrefix = []byte{0x7}
+
 	// DenomiatorPrefix indexes token contract addresses from ETH on gravity
 	DenomiatorPrefix = []byte{0x8}
 
@@ -61,29 +143,20 @@ var (
 	// OutgoingTXBatchKey indexes outgoing tx batches under a nonce and token address
 	OutgoingTXBatchKey = []byte{0xa}
 
-	// OutgoingTXRequestBatchKey indexes outgoing tx batches under a nonce and token address
-	OutgoingTXRequestBatchKey = []byte{0xc}
-
 	// OutgoingTXBatchBlockKey indexes outgoing tx batches under a block height and token address
 	OutgoingTXBatchBlockKey = []byte{0xb}
 
-	// BatchConfirmKey indexes validator confirmations by token contract address
-	BatchConfirmKey = []byte{0xe1}
+	// OutgoingTXRequestBatchKey indexes outgoing tx batches under a nonce and token address
+	OutgoingTXRequestBatchKey = []byte{0xc}
+
 
 	// SecondIndexNonceByClaimKey indexes latest nonce for a given claim type
 	SecondIndexNonceByClaimKey = []byte{0xf}
 
-	// LastEventNonceByValidatorKey indexes lateset event nonce by validator
-	LastEventNonceByValidatorKey = []byte{0xf1}
 
-	// LastObservedEventNonceKey indexes the latest event nonce
-	LastObservedEventNonceKey = []byte{0xf2}
+	// BatchConfirmKey indexes validator confirmations by token contract address
+	BatchConfirmKey = []byte{0xe1}
 
-	// LastValsetConfirmNonceKey indexes the latest valset confirm nonce
-	LastValsetConfirmNonceKey = []byte{0xf3}
-
-	// SequenceKeyPrefix indexes different txids
-	SequenceKeyPrefix = []byte{0x7}
 
 	// KeyLastTXPoolID indexes the lastTxPoolID
 	KeyLastTXPoolID = append(SequenceKeyPrefix, []byte("lastTxPoolId")...)
@@ -100,38 +173,53 @@ var (
 	// KeyOutgoingLogicConfirm indexes the outgoing logic confirms
 	KeyOutgoingLogicConfirm = []byte{0xae}
 
+	// save gravity list
+	GravityListKey = []byte{0xaf}
+
+	// LastEventNonceByValidatorKey indexes lateset event nonce by validator
+	LastEventNonceByValidatorKey = []byte{0xf1}
+
+	// LastObservedEventNonceKey indexes the latest event nonce
+	LastObservedEventNonceKey = []byte{0xf2}
+
+	// LastValsetConfirmNonceKey indexes the latest valset confirm nonce
+	LastValsetConfirmNonceKey = []byte{0xf3}
+
+
 	// LastObservedEthereumBlockHeightKey indexes the latest Ethereum block height
-	LastObservedEthereumBlockHeightKey = []byte{0xf9}
+	LastObservedEthereumBlockHeightKey = []byte{0xf4}
 
 	// WlkToEthKey prefixes the index of wlk asset to eth ERC20s
-	WlkToEthKey = []byte{0xf3}
+	WlkToEthKey = []byte{0xf5}
 
 	// EthToWlkKey prefixes the index of eth originated assets ERC20s to wlk
-	EthToWlkKey = []byte{0xf4}
+	EthToWlkKey = []byte{0xf6}
 
 	// LastSlashedValsetNonce indexes the latest slashed valset nonce
-	LastSlashedValsetNonce = []byte{0xf5}
+	LastSlashedValsetNonce = []byte{0xf7}
 
 	// LatestValsetNonce indexes the latest valset nonce
-	LatestValsetNonce = []byte{0xf6}
+	LatestValsetNonce = []byte{0xf8}
 
 	// LastSlashedBatchBlock indexes the latest slashed batch block height
-	LastSlashedBatchBlock = []byte{0xf7}
+	LastSlashedBatchBlock = []byte{0xf9}
 
 	// LastUnBondingBlockHeight indexes the last validator unbonding block height
-	LastUnBondingBlockHeight = []byte{0xf8}
+	LastUnBondingBlockHeight = []byte{0xfa}
 
-	ContractMetaDataKey = []byte{0xf9}
+	ContractMetaDataKey = []byte{0xfb}
 
-	TxIdKey = []byte{0xfa}
+	TxIdKey = []byte{0xfc}
 
-	EventNonceKey = []byte{0xfb}
+	EventNonceKey = []byte{0xfd}
 
 	// WlkToEthKey prefixes the index of wlk asset to eth ERC20s
-	WRC721ToEth721Key = []byte{0xfc}
+	WRC721ToEth721Key = []byte{0xfe}
 
 	// EthToWlkKey prefixes the index of eth originated assets ERC20s to wlk
-	ERC721ToWRC721Key = []byte{0xfd}
+	ERC721ToWRC721Key = []byte{0xff}
+
+
 )
 
 // GetOrchestratorAddressKey returns the following key format
@@ -153,6 +241,10 @@ func GetEthAddressKey(validator sdk.AccAddress) []byte {
 // [0x0][0 0 0 0 0 0 0 1]
 func GetValsetKey(nonce uint64) []byte {
 	return append(ValsetRequestKey, UInt64Bytes(nonce)...)
+}
+
+func GetGravityKey(gid string) []byte {
+	return append(GravityListKey, []byte(gid)...)
 }
 
 // GetValsetConfirmKey returns the following key format
@@ -304,16 +396,16 @@ func GetContractMetaDataKey(contract string) []byte {
 	return append(ContractMetaDataKey, []byte(contract)...)
 }
 
-func GetOutgoingLogicCallKey(invalidationId []byte, invalidationNonce uint64) []byte {
-	a := append(KeyOutgoingLogicCall, invalidationId...)
-	return append(a, UInt64Bytes(invalidationNonce)...)
-}
-
-func GetLogicConfirmKey(invalidationId []byte, invalidationNonce uint64, validator sdk.AccAddress) []byte {
-	interm := append(KeyOutgoingLogicConfirm, invalidationId...)
-	interm = append(interm, UInt64Bytes(invalidationNonce)...)
-	return append(interm, validator.Bytes()...)
-}
+//func GetOutgoingLogicCallKey(invalidationId []byte, invalidationNonce uint64) []byte {
+//	a := append(KeyOutgoingLogicCall, invalidationId...)
+//	return append(a, UInt64Bytes(invalidationNonce)...)
+//}
+//
+//func GetLogicConfirmKey(invalidationId []byte, invalidationNonce uint64, validator sdk.AccAddress) []byte {
+//	interm := append(KeyOutgoingLogicConfirm, invalidationId...)
+//	interm = append(interm, UInt64Bytes(invalidationNonce)...)
+//	return append(interm, validator.Bytes()...)
+//}
 
 func GetTxIdKey(txId uint64) []byte {
 	return append(TxIdKey, sdk.Uint64ToBigEndian(txId)...)

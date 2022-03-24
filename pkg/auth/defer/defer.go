@@ -1,7 +1,6 @@
 package _defer
 
 import (
-	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/account"
 	types2 "github.com/ci123chain/ci123chain/pkg/app/types"
@@ -54,7 +53,6 @@ func NewDeferHandler( ak account.AccountKeeper, sk supply.Keeper) sdk.DeferHandl
 		}
 		calculateGas := sdk.CalculateGas(restgas)
 		restFee := sdk.NewChainCoin(calculateGas)
-		fmt.Println("return rest fee: ", calculateGas.String())
 		err := sk.SendCoinsFromModuleToAccount(ctx, auth.FeeCollectorName, signer, sdk.NewCoins(restFee))
 		if err != nil {
 			return

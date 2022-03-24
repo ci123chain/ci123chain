@@ -76,7 +76,7 @@ func (AppModule) Name() string {
 // InitGenesis initializes the genesis state for this module and implements app module.
 func (am AppModule) InitGenesis(ctx sdk.Context, bz json.RawMessage) []abci.ValidatorUpdate {
 	var genesisState types.GenesisState
-	err := types.SubModuleCdc.UnmarshalJSON(bz, &genesisState)
+	err := json.Unmarshal(bz, &genesisState)
 	if err != nil {
 		panic(fmt.Sprintf("failed to unmarshal %s genesis state: %s", types.ModuleName, err))
 	}
@@ -85,9 +85,14 @@ func (am AppModule) InitGenesis(ctx sdk.Context, bz json.RawMessage) []abci.Vali
 }
 
 //// ExportGenesis exports the current genesis state to a json.RawMessage
+// todo gogo protobuf encoding
 func (am AppModule) ExportGenesis(ctx sdk.Context) json.RawMessage {
 	gs := keeper.ExportGenesis(ctx, am.Keeper)
-	return types.SubModuleCdc.MustMarshalJSON(&gs)
+	by, err := json.Marshal(gs)
+	if err != nil {
+		panic(err)
+	}
+	return by
 }
 
 // EndBlock implements app module
@@ -99,7 +104,8 @@ func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.Val
 	return []abci.ValidatorUpdate{}
 }
 
-func (m AppModule) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) {
+func (am AppModule) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) {
+	BeginBlocker(ctx, am.Keeper)
 }
 
 func (m AppModule) Committer(ctx sdk.Context) {

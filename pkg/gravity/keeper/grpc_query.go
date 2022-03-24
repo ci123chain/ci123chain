@@ -35,13 +35,13 @@ func (k Keeper) ValsetConfirm(c context.Context, req *types.QueryValsetConfirmRe
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "address invalid")
 	}
-	return &types.QueryValsetConfirmResponse{Confirm: k.GetValsetConfirm(sdk.UnwrapSDKContext(c), req.Nonce, addr)}, nil
+	return &types.QueryValsetConfirmResponse{Confirm: k.GetValsetConfirmByGID(sdk.UnwrapSDKContext(c), req.Nonce, addr)}, nil
 }
 
 // ValsetConfirmsByNonce queries the ValsetConfirmsByNonce of the gravity module
 func (k Keeper) ValsetConfirmsByNonce(c context.Context, req *types.QueryValsetConfirmsByNonceRequest) (*types.QueryValsetConfirmsByNonceResponse, error) {
 	var confirms []*types.MsgValsetConfirm
-	k.IterateValsetConfirmByNonce(sdk.UnwrapSDKContext(c), req.Nonce, func(_ []byte, c types.MsgValsetConfirm) bool {
+	k.IterateValsetConfirmByNonceWithGID(sdk.UnwrapSDKContext(c), req.Nonce, func(_ []byte, c types.MsgValsetConfirm) bool {
 		confirms = append(confirms, &c)
 		return false
 	})
@@ -71,7 +71,7 @@ func (k Keeper) LastPendingValsetRequestByAddr(c context.Context, req *types.Que
 	var pendingValsetReq []*types.Valset
 	k.IterateValsets(sdk.UnwrapSDKContext(c), func(_ []byte, val *types.Valset) bool {
 		// foundConfirm is true if the operatorAddr has signed the valset we are currently looking at
-		foundConfirm := k.GetValsetConfirm(sdk.UnwrapSDKContext(c), val.Nonce, addr) != nil
+		foundConfirm := k.GetValsetConfirmByGID(sdk.UnwrapSDKContext(c), val.Nonce, addr) != nil
 		// if this valset has NOT been signed by operatorAddr, store it in pendingValsetReq
 		// and exit the loop
 		if !foundConfirm {
@@ -102,7 +102,7 @@ func (k Keeper) LastPendingBatchRequestByAddr(c context.Context, req *types.Quer
 
 	var pendingBatchReq *types.OutgoingTxBatch
 	k.IterateOutgoingTXBatches(sdk.UnwrapSDKContext(c), func(_ []byte, batch *types.OutgoingTxBatch) bool {
-		foundConfirm := k.GetBatchConfirm(sdk.UnwrapSDKContext(c), batch.BatchNonce, batch.TokenContract, addr) != nil
+		foundConfirm := k.GetBatchConfirmWithGID(sdk.UnwrapSDKContext(c), batch.BatchNonce, batch.TokenContract, addr) != nil
 		if !foundConfirm {
 			pendingBatchReq = batch
 			return true
@@ -111,24 +111,6 @@ func (k Keeper) LastPendingBatchRequestByAddr(c context.Context, req *types.Quer
 	})
 
 	return &types.QueryLastPendingBatchRequestByAddrResponse{Batch: pendingBatchReq}, nil
-}
-
-func (k Keeper) LastPendingLogicCallByAddr(c context.Context, req *types.QueryLastPendingLogicCallByAddrRequest) (*types.QueryLastPendingLogicCallByAddrResponse, error) {
-	addr, err := sdk.AccAddressFromBech32(req.Address)
-	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "address invalid")
-	}
-
-	var pendingLogicReq *types.OutgoingLogicCall
-	k.IterateOutgoingLogicCalls(sdk.UnwrapSDKContext(c), func(_ []byte, logic *types.OutgoingLogicCall) bool {
-		foundConfirm := k.GetLogicCallConfirm(sdk.UnwrapSDKContext(c), logic.InvalidationId, logic.InvalidationNonce, addr) != nil
-		if !foundConfirm {
-			pendingLogicReq = logic
-			return true
-		}
-		return false
-	})
-	return &types.QueryLastPendingLogicCallByAddrResponse{Call: pendingLogicReq}, nil
 }
 
 // OutgoingTxBatches queries the OutgoingTxBatches of the gravity module
@@ -141,15 +123,35 @@ func (k Keeper) OutgoingTxBatches(c context.Context, req *types.QueryOutgoingTxB
 	return &types.QueryOutgoingTxBatchesResponse{Batches: batches}, nil
 }
 
+//func (k Keeper) LastPendingLogicCallByAddr(c context.Context, req *types.QueryLastPendingLogicCallByAddrRequest) (*types.QueryLastPendingLogicCallByAddrResponse, error) {
+//	addr, err := sdk.AccAddressFromBech32(req.Address)
+//	if err != nil {
+//		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "address invalid")
+//	}
+//
+//	var pendingLogicReq *types.OutgoingLogicCall
+//	k.IterateOutgoingLogicCalls(sdk.UnwrapSDKContext(c), func(_ []byte, logic *types.OutgoingLogicCall) bool {
+//		foundConfirm := k.GetLogicCallConfirm(sdk.UnwrapSDKContext(c), logic.InvalidationId, logic.InvalidationNonce, addr) != nil
+//		if !foundConfirm {
+//			pendingLogicReq = logic
+//			return true
+//		}
+//		return false
+//	})
+//	return &types.QueryLastPendingLogicCallByAddrResponse{Call: pendingLogicReq}, nil
+//}
+
+
+
 // OutgoingLogicCalls queries the OutgoingLogicCalls of the gravity module
-func (k Keeper) OutgoingLogicCalls(c context.Context, req *types.QueryOutgoingLogicCallsRequest) (*types.QueryOutgoingLogicCallsResponse, error) {
-	var calls []*types.OutgoingLogicCall
-	k.IterateOutgoingLogicCalls(sdk.UnwrapSDKContext(c), func(_ []byte, call *types.OutgoingLogicCall) bool {
-		calls = append(calls, call)
-		return len(calls) == MaxResults
-	})
-	return &types.QueryOutgoingLogicCallsResponse{Calls: calls}, nil
-}
+//func (k Keeper) OutgoingLogicCalls(c context.Context, req *types.QueryOutgoingLogicCallsRequest) (*types.QueryOutgoingLogicCallsResponse, error) {
+//	var calls []*types.OutgoingLogicCall
+//	k.IterateOutgoingLogicCalls(sdk.UnwrapSDKContext(c), func(_ []byte, call *types.OutgoingLogicCall) bool {
+//		calls = append(calls, call)
+//		return len(calls) == MaxResults
+//	})
+//	return &types.QueryOutgoingLogicCallsResponse{Calls: calls}, nil
+//}
 
 // BatchRequestByNonce queries the BatchRequestByNonce of the gravity module
 func (k Keeper) BatchRequestByNonce(c context.Context, req *types.QueryBatchRequestByNonceRequest) (*types.QueryBatchRequestByNonceResponse, error) {
@@ -166,7 +168,7 @@ func (k Keeper) BatchRequestByNonce(c context.Context, req *types.QueryBatchRequ
 // BatchConfirms returns the batch confirmations by nonce and token contract
 func (k Keeper) BatchConfirms(c context.Context, req *types.QueryBatchConfirmsRequest) (*types.QueryBatchConfirmsResponse, error) {
 	var confirms []*types.MsgConfirmBatch
-	k.IterateBatchConfirmByNonceAndTokenContract(sdk.UnwrapSDKContext(c), req.Nonce, req.ContractAddress, func(_ []byte, c types.MsgConfirmBatch) bool {
+	k.IterateBatchConfirmByNonceAndTokenContractWithGID(sdk.UnwrapSDKContext(c), req.Nonce, req.ContractAddress, func(_ []byte, c types.MsgConfirmBatch) bool {
 		confirms = append(confirms, &c)
 		return false
 	})
@@ -174,14 +176,14 @@ func (k Keeper) BatchConfirms(c context.Context, req *types.QueryBatchConfirmsRe
 }
 
 // LogicConfirms returns the Logic confirmations by nonce and token contract
-func (k Keeper) LogicConfirms(c context.Context, req *types.QueryLogicConfirmsRequest) (*types.QueryLogicConfirmsResponse, error) {
-	var confirms []*types.MsgConfirmLogicCall
-	k.IterateLogicConfirmByInvalidationIdAndNonce(sdk.UnwrapSDKContext(c), req.InvalidationId, req.InvalidationNonce, func(_ []byte, c *types.MsgConfirmLogicCall) bool {
-		confirms = append(confirms, c)
-		return false
-	})
-	return &types.QueryLogicConfirmsResponse{Confirms: confirms}, nil
-}
+//func (k Keeper) LogicConfirms(c context.Context, req *types.QueryLogicConfirmsRequest) (*types.QueryLogicConfirmsResponse, error) {
+//	var confirms []*types.MsgConfirmLogicCall
+//	k.IterateLogicConfirmByInvalidationIdAndNonce(sdk.UnwrapSDKContext(c), req.InvalidationId, req.InvalidationNonce, func(_ []byte, c *types.MsgConfirmLogicCall) bool {
+//		confirms = append(confirms, c)
+//		return false
+//	})
+//	return &types.QueryLogicConfirmsResponse{Confirms: confirms}, nil
+//}
 
 // LastEventNonceByAddr returns the last event nonce for the given validator address, this allows eth oracles to figure out where they left off
 func (k Keeper) LastEventNonceByAddr(c context.Context, req *types.QueryLastEventNonceByAddrRequest) (*types.QueryLastEventNonceByAddrResponse, error) {

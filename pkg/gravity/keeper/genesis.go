@@ -14,93 +14,70 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 		k.StoreValsetUnsafe(ctx, vs)
 	}
 
-	// reset valset confirmations in state
-	for _, conf := range data.ValsetConfirms {
-		k.SetValsetConfirm(ctx, *conf)
-	}
-
-	// reset batches in state
-	for _, batch := range data.Batches {
-		// TODO: block height?
-		k.StoreBatchUnsafe(ctx, batch)
-	}
-
-	// reset batch confirmations in state
-	for _, conf := range data.BatchConfirms {
-		k.SetBatchConfirm(ctx, &conf)
-	}
-
-	// reset logic calls in state
-	for _, call := range data.LogicCalls {
-		k.SetOutgoingLogicCall(ctx, call)
-	}
-
-	// reset batch confirmations in state
-	for _, conf := range data.LogicCallConfirms {
-		k.SetLogicCallConfirm(ctx, &conf)
-	}
-
-	// reset pool transactions in state
-	for _, tx := range data.UnbatchedTransfers {
-		k.setPoolEntry(ctx, tx)
-		k.setTxIdState(ctx, tx.Id, txIdStatePending)
-	}
-
-	// reset attestations in state
-	for _, att := range data.Attestations {
-		claim, err := k.UnpackAttestationClaim(&att)
-		if err != nil {
-			panic("couldn't cast to claim")
+	for gid, data := range data.Gravitys {
+		k.SetCurrentGid(gid)
+		k.saveGravityID(ctx, gid)
+		// reset valset confirmations in state
+		for _, conf := range data.ValsetConfirms {
+			k.SetValsetConfirmByGID(ctx, *conf)
 		}
 
-		// TODO: block height?
-		k.SetAttestation(ctx, claim.GetEventNonce(), claim.ClaimHash(), &att)
-	}
-	k.setLastObservedEventNonce(ctx, data.LastObservedNonce)
-
-	// reset attestation state of specific validators
-	// this must be done after the above to be correct
-	for _, att := range data.Attestations {
-		claim, err := k.UnpackAttestationClaim(&att)
-		if err != nil {
-			panic("couldn't cast to claim")
+		// reset batches in state
+		for _, batch := range data.Batches {
+			// TODO: block height?
+			k.StoreBatchUnsafe(ctx, batch)
 		}
-		// reconstruct the latest event nonce for every validator
-		// if somehow this genesis state is saved when all attestations
-		// have been cleaned up GetLastEventNonceByValidator handles that case
-		//
-		// if we where to save and load the last event nonce for every validator
-		// then we would need to carry that state forever across all chain restarts
-		// but since we've already had to handle the edge case of new validators joining
-		// while all attestations have already been cleaned up we can do this instead and
-		// not carry around every validators event nonce counter forever.
-		for _, vote := range att.Votes {
-			val:= sdk.HexToAddress(vote)
-			last := k.GetLastEventNonceByValidator(ctx, val)
-			if claim.GetEventNonce() > last {
-				k.setLastEventNonceByValidator(ctx, val, claim.GetEventNonce())
+
+		// reset batch confirmations in state
+		for _, conf := range data.BatchConfirms {
+			k.SetBatchConfirmWithGID(ctx, &conf)
+		}
+
+
+		// reset pool transactions in state
+		for _, tx := range data.UnbatchedTransfers {
+			k.setPoolEntry(ctx, tx)
+			k.setTxIdState(ctx, tx.Id, txIdStatePending)
+		}
+
+		// reset attestations in state
+		for _, att := range data.Attestations {
+			claim, err := k.GetAttestationClaim(&att)
+			if err != nil {
+				panic("couldn't cast to claim")
+			}
+
+			// TODO: block height?
+			k.SetAttestation(ctx, claim.GetEventNonce(), claim.ClaimHash(), &att)
+		}
+		k.setLastObservedEventNonceWithGid(ctx, data.LastObservedNonce)
+
+		// reset attestation state of specific validators
+		// this must be done after the above to be correct
+		for _, att := range data.Attestations {
+			claim, err := k.GetAttestationClaim(&att)
+			if err != nil {
+				panic("couldn't cast to claim")
+			}
+
+			for _, vote := range att.Votes {
+				val:= sdk.HexToAddress(vote)
+				last := k.GetLastEventNonceByValidator(ctx, val)
+				if claim.GetEventNonce() > last {
+					k.setLastEventNonceByValidator(ctx, val, claim.GetEventNonce())
+				}
 			}
 		}
+
+		// populate state with cosmos originated denom-erc20 mapping
+		for _, item := range data.Erc20ToDenoms {
+			k.setERC20Map(ctx, item.Denom, item.Erc20)
+		}
+
+		k.SetCurrentGid("")
 	}
 
-	// reset delegate keys in state
-	//for _, keys := range data.DelegateKeys {
-	//	err := keys.ValidateBasic()
-	//	if err != nil {
-	//		panic("Invalid delegate key in Genesis!")
-	//	}
-	//	val:= sdk.HexToAddress(keys.Validator)
-	//	orch, _ := sdk.AccAddressFromBech32(keys.Orchestrator)
-	//	// set the orchestrator address
-	//	k.SetOrchestratorValidator(ctx, val, orch)
-	//	// set the ethereum address
-	//	k.SetEthAddress(ctx, val, keys.EthAddress)
-	//}
 
-	// populate state with cosmos originated denom-erc20 mapping
-	for _, item := range data.Erc20ToDenoms {
-		k.setERC20Map(ctx, item.Denom, item.Erc20)
-	}
 }
 
 // ExportGenesis exports all the state needed to restart the chain
@@ -108,62 +85,70 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 	var (
 		p                   = k.GetParams(ctx)
-		calls               = k.GetOutgoingLogicCalls(ctx)
-		batches             = k.GetOutgoingTxBatches(ctx)
+		//calls               = k.GetOutgoingLogicCalls(ctx)
+
 		valsets             = k.GetValsets(ctx)
-		attmap              = k.GetAttestationMapping(ctx)
 		vsconfs             = []*types.MsgValsetConfirm{}
 		batchconfs          = []types.MsgConfirmBatch{}
-		callconfs           = []types.MsgConfirmLogicCall{}
 		attestations        = []types.Attestation{}
 		delegates           = k.GetDelegateKeys(ctx)
-		lastobserved        = k.GetLastObservedEventNonce(ctx)
+
 		erc20ToDenoms       = []*types.ERC20ToDenom{}
-		unbatched_transfers = k.GetPoolTransactions(ctx)
+
+		gravityDatas		= map[string]types.GravityData{}
 	)
+	gids := k.GetAllGravityIDs(ctx)
+	for _, gid := range gids {
+		k.SetCurrentGid(gid)
 
-	// export valset confirmations from state
-	for _, vs := range valsets {
-		// TODO: set height = 0?
-		vsconfs = append(vsconfs, k.GetValsetConfirms(ctx, vs.Nonce)...)
+		lastobserved := k.GetLastObservedEventNonceWithGid(ctx)
+
+		//export valset confirmations from state
+		for _, vs := range valsets {
+			// TODO: set height = 0?
+			vsconfs = append(vsconfs, k.GetValsetConfirmsByGID(ctx, vs.Nonce)...)
+		}
+
+		// export batch confirmations from state
+		batches := k.GetOutgoingTxBatches(ctx)
+		for _, batch := range batches {
+			// TODO: set height = 0?
+			batchconfs = append(batchconfs, k.GetBatchConfirmByNonceAndTokenContractWithGID(ctx, batch.BatchNonce, batch.TokenContract)...)
+		}
+
+		attmap := k.GetAttestationMapping(ctx)
+		// export attestations from state
+		for _, atts := range attmap {
+			// TODO: set height = 0?
+			attestations = append(attestations, atts...)
+		}
+
+		// export erc20 to denom relations
+		k.IterateERC20ToDenom(ctx, func(key []byte, erc20ToDenom *types.ERC20ToDenom) bool {
+			erc20ToDenoms = append(erc20ToDenoms, erc20ToDenom)
+			return false
+		})
+
+		unbatched_transfers := k.GetPoolTransactions(ctx)
+
+		gData := types.GravityData{
+			LastObservedNonce:  lastobserved,
+			ValsetConfirms:     vsconfs,
+			Batches:            batches,
+			BatchConfirms:      batchconfs,
+			Attestations:       attestations,
+			Erc20ToDenoms:      erc20ToDenoms,
+			UnbatchedTransfers: unbatched_transfers,
+		}
+		gravityDatas[gid] = gData
+
+		k.SetCurrentGid("")
 	}
-
-	// export batch confirmations from state
-	for _, batch := range batches {
-		// TODO: set height = 0?
-		batchconfs = append(batchconfs, k.GetBatchConfirmByNonceAndTokenContract(ctx, batch.BatchNonce, batch.TokenContract)...)
-	}
-
-	// export logic call confirmations from state
-	for _, call := range calls {
-		// TODO: set height = 0?
-		callconfs = append(callconfs, k.GetLogicConfirmByInvalidationIdAndNonce(ctx, call.InvalidationId, call.InvalidationNonce)...)
-	}
-
-	// export attestations from state
-	for _, atts := range attmap {
-		// TODO: set height = 0?
-		attestations = append(attestations, atts...)
-	}
-
-	// export erc20 to denom relations
-	k.IterateERC20ToDenom(ctx, func(key []byte, erc20ToDenom *types.ERC20ToDenom) bool {
-		erc20ToDenoms = append(erc20ToDenoms, erc20ToDenom)
-		return false
-	})
 
 	return types.GenesisState{
 		Params:             &p,
-		LastObservedNonce:  lastobserved,
 		Valsets:            valsets,
-		ValsetConfirms:     vsconfs,
-		Batches:            batches,
-		BatchConfirms:      batchconfs,
-		LogicCalls:         calls,
-		LogicCallConfirms:  callconfs,
-		Attestations:       attestations,
 		DelegateKeys:       delegates,
-		Erc20ToDenoms:      erc20ToDenoms,
-		UnbatchedTransfers: unbatched_transfers,
+		Gravitys: 			gravityDatas,
 	}
 }

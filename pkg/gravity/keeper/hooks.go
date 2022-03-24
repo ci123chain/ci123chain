@@ -22,7 +22,6 @@ func (h Hooks) AfterValidatorBeginUnbonding(ctx sdk.Context, _ sdk.AccAddress, _
 	// The reason for creating valset requests in endblock is to create only one valset request per block if multiple validators starts unbonding at same block.
 
 	h.k.SetLastUnBondingBlockHeight(ctx, uint64(ctx.BlockHeight()))
-
 }
 
 func (h Hooks) BeforeDelegationCreated(_ sdk.Context, delAddr sdk.AccAddress, valAddr sdk.AccAddress) {

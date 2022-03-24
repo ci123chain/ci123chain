@@ -2,13 +2,10 @@ package cmd
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/app"
-	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	tmjson "github.com/tendermint/tendermint/libs/json"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	tmtypes "github.com/tendermint/tendermint/types"
@@ -16,7 +13,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strconv"
 )
 
 const (
@@ -38,35 +34,6 @@ func ExportCmd(appExporter app.AppExporter, defaultNodeHome string) *cobra.Comma
 
 			if _, err := os.Stat(config.GenesisFile()); os.IsNotExist(err) {
 				return err
-			}
-
-			stateDB := ""
-
-			dbType := viper.GetString(flagCiStateDBType)
-			if dbType == "" {
-				dbType = "redis"
-			}
-
-			switch dbType {
-			case "redis":
-				dbHost := viper.GetString(flagCiStateDBHost)
-
-				if dbHost == "" {
-					var err error
-					dbHost, err = util.GetDomain()
-					if err != nil {
-						return err
-					}
-				}
-				dbTls := viper.GetBool(flagCiStateDBTls)
-				dbPort := viper.GetUint64(flagCiStateDBPort)
-				p := strconv.FormatUint(dbPort, 10)
-				stateDB = "redisdb://" + dbHost + ":" + p
-				if dbTls {
-					stateDB += "#tls"
-				}
-			default:
-				return errors.New(fmt.Sprintf("types of db: %s, which is not reids not implement yet", dbType))
 			}
 
 			if appExporter == nil {
@@ -93,7 +60,7 @@ func ExportCmd(appExporter app.AppExporter, defaultNodeHome string) *cobra.Comma
 			forZeroHeight, _ := cmd.Flags().GetBool(FlagForZeroHeight)
 			jailAllowedAddrs, _ := cmd.Flags().GetStringSlice(FlagJailAllowedAddrs)
 
-			exported, err := appExporter(serverCtx.Logger, stateDB, traceWriter, height, forZeroHeight, jailAllowedAddrs, nil)
+			exported, err := appExporter(serverCtx.Logger, "", traceWriter, height, forZeroHeight, jailAllowedAddrs, nil)
 			if err != nil {
 				return fmt.Errorf("error exporting state: %v", err)
 			}

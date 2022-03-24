@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"encoding/binary"
-	"encoding/hex"
 	"fmt"
 	"strconv"
 
@@ -14,102 +13,6 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/gravity/types"
 )
 
-const (
-
-	// Valsets
-
-	// This retrieves a specific validator set by it's nonce
-	// used to compare what's on Ethereum with what's in Cosmos
-	// to perform slashing / validation of system consistency
-	QueryValsetRequest = "valsetRequest"
-	// Gets all the confirmation signatures for a given validator
-	// set, used by the relayer to package the validator set and
-	// it's signatures into an Ethereum transaction
-	QueryValsetConfirmsByNonce = "valsetConfirms"
-	// Gets the last N (where N is currently 5) validator sets that
-	// have been produced by the chain. Useful to see if any recently
-	// signed requests can be submitted.
-	QueryLastValsetRequests = "lastValsetRequests"
-	// Gets a list of unsigned valsets for a given validators delegate
-	// orchestrator address. Up to 100 are sent at a time
-	QueryLastPendingValsetRequestByAddr = "lastPendingValsetRequest"
-
-	QueryCurrentValset = "currentValset"
-	// TODO remove this, it's not used, getting one confirm at a time
-	// is mostly useless
-	QueryValsetConfirm = "valsetConfirm"
-
-	// used by the contract deployer script. GravityID is set in the Genesis
-	// file, then read by the contract deployer and deployed to Ethereum
-	// a unique GravityID ensures that even if the same validator set with
-	// the same keys is running on two chains these chains can have independent
-	// bridges
-	QueryGravityID = "gravityID"
-
-	// Batches
-	// note the current logic here constrains batch throughput to one
-	// batch (of any type) per Cosmos block.
-
-	// This retrieves a specific batch by it's nonce and token contract
-	// or in the case of a Cosmos originated address it's denom
-	QueryBatch = "batch"
-	// Get the last unsigned batch (of any denom) for the validators
-	// orchestrator to sign
-	QueryLastPendingBatchRequestByAddr = "lastPendingBatchRequest"
-	// gets the last 100 outgoing batches, regardless of denom, useful
-	// for a relayer to see what is available to relay
-	QueryOutgoingTxBatches = "lastBatches"
-	// Used by the relayer to package a batch with signatures required
-	// to submit to Ethereum
-	QueryBatchConfirms = "batchConfirms"
-	// Used to query all pending SendToEth transactions and fees available for each
-	// token type, a relayer can then estimate their potential profit when requesting
-	// a batch
-	QueryBatchFees = "batchFees"
-
-	// Logic calls
-	// note the current logic here constrains logic call throughput to one
-	// call (of any type) per Cosmos block.
-
-	// This retrieves a specific logic call by it's nonce and token contract
-	// or in the case of a Cosmos originated address it's denom
-	QueryLogicCall = "logicCall"
-	// Get the last unsigned logic call for the validators orchestrator
-	// to sign
-	QueryLastPendingLogicCallByAddr = "lastPendingLogicCall"
-	// gets the last 5 outgoing logic calls, regardless of denom, useful
-	// for a relayer to see what is available to relay
-	QueryOutgoingLogicCalls = "lastLogicCalls"
-	// Used by the relayer to package a logic call with signatures required
-	// to submit to Ethereum
-	QueryLogicCallConfirms = "logicCallConfirms"
-
-	// Token mapping
-	// This retrieves the denom which is represented by a given ERC20 contract
-	QueryERC20ToDenom = "ERC20ToDenom"
-	// This retrieves the ERC20 contract which represents a given denom
-	QueryDenomToERC20 = "DenomToERC20"
-
-	// This retrieves the denom which is represented by a given ERC721 contract
-	QueryERC721ToDenom = "ERC721ToDenom"
-	// This retrieves the ERC721 contract which represents a given denom
-	QueryDenomToERC721 = "DenomToERC721"
-
-	// Query pending transactions
-	QueryPendingSendToEth = "PendingSendToEth"
-
-	// Query last event nonce
-	QueryLastEventNonce = "lastEventNonce"
-
-	// Query last valset confirm nonce
-	QueryLastValsetConfirmNonce = "lastValsetConfirmNonce"
-
-	//
-	QueryTxId = "txId"
-	QueryEventNonce = "eventNonce"
-
-	QueryObservedEventNonce = "observedEventNonce"
-)
 
 // NewQuerier is the module level router for state queries
 func NewQuerier(keeper Keeper) sdk.Querier {
@@ -117,71 +20,60 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 		switch path[0] {
 
 		// Valsets
-		case QueryCurrentValset:
+		case types.QueryCurrentValset:
 			return queryCurrentValset(ctx, keeper)
-		case QueryValsetRequest:
-			return queryValsetRequest(ctx, path[1:], keeper)
-		case QueryValsetConfirm:
-			return queryValsetConfirm(ctx, path[1:], keeper)
-		case QueryValsetConfirmsByNonce:
-			return queryAllValsetConfirms(ctx, path[1], keeper)
-		case QueryLastValsetRequests:
+		case types.QueryValsetRequest:
+			return queryValsetRequestByNonce(ctx, path[1], keeper)
+		//case types.QueryValsetConfirm:
+		//	return queryValsetConfirm(ctx, path[1:], keeper)
+		case types.QueryValsetConfirmsByNonce:
+			return queryAllValsetConfirms(ctx, path[1], path[2], keeper)
+		case types.QueryLastValsetRequests:
 			return lastValsetRequests(ctx, keeper)
-		case QueryLastPendingValsetRequestByAddr:
-			return lastPendingValsetRequest(ctx, path[1], keeper)
+		case types.QueryLastPendingValsetRequestByAddr:
+			return lastPendingValsetRequest(ctx, path[1], path[2], keeper)
 
 		// Batches
-		case QueryBatch:
-			return queryBatch(ctx, path[1], path[2], keeper)
-		case QueryBatchConfirms:
-			return queryAllBatchConfirms(ctx, path[1], path[2], keeper)
-		case QueryLastPendingBatchRequestByAddr:
-			return lastPendingBatchRequest(ctx, path[1], keeper)
-		case QueryOutgoingTxBatches:
-			return lastBatchesRequest(ctx, keeper)
-		case QueryBatchFees:
-			return queryBatchFees(ctx, keeper)
+		case types.QueryBatch:
+			return queryBatch(ctx, path[1], path[2], path[3], keeper)
+		case types.QueryBatchConfirms:
+			return queryAllBatchConfirms(ctx, path[1], path[2], path[3], keeper)
+		case types.QueryLastPendingBatchRequestByAddr:
+			return lastPendingBatchRequest(ctx, path[1], path[2], keeper)
+		case types.QueryLatestTxBatches:
+			return lastBatchesRequest(ctx, path[1], keeper)
+		//case types.QueryBatchFees:
+		//	return queryBatchFees(ctx, keeper)
 
-		// Logic calls
-		case QueryLogicCall:
-			return queryLogicCall(ctx, path[1], path[2], keeper)
-		case QueryLogicCallConfirms:
-			return queryAllLogicCallConfirms(ctx, path[1], path[2], keeper)
-		case QueryLastPendingLogicCallByAddr:
-			return lastPendingLogicCallRequest(ctx, path[1], keeper)
-		case QueryOutgoingLogicCalls:
-			return lastLogicCallRequests(ctx, keeper)
-
-		case QueryGravityID:
-			return queryGravityID(ctx, keeper)
 
 		// Token mappings
-		case QueryDenomToERC20:
-			return queryDenomToERC20(ctx, path[1], keeper)
-		case QueryERC20ToDenom:
-			return queryERC20ToDenom(ctx, path[1], keeper)
-		case QueryDenomToERC721:
-			return queryDenomToERC721(ctx, path[1], keeper)
-		case QueryERC721ToDenom:
-			return queryERC721ToDenom(ctx, path[1], keeper)
+		case types.QueryDenomToERC20:
+			return queryDenomToERC20(ctx, path[1], path[2], keeper)
+		case types.QueryERC20ToDenom:
+			return queryERC20ToDenom(ctx, path[1], path[2], keeper)
+		case types.QueryDenomToERC721:
+			return queryDenomToERC721(ctx, path[1], path[2], keeper)
+		case types.QueryERC721ToDenom:
+			return queryERC721ToDenom(ctx, path[1], path[2], keeper)
 
 		// Pending transactions
-		case QueryPendingSendToEth:
-			return queryPendingSendToEth(ctx, path[1], path[2], keeper)
+		case types.QueryPendingSendToEths:
+			return queryPendingSendToEth(ctx, path[1], path[2], path[3], keeper)
 
 		// Event
-		case QueryLastEventNonce:
-			return queryLastEventNonce(ctx, path[1], keeper)
+		case types.QueryLastEventNonce:
+			return queryLastEventNonce(ctx, path[1], path[2], keeper)
 
-		case QueryLastValsetConfirmNonce:
-			return queryLastValsetConfirmNonce(ctx, keeper)
+		case types.QueryLastValsetConfirmNonce:
+			return queryLastValsetConfirmNonce(ctx, path[1], keeper)
 
-		case QueryTxId:
-			return queryTxId(ctx, path[1], keeper)
-		case QueryEventNonce:
-			return queryEventNonce(ctx, path[1], keeper)
-		case QueryObservedEventNonce:
-			return queryObservedEventNonce(ctx, keeper)
+		//case QueryTxId:
+		//	return queryTxId(ctx, path[1], keeper)
+		//case QueryEventNonce:
+		//	return queryEventNonce(ctx, path[1], keeper)
+
+		case types.QueryObservedEventNonce:
+			return queryObservedEventNonce(ctx, path[1], keeper)
 
 		default:
 			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unknown %s query endpoint", types.ModuleName)
@@ -189,15 +81,17 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 	}
 }
 
-func queryObservedEventNonce(ctx sdk.Context, keeper Keeper) ([]byte, error) {
-	nonce := keeper.GetLastObservedEventNonce(ctx)
+func queryObservedEventNonce(ctx sdk.Context, gravityID string, keeper Keeper) ([]byte, error) {
+	keeper.currentGID = gravityID
+	nonce := keeper.GetLastObservedEventNonceWithGid(ctx)
 	var buf = make([]byte, 8)
 	binary.BigEndian.PutUint64(buf, nonce)
 	return buf, nil
 }
 
-func queryValsetRequest(ctx sdk.Context, path []string, keeper Keeper) ([]byte, error) {
-	nonce, err := types.UInt64FromString(path[0])
+func queryValsetRequestByNonce(ctx sdk.Context, nonceS string, keeper Keeper) ([]byte, error) {
+	//keeper.currentGID = gravityID
+	nonce, err := types.UInt64FromString(nonceS)
 	if err != nil {
 		return nil, err
 	}
@@ -218,14 +112,15 @@ func queryValsetRequest(ctx sdk.Context, path []string, keeper Keeper) ([]byte, 
 
 // allValsetConfirmsByNonce returns all the confirm messages for a given nonce
 // When nothing found an empty json array is returned. No pagination.
-func queryAllValsetConfirms(ctx sdk.Context, nonceStr string, keeper Keeper) ([]byte, error) {
+func queryAllValsetConfirms(ctx sdk.Context, gravityID, nonceStr string, keeper Keeper) ([]byte, error) {
+	keeper.currentGID = gravityID
 	nonce, err := types.UInt64FromString(nonceStr)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, err.Error())
 	}
 
 	var confirms []*types.MsgValsetConfirm
-	keeper.IterateValsetConfirmByNonce(ctx, nonce, func(_ []byte, c types.MsgValsetConfirm) bool {
+	keeper.IterateValsetConfirmByNonceWithGID(ctx, nonce, func(_ []byte, c types.MsgValsetConfirm) bool {
 		confirms = append(confirms, &c)
 		return false
 	})
@@ -242,14 +137,15 @@ func queryAllValsetConfirms(ctx sdk.Context, nonceStr string, keeper Keeper) ([]
 
 // allBatchConfirms returns all the confirm messages for a given nonce
 // When nothing found an empty json array is returned. No pagination.
-func queryAllBatchConfirms(ctx sdk.Context, nonceStr string, tokenContract string, keeper Keeper) ([]byte, error) {
+func queryAllBatchConfirms(ctx sdk.Context, gravityID, nonceStr string, tokenContract string, keeper Keeper) ([]byte, error) {
+	keeper.currentGID = gravityID
 	nonce, err := types.UInt64FromString(nonceStr)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, err.Error())
 	}
 
 	var confirms []types.MsgConfirmBatch
-	keeper.IterateBatchConfirmByNonceAndTokenContract(ctx, nonce, tokenContract, func(_ []byte, c types.MsgConfirmBatch) bool {
+	keeper.IterateBatchConfirmByNonceAndTokenContractWithGID(ctx, nonce, tokenContract, func(_ []byte, c types.MsgConfirmBatch) bool {
 		confirms = append(confirms, c)
 		return false
 	})
@@ -287,7 +183,8 @@ func lastValsetRequests(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 
 // lastPendingValsetRequest gets a list of validator sets that this validator has not signed
 // limited by 100 sets per request.
-func lastPendingValsetRequest(ctx sdk.Context, operatorAddr string, keeper Keeper) ([]byte, error) {
+func lastPendingValsetRequest(ctx sdk.Context, gravityID, operatorAddr string, keeper Keeper) ([]byte, error) {
+	keeper.SetCurrentGid(gravityID)
 	addr, err := sdk.AccAddressFromBech32(operatorAddr)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "address invalid")
@@ -296,7 +193,7 @@ func lastPendingValsetRequest(ctx sdk.Context, operatorAddr string, keeper Keepe
 	var pendingValsetReq []*types.Valset
 	keeper.IterateValsets(ctx, func(_ []byte, val *types.Valset) bool {
 		// foundConfirm is true if the operatorAddr has signed the valset we are currently looking at
-		foundConfirm := keeper.GetValsetConfirm(ctx, val.Nonce, addr) != nil
+		foundConfirm := keeper.GetValsetConfirmByGID(ctx, val.Nonce, addr) != nil
 		// if this valset has NOT been signed by operatorAddr, store it in pendingValsetReq
 		// and exit the loop
 		if !foundConfirm {
@@ -332,28 +229,28 @@ func queryCurrentValset(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 
 // queryValsetConfirm returns the confirm msg for single orchestrator address and nonce
 // When nothing found a nil value is returned
-func queryValsetConfirm(ctx sdk.Context, path []string, keeper Keeper) ([]byte, error) {
-	nonce, err := types.UInt64FromString(path[0])
-	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, err.Error())
-	}
-
-	accAddress, err := sdk.AccAddressFromBech32(path[1])
-	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, err.Error())
-	}
-
-	valset := keeper.GetValsetConfirm(ctx, nonce, accAddress)
-	if valset == nil {
-		return nil, nil
-	}
-	res, err := codec.MarshalJSONIndent(types.GravityCodec, *valset)
-	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
-	}
-
-	return res, nil
-}
+//func queryValsetConfirm(ctx sdk.Context, path []string, keeper Keeper) ([]byte, error) {
+//	nonce, err := types.UInt64FromString(path[0])
+//	if err != nil {
+//		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, err.Error())
+//	}
+//
+//	accAddress, err := sdk.AccAddressFromBech32(path[1])
+//	if err != nil {
+//		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, err.Error())
+//	}
+//
+//	valset := keeper.GetValsetConfirmByGID(ctx, nonce, accAddress)
+//	if valset == nil {
+//		return nil, nil
+//	}
+//	res, err := codec.MarshalJSONIndent(types.GravityCodec, *valset)
+//	if err != nil {
+//		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+//	}
+//
+//	return res, nil
+//}
 
 type MultiSigUpdateResponse struct {
 	Valset     types.Valset `json:"valset"`
@@ -361,7 +258,9 @@ type MultiSigUpdateResponse struct {
 }
 
 // lastPendingBatchRequest gets the latest batch that has NOT been signed by operatorAddr
-func lastPendingBatchRequest(ctx sdk.Context, operatorAddr string, keeper Keeper) ([]byte, error) {
+func lastPendingBatchRequest(ctx sdk.Context, gravityID, operatorAddr string, keeper Keeper) ([]byte, error) {
+	keeper.currentGID = gravityID
+
 	addr, err := sdk.AccAddressFromBech32(operatorAddr)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "address invalid")
@@ -369,7 +268,7 @@ func lastPendingBatchRequest(ctx sdk.Context, operatorAddr string, keeper Keeper
 
 	var pendingBatchReq *types.OutgoingTxBatch
 	keeper.IterateOutgoingTXBatches(ctx, func(_ []byte, batch *types.OutgoingTxBatch) bool {
-		foundConfirm := keeper.GetBatchConfirm(ctx, batch.BatchNonce, batch.TokenContract, addr) != nil
+		foundConfirm := keeper.GetBatchConfirmWithGID(ctx, batch.BatchNonce, batch.TokenContract, addr) != nil
 		if !foundConfirm {
 			pendingBatchReq = batch
 			return true
@@ -389,7 +288,9 @@ func lastPendingBatchRequest(ctx sdk.Context, operatorAddr string, keeper Keeper
 const MaxResults = 100 // todo: impl pagination
 
 // Gets MaxResults batches from store. Does not select by token type or anything
-func lastBatchesRequest(ctx sdk.Context, keeper Keeper) ([]byte, error) {
+func lastBatchesRequest(ctx sdk.Context, gravityID string, keeper Keeper) ([]byte, error) {
+	keeper.currentGID = gravityID
+
 	var batches []*types.OutgoingTxBatch
 	keeper.IterateOutgoingTXBatches(ctx, func(_ []byte, batch *types.OutgoingTxBatch) bool {
 		batches = append(batches, batch)
@@ -405,7 +306,9 @@ func lastBatchesRequest(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 	return res, nil
 }
 
-func queryBatchFees(ctx sdk.Context, keeper Keeper) ([]byte, error) {
+func queryBatchFees(ctx sdk.Context, gravityID string, keeper Keeper) ([]byte, error) {
+	keeper.currentGID = gravityID
+
 	val := types.QueryBatchFeeResponse{BatchFees: keeper.GetAllBatchFees(ctx)}
 	res, err := codec.MarshalJSONIndent(types.GravityCodec, val)
 	if err != nil {
@@ -414,25 +317,11 @@ func queryBatchFees(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 	return res, nil
 }
 
-// Gets MaxResults logic calls from store.
-func lastLogicCallRequests(ctx sdk.Context, keeper Keeper) ([]byte, error) {
-	var calls []*types.OutgoingLogicCall
-	keeper.IterateOutgoingLogicCalls(ctx, func(_ []byte, call *types.OutgoingLogicCall) bool {
-		calls = append(calls, call)
-		return len(calls) == MaxResults
-	})
-	if len(calls) == 0 {
-		return nil, nil
-	}
-	res, err := codec.MarshalJSONIndent(types.GravityCodec, calls)
-	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
-	}
-	return res, nil
-}
 
 // queryBatch gets a batch by tokenContract and nonce
-func queryBatch(ctx sdk.Context, nonce string, tokenContract string, keeper Keeper) ([]byte, error) {
+func queryBatch(ctx sdk.Context, gravityID string, nonce string, tokenContract string, keeper Keeper) ([]byte, error) {
+	keeper.currentGID = gravityID
+
 	parsedNonce, err := types.UInt64FromString(nonce)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, err.Error())
@@ -451,89 +340,9 @@ func queryBatch(ctx sdk.Context, nonce string, tokenContract string, keeper Keep
 	return res, nil
 }
 
-// lastPendingLogicCallRequest gets the latest call that has NOT been signed by operatorAddr
-func lastPendingLogicCallRequest(ctx sdk.Context, operatorAddr string, keeper Keeper) ([]byte, error) {
-	addr, err := sdk.AccAddressFromBech32(operatorAddr)
-	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "address invalid")
-	}
 
-	var pendingLogicCalls *types.OutgoingLogicCall
-	keeper.IterateOutgoingLogicCalls(ctx, func(_ []byte, call *types.OutgoingLogicCall) bool {
-		foundConfirm := keeper.GetLogicCallConfirm(ctx, call.InvalidationId, call.InvalidationNonce, addr) != nil
-		if !foundConfirm {
-			pendingLogicCalls = call
-			return true
-		}
-		return false
-	})
-	if pendingLogicCalls == nil {
-		return nil, nil
-	}
-	res, err := codec.MarshalJSONIndent(types.GravityCodec, pendingLogicCalls)
-	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
-	}
-	return res, nil
-}
-
-// queryLogicCall gets a logic call by nonce and invalidation id
-func queryLogicCall(ctx sdk.Context, invalidationId string, invalidationNonce string, keeper Keeper) ([]byte, error) {
-	nonce, err := types.UInt64FromString(invalidationNonce)
-	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, err.Error())
-	}
-
-	foundCall := keeper.GetOutgoingLogicCall(ctx, []byte(invalidationId), nonce)
-	if foundCall == nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "Can not find logic call")
-	}
-	res, err := codec.MarshalJSONIndent(types.GravityCodec, foundCall)
-	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, err.Error())
-	}
-	return res, nil
-}
-
-// allLogicCallConfirms returns all the confirm messages for a given nonce
-// When nothing found an empty json array is returned. No pagination.
-func queryAllLogicCallConfirms(ctx sdk.Context, invalidationId string, invalidationNonce string, keeper Keeper) ([]byte, error) {
-	nonce, err := types.UInt64FromString(invalidationNonce)
-	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, err.Error())
-	}
-	invalidationIdBytes, err := hex.DecodeString(invalidationId)
-	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, err.Error())
-	}
-
-	var confirms []*types.MsgConfirmLogicCall
-	keeper.IterateLogicConfirmByInvalidationIdAndNonce(ctx, invalidationIdBytes, nonce, func(_ []byte, c *types.MsgConfirmLogicCall) bool {
-		confirms = append(confirms, c)
-		return false
-	})
-	if len(confirms) == 0 {
-		return nil, nil
-	}
-	res, err := codec.MarshalJSONIndent(types.GravityCodec, confirms)
-	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
-	}
-
-	return res, nil
-}
-
-func queryGravityID(ctx sdk.Context, keeper Keeper) ([]byte, error) {
-	gravityID := keeper.GetGravityID(ctx)
-	res, err := codec.MarshalJSONIndent(types.GravityCodec, gravityID)
-	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
-	} else {
-		return res, nil
-	}
-}
-
-func queryDenomToERC20(ctx sdk.Context, denom string, keeper Keeper) ([]byte, error) {
+func queryDenomToERC20(ctx sdk.Context, gravityID string, denom string, keeper Keeper) ([]byte, error) {
+	keeper.currentGID = gravityID
 	cosmos_originated, erc20, err := keeper.DenomToERC20Lookup(ctx, denom)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
@@ -552,7 +361,8 @@ func queryDenomToERC20(ctx sdk.Context, denom string, keeper Keeper) ([]byte, er
 	}
 }
 
-func queryERC20ToDenom(ctx sdk.Context, ERC20 string, keeper Keeper) ([]byte, error) {
+func queryERC20ToDenom(ctx sdk.Context, gravityID string, ERC20 string, keeper Keeper) ([]byte, error) {
+	keeper.currentGID = gravityID
 	cosmos_originated, denom := keeper.ERC20ToDenomLookup(ctx, ERC20)
 	if !cosmos_originated {
 		return nil, sdkerrors.Wrap(types.ErrQueryDenom, "denom not found")
@@ -568,7 +378,8 @@ func queryERC20ToDenom(ctx sdk.Context, ERC20 string, keeper Keeper) ([]byte, er
 	}
 }
 
-func queryDenomToERC721(ctx sdk.Context, denom string, keeper Keeper) ([]byte, error) {
+func queryDenomToERC721(ctx sdk.Context, gravityID string, denom string, keeper Keeper) ([]byte, error) {
+	keeper.currentGID = gravityID
 	cosmos_originated, erc721, err := keeper.DenomToERC721Lookup(ctx, denom)
 	if !cosmos_originated {
 		return nil, sdkerrors.Wrap(types.ErrQueryDenom, "721 not found")
@@ -587,7 +398,8 @@ func queryDenomToERC721(ctx sdk.Context, denom string, keeper Keeper) ([]byte, e
 	}
 }
 
-func queryERC721ToDenom(ctx sdk.Context, ERC20 string, keeper Keeper) ([]byte, error) {
+func queryERC721ToDenom(ctx sdk.Context, gravityID string, ERC20 string, keeper Keeper) ([]byte, error) {
+	keeper.currentGID = gravityID
 	cosmos_originated, denom := keeper.ERC721ToDenomLookup(ctx, ERC20)
 	if !cosmos_originated {
 		return nil, sdkerrors.Wrap(types.ErrQueryDenom, "denom721 not found")
@@ -603,7 +415,8 @@ func queryERC721ToDenom(ctx sdk.Context, ERC20 string, keeper Keeper) ([]byte, e
 	}
 }
 
-func queryPendingSendToEth(ctx sdk.Context, senderAddr, wlkContract string, k Keeper) ([]byte, error) {
+func queryPendingSendToEth(ctx sdk.Context, gravityID string, senderAddr,  wlkContract string, k Keeper) ([]byte, error) {
+	k.currentGID = gravityID
 	//batches := k.GetOutgoingTxBatches(ctx)
 	unbatched_tx := k.GetPoolTransactions(ctx)
 	sender_address := senderAddr
@@ -650,14 +463,16 @@ func queryPendingSendToEth(ctx sdk.Context, senderAddr, wlkContract string, k Ke
 	}
 }
 
-func queryLastEventNonce(ctx sdk.Context, address string, k Keeper) ([]byte, error) {
+func queryLastEventNonce(ctx sdk.Context, gravityID string, address string, k Keeper) ([]byte, error) {
+	k.currentGID = gravityID
 	addr := sdk.HexToAddress(address)
 	lastEventNonce := k.GetLastEventNonceByValidator(ctx, addr)
 	x := types.UInt64Bytes(lastEventNonce)
 	return x, nil
 }
 
-func queryLastValsetConfirmNonce(ctx sdk.Context, k Keeper) ([]byte, error) {
+func queryLastValsetConfirmNonce(ctx sdk.Context, gravityID string, k Keeper) ([]byte, error) {
+	k.currentGID = gravityID
 	lastValsetConfirmNonce := k.GetLastValsetConfirmNonce(ctx)
 	x := types.UInt64Bytes(lastValsetConfirmNonce)
 	return x, nil

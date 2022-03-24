@@ -27,7 +27,7 @@ func (tx *MsgEditValidator) ValidateBasic() error {
 	if tx.ValidatorAddress.Empty() {
 		return ErrInvalidParam
 	}
-	if tx.MinSelfDelegation != nil && tx.MinSelfDelegation.IsPositive() {
+	if tx.MinSelfDelegation != nil && !tx.MinSelfDelegation.IsPositive() {
 		return ErrInvalidParam
 	}
 	if tx.CommissionRate != nil {

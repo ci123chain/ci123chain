@@ -58,23 +58,19 @@ func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 		&MsgWithdrawClaim{},
 		&MsgERC20DeployedClaim{},
 		&MsgERC721DeployedClaim{},
-		&MsgLogicCallExecutedClaim{},
 		&MsgValsetConfirmNonceClaim{},
 	)
 	registry.RegisterImplementations(
 		(*sdk.Msg)(nil),
-		&MsgSetOrchestratorAddress{},
 		&MsgValsetConfirm{},
 		&MsgSendToEth{},
 		&MsgRequestBatch{},
 		&MsgConfirmBatch{},
-		&MsgConfirmLogicCall{},
 		&MsgDepositClaim{},
 		&MsgDeposit721Claim{},
 		&MsgWithdrawClaim{},
 		&MsgERC20DeployedClaim{},
 		&MsgERC721DeployedClaim{},
-		&MsgLogicCallExecutedClaim{},
 		&MsgValsetConfirmNonceClaim{},
 		&MsgCancelSendToEth{},
 	)

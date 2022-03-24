@@ -10,8 +10,10 @@ import (
 	"github.com/tendermint/tendermint/crypto/tmhash"
 )
 
+type GravityInterface interface {
+	GetGravityID() string
+}
 var (
-	_ sdk.Msg = &MsgSetOrchestratorAddress{}
 	_ sdk.Msg = &MsgValsetConfirm{}
 	_ sdk.Msg = &MsgSendToEth{}
 	_ sdk.Msg = &MsgCancelSendToEth{}
@@ -22,12 +24,27 @@ var (
 	_ sdk.Msg = &MsgConfirm721Batch{}
 	_ sdk.Msg = &MsgERC20DeployedClaim{}
 	_ sdk.Msg = &MsgERC721DeployedClaim{}
-	_ sdk.Msg = &MsgConfirmLogicCall{}
-	_ sdk.Msg = &MsgLogicCallExecutedClaim{}
 	_ sdk.Msg = &MsgDepositClaim{}
 	_ sdk.Msg = &MsgDeposit721Claim{}
 	_ sdk.Msg = &MsgWithdrawClaim{}
 	_ sdk.Msg = &MsgWithdraw721Claim{}
+	_ sdk.Msg = &MsgValsetConfirmNonceClaim{}
+
+	_ GravityInterface = &MsgValsetConfirm{}
+	_ GravityInterface = &MsgSendToEth{}
+	_ GravityInterface = &MsgCancelSendToEth{}
+	_ GravityInterface = &MsgRequestBatch{}
+	_ GravityInterface = &MsgSend721ToEth{}
+	_ GravityInterface = &MsgRequest721Batch{}
+	_ GravityInterface = &MsgConfirmBatch{}
+	_ GravityInterface = &MsgConfirm721Batch{}
+	_ GravityInterface = &MsgERC20DeployedClaim{}
+	_ GravityInterface = &MsgERC721DeployedClaim{}
+	_ GravityInterface = &MsgDepositClaim{}
+	_ GravityInterface = &MsgDeposit721Claim{}
+	_ GravityInterface = &MsgWithdrawClaim{}
+	_ GravityInterface = &MsgWithdraw721Claim{}
+	_ GravityInterface = &MsgValsetConfirmNonceClaim{}
 )
 
 type MsgSend721ToEth struct {
@@ -35,6 +52,11 @@ type MsgSend721ToEth struct {
 	EthDest   string     `protobuf:"bytes,2,opt,name=eth_dest,json=ethDest,proto3" json:"eth_dest,omitempty"`
 	Amount    sdk.Coin `protobuf:"bytes,3,opt,name=amount,proto3" json:"amount"`
 	BridgeFee sdk.Coin `protobuf:"bytes,4,opt,name=bridge_fee,json=bridgeFee,proto3" json:"bridge_fee"`
+	GravityID 	 string `protobuf:"bytes,5,opt,name=gravity_id,proto3" json:"gravity_id"`
+}
+
+func (m *MsgSend721ToEth) GetGravityID() string {
+	return m.GravityID
 }
 
 type MsgSend721ToEthResponse struct {
@@ -47,7 +69,13 @@ func (*MsgSend721ToEthResponse) ProtoMessage()    {}
 type MsgRequest721Batch struct {
 	Sender string `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
 	Denom  string `protobuf:"bytes,2,opt,name=denom,proto3" json:"denom,omitempty"`
+	GravityID 	 string `protobuf:"bytes,3,opt,name=gravity_id,proto3" json:"gravity_id"`
 }
+
+func (m *MsgRequest721Batch) GetGravityID() string {
+	return m.GravityID
+}
+
 func (m *MsgRequest721Batch) Reset()         { *m = MsgRequest721Batch{} }
 func (m *MsgRequest721Batch) String() string { return proto.CompactTextString(m) }
 func (*MsgRequest721Batch) ProtoMessage()    {}
@@ -65,7 +93,13 @@ type MsgConfirm721Batch struct {
 	EthSigner     string `protobuf:"bytes,3,opt,name=eth_signer,json=ethSigner,proto3" json:"eth_signer,omitempty"`
 	Orchestrator  string `protobuf:"bytes,4,opt,name=orchestrator,proto3" json:"orchestrator,omitempty"`
 	Signature     string `protobuf:"bytes,5,opt,name=signature,proto3" json:"signature,omitempty"`
+	GravityID 	 string `protobuf:"bytes,6,opt,name=gravity_id,proto3" json:"gravity_id"`
 }
+
+func (m *MsgConfirm721Batch) GetGravityID() string {
+	return m.GravityID
+}
+
 func (m *MsgConfirm721Batch) Reset()         { *m = MsgConfirm721Batch{} }
 func (m *MsgConfirm721Batch) String() string { return proto.CompactTextString(m) }
 func (*MsgConfirm721Batch) ProtoMessage()    {}
@@ -86,6 +120,11 @@ type MsgDeposit721Claim struct {
 	EthereumSender string  `protobuf:"bytes,7,opt,name=ethereum_sender,json=ethereumSender,proto3" json:"ethereum_sender,omitempty"`
 	CosmosReceiver string  `protobuf:"bytes,8,opt,name=cosmos_receiver,json=cosmosReceiver,proto3" json:"cosmos_receiver,omitempty"`
 	Orchestrator   string  `protobuf:"bytes,9,opt,name=orchestrator,proto3" json:"orchestrator,omitempty"`
+	GravityID 	 string `protobuf:"bytes,10,opt,name=gravity_id,proto3" json:"gravity_id"`
+}
+
+func (m *MsgDeposit721Claim) GetGravityID() string {
+	return m.GravityID
 }
 
 type MsgDeposit721ClaimResponse struct {
@@ -101,6 +140,11 @@ type MsgWithdraw721Claim struct {
 	BatchNonce    uint64 `protobuf:"varint,3,opt,name=batch_nonce,json=batchNonce,proto3" json:"batch_nonce,omitempty"`
 	TokenContract string `protobuf:"bytes,4,opt,name=token_contract,json=tokenContract,proto3" json:"token_contract,omitempty"`
 	Orchestrator  string `protobuf:"bytes,5,opt,name=orchestrator,proto3" json:"orchestrator,omitempty"`
+	GravityID 	 string `protobuf:"bytes,6,opt,name=gravity_id,proto3" json:"gravity_id"`
+}
+
+func (m *MsgWithdraw721Claim) GetGravityID() string {
+	return m.GravityID
 }
 
 type MsgERC721DeployedClaim struct {
@@ -111,6 +155,11 @@ type MsgERC721DeployedClaim struct {
 	Name          string `protobuf:"bytes,5,opt,name=name,proto3" json:"name,omitempty"`
 	Symbol        string `protobuf:"bytes,6,opt,name=symbol,proto3" json:"symbol,omitempty"`
 	Orchestrator  string `protobuf:"bytes,7,opt,name=orchestrator,proto3" json:"orchestrator,omitempty"`
+	GravityID 	  string `protobuf:"bytes,5,opt,name=gravity_id,proto3" json:"gravity_id"`
+}
+
+func (m *MsgERC721DeployedClaim) GetGravityID() string {
+	return m.GravityID
 }
 
 type MsgERC721DeployedClaimResponse struct {
@@ -123,7 +172,12 @@ func (*MsgERC721DeployedClaimResponse) ProtoMessage()    {}
 type MsgValsetConfirmNonceClaim struct {
 	ValsetNonce     uint64  `protobuf:"varint,1,opt,name=valset_nonce,json=valset_nonce,proto3" json:"valset_nonce,omitempty"`
 	EventNonce		uint64  `protobuf:"varint,2,opt,name=event_nonce,json=event_nonce,proto3" json:"event_nonce,omitempty"`
-	Orchestrator  string `protobuf:"bytes,3,opt,name=orchestrator,proto3" json:"orchestrator,omitempty"`
+	Orchestrator    string `protobuf:"bytes,3,opt,name=orchestrator,proto3" json:"orchestrator,omitempty"`
+	GravityID 	 	string `protobuf:"bytes,4,opt,name=gravity_id,proto3" json:"gravity_id"`
+}
+
+func (m *MsgValsetConfirmNonceClaim) GetGravityID() string {
+	return m.GravityID
 }
 
 func (m *MsgValsetConfirmNonceClaim) Reset()         { *m = MsgValsetConfirmNonceClaim{} }
@@ -160,6 +214,9 @@ func (e *MsgValsetConfirmNonceClaim) GetType() ClaimType {
 func (e *MsgValsetConfirmNonceClaim) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(e.Orchestrator); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, e.Orchestrator)
+	}
+	if len(e.GravityID) < 1 {
+		return ErrEmpty.Wrap(" gravityid")
 	}
 	if e.EventNonce == 0 {
 		return fmt.Errorf("nonce == 0")
@@ -217,62 +274,6 @@ func (msg MsgValsetConfirmNonceClaim) GetFromAddress() sdk.AccAddress {
 	return acc
 }
 
-// NewMsgSetOrchestratorAddress returns a new msgSetOrchestratorAddress
-func NewMsgSetOrchestratorAddress(val sdk.AccAddress, oper sdk.AccAddress, eth string) *MsgSetOrchestratorAddress {
-	return &MsgSetOrchestratorAddress{
-		Validator:    val.String(),
-		Orchestrator: oper.String(),
-		EthAddress:   eth,
-	}
-}
-
-// Route should return the name of the module
-func (msg *MsgSetOrchestratorAddress) Route() string { return RouterKey }
-
-// MsgType should return the action
-func (msg *MsgSetOrchestratorAddress) MsgType() string { return "set_operator_address" }
-
-// ValidateBasic performs stateless checks
-func (msg *MsgSetOrchestratorAddress) ValidateBasic() (err error) {
-	if _, err = sdk.AccAddressFromBech32(msg.Validator); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Validator)
-	}
-	if _, err = sdk.AccAddressFromBech32(msg.Orchestrator); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Orchestrator)
-	}
-	if err := ValidateEthAddress(msg.EthAddress); err != nil {
-		return sdkerrors.Wrap(err, "ethereum address")
-	}
-	return nil
-}
-
-// GetSignBytes encodes the message for signing
-func (msg *MsgSetOrchestratorAddress) GetSignBytes() []byte {
-	return sdk.MustSortJSON(GravityCodec.MustMarshalJSON(msg))
-}
-
-// GetSigners defines whose signature is required
-func (msg *MsgSetOrchestratorAddress) GetSigners() []sdk.AccAddress {
-	acc, err := sdk.AccAddressFromBech32(msg.Validator)
-	if err != nil {
-		panic(err)
-	}
-	return []sdk.AccAddress{sdk.AccAddress(acc)}
-}
-
-// GetFromAddress defines whose signature is required
-func (msg *MsgSetOrchestratorAddress) GetFromAddress() sdk.AccAddress {
-	acc, err := sdk.AccAddressFromBech32(msg.Validator)
-	if err != nil {
-		panic(err)
-	}
-	return acc
-}
-
-func (msg *MsgSetOrchestratorAddress) Bytes() []byte {
-	return sdk.MustSortJSON(GravityCodec.MustMarshalJSON(msg))
-}
-
 // NewMsgValsetConfirm returns a new msgValsetConfirm
 func NewMsgValsetConfirm(nonce uint64, ethAddress string, validator sdk.AccAddress, signature string) *MsgValsetConfirm {
 	return &MsgValsetConfirm{
@@ -296,6 +297,9 @@ func (msg *MsgValsetConfirm) ValidateBasic() (err error) {
 	}
 	if err := ValidateEthAddress(msg.EthAddress); err != nil {
 		return sdkerrors.Wrap(err, "ethereum address")
+	}
+	if len(msg.GravityID) < 1 {
+		return ErrEmpty.Wrap(" gravityid")
 	}
 	if msg.Orchestrator != msg.EthAddress {
 		return sdkerrors.Wrap(err, "ethereum and orchestrator address should equal")
@@ -361,7 +365,9 @@ func (msg MsgSendToEth) ValidateBasic() error {
 	//if msg.Amount.Denom != msg.BridgeFee.Denom {
 	//	return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, fmt.Sprintf("fee and amount must be the same type %s != %s", msg.Amount.Denom, msg.BridgeFee.Denom))
 	//}
-
+	if len(msg.GravityID) < 1 {
+		return ErrEmpty.Wrap(" gravityid")
+	}
 	if !msg.Amount.IsValid() || msg.Amount.IsZero() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "amount")
 	}
@@ -420,7 +426,9 @@ func (msg MsgSend721ToEth) ValidateBasic() error {
 	//if msg.Amount.Denom != msg.BridgeFee.Denom {
 	//	return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, fmt.Sprintf("fee and amount must be the same type %s != %s", msg.Amount.Denom, msg.BridgeFee.Denom))
 	//}
-
+	if len(msg.GravityID) < 1 {
+		return ErrEmpty.Wrap(" gravityid")
+	}
 	if !msg.Amount.IsValid() || msg.Amount.IsZero() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "amount")
 	}
@@ -476,6 +484,9 @@ func (msg MsgRequestBatch) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Sender)
 	}
+	if len(msg.GravityID) < 1 {
+		return ErrEmpty.Wrap(" gravityid")
+	}
 	return nil
 }
 
@@ -518,6 +529,9 @@ func (msg MsgRequest721Batch) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Sender)
 	}
+	if len(msg.GravityID) < 1 {
+		return ErrEmpty.Wrap(" gravityid")
+	}
 	return nil
 }
 
@@ -559,6 +573,9 @@ func (msg MsgConfirmBatch) MsgType() string { return "confirm_batch" }
 func (msg MsgConfirmBatch) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Orchestrator); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Orchestrator)
+	}
+	if len(msg.GravityID) < 1 {
+		return ErrEmpty.Wrap(" gravityid")
 	}
 	if err := ValidateEthAddress(msg.EthSigner); err != nil {
 		return sdkerrors.Wrap(err, "eth signer")
@@ -611,6 +628,9 @@ func (msg MsgConfirm721Batch) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Orchestrator); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Orchestrator)
 	}
+	if len(msg.GravityID) < 1 {
+		return ErrEmpty.Wrap(" gravityid")
+	}
 	if err := ValidateEthAddress(msg.EthSigner); err != nil {
 		return sdkerrors.Wrap(err, "eth signer")
 	}
@@ -651,57 +671,7 @@ func (msg MsgConfirm721Batch) GetFromAddress() sdk.AccAddress {
 	return acc
 }
 
-// Route should return the name of the module
-func (msg MsgConfirmLogicCall) Route() string { return RouterKey }
 
-// MsgType should return the action
-func (msg MsgConfirmLogicCall) MsgType() string { return "confirm_logic" }
-
-// ValidateBasic performs stateless checks
-func (msg MsgConfirmLogicCall) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(msg.Orchestrator); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Orchestrator)
-	}
-	if err := ValidateEthAddress(msg.EthSigner); err != nil {
-		return sdkerrors.Wrap(err, "eth signer")
-	}
-	_, err := hex.DecodeString(msg.Signature)
-	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "Could not decode hex string %s", msg.Signature)
-	}
-	_, err = hex.DecodeString(msg.InvalidationId)
-	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "Could not decode hex string %s", msg.InvalidationId)
-	}
-	return nil
-}
-
-func (msg *MsgConfirmLogicCall) Bytes() []byte {
-	return sdk.MustSortJSON(GravityCodec.MustMarshalJSON(msg))
-}
-
-// GetSignBytes encodes the message for signing
-func (msg MsgConfirmLogicCall) GetSignBytes() []byte {
-	return sdk.MustSortJSON(GravityCodec.MustMarshalJSON(msg))
-}
-
-// GetSigners defines whose signature is required
-func (msg MsgConfirmLogicCall) GetSigners() []sdk.AccAddress {
-	acc, err := sdk.AccAddressFromBech32(msg.Orchestrator)
-	if err != nil {
-		panic(err)
-	}
-	return []sdk.AccAddress{acc}
-}
-
-func (msg MsgConfirmLogicCall) GetFromAddress() sdk.AccAddress {
-	acc, err := sdk.AccAddressFromBech32(msg.Orchestrator)
-	if err != nil {
-		panic(err)
-	}
-
-	return acc
-}
 
 // EthereumClaim represents a claim on ethereum state
 type EthereumClaim interface {
@@ -732,7 +702,6 @@ var (
 	_ EthereumClaim = &MsgWithdraw721Claim{}
 	_ EthereumClaim = &MsgERC20DeployedClaim{}
 	_ EthereumClaim = &MsgERC721DeployedClaim{}
-	_ EthereumClaim = &MsgLogicCallExecutedClaim{}
 )
 
 // GetType returns the type of the claim
@@ -744,6 +713,9 @@ func (e *MsgDepositClaim) GetType() ClaimType {
 func (e *MsgDepositClaim) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(e.CosmosReceiver); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, e.CosmosReceiver)
+	}
+	if len(e.GravityID) < 1 {
+		return ErrEmpty.Wrap(" gravityid")
 	}
 	if err := ValidateEthAddress(e.EthereumSender); err != nil {
 		return sdkerrors.Wrap(err, "eth sender")
@@ -823,6 +795,9 @@ func (e *MsgDeposit721Claim) GetType() ClaimType {
 func (e *MsgDeposit721Claim) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(e.CosmosReceiver); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, e.CosmosReceiver)
+	}
+	if len(e.GravityID) < 1 {
+		return ErrEmpty.Wrap(" gravityid")
 	}
 	if err := ValidateEthAddress(e.EthereumSender); err != nil {
 		return sdkerrors.Wrap(err, "eth sender")
@@ -920,6 +895,9 @@ func (e *MsgWithdrawClaim) ValidateBasic() error {
 	if e.BatchNonce == 0 {
 		return fmt.Errorf("batch_nonce == 0")
 	}
+	if len(e.GravityID) < 1 {
+		return ErrEmpty.Wrap(" gravityid")
+	}
 	if err := ValidateEthAddress(e.TokenContract); err != nil {
 		return sdkerrors.Wrap(err, "erc20 token")
 	}
@@ -995,6 +973,9 @@ func (e *MsgWithdraw721Claim) ValidateBasic() error {
 	if e.BatchNonce == 0 {
 		return fmt.Errorf("batch_nonce == 0")
 	}
+	if len(e.GravityID) < 1 {
+		return ErrEmpty.Wrap(" gravityid")
+	}
 	if err := ValidateEthAddress(e.TokenContract); err != nil {
 		return sdkerrors.Wrap(err, "erc20 token")
 	}
@@ -1066,6 +1047,9 @@ func (e *MsgERC20DeployedClaim) GetType() ClaimType {
 func (e *MsgERC20DeployedClaim) ValidateBasic() error {
 	if err := ValidateEthAddress(e.TokenContract); err != nil {
 		return sdkerrors.Wrap(err, "erc20 token")
+	}
+	if len(e.GravityID) < 1 {
+		return ErrEmpty.Wrap(" gravityid")
 	}
 	if _, err := sdk.AccAddressFromBech32(e.Orchestrator); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, e.Orchestrator)
@@ -1140,6 +1124,9 @@ func (e *MsgERC721DeployedClaim) ValidateBasic() error {
 	if err := ValidateEthAddress(e.TokenContract); err != nil {
 		return sdkerrors.Wrap(err, "erc20 token")
 	}
+	if len(e.GravityID) < 1 {
+		return ErrEmpty.Wrap(" gravityid")
+	}
 	if _, err := sdk.AccAddressFromBech32(e.Orchestrator); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, e.Orchestrator)
 	}
@@ -1213,71 +1200,6 @@ func (m *MsgERC721DeployedClaim) GetBlockHeight() uint64 {
 	return 0
 }
 
-// GetType returns the type of the claim
-func (e *MsgLogicCallExecutedClaim) GetType() ClaimType {
-	return CLAIM_TYPE_LOGIC_CALL_EXECUTED
-}
-
-// ValidateBasic performs stateless checks
-func (e *MsgLogicCallExecutedClaim) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(e.Orchestrator); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, e.Orchestrator)
-	}
-	if e.EventNonce == 0 {
-		return fmt.Errorf("nonce == 0")
-	}
-	return nil
-}
-
-// GetSignBytes encodes the message for signing
-func (msg MsgLogicCallExecutedClaim) GetSignBytes() []byte {
-	return sdk.MustSortJSON(GravityCodec.MustMarshalJSON(msg))
-}
-
-func (msg MsgLogicCallExecutedClaim) GetClaimer() sdk.AccAddress {
-	err := msg.ValidateBasic()
-	if err != nil {
-		panic("MsgERC20DeployedClaim failed ValidateBasic! Should have been handled earlier")
-	}
-
-	val, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
-	return val
-}
-
-// GetSigners defines whose signature is required
-func (msg MsgLogicCallExecutedClaim) GetSigners() []sdk.AccAddress {
-	acc, err := sdk.AccAddressFromBech32(msg.Orchestrator)
-	if err != nil {
-		panic(err)
-	}
-
-	return []sdk.AccAddress{acc}
-}
-
-// MsgType should return the action
-func (msg MsgLogicCallExecutedClaim) MsgType() string { return "Logic_Call_Executed_Claim" }
-
-// Route should return the name of the module
-func (msg MsgLogicCallExecutedClaim) Route() string { return RouterKey }
-
-func (msg *MsgLogicCallExecutedClaim) Bytes() []byte {
-	return sdk.MustSortJSON(GravityCodec.MustMarshalJSON(msg))
-}
-
-// ClaimHash implements BridgeDeposit.Hash
-func (msg *MsgLogicCallExecutedClaim) ClaimHash() []byte {
-	path := fmt.Sprintf("%s/%d/", msg.InvalidationId, msg.InvalidationNonce)
-	return tmhash.Sum([]byte(path))
-}
-
-func (msg MsgLogicCallExecutedClaim) GetFromAddress() sdk.AccAddress {
-	acc, err := sdk.AccAddressFromBech32(msg.Orchestrator)
-	if err != nil {
-		panic(err)
-	}
-
-	return acc
-}
 
 // NewMsgCancelSendToEth returns a new msgSetOrchestratorAddress
 func NewMsgCancelSendToEth(val sdk.AccAddress, id uint64) *MsgCancelSendToEth {

@@ -78,7 +78,7 @@ func (s *RedisDBSourceImp) FetchSource() (hostArr []string) {
 
 func SchemaPrefix() string {
 	prefix := util.DefaultHTTP
-	if os.Getenv("CI_UNIQUE_KEY") != "" {
+	if os.Getenv("IDG_APPID") != "" {
 		prefix = util.DefaultHTTPS
 	}
 	return prefix
