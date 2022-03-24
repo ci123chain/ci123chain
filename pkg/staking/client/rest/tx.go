@@ -23,7 +23,7 @@ func RegisterRestTxRoutes(cliCtx context.Context, r *mux.Router)  {
 	//r.HandleFunc("/staking/delegator/delegate", rest.MiddleHandler(cliCtx, DelegateTX, types.DefaultCodespace)).Methods("POST")
 	//r.HandleFunc("/staking/delegator/redelegate", rest.MiddleHandler(cliCtx, RedelegateTX, types.DefaultCodespace)).Methods("POST")
 	//r.HandleFunc("/staking/delegator/undelegate", rest.MiddleHandler(cliCtx, UndelegateTX, types.DefaultCodespace)).Methods("POST")
-	//r.HandleFunc("/staking/validator/edit", rest.MiddleHandler(cliCtx, EditValidatorTX, types.DefaultCodespace)).Methods("POST")
+	r.HandleFunc("/staking/validator/edit", rest.MiddleHandler(cliCtx, EditValidatorTX, types.DefaultCodespace)).Methods("POST")
 }
 
 var cdc = types2.GetCodec()
