@@ -103,8 +103,7 @@ func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, counte
 	poolEvent := sdk.NewEvent(
 		types.EventTypeBridgeWithdrawalReceived,
 		sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(types.ModuleName)),
-		sdk.NewAttribute([]byte(types.AttributeKeyContract), []byte(k.GetBridgeContractAddress(ctx))),
-		sdk.NewAttribute([]byte(types.AttributeKeyBridgeChainID), []byte(strconv.Itoa(int(k.GetBridgeChainID(ctx))))),
+		sdk.NewAttribute([]byte(types.AttributeKeyBridgeChainID), []byte(k.currentGID)),
 		sdk.NewAttribute([]byte(types.AttributeKeyOutgoingTXID), []byte(strconv.Itoa(int(nextID)))),
 		sdk.NewAttribute([]byte(types.AttributeKeyNonce), []byte(fmt.Sprint(nextID))),
 	)
@@ -176,8 +175,7 @@ func (k Keeper) RemoveFromOutgoingPoolAndRefund(ctx sdk.Context, txId uint64, se
 	poolEvent := sdk.NewEvent(
 		types.EventTypeBridgeWithdrawCanceled,
 		sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(types.ModuleName)),
-		sdk.NewAttribute([]byte(types.AttributeKeyContract), []byte(k.GetBridgeContractAddress(ctx))),
-		sdk.NewAttribute([]byte(types.AttributeKeyBridgeChainID), []byte(strconv.Itoa(int(k.GetBridgeChainID(ctx))))),
+		sdk.NewAttribute([]byte(types.AttributeKeyBridgeChainID), []byte(k.currentGID)),
 	)
 	ctx.EventManager().EmitEvent(poolEvent)
 

@@ -22,21 +22,6 @@ var (
 	// AttestationVotesPowerThreshold threshold of votes power to succeed
 	AttestationVotesPowerThreshold = sdk.NewInt(66)
 
-	// ParamsStoreKeyGravityID stores the gravity id
-	ParamsStoreKeyGravityID = []byte("GravityID")
-
-	// ParamsStoreKeyContractHash stores the contract hash
-	ParamsStoreKeyContractHash = []byte("ContractHash")
-
-	// ParamsStoreKeyStartThreshold stores the start threshold
-	ParamsStoreKeyStartThreshold = []byte("StartThreshold")
-
-	// ParamsStoreKeyBridgeContractAddress stores the contract address
-	ParamsStoreKeyBridgeContractAddress = []byte("BridgeContractAddress")
-
-	// ParamsStoreKeyBridgeContractChainID stores the bridge chain id
-	ParamsStoreKeyBridgeContractChainID = []byte("BridgeChainID")
-
 	// ParamsStoreKeySignedValsetsWindow stores the signed blocks window
 	ParamsStoreKeySignedValsetsWindow = []byte("SignedValsetsWindow")
 
@@ -94,7 +79,6 @@ func DefaultGenesisState() *GenesisState {
 // DefaultParams returns a copy of the default params
 func DefaultParams() *Params {
 	return &Params{
-		GravityId:                     "defaultgravityid",
 		SignedValsetsWindow:           10000,
 		SignedBatchesWindow:           10000,
 		SignedClaimsWindow:            10000,
@@ -169,10 +153,6 @@ func ParamKeyTable() paramtypes.KeyTable {
 // pairs of auth module's parameters.
 func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 	return paramtypes.ParamSetPairs{
-		paramtypes.NewParamSetPair(ParamsStoreKeyGravityID, &p.GravityId, validateGravityID),
-		paramtypes.NewParamSetPair(ParamsStoreKeyContractHash, &p.ContractSourceHash, validateContractHash),
-		paramtypes.NewParamSetPair(ParamsStoreKeyBridgeContractAddress, &p.BridgeEthereumAddress, validateBridgeContractAddress),
-		paramtypes.NewParamSetPair(ParamsStoreKeyBridgeContractChainID, &p.BridgeChainId, validateBridgeChainID),
 		paramtypes.NewParamSetPair(ParamsStoreKeySignedValsetsWindow, &p.SignedValsetsWindow, validateSignedValsetsWindow),
 		paramtypes.NewParamSetPair(ParamsStoreKeySignedBatchesWindow, &p.SignedBatchesWindow, validateSignedBatchesWindow),
 		paramtypes.NewParamSetPair(ParamsStoreKeySignedClaimsWindow, &p.SignedClaimsWindow, validateSignedClaimsWindow),

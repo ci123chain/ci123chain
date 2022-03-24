@@ -2,13 +2,11 @@ package keeper
 
 import (
 	"fmt"
-	"github.com/ethereum/go-ethereum/common"
-	"math/big"
-	"strconv"
-
 	"github.com/ci123chain/ci123chain/pkg/abci/store"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
+	"github.com/ethereum/go-ethereum/common"
+	"math/big"
 
 	"github.com/ci123chain/ci123chain/pkg/gravity/types"
 )
@@ -65,8 +63,8 @@ func (k Keeper) BuildOutgoingTXBatch(ctx sdk.Context, contractAddress string, ma
 	batchEvent := sdk.NewEvent(
 		types.EventTypeOutgoingBatch,
 		sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(types.ModuleName)),
-		sdk.NewAttribute([]byte(types.AttributeKeyContract), []byte(k.GetBridgeContractAddress(ctx))),
-		sdk.NewAttribute([]byte(types.AttributeKeyBridgeChainID), []byte(strconv.Itoa(int(k.GetBridgeChainID(ctx))))),
+		//sdk.NewAttribute([]byte(types.AttributeKeyContract), []byte(k.GetBridgeContractAddress(ctx))),
+		sdk.NewAttribute([]byte(types.AttributeKeyBridgeChainID), []byte(k.currentGID)),
 		sdk.NewAttribute([]byte(types.AttributeKeyOutgoingBatchID), []byte(fmt.Sprint(nextID))),
 		sdk.NewAttribute([]byte(types.AttributeKeyNonce), []byte(fmt.Sprint(nextID))),
 	)
@@ -230,8 +228,7 @@ func (k Keeper) CancelOutgoingTXBatch(ctx sdk.Context, tokenContract string, non
 	batchEvent := sdk.NewEvent(
 		types.EventTypeOutgoingBatchCanceled,
 		sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(types.ModuleName)),
-		sdk.NewAttribute([]byte(types.AttributeKeyContract), []byte(k.GetBridgeContractAddress(ctx))),
-		sdk.NewAttribute([]byte(types.AttributeKeyBridgeChainID), []byte(strconv.Itoa(int(k.GetBridgeChainID(ctx))))),
+		sdk.NewAttribute([]byte(types.AttributeKeyBridgeChainID), []byte(k.currentGID)),
 		sdk.NewAttribute([]byte(types.AttributeKeyOutgoingBatchID), []byte(fmt.Sprint(nonce))),
 		sdk.NewAttribute([]byte(types.AttributeKeyNonce), []byte(fmt.Sprint(nonce))),
 	)

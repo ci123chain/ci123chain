@@ -164,7 +164,7 @@ func (a AttestationHandler) Handle(ctx sdk.Context, gravityID string, att types.
 		// TODO here we should check the contents of the validator set against
 		// the store, if they differ we should take some action to indicate to the
 		// user that bridge highjacking has occurred
-		a.keeper.setLastValsetsConfirmNonce(ctx, claim.ValsetNonce)
+		a.keeper.setLastValsetConfirmNonce(ctx, claim.ValsetNonce)
 		return nil
 	default:
 		return sdkerrors.Wrapf(types.ErrInvalid, "event type: %s", claim.GetType())

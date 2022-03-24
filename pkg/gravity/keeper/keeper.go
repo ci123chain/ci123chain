@@ -8,7 +8,6 @@ import (
 	supply "github.com/ci123chain/ci123chain/pkg/supply/keeper"
 	"math"
 	"sort"
-	"strconv"
 	"strings"
 
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
@@ -118,8 +117,7 @@ func (k Keeper) SetValsetRequest(ctx sdk.Context) *types.Valset {
 		sdk.NewEvent(
 			types.EventTypeMultisigUpdateRequest,
 			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(types.ModuleName)),
-			sdk.NewAttribute([]byte(types.AttributeKeyContract), []byte(k.GetBridgeContractAddress(ctx))),
-			sdk.NewAttribute([]byte(types.AttributeKeyBridgeChainID), []byte(strconv.Itoa(int(k.GetBridgeChainID(ctx))))),
+			sdk.NewAttribute([]byte(types.AttributeKeyBridgeChainID), []byte(k.currentGID)),
 			sdk.NewAttribute([]byte(types.AttributeKeyMultisigID), []byte(fmt.Sprint(valset.Nonce))),
 			sdk.NewAttribute([]byte(types.AttributeKeyNonce), []byte(fmt.Sprint(valset.Nonce))),
 		),
@@ -618,19 +616,13 @@ func (k Keeper) SetParams(ctx sdk.Context, ps types.Params) {
 	k.paramSpace.SetParamSet(ctx, &ps)
 }
 
-// GetBridgeContractAddress returns the bridge contract address on ETH
-func (k Keeper) GetBridgeContractAddress(ctx sdk.Context) string {
-	var a string
-	k.paramSpace.Get(ctx, types.ParamsStoreKeyBridgeContractAddress, &a)
-	return a
-}
 
 // GetBridgeChainID returns the chain id of the ETH chain we are running against
-func (k Keeper) GetBridgeChainID(ctx sdk.Context) uint64 {
-	var a uint64
-	k.paramSpace.Get(ctx, types.ParamsStoreKeyBridgeContractChainID, &a)
-	return a
-}
+//func (k Keeper) GetBridgeChainID(ctx sdk.Context) uint64 {
+//	var a uint64
+//	k.paramSpace.Get(ctx, types.ParamsStoreKeyBridgeContractChainID, &a)
+//	return a
+//}
 
 // GetGravityID returns the GravityID the GravityID is essentially a salt value
 // for bridge signatures, provided each chain running Gravity has a unique ID

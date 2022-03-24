@@ -12,22 +12,19 @@ import (
 func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 	// Question: what here can be epoched?
 
-
 	gravityIDs := k.GetAllGravityIDs(ctx)
 	for _, gid := range gravityIDs {
 		k.SetCurrentGid(gid)
 		slashing(ctx, k)
 		attestationTally(ctx, k)
 		cleanupTimedOutBatches(ctx, k)
-
+		cleanupConfirmedValsets(ctx, k)
 		k.SetCurrentGid("")
 	}
-
-
-	cleanupConfirmedValsets(ctx, k)
+	updateValsets(ctx, k)
 }
 
-func cleanupConfirmedValsets(ctx sdk.Context, k keeper.Keeper) {
+func updateValsets(ctx sdk.Context, k keeper.Keeper) {
 	// Auto signerset tx creation.
 	// 1. If there are no signer set requests, create a new one.
 	// 2. If there is at least one validator who started unbonding in current block. (we persist last unbonded block height in hooks.go)
@@ -40,10 +37,6 @@ func cleanupConfirmedValsets(ctx sdk.Context, k keeper.Keeper) {
 		return
 	}
 
-	//latestConfirmNonce := k.GetLastValsetConfirmNonce(ctx)
-	//if latestConfirmNonce == 0 {
-	//	return
-	//}
 
 	lastUnbondingHeight := k.GetLastUnBondingBlockHeight(ctx)
 	blockHeight := uint64(ctx.BlockHeight())
@@ -51,19 +44,26 @@ func cleanupConfirmedValsets(ctx sdk.Context, k keeper.Keeper) {
 	powerDiff := types.BridgeValidators(k.GetCurrentValset(ctx).Members).PowerDiff(valsets[0].Members)
 
 	shouldCreate := (lastUnbondingHeight == blockHeight) || (powerDiff > 0.05)
-	k.Logger(ctx).Info(
-		"considering signer set tx creation",
-		"blockHeight", blockHeight,
-		"lastUnbondingHeight", lastUnbondingHeight,
-		//"latestSignerSetTx.Nonce", latestConfirmNonce,
-		"powerDiff", powerDiff,
-		"shouldCreate", shouldCreate,
-	)
 
 	if shouldCreate {
+		k.Logger(ctx).Info(
+			"considering signer set tx creation",
+			"blockHeight", blockHeight,
+			"lastUnbondingHeight", lastUnbondingHeight,
+			//"latestSignerSetTx.Nonce", latestConfirmNonce,
+			"powerDiff", powerDiff,
+			"shouldCreate", shouldCreate,
+		)
 		k.SetValsetRequest(ctx)
 	}
+}
 
+// clean up confirmed valsets
+func cleanupConfirmedValsets(ctx sdk.Context, k keeper.Keeper) {
+	//latestConfirmNonce := k.GetLastValsetConfirmNonce(ctx)
+	//if latestConfirmNonce == 0 {
+	//	return
+	//}
 	//k.DeleteValset(ctx, latestConfirmNonce-1)
 }
 

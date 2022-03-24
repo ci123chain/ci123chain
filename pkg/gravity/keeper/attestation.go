@@ -4,11 +4,8 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/codec"
-	"strconv"
-
 	codectypes "github.com/ci123chain/ci123chain/pkg/abci/codec/types"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
-
 	"github.com/ci123chain/ci123chain/pkg/gravity/types"
 )
 
@@ -120,8 +117,8 @@ func (k Keeper) emitObservedEvent(ctx sdk.Context, att *types.Attestation, claim
 		types.EventTypeObservation,
 		sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(types.ModuleName)),
 		sdk.NewAttribute([]byte(types.AttributeKeyAttestationType), []byte(string(claim.GetType()))),
-		sdk.NewAttribute([]byte(types.AttributeKeyContract), []byte(k.GetBridgeContractAddress(ctx))),
-		sdk.NewAttribute([]byte(types.AttributeKeyBridgeChainID), []byte(strconv.Itoa(int(k.GetBridgeChainID(ctx))))),
+		//sdk.NewAttribute([]byte(types.AttributeKeyContract), []byte(k.GetBridgeContractAddress(ctx))),
+		sdk.NewAttribute([]byte(types.AttributeKeyBridgeChainID), []byte(k.currentGID)),
 		sdk.NewAttribute([]byte(types.AttributeKeyAttestationID), []byte(string(types.GetAttestationKey(claim.GetEventNonce(), claim.ClaimHash())))), // todo: serialize with hex/ base64 ?
 		sdk.NewAttribute([]byte(types.AttributeKeyNonce), []byte(fmt.Sprint(claim.GetEventNonce()))),
 		// TODO: do we want to emit more information?
@@ -252,7 +249,7 @@ func (k Keeper) setLastObservedEventNonceWithGid(ctx sdk.Context, nonce uint64) 
 }
 
 // setLastValsetsConfirmNonce sets the latest observed valset confirm nonce
-func (k Keeper) setLastValsetsConfirmNonce(ctx sdk.Context, nonce uint64) {
+func (k Keeper) setLastValsetConfirmNonce(ctx sdk.Context, nonce uint64) {
 	store := k.getGidStore(ctx)
 	store.Set(types.LastValsetConfirmNonceKey, types.UInt64Bytes(nonce))
 }
