@@ -5,7 +5,6 @@ package types
 
 import (
 	fmt "fmt"
-	types "github.com/ci123chain/ci123chain/pkg/abci/codec/types"
 	github_com_cosmos_cosmos_sdk_types "github.com/ci123chain/ci123chain/pkg/abci/types"
 	_ "github.com/gogo/protobuf/gogoproto"
 	proto "github.com/gogo/protobuf/proto"
@@ -89,7 +88,7 @@ type Attestation struct {
 	Observed bool       `protobuf:"varint,1,opt,name=observed,proto3" json:"observed,omitempty"`
 	Votes    []string   `protobuf:"bytes,2,rep,name=votes,proto3" json:"votes,omitempty"`
 	Height   uint64     `protobuf:"varint,3,opt,name=height,proto3" json:"height,omitempty"`
-	Claim    *types.Any `protobuf:"bytes,4,opt,name=claim,proto3" json:"claim,omitempty"`
+	Claim    EthereumClaim `protobuf:"bytes,4,opt,name=claim,proto3" json:"claim,omitempty"`
 }
 
 func (m *Attestation) Reset()         { *m = Attestation{} }
@@ -97,27 +96,6 @@ func (m *Attestation) String() string { return proto.CompactTextString(m) }
 func (*Attestation) ProtoMessage()    {}
 func (*Attestation) Descriptor() ([]byte, []int) {
 	return fileDescriptor_e3205613bbab7525, []int{0}
-}
-func (m *Attestation) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *Attestation) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_Attestation.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *Attestation) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Attestation.Merge(m, src)
-}
-func (m *Attestation) XXX_Size() int {
-	return m.Size()
 }
 func (m *Attestation) XXX_DiscardUnknown() {
 	xxx_messageInfo_Attestation.DiscardUnknown(m)
@@ -146,7 +124,7 @@ func (m *Attestation) GetHeight() uint64 {
 	return 0
 }
 
-func (m *Attestation) GetClaim() *types.Any {
+func (m *Attestation) GetClaim() EthereumClaim {
 	if m != nil {
 		return m.Claim
 	}
@@ -243,64 +221,6 @@ var fileDescriptor_e3205613bbab7525 = []byte{
 	0xf6, 0x5f, 0xfd, 0x0d, 0x00, 0x00, 0xff, 0xff, 0xc0, 0x5a, 0x62, 0x07, 0x52, 0x02, 0x00, 0x00,
 }
 
-func (m *Attestation) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *Attestation) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *Attestation) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if m.Claim != nil {
-		{
-			size, err := m.Claim.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintAttestation(dAtA, i, uint64(size))
-		}
-		i--
-		dAtA[i] = 0x22
-	}
-	if m.Height != 0 {
-		i = encodeVarintAttestation(dAtA, i, uint64(m.Height))
-		i--
-		dAtA[i] = 0x18
-	}
-	if len(m.Votes) > 0 {
-		for iNdEx := len(m.Votes) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.Votes[iNdEx])
-			copy(dAtA[i:], m.Votes[iNdEx])
-			i = encodeVarintAttestation(dAtA, i, uint64(len(m.Votes[iNdEx])))
-			i--
-			dAtA[i] = 0x12
-		}
-	}
-	if m.Observed {
-		i--
-		if m.Observed {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
-		}
-		i--
-		dAtA[i] = 0x8
-	}
-	return len(dAtA) - i, nil
-}
 
 func (m *ERC20Token) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
@@ -353,30 +273,6 @@ func encodeVarintAttestation(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-func (m *Attestation) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.Observed {
-		n += 2
-	}
-	if len(m.Votes) > 0 {
-		for _, s := range m.Votes {
-			l = len(s)
-			n += 1 + l + sovAttestation(uint64(l))
-		}
-	}
-	if m.Height != 0 {
-		n += 1 + sovAttestation(uint64(m.Height))
-	}
-	if m.Claim != nil {
-		l = m.Claim.Size()
-		n += 1 + l + sovAttestation(uint64(l))
-	}
-	return n
-}
 
 func (m *ERC20Token) Size() (n int) {
 	if m == nil {
@@ -398,166 +294,6 @@ func sovAttestation(x uint64) (n int) {
 }
 func sozAttestation(x uint64) (n int) {
 	return sovAttestation(uint64((x << 1) ^ uint64((int64(x) >> 63))))
-}
-func (m *Attestation) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowAttestation
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: Attestation: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: Attestation: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Observed", wireType)
-			}
-			var v int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowAttestation
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			m.Observed = bool(v != 0)
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Votes", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowAttestation
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthAttestation
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthAttestation
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Votes = append(m.Votes, string(dAtA[iNdEx:postIndex]))
-			iNdEx = postIndex
-		case 3:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Height", wireType)
-			}
-			m.Height = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowAttestation
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.Height |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 4:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Claim", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowAttestation
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthAttestation
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthAttestation
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Claim == nil {
-				m.Claim = &types.Any{}
-			}
-			if err := m.Claim.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipAttestation(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthAttestation
-			}
-			if (iNdEx + skippy) < 0 {
-				return ErrInvalidLengthAttestation
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
 }
 func (m *ERC20Token) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)

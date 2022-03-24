@@ -3,14 +3,12 @@ package keeper
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/ci123chain/ci123chain/pkg/abci/codec"
-	codectypes "github.com/ci123chain/ci123chain/pkg/abci/codec/types"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/gravity/types"
 )
 
 // TODO-JT: carefully look at atomicity of this function
-func (k Keeper) Attest(ctx sdk.Context, claim types.EthereumClaim, anyClaim *codectypes.Any) (*types.Attestation, error) {
+func (k Keeper) Attest(ctx sdk.Context, claim types.EthereumClaim) (*types.Attestation, error) {
 	valAddr := claim.GetClaimer()
 	if valAddr.Empty() {
 		panic("Could not find ValAddr for delegate key, should be checked by now")
@@ -29,7 +27,7 @@ func (k Keeper) Attest(ctx sdk.Context, claim types.EthereumClaim, anyClaim *cod
 		att = &types.Attestation{
 			Observed: false,
 			Height:   uint64(ctx.BlockHeight()),
-			Claim:    anyClaim,
+			Claim:    claim,
 		}
 	}
 
@@ -46,7 +44,7 @@ func (k Keeper) Attest(ctx sdk.Context, claim types.EthereumClaim, anyClaim *cod
 // and has not already been marked Observed, then calls processAttestation to actually apply it to the state,
 // and then marks it Observed and emits an event.
 func (k Keeper) TryAttestation(ctx sdk.Context, att *types.Attestation) {
-	claim, err := k.UnpackAttestationClaim(att)
+	claim, err := k.GetAttestationClaim(att)
 	if err != nil {
 		panic("could not cast to claim")
 	}
@@ -130,7 +128,7 @@ func (k Keeper) emitObservedEvent(ctx sdk.Context, att *types.Attestation, claim
 func (k Keeper) SetAttestation(ctx sdk.Context, eventNonce uint64, claimHash []byte, att *types.Attestation) {
 	store := k.getGidStore(ctx)
 	aKey := types.GetAttestationKey(eventNonce, claimHash)
-	store.Set(aKey, codec.GetLegacyAminoByCodec(k.cdc).MustMarshalBinaryBare(att))
+	store.Set(aKey, types.GravityCodec.MustMarshalBinaryBare(att))
 }
 
 // GetAttestation return an attestation given a nonce
@@ -142,7 +140,7 @@ func (k Keeper) GetAttestation(ctx sdk.Context, eventNonce uint64, claimHash []b
 		return nil
 	}
 	var att types.Attestation
-	codec.GetLegacyAminoByCodec(k.cdc).MustUnmarshalBinaryBare(bz, &att)
+	types.GravityCodec.MustUnmarshalBinaryBare(bz, &att)
 	return &att
 }
 
@@ -156,7 +154,7 @@ func (k Keeper) DeleteAttestation(ctx sdk.Context, eventNonce uint64, claimHash 
 func (k Keeper) GetAttestationMapping(ctx sdk.Context) (out map[uint64][]types.Attestation) {
 	out = make(map[uint64][]types.Attestation)
 	k.IterateAttestaions(ctx, func(_ []byte, att types.Attestation) bool {
-		claim, err := k.UnpackAttestationClaim(&att)
+		claim, err := k.GetAttestationClaim(&att)
 		if err != nil {
 			panic("couldn't cast to claim")
 		}
@@ -174,14 +172,14 @@ func (k Keeper) GetAttestationMapping(ctx sdk.Context) (out map[uint64][]types.A
 // IterateAttestaions iterates through all attestations
 func (k Keeper) IterateAttestaions(ctx sdk.Context, cb func([]byte, types.Attestation) bool) {
 	store := k.getGidStore(ctx)
-	prefix := []byte(types.OracleAttestationKey)
+	prefix := types.OracleAttestationKey
 	iter := store.Iterator(prefixRange(prefix))
 	defer iter.Close()
 
 	for ; iter.Valid(); iter.Next() {
 		att := types.Attestation{}
 		// todo fix for old data
-		err := codec.GetLegacyAminoByCodec(k.cdc).UnmarshalBinaryBare(iter.Value(), &att)
+		err := types.GravityCodec.UnmarshalBinaryBare(iter.Value(), &att)
 		if err != nil {
 			//k.Logger(ctx).Warn("unmarshal attention error: ", err)
 			continue

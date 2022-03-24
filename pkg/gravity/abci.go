@@ -177,7 +177,7 @@ func slashing(ctx sdk.Context, k keeper.Keeper) {
 					//	k.StakingKeeper.Slash(ctx, cons, ctx.BlockHeight(), k.StakingKeeper.GetLastValidatorPower(ctx, validator), params.SlashFractionConflictingClaim)
 					//	k.StakingKeeper.Jail(ctx, cons)
 					//}
-					claim, err := k.UnpackAttestationClaim(&att)
+					claim, err := k.GetAttestationClaim(&att)
 					if err != nil {
 						panic("couldn't cast to claim")
 					}
@@ -210,7 +210,7 @@ func slashing(ctx sdk.Context, k keeper.Keeper) {
 						k.StakingKeeper.Jail(ctx, cons)
 					}
 				}
-				claim, err := k.UnpackAttestationClaim(&att)
+				claim, err := k.GetAttestationClaim(&att)
 				if err != nil {
 					panic("couldn't cast to claim")
 				}
@@ -260,7 +260,7 @@ func attestationTally(ctx sdk.Context, k keeper.Keeper) {
 			// If no attestation becomes observed, when we get to the next nonce, every attestation in
 			// it will be skipped. The same will happen for every nonce after that.
 			lastEventNonce := k.GetLastObservedEventNonceWithGid(ctx)
-			claim, _ := k.UnpackAttestationClaim(&att)
+			claim, _ := k.GetAttestationClaim(&att)
 			claimbz, _ := json.Marshal(claim)
 
 			if nonce == uint64(lastEventNonce)+1 {

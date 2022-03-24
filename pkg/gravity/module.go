@@ -87,14 +87,12 @@ func (am AppModule) InitGenesis(ctx sdk.Context, bz json.RawMessage) []abci.Vali
 //// ExportGenesis exports the current genesis state to a json.RawMessage
 // todo gogo protobuf encoding
 func (am AppModule) ExportGenesis(ctx sdk.Context) json.RawMessage {
-	bz, _ := json.Marshal(types.GenesisState{})
-	return bz
-	//gs := keeper.ExportGenesis(ctx, am.Keeper)
-	//by, err := json.Marshal(gs)
-	//if err != nil {
-	//	panic(err)
-	//}
-	//return by
+	gs := keeper.ExportGenesis(ctx, am.Keeper)
+	by, err := json.Marshal(gs)
+	if err != nil {
+		panic(err)
+	}
+	return by
 }
 
 // EndBlock implements app module

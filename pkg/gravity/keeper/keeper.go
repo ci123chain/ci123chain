@@ -659,15 +659,8 @@ func (k Keeper) logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-func (k Keeper) UnpackAttestationClaim(att *types.Attestation) (types.EthereumClaim, error) {
-	//var msg types.EthereumClaim
-	var msg types.EthereumClaim
-	err := types.SubModuleCdc.UnpackAny(att.Claim, &msg)
-	if err != nil {
-		return nil, err
-	}
-	//msg := att.Claim.GetCachedValue().(types.EthereumClaim)
-	return msg, nil
+func (k Keeper) GetAttestationClaim(att *types.Attestation) (types.EthereumClaim, error) {
+	return att.Claim, nil
 }
 
 // GetDelegateKeys iterates both the EthAddress and Orchestrator address indexes to produce

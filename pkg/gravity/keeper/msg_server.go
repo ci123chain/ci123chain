@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	codectypes "github.com/ci123chain/ci123chain/pkg/abci/codec/types"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	stakingtypes "github.com/ci123chain/ci123chain/pkg/staking/types"
@@ -266,13 +265,13 @@ func (k msgServer) DepositClaim(c context.Context, msg *types.MsgDepositClaim) (
 		return nil, sdkerrors.Wrap(sdkerrors.ErrorInvalidSigner, "validator not in active set")
 	}
 
-	any, err := codectypes.NewAnyWithValue(msg)
-	if err != nil {
-		return nil, err
-	}
+	//any, err := codectypes.NewAnyWithValue(msg)
+	//if err != nil {
+	//	return nil, err
+	//}
 
 	// Add the claim to the store
-	_, err = k.Attest(ctx, msg, any)
+	_, err := k.Attest(ctx, msg)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "create attestation")
 	}
@@ -307,13 +306,8 @@ func (k msgServer) WithdrawClaim(c context.Context, msg *types.MsgWithdrawClaim)
 		return nil, sdkerrors.Wrap(sdkerrors.ErrorInvalidSigner, "validator not in acitve set")
 	}
 
-	any, err := codectypes.NewAnyWithValue(msg)
-	if err != nil {
-		return nil, err
-	}
-
 	// Add the claim to the store
-	_, err = k.Attest(ctx, msg, any)
+	_, err := k.Attest(ctx, msg)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "create attestation")
 	}
@@ -342,13 +336,8 @@ func (k msgServer) ERC20DeployedClaim(c context.Context, msg *types.MsgERC20Depl
 		return nil, sdkerrors.Wrap(sdkerrors.ErrorInvalidSigner, "validator not in acitve set")
 	}
 
-	any, err := codectypes.NewAnyWithValue(msg)
-	if err != nil {
-		return nil, err
-	}
-
 	// Add the claim to the store
-	_, err = k.Attest(ctx, msg, any)
+	_, err := k.Attest(ctx, msg)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "create attestation")
 	}
@@ -396,13 +385,8 @@ func (k msgServer) Deposit721Claim(c context.Context, msg *types.MsgDeposit721Cl
 		return nil, sdkerrors.Wrap(sdkerrors.ErrorInvalidSigner, "validator not in active set")
 	}
 
-	any, err := codectypes.NewAnyWithValue(msg)
-	if err != nil {
-		return nil, err
-	}
-
 	// Add the claim to the store
-	_, err = k.Attest(ctx, msg, any)
+	_, err := k.Attest(ctx, msg)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "create attestation")
 	}
@@ -431,13 +415,8 @@ func (k msgServer) ERC721DeployedClaim(c context.Context, msg *types.MsgERC721De
 		return nil, sdkerrors.Wrap(sdkerrors.ErrorInvalidSigner, "validator not in acitve set")
 	}
 
-	any, err := codectypes.NewAnyWithValue(msg)
-	if err != nil {
-		return nil, err
-	}
-
 	// Add the claim to the store
-	_, err = k.Attest(ctx, msg, any)
+	_, err := k.Attest(ctx, msg)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "create attestation")
 	}
@@ -465,13 +444,8 @@ func (k msgServer) ValsetConfirmNonceClaim(c context.Context, msg *types.MsgVals
 		return nil, sdkerrors.Wrap(sdkerrors.ErrorInvalidSigner, "validator not in acitve set")
 	}
 
-	any, err := codectypes.NewAnyWithValue(msg)
-	if err != nil {
-		return nil, err
-	}
-
 	// Add the claim to the store
-	_, err = k.Attest(ctx, msg, any)
+	_, err := k.Attest(ctx, msg)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "create attestation error")
 	}
