@@ -14,7 +14,7 @@ import (
 )
 
 type msgServer struct {
-	Keeper
+	*Keeper
 }
 
 const (
@@ -25,11 +25,24 @@ const (
 // NewMsgServerImpl returns an implementation of the gov MsgServer interface
 // for the provided Keeper.
 func NewMsgServerImpl(keeper Keeper) types.MsgServer {
-	return &msgServer{Keeper: keeper}
+	return &msgServer{Keeper: &keeper}
 }
 
 var _ types.MsgServer = msgServer{}
 
+func (k msgServer) SetGravityID(c context.Context,gid string) error {
+	ctx := sdk.UnwrapSDKContext(c)
+	if gid == "" {
+		return types.ErrEmpty.Wrap(" gravityid")
+	}
+	k.Keeper.saveGravityID(ctx, gid)
+	k.SetCurrentGid(gid)
+	return nil
+}
+
+func (k msgServer) RevertGravityID() {
+	k.SetCurrentGid("")
+}
 
 // ValsetConfirm handles MsgValsetConfirm
 // TODO: check msgValsetConfirm to have an Orchestrator field instead of a Validator field
@@ -40,10 +53,9 @@ func (k msgServer) ValsetConfirm(c context.Context, msg *types.MsgValsetConfirm)
 	if valset == nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "couldn't find valset")
 	}
-
-	gravityID2 := k.GetGravityID(ctx)
-	//gravityID := msg.GravityID
-	checkpoint := valset.GetCheckpoint(gravityID2)
+	
+	gravityID := k.currentGID
+	checkpoint := valset.GetCheckpoint(gravityID)
 	sigBytes, err := hex.DecodeString(msg.Signature)
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "signature decoding")
@@ -59,10 +71,10 @@ func (k msgServer) ValsetConfirm(c context.Context, msg *types.MsgValsetConfirm)
 	}
 
 	// persist signature
-	if k.GetValsetConfirm(ctx, msg.Nonce, orchaddr) != nil {
+	if k.GetValsetConfirmByGID(ctx, msg.Nonce, orchaddr) != nil {
 		return nil, sdkerrors.Wrap(types.ErrDuplicate, "signature duplicate")
 	}
-	key := k.SetValsetConfirm(ctx, *msg)
+	key := k.SetValsetConfirmByGID(ctx, *msg)
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
@@ -148,7 +160,7 @@ func (k msgServer) ConfirmBatch(c context.Context, msg *types.MsgConfirmBatch) (
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "couldn't find batch")
 	}
 
-	gravityID := k.GetGravityID(ctx)
+	gravityID := k.currentGID
 	checkpoint, err := batch.GetCheckpoint(gravityID, msg.TokenType)
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "checkpoint generation")
@@ -169,10 +181,10 @@ func (k msgServer) ConfirmBatch(c context.Context, msg *types.MsgConfirmBatch) (
 	}
 
 	// check if we already have this confirm
-	if k.GetBatchConfirm(ctx, msg.Nonce, msg.TokenContract, orchaddr) != nil {
+	if k.GetBatchConfirmWithGID(ctx, msg.Nonce, msg.TokenContract, orchaddr) != nil {
 		return nil, sdkerrors.Wrap(types.ErrDuplicate, "duplicate signature")
 	}
-	key := k.SetBatchConfirm(ctx, msg)
+	key := k.SetBatchConfirmWithGID(ctx, msg)
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
@@ -186,58 +198,58 @@ func (k msgServer) ConfirmBatch(c context.Context, msg *types.MsgConfirmBatch) (
 }
 
 // ConfirmLogicCall handles MsgConfirmLogicCall
-func (k msgServer) ConfirmLogicCall(c context.Context, msg *types.MsgConfirmLogicCall) (*types.MsgConfirmLogicCallResponse, error) {
-	ctx := sdk.UnwrapSDKContext(c)
-	invalidationIdBytes, err := hex.DecodeString(msg.InvalidationId)
-	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalid, "invalidation id encoding")
-	}
-
-	// fetch the outgoing logic given the nonce
-	logic := k.GetOutgoingLogicCall(ctx, invalidationIdBytes, msg.InvalidationNonce)
-	if logic == nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalid, "couldn't find logic")
-	}
-
-	gravityID := k.GetGravityID(ctx)
-	checkpoint, err := logic.GetCheckpoint(gravityID)
-	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalid, "checkpoint generation")
-	}
-
-	sigBytes, err := hex.DecodeString(msg.Signature)
-	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalid, "signature decoding")
-	}
-
-	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
-	if k.StakingKeeper.Validator(ctx, orchaddr) == nil {
-		return nil, sdkerrors.Wrap(stakingtypes.ErrNoValidatorFound, orchaddr.String())
-	}
-
-	ethAddress := orchaddr.String()
-
-	err = types.ValidateEthereumSignature(checkpoint, sigBytes, ethAddress)
-	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalid, fmt.Sprintf("signature verification failed expected sig by %s with gravity-id %s with checkpoint %s found %s", ethAddress, gravityID, hex.EncodeToString(checkpoint), msg.Signature))
-	}
-
-	// check if we already have this confirm
-	if k.GetLogicCallConfirm(ctx, invalidationIdBytes, msg.InvalidationNonce, orchaddr) != nil {
-		return nil, sdkerrors.Wrap(types.ErrDuplicate, "duplicate signature")
-	}
-
-	k.SetLogicCallConfirm(ctx, msg)
-
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			sdk.EventTypeMessage,
-			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(msg.MsgType())),
-		),
-	)
-
-	return nil, nil
-}
+//func (k msgServer) ConfirmLogicCall(c context.Context, msg *types.MsgConfirmLogicCall) (*types.MsgConfirmLogicCallResponse, error) {
+//	ctx := sdk.UnwrapSDKContext(c)
+//	invalidationIdBytes, err := hex.DecodeString(msg.InvalidationId)
+//	if err != nil {
+//		return nil, sdkerrors.Wrap(types.ErrInvalid, "invalidation id encoding")
+//	}
+//
+//	// fetch the outgoing logic given the nonce
+//	logic := k.GetOutgoingLogicCall(ctx, invalidationIdBytes, msg.InvalidationNonce)
+//	if logic == nil {
+//		return nil, sdkerrors.Wrap(types.ErrInvalid, "couldn't find logic")
+//	}
+//
+//	gravityID := k.currentGID
+//	checkpoint, err := logic.GetCheckpoint(gravityID)
+//	if err != nil {
+//		return nil, sdkerrors.Wrap(types.ErrInvalid, "checkpoint generation")
+//	}
+//
+//	sigBytes, err := hex.DecodeString(msg.Signature)
+//	if err != nil {
+//		return nil, sdkerrors.Wrap(types.ErrInvalid, "signature decoding")
+//	}
+//
+//	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
+//	if k.StakingKeeper.Validator(ctx, orchaddr) == nil {
+//		return nil, sdkerrors.Wrap(stakingtypes.ErrNoValidatorFound, orchaddr.String())
+//	}
+//
+//	ethAddress := orchaddr.String()
+//
+//	err = types.ValidateEthereumSignature(checkpoint, sigBytes, ethAddress)
+//	if err != nil {
+//		return nil, sdkerrors.Wrap(types.ErrInvalid, fmt.Sprintf("signature verification failed expected sig by %s with gravity-id %s with checkpoint %s found %s", ethAddress, gravityID, hex.EncodeToString(checkpoint), msg.Signature))
+//	}
+//
+//	// check if we already have this confirm
+//	if k.GetLogicCallConfirm(ctx, invalidationIdBytes, msg.InvalidationNonce, orchaddr) != nil {
+//		return nil, sdkerrors.Wrap(types.ErrDuplicate, "duplicate signature")
+//	}
+//
+//	k.SetLogicCallConfirm(ctx, msg)
+//
+//	ctx.EventManager().EmitEvent(
+//		sdk.NewEvent(
+//			sdk.EventTypeMessage,
+//			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(msg.MsgType())),
+//		),
+//	)
+//
+//	return nil, nil
+//}
 
 // DepositClaim handles MsgDepositClaim
 // TODO it is possible to submit an old msgDepositClaim (old defined as covering an event nonce that has already been
@@ -354,41 +366,6 @@ func (k msgServer) ERC20DeployedClaim(c context.Context, msg *types.MsgERC20Depl
 	return &types.MsgERC20DeployedClaimResponse{}, nil
 }
 
-// LogicCallExecutedClaim handles claims for executing a logic call on Ethereum
-func (k msgServer) LogicCallExecutedClaim(c context.Context, msg *types.MsgLogicCallExecutedClaim) (*types.MsgLogicCallExecutedClaimResponse, error) {
-	ctx := sdk.UnwrapSDKContext(c)
-
-	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
-
-	// return an error if the validator isn't in the active set
-	val := k.StakingKeeper.Validator(ctx, orchaddr)
-	if val == nil || !val.IsBonded() {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrorInvalidSigner, "validator not in acitve set")
-	}
-
-	any, err := codectypes.NewAnyWithValue(msg)
-	if err != nil {
-		return nil, err
-	}
-
-	// Add the claim to the store
-	_, err = k.Attest(ctx, msg, any)
-	if err != nil {
-		return nil, sdkerrors.Wrap(err, "create attestation")
-	}
-
-	// Emit the handle message event
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			sdk.EventTypeMessage,
-			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(msg.MsgType())),
-			// TODO: maybe return something better here? is this the right string representation?
-			sdk.NewAttribute([]byte(types.AttributeKeyAttestationID), types.GetAttestationKey(msg.EventNonce, msg.ClaimHash())),
-		),
-	)
-
-	return &types.MsgLogicCallExecutedClaimResponse{}, nil
-}
 
 func (k msgServer) CancelSendToEth(c context.Context, msg *types.MsgCancelSendToEth) (*types.MsgCancelSendToEthResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
@@ -496,7 +473,7 @@ func (k msgServer) ValsetConfirmNonceClaim(c context.Context, msg *types.MsgVals
 	// Add the claim to the store
 	_, err = k.Attest(ctx, msg, any)
 	if err != nil {
-		return nil, sdkerrors.Wrap(err, "create attestation")
+		return nil, sdkerrors.Wrap(err, "create attestation error")
 	}
 
 	// Emit the handle message event

@@ -159,7 +159,11 @@ type MsgValsetConfirm struct {
 	Orchestrator string `protobuf:"bytes,2,opt,name=orchestrator,proto3" json:"orchestrator,omitempty"`
 	EthAddress   string `protobuf:"bytes,3,opt,name=eth_address,json=ethAddress,proto3" json:"eth_address,omitempty"`
 	Signature    string `protobuf:"bytes,4,opt,name=signature,proto3" json:"signature,omitempty"`
-	GravityID 	 string `json:"gravity_id"`
+	GravityID 	 string `protobuf:"bytes,5,opt,name=gravity_id,proto3" json:"gravity_id"`
+}
+
+func (m *MsgValsetConfirm) GetGravityID() string {
+	return m.GravityID
 }
 
 func (m *MsgValsetConfirm) Reset()         { *m = MsgValsetConfirm{} }
@@ -277,6 +281,11 @@ type MsgSendToEth struct {
 	Amount    sdk.Coin `protobuf:"bytes,3,opt,name=amount,proto3" json:"amount"`
 	BridgeFee sdk.Coin `protobuf:"bytes,4,opt,name=bridge_fee,json=bridgeFee,proto3" json:"bridge_fee"`
 	TokenType uint64	`protobuf:"bytes,5,opt,name=token_type,json=tokenType,proto3" json:"token_type"`
+	GravityID 	 string `protobuf:"bytes,6,opt,name=gravity_id,proto3" json:"gravity_id"`
+}
+
+func (m *MsgSendToEth) GetGravityID() string {
+	return m.GravityID
 }
 
 func (m *MsgSendToEth) Reset()         { *m = MsgSendToEth{} }
@@ -426,6 +435,12 @@ type MsgRequestBatch struct {
 	Sender string `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
 	Denom  string `protobuf:"bytes,2,opt,name=denom,proto3" json:"denom,omitempty"`
 	TokenType uint64 `protobuf:"bytes,3,opt,name=token_type,proto3" json:"token_type,omitempty"`
+	GravityID 	 string `protobuf:"bytes,4,opt,name=gravity_id,proto3" json:"gravity_id"`
+
+}
+
+func (m *MsgRequestBatch) GetGravityID() string {
+	return m.GravityID
 }
 
 func (m *MsgRequestBatch) Reset()         { *m = MsgRequestBatch{} }
@@ -526,6 +541,11 @@ type MsgConfirmBatch struct {
 	Orchestrator  string `protobuf:"bytes,4,opt,name=orchestrator,proto3" json:"orchestrator,omitempty"`
 	Signature     string `protobuf:"bytes,5,opt,name=signature,proto3" json:"signature,omitempty"`
 	TokenType 	  uint64 `protobuf:"bytes,6,opt,name=token_type,json=tokenType,proto3" json:"token_type"`
+	GravityID 	  string `protobuf:"bytes,7,opt,name=gravity_id,proto3" json:"gravity_id"`
+}
+
+func (m *MsgConfirmBatch) GetGravityID() string {
+	return m.GravityID
 }
 
 func (m *MsgConfirmBatch) Reset()         { *m = MsgConfirmBatch{} }
@@ -768,6 +788,11 @@ type MsgDepositClaim struct {
 	EthereumSender string                                 `protobuf:"bytes,8,opt,name=ethereum_sender,json=ethereumSender,proto3" json:"ethereum_sender,omitempty"`
 	CosmosReceiver string                                 `protobuf:"bytes,9,opt,name=cosmos_receiver,json=cosmosReceiver,proto3" json:"cosmos_receiver,omitempty"`
 	Orchestrator   string                                 `protobuf:"bytes,10,opt,name=orchestrator,proto3" json:"orchestrator,omitempty"`
+	GravityID 	   string 								  `protobuf:"bytes,11,opt,name=gravity_id,proto3" json:"gravity_id"`
+}
+
+func (m *MsgDepositClaim) GetGravityID() string {
+	return m.GravityID
 }
 
 func (m *MsgDepositClaim) Reset()         { *m = MsgDepositClaim{} }
@@ -889,6 +914,11 @@ type MsgWithdrawClaim struct {
 	BatchNonce    uint64 `protobuf:"varint,3,opt,name=batch_nonce,json=batchNonce,proto3" json:"batch_nonce,omitempty"`
 	TokenContract string `protobuf:"bytes,4,opt,name=token_contract,json=tokenContract,proto3" json:"token_contract,omitempty"`
 	Orchestrator  string `protobuf:"bytes,5,opt,name=orchestrator,proto3" json:"orchestrator,omitempty"`
+	GravityID 	 string `protobuf:"bytes,6,opt,name=gravity_id,proto3" json:"gravity_id"`
+}
+
+func (m *MsgWithdrawClaim) GetGravityID() string {
+	return m.GravityID
 }
 
 func (m *MsgWithdrawClaim) Reset()         { *m = MsgWithdrawClaim{} }
@@ -1049,6 +1079,11 @@ type MsgERC20DeployedClaim struct {
 	Symbol        string `protobuf:"bytes,6,opt,name=symbol,proto3" json:"symbol,omitempty"`
 	Decimals      uint64 `protobuf:"varint,7,opt,name=decimals,proto3" json:"decimals,omitempty"`
 	Orchestrator  string `protobuf:"bytes,8,opt,name=orchestrator,proto3" json:"orchestrator,omitempty"`
+	GravityID 	  string `protobuf:"bytes,9,opt,name=gravity_id,proto3" json:"gravity_id"`
+}
+
+func (m *MsgERC20DeployedClaim) GetGravityID() string {
+	return m.GravityID
 }
 
 func (m *MsgERC20DeployedClaim) Reset()         { *m = MsgERC20DeployedClaim{} }
@@ -1296,6 +1331,11 @@ var xxx_messageInfo_MsgLogicCallExecutedClaimResponse proto.InternalMessageInfo
 type MsgCancelSendToEth struct {
 	TransactionId uint64 `protobuf:"varint,1,opt,name=transaction_id,json=transactionId,proto3" json:"transaction_id,omitempty"`
 	Sender        string `protobuf:"bytes,2,opt,name=sender,proto3" json:"sender,omitempty"`
+	GravityID 	 string `protobuf:"bytes,3,opt,name=gravity_id,proto3" json:"gravity_id"`
+}
+
+func (m *MsgCancelSendToEth) GetGravityID() string {
+	return m.GravityID
 }
 
 func (m *MsgCancelSendToEth) Reset()         { *m = MsgCancelSendToEth{} }
@@ -1638,17 +1678,19 @@ func (c *msgClient) CancelSendToEth(ctx context.Context, in *MsgCancelSendToEth,
 
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
+	SetGravityID(context.Context, string) error
+	RevertGravityID()
 	ValsetConfirm(context.Context, *MsgValsetConfirm) (*MsgValsetConfirmResponse, error)
 	SendToEth(context.Context, *MsgSendToEth) (*MsgSendToEthResponse, error)
 	RequestBatch(context.Context, *MsgRequestBatch) (*MsgRequestBatchResponse, error)
 	ConfirmBatch(context.Context, *MsgConfirmBatch) (*MsgConfirmBatchResponse, error)
-	ConfirmLogicCall(context.Context, *MsgConfirmLogicCall) (*MsgConfirmLogicCallResponse, error)
+	//ConfirmLogicCall(context.Context, *MsgConfirmLogicCall) (*MsgConfirmLogicCallResponse, error)
 	DepositClaim(context.Context, *MsgDepositClaim) (*MsgDepositClaimResponse, error)
 	Deposit721Claim(context.Context, *MsgDeposit721Claim) (*MsgDeposit721ClaimResponse, error)
 	WithdrawClaim(context.Context, *MsgWithdrawClaim) (*MsgWithdrawClaimResponse, error)
 	ERC20DeployedClaim(context.Context, *MsgERC20DeployedClaim) (*MsgERC20DeployedClaimResponse, error)
 	ERC721DeployedClaim(context.Context, *MsgERC721DeployedClaim) (*MsgERC721DeployedClaimResponse, error)
-	LogicCallExecutedClaim(context.Context, *MsgLogicCallExecutedClaim) (*MsgLogicCallExecutedClaimResponse, error)
+	//LogicCallExecutedClaim(context.Context, *MsgLogicCallExecutedClaim) (*MsgLogicCallExecutedClaimResponse, error)
 	ValsetConfirmNonceClaim(context.Context, *MsgValsetConfirmNonceClaim) (*MsgValsetConfirmNonceClaimResponse, error)
 	//SetOrchestratorAddress(context.Context, *MsgSetOrchestratorAddress) (*MsgSetOrchestratorAddressResponse, error)
 	CancelSendToEth(context.Context, *MsgCancelSendToEth) (*MsgCancelSendToEthResponse, error)
@@ -1780,23 +1822,6 @@ func _Msg_ConfirmBatch_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Msg_ConfirmLogicCall_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MsgConfirmLogicCall)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MsgServer).ConfirmLogicCall(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/gravity.v1.Msg/ConfirmLogicCall",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgServer).ConfirmLogicCall(ctx, req.(*MsgConfirmLogicCall))
-	}
-	return interceptor(ctx, in, info, handler)
-}
 
 func _Msg_DepositClaim_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(MsgDepositClaim)
@@ -1852,23 +1877,6 @@ func _Msg_ERC20DeployedClaim_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Msg_LogicCallExecutedClaim_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MsgLogicCallExecutedClaim)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MsgServer).LogicCallExecutedClaim(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/gravity.v1.Msg/LogicCallExecutedClaim",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgServer).LogicCallExecutedClaim(ctx, req.(*MsgLogicCallExecutedClaim))
-	}
-	return interceptor(ctx, in, info, handler)
-}
 
 func _Msg_CancelSendToEth_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(MsgCancelSendToEth)
@@ -1909,10 +1917,6 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Msg_ConfirmBatch_Handler,
 		},
 		{
-			MethodName: "ConfirmLogicCall",
-			Handler:    _Msg_ConfirmLogicCall_Handler,
-		},
-		{
 			MethodName: "DepositClaim",
 			Handler:    _Msg_DepositClaim_Handler,
 		},
@@ -1923,10 +1927,6 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ERC20DeployedClaim",
 			Handler:    _Msg_ERC20DeployedClaim_Handler,
-		},
-		{
-			MethodName: "LogicCallExecutedClaim",
-			Handler:    _Msg_LogicCallExecutedClaim_Handler,
 		},
 		{
 			MethodName: "CancelSendToEth",

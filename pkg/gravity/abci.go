@@ -2,20 +2,28 @@ package gravity
 
 import (
 	"encoding/json"
-	"sort"
-
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/gravity/keeper"
 	"github.com/ci123chain/ci123chain/pkg/gravity/types"
+	"sort"
 )
 
 // EndBlocker is called at the end of every block
 func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 	// Question: what here can be epoched?
-	slashing(ctx, k)
-	attestationTally(ctx, k)
-	cleanupTimedOutBatches(ctx, k)
-	cleanupTimedOutLogicCalls(ctx, k)
+
+
+	gravityIDs := k.GetAllGravityIDs(ctx)
+	for _, gid := range gravityIDs {
+		k.SetCurrentGid(gid)
+		slashing(ctx, k)
+		attestationTally(ctx, k)
+		cleanupTimedOutBatches(ctx, k)
+
+		k.SetCurrentGid("")
+	}
+
+
 	cleanupConfirmedValsets(ctx, k)
 }
 
@@ -32,10 +40,10 @@ func cleanupConfirmedValsets(ctx sdk.Context, k keeper.Keeper) {
 		return
 	}
 
-	latestConfirmNonce := k.GetLastValsetConfirmNonce(ctx)
-	if latestConfirmNonce == 0 {
-		return
-	}
+	//latestConfirmNonce := k.GetLastValsetConfirmNonce(ctx)
+	//if latestConfirmNonce == 0 {
+	//	return
+	//}
 
 	lastUnbondingHeight := k.GetLastUnBondingBlockHeight(ctx)
 	blockHeight := uint64(ctx.BlockHeight())
@@ -47,7 +55,7 @@ func cleanupConfirmedValsets(ctx sdk.Context, k keeper.Keeper) {
 		"considering signer set tx creation",
 		"blockHeight", blockHeight,
 		"lastUnbondingHeight", lastUnbondingHeight,
-		"latestSignerSetTx.Nonce", latestConfirmNonce,
+		//"latestSignerSetTx.Nonce", latestConfirmNonce,
 		"powerDiff", powerDiff,
 		"shouldCreate", shouldCreate,
 	)
@@ -56,7 +64,7 @@ func cleanupConfirmedValsets(ctx sdk.Context, k keeper.Keeper) {
 		k.SetValsetRequest(ctx)
 	}
 
-	k.DeleteValset(ctx, latestConfirmNonce-1)
+	//k.DeleteValset(ctx, latestConfirmNonce-1)
 }
 
 func slashing(ctx sdk.Context, k keeper.Keeper) {
@@ -247,7 +255,7 @@ func attestationTally(ctx sdk.Context, k keeper.Keeper) {
 			// we skip the other attestations and move on to the next nonce again.
 			// If no attestation becomes observed, when we get to the next nonce, every attestation in
 			// it will be skipped. The same will happen for every nonce after that.
-			lastEventNonce := k.GetLastObservedEventNonce(ctx)
+			lastEventNonce := k.GetLastObservedEventNonceWithGid(ctx)
 			claim, _ := k.UnpackAttestationClaim(&att)
 			claimbz, _ := json.Marshal(claim)
 
@@ -289,40 +297,4 @@ func cleanupTimedOutBatches(ctx sdk.Context, k keeper.Keeper) {
 //    here is the Ethereum block height at the time of the last Deposit or Withdraw to be observed. It's very important we do not
 //    project, if we do a slowdown on ethereum could cause a double spend. Instead timeouts will *only* occur after the timeout period
 //    AND any deposit or withdraw has occurred to update the Ethereum block height.
-func cleanupTimedOutLogicCalls(ctx sdk.Context, k keeper.Keeper) {
-	ethereumHeight := k.GetLastObservedEthereumBlockHeight(ctx).EthereumBlockHeight
-	calls := k.GetOutgoingLogicCalls(ctx)
-	for _, call := range calls {
-		if call.Timeout < ethereumHeight {
-			k.CancelOutgoingLogicCall(ctx, call.InvalidationId, call.InvalidationNonce)
-		}
-	}
-}
 
-// TestingEndBlocker is a second endblocker function only imported in the Gravity codebase itself
-// if you are a consuming Cosmos chain DO NOT IMPORT THIS, it simulates a chain using the arbitrary
-// logic API to request logic calls
-func TestingEndBlocker(ctx sdk.Context, k keeper.Keeper) {
-	// if this is nil we have not set our test outgoing logic call yet
-	if k.GetOutgoingLogicCall(ctx, []byte("GravityTesting"), 0).Payload == nil {
-		// TODO this call isn't actually very useful for testing, since it always
-		// throws, being just junk data that's expected. But it prevents us from checking
-		// the full lifecycle of the call. We need to find some way for this to read data
-		// and encode a simple testing call, probably to one of the already deployed ERC20
-		// contracts so that we can get the full lifecycle.
-		token := []*types.ERC20Token{{
-			Contract: "0x7580bfe88dd3d07947908fae12d95872a260f2d8",
-			Amount:   sdk.NewIntFromUint64(5000),
-		}}
-		_ = types.OutgoingLogicCall{
-			Transfers:            token,
-			Fees:                 token,
-			LogicContractAddress: "0x510ab76899430424d209a6c9a5b9951fb8a6f47d",
-			Payload:              []byte("fake bytes"),
-			Timeout:              10000,
-			InvalidationId:       []byte("GravityTesting"),
-			InvalidationNonce:    1,
-		}
-		//k.SetOutgoingLogicCall(ctx, &call)
-	}
-}

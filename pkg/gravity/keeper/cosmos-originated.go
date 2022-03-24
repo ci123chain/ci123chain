@@ -11,7 +11,7 @@ import (
 )
 
 func (k Keeper) GetMapedWlkToken(ctx sdk.Context, erc20 string) (string, bool) {
-	store := ctx.KVStore(k.storeKey)
+	store := k.getGidStore(ctx)
 	bz := store.Get(types.GetEthToWlkKey(erc20))
 
 	if bz != nil {
@@ -21,7 +21,7 @@ func (k Keeper) GetMapedWlkToken(ctx sdk.Context, erc20 string) (string, bool) {
 }
 
 func (k Keeper) GetMapedEthToken(ctx sdk.Context, wrc20 string) (string, bool) {
-	store := ctx.KVStore(k.storeKey)
+	store := k.getGidStore(ctx)
 	bz := store.Get(types.GetWlKToEthKey(wrc20))
 
 	if bz != nil {
@@ -31,7 +31,7 @@ func (k Keeper) GetMapedEthToken(ctx sdk.Context, wrc20 string) (string, bool) {
 }
 
 func (k Keeper) GetMapedWRC721Token(ctx sdk.Context, erc721 string) (string, bool) {
-	store := ctx.KVStore(k.storeKey)
+	store := k.getGidStore(ctx)
 	bz := store.Get(types.GetERC721ToWRC721Key(erc721))
 
 	if bz != nil {
@@ -41,7 +41,7 @@ func (k Keeper) GetMapedWRC721Token(ctx sdk.Context, erc721 string) (string, boo
 }
 
 func (k Keeper) GetMapedERC721Token(ctx sdk.Context, wrc721 string) (string, bool) {
-	store := ctx.KVStore(k.storeKey)
+	store := k.getGidStore(ctx)
 	bz := store.Get(types.GetWRC721ToERC721Key(wrc721))
 
 	if bz != nil {
@@ -54,7 +54,7 @@ func (k Keeper) setERC20Map(ctx sdk.Context, wlkContract string, ethContract str
 	if wlkContract == "" || ethContract == "" {
 		panic("contract address cannot be empty")
 	}
-	store := ctx.KVStore(k.storeKey)
+	store := k.getGidStore(ctx)
 	store.Set(types.GetWlKToEthKey(wlkContract), []byte(ethContract))
 	store.Set(types.GetEthToWlkKey(ethContract), []byte(wlkContract))
 }
@@ -63,7 +63,7 @@ func (k Keeper) setERC721Map(ctx sdk.Context, wlkContract string, ethContract st
 	if wlkContract == "" || ethContract == "" {
 		panic("contract address cannot be empty")
 	}
-	store := ctx.KVStore(k.storeKey)
+	store := k.getGidStore(ctx)
 	store.Set(types.GetWRC721ToERC721Key(wlkContract), []byte(ethContract))
 	store.Set(types.GetERC721ToWRC721Key(ethContract), []byte(wlkContract))
 }
@@ -107,7 +107,7 @@ func (k Keeper) ERC20ToDenomLookup(ctx sdk.Context, tokenContract string) (bool,
 
 // IterateERC20ToDenom iterates over erc20 to denom relations
 func (k Keeper) IterateERC20ToDenom(ctx sdk.Context, cb func([]byte, *types.ERC20ToDenom) bool) {
-	prefixStore := store.NewPrefixStore(ctx.KVStore(k.storeKey), types.EthToWlkKey)
+	prefixStore := store.NewPrefixStore(k.getGidStore(ctx), types.EthToWlkKey)
 	iter := prefixStore.Iterator(nil, nil)
 	defer iter.Close()
 
@@ -155,7 +155,7 @@ func (k Keeper) ERC721ToDenomLookup(ctx sdk.Context, tokenContract string) (bool
 
 // IterateERC721ToDenom iterates over erc721 to denom relations
 func (k Keeper) IterateERC721ToDenom(ctx sdk.Context, cb func([]byte, *types.ERC20ToDenom) bool) {
-	prefixStore := store.NewPrefixStore(ctx.KVStore(k.storeKey), types.ERC721ToWRC721Key)
+	prefixStore := store.NewPrefixStore(k.getGidStore(ctx), types.ERC721ToWRC721Key)
 	iter := prefixStore.Iterator(nil, nil)
 	defer iter.Close()
 

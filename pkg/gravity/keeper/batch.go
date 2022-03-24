@@ -135,7 +135,7 @@ func (k Keeper) OutgoingTxBatchExecuted(ctx sdk.Context, tokenContract string, n
 
 // StoreBatch stores a transaction batch
 func (k Keeper) StoreBatch(ctx sdk.Context, batch *types.OutgoingTxBatch, requestor common.Address) {
-	store := ctx.KVStore(k.storeKey)
+	store := k.getGidStore(ctx)
 	// set the current block height when storing the batch
 	batch.Block = uint64(ctx.BlockHeight())
 	requestBatch := &types.RequestBatch{
@@ -151,7 +151,7 @@ func (k Keeper) StoreBatch(ctx sdk.Context, batch *types.OutgoingTxBatch, reques
 
 // StoreBatchUnsafe stores a transaction batch w/o setting the height
 func (k Keeper) StoreBatchUnsafe(ctx sdk.Context, batch *types.OutgoingTxBatch) {
-	store := ctx.KVStore(k.storeKey)
+	store := k.getGidStore(ctx)
 	key := types.GetOutgoingTxBatchKey(batch.TokenContract, batch.BatchNonce)
 	store.Set(key, k.cdc.MustMarshalBinaryBare(batch))
 
@@ -161,7 +161,7 @@ func (k Keeper) StoreBatchUnsafe(ctx sdk.Context, batch *types.OutgoingTxBatch) 
 
 // GetRequestBatch loads a batch object. Returns nil when not exists.
 func (k Keeper) GetRequestBatch(ctx sdk.Context, tokenContract string, nonce uint64) *types.RequestBatch {
-	store := ctx.KVStore(k.storeKey)
+	store := k.getGidStore(ctx)
 	key := types.GetOutgoingTxRequestBatchKey(tokenContract, nonce)
 	bz := store.Get(key)
 	if len(bz) == 0 {
@@ -174,7 +174,7 @@ func (k Keeper) GetRequestBatch(ctx sdk.Context, tokenContract string, nonce uin
 
 // DeleteBatch deletes an outgoing transaction batch
 func (k Keeper) DeleteBatch(ctx sdk.Context, batch types.OutgoingTxBatch) {
-	store := ctx.KVStore(k.storeKey)
+	store := k.getGidStore(ctx)
 	store.Delete(types.GetOutgoingTxBatchKey(batch.TokenContract, batch.BatchNonce))
 	store.Delete(types.GetOutgoingTxBatchBlockKey(batch.Block))
 }
@@ -198,7 +198,7 @@ func (k Keeper) pickUnbatchedTX(ctx sdk.Context, contractAddress string, maxElem
 
 // GetOutgoingTXBatch loads a batch object. Returns nil when not exists.
 func (k Keeper) GetOutgoingTXBatch(ctx sdk.Context, tokenContract string, nonce uint64) *types.OutgoingTxBatch {
-	store := ctx.KVStore(k.storeKey)
+	store := k.getGidStore(ctx)
 	key := types.GetOutgoingTxBatchKey(tokenContract, nonce)
 	bz := store.Get(key)
 	if len(bz) == 0 {
@@ -241,7 +241,7 @@ func (k Keeper) CancelOutgoingTXBatch(ctx sdk.Context, tokenContract string, non
 
 // IterateOutgoingTXBatches iterates through all outgoing batches in DESC order.
 func (k Keeper) IterateOutgoingTXBatches(ctx sdk.Context, cb func(key []byte, batch *types.OutgoingTxBatch) bool) {
-	prefixStore := store.NewPrefixStore(ctx.KVStore(k.storeKey), types.OutgoingTXBatchKey)
+	prefixStore := store.NewPrefixStore(k.getGidStore(ctx), types.OutgoingTXBatchKey)
 	iter := prefixStore.ReverseIterator(nil, nil)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
@@ -276,47 +276,47 @@ func (k Keeper) GetLastOutgoingBatchByTokenType(ctx sdk.Context, token string) *
 	}
 	return lastBatch
 }
-
-// SetLastSlashedBatchBlock sets the latest slashed Batch block height
-func (k Keeper) SetLastSlashedBatchBlock(ctx sdk.Context, blockHeight uint64) {
-	store := ctx.KVStore(k.storeKey)
-	store.Set(types.LastSlashedBatchBlock, types.UInt64Bytes(blockHeight))
-}
-
-// GetLastSlashedBatchBlock returns the latest slashed Batch block
-func (k Keeper) GetLastSlashedBatchBlock(ctx sdk.Context) uint64 {
-	store := ctx.KVStore(k.storeKey)
-	bytes := store.Get(types.LastSlashedBatchBlock)
-	if len(bytes) == 0 {
-		return 0
-	}
-	return types.UInt64FromBytes(bytes)
-}
-
-// GetUnSlashedBatches returns all the unslashed batches in state
-func (k Keeper) GetUnSlashedBatches(ctx sdk.Context, maxHeight uint64) (out []*types.OutgoingTxBatch) {
-	lastSlashedBatchBlock := k.GetLastSlashedBatchBlock(ctx)
-	k.IterateBatchBySlashedBatchBlock(ctx, lastSlashedBatchBlock, maxHeight, func(_ []byte, batch *types.OutgoingTxBatch) bool {
-		if batch.Block > lastSlashedBatchBlock {
-			out = append(out, batch)
-		}
-		return false
-	})
-	return
-}
-
-// IterateBatchBySlashedBatchBlock iterates through all Batch by last slashed Batch block in ASC order
-func (k Keeper) IterateBatchBySlashedBatchBlock(ctx sdk.Context, lastSlashedBatchBlock uint64, maxHeight uint64, cb func([]byte, *types.OutgoingTxBatch) bool) {
-	prefixStore := store.NewPrefixStore(ctx.KVStore(k.storeKey), types.OutgoingTXBatchBlockKey)
-	iter := prefixStore.Iterator(types.UInt64Bytes(lastSlashedBatchBlock), types.UInt64Bytes(maxHeight))
-	defer iter.Close()
-
-	for ; iter.Valid(); iter.Next() {
-		var Batch types.OutgoingTxBatch
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &Batch)
-		// cb returns true to stop early
-		if cb(iter.Key(), &Batch) {
-			break
-		}
-	}
-}
+//
+//// SetLastSlashedBatchBlock sets the latest slashed Batch block height
+//func (k Keeper) SetLastSlashedBatchBlock(ctx sdk.Context, blockHeight uint64) {
+//	store := ctx.KVStore(k.storeKey)
+//	store.Set(types.LastSlashedBatchBlock, types.UInt64Bytes(blockHeight))
+//}
+//
+//// GetLastSlashedBatchBlock returns the latest slashed Batch block
+//func (k Keeper) GetLastSlashedBatchBlock(ctx sdk.Context) uint64 {
+//	store := ctx.KVStore(k.storeKey)
+//	bytes := store.Get(types.LastSlashedBatchBlock)
+//	if len(bytes) == 0 {
+//		return 0
+//	}
+//	return types.UInt64FromBytes(bytes)
+//}
+//
+//// GetUnSlashedBatches returns all the unslashed batches in state
+//func (k Keeper) GetUnSlashedBatches(ctx sdk.Context, maxHeight uint64) (out []*types.OutgoingTxBatch) {
+//	lastSlashedBatchBlock := k.GetLastSlashedBatchBlock(ctx)
+//	k.IterateBatchBySlashedBatchBlock(ctx, lastSlashedBatchBlock, maxHeight, func(_ []byte, batch *types.OutgoingTxBatch) bool {
+//		if batch.Block > lastSlashedBatchBlock {
+//			out = append(out, batch)
+//		}
+//		return false
+//	})
+//	return
+//}
+//
+//// IterateBatchBySlashedBatchBlock iterates through all Batch by last slashed Batch block in ASC order
+//func (k Keeper) IterateBatchBySlashedBatchBlock(ctx sdk.Context, lastSlashedBatchBlock uint64, maxHeight uint64, cb func([]byte, *types.OutgoingTxBatch) bool) {
+//	prefixStore := store.NewPrefixStore(ctx.KVStore(k.storeKey), types.OutgoingTXBatchBlockKey)
+//	iter := prefixStore.Iterator(types.UInt64Bytes(lastSlashedBatchBlock), types.UInt64Bytes(maxHeight))
+//	defer iter.Close()
+//
+//	for ; iter.Valid(); iter.Next() {
+//		var Batch types.OutgoingTxBatch
+//		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &Batch)
+//		// cb returns true to stop early
+//		if cb(iter.Key(), &Batch) {
+//			break
+//		}
+//	}
+//}

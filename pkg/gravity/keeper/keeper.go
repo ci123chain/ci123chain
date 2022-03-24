@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"encoding/hex"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/account"
 	slashing "github.com/ci123chain/ci123chain/pkg/slashing/keeper"
@@ -35,7 +34,7 @@ type Keeper struct {
 	currentGID 		string
 
 	AttestationHandler interface {
-		Handle(sdk.Context, types.Attestation, types.EthereumClaim) error
+		Handle(sdk.Context, string, types.Attestation, types.EthereumClaim) error
 	}
 }
 
@@ -68,6 +67,40 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, paramSpace paramtypes.Su
 // Logger returns a module-specific logger.
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", "x/"+ types.ModuleName)
+}
+
+func (k *Keeper) SetCurrentGid(gid string)  {
+	k.currentGID = gid
+}
+
+func (k Keeper) saveGravityID(ctx sdk.Context, gid string) {
+	if k.existGravityID(ctx, gid) {
+		return
+	}
+	store := k.getCommonStore(ctx)
+	key := types.GetGravityKey(gid)
+	store.Set(key, types.UInt64Bytes(1))
+}
+
+func (k Keeper) existGravityID(ctx sdk.Context, gid string) bool {
+	store := k.getCommonStore(ctx)
+	key := types.GetGravityKey(gid)
+	bz := store.Get(key)
+	if bz != nil {
+		return true
+	}
+	return false
+}
+
+func (k Keeper) GetAllGravityIDs(ctx sdk.Context) (ids []string) {
+	store := k.getCommonStore(ctx)
+	iter := store.Prefix(types.GravityListKey).Iterator(nil, nil)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		key := iter.Key()
+		ids = append(ids, string(key))
+	}
+	return ids
 }
 
 /////////////////////////////
@@ -118,7 +151,7 @@ func (k Keeper) StoreValset(ctx sdk.Context, valset *types.Valset) {
 
 //  SetLatestValsetNonce sets the latest valset nonce
 func (k Keeper) SetLatestValsetNonce(ctx sdk.Context, nonce uint64) {
-	store := k.getGidStore(ctx)
+	store := k.getCommonStore(ctx)
 	store.Set(types.LatestValsetNonce, types.UInt64Bytes(nonce))
 }
 
@@ -165,7 +198,7 @@ func (k Keeper) GetValset(ctx sdk.Context, nonce uint64) *types.Valset {
 
 // IterateValsets retruns all valsetRequests
 func (k Keeper) IterateValsets(ctx sdk.Context, cb func(key []byte, val *types.Valset) bool) {
-	prefixStore := store.NewPrefixStore(ctx.KVStore(k.storeKey), types.ValsetRequestKey)
+	prefixStore := store.NewPrefixStore(k.getCommonStore(ctx), types.ValsetRequestKey)
 	iter := prefixStore.ReverseIterator(nil, nil)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
@@ -398,16 +431,16 @@ func (k Keeper) GetBatchConfirmByNonceAndTokenContractWithGID(ctx sdk.Context, n
 /////////////////////////////
 
 // SetEthAddress sets the ethereum address for a given validator
-func (k Keeper) SetEthAddress(ctx sdk.Context, validator sdk.AccAddress, ethAddr string) {
-	store := ctx.KVStore(k.storeKey)
-	store.Set(types.GetEthAddressKey(validator), []byte(ethAddr))
-}
+//func (k Keeper) SetEthAddress(ctx sdk.Context, validator sdk.AccAddress, ethAddr string) {
+//	store := ctx.KVStore(k.storeKey)
+//	store.Set(types.GetEthAddressKey(validator), []byte(ethAddr))
+//}
 
 // GetEthAddress returns the eth address for a given gravity validator
-func (k Keeper) GetEthAddress(ctx sdk.Context, validator sdk.AccAddress) string {
-	store := ctx.KVStore(k.storeKey)
-	return string(store.Get(types.GetEthAddressKey(validator)))
-}
+//func (k Keeper) GetEthAddress(ctx sdk.Context, validator sdk.AccAddress) string {
+//	store := ctx.KVStore(k.storeKey)
+//	return string(store.Get(types.GetEthAddressKey(validator)))
+//}
 
 // GetCurrentValset gets powers from the store and normalizes them
 // into an integer percentage with a resolution of uint32 Max meaning
@@ -452,123 +485,123 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context) *types.Valset {
 /////////////////////////////
 
 // GetOutgoingLogicCall gets an outgoing logic call
-func (k Keeper) GetOutgoingLogicCall(ctx sdk.Context, invalidationId []byte, invalidationNonce uint64) *types.OutgoingLogicCall {
-	store := ctx.KVStore(k.storeKey)
-	call := types.OutgoingLogicCall{}
-	k.cdc.MustUnmarshalBinaryBare(store.Get(types.GetOutgoingLogicCallKey(invalidationId, invalidationNonce)), &call)
-	return &call
-}
+//func (k Keeper) GetOutgoingLogicCall(ctx sdk.Context, invalidationId []byte, invalidationNonce uint64) *types.OutgoingLogicCall {
+//	store := ctx.KVStore(k.storeKey)
+//	call := types.OutgoingLogicCall{}
+//	k.cdc.MustUnmarshalBinaryBare(store.Get(types.GetOutgoingLogicCallKey(invalidationId, invalidationNonce)), &call)
+//	return &call
+//}
 
 // SetOutogingLogicCall sets an outgoing logic call
-func (k Keeper) SetOutgoingLogicCall(ctx sdk.Context, call *types.OutgoingLogicCall) {
-	store := ctx.KVStore(k.storeKey)
-	store.Set(types.GetOutgoingLogicCallKey(call.InvalidationId, call.InvalidationNonce), k.cdc.MustMarshalBinaryBare(call))
-}
+//func (k Keeper) SetOutgoingLogicCall(ctx sdk.Context, call *types.OutgoingLogicCall) {
+//	store := ctx.KVStore(k.storeKey)
+//	store.Set(types.GetOutgoingLogicCallKey(call.InvalidationId, call.InvalidationNonce), k.cdc.MustMarshalBinaryBare(call))
+//}
 
 // DeleteOutgoingLogicCall deletes outgoing logic calls
-func (k Keeper) DeleteOutgoingLogicCall(ctx sdk.Context, invalidationId []byte, invalidationNonce uint64) {
-	ctx.KVStore(k.storeKey).Delete(types.GetOutgoingLogicCallKey(invalidationId, invalidationNonce))
-}
+//func (k Keeper) DeleteOutgoingLogicCall(ctx sdk.Context, invalidationId []byte, invalidationNonce uint64) {
+//	ctx.KVStore(k.storeKey).Delete(types.GetOutgoingLogicCallKey(invalidationId, invalidationNonce))
+//}
 
 // IterateOutgoingLogicCalls iterates over outgoing logic calls
-func (k Keeper) IterateOutgoingLogicCalls(ctx sdk.Context, cb func([]byte, *types.OutgoingLogicCall) bool) {
-	prefixStore := store.NewPrefixStore(ctx.KVStore(k.storeKey), types.KeyOutgoingLogicCall)
-	iter := prefixStore.Iterator(nil, nil)
-	defer iter.Close()
-	for ; iter.Valid(); iter.Next() {
-		var call types.OutgoingLogicCall
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &call)
-		// cb returns true to stop early
-		if cb(iter.Key(), &call) {
-			break
-		}
-	}
-}
+//func (k Keeper) IterateOutgoingLogicCalls(ctx sdk.Context, cb func([]byte, *types.OutgoingLogicCall) bool) {
+//	prefixStore := store.NewPrefixStore(ctx.KVStore(k.storeKey), types.KeyOutgoingLogicCall)
+//	iter := prefixStore.Iterator(nil, nil)
+//	defer iter.Close()
+//	for ; iter.Valid(); iter.Next() {
+//		var call types.OutgoingLogicCall
+//		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &call)
+//		// cb returns true to stop early
+//		if cb(iter.Key(), &call) {
+//			break
+//		}
+//	}
+//}
 
 // GetOutgoingLogicCalls returns the outgoing tx batches
-func (k Keeper) GetOutgoingLogicCalls(ctx sdk.Context) (out []*types.OutgoingLogicCall) {
-	k.IterateOutgoingLogicCalls(ctx, func(_ []byte, call *types.OutgoingLogicCall) bool {
-		out = append(out, call)
-		return false
-	})
-	return
-}
+//func (k Keeper) GetOutgoingLogicCalls(ctx sdk.Context) (out []*types.OutgoingLogicCall) {
+//	k.IterateOutgoingLogicCalls(ctx, func(_ []byte, call *types.OutgoingLogicCall) bool {
+//		out = append(out, call)
+//		return false
+//	})
+//	return
+//}
 
 // CancelOutgoingLogicCalls releases all TX in the batch and deletes the batch
-func (k Keeper) CancelOutgoingLogicCall(ctx sdk.Context, invalidationId []byte, invalidationNonce uint64) error {
-	call := k.GetOutgoingLogicCall(ctx, invalidationId, invalidationNonce)
-	if call == nil {
-		return types.ErrUnknown
-	}
-	// Delete batch since it is finished
-	k.DeleteOutgoingLogicCall(ctx, call.InvalidationId, call.InvalidationNonce)
-
-	// a consuming application will have to watch for this event and act on it
-	batchEvent := sdk.NewEvent(
-		types.EventTypeOutgoingLogicCallCanceled,
-		sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(types.ModuleName)),
-		sdk.NewAttribute([]byte(types.AttributeKeyInvalidationID), []byte(fmt.Sprint(call.InvalidationId))),
-		sdk.NewAttribute([]byte(types.AttributeKeyInvalidationNonce), []byte(fmt.Sprint(call.InvalidationNonce))),
-	)
-	ctx.EventManager().EmitEvent(batchEvent)
-	return nil
-}
+//func (k Keeper) CancelOutgoingLogicCall(ctx sdk.Context, invalidationId []byte, invalidationNonce uint64) error {
+//	call := k.GetOutgoingLogicCall(ctx, invalidationId, invalidationNonce)
+//	if call == nil {
+//		return types.ErrUnknown
+//	}
+//	// Delete batch since it is finished
+//	k.DeleteOutgoingLogicCall(ctx, call.InvalidationId, call.InvalidationNonce)
+//
+//	// a consuming application will have to watch for this event and act on it
+//	batchEvent := sdk.NewEvent(
+//		types.EventTypeOutgoingLogicCallCanceled,
+//		sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(types.ModuleName)),
+//		sdk.NewAttribute([]byte(types.AttributeKeyInvalidationID), []byte(fmt.Sprint(call.InvalidationId))),
+//		sdk.NewAttribute([]byte(types.AttributeKeyInvalidationNonce), []byte(fmt.Sprint(call.InvalidationNonce))),
+//	)
+//	ctx.EventManager().EmitEvent(batchEvent)
+//	return nil
+//}
 
 /////////////////////////////
 //       LOGICCONFIRMS     //
 /////////////////////////////
 
 // SetLogicCallConfirm sets a logic confirm in the store
-func (k Keeper) SetLogicCallConfirm(ctx sdk.Context, msg *types.MsgConfirmLogicCall) {
-	bytes, _ := hex.DecodeString(msg.InvalidationId)
-	acc, err := sdk.AccAddressFromBech32(msg.Orchestrator)
-	if err != nil {
-		panic(err)
-	}
-	ctx.KVStore(k.storeKey).Set(types.GetLogicConfirmKey(bytes, msg.InvalidationNonce, acc), k.cdc.MustMarshalBinaryBare(msg))
-}
+//func (k Keeper) SetLogicCallConfirm(ctx sdk.Context, msg *types.MsgConfirmLogicCall) {
+//	bytes, _ := hex.DecodeString(msg.InvalidationId)
+//	acc, err := sdk.AccAddressFromBech32(msg.Orchestrator)
+//	if err != nil {
+//		panic(err)
+//	}
+//	ctx.KVStore(k.storeKey).Set(types.GetLogicConfirmKey(bytes, msg.InvalidationNonce, acc), k.cdc.MustMarshalBinaryBare(msg))
+//}
 
 // GetLogicCallConfirm gets a logic confirm from the store
-func (k Keeper) GetLogicCallConfirm(ctx sdk.Context, invalidationId []byte, invalidationNonce uint64, val sdk.AccAddress) *types.MsgConfirmLogicCall {
-	store := ctx.KVStore(k.storeKey)
-	data := store.Get(types.GetLogicConfirmKey(invalidationId, invalidationNonce, val))
-	if data == nil {
-		return nil
-	}
-	out := types.MsgConfirmLogicCall{}
-	k.cdc.MustUnmarshalBinaryBare(data, &out)
-	return &out
-}
+//func (k Keeper) GetLogicCallConfirm(ctx sdk.Context, invalidationId []byte, invalidationNonce uint64, val sdk.AccAddress) *types.MsgConfirmLogicCall {
+//	store := ctx.KVStore(k.storeKey)
+//	data := store.Get(types.GetLogicConfirmKey(invalidationId, invalidationNonce, val))
+//	if data == nil {
+//		return nil
+//	}
+//	out := types.MsgConfirmLogicCall{}
+//	k.cdc.MustUnmarshalBinaryBare(data, &out)
+//	return &out
+//}
 
 // DeleteLogicCallConfirm deletes a logic confirm from the store
-func (k Keeper) DeleteLogicCallConfirm(ctx sdk.Context, invalidationId []byte, invalidationNonce uint64, val sdk.AccAddress) {
-	ctx.KVStore(k.storeKey).Delete(types.GetLogicConfirmKey(invalidationId, invalidationNonce, val))
-}
+//func (k Keeper) DeleteLogicCallConfirm(ctx sdk.Context, invalidationId []byte, invalidationNonce uint64, val sdk.AccAddress) {
+//	ctx.KVStore(k.storeKey).Delete(types.GetLogicConfirmKey(invalidationId, invalidationNonce, val))
+//}
 
 // IterateLogicConfirmByNonce iterates over all logic confirms stored by nonce
-func (k Keeper) IterateLogicConfirmByInvalidationIdAndNonce(ctx sdk.Context, invalidationId []byte, invalidationNonce uint64, cb func([]byte, *types.MsgConfirmLogicCall) bool) {
-	prefixStore := store.NewPrefixStore(ctx.KVStore(k.storeKey), types.KeyOutgoingLogicConfirm)
-	iter := prefixStore.Iterator(prefixRange(append(invalidationId, types.UInt64Bytes(invalidationNonce)...)))
-	defer iter.Close()
-
-	for ; iter.Valid(); iter.Next() {
-		confirm := types.MsgConfirmLogicCall{}
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &confirm)
-		// cb returns true to stop early
-		if cb(iter.Key(), &confirm) {
-			break
-		}
-	}
-}
+//func (k Keeper) IterateLogicConfirmByInvalidationIdAndNonce(ctx sdk.Context, invalidationId []byte, invalidationNonce uint64, cb func([]byte, *types.MsgConfirmLogicCall) bool) {
+//	prefixStore := store.NewPrefixStore(ctx.KVStore(k.storeKey), types.KeyOutgoingLogicConfirm)
+//	iter := prefixStore.Iterator(prefixRange(append(invalidationId, types.UInt64Bytes(invalidationNonce)...)))
+//	defer iter.Close()
+//
+//	for ; iter.Valid(); iter.Next() {
+//		confirm := types.MsgConfirmLogicCall{}
+//		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &confirm)
+//		// cb returns true to stop early
+//		if cb(iter.Key(), &confirm) {
+//			break
+//		}
+//	}
+//}
 
 // GetLogicConfirmsByInvalidationIdAndNonce returns the logic call confirms
-func (k Keeper) GetLogicConfirmByInvalidationIdAndNonce(ctx sdk.Context, invalidationId []byte, invalidationNonce uint64) (out []types.MsgConfirmLogicCall) {
-	k.IterateLogicConfirmByInvalidationIdAndNonce(ctx, invalidationId, invalidationNonce, func(_ []byte, msg *types.MsgConfirmLogicCall) bool {
-		out = append(out, *msg)
-		return false
-	})
-	return
-}
+//func (k Keeper) GetLogicConfirmByInvalidationIdAndNonce(ctx sdk.Context, invalidationId []byte, invalidationNonce uint64) (out []types.MsgConfirmLogicCall) {
+//	k.IterateLogicConfirmByInvalidationIdAndNonce(ctx, invalidationId, invalidationNonce, func(_ []byte, msg *types.MsgConfirmLogicCall) bool {
+//		out = append(out, *msg)
+//		return false
+//	})
+//	return
+//}
 
 /////////////////////////////
 //       PARAMETERS        //
@@ -609,11 +642,11 @@ func (k Keeper) GetBridgeChainID(ctx sdk.Context) uint64 {
 // is deployed the GravityID CAN NOT BE CHANGED. Meaning that it can't just be the
 // same as the chain id since the chain id may be changed many times with each
 // successive chain in charge of the same bridge
-func (k Keeper) GetGravityID(ctx sdk.Context) string {
-	var a string
-	k.paramSpace.Get(ctx, types.ParamsStoreKeyGravityID, &a)
-	return a
-}
+//func (k Keeper) GetGravityID(ctx sdk.Context) string {
+//	var a string
+//	k.paramSpace.Get(ctx, types.ParamsStoreKeyGravityID, &a)
+//	return a
+//}
 
 // Set GravityID sets the GravityID the GravityID is essentially a salt value
 // for bridge signatures, provided each chain running Gravity has a unique ID
@@ -625,9 +658,9 @@ func (k Keeper) GetGravityID(ctx sdk.Context) string {
 // is deployed the GravityID CAN NOT BE CHANGED. Meaning that it can't just be the
 // same as the chain id since the chain id may be changed many times with each
 // successive chain in charge of the same bridge
-func (k Keeper) SetGravityID(ctx sdk.Context, v string) {
-	k.paramSpace.Set(ctx, types.ParamsStoreKeyGravityID, v)
-}
+//func (k Keeper) SetGravityID(ctx sdk.Context, v string) {
+//	k.paramSpace.Set(ctx, types.ParamsStoreKeyGravityID, v)
+//}
 
 // logger returns a module-specific logger.
 func (k Keeper) logger(ctx sdk.Context) log.Logger {
@@ -764,11 +797,13 @@ func prefixRange(prefix []byte) ([]byte, []byte) {
 
 
 func (k Keeper) SetTokenMetaData(ctx sdk.Context, contract string, meta types.MetaData) {
-	ctx.KVStore(k.storeKey).Set(types.GetContractMetaDataKey(contract), k.cdc.MustMarshalBinaryBare(meta))
+	store := k.getGidStore(ctx)
+	store.Set(types.GetContractMetaDataKey(contract), k.cdc.MustMarshalBinaryBare(meta))
 }
 
 func (k Keeper) GetTokenMetaData(ctx sdk.Context, contract string) types.MetaData {
-	bz := ctx.KVStore(k.storeKey).Get(types.GetContractMetaDataKey(contract))
+	store := k.getGidStore(ctx)
+	bz := store.Get(types.GetContractMetaDataKey(contract))
 	if bz == nil {
 		return types.MetaData{}
 	}

@@ -11,17 +11,10 @@ import (
 	"github.com/ci123chain/ci123chain/pkg/gravity/types"
 )
 
-func getValsetRequestHandler(cliCtx context.Context, storeName string) http.HandlerFunc {
+func getValsetRequestByNonceHandler(cliCtx context.Context, storeName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		nonce := vars[nonce]
-		//heightvar := vars[height]
-
-		//height, err := strconv.ParseInt(heightvar, 10, 64)
-		//if err != nil {
-		//	rest.WriteErrorRes(w, err.Error())
-		//	return
-		//}
 
 		res, height, _, err := cliCtx.Query(fmt.Sprintf("custom/%s/valsetRequest/%s", storeName, nonce), nil, false)
 		if err != nil {
@@ -45,8 +38,8 @@ func batchByNonceHandler(cliCtx context.Context, storeName string) http.HandlerF
 		vars := mux.Vars(r)
 		nonce := vars[nonce]
 		denom := vars[tokenAddress]
-
-		res, height, _, err := cliCtx.Query(fmt.Sprintf("custom/%s/batch/%s/%s", storeName, nonce, denom), nil, false)
+		gravityID := vars[gravity_id]
+		res, height, _, err := cliCtx.Query(fmt.Sprintf("custom/%s/batch/%s/%s/%s", storeName, gravityID, nonce, denom), nil, false)
 		if err != nil {
 			rest.WriteErrorRes(w, err.Error())
 			return
@@ -65,8 +58,9 @@ func batchByNonceHandler(cliCtx context.Context, storeName string) http.HandlerF
 // USED BY RUST
 func lastBatchesHandler(cliCtx context.Context, storeName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
-		res, height, _, err := cliCtx.Query(fmt.Sprintf("custom/%s/lastBatches", storeName), nil, false)
+		vars := mux.Vars(r)
+		gravityID := vars[gravity_id]
+		res, height, _, err := cliCtx.Query(fmt.Sprintf("custom/%s/lastBatches/%s", storeName, gravityID), nil, false)
 		if err != nil {
 			rest.WriteErrorRes(w, err.Error())
 			return
@@ -87,8 +81,9 @@ func allValsetConfirmsHandler(cliCtx context.Context, storeName string) http.Han
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		nonce := vars[nonce]
+		gravityID := vars[gravity_id]
 
-		res, height, _, err := cliCtx.Query(fmt.Sprintf("custom/%s/valsetConfirms/%s", storeName, nonce), nil, false)
+		res, height, _, err := cliCtx.Query(fmt.Sprintf("custom/%s/valsetConfirms/%s/%s", storeName, gravityID, nonce), nil, false)
 		if err != nil {
 			rest.WriteErrorRes(w, err.Error())
 			return
@@ -110,8 +105,9 @@ func allBatchConfirmsHandler(cliCtx context.Context, storeName string) http.Hand
 		vars := mux.Vars(r)
 		nonce := vars[nonce]
 		denom := vars[tokenAddress]
+		gravityID := vars[gravity_id]
 
-		res, height, _, err := cliCtx.Query(fmt.Sprintf("custom/%s/batchConfirms/%s/%s", storeName, nonce, denom), nil, false)
+		res, height, _, err := cliCtx.Query(fmt.Sprintf("custom/%s/batchConfirms/%s/%s/%s", storeName, gravityID, nonce, denom), nil, false)
 		if err != nil {
 			rest.WriteErrorRes(w, err.Error())
 			return
@@ -149,8 +145,9 @@ func lastValsetRequestsByAddressHandler(cliCtx context.Context, storeName string
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		operatorAddr := vars[bech32ValidatorAddress]
+		gravityID := vars[gravity_id]
 
-		res, height, _, err := cliCtx.Query(fmt.Sprintf("custom/%s/lastPendingValsetRequest/%s", storeName, operatorAddr), nil, false)
+		res, height, _, err := cliCtx.Query(fmt.Sprintf("custom/%s/lastPendingValsetRequest/%s/%s", storeName, gravityID, operatorAddr), nil, false)
 		if err != nil {
 			rest.WriteErrorRes(w, err.Error())
 			return
@@ -170,8 +167,9 @@ func lastBatchesByAddressHandler(cliCtx context.Context, storeName string) http.
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		operatorAddr := vars[bech32ValidatorAddress]
+		gravityID := vars[gravity_id]
 
-		res, height, _, err := cliCtx.Query(fmt.Sprintf("custom/%s/lastPendingBatchRequest/%s", storeName, operatorAddr), nil, false)
+		res, height, _, err := cliCtx.Query(fmt.Sprintf("custom/%s/lastPendingBatchRequest/%s/%s", storeName, gravityID, operatorAddr), nil, false)
 		if err != nil {
 			rest.WriteErrorRes(w, err.Error())
 			return
@@ -191,8 +189,9 @@ func lastEventNonceByAddressHandler(cliCtx context.Context, storeName string) ht
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		operatorAddr := vars[bech32ValidatorAddress]
+		gravityID := vars[gravity_id]
 
-		res, height, _, err := cliCtx.Query(fmt.Sprintf("custom/%s/lastEventNonce/%s", storeName, operatorAddr), nil, false)
+		res, height, _, err := cliCtx.Query(fmt.Sprintf("custom/%s/lastEventNonce/%s/%s", storeName, gravityID, operatorAddr), nil, false)
 		if err != nil {
 			rest.WriteErrorRes(w, err.Error())
 			return
@@ -203,30 +202,19 @@ func lastEventNonceByAddressHandler(cliCtx context.Context, storeName string) ht
 	}
 }
 
-func lastValsetConfirmNonceHandler(cliCtx context.Context, storeName string) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		res, height, _, err := cliCtx.Query(fmt.Sprintf("custom/%s/lastValsetConfirmNonce/%s", storeName), nil, false)
-		if err != nil {
-			rest.WriteErrorRes(w, err.Error())
-			return
-		}
+//func lastValsetConfirmNonceHandler(cliCtx context.Context, storeName string) http.HandlerFunc {
+//	return func(w http.ResponseWriter, r *http.Request) {
+//		res, height, _, err := cliCtx.Query(fmt.Sprintf("custom/%s/lastValsetConfirmNonce/%s", storeName), nil, false)
+//		if err != nil {
+//			rest.WriteErrorRes(w, err.Error())
+//			return
+//		}
+//
+//		out := types.UInt64FromBytes(res)
+//		rest.PostProcessResponseBare(w, cliCtx.WithHeight(height), out)
+//	}
+//}
 
-		out := types.UInt64FromBytes(res)
-		rest.PostProcessResponseBare(w, cliCtx.WithHeight(height), out)
-	}
-}
-
-func lastLogicCallHandler(cliCtx context.Context, storeName string) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		res, height, _, err := cliCtx.Query(fmt.Sprintf("custom/%s/lastLogicCalls", storeName), nil, false)
-		if err != nil {
-			rest.WriteErrorRes(w, err.Error())
-			return
-		}
-
-		rest.PostProcessResponseBare(w, cliCtx.WithHeight(height), res)
-	}
-}
 
 func currentValsetHandler(cliCtx context.Context, storeName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -245,8 +233,9 @@ func denomToERC20Handler(cliCtx context.Context, storeName string) http.HandlerF
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		denom := vars[denom]
+		gravityID := vars[gravity_id]
 
-		res, height, _, err := cliCtx.Query(fmt.Sprintf("custom/%s/DenomToERC20/%s", storeName, denom), nil, false)
+		res, height, _, err := cliCtx.Query(fmt.Sprintf("custom/%s/DenomToERC20/%s/%s", storeName, gravityID, denom), nil, false)
 		if err != nil {
 			rest.WriteErrorRes(w, err.Error())
 			return
@@ -259,8 +248,8 @@ func ERC20ToDenomHandler(cliCtx context.Context, storeName string) http.HandlerF
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		ERC20 := vars[tokenAddress]
-
-		res, height, _, err := cliCtx.Query(fmt.Sprintf("custom/%s/ERC20ToDenom/%s", storeName, ERC20), nil, false)
+		gravityID := vars[gravity_id]
+		res, height, _, err := cliCtx.Query(fmt.Sprintf("custom/%s/ERC20ToDenom/%s/%s", storeName, gravityID, ERC20), nil, false)
 		if err != nil {
 			rest.WriteErrorRes(w, err.Error())
 			return
@@ -273,8 +262,8 @@ func denomToERC721Handler(cliCtx context.Context, storeName string) http.Handler
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		denom := vars[denom]
-
-		res, height, _, err := cliCtx.Query(fmt.Sprintf("custom/%s/DenomToERC721/%s", storeName, denom), nil, false)
+		gravityID := vars[gravity_id]
+		res, height, _, err := cliCtx.Query(fmt.Sprintf("custom/%s/DenomToERC721/%s/%s", storeName, gravityID, denom), nil, false)
 		if err != nil {
 			rest.WriteErrorRes(w, err.Error())
 			return
@@ -287,8 +276,8 @@ func ERC721ToDenomHandler(cliCtx context.Context, storeName string) http.Handler
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		ERC721 := vars[tokenAddress]
-
-		res, height, _, err := cliCtx.Query(fmt.Sprintf("custom/%s/ERC721ToDenom/%s", storeName, ERC721), nil, false)
+		gravityID := vars[gravity_id]
+		res, height, _, err := cliCtx.Query(fmt.Sprintf("custom/%s/ERC721ToDenom/%s/%s", storeName, gravityID, ERC721), nil, false)
 		if err != nil {
 			rest.WriteErrorRes(w, err.Error())
 			return
@@ -342,7 +331,9 @@ func queryPendingSendToEthHandler(cliCtx context.Context, storeName string) http
 		params := r.URL.Query()
 		sender := params.Get("sender")
 		wlk_contract := params.Get("wlkContract")
-		res, height, _, err := cliCtx.Query(fmt.Sprintf("custom/%s/PendingSendToEth/%s/%s", storeName, sender, wlk_contract), nil, false)
+		gravityID := params.Get(gravity_id)
+
+		res, height, _, err := cliCtx.Query(fmt.Sprintf("custom/%s/PendingSendToEth/%s/%s/%s", storeName, gravityID, sender, wlk_contract), nil, false)
 		if err != nil {
 			rest.WriteErrorRes(w, err.Error())
 			return

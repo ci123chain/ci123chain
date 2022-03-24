@@ -186,7 +186,7 @@ func (k Keeper) RemoveFromOutgoingPoolAndRefund(ctx sdk.Context, txId uint64, se
 
 // appendToUnbatchedTXIndex add at the end when tx with same fee exists
 func (k Keeper) appendToUnbatchedTXIndex(ctx sdk.Context, tokenContract string, fee types.ERC20Token, txID uint64) {
-	store := ctx.KVStore(k.storeKey)
+	store := k.getGidStore(ctx)
 	idxKey := types.GetFeeSecondIndexKey(fee)
 	var idSet types.IDSet
 	if store.Has(idxKey) {
@@ -199,7 +199,7 @@ func (k Keeper) appendToUnbatchedTXIndex(ctx sdk.Context, tokenContract string, 
 
 // appendToUnbatchedTXIndex add at the top when tx with same fee exists
 func (k Keeper) prependToUnbatchedTXIndex(ctx sdk.Context, tokenContract string, fee types.ERC20Token, txID uint64) {
-	store := ctx.KVStore(k.storeKey)
+	store := k.getGidStore(ctx)
 	idxKey := types.GetFeeSecondIndexKey(fee)
 	var idSet types.IDSet
 	if store.Has(idxKey) {
@@ -212,7 +212,7 @@ func (k Keeper) prependToUnbatchedTXIndex(ctx sdk.Context, tokenContract string,
 
 // removeFromUnbatchedTXIndex removes the tx from the index and makes it implicit no available anymore
 func (k Keeper) removeFromUnbatchedTXIndex(ctx sdk.Context, fee types.ERC20Token, txID uint64) error {
-	store := ctx.KVStore(k.storeKey)
+	store := k.getGidStore(ctx)
 	idxKey := types.GetFeeSecondIndexKey(fee)
 	var idSet types.IDSet
 	bz := store.Get(idxKey)
@@ -239,13 +239,13 @@ func (k Keeper) setPoolEntry(ctx sdk.Context, val *types.OutgoingTransferTx) err
 	if err != nil {
 		return err
 	}
-	store := ctx.KVStore(k.storeKey)
+	store := k.getGidStore(ctx)
 	store.Set(types.GetOutgoingTxPoolKey(val.Id), bz)
 	return nil
 }
 
 func (k Keeper) getPoolEntry(ctx sdk.Context, id uint64) (*types.OutgoingTransferTx, error) {
-	store := ctx.KVStore(k.storeKey)
+	store := k.getGidStore(ctx)
 	bz := store.Get(types.GetOutgoingTxPoolKey(id))
 	if bz == nil {
 		return nil, types.ErrUnknown.Wrap("Can not find this txid")
@@ -256,7 +256,7 @@ func (k Keeper) getPoolEntry(ctx sdk.Context, id uint64) (*types.OutgoingTransfe
 }
 
 func (k Keeper) removePoolEntry(ctx sdk.Context, id uint64) {
-	store := ctx.KVStore(k.storeKey)
+	store := k.getGidStore(ctx)
 	store.Delete(types.GetOutgoingTxPoolKey(id))
 }
 
@@ -267,12 +267,12 @@ var (
 )
 
 func (k Keeper) setTxIdState(ctx sdk.Context, txId uint64, state []byte) {
-	store := ctx.KVStore(k.storeKey)
+	store := k.getGidStore(ctx)
 	store.Set(types.GetTxIdKey(txId), state)
 }
 
 func (k Keeper) getTxIdState(ctx sdk.Context, txId uint64) ([]byte, error) {
-	store := ctx.KVStore(k.storeKey)
+	store := k.getGidStore(ctx)
 	by := store.Get(types.GetTxIdKey(txId))
 	if by == nil {
 		return nil, types.ErrUnknown
@@ -285,12 +285,12 @@ var (
 )
 
 func (k Keeper) setEventNonceState(ctx sdk.Context, eventNonce uint64, state []byte) {
-	store := ctx.KVStore(k.storeKey)
+	store := k.getGidStore(ctx)
 	store.Set(types.GetEventNonceKey(eventNonce), state)
 }
 
 func (k Keeper) getEventNonceState(ctx sdk.Context, eventNonce uint64) ([]byte, error) {
-	store := ctx.KVStore(k.storeKey)
+	store := k.getGidStore(ctx)
 	by := store.Get(types.GetEventNonceKey(eventNonce))
 	if by == nil {
 		return nil, types.ErrUnknown
@@ -300,10 +300,10 @@ func (k Keeper) getEventNonceState(ctx sdk.Context, eventNonce uint64) ([]byte, 
 
 // GetPoolTransactions, grabs all transactions from the tx pool, useful for queries or genesis save/load
 func (k Keeper) GetPoolTransactions(ctx sdk.Context) []*types.OutgoingTransferTx {
-	prefixStore := ctx.KVStore(k.storeKey)
+	store := k.getGidStore(ctx)
 	// we must use the second index key here because transactions are left in the store, but removed
 	// from the tx sorting key, while in batches
-	iter := prefixStore.ReverseIterator(prefixRange([]byte(types.SecondIndexOutgoingTXFeeKey)))
+	iter := store.ReverseIterator(prefixRange(types.SecondIndexOutgoingTXFeeKey))
 	var ret []*types.OutgoingTransferTx
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
@@ -322,7 +322,7 @@ func (k Keeper) GetPoolTransactions(ctx sdk.Context) []*types.OutgoingTransferTx
 
 // IterateOutgoingPoolByFee iterates over the outgoing pool which is sorted by fee
 func (k Keeper) IterateOutgoingPoolByFee(ctx sdk.Context, contract string, cb func(uint64, *types.OutgoingTransferTx) bool) {
-	prefixStore := store.NewPrefixStore(ctx.KVStore(k.storeKey), types.SecondIndexOutgoingTXFeeKey)
+	prefixStore := store.NewPrefixStore(k.getGidStore(ctx), types.SecondIndexOutgoingTXFeeKey)
 	iter := prefixStore.ReverseIterator(prefixRange([]byte(contract)))
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
@@ -374,7 +374,7 @@ func (k Keeper) GetAllBatchFees(ctx sdk.Context) (batchFees []*types.BatchFees) 
 
 // CreateBatchFees iterates over the outgoing pool and creates batch token fee map
 func (k Keeper) createBatchFees(ctx sdk.Context) map[string]*types.BatchFees {
-	prefixStore := store.NewPrefixStore(ctx.KVStore(k.storeKey), types.SecondIndexOutgoingTXFeeKey)
+	prefixStore := store.NewPrefixStore(k.getGidStore(ctx), types.SecondIndexOutgoingTXFeeKey)
 	iter := prefixStore.Iterator(nil, nil)
 	defer iter.Close()
 
@@ -418,7 +418,7 @@ func (k Keeper) createBatchFees(ctx sdk.Context) map[string]*types.BatchFees {
 }
 
 func (k Keeper) autoIncrementID(ctx sdk.Context, idKey []byte) uint64 {
-	store := ctx.KVStore(k.storeKey)
+	store := k.getGidStore(ctx)
 	bz := store.Get(idKey)
 	var id uint64 = 1
 	if bz != nil {

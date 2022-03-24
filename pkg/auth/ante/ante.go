@@ -1,7 +1,6 @@
 package ante
 
 import (
-	"fmt"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	"github.com/ci123chain/ci123chain/pkg/account"
 	types2 "github.com/ci123chain/ci123chain/pkg/app/types"
@@ -77,8 +76,6 @@ func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, sk su
 		if err := sk.SendCoinsFromAccountToModule(newCtx, signer, auth.FeeCollectorName, sdk.NewCoins(sdk.NewChainCoin(gasTotal))); err != nil {
 			return newCtx, sdk.Result{}, err, true
 		}
-		fmt.Println("Pay Fees: ", gasTotal.String())
-
 
 		//Calculate fee of tx size
 		newCtx.GasMeter().ConsumeGas(params.TxSizeCostPerByte * sdk.Gas(len(newCtx.TxBytes())), "txSize")
