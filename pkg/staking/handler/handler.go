@@ -13,13 +13,13 @@ import (
 
 func NewHandler(k keeper.StakingKeeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
-		//ctx = ctx.WithEventManager(sdk.NewEventManager())
-		//
-		//switch msg := msg.(type) {
+		ctx = ctx.WithEventManager(sdk.NewEventManager())
+
+		switch msg := msg.(type) {
 		//case *staking.MsgCreateValidator:
 		//	return handleMsgCreateValidator(ctx, k, *msg)
-		//case *staking.MsgEditValidator:
-		//	return handleMsgEditValidator(ctx, k, *msg)
+		case *staking.MsgEditValidator:
+			return handleMsgEditValidator(ctx, k, *msg)
 		//case *staking.MsgDelegate:
 		//	return handleMsgDelegate(ctx, k, *msg)
 		//case *staking.MsgRedelegate:
@@ -28,7 +28,7 @@ func NewHandler(k keeper.StakingKeeper) sdk.Handler {
 		//	return handleMsgUndelegate(ctx, k, *msg)
 		//default:
 		//	return nil, types.ErrInvalidTxType
-		//}
+		}
 		return nil, nil
 	}
 }
