@@ -3,7 +3,6 @@ package types
 import (
 	"bytes"
 	"fmt"
-	"strings"
 	"time"
 
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
@@ -95,18 +94,7 @@ func DefaultParams() *Params {
 
 // ValidateBasic checks that the parameters have valid values.
 func (p Params) ValidateBasic() error {
-	if err := validateGravityID(p.GravityId); err != nil {
-		return sdkerrors.Wrap(err, "gravity id")
-	}
-	if err := validateContractHash(p.ContractSourceHash); err != nil {
-		return sdkerrors.Wrap(err, "contract hash")
-	}
-	if err := validateBridgeContractAddress(p.BridgeEthereumAddress); err != nil {
-		return sdkerrors.Wrap(err, "bridge contract address")
-	}
-	if err := validateBridgeChainID(p.BridgeChainId); err != nil {
-		return sdkerrors.Wrap(err, "bridge chain id")
-	}
+
 	if err := validateTargetBatchTimeout(p.TargetBatchTimeout); err != nil {
 		return sdkerrors.Wrap(err, "Batch timeout")
 	}
@@ -174,33 +162,6 @@ func (p Params) Equal(p2 Params) bool {
 	return bytes.Equal(bz1, bz2)
 }
 
-func validateGravityID(i interface{}) error {
-	v, ok := i.(string)
-	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-	if _, err := strToFixByteArray(v); err != nil {
-		return err
-	}
-	return nil
-}
-
-func validateContractHash(i interface{}) error {
-	// TODO: should we validate that the input here is a properly formatted
-	// SHA256 (or other) hash?
-	if _, ok := i.(string); !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-	return nil
-}
-
-func validateBridgeChainID(i interface{}) error {
-	if _, ok := i.(uint64); !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-	return nil
-}
-
 func validateTargetBatchTimeout(i interface{}) error {
 	val, ok := i.(uint64)
 	if !ok {
@@ -227,20 +188,6 @@ func validateAverageEthereumBlockTime(i interface{}) error {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	} else if val < 100 {
 		return fmt.Errorf("invalid average Ethereum block time, too short for latency limitations")
-	}
-	return nil
-}
-
-func validateBridgeContractAddress(i interface{}) error {
-	v, ok := i.(string)
-	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-	if err := ValidateEthAddress(v); err != nil {
-		// TODO: ensure that empty addresses are valid in params
-		if !strings.Contains(err.Error(), "empty") {
-			return err
-		}
 	}
 	return nil
 }

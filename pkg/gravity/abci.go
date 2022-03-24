@@ -8,6 +8,10 @@ import (
 	"sort"
 )
 
+func BeginBlocker(ctx sdk.Context, k keeper.Keeper) {
+
+}
+
 // EndBlocker is called at the end of every block
 func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 	// Question: what here can be epoched?
@@ -263,7 +267,7 @@ func attestationTally(ctx sdk.Context, k keeper.Keeper) {
 				k.Logger(ctx).Info("TryAttestation", "Nonce", nonce, "lastEventNonce", lastEventNonce, "ClaimJson", string(claimbz))
 				k.TryAttestation(ctx, &att)
 			} else {
-				k.Logger(ctx).Info("Try Not Attestation", "Nonce", nonce, "lastEventNonce", lastEventNonce, "ClaimJson", string(claimbz))
+				k.Logger(ctx).Debug("Try Not Attestation", "Nonce", nonce, "lastEventNonce", lastEventNonce, "ClaimJson", string(claimbz))
 			}
 		}
 	}

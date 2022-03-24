@@ -94,7 +94,9 @@ func ConstructAppExporter(name string) AppExporter {
 			return ExportedApp{}, types.ErrNewDB(types.DefaultCodespace, err)
 		}
 		var rdb dbm.DB = nil
-		rdb, err = GetRDB(stateDB, lg)
+		if stateDB != "" {
+			rdb, err = GetRDB(stateDB, lg)
+		}
 		if err != nil {
 			return ExportedApp{}, types.ErrNewDB(types.DefaultCodespace, err)
 		}
