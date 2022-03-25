@@ -67,10 +67,10 @@ func startCmd(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Codec) *co
 			v0.SetSkipWAL(viper.GetBool(flagSkipWAL))
 			loadExport := viper.GetBool(flagStartFromExport)
 			exportFile := viper.GetString(flagStartFromExportFile)
-			if loadExport {
-				filePath := filepath.Join(ctx.Config.RootDir, "config/genesis.json")
-				err := downloadGenesis(exportFile, filePath)
 
+			filePath := filepath.Join(ctx.Config.RootDir, "config/genesis.json")
+			if loadExport && !tos.FileExists(filePath){
+				err := downloadGenesis(exportFile, filePath)
 				//by, err := ioutil.ReadFile(exportFile)
 				if err != nil {
 					ctx.Logger.Error("start node with export genesis file, but download fail ", "path", exportFile, "err", err.Error())
