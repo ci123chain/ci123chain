@@ -539,8 +539,35 @@ func (api *PublicEthereumAPI) GetTransactionByHash(hash common.Hash) (*Transacti
 		return nil, err2
 	}
 
+	ethTx, ok := rawtx.(*types.MsgEthereumTx)
+	if !ok {
+		//not ethTx
+		cTx, ok := rawtx.(*types.CommonTx)
+		if !ok {
+			return nil, err
+		}
+		index := uint64(tx.Index)
+		transaction := &Transaction{
+			BlockHash:        &blockHash,
+			BlockNumber:     (*hexutil.Big)(big.NewInt(tx.Height)),
+			From:             cTx.From.Address,
+			Gas:              hexutil.Uint64(cTx.Gas),
+			GasPrice:         nil,
+			Hash:             common.BytesToHash(tx.Tx.Hash()),
+			Input:            nil,
+			Nonce:            hexutil.Uint64(cTx.Nonce),
+			To:               nil,
+			TransactionIndex: (*hexutil.Uint64)(&index),
+			Value:            nil,
+			V:                nil,
+			R:                nil,
+			S:                nil,
+		}
+		return transaction, nil
+	}
+
 	height := uint64(tx.Height)
-	s, err :=  NewTransaction(rawtx.(*types.MsgEthereumTx), common.BytesToHash(tx.Tx.Hash()), blockHash, height, uint64(tx.Index))
+	s, err := NewTransaction(ethTx, common.BytesToHash(tx.Tx.Hash()), blockHash, height, uint64(tx.Index))
 	return s, err
 }
 
@@ -789,11 +816,11 @@ func formatBlock(
 		"logsBloom":        bloom,
 		"transactionsRoot": ethtypes.EmptyRootHash,//hexutil.Bytes(header.DataHash),
 		"stateRoot":        common.BytesToHash(header.AppHash),//hexutil.Bytes(header.AppHash),
-		"miner":            common.Address{},
+		"miner":            header.ProposerAddress.Bytes(),
 		"mixHash":          common.Hash{},
 		"difficulty":       hexutil.Uint64(0), //big.NewInt(0),
 		//"totalDifficulty":  0,
-		"extraData":        []byte(""),
+		"extraData":        []byte(""), //totalTx
 		"size":             hexutil.Uint64(size),
 		"gasLimit":         hexutil.Uint64(gasLimit), // Static gas limit
 		"gasUsed":          hexutil.Uint64(gasUsed.Uint64()),//(*hexutil.Big)(gasUsed),
