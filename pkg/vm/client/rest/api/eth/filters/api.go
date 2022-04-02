@@ -618,11 +618,16 @@ func (b *EthBackend) GetBlockByNumber(blockNum rpctypes.BlockNumber, fullTx bool
 
 	resBlock := res.(*coretypes.ResultBlock)
 
-	_, gasUsed, ethTxs, err := rpctypes.EthTransactionsFromTendermint(b.clientCtx, resBlock.Block.Txs, common.BytesToHash(resBlock.Block.Hash()), uint64(resBlock.Block.Height))
+	txHashs, gasUsed, ethTxs, err := rpctypes.EthTransactionsFromTendermint(b.clientCtx, resBlock.Block.Txs, common.BytesToHash(resBlock.Block.Hash()), uint64(resBlock.Block.Height))
 	if err != nil {
 		return nil, err
 	}
-	return rpctypes.EthBlockFromTendermint(b.clientCtx, resBlock.Block, gasUsed, ethTxs)
+
+	if fullTx {
+		return rpctypes.EthBlockFromTendermint(b.clientCtx, resBlock.Block, gasUsed, ethTxs)
+	} else {
+		return rpctypes.EthBlockFromTendermint(b.clientCtx, resBlock.Block, gasUsed, txHashs)
+	}
 }
 
 // GetBlockByHash returns the block identified by hash.
@@ -642,11 +647,15 @@ func (b *EthBackend) GetBlockByHash(hash common.Hash, fullTx bool) (map[string]i
 		return nil, nil
 	}
 
-	_, gasUsed, ethTxs, err := rpctypes.EthTransactionsFromTendermint(b.clientCtx, resBlock.Block.Txs, common.BytesToHash(resBlock.Block.Hash()), uint64(resBlock.Block.Height))
+	txHashs, gasUsed, ethTxs, err := rpctypes.EthTransactionsFromTendermint(b.clientCtx, resBlock.Block.Txs, common.BytesToHash(resBlock.Block.Hash()), uint64(resBlock.Block.Height))
 	if err != nil {
 		return nil, err
 	}
-	return rpctypes.EthBlockFromTendermint(b.clientCtx, resBlock.Block, gasUsed, ethTxs)
+	if fullTx {
+		return rpctypes.EthBlockFromTendermint(b.clientCtx, resBlock.Block, gasUsed, ethTxs)
+	} else {
+		return rpctypes.EthBlockFromTendermint(b.clientCtx, resBlock.Block, gasUsed, txHashs)
+	}
 }
 
 // HeaderByNumber returns the block header identified by height.

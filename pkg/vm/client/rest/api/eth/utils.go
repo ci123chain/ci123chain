@@ -30,6 +30,7 @@ func EthTransactionsFromTendermint(clientCtx clientcontext.Context, txs []tmtype
 			// continue to next transaction in case it's not a MsgEthereumTx
 			continue
 		}
+
 		// TODO: Remove gas usage calculation if saving gasUsed per block
 		gasUsed.Add(gasUsed, big.NewInt(int64(ethTx.GetGas())))
 		transactionHashes = append(transactionHashes, common.BytesToHash(tx.Hash()))

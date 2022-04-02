@@ -230,11 +230,15 @@ func (api *PublicEthereumAPI) GetBlockByNumber(blockNum BlockNumber, fullTx bool
 		return nil, nil
 	}
 
-	_, gasUsed, ethTxs, err := EthTransactionsFromTendermint(api.clientCtx, resBlock.Block.Txs, common.BytesToHash(resBlock.Block.Hash()), uint64(resBlock.Block.Height))
+	txHash, gasUsed, ethTxs, err := EthTransactionsFromTendermint(api.clientCtx, resBlock.Block.Txs, common.BytesToHash(resBlock.Block.Hash()), uint64(resBlock.Block.Height))
 	if err != nil {
 		return nil, err
 	}
-	return EthBlockFromTendermint(api.clientCtx, resBlock.Block, gasUsed, ethTxs)
+	if fullTx {
+		return EthBlockFromTendermint(api.clientCtx, resBlock.Block, gasUsed, ethTxs)
+	} else {
+		return EthBlockFromTendermint(api.clientCtx, resBlock.Block, gasUsed, txHash)
+	}
 }
 
 // GetBlockByHash returns the block identified by hash.
@@ -255,11 +259,15 @@ func (api *PublicEthereumAPI) GetBlockByHash(hash common.Hash, fullTx bool) (int
 		return nil, nil
 	}
 
-	_, gasUsed, ethTxs, err := EthTransactionsFromTendermint(api.clientCtx, resBlock.Block.Txs, common.BytesToHash(resBlock.Block.Hash()), uint64(resBlock.Block.Height))
+	txHashs, gasUsed, ethTxs, err := EthTransactionsFromTendermint(api.clientCtx, resBlock.Block.Txs, common.BytesToHash(resBlock.Block.Hash()), uint64(resBlock.Block.Height))
 	if err != nil {
 		return nil, err
 	}
-	return EthBlockFromTendermint(api.clientCtx, resBlock.Block, gasUsed, ethTxs)
+	if fullTx {
+		return EthBlockFromTendermint(api.clientCtx, resBlock.Block, gasUsed, ethTxs)
+	} else {
+		return EthBlockFromTendermint(api.clientCtx, resBlock.Block, gasUsed, txHashs)
+	}
 }
 
 // Accounts returns the list of accounts available to this node.
