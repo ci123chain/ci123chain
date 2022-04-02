@@ -103,19 +103,17 @@ func formatBlock(
 		"logsBloom":        bloom,
 		"transactionsRoot": ethtypes.EmptyRootHash,//hexutil.Bytes(header.DataHash),
 		"stateRoot":        common.BytesToHash(header.AppHash),//hexutil.Bytes(header.AppHash),
-		"miner":            common.Address{},
+		"miner":            header.ProposerAddress.String(),
 		"mixHash":          common.Hash{},
 		"difficulty":       hexutil.Uint64(0), //big.NewInt(0),
 		//"totalDifficulty":  0,
-		"extraData":        []byte(""),
+		"extraData":        []byte(""), //totalTx
 		"size":             hexutil.Uint64(size),
 		"gasLimit":         hexutil.Uint64(gasLimit), // Static gas limit
 		"gasUsed":          hexutil.Uint64(gasUsed.Uint64()),//(*hexutil.Big)(gasUsed),
 		"timestamp":        hexutil.Uint64(header.Time.Unix()),
 		"uncles":           []string{},
 		"receiptsRoot":     common.Hash{},
-		"totalTx": 			header.TotalTxs,
-		"numbTx": 			header.NumTxs,
 	}
 
 	if !reflect.ValueOf(transactions).IsNil() {
