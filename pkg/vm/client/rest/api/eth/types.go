@@ -103,7 +103,7 @@ func EthHeaderFromTendermint(header tmtypes.Header) *ethtypes.Header {
 	return &ethtypes.Header{
 		ParentHash:  common.BytesToHash(header.LastBlockID.Hash.Bytes()),
 		UncleHash:   common.Hash{},
-		Coinbase:    common.Address{},
+		Coinbase:    common.BytesToAddress(header.ProposerAddress.Bytes()),
 		Root:        common.BytesToHash(header.AppHash),
 		TxHash:      common.BytesToHash(header.DataHash),
 		ReceiptHash: common.Hash{},

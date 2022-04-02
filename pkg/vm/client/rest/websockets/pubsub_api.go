@@ -127,7 +127,7 @@ func (api *PubSubAPI) subscribeNewHeads(conn *websocket.Conn) (rpc.ID, error) {
 				}
 				api.filtersMu.Unlock()
 				if err != nil {
-					api.logger.Error("error writing header")
+					api.logger.Error("writing header", "Error", err.Error())
 					delete(api.filters, sub.ID())
 				}
 			case <-errCh:
