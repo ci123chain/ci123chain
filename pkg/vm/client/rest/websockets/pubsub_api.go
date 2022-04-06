@@ -83,7 +83,9 @@ func (api *PubSubAPI) unsubscribe(id rpc.ID) bool {
 	if api.filters[id] == nil {
 		return false
 	}
-
+	if api.filters[id].sub != nil {
+		api.filters[id].sub.Unsubscribe(api.events)
+	}
 	close(api.filters[id].unsubscribed)
 	delete(api.filters, id)
 	return true
@@ -127,13 +129,11 @@ func (api *PubSubAPI) subscribeNewHeads(conn *websocket.Conn) (rpc.ID, error) {
 				}
 				api.filtersMu.Unlock()
 				if err != nil {
-					api.logger.Error("writing header", "Error", err.Error())
-					delete(api.filters, sub.ID())
+					api.logger.Warn("writing header", "Error", err.Error())
+					api.unsubscribe(sub.ID())
 				}
 			case <-errCh:
-				api.filtersMu.Lock()
-				delete(api.filters, sub.ID())
-				api.filtersMu.Unlock()
+				api.unsubscribe(sub.ID())
 				return
 			case <-unsubscribed:
 				return

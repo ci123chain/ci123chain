@@ -74,7 +74,7 @@ func NewAPI(clientCtx clientcontext.Context, backend Backend) *PublicFilterAPI {
 		clientCtx: clientCtx,
 		backend:   backend,
 		filters:   make(map[rpc.ID]*filter),
-		//events:    NewEventSystem(clientCtx.Client),
+		events:    NewEventSystem(clientCtx.Client),
 	}
 	// start the clients to subscribe to Tendermint events
 	if err := clientCtx.Client.Start(); err != nil {
