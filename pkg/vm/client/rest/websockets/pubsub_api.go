@@ -248,14 +248,12 @@ func (api *PubSubAPI) subscribeLogs(conn *websocket.Conn, extra interface{}) (rp
 				api.filtersMu.Unlock()
 
 				if err != nil {
-					err = fmt.Errorf("failed to write header: %w", err)
-					delete(api.filters, sub.ID())
+					api.logger.Warn("failed to write header", "Error", err.Error())
+					api.unsubscribe(sub.ID())
 					return
 				}
 			case <-errCh:
-				api.filtersMu.Lock()
-				delete(api.filters, sub.ID())
-				api.filtersMu.Unlock()
+				api.unsubscribe(sub.ID())
 				return
 			case <-unsubscribed:
 				return
@@ -305,14 +303,12 @@ func (api *PubSubAPI) subscribePendingTransactions(conn *websocket.Conn) (rpc.ID
 				api.filtersMu.Unlock()
 
 				if err != nil {
-					err = fmt.Errorf("failed to write header: %w", err)
-					delete(api.filters, sub.ID())
+					api.logger.Warn("failed to write header", "Error", err.Error())
+					api.unsubscribe(sub.ID())
 					return
 				}
 			case <-errCh:
-				api.filtersMu.Lock()
-				delete(api.filters, sub.ID())
-				api.filtersMu.Unlock()
+				api.unsubscribe(sub.ID())
 			}
 		}
 	}(sub.Event(), sub.Err())
