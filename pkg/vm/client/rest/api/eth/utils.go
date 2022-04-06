@@ -1,6 +1,7 @@
 package eth
 
 import (
+	"context"
 	"fmt"
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
 	"github.com/ci123chain/ci123chain/pkg/app/types"
@@ -18,7 +19,7 @@ import (
 
 // EthTransactionsFromTendermint returns a slice of ethereum transaction hashes and the total gas usage from a set of
 // tendermint block transactions.
-func EthTransactionsFromTendermint(clientCtx clientcontext.Context, txs []tmtypes.Tx, blockHash common.Hash, blockNumber uint64) ([]common.Hash, *big.Int, []*Transaction, error) {
+func EthTransactionsFromTendermint(clientCtx clientcontext.Context , txs []tmtypes.Tx, blockHash common.Hash, blockNumber uint64) ([]common.Hash, *big.Int, []*Transaction, error) {
 	var transactionHashes []common.Hash
 	var transactions []*Transaction
 	gasUsed := big.NewInt(0)
@@ -34,7 +35,11 @@ func EthTransactionsFromTendermint(clientCtx clientcontext.Context, txs []tmtype
 		// TODO: Remove gas usage calculation if saving gasUsed per block
 		gasUsed.Add(gasUsed, big.NewInt(int64(ethTx.GetGas())))
 		transactionHashes = append(transactionHashes, common.BytesToHash(tx.Hash()))
-		tx, err := NewTransaction(ethTx, common.BytesToHash(tx.Hash()), blockHash, blockNumber, index)
+
+		rawTx, err := clientCtx.Client.Tx(context.Background(),tx.Hash(), false)
+		txData := rawTx.TxResult.GetData()
+
+		tx, err := NewTransactionWithReceipt(ethTx, common.BytesToHash(tx.Hash()), blockHash, blockNumber, index, txData)
 		if err == nil {
 			transactions = append(transactions, tx)
 			index++

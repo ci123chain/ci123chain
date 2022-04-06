@@ -85,6 +85,33 @@ type Transaction struct {
 	V                *hexutil.Big    `json:"v"`
 	R                *hexutil.Big    `json:"r"`
 	S                *hexutil.Big    `json:"s"`
+
+	// Receipt data
+	ContractAddress  common.Address  `json:"contractAddress"`
+	Status 			 int			 `json:"status"`
+	//LogsBloom 		 ethtypes.Bloom `json:"logsBloom"`
+	Logs			 []*ethtypes.Log `json:"logs"`
+}
+
+func NewTransactionWithReceipt(tx *types.MsgEthereumTx, txHash, blockHash common.Hash, blockNumber, index uint64, resultData []byte)  (*Transaction, error)  {
+	transaction, err := NewTransaction(tx, txHash, blockHash, blockNumber, index)
+	if err != nil {
+		return transaction, err
+	}
+	data, err := evmtypes.DecodeResultData(resultData)
+	status := 1
+	if err != nil {
+		status = 0 // transaction failed
+	}
+
+	if len(data.Logs) == 0 {
+		data.Logs = []*ethtypes.Log{}
+	}
+	transaction.ContractAddress = data.ContractAddress
+	transaction.Status = status
+	//transaction.LogsBloom = data.Bloom
+	transaction.Logs = data.Logs
+	return transaction, err
 }
 
 func NewTransaction(tx *types.MsgEthereumTx, txHash, blockHash common.Hash, blockNumber, index uint64) (*Transaction, error) {
@@ -110,6 +137,25 @@ func NewTransaction(tx *types.MsgEthereumTx, txHash, blockHash common.Hash, bloc
 	}
 
 	return rpcTx, nil
+}
+
+func NewTransactionFromWeelinkTx(tx *types.CommonTx, txHash, blockHash common.Hash, blockNumber, index uint64) (*Transaction) {
+	return &Transaction{
+		BlockHash:        &blockHash,
+		BlockNumber:     (*hexutil.Big)(new(big.Int).SetUint64(blockNumber)),
+		From:             tx.From.Address,
+		Gas:              hexutil.Uint64(tx.Gas),
+		GasPrice:         nil,
+		Hash:             txHash,
+		Input:            nil,
+		Nonce:            hexutil.Uint64(tx.Nonce),
+		To:               nil,
+		TransactionIndex: (*hexutil.Uint64)(&index),
+		Value:            nil,
+		V:                nil,
+		R:                nil,
+		S:                nil,
+	}
 }
 
 // NewAPI creates an instance of the public ETH Web3 API.
@@ -537,6 +583,7 @@ func (api *PublicEthereumAPI) GetTransactionByHash(hash common.Hash) (*Transacti
 	}
 
 	blockHash := common.BytesToHash(block.Block.Header.Hash())
+	txHash := common.BytesToHash(tx.Tx.Hash())
 
 	rawtx, err2 := types.DefaultTxDecoder(cdc)(tx.Tx)
 	if err2 != nil {
@@ -551,27 +598,15 @@ func (api *PublicEthereumAPI) GetTransactionByHash(hash common.Hash) (*Transacti
 			return nil, err
 		}
 		index := uint64(tx.Index)
-		transaction := &Transaction{
-			BlockHash:        &blockHash,
-			BlockNumber:     (*hexutil.Big)(big.NewInt(tx.Height)),
-			From:             cTx.From.Address,
-			Gas:              hexutil.Uint64(cTx.Gas),
-			GasPrice:         nil,
-			Hash:             common.BytesToHash(tx.Tx.Hash()),
-			Input:            nil,
-			Nonce:            hexutil.Uint64(cTx.Nonce),
-			To:               nil,
-			TransactionIndex: (*hexutil.Uint64)(&index),
-			Value:            nil,
-			V:                nil,
-			R:                nil,
-			S:                nil,
-		}
+
+		transaction := NewTransactionFromWeelinkTx(cTx, txHash, blockHash, uint64(tx.Height),  index)
+
 		return transaction, nil
 	}
 
 	height := uint64(tx.Height)
-	s, err := NewTransaction(ethTx, common.BytesToHash(tx.Tx.Hash()), blockHash, height, uint64(tx.Index))
+	txData := tx.TxResult.GetData()
+	s, err := NewTransactionWithReceipt(ethTx, txHash, blockHash, height, uint64(tx.Index), txData)
 	return s, err
 }
 
