@@ -193,21 +193,14 @@ func (f *Filter) checkMatches(begin int64) []*ethtypes.Log {
 		return nil
 	}
 
-	transactions, ok := block["transactions"].([]common.Hash)
+	transactions, ok := block["transactions"].([]*rpctypes.Transaction)
 	if !ok || len(transactions) == 0 {
 		return nil
 	}
 
 	unfiltered := []*ethtypes.Log{}
 	for _, tx := range transactions {
-		logs, err := f.backend.GetTransactionLogs(tx)
-		if err != nil {
-			// ignore error if transaction didn't set any logs (eg: when tx types is not
-			// MsgEthereumTx or MsgEth)
-			continue
-		}
-
-		unfiltered = append(unfiltered, logs...)
+		unfiltered = append(unfiltered, tx.Logs...)
 	}
 
 	return FilterLogs(unfiltered, nil, nil, f.criteria.Addresses, f.criteria.Topics)
