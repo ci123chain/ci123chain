@@ -74,7 +74,7 @@ func NewAPI(clientCtx clientcontext.Context, backend Backend) *PublicFilterAPI {
 		clientCtx: clientCtx,
 		backend:   backend,
 		filters:   make(map[rpc.ID]*filter),
-		//events:    NewEventSystem(clientCtx.Client),
+		events:    NewEventSystem(clientCtx.Client),
 	}
 	// start the clients to subscribe to Tendermint events
 	if err := clientCtx.Client.Start(); err != nil {
@@ -618,12 +618,16 @@ func (b *EthBackend) GetBlockByNumber(blockNum rpctypes.BlockNumber, fullTx bool
 
 	resBlock := res.(*coretypes.ResultBlock)
 
-	var transactions []common.Hash
-	for _, tx := range resBlock.Block.Txs {
-		transactions = append(transactions, common.BytesToHash(tx.Hash()))
+	txHashs, gasUsed, ethTxs, err := rpctypes.EthTransactionsFromTendermint(b.clientCtx, resBlock.Block.Txs, common.BytesToHash(resBlock.Block.Hash()), uint64(resBlock.Block.Height))
+	if err != nil {
+		return nil, err
 	}
 
-	return rpctypes.EthBlockFromTendermint(b.clientCtx, resBlock.Block, transactions)
+	if fullTx {
+		return rpctypes.EthBlockFromTendermint(b.clientCtx, resBlock.Block, gasUsed, ethTxs)
+	} else {
+		return rpctypes.EthBlockFromTendermint(b.clientCtx, resBlock.Block, gasUsed, txHashs)
+	}
 }
 
 // GetBlockByHash returns the block identified by hash.
@@ -643,11 +647,15 @@ func (b *EthBackend) GetBlockByHash(hash common.Hash, fullTx bool) (map[string]i
 		return nil, nil
 	}
 
-	var transactions []common.Hash
-	for _, tx := range resBlock.Block.Txs {
-		transactions = append(transactions, common.BytesToHash(tx.Hash()))
+	txHashs, gasUsed, ethTxs, err := rpctypes.EthTransactionsFromTendermint(b.clientCtx, resBlock.Block.Txs, common.BytesToHash(resBlock.Block.Hash()), uint64(resBlock.Block.Height))
+	if err != nil {
+		return nil, err
 	}
-	return rpctypes.EthBlockFromTendermint(b.clientCtx, resBlock.Block, transactions)
+	if fullTx {
+		return rpctypes.EthBlockFromTendermint(b.clientCtx, resBlock.Block, gasUsed, ethTxs)
+	} else {
+		return rpctypes.EthBlockFromTendermint(b.clientCtx, resBlock.Block, gasUsed, txHashs)
+	}
 }
 
 // HeaderByNumber returns the block header identified by height.

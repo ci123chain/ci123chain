@@ -150,6 +150,7 @@ func (st StateTransition) TransitionDb(ctx sdk.Context, config ChainConfig) (*Ex
 		ret, leftOverGas, err = evm.Call(senderRef, *st.Recipient, st.Payload, gasLimit, st.Amount)
 		recipientLog = fmt.Sprintf("recipient address %s", st.Recipient.String())
 	}
+	fmt.Println("NewContract:", recipientLog)
 	gasConsumed = gasLimit - leftOverGas
 
 	if err != nil {

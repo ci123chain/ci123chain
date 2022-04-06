@@ -73,7 +73,7 @@ func cleanupConfirmedValsets(ctx sdk.Context, k keeper.Keeper) {
 
 func slashing(ctx sdk.Context, k keeper.Keeper) {
 	params := k.GetParams(ctx)
-	currentBondedSet := k.StakingKeeper.GetBondedValidatorsByPower(ctx)
+	//currentBondedSet := k.StakingKeeper.GetBondedValidatorsByPower(ctx)
 
 	//valsets are sorted so the most recent one is first
 	//valsets := k.GetValsets(ctx)
@@ -195,21 +195,21 @@ func slashing(ctx sdk.Context, k keeper.Keeper) {
 
 			// if the signing window has passed and the attestation is still unobserved wait.
 			if windowPassed && att.Observed {
-				for _, bv := range currentBondedSet {
-					found := false
-					for _, val := range att.Votes {
-						confVal := sdk.HexToAddress(val)
-						if confVal.Equals(bv.GetOperator()) {
-							found = true
-							break
-						}
-					}
-					if !found {
-						cons := bv.GetConsAddr()
-						k.StakingKeeper.Slash(ctx, cons, ctx.BlockHeight(), k.StakingKeeper.GetLastValidatorPower(ctx, bv.GetOperator()), params.SlashFractionClaim)
-						k.StakingKeeper.Jail(ctx, cons)
-					}
-				}
+				//for _, bv := range currentBondedSet {
+				//	found := false
+				//	for _, val := range att.Votes {
+				//		confVal := sdk.HexToAddress(val)
+				//		if confVal.Equals(bv.GetOperator()) {
+				//			found = true
+				//			break
+				//		}
+				//	}
+				//	if !found {
+				//		cons := bv.GetConsAddr()
+				//		k.StakingKeeper.Slash(ctx, cons, ctx.BlockHeight(), k.StakingKeeper.GetLastValidatorPower(ctx, bv.GetOperator()), params.SlashFractionClaim)
+				//		k.StakingKeeper.Jail(ctx, cons)
+				//	}
+				//}
 				claim, err := k.GetAttestationClaim(&att)
 				if err != nil {
 					panic("couldn't cast to claim")

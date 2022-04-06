@@ -13,7 +13,6 @@ import (
 	accounttypes "github.com/ci123chain/ci123chain/pkg/account/types"
 	"github.com/ci123chain/ci123chain/pkg/app/types"
 	clientcontext "github.com/ci123chain/ci123chain/pkg/client/context"
-	"github.com/ci123chain/ci123chain/pkg/libs"
 	"github.com/ci123chain/ci123chain/pkg/util"
 	"github.com/ci123chain/ci123chain/pkg/vm/evmtypes"
 	vmmodule "github.com/ci123chain/ci123chain/pkg/vm/moduletypes"
@@ -25,13 +24,12 @@ import (
 	"github.com/ethereum/go-ethereum/rlp"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/log"
-	tmtypes "github.com/tendermint/tendermint/types"
 	"math/big"
 	"os"
 )
 
 const (
-	DefaultRPCGasLimit = 10000000
+	DefaultRPCGasLimit = 5000000
 	ETHMinGas = 21000
 )
 
@@ -224,7 +222,6 @@ func (api *PublicEthereumAPI) GetBlockByNumber(blockNum BlockNumber, fullTx bool
 		height = int64(num)
 	}
 
-
 	api.logger.Debug("height", "h", height)
 
 	resBlock, err := api.clientCtx.Client.Block(api.ctx, &height)
@@ -233,12 +230,15 @@ func (api *PublicEthereumAPI) GetBlockByNumber(blockNum BlockNumber, fullTx bool
 		return nil, nil
 	}
 
-	var transactions []common.Hash
-	for _, tx := range resBlock.Block.Txs {
-		transactions = append(transactions, common.BytesToHash(tx.Hash()))
+	txHash, gasUsed, ethTxs, err := EthTransactionsFromTendermint(api.clientCtx, resBlock.Block.Txs, common.BytesToHash(resBlock.Block.Hash()), uint64(resBlock.Block.Height))
+	if err != nil {
+		return nil, err
 	}
-
-	return EthBlockFromTendermint(api.clientCtx, resBlock.Block, transactions)
+	if fullTx {
+		return EthBlockFromTendermint(api.clientCtx, resBlock.Block, gasUsed, ethTxs)
+	} else {
+		return EthBlockFromTendermint(api.clientCtx, resBlock.Block, gasUsed, txHash)
+	}
 }
 
 // GetBlockByHash returns the block identified by hash.
@@ -259,11 +259,15 @@ func (api *PublicEthereumAPI) GetBlockByHash(hash common.Hash, fullTx bool) (int
 		return nil, nil
 	}
 
-	var transactions []common.Hash
-	for _, tx := range resBlock.Block.Txs {
-		transactions = append(transactions, common.BytesToHash(tx.Hash()))
+	txHashs, gasUsed, ethTxs, err := EthTransactionsFromTendermint(api.clientCtx, resBlock.Block.Txs, common.BytesToHash(resBlock.Block.Hash()), uint64(resBlock.Block.Height))
+	if err != nil {
+		return nil, err
 	}
-	return EthBlockFromTendermint(api.clientCtx, resBlock.Block, transactions)
+	if fullTx {
+		return EthBlockFromTendermint(api.clientCtx, resBlock.Block, gasUsed, ethTxs)
+	} else {
+		return EthBlockFromTendermint(api.clientCtx, resBlock.Block, gasUsed, txHashs)
+	}
 }
 
 // Accounts returns the list of accounts available to this node.
@@ -539,8 +543,35 @@ func (api *PublicEthereumAPI) GetTransactionByHash(hash common.Hash) (*Transacti
 		return nil, err2
 	}
 
+	ethTx, ok := rawtx.(*types.MsgEthereumTx)
+	if !ok {
+		//not ethTx
+		cTx, ok := rawtx.(*types.CommonTx)
+		if !ok {
+			return nil, err
+		}
+		index := uint64(tx.Index)
+		transaction := &Transaction{
+			BlockHash:        &blockHash,
+			BlockNumber:     (*hexutil.Big)(big.NewInt(tx.Height)),
+			From:             cTx.From.Address,
+			Gas:              hexutil.Uint64(cTx.Gas),
+			GasPrice:         nil,
+			Hash:             common.BytesToHash(tx.Tx.Hash()),
+			Input:            nil,
+			Nonce:            hexutil.Uint64(cTx.Nonce),
+			To:               nil,
+			TransactionIndex: (*hexutil.Uint64)(&index),
+			Value:            nil,
+			V:                nil,
+			R:                nil,
+			S:                nil,
+		}
+		return transaction, nil
+	}
+
 	height := uint64(tx.Height)
-	s, err :=  NewTransaction(rawtx.(*types.MsgEthereumTx), common.BytesToHash(tx.Tx.Hash()), blockHash, height, uint64(tx.Index))
+	s, err := NewTransaction(ethTx, common.BytesToHash(tx.Tx.Hash()), blockHash, height, uint64(tx.Index))
 	return s, err
 }
 
@@ -676,44 +707,12 @@ func (api *PublicEthereumAPI) doCall(
 
 	return &simResponse, nil
 }
-//// generateFromArgs populates tx message with args (used in RPC API)
-//func (api *PublicEthereumAPI) generateFromArgs(args SendTxArgs) (*evmtypes.MsgEvmTx, error) {
-//	amount := (*big.Int)(args.Value)
-//	gasPrice := big.NewInt(1)
-//	nonce := uint64(*args.Nonce)
-//
-//	var gasLimit uint64
-//	if args.Gas == nil {
-//		gasLimit = uint64(DefaultRPCGasLimit)
-//	} else {
-//		gasLimit = (uint64)(*args.Gas)
-//	}
-//
-//	if args.Data != nil && args.Input != nil && !bytes.Equal(*args.Data, *args.Input) {
-//		return nil, errors.New(`both "data" and "input" are set and not equal. Please use "input" to pass transaction call data`)
-//	}
-//
-//	// Sets input to either Input or Data, if both are set and not equal error above returns
-//	var input []byte
-//	if args.Input != nil {
-//		input = *args.Input
-//	} else if args.Data != nil {
-//		input = *args.Data
-//	}
-//
-//	if args.To == nil && len(input) == 0 {
-//		// Contract creation
-//		return nil, fmt.Errorf("contract creation without any data provided")
-//	}
-//
-//	msg := evmtypes.NewMsgEvmTx(sdk.AccAddress{args.From}, nonce, args.To, amount, gasLimit, gasPrice, input)
-//	return &msg, nil
-//}
 
 
 func (api *PublicEthereumAPI) generateFromArgs(args SendTxArgs) (*types.MsgEthereumTx, error) {
 	amount := (*big.Int)(args.Value)
-	gasPrice := big.NewInt(1)
+	gasPrice := sdk.GetGasPrice()
+	gasPriceI := new(big.Int).SetUint64(gasPrice)
 	nonce := uint64(*args.Nonce)
 
 	var gasLimit uint64
@@ -721,7 +720,6 @@ func (api *PublicEthereumAPI) generateFromArgs(args SendTxArgs) (*types.MsgEther
 		gasLimit = uint64(DefaultRPCGasLimit)
 	} else {
 		gasLimit = (uint64)(*args.Gas)
-
 	}
 	if args.Data != nil && args.Input != nil && !bytes.Equal(*args.Data, *args.Input) {
 		return nil, errors.New(`both "data" and "input" are set and not equal. Please use "input" to pass transaction call data`)
@@ -740,76 +738,11 @@ func (api *PublicEthereumAPI) generateFromArgs(args SendTxArgs) (*types.MsgEther
 		return nil, fmt.Errorf("contract creation without any data provided")
 	}
 
-	msg := types.NewMsgEthereumTx(nonce, args.To, amount, gasLimit, gasPrice, input)
+	msg := types.NewMsgEthereumTx(nonce, args.To, amount, gasLimit, gasPriceI, input)
 	return &msg, nil
 }
 
-// EthBlockFromTendermint returns a JSON-RPC compatible Ethereum blockfrom a given Tendermint block.
-func EthBlockFromTendermint(clientCtx clientcontext.Context, block *tmtypes.Block, transactions []common.Hash) (map[string]interface{}, error) {
-	gasLimit := DefaultRPCGasLimit
-	gasUsed := big.NewInt(0)
 
-	r, _ := libs.RetryI(0, func(retryTimes int) (res interface{}, err error) {
-		res, _, _, err = clientCtx.Query(fmt.Sprintf("custom/%s/%s/%d", vmmodule.ModuleName, evmtypes.QueryBloom, block.Height), nil, false)
-		if err != nil {
-			return nil, err
-		}
-		return res, nil
-	})
-	res := r.([]byte)
-	var bloomRes evmtypes.QueryBloomFilter
-	types.GetCodec().MustUnmarshalJSON(res, &bloomRes)
-
-	bloom := bloomRes.Bloom
-
-	return formatBlock(block.Header, block.Size(), int64(gasLimit), gasUsed, transactions, bloom), nil
-}
-
-func formatBlock(
-	header tmtypes.Header, size int, gasLimit int64,
-	gasUsed *big.Int, transactions interface{}, bloom ethtypes.Bloom,
-) map[string]interface{} {
-	//if len(header.DataHash) == 0 {
-	//	header.DataHash = common.Hash{}.Bytes()
-	//}
-
-	//var transactionRoot common.Hash
-	//if len(header.DataHash) == 0 {
-	//	transactionRoot = common.BytesToHash(ethtypes.EmptyRootHash.Bytes())
-	//}else {
-	//	transactionRoot = common.BytesToHash(header.DataHash.Bytes())
-	//}
-
-	res := map[string]interface{}{
-		"number":           hexutil.Uint64(header.Height),
-		"hash":             hexutil.Bytes(header.Hash()),
-		"parentHash":       common.BytesToHash(header.LastBlockID.Hash.Bytes()),//hexutil.Bytes(header.LastBlockID.Hash),
-		"nonce":            nil, // PoW specific
-		"sha3Uncles":       ethtypes.EmptyUncleHash, //common.Hash{},     // No uncles in Tendermint
-		"logsBloom":        bloom,
-		"transactionsRoot": ethtypes.EmptyRootHash,//hexutil.Bytes(header.DataHash),
-		"stateRoot":        common.BytesToHash(header.AppHash),//hexutil.Bytes(header.AppHash),
-		"miner":            common.Address{},
-		"mixHash":          common.Hash{},
-		"difficulty":       hexutil.Uint64(0), //big.NewInt(0),
-		//"totalDifficulty":  0,
-		"extraData":        []byte(""),
-		"size":             hexutil.Uint64(size),
-		"gasLimit":         hexutil.Uint64(gasLimit), // Static gas limit
-		"gasUsed":          hexutil.Uint64(gasUsed.Uint64()),//(*hexutil.Big)(gasUsed),
-		"timestamp":        hexutil.Uint64(header.Time.Unix()),
-		"uncles":           []string{},
-		"receiptsRoot":     common.Hash{},
-	}
-
-	if len(transactions.([]common.Hash)) == 0 {
-		res["transactions"] = []string{}
-	} else {
-		res["transactions"] = transactions.([]common.Hash)
-	}
-
-	return res
-}
 
 func (api *PublicEthereumAPI) EstimateGas(args CallArgs) (hexutil.Uint64, error) {
 	api.logger.Debug("eth_estimateGas")
