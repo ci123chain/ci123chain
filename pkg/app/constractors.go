@@ -23,6 +23,7 @@ import (
 	"os"
 	"path/filepath"
 )
+
 type (
 	AppCreator func(home string, logger log.Logger, statedb, traceStore string) (Application, error)
 
