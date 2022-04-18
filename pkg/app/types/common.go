@@ -116,10 +116,10 @@ func DefaultTxDecoder(cdc *codec.Codec) types2.TxDecoder {
 	return func(txBytes []byte) (types2.Tx, error) {
 		var transfer *CommonTx
 		err := codec.GetLegacyAminoByCodec(cdc).UnmarshalBinaryBare(txBytes, &transfer)
-		if err != nil {
+		if err != nil || transfer == nil {
 			var pbTx PbTx
 			err = GetEncodingConfig().Marshaler.UnmarshalBinaryBare(txBytes, &pbTx)
-			if err != nil {
+			if err != nil || len(pbTx.GetMsgs()) < 1 {
 				var ethTx *MsgEthereumTx
 				err := rlp.DecodeBytes(txBytes, &ethTx)
 				if err != nil {
