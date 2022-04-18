@@ -107,7 +107,7 @@ func startCmd(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Codec) *co
 	cmd.Flags().String(flagShardIndex, "", "index of shard")
 	cmd.Flags().Int(flagIteratorLimit, 10, "iterator limit")
 	cmd.Flags().String(app.FlagValidatorKey, "", "validator_key")
-	cmd.Flags().String(flagRunMode, "single", "run chain mode")
+	cmd.Flags().String(flagRunMode, "light", "run chain mode")
 	cmd.Flags().Bool(flagStartFromExport, false, "start with export file")
 	cmd.Flags().String(flagStartFromExportFile, "/opt/exportFile.json", "start with export file")
 	cmd.Flags().String(FlagWebsocket, "8546", "websocket port to listen to")
