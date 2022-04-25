@@ -7,6 +7,7 @@ import (
 	abci_store "github.com/ci123chain/ci123chain/pkg/abci/store"
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 	sdkerrors "github.com/ci123chain/ci123chain/pkg/abci/types/errors"
+	"github.com/ci123chain/ci123chain/pkg/gravity"
 	"github.com/ci123chain/ci123chain/pkg/upgrade/types"
 	"github.com/tendermint/tendermint/libs/log"
 )
@@ -16,15 +17,18 @@ type Keeper struct {
 	storeKey           sdk.StoreKey
 	cdc                *codec.Codec
 	upgradeHandlers    map[string]types.UpgradeHandler
+
+	GravityKeeper gravity.Keeper
 }
 
 // NewKeeper constructs an upgrade Keeper
-func NewKeeper(skipUpgradeHeights map[int64]bool, storeKey sdk.StoreKey, cdc *codec.Codec) Keeper {
+func NewKeeper(skipUpgradeHeights map[int64]bool, storeKey sdk.StoreKey, cdc *codec.Codec, gravityKeeper gravity.Keeper) Keeper {
 	k := Keeper{
 		skipUpgradeHeights: skipUpgradeHeights,
 		storeKey:           storeKey,
 		cdc:                cdc,
 		upgradeHandlers:    map[string]types.UpgradeHandler{},
+		GravityKeeper:      gravityKeeper,
 	}
 	// registe some upgrade here
 	return k

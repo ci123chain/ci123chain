@@ -205,7 +205,6 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer,
 		//capKeyMainStore: 	MainStoreKey,
 		//txIndexStore: 		TxIndexStoreKey,
 	}
-	c.UpgradeKeeper = upgrade.NewKeeper(nil, keys[upgrade.StoreKey], cdc)
 
 	c.AccountKeeper = keeper.NewAccountKeeper(cdc, keys[account.StoreKey], acc_types.ProtoBaseAccount)
 
@@ -234,13 +233,15 @@ func NewChain(logger log.Logger, ldb tmdb.DB, cdb tmdb.DB, traceStore io.Writer,
 	odb := toRedisdb(cdb)
 	orderKeeper := order.NewKeeper(odb, keys[order.StoreKey], c.AccountKeeper)
 
-	c.VMKeeper = vm.NewKeeper(cdc, keys[vm.StoreKey], homeDir, c.GetSubspace(vm.ModuleName), c.AccountKeeper, c.StakingKeeper, c.UpgradeKeeper)
+	c.VMKeeper = vm.NewKeeper(cdc, keys[vm.StoreKey], homeDir, c.GetSubspace(vm.ModuleName), c.AccountKeeper, c.StakingKeeper)
 	c.SupplyKeeper.SetVMKeeper(c.VMKeeper)
 
 	c.GravityKeeper = gravity.NewKeeper(cdc, keys[gravity.StoreKey], c.GetSubspace(gravity.ModuleName), c.AccountKeeper, c.StakingKeeper, c.SupplyKeeper, c.SlashingKeeper)
 	c.StakingKeeper.SetHooks(staking.NewMultiStakingHooks(c.DistrKeeper.Hooks(), c.SlashingKeeper.Hooks(), c.GravityKeeper.Hooks()))
 
 	c.PrestakingKeeper = prestaking.NewKeeper(cdc, keys[prestaking.StoreKey], c.AccountKeeper, c.SupplyKeeper, c.StakingKeeper, c.UpgradeKeeper, c.GetSubspace(prestaking.ModuleName),cdb)
+
+	c.UpgradeKeeper = upgrade.NewKeeper(nil, keys[upgrade.StoreKey], cdc, c.GravityKeeper)
 
 	c.RegistryKeeper = registry.NewKeeper(cdc, keys[registry.StoreKey], c.SupplyKeeper, c.UpgradeKeeper)
 
