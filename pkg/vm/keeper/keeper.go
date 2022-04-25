@@ -14,7 +14,6 @@ import (
 	types2 "github.com/ci123chain/ci123chain/pkg/account/types"
 	"github.com/ci123chain/ci123chain/pkg/params"
 	keeper2 "github.com/ci123chain/ci123chain/pkg/staking/keeper"
-	"github.com/ci123chain/ci123chain/pkg/upgrade"
 	"github.com/ci123chain/ci123chain/pkg/vm/evmtypes"
 	vmmodule "github.com/ci123chain/ci123chain/pkg/vm/moduletypes"
 	"github.com/ci123chain/ci123chain/pkg/vm/moduletypes/utils"
@@ -45,7 +44,6 @@ type Keeper struct {
 	homeDir				string
 	AccountKeeper 		account.AccountKeeper
 	StakingKeeper       keeper2.StakingKeeper
-	UpgradeKeeper 		upgrade.Keeper
 	// Ethermint concrete implementation on the EVM StateDB interface
 	CommitStateDB 		*evmtypes.CommitStateDB
 	// Transaction counter in a block. Used on StateSB's Prepare function.
