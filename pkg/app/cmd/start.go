@@ -112,8 +112,8 @@ func startCmd(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Codec) *co
 	cmd.Flags().String(flagStartFromExportFile, "/opt/exportFile.json", "start with export file")
 	cmd.Flags().String(FlagWebsocket, "8546", "websocket port to listen to")
 	cmd.Flags().Uint(FlagMaxOpenConnections, 1000, "The number of maximum open connections")
-	cmd.Flags().Uint(FlagRPCReadTimeout, 10, "The RPC read timeout")
-	cmd.Flags().Uint(FlagRPCWriteTimeout, 10, "The RPC write timeout")
+	cmd.Flags().Uint(FlagRPCReadTimeout, 60, "The RPC read timeout")
+	cmd.Flags().Uint(FlagRPCWriteTimeout, 60, "The RPC write timeout")
 	cmd.Flags().String(flagTokenName, "stake", "Chain token name")
 	cmd.Flags().String(app.FlagMasterDomain, "", "master node")
 
