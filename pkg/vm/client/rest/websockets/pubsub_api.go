@@ -186,15 +186,30 @@ func (api *PubSubAPI) subscribeLogs(conn *websocket.Conn, extra interface{}) (rp
 			crit.Topics = [][]common.Hash{}
 			for _, topic := range topics {
 				//var isSlice bool
-				var tstr string
-				var ok bool
-				tstr, ok = topic.(string)
+				tss, ok := topic.([]interface{})
 				if !ok {
-					return "", fmt.Errorf("invalid topics")
-				}
+					var tstr string
+					var ok bool
+					tstr, ok = topic.(string)
+					if !ok {
+						return "", fmt.Errorf("invalid topics")
+					}
 
-				h := common.HexToHash(tstr)
-				crit.Topics = append(crit.Topics, []common.Hash{h})
+					h := common.HexToHash(tstr)
+					crit.Topics = append(crit.Topics, []common.Hash{h})
+				} else {
+					for _, t := range tss {
+						var tstr string
+						var ok bool
+						tstr, ok = t.(string)
+						if !ok {
+							return "", fmt.Errorf("invalid topics")
+						}
+
+						h := common.HexToHash(tstr)
+						crit.Topics = append(crit.Topics, []common.Hash{h})
+					}
+				}
 			}
 		}
 	}
@@ -230,28 +245,31 @@ func (api *PubSubAPI) subscribeLogs(conn *websocket.Conn, extra interface{}) (rp
 				}
 
 				logs := rpcfilters.FilterLogs(resultData.Logs, crit.FromBlock, crit.ToBlock, crit.Addresses, crit.Topics)
+				if logs == nil {
+					continue
+				}
 
 				api.filtersMu.Lock()
 				if f, found := api.filters[sub.ID()]; found {
 					// write to ws conn
-					res := &SubscriptionNotification{
-						Jsonrpc: "2.0",
-						Method:  "eth_subscription",
-						Params: &SubscriptionResult{
-							Subscription: sub.ID(),
-							Result:       logs,
-						},
+					for i := range logs {
+						res := &SubscriptionNotification{
+							Jsonrpc: "2.0",
+							Method:  "eth_subscription",
+							Params: &SubscriptionResult{
+								Subscription: sub.ID(),
+								Result:       logs[i],
+							},
+						}
+						err = f.conn.WriteJSON(res)
+						if err != nil {
+							api.logger.Warn("failed to write header", "Error", err.Error())
+							api.unsubscribe(sub.ID())
+							return
+						}
 					}
-
-					err = f.conn.WriteJSON(res)
 				}
 				api.filtersMu.Unlock()
-
-				if err != nil {
-					api.logger.Warn("failed to write header", "Error", err.Error())
-					api.unsubscribe(sub.ID())
-					return
-				}
 			case <-errCh:
 				api.unsubscribe(sub.ID())
 				return

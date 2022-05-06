@@ -107,6 +107,9 @@ func (f *Filter) Logs(ctx context.Context) ([]*ethtypes.Log, error) {
 	if f.criteria.ToBlock.Int64() == -1 {
 		f.criteria.ToBlock = big.NewInt(head)
 	}
+	if f.criteria.FromBlock.Int64() == 0 {
+		f.criteria.FromBlock = big.NewInt(1)
+	}
 
 	end := f.criteria.ToBlock.Uint64()
 
