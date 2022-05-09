@@ -50,12 +50,7 @@ func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, sk su
 			newCtx := ctx.WithGasMeter(sdk.NewGasMeter(0))
 			return newCtx, sdk.Result{}, sdkerrors.ErrAccountNotExist, true
 		}
-		accountSequence := acc.GetSequence()
-		txNonce := tx.GetNonce()
-		if txNonce != accountSequence {
-			newCtx := ctx.WithGasMeter(sdk.NewGasMeter(0))
-			return newCtx, sdk.Result{}, sdkerrors.ErrInvalidParam.Wrap("nonce dismatch"), true
-		}
+
 
 		params := authKeeper.GetParams(ctx)
 		// Ensure that the provided fees meet a minimum threshold for the validator,
@@ -81,10 +76,20 @@ func NewAnteHandler( authKeeper auth.AuthKeeper, ak account.AccountKeeper, sk su
 		newCtx.GasMeter().ConsumeGas(params.TxSizeCostPerByte * sdk.Gas(len(newCtx.TxBytes())), "txSize")
 
 		// account sequence{nonce} + 1
-		acc = ak.GetAccount(ctx, signer)
-		nowSequence := accountSequence + 1
-		_ = acc.SetSequence(nowSequence)
-		ak.SetAccount(newCtx, acc)
+		if !ctx.IsCheckTx() {
+			accountSequence := acc.GetSequence()
+			txNonce := tx.GetNonce()
+			if txNonce != accountSequence {
+				newCtx := ctx.WithGasMeter(sdk.NewGasMeter(0))
+				return newCtx, sdk.Result{}, sdkerrors.ErrInvalidParam.Wrap("nonce dismatch"), true
+			}
+
+			acc = ak.GetAccount(ctx, signer)
+			nowSequence := accountSequence + 1
+			_ = acc.SetSequence(nowSequence)
+			ak.SetAccount(newCtx, acc)
+		}
+
 		return newCtx, sdk.Result{GasWanted:gas, GasUsed: newCtx.GasMeter().GasConsumed()}, nil, false
 	}
 }
