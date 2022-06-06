@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"bytes"
+	"encoding/hex"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/account"
 	slashing "github.com/ci123chain/ci123chain/pkg/slashing/keeper"
@@ -191,6 +193,18 @@ func (k Keeper) GetValset(ctx sdk.Context, nonce uint64) *types.Valset {
 	}
 	var valset types.Valset
 	k.cdc.MustUnmarshalBinaryBare(bz, &valset)
+	sort.SliceStable(valset.Members, func(i, j int) bool {
+		if valset.Members[i].Power > valset.Members[j].Power {
+			return true
+		} else if valset.Members[i].Power == valset.Members[j].Power {
+			b1, _ := hex.DecodeString(valset.Members[i].EthereumAddress)
+			b2, _ := hex.DecodeString(valset.Members[j].EthereumAddress)
+			if bytes.Compare(b1, b2) > 0 {
+				return true
+			}
+		}
+		return false
+	})
 	return &valset
 }
 
@@ -470,6 +484,19 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context) *types.Valset {
 	for i := range bridgeValidators {
 		bridgeValidators[i].Power = sdk.NewUint(bridgeValidators[i].Power).MulUint64(math.MaxUint32).QuoUint64(totalPower).Uint64()
 	}
+
+	sort.SliceStable(bridgeValidators, func(i, j int) bool {
+		if bridgeValidators[i].Power > bridgeValidators[j].Power {
+			return true
+		} else if bridgeValidators[i].Power == bridgeValidators[j].Power {
+			b1, _ := hex.DecodeString(bridgeValidators[i].EthereumAddress)
+			b2, _ := hex.DecodeString(bridgeValidators[j].EthereumAddress)
+			if bytes.Compare(b1, b2) > 0 {
+				return true
+			}
+		}
+		return false
+	})
 
 	// TODO: make the nonce an incrementing one (i.e. fetch last nonce from state, increment, set here)
 	return types.NewValset(k.GetLatestValsetNonce(ctx), uint64(ctx.BlockHeight()), bridgeValidators)
