@@ -1,8 +1,6 @@
 package keeper
 
 import (
-	"bytes"
-	"encoding/hex"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/account"
 	slashing "github.com/ci123chain/ci123chain/pkg/slashing/keeper"
@@ -197,9 +195,7 @@ func (k Keeper) GetValset(ctx sdk.Context, nonce uint64) *types.Valset {
 		if valset.Members[i].Power > valset.Members[j].Power {
 			return true
 		} else if valset.Members[i].Power == valset.Members[j].Power {
-			b1, _ := hex.DecodeString(valset.Members[i].EthereumAddress)
-			b2, _ := hex.DecodeString(valset.Members[j].EthereumAddress)
-			if bytes.Compare(b1, b2) > 0 {
+			if strings.Compare(valset.Members[i].EthereumAddress, valset.Members[j].EthereumAddress) > 0 {
 				return true
 			}
 		}
@@ -489,9 +485,7 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context) *types.Valset {
 		if bridgeValidators[i].Power > bridgeValidators[j].Power {
 			return true
 		} else if bridgeValidators[i].Power == bridgeValidators[j].Power {
-			b1, _ := hex.DecodeString(bridgeValidators[i].EthereumAddress)
-			b2, _ := hex.DecodeString(bridgeValidators[j].EthereumAddress)
-			if bytes.Compare(b1, b2) > 0 {
+			if strings.Compare(bridgeValidators[i].EthereumAddress, bridgeValidators[j].EthereumAddress) > 0 {
 				return true
 			}
 		}
