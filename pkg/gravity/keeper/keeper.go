@@ -195,9 +195,7 @@ func (k Keeper) GetValset(ctx sdk.Context, nonce uint64) *types.Valset {
 		if valset.Members[i].Power > valset.Members[j].Power {
 			return true
 		} else if valset.Members[i].Power == valset.Members[j].Power {
-			if strings.Compare(valset.Members[i].EthereumAddress, valset.Members[j].EthereumAddress) > 0 {
-				return true
-			}
+			return types.EthAddrGreaterThan(valset.Members[i].EthereumAddress, valset.Members[j].EthereumAddress)
 		}
 		return false
 	})
@@ -477,20 +475,9 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context) *types.Valset {
 		bridgeValidators[i].EthereumAddress = val.String()
 	}
 	// normalize power values
-	for i := range bridgeValidators {
+	for i := range validators {
 		bridgeValidators[i].Power = sdk.NewUint(bridgeValidators[i].Power).MulUint64(math.MaxUint32).QuoUint64(totalPower).Uint64()
 	}
-
-	sort.SliceStable(bridgeValidators, func(i, j int) bool {
-		if bridgeValidators[i].Power > bridgeValidators[j].Power {
-			return true
-		} else if bridgeValidators[i].Power == bridgeValidators[j].Power {
-			if strings.Compare(bridgeValidators[i].EthereumAddress, bridgeValidators[j].EthereumAddress) > 0 {
-				return true
-			}
-		}
-		return false
-	})
 
 	// TODO: make the nonce an incrementing one (i.e. fetch last nonce from state, increment, set here)
 	return types.NewValset(k.GetLatestValsetNonce(ctx), uint64(ctx.BlockHeight()), bridgeValidators)
