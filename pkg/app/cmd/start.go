@@ -109,7 +109,7 @@ func startCmd(ctx *app.Context, appCreator app.AppCreator, cdc *codec.Codec) *co
 	cmd.Flags().String(app.FlagValidatorKey, "", "validator_key")
 	cmd.Flags().String(flagRunMode, "light", "run chain mode")
 	cmd.Flags().Bool(flagStartFromExport, false, "start with export file")
-	cmd.Flags().String(flagStartFromExportFile, "/opt/exportFile.json", "start with export file")
+	cmd.Flags().String(flagStartFromExportFile, "/opt/genesis.json", "start with export file")
 	cmd.Flags().String(FlagWebsocket, "8546", "websocket port to listen to")
 	cmd.Flags().Uint(FlagMaxOpenConnections, 1000, "The number of maximum open connections")
 	cmd.Flags().Uint(FlagRPCReadTimeout, 60, "The RPC read timeout")

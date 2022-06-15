@@ -16,7 +16,7 @@ func TestFixFile(t *testing.T) {
 	rawFile, err := types.GenesisDocFromFile("./genesis.json")
 
 
-	exportFile, err := types.GenesisDocFromFile("/Users/tanhui/Desktop/exportFile.json")
+	exportFile, err := types.GenesisDocFromFile("/Users/tanhui/Desktop/genesis.json")
 	if err != nil {
 		t.Log(err)
 	}
