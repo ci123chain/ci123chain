@@ -46,7 +46,7 @@ fi
 
 # genesis file
 if [ ! -f $CI_HOME/config/genesis.json ]; then
-    if [ -z $CI_MASTER_DOMAIN ]; then
+    if [ -z $CI_MASTER_DOMAIN ] && [ -z $CI_EXPORT ]; then
         echo "---Not found genesis file, Creating----"
 
         /opt/cid-linux init --home=$CI_HOME --eth_chain_id=$CI_ETH_CHAIN_ID --chain_id=$CI_CHAIN_ID --denom=$CI_TOKENNAME
@@ -71,7 +71,7 @@ if [ ! -f $CI_HOME/config/genesis.json ]; then
             #./cid-linux add-genesis-shard "ci0:0;ci1:0;ci2:0"
         fi
 
-    else # second node
+    else # second node or Export mode
         echo "---Second node OR Export Mode----"
         echo "---Create Validator----"
         /opt/cid-linux gen-validator --home=$CI_HOME

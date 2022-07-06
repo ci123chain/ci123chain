@@ -29,7 +29,7 @@ import (
 )
 
 const (
-	DefaultRPCGasLimit = 5000000
+	DefaultRPCGasLimit = 20000000
 	ETHMinGas = 21000
 )
 
