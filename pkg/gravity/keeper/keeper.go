@@ -191,6 +191,14 @@ func (k Keeper) GetValset(ctx sdk.Context, nonce uint64) *types.Valset {
 	}
 	var valset types.Valset
 	k.cdc.MustUnmarshalBinaryBare(bz, &valset)
+	sort.SliceStable(valset.Members, func(i, j int) bool {
+		if valset.Members[i].Power > valset.Members[j].Power {
+			return true
+		} else if valset.Members[i].Power == valset.Members[j].Power {
+			return types.EthAddrGreaterThan(valset.Members[i].EthereumAddress, valset.Members[j].EthereumAddress)
+		}
+		return false
+	})
 	return &valset
 }
 
@@ -467,7 +475,7 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context) *types.Valset {
 		bridgeValidators[i].EthereumAddress = val.String()
 	}
 	// normalize power values
-	for i := range bridgeValidators {
+	for i := range validators {
 		bridgeValidators[i].Power = sdk.NewUint(bridgeValidators[i].Power).MulUint64(math.MaxUint32).QuoUint64(totalPower).Uint64()
 	}
 

@@ -57,7 +57,7 @@ func (b BridgeValidators) Sort() {
 	sort.Slice(b, func(i, j int) bool {
 		if b[i].Power == b[j].Power {
 			// Secondary sort on eth address in case powers are equal
-			return EthAddrLessThan(b[i].EthereumAddress, b[j].EthereumAddress)
+			return EthAddrGreaterThan(b[i].EthereumAddress, b[j].EthereumAddress)
 		}
 		return b[i].Power > b[j].Power
 	})

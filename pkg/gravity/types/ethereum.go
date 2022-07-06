@@ -3,6 +3,7 @@ package types
 import (
 	"bytes"
 	"fmt"
+	"github.com/ethereum/go-ethereum/common"
 	"regexp"
 	"strings"
 
@@ -24,9 +25,9 @@ const (
 	GravityDenomLen = len(GravityDenomPrefix) + len(GravityDenomSeparator) + ETHContractAddressLen
 )
 
-// EthAddrLessThan migrates the Ethereum address less than function
-func EthAddrLessThan(e, o string) bool {
-	return bytes.Compare([]byte(e)[:], []byte(o)[:]) == -1
+// EthAddrGreaterThan migrates the Ethereum address less than function
+func EthAddrGreaterThan(e, o string) bool {
+	return bytes.Compare(common.HexToAddress(e).Bytes(), common.HexToAddress(o).Bytes()) > 0
 }
 
 // ValidateEthAddress validates the ethereum address strings

@@ -13,7 +13,7 @@ func TestFix2File(t *testing.T) {
 	cdc := app_types.GetCodec()
 	rawFile, err := types.GenesisDocFromFile("./genesis.json")
 
-	exportFile, err := types.GenesisDocFromFile("/Users/tanhui/Desktop/exportFile3-11.json")
+	exportFile, err := types.GenesisDocFromFile("/Users/tanhui/Downloads/genesis_173117.json")
 	if err != nil {
 		t.Log(err)
 	}
