@@ -108,4 +108,4 @@ fi
 # start
 sleep 5s # for NFS Err
 echo "---Start cid---"
-/opt/upgrade start --laddr=tcp://0.0.0.0:80 --home=$CI_HOME
+exec /opt/upgrade start --laddr=tcp://0.0.0.0:80 --home=$CI_HOME
