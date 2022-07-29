@@ -123,6 +123,8 @@ func GetDownloadURL(cfg *Config, height uint64, version string) (string, error) 
 		return "", fmt.Errorf("get can upgrade version download url state: %d, msg: %s", res.State, res.Msg)
 	}
 	if normalizeVersion(res.Data.Version) != version {
+		fmt.Printf("current version: %s, current height: %d, current height version should be: %s, upgeade from: %s\n",
+			version, height, normalizeVersion(res.Data.Version), res.Data.Url)
 		return res.Data.Url, nil
 	}
 	return "", nil
@@ -175,7 +177,7 @@ func GetVersion(cfg *Config, bin string) (string, error) {
 }
 
 func normalizeVersion(version string) string {
-	return strings.Split(strings.TrimLeft(version, "v"), "-")[0]
+	return strings.Split(strings.TrimLeft(strings.ReplaceAll(version, "\n", ""), "v"), "-")[0]
 }
 
 func HealthCheck(bin string) error {

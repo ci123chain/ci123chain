@@ -11,6 +11,8 @@ func main() {
 		fmt.Fprintf(os.Stderr, "%+v\n", err)
 		os.Exit(1)
 	}
+	fmt.Println("upgrade successful！")
+	os.Exit(0)
 }
 
 // Run is the main loop, but returns an error
