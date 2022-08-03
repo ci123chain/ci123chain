@@ -8,6 +8,7 @@ import (
 	types2 "github.com/ci123chain/ci123chain/pkg/app/types"
 	staking "github.com/ci123chain/ci123chain/pkg/staking/types"
 	"github.com/ci123chain/ci123chain/pkg/util"
+	"github.com/cosmos/iavl"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/libs/log"
@@ -92,7 +93,7 @@ func (app *repairApp) getLatestVersion() int64 {
 
 func repairState(ctx *app.Context) {
 	sm.SetIgnoreSmbCheck(true)
-	//iavl.SetIgnoreVersionCheck(true)
+	iavl.SetIgnoreVersionCheck(true)
 
 	// load latest block height
 	rootDir := ctx.Config.RootDir

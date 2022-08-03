@@ -31,8 +31,11 @@ func (k Keeper) SendCoinsFromModuleToEVMAccount(ctx sdk.Context, to sdk.AccAddre
 	ctx = ctx.WithIsRootMsg(true)
 	msg := k.BuildParams(from, &wlkContract.Address, data, DefaultGas, k.getNonce(ctx, from))
 
-	result, err := k.evmKeeper.EvmTxExec(ctx, msg)
-	k.Logger(ctx).Info("Transfer action result", "value", result)
+	_, err = k.evmKeeper.EvmTxExec(ctx, msg)
+	if err != nil {
+		k.Logger(ctx).Error(err.Error())
+	}
+	//k.Logger(ctx).Info("Transfer action result", "value", result)
 	return err
 }
 
@@ -55,11 +58,12 @@ func (k Keeper) Send721CoinsFromModuleToEVMAccount(ctx sdk.Context, to sdk.AccAd
 	ctx = ctx.WithIsRootMsg(true)
 	msg := k.BuildParams(from, &wlkContract.Address, data, DefaultGas, k.getNonce(ctx, from))
 
-	result, err := k.evmKeeper.EvmTxExec(ctx, msg)
-	k.Logger(ctx).Info("Transfer action result", "value", result)
+	_, err = k.evmKeeper.EvmTxExec(ctx, msg)
+	if err != nil {
+		k.Logger(ctx).Error(err.Error())
+	}
 	return err
 }
-
 
 func (k Keeper) SendCoinsFromEVMAccountToModule(ctx sdk.Context, senderAddr sdk.AccAddress,
 	moduleName string, wlkContract sdk.AccAddress, amount *big.Int) error {
@@ -81,8 +85,11 @@ func (k Keeper) SendCoinsFromEVMAccountToModule(ctx sdk.Context, senderAddr sdk.
 	ctx = ctx.WithIsRootMsg(true)
 	msg := k.BuildParams(senderAddr, &wlkContract.Address, data, DefaultGas, k.getNonce(ctx, senderAddr))
 
-	result, err := k.evmKeeper.EvmTxExec(ctx, msg)
-	k.Logger(ctx).Info("Transfer action result", "value", result)
+	_, err = k.evmKeeper.EvmTxExec(ctx, msg)
+	if err != nil {
+		k.Logger(ctx).Error(err.Error())
+	}
+	//k.Logger(ctx).Info("Transfer action result", "value", result)
 	return err
 }
 
@@ -106,12 +113,13 @@ func (k Keeper) Send721CoinsFromEVMAccountToModule(ctx sdk.Context, senderAddr s
 	ctx = ctx.WithIsRootMsg(true)
 	msg := k.BuildParams(senderAddr, &wlkContract.Address, data, DefaultGas, k.getNonce(ctx, senderAddr))
 
-	result, err := k.evmKeeper.EvmTxExec(ctx, msg)
-	k.Logger(ctx).Info("Transfer action result", "value", result)
+	_, err = k.evmKeeper.EvmTxExec(ctx, msg)
+	if err != nil {
+		k.Logger(ctx).Error(err.Error())
+	}
+	//k.Logger(ctx).Info("Transfer action result", "value", result)
 	return err
 }
-
-
 
 func (k Keeper) WRC20DenomValueForFunc(ctx sdk.Context, moduleName string, contract sdk.AccAddress, funcName string) (value interface{}, err error) {
 	sender := k.GetModuleAddress(moduleName)
@@ -127,7 +135,7 @@ func (k Keeper) WRC20DenomValueForFunc(ctx sdk.Context, moduleName string, contr
 
 	data = append(m.ID(), data...)
 
-	msg := k.BuildParams(sender, &contract.Address, data, DefaultGas,  k.getNonce(ctx, sender))
+	msg := k.BuildParams(sender, &contract.Address, data, DefaultGas, k.getNonce(ctx, sender))
 
 	// for simulator
 	ctx.WithIsCheckTx(true)
@@ -169,7 +177,7 @@ func (k Keeper) WRC721DenomValueForFunc(ctx sdk.Context, moduleName string, cont
 
 	data = append(m.ID(), data...)
 
-	msg := k.BuildParams(sender, &contract.Address, data, DefaultGas,  k.getNonce(ctx, sender))
+	msg := k.BuildParams(sender, &contract.Address, data, DefaultGas, k.getNonce(ctx, sender))
 
 	// for simulator
 	ctx.WithIsCheckTx(true)
@@ -215,7 +223,7 @@ func (k Keeper) DeployWRC20ForGivenERC20(ctx sdk.Context, moduleName string, par
 
 	result, err := k.evmKeeper.EvmTxExec(ctx, msg)
 
-	if result != nil && err == nil{
+	if result != nil && err == nil {
 		addStr := result.VMResult().Log
 		return sdk.HexToAddress(addStr), err
 	}
@@ -240,7 +248,7 @@ func (k Keeper) DeployWRC721ForGivenERC721(ctx sdk.Context, moduleName string, p
 
 	result, err := k.evmKeeper.EvmTxExec(ctx, msg)
 
-	if result != nil && err == nil{
+	if result != nil && err == nil {
 		addStr := result.VMResult().Log
 		return sdk.HexToAddress(addStr), err
 	}

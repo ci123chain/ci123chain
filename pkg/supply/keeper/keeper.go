@@ -28,6 +28,7 @@ func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, ak account.AccountKeeper, mac
 	permAddrs := make(map[string]types.PermissionsForAddress)
 	for name, perms := range maccPerms {
 		permAddrs[name] = types.NewPermissionForAddress(name, perms)
+		//fmt.Println(name, permAddrs[name].GetAddress().String())
 	}
 
 	return Keeper{
