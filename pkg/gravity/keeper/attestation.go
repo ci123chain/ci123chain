@@ -58,12 +58,14 @@ func (k Keeper) TryAttestation(ctx sdk.Context, att *types.Attestation) {
 		requiredPower := types.AttestationVotesPowerThreshold.Mul(totalPower).Quo(sdk.NewInt(100))
 		attestationPower := sdk.NewInt(0)
 		for _, validator := range att.Votes {
-			val:= sdk.HexToAddress(validator)
+			val := sdk.HexToAddress(validator)
+			k.Logger(ctx).Info("Find Vote:", "Address", validator)
 			validatorPower := k.StakingKeeper.GetLastValidatorPower(ctx, val)
 			// Add it to the attestation power's sum
 			attestationPower = attestationPower.Add(sdk.NewInt(validatorPower))
 			// If the power of all the validators that have voted on the attestation is higher or equal to the threshold,
 			// process the attestation, set Observed to true, and break
+			k.Logger(ctx).Info("Vote Power:", "Need", requiredPower.Int64(), "Got", attestationPower.Int64())
 			if attestationPower.GTE(requiredPower) {
 				lastEventNonce := k.GetLastObservedEventNonceWithGid(ctx)
 				// this check is performed at the next level up so this should never panic
