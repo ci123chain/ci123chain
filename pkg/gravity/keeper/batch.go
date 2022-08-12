@@ -56,7 +56,7 @@ func (k Keeper) BuildOutgoingTXBatch(ctx sdk.Context, contractAddress string, ma
 		BatchTimeout:  k.getBatchTimeoutHeight(ctx),
 		Transactions:  selectedTx,
 		TokenContract: contractAddress,
-		TokenType: tokenType,
+		TokenType:     tokenType,
 	}
 	k.StoreBatch(ctx, batch, requestor)
 
@@ -225,14 +225,14 @@ func (k Keeper) CancelOutgoingTXBatch(ctx sdk.Context, tokenContract string, non
 	// Delete batch since it is finished
 	k.DeleteBatch(ctx, *batch)
 
-	batchEvent := sdk.NewEvent(
-		types.EventTypeOutgoingBatchCanceled,
-		sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(types.ModuleName)),
-		sdk.NewAttribute([]byte(types.AttributeKeyBridgeChainID), []byte(k.currentGID)),
-		sdk.NewAttribute([]byte(types.AttributeKeyOutgoingBatchID), []byte(fmt.Sprint(nonce))),
-		sdk.NewAttribute([]byte(types.AttributeKeyNonce), []byte(fmt.Sprint(nonce))),
-	)
-	ctx.EventManager().EmitEvent(batchEvent)
+	//batchEvent := sdk.NewEvent(
+	//	types.EventTypeOutgoingBatchCanceled,
+	//	sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(types.ModuleName)),
+	//	sdk.NewAttribute([]byte(types.AttributeKeyBridgeChainID), []byte(k.currentGID)),
+	//	sdk.NewAttribute([]byte(types.AttributeKeyOutgoingBatchID), []byte(fmt.Sprint(nonce))),
+	//	sdk.NewAttribute([]byte(types.AttributeKeyNonce), []byte(fmt.Sprint(nonce))),
+	//)
+	//ctx.EventManager().EmitEvent(batchEvent)
 	return nil
 }
 
@@ -273,6 +273,7 @@ func (k Keeper) GetLastOutgoingBatchByTokenType(ctx sdk.Context, token string) *
 	}
 	return lastBatch
 }
+
 //
 //// SetLastSlashedBatchBlock sets the latest slashed Batch block height
 //func (k Keeper) SetLastSlashedBatchBlock(ctx sdk.Context, blockHeight uint64) {
