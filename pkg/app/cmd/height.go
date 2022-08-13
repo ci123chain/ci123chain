@@ -18,10 +18,17 @@ func storeHeight(ctx *app.Context) *cobra.Command {
 			dataDir := filepath.Join(rootDir, "data")
 			originBlockStoreDB, err := openDB(blockStoreDB, dataDir)
 			if err != nil {
-				if _, err = leveldb.RecoverFile(dataDir, nil); err != nil {
+				_, err := leveldb.RecoverFile(dataDir+"/"+blockStoreDB+".db", nil)
+				if err != nil {
 					panic(fmt.Sprintf(`err while recoverfile%s : %s`, dataDir, err.Error()))
 				}
+				//originBlockStoreDB = &db.GoLevelDB{
+				//	indb,
+				//}
 			}
+
+			//aa, err := leveldb.RecoverFile(dataDir+"/"+blockStoreDB+".db", nil)
+			//fmt.Println(aa, err)
 			panicError(err)
 			originBlockStore := store.NewBlockStore(originBlockStoreDB)
 			originLatestBlockHeight := originBlockStore.Height()
