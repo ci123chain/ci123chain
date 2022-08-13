@@ -9,17 +9,16 @@ import (
 
 var LineBreak = &cobra.Command{Run: func(cmd *cobra.Command, args []string) {}}
 
-
 func AddServerCommands(
 	ctx *app.Context,
 	cdc *amino.Codec,
 	rootCmd *cobra.Command,
 	appInit app.AppInit,
 	appCreator app.AppCreator,
-	appExport 	app.AppExporter,
-	)  {
+	appExport app.AppExporter,
+) {
 	tendermintCmd := &cobra.Command{
-		Use:  "tendermint",
+		Use:   "tendermint",
 		Short: "Tendermint subcommands",
 	}
 	tendermintCmd.AddCommand(
@@ -28,7 +27,7 @@ func AddServerCommands(
 		//showAddressCmd(ctx),
 		//validatorCmd(ctx),
 		lite.LiteCmd,
-		)
+	)
 
 	rootCmd.AddCommand(
 		iaviewerCmd(cdc),
@@ -51,5 +50,6 @@ func AddServerCommands(
 		LineBreak,
 		versionCmd(),
 		storeHeight(ctx),
-		)
+		recoverLevelDB(ctx),
+	)
 }
