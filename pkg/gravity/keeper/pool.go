@@ -73,6 +73,8 @@ func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, counte
 	}
 	// get next tx id from keeper
 	nextID := k.autoIncrementID(ctx, types.KeyLastTXPoolID)
+	// add relation to txid and tokentype
+	k.SetTxidTokenType(ctx, nextID, tokenType)
 
 	erc20Fee := types.NewSDKIntERC20Token(fee.Amount, counterPartContract)
 
@@ -150,27 +152,30 @@ func (k Keeper) RemoveFromOutgoingPoolAndRefund(ctx sdk.Context, txId uint64, se
 
 	k.setTxIdState(ctx, txId, txIDStateCancel)
 
-	// reissue the amount and the fee
-
-	totalToRefund, _ := k.GetMapedWlkToken(ctx, tx.Erc20Token.Contract)
 	feeToRefundCoins := sdk.NewCoins(sdk.NewChainCoin(tx.Erc20Fee.Amount))
-	//totalToRefundCoins := sdk.NewCoins(totalToRefund)
-	//
-	//isCosmosOriginated, _ := k.ERC20ToDenomLookup(ctx, tx.Erc20Token.Contract)
+	if err := k.SupplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, sender, feeToRefundCoins); err != nil {
+		return err
+	}
 
-	// If it is a cosmos-originated the coins are in the module (see AddToOutgoingPool) so we can just take them out
-	//if isCosmosOriginated {
-	//	if err := k.SupplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, sender, totalToRefundCoins); err != nil {
-	//		return err
-	//	}
-	//} else {
-		if err := k.SupplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, sender, feeToRefundCoins); err != nil {
-			return err
+	// reissue the amount and the fee
+	tokenType := k.GetTxidTokenType(ctx, txId)
+	if tokenType == ERC20 {
+		wlkToken, _ := k.GetMapedWlkToken(ctx, tx.Erc20Token.Contract)
+		if k.IsWlkToken(wlkToken) {
+			if err := k.SupplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, sender, sdk.NewCoins(sdk.NewChainCoin(tx.Erc20Token.Amount))); err != nil {
+				return err
+			}
+		} else {
+			if err = k.SupplyKeeper.SendCoinsFromModuleToEVMAccount(ctx, sender, types.ModuleName, sdk.HexToAddress(wlkToken), tx.Erc20Token.Amount.BigInt()); err != nil {
+				return sdkerrors.Wrap(err, "module transfer failed")
+			}
 		}
-		if err = k.SupplyKeeper.SendCoinsFromModuleToEVMAccount(ctx, sender, types.ModuleName, sdk.HexToAddress(totalToRefund), tx.Erc20Token.Amount.BigInt()); err != nil {
-			return sdkerrors.Wrap(err, "transfer vouchers")
+	} else {
+		wlkToken, _ := k.GetMapedWRC721Token(ctx, tx.Erc20Token.Contract)
+		if err = k.SupplyKeeper.Send721CoinsFromModuleToEVMAccount(ctx, sender, types.ModuleName, sdk.HexToAddress(wlkToken), tx.Erc20Token.Amount.BigInt()); err != nil {
+			return sdkerrors.Wrap(err, "module transfer failed")
 		}
-	//}
+	}
 
 	poolEvent := sdk.NewEvent(
 		types.EventTypeBridgeWithdrawCanceled,
@@ -260,8 +265,8 @@ func (k Keeper) removePoolEntry(ctx sdk.Context, id uint64) {
 
 var (
 	txIdStatePending = []byte("pending")
-	txIdStateDone = []byte("done")
-	txIDStateCancel = []byte("cancel")
+	txIdStateDone    = []byte("done")
+	txIDStateCancel  = []byte("cancel")
 )
 
 func (k Keeper) setTxIdState(ctx sdk.Context, txId uint64, state []byte) {

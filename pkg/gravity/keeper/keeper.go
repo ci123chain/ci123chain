@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"encoding/binary"
 	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/account"
 	slashing "github.com/ci123chain/ci123chain/pkg/slashing/keeper"
@@ -21,16 +22,16 @@ import (
 
 // Keeper maintains the link to storage and exposes getter/setter methods for the various parts of the state machine
 type Keeper struct {
-	AccountKeeper	account.AccountKeeper
+	AccountKeeper account.AccountKeeper
 	StakingKeeper staking.StakingKeeper
-	SupplyKeeper supply.Keeper
-	storeKey   sdk.StoreKey // Unexposed key to access store from sdk.Context
-	paramSpace paramtypes.Subspace
+	SupplyKeeper  supply.Keeper
+	storeKey      sdk.StoreKey // Unexposed key to access store from sdk.Context
+	paramSpace    paramtypes.Subspace
 
 	cdc            *codec.Codec // The wire codec for binary encoding/decoding.
 	SlashingKeeper slashing.Keeper
 
-	currentGID 		string
+	currentGID string
 
 	AttestationHandler interface {
 		Handle(sdk.Context, string, types.Attestation, types.EthereumClaim) error
@@ -49,14 +50,14 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, paramSpace paramtypes.Su
 		cdc:            cdc,
 		paramSpace:     paramSpace,
 		storeKey:       storeKey,
-		AccountKeeper: 	accountKeeper,
+		AccountKeeper:  accountKeeper,
 		StakingKeeper:  stakingKeeper,
-		SupplyKeeper: 	supplyKeeper,
+		SupplyKeeper:   supplyKeeper,
 		SlashingKeeper: slashingKeeper,
 	}
 	k.AttestationHandler = AttestationHandler{
-		keeper:     k,
-		supplyKeeper: supplyKeeper,
+		keeper:        k,
+		supplyKeeper:  supplyKeeper,
 		accountKeeper: accountKeeper,
 	}
 
@@ -65,10 +66,10 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, paramSpace paramtypes.Su
 
 // Logger returns a module-specific logger.
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
-	return ctx.Logger().With("module", "x/"+ types.ModuleName)
+	return ctx.Logger().With("module", "x/"+types.ModuleName)
 }
 
-func (k *Keeper) SetCurrentGid(gid string)  {
+func (k *Keeper) SetCurrentGid(gid string) {
 	k.currentGID = gid
 }
 
@@ -483,9 +484,6 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context) *types.Valset {
 	return types.NewValset(k.GetLatestValsetNonce(ctx), uint64(ctx.BlockHeight()), bridgeValidators)
 }
 
-
-
-
 /////////////////////////////
 //       LOGICCALLS        //
 /////////////////////////////
@@ -623,7 +621,6 @@ func (k Keeper) GetParams(ctx sdk.Context) (params types.Params) {
 func (k Keeper) SetParams(ctx sdk.Context, ps types.Params) {
 	k.paramSpace.SetParamSet(ctx, &ps)
 }
-
 
 // GetBridgeChainID returns the chain id of the ETH chain we are running against
 //func (k Keeper) GetBridgeChainID(ctx sdk.Context) uint64 {
@@ -787,7 +784,22 @@ func prefixRange(prefix []byte) ([]byte, []byte) {
 	return prefix, end
 }
 
+func (k Keeper) SetTxidTokenType(ctx sdk.Context, txid uint64, tokenType uint64) {
+	if tokenType != ERC721 && tokenType != ERC20 {
+		panic("Error Token Type")
+	}
+	store := k.getGidStore(ctx)
+	store.Set(types.GetTxIdTokenTypeKey(txid), sdk.Uint64ToBigEndian(tokenType))
+}
 
+func (k Keeper) GetTxidTokenType(ctx sdk.Context, txid uint64) uint64 {
+	store := k.getGidStore(ctx)
+	bz := store.Get(types.GetTxIdTokenTypeKey(txid))
+	if bz == nil {
+		return ERC20
+	}
+	return binary.BigEndian.Uint64(bz)
+}
 
 func (k Keeper) SetTokenMetaData(ctx sdk.Context, contract string, meta types.MetaData) {
 	store := k.getGidStore(ctx)

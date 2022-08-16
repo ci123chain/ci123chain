@@ -51,6 +51,7 @@ func (k Keeper) Send721CoinsFromModuleToEVMAccount(ctx sdk.Context, to sdk.AccAd
 	if !ok {
 		return fmt.Errorf("invalid method")
 	}
+	fmt.Println(from.String(), "  ", to.String(), "  ", tokenId.String(), "  ", wlkContract.String())
 	params := []interface{}{from.Address, to.Address, tokenId}
 	data, err := abi.Encode(params, m.Inputs)
 	data = append(m.ID(), data...)
@@ -106,6 +107,7 @@ func (k Keeper) Send721CoinsFromEVMAccountToModule(ctx sdk.Context, senderAddr s
 	if !ok {
 		return fmt.Errorf("invalid method")
 	}
+	fmt.Println(senderAddr.String(), "  ", to.String(), "  ", tokenId.String(), "  ", wlkContract.String())
 	params := []interface{}{senderAddr.Address, to.Address, tokenId}
 	data, err := abi.Encode(params, m.Inputs)
 	data = append(m.ID(), data...)
