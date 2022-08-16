@@ -16,6 +16,7 @@ import (
 
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
 )
+
 //vm/evmtypes/state_transition.go
 
 // StateTransition defines data to transitionDB in evm
@@ -44,6 +45,7 @@ type GasInfo struct {
 }
 
 var _ types.VMResult = (*ExecutionResult)(nil)
+
 // ExecutionResult represents what's returned from a transition
 type ExecutionResult struct {
 	Logs    []*ethtypes.Log
@@ -150,7 +152,6 @@ func (st StateTransition) TransitionDb(ctx sdk.Context, config ChainConfig) (*Ex
 		ret, leftOverGas, err = evm.Call(senderRef, *st.Recipient, st.Payload, gasLimit, st.Amount)
 		recipientLog = fmt.Sprintf("recipient address %s", st.Recipient.String())
 	}
-	fmt.Println("NewContract:", recipientLog)
 	gasConsumed = gasLimit - leftOverGas
 
 	if err != nil {
@@ -215,7 +216,7 @@ func (st StateTransition) TransitionDb(ctx sdk.Context, config ChainConfig) (*Ex
 	resultLog := fmt.Sprintf(
 		"executed EVM state transition; sender address %s; %s", st.Sender.String(), recipientLog,
 	)
-	if contractCreation{
+	if contractCreation {
 		resultLog = recipientLog
 	}
 

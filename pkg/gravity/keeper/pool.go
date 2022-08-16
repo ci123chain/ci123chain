@@ -157,7 +157,7 @@ func (k Keeper) RemoveFromOutgoingPoolAndRefund(ctx sdk.Context, txId uint64, se
 		return err
 	}
 
-	// reissue the amount and the fee
+	// reissue the amount and the fee  default 721(for weemonster
 	tokenType := k.GetTxidTokenType(ctx, txId)
 	if tokenType == ERC20 {
 		wlkToken, _ := k.GetMapedWlkToken(ctx, tx.Erc20Token.Contract)
