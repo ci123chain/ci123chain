@@ -796,7 +796,7 @@ func (k Keeper) GetTxidTokenType(ctx sdk.Context, txid uint64) uint64 {
 	store := k.getGidStore(ctx)
 	bz := store.Get(types.GetTxIdTokenTypeKey(txid))
 	if bz == nil {
-		return ERC20
+		return ERC721
 	}
 	return binary.BigEndian.Uint64(bz)
 }
