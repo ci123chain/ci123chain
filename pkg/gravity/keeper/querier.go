@@ -425,7 +425,10 @@ func queryPendingSendToEth(ctx sdk.Context, gravityID string, senderAddr,  wlkCo
 	if len(wlkContract) != 0 {
 		contract_address, exists := k.GetMapedEthToken(ctx, wlk_contract_address)
 		if !exists {
-			return nil, fmt.Errorf("denom not a default coin: %s, and also not a ERC20 index", wlk_contract_address)
+			contract_address, exists = k.GetMapedERC721Token(ctx, wlk_contract_address)
+			if !exists {
+				return nil, fmt.Errorf("denom not a default coin: %s, and also not a ERC20/ERC721 index", wlk_contract_address)
+			}
 		}
 		eth_contract_address = contract_address
 	}

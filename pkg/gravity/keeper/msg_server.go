@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"encoding/hex"
+	"errors"
 	"fmt"
 
 	sdk "github.com/ci123chain/ci123chain/pkg/abci/types"
@@ -93,6 +94,11 @@ func (k msgServer) SendToEth(c context.Context, msg *types.MsgSendToEth) (*types
 	if err != nil {
 		return nil, err
 	}
+	// fee at least 100 wlk
+	if msg.BridgeFee.Amount.LT(sdk.NewIntWithDecimal(1, 20)) {
+		return nil, errors.New("Bridge fee is less than 100 wlk")
+	}
+
 	txID, err := k.AddToOutgoingPool(ctx, sender, msg.EthDest, msg.Amount, msg.BridgeFee, msg.TokenType)
 	if err != nil {
 		return nil, err

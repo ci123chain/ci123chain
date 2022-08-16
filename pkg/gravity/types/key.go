@@ -92,12 +92,11 @@ const (
 	QueryLastValsetConfirmNonce = "lastValsetConfirmNonce"
 
 	//
-	QueryTxId = "txId"
+	QueryTxId       = "txId"
 	QueryEventNonce = "eventNonce"
 
 	QueryObservedEventNonce = "observedEventNonce"
 )
-
 
 var (
 	// EthAddressKey indexes cosmos validator account addresses
@@ -130,7 +129,6 @@ var (
 	// OutgoingTXPoolKey indexes the last nonce for the outgoing tx pool
 	OutgoingTXPoolKey = []byte{0x6}
 
-
 	// SequenceKeyPrefix indexes different txids
 	SequenceKeyPrefix = []byte{0x7}
 
@@ -149,14 +147,11 @@ var (
 	// OutgoingTXRequestBatchKey indexes outgoing tx batches under a nonce and token address
 	OutgoingTXRequestBatchKey = []byte{0xc}
 
-
 	// SecondIndexNonceByClaimKey indexes latest nonce for a given claim type
 	SecondIndexNonceByClaimKey = []byte{0xf}
 
-
 	// BatchConfirmKey indexes validator confirmations by token contract address
 	BatchConfirmKey = []byte{0xe1}
-
 
 	// KeyLastTXPoolID indexes the lastTxPoolID
 	KeyLastTXPoolID = append(SequenceKeyPrefix, []byte("lastTxPoolId")...)
@@ -185,7 +180,6 @@ var (
 	// LastValsetConfirmNonceKey indexes the latest valset confirm nonce
 	LastValsetConfirmNonceKey = []byte{0xf3}
 
-
 	// LastObservedEthereumBlockHeightKey indexes the latest Ethereum block height
 	LastObservedEthereumBlockHeightKey = []byte{0xf4}
 
@@ -211,6 +205,8 @@ var (
 
 	TxIdKey = []byte{0xfc}
 
+	TxIdTokenTypeKey = []byte{0xcc}
+
 	EventNonceKey = []byte{0xfd}
 
 	// WlkToEthKey prefixes the index of wlk asset to eth ERC20s
@@ -218,8 +214,6 @@ var (
 
 	// EthToWlkKey prefixes the index of eth originated assets ERC20s to wlk
 	ERC721ToWRC721Key = []byte{0xff}
-
-
 )
 
 // GetOrchestratorAddressKey returns the following key format
@@ -409,6 +403,10 @@ func GetContractMetaDataKey(contract string) []byte {
 
 func GetTxIdKey(txId uint64) []byte {
 	return append(TxIdKey, sdk.Uint64ToBigEndian(txId)...)
+}
+
+func GetTxIdTokenTypeKey(txId uint64) []byte {
+	return append(TxIdTokenTypeKey, sdk.Uint64ToBigEndian(txId)...)
 }
 
 func GetEventNonceKey(eventNonce uint64) []byte {
