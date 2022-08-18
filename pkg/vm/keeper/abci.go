@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"github.com/ci123chain/ci123chain/pkg/vm/evmtypes"
 	"math/big"
 
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -25,6 +26,7 @@ func (k *Keeper) BeginBlock(ctx sdk.Context, req abci.RequestBeginBlock) {
 	// reset counters that are used on CommitStateDB.Prepare
 	k.Bloom = big.NewInt(0)
 	k.TxCount = 0
+	k.CommitStateDB = evmtypes.NewCommitStateDB(sdk.Context{}, k.storeKey, k.ParamSpace, k.AccountKeeper)
 }
 
 // EndBlock updates the accounts and commits state objects to the KV Store, while

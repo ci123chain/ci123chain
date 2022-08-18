@@ -37,20 +37,22 @@ const INIT string = "init"
 const INVOKE string = "invoke"
 const CAN_MIGRATE string = "canMigrate"
 const CAN_MIGRATE_RESULT string = "true"
+
 type Keeper struct {
-	storeKey    		sdk.StoreKey
-	cdc         		*codec.Codec
-	wasmer     	 		Wasmer
-	homeDir				string
-	AccountKeeper 		account.AccountKeeper
-	StakingKeeper       keeper2.StakingKeeper
+	storeKey      sdk.StoreKey
+	cdc           *codec.Codec
+	wasmer        Wasmer
+	homeDir       string
+	AccountKeeper account.AccountKeeper
+	StakingKeeper keeper2.StakingKeeper
 	// Ethermint concrete implementation on the EVM StateDB interface
-	CommitStateDB 		*evmtypes.CommitStateDB
+	CommitStateDB *evmtypes.CommitStateDB
+	ParamSpace    params.Subspace
 	// Transaction counter in a block. Used on StateSB's Prepare function.
 	// It is reset to 0 every block on BeginBlock so there's no point in storing the counter
 	// on the KVStore or adding it as a field on the EVM genesis state.
-	TxCount 			int
-	Bloom   			*big.Int
+	TxCount int
+	Bloom   *big.Int
 }
 
 func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, homeDir string, paramSpace params.Subspace, accountKeeper account.AccountKeeper, stakingKeeper keeper2.StakingKeeper) Keeper {
@@ -71,6 +73,7 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, homeDir string, paramSpa
 		AccountKeeper: accountKeeper,
 		StakingKeeper: stakingKeeper,
 		CommitStateDB: evmtypes.NewCommitStateDB(sdk.Context{}, storeKey, paramSpace, accountKeeper),
+		ParamSpace:    paramSpace,
 		TxCount:       0,
 		Bloom:         big.NewInt(0),
 	}
@@ -108,7 +111,7 @@ func (k *Keeper) Upload(ctx sdk.Context, wasmCode []byte, creator sdk.AccAddress
 func (k *Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAddress, args utils.WasmInput, name, version, author, email, describe string, genesisContractAddress sdk.AccAddress, gasWanted uint64) (sdk.AccAddress, error) {
 	// 如果是官方合约，不限制gas数量
 	runtimeCfg := &runtimeConfig{
-		GasUsed: 0,
+		GasUsed:     0,
 		PreCaller:   invoker,
 		Invoker:     invoker,
 		Creator:     invoker,
@@ -116,7 +119,7 @@ func (k *Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAd
 		Keeper:      k,
 		Context:     &ctx,
 	}
-	
+
 	if args.Method != InstantiateFuncName {
 		return sdk.AccAddress{}, errors.New("Instantiate function must be `init`")
 	}
@@ -140,10 +143,10 @@ func (k *Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAd
 	if isGenesis {
 		if genesisContractAddress == types.EmptyAddress {
 			contractAddress = k.generateContractAddress(codeHash, invoker, args, 1)
-		}else {
+		} else {
 			contractAddress = genesisContractAddress
 		}
-	}else {
+	} else {
 		nonce := k.AccountKeeper.GetAccount(ctx, invoker).GetSequence()
 		contractAddress = k.generateContractAddress(codeHash, invoker, args, nonce)
 	}
@@ -179,7 +182,7 @@ func (k *Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAd
 		wc = ccstore.Get(codeHash)
 
 		fileName := k.wasmer.FilePathMap[strings.ToLower(codeInfo.CodeHash)]
-		err = ioutil.WriteFile(k.homeDir + WASMDIR + fileName, wc, types.ModePerm)
+		err = ioutil.WriteFile(k.homeDir+WASMDIR+fileName, wc, types.ModePerm)
 		if err != nil {
 			return sdk.AccAddress{}, err
 		}
@@ -213,18 +216,18 @@ func (k *Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAd
 		contractListBytes := ccstore.Get(types.GetAccountContractListKey(accountAddr))
 		if contractListBytes != nil {
 			err := json.Unmarshal(contractListBytes, &contractList)
-			if err != nil{
+			if err != nil {
 				return sdk.AccAddress{}, err
 			}
 		}
 		contractList = append(contractList, contractAddrStr)
 		contractListBytes, err = json.Marshal(contractList)
-		if err != nil{
+		if err != nil {
 			return sdk.AccAddress{}, err
 		}
 		ccstore.Set(types.GetAccountContractListKey(accountAddr), contractListBytes)
 	}
-	ctx.GasMeter().ConsumeGas(sdk.Gas(runtimeCfg.GasUsed),"wasm cost")
+	ctx.GasMeter().ConsumeGas(sdk.Gas(runtimeCfg.GasUsed), "wasm cost")
 	return contractAddress, nil
 }
 
@@ -232,7 +235,7 @@ func (k *Keeper) Instantiate(ctx sdk.Context, codeHash []byte, invoker sdk.AccAd
 func (k *Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, invoker sdk.AccAddress, args utils.WasmInput, gasWanted uint64) (sdk.Result, error) {
 	runtimeCfg := &runtimeConfig{
 		GasUsed:     0,
-		GasWanted: 	 gasWanted,
+		GasWanted:   gasWanted,
 		PreCaller:   invoker,
 		Invoker:     invoker,
 		SelfAddress: contractAddress,
@@ -257,7 +260,7 @@ func (k *Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, invoke
 		wc = ccstore.Get(codeHash)
 
 		fileName := k.wasmer.FilePathMap[strings.ToLower(codeInfo.CodeHash)]
-		err = ioutil.WriteFile(k.homeDir + WASMDIR + fileName, wc, types.ModePerm)
+		err = ioutil.WriteFile(k.homeDir+WASMDIR+fileName, wc, types.ModePerm)
 		if err != nil {
 			return sdk.Result{}, err
 		}
@@ -272,9 +275,9 @@ func (k *Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, invoke
 	if err != nil {
 		return sdk.Result{}, err
 	}
-	ctx.GasMeter().ConsumeGas(sdk.Gas(runtimeCfg.GasUsed),"wasm cost")
+	ctx.GasMeter().ConsumeGas(sdk.Gas(runtimeCfg.GasUsed), "wasm cost")
 	return sdk.Result{
-		Data:   []byte(fmt.Sprintf("%s", string(res))),
+		Data: []byte(fmt.Sprintf("%s", string(res))),
 	}, nil
 }
 
@@ -337,7 +340,7 @@ func (k Keeper) Query(ctx sdk.Context, contractAddress, invoker sdk.AccAddress, 
 		wc = store.Get(codeHash)
 
 		fileName := k.wasmer.FilePathMap[strings.ToLower(codeInfo.CodeHash)]
-		err = ioutil.WriteFile(k.homeDir + WASMDIR + fileName, wc, types.ModePerm)
+		err = ioutil.WriteFile(k.homeDir+WASMDIR+fileName, wc, types.ModePerm)
 		if err != nil {
 			return types.ContractState{}, err
 		}
@@ -358,7 +361,6 @@ func (k Keeper) Query(ctx sdk.Context, contractAddress, invoker sdk.AccAddress, 
 
 	return contractState, nil
 }
-
 
 func (k *Keeper) contractInstance(ctx sdk.Context, contractAddress sdk.AccAddress) (types.CodeInfo, error) {
 	var wasmer Wasmer
@@ -476,7 +478,7 @@ func (k *Keeper) create(ctx sdk.Context, invokerAddr sdk.AccAddress, wasmCode []
 				}
 			}
 			return codeHash, nil
-		}else {
+		} else {
 			err = ioutil.WriteFile(filePath, gasedCode, types.ModePerm)
 			if err != nil {
 				return nil, err
@@ -629,20 +631,19 @@ func (k *Keeper) SetParams(ctx sdk.Context, params evmtypes.Params) {
 	k.CommitStateDB.WithContext(ctx).SetParams(params)
 }
 
-func EndKey(startKey []byte) (endKey []byte){
+func EndKey(startKey []byte) (endKey []byte) {
 	key := string(startKey)
 	length := len(key)
 	last := []rune(key[length-1:])
-	end := key[:length-1] + string(last[0] + 1)
+	end := key[:length-1] + string(last[0]+1)
 	endKey = []byte(end)
 	return
 }
 
-
 func IsValidaWasmFile(code []byte) error {
 	if !IsWasm(code) {
 		return errors.New("it is not a wasm file")
-	}else {
+	} else {
 		// Create an Engine
 		engine := wasmer.NewEngine()
 		store := wasmer.NewStore(engine)
@@ -659,15 +660,14 @@ func IsWasm(input []byte) bool {
 	return bytes.Equal(input[:4], types.WasmIdent)
 }
 
-
 func (k *Keeper) RecordSection(ctx sdk.Context, height int64, bloom ethtypes.Bloom) {
-	index := (height-1)/evmtypes.SectionSize
+	index := (height - 1) / evmtypes.SectionSize
 
 	gen, found := k.GetSectionBloom(ctx, index)
 	if !found {
 		gen, _ = NewGenerator(evmtypes.SectionSize)
 	}
-	gen.AddBloom(uint((height-1) % evmtypes.SectionSize), bloom)
+	gen.AddBloom(uint((height-1)%evmtypes.SectionSize), bloom)
 
 	k.SetSectionBloom(ctx, index, gen)
 }
@@ -735,8 +735,8 @@ var (
 // Generator takes a number of bloom filters and generates the rotated bloom bits
 // to be used for batched filtering.
 type Generator struct {
-	Blooms   [ethtypes.BloomBitLength][]byte `json:"blooms"`// Rotated blooms for per-bit matching
-	Sections uint  `json:"sections"`                       // Number of sections to batch together
+	Blooms   [ethtypes.BloomBitLength][]byte `json:"blooms"`   // Rotated blooms for per-bit matching
+	Sections uint                            `json:"sections"` // Number of sections to batch together
 	//NextSec  uint   `json:"next_sec"`                     // Next section to set when adding a bloom
 }
 
@@ -791,4 +791,3 @@ func (b *Generator) Bitset(idx uint) ([]byte, error) {
 	}
 	return b.Blooms[idx], nil
 }
-

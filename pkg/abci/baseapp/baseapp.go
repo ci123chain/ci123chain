@@ -70,14 +70,14 @@ type BaseApp struct {
 	cms         sdk.CommitMultiStore // Main (uncached) state
 	queryRouter QueryRouter          // router for redirecting query calls
 	//handler     sdk.Handler
-	router 		sdk.Router
+	router sdk.Router
 
-	grpcQueryRouter   *GRPCQueryRouter     // router for redirecting gRPC query calls
-	msgServiceRouter  *MsgServiceRouter    // router for redirecting Msg service messages
+	grpcQueryRouter  *GRPCQueryRouter  // router for redirecting gRPC query calls
+	msgServiceRouter *MsgServiceRouter // router for redirecting Msg service messages
 
-	txDecoder   sdk.TxDecoder // unmarshal []byte into sdk.Tx
+	txDecoder sdk.TxDecoder // unmarshal []byte into sdk.Tx
 
-	anteHandler sdk.AnteHandler // ante handler for fee and auth
+	anteHandler  sdk.AnteHandler  // ante handler for fee and auth
 	deferHandler sdk.DeferHandler // defer handler for fee and auth
 
 	// may be nil
@@ -86,7 +86,7 @@ type BaseApp struct {
 	endBlocker       sdk.EndBlocker   // logic to run after all txs, and to determine valset changes
 	addrPeerFilter   sdk.PeerFilter   // filter peers by address and port
 	pubkeyPeerFilter sdk.PeerFilter   // filter peers by public types
-	committer 		 Committer
+	committer        Committer
 	//--------------------
 	// Volatile
 	// checkState is set on initialization and reset on Commit.
@@ -111,7 +111,6 @@ type BaseApp struct {
 	gasPriceConfig *config.GasPriceConfig
 
 	paramStore ParamStore
-
 }
 
 func (app *BaseApp) ListSnapshots(req abci.RequestListSnapshots) abci.ResponseListSnapshots {
@@ -247,15 +246,15 @@ var _ abci.Application = (*BaseApp)(nil)
 // Accepts variable number of option functions, which act on the BaseApp to set configuration choices
 func NewBaseApp(name string, logger log.Logger, ldb dbm.DB, cdb dbm.DB, cacheDir string, txDecoder sdk.TxDecoder, options ...func(*BaseApp)) *BaseApp {
 	app := &BaseApp{
-		Logger:      logger,
-		name:        name,
-		cms:         store.NewCommitMultiStore(ldb, cdb, cacheDir),
+		Logger: logger,
+		name:   name,
+		cms:    store.NewCommitMultiStore(ldb, cdb, cacheDir),
 		//cms:         store.NewBaseMultiStore(db),
-		queryRouter: NewQueryRouter(),
-		router: 	 sdk.NewRouter(),
+		queryRouter:      NewQueryRouter(),
+		router:           sdk.NewRouter(),
 		grpcQueryRouter:  NewGRPCQueryRouter(),
 		msgServiceRouter: NewMsgServiceRouter(),
-		txDecoder:   txDecoder,
+		txDecoder:        txDecoder,
 	}
 
 	for _, option := range options {
@@ -298,7 +297,6 @@ func (app *BaseApp) MountKVStores(keys map[string]*sdk.KVStoreKey) {
 		app.MountStore(key, sdk.StoreTypeIAVL)
 	}
 }
-
 
 func (app *BaseApp) MountStoreMemory(keys map[string]*sdk.MemoryStoreKey) {
 	for _, key := range keys {
@@ -439,7 +437,6 @@ func (app *BaseApp) SetOption(req abci.RequestSetOption) (res abci.ResponseSetOp
 	// TODO: Implement
 	return
 }
-
 
 func (app *BaseApp) setIndexEvents(ie []string) {
 	app.indexEvents = make(map[string]struct{})
@@ -693,10 +690,10 @@ func handleQueryApp(app *BaseApp, path []string, req abci.RequestQuery) (res abc
 			//if err != nil {
 			//	return abcierrors.QueryResult(sdkerrors.Wrap(sdkerrors.ErrTxDecode, err.Error()))
 			//} else {
-				result, err = app.Simulate(txBytes)
-				if err != nil {
-					return abcierrors.QueryResult(err)
-				}
+			result, err = app.Simulate(txBytes)
+			if err != nil {
+				return abcierrors.QueryResult(err)
+			}
 			//}
 			simulationResp := sdk.QureyAppResponse{
 				Code:       uint32(result.Code),
@@ -791,7 +788,7 @@ func handleQueryCustom(app *BaseApp, path []string, req abci.RequestQuery) (res 
 	// For example, in the path "custom/gov/proposal/test", the gov querier gets []string{"proposal", "test"} as the path
 	resBytes, err := querier(ctx, path[2:], req)
 	if err != nil {
-		codespace, code, l :=sdkerrors.ABCIInfo(err, false)
+		codespace, code, l := sdkerrors.ABCIInfo(err, false)
 		return abci.ResponseQuery{
 			Code:      code,
 			Codespace: codespace,
@@ -803,8 +800,6 @@ func handleQueryCustom(app *BaseApp, path []string, req abci.RequestQuery) (res 
 		Value: resBytes,
 	}
 }
-
-
 
 // BeginBlock implements the ABCI application interface.
 func (app *BaseApp) BeginBlock(req abci.RequestBeginBlock) (res abci.ResponseBeginBlock) {
@@ -902,19 +897,18 @@ func (app *BaseApp) getContextForTx(mode runTxMode, txBytes []byte) (ctx sdk.Con
 	if mode == runTxModeSimulate {
 		ctx, _ = ctx.CacheContext()
 
-
 	}
 	return
 }
 
-func (app *BaseApp) runMsgs(ctx sdk.Context, msgs []sdk.Msg, mode runTxMode) (sdk.Result, error){
+func (app *BaseApp) runMsgs(ctx sdk.Context, msgs []sdk.Msg, mode runTxMode) (sdk.Result, error) {
 	msgLogs := make(sdk.ABCIMessageLogs, 0, len(msgs))
-	var code      uint32
+	var code uint32
 	var codespace string
 	var data []byte
 	var events []abci.Event
 
-	for msgIdx, msg := range msgs{
+	for msgIdx, msg := range msgs {
 		msgRoute := msg.Route()
 		handler := app.router.Route(msgRoute)
 		if handler == nil {
@@ -949,12 +943,12 @@ func (app *BaseApp) runMsgs(ctx sdk.Context, msgs []sdk.Msg, mode runTxMode) (sd
 	}
 
 	return sdk.Result{
-		Code: 		code,
-		Codespace: 	codespace,
-		GasUsed:   	ctx.GasMeter().GasConsumed(),
-		Log: 		strings.TrimSpace(msgLogs.String()),
-		Data: 		data,
-		Events: 	events,
+		Code:      code,
+		Codespace: codespace,
+		GasUsed:   ctx.GasMeter().GasConsumed(),
+		Log:       strings.TrimSpace(msgLogs.String()),
+		Data:      data,
+		Events:    events,
 	}, nil
 }
 
@@ -1147,7 +1141,7 @@ func validateBasicTxMsgs(msgs []sdk.Msg, signer sdk.AccAddress) error {
 
 	for _, msg := range msgs {
 		// Validate the Msg.
-		if signer != msg.GetFromAddress(){
+		if signer != msg.GetFromAddress() {
 			return abcierrors.Wrap(abcierrors.ErrorInvalidSigner, "Signer is different from msg.from")
 		}
 		err := msg.ValidateBasic()
@@ -1162,9 +1156,9 @@ func validateBasicTxMsgs(msgs []sdk.Msg, signer sdk.AccAddress) error {
 func allMsgAttributes(msgs []sdk.Msg) [][]sdk.Attribute {
 	var attributes = make([][]sdk.Attribute, 0)
 	var multiMsg string
-	if len(msgs) == 1{
+	if len(msgs) == 1 {
 		multiMsg = "false"
-	}else {
+	} else {
 		multiMsg = "true"
 	}
 	for _, v := range msgs {
@@ -1277,7 +1271,7 @@ func allMsgAttributes(msgs []sdk.Msg) [][]sdk.Attribute {
 		attrs = sdk.NewAttributes(attrs,
 			sdk.NewAttribute([]byte(sdk.AttributeKeySender), []byte(sender)),
 			sdk.NewAttribute([]byte(sdk.AttributeKeyReceiver), []byte(receiver)),
-			sdk.NewAttribute([]byte(sdk.AttributeKeyMethod),[]byte(operation)),
+			sdk.NewAttribute([]byte(sdk.AttributeKeyMethod), []byte(operation)),
 			sdk.NewAttribute([]byte(sdk.AttributeKeyAmount), []byte(amount)),
 			sdk.NewAttribute([]byte(sdk.AttributeKeyModule), []byte(module)),
 			sdk.NewAttribute([]byte(sdk.EventTypeMultiMsg), []byte(multiMsg)),
