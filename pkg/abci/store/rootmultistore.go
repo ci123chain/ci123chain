@@ -1,16 +1,12 @@
 package store
 
 import (
-	"encoding/json"
 	"fmt"
 	order "github.com/ci123chain/ci123chain/pkg/order/types"
 	ics23 "github.com/confio/ics23/go"
+	"github.com/cosmos/cosmos-sdk/store/types"
 	tmcrypto "github.com/tendermint/tendermint/proto/tendermint/crypto"
 	"io"
-	"io/ioutil"
-	"os"
-	"path/filepath"
-	"reflect"
 	"strings"
 
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -33,14 +29,15 @@ const (
 // cacheMultiStore which is for cache-wrapping other MultiStores. It implements
 // the CommitMultiStore interface.
 type rootMultiStore struct {
-	ldb 	     dbm.DB
-	cdb          dbm.DB
-	lastCommitID CommitID
-	pruning      sdk.PruningStrategy
-	storesParams map[StoreKey]storeParams
-	stores       map[StoreKey]CommitStore
-	keysByName   map[string]StoreKey
-	cacheDir     string
+	ldb            dbm.DB
+	cdb            dbm.DB
+	lastCommitID   CommitID
+	pruning        sdk.PruningStrategy
+	storesParams   map[StoreKey]storeParams
+	stores         map[StoreKey]CommitStore
+	keysByName     map[string]StoreKey
+	cacheDir       string
+	initialVersion int64
 
 	traceWriter  io.Writer
 	traceContext TraceContext
@@ -53,7 +50,7 @@ var _ Queryable = (*rootMultiStore)(nil)
 func NewCommitMultiStore(ldb dbm.DB, cdb dbm.DB, cacheDir string) *rootMultiStore {
 	return &rootMultiStore{
 		ldb:          ldb,
-		cdb:		  cdb,
+		cdb:          cdb,
 		storesParams: make(map[StoreKey]storeParams),
 		stores:       make(map[StoreKey]CommitStore),
 		keysByName:   make(map[string]StoreKey),
@@ -174,7 +171,19 @@ func (rs *rootMultiStore) WithTracer(w io.Writer) MultiStore {
 }
 
 func (rs *rootMultiStore) SetInitialVersion(version int64) error {
-	rs.lastCommitID.Version = version - 1
+	//rs.lastCommitID.Version = version - 1
+	rs.initialVersion = version
+
+	for key, store := range rs.stores {
+
+		if store.GetStoreType() == sdk.StoreTypeIAVL {
+			// If the store is wrapped with an inter-block cache, we must first unwrap
+			// it to get the underlying IAVL store.
+			store = rs.GetCommitKVStore(key)
+			store.(types.StoreWithInitialVersion).SetInitialVersion(version)
+		}
+	}
+
 	return nil
 }
 
@@ -220,37 +229,47 @@ func (rs *rootMultiStore) LastCommitID() CommitID {
 // Implements Committer/CommitStore.
 func (rs *rootMultiStore) Commit() CommitID {
 	var commitInfo commitInfo
-	var cacheMap []CacheMap
+	var previousHeight, version int64
+	if rs.lastCommitID.Version == 0 && rs.initialVersion > 1 {
+		// This case means that no commit has been made in the store, we
+		// start from initialVersion.
+		version = rs.initialVersion
+	} else {
+		previousHeight = rs.lastCommitID.Version
+		version = previousHeight + 1
+	}
 
-	version := rs.lastCommitID.Version + 1
 	// check cache
-	cacheName := filepath.Join(rs.cacheDir, CacheName)
-	if _, err := os.Stat(cacheName); os.IsNotExist(err) {
-		for _, store := range rs.stores {
-			if reflect.TypeOf(store).Elem() == reflect.TypeOf(IavlStore{}){
-				remote := store.(*IavlStore).Parent()
-				if remote == nil {
-					continue
-				}
-				s := remote.(*baseKVStore).GetCache()
-				for k, v := range s{
-					cacheMap = append(cacheMap, CacheMap{
-						Key:   []byte(k),
-						Value: v,
-					})
+	/*
+		var cacheMap []CacheMap
+		cacheName := filepath.Join(rs.cacheDir, CacheName)
+		if _, err := os.Stat(cacheName); os.IsNotExist(err) {
+			for _, store := range rs.stores {
+				if reflect.TypeOf(store).Elem() == reflect.TypeOf(IavlStore{}) {
+					remote := store.(*IavlStore).Parent()
+					if remote == nil {
+						continue
+					}
+					s := remote.(*baseKVStore).GetCache()
+					for k, v := range s {
+						cacheMap = append(cacheMap, CacheMap{
+							Key:   []byte(k),
+							Value: v,
+						})
+					}
 				}
 			}
+			cache, err := json.Marshal(cacheMap)
+			if err != nil {
+				panic(err)
+			}
+			err = ioutil.WriteFile(cacheName, cache, os.ModePerm)
+			if err != nil {
+				panic(err)
+			}
 		}
-		cache, err := json.Marshal(cacheMap)
-		if err != nil {
-			panic(err)
-		}
-		err = ioutil.WriteFile(cacheName, cache, os.ModePerm)
-		if err != nil {
-			panic(err)
-		}
-		//stores = rs.stores
-	}
+	*/
+
 	// commitLocalStores
 	commitInfo = rs.commitStores(version, rs.stores)
 
@@ -259,13 +278,12 @@ func (rs *rootMultiStore) Commit() CommitID {
 	setCommitInfo(batch, version, commitInfo)
 	setLatestVersion(batch, version)
 	batch.Write()
-
-	// commitSharedDB
-	rs.commitSharedDB(cacheMap)
-
-	//remove cache
-	os.Remove(cacheName)
-
+	/*
+		// commitSharedDB
+		rs.commitSharedDB(cacheMap)
+		//remove cache
+		os.Remove(cacheName)
+	*/
 	//done
 	if rs.cdb != nil {
 		var orderBook order.OrderBook
@@ -276,7 +294,6 @@ func (rs *rootMultiStore) Commit() CommitID {
 		orderBytes, _ = order.ModuleCdc.MarshalJSON(orderBook)
 		cdb.Set([]byte(order.OrderBookKey), orderBytes)
 	}
-
 
 	// Prepare for next version.
 	commitID := CommitID{
@@ -509,7 +526,6 @@ func (ci commitInfo) CommitID() CommitID {
 	}
 }
 
-
 func (ci commitInfo) toMap() map[string][]byte {
 	m := make(map[string][]byte, len(ci.StoreInfos))
 	for _, storeInfo := range ci.StoreInfos {
@@ -551,6 +567,7 @@ func NewSimpleMerkleCommitmentOp(key []byte, proof *ics23.CommitmentProof) Commi
 		Proof: proof,
 	}
 }
+
 //----------------------------------------
 // storeInfo
 
@@ -676,6 +693,6 @@ func setCommitInfo(batch dbm.Batch, version int64, cInfo commitInfo) {
 }
 
 type CacheMap struct {
-	Key		 []byte `json:"key"`
-	Value    []byte `json:"value"`
+	Key   []byte `json:"key"`
+	Value []byte `json:"value"`
 }

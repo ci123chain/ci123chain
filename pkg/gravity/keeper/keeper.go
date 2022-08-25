@@ -38,6 +38,10 @@ type Keeper struct {
 	}
 }
 
+func (k *Keeper) Cdc() *codec.Codec {
+	return k.cdc
+}
+
 // NewKeeper returns a new instance of the gravity keeper
 func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, paramSpace paramtypes.Subspace, accountKeeper account.AccountKeeper,
 	stakingKeeper staking.StakingKeeper, supplyKeeper supply.Keeper, slashingKeeper slashing.Keeper) Keeper {

@@ -39,6 +39,5 @@ release:
 release-build:
 	docker build -f Dockerfile_local -t cichain:$(Tag) .
 
-upgrade-build:
-	docker build -f Dockerfile_upgrade -t cichainupgrade:v0.0.1 .
-	docker run -v $(PWD)/bin:/opt/temp cichainupgrade:v0.0.1 bash -c "cp /opt/cid-linux /opt/temp"
+local-build:
+	$(GO_BUILD_CMD) $(BUILD_FLAGS) -o ./docker/node/build/cid-linux ./cmd/cid
