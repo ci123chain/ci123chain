@@ -85,7 +85,6 @@ func newRepairApp(logger log.Logger, db dbm.DB, traceStore io.Writer) *repairApp
 	)}
 }
 
-
 func (app *repairApp) getLatestVersion() int64 {
 	rs := initAppStore(app.db)
 	return rs.GetLatestVersion()
@@ -100,7 +99,6 @@ func repairState(ctx *app.Context) {
 	dataDir := filepath.Join(rootDir, "data")
 	latestBlockHeight := latestBlockHeight(dataDir)
 
-
 	// create proxy app
 	proxyApp, repairApp, err := createRepairApp(ctx)
 	panicError(err)
@@ -110,6 +108,9 @@ func repairState(ctx *app.Context) {
 	panicError(err)
 	genesisDocProvider := node.DefaultGenesisDocProviderFunc(ctx.Config)
 	state, _, err := node.LoadStateFromDBOrGenesisDocProvider(stateStoreDB, genesisDocProvider)
+	panicError(err)
+
+	stateStoreDBBack, err := openDB("state_back", dataDir)
 	panicError(err)
 
 	// load start version
@@ -125,20 +126,45 @@ func repairState(ctx *app.Context) {
 	panicError(err)
 
 	// repair data by apply the latest two blocks
-	doRepair(ctx, state, stateStoreDB, proxyApp, startVersion, latestBlockHeight, dataDir)
+	doRepair(ctx, state, stateStoreDB, stateStoreDBBack, proxyApp, startVersion, latestBlockHeight, dataDir)
 	//repairApp.StopStore()
 }
 
-
-func doRepair(ctx *app.Context, state sm.State, stateStoreDB dbm.DB,
+func doRepair(ctx *app.Context, state sm.State, stateStoreDB, stateStoreDBBack dbm.DB,
 	proxyApp proxy.AppConns, startHeight, latestHeight int64, dataDir string) {
-	var err error
+	stateCopy := state.Copy()
+	state = constructStartState(state, stateStoreDB, startHeight+1)
 	smstore := sm.NewStore(stateStoreDB)
+	var err error
+	//smstoreBack := sm.NewStore(stateStoreDBBack)
+	//backVal, err := smstoreBack.LoadValidators(startHeight)
+	//fmt.Println("BackUpa: ", backVal.Proposer.String())
+	//fmt.Println("Current: ", state.Validators.Proposer.String())
+
 	blockExec := sm.NewBlockExecutor(smstore, ctx.Logger, proxyApp.Consensus(), memmock.Mempool{}, sm.EmptyEvidencePool{})
 	for height := startHeight + 1; height <= latestHeight; height++ {
 		repairBlock, repairBlockMeta := loadBlock(height, dataDir)
+
 		state, _, err = blockExec.ApplyBlock(state, repairBlockMeta.BlockID, repairBlock)
 		panicError(err)
+
+		//backVal, err = smstoreBack.LoadValidators(height)
+		//fmt.Println("BackUpa: ", backVal.Proposer.String())
+		//fmt.Println("Current: ", state.Validators.Proposer.String())
+
+		//use stateCopy to correct the repaired state
+		if state.LastBlockHeight == stateCopy.LastBlockHeight {
+			//fmt.Println("newState", fmt.Sprintf("%+v", state))
+			//fmt.Println("oldState", fmt.Sprintf("%+v", stateCopy))
+
+			state.LastHeightConsensusParamsChanged = stateCopy.LastHeightConsensusParamsChanged
+			state.LastHeightValidatorsChanged = stateCopy.LastHeightValidatorsChanged
+			//state.LastValidators = stateCopy.LastValidators.Copy()
+			//state.Validators = stateCopy.Validators.Copy()
+			//state.NextValidators = state.NextValidators.Copy()
+			//smstore.Save(state)
+			//sm.SaveState(stateStoreDB, state)
+		}
 		res, err := proxyApp.Query().InfoSync(proxy.RequestInfo)
 		panicError(err)
 		repairedBlockHeight := res.LastBlockHeight
@@ -146,6 +172,31 @@ func doRepair(ctx *app.Context, state sm.State, stateStoreDB dbm.DB,
 		fmt.Println("Repaired block height", repairedBlockHeight)
 		fmt.Println("Repaired app hash", fmt.Sprintf("%X", repairedAppHash))
 	}
+}
+
+func constructStartState(state sm.State, stateStoreDB dbm.DB, startHeight int64) sm.State {
+	stateCopy := state.Copy()
+	smstore := sm.NewStore(stateStoreDB)
+
+	validators, err := smstore.LoadValidators(startHeight)
+	lastValidators, err := smstore.LoadValidators(startHeight - 1)
+	if err != nil {
+		return stateCopy
+	}
+	nextValidators, err := smstore.LoadValidators(startHeight + 1)
+	if err != nil {
+		return stateCopy
+	}
+	consensusParams, err := smstore.LoadConsensusParams(startHeight + 1)
+	if err != nil {
+		return stateCopy
+	}
+	stateCopy.Validators = validators
+	stateCopy.LastValidators = lastValidators
+	stateCopy.NextValidators = nextValidators
+	stateCopy.ConsensusParams = consensusParams
+	stateCopy.LastBlockHeight = startHeight
+	return stateCopy
 }
 
 func loadBlock(height int64, dataDir string) (*types.Block, *types.BlockMeta) {
@@ -160,7 +211,6 @@ func loadBlock(height int64, dataDir string) (*types.Block, *types.BlockMeta) {
 	return block, meta
 }
 
-
 func latestBlockHeight(dataDir string) int64 {
 	storeDB, err := openDB(blockStoreDB, dataDir)
 	panicError(err)
@@ -168,6 +218,3 @@ func latestBlockHeight(dataDir string) int64 {
 	blockStore := store.NewBlockStore(storeDB)
 	return blockStore.Height()
 }
-
-
-

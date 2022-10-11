@@ -34,6 +34,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.7.1
 	github.com/stretchr/testify v1.7.0
+	github.com/syndtr/goleveldb v1.0.1-0.20200815110645-5c35d600f0ca
 	github.com/tendermint/go-amino v0.16.0
 	github.com/tendermint/tendermint v0.34.10
 	github.com/tendermint/tm-db v0.6.4
@@ -53,6 +54,6 @@ replace (
 	github.com/cosmos/iavl => github.com/ci123chain/iavl v0.16.0-ci0
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 	//github.com/tendermint/tendermint => ../tendermint-ci
-	github.com/tendermint/tendermint => github.com/ci123chain/tendermint v0.32.7-ci35
+	github.com/tendermint/tendermint => github.com/ci123chain/tendermint v0.32.7-ci44
 	github.com/wasmerio/wasmer-go => github.com/ci123chain/wasmer-go v1.0.3-rc2
 )

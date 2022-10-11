@@ -9,11 +9,11 @@ import (
 var GravityCodec *codec.Codec
 var SubModuleCdc *codec.ProtoCodec
 
-func init(){
+func init() {
 	GravityCodec = codec.New()
 	RegisterCodec(GravityCodec)
 	codec.RegisterCrypto(GravityCodec)
-	GravityCodec.Seal()
+	//GravityCodec.Seal()
 }
 
 func SetBinary(registry codectypes.InterfaceRegistry) {
@@ -21,7 +21,7 @@ func SetBinary(registry codectypes.InterfaceRegistry) {
 }
 
 // RegisterCodec registers concrete types on the Amino codec
-func RegisterCodec(cdc *codec.Codec)  {
+func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterInterface((*EthereumClaim)(nil), nil)
 	cdc.RegisterConcrete(&MsgSetOrchestratorAddress{}, "gravity/MsgSetOrchestratorAddress", nil)
 	cdc.RegisterConcrete(&MsgValsetConfirm{}, "gravity/MsgValsetConfirm", nil)
@@ -41,9 +41,15 @@ func RegisterCodec(cdc *codec.Codec)  {
 	cdc.RegisterConcrete(&MsgCancelSendToEth{}, "gravity/MsgCancelSendToEth", nil)
 	cdc.RegisterConcrete(&OutgoingTransferTx{}, "gravity/OutgoingTransferTx", nil)
 	cdc.RegisterConcrete(&ERC20Token{}, "gravity/ERC20Token", nil)
+	cdc.RegisterConcrete(&ERC20ToDenom{}, "gravity/ERC20ToDenom", nil)
 	cdc.RegisterConcrete(&IDSet{}, "gravity/IDSet", nil)
 	cdc.RegisterConcrete(&Attestation{}, "gravity/Attestation", nil)
 	cdc.RegisterConcrete(&MetaData{}, "gravity/ContractMetaData", nil)
+	cdc.RegisterConcrete(&GenesisState{}, "gravity/GenesisState", nil)
+	cdc.RegisterConcrete(&GravityData{}, "gravity/GravityData", nil)
+	cdc.RegisterConcrete(&Params{}, "gravity/Params", nil)
+	cdc.RegisterConcrete(&BridgeValidator{}, "gravity/BridgeValidator", nil)
+	cdc.RegisterConcrete(&BridgeValidators{}, "gravity/BridgeValidators", nil)
 }
 
 func RegisterInterfaces(registry codectypes.InterfaceRegistry) {

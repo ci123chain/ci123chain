@@ -227,7 +227,7 @@ type GenesisState struct {
 	Params             *Params                      `protobuf:"bytes,1,opt,name=params,proto3" json:"params,omitempty"`
 	Valsets            []*Valset                    `protobuf:"bytes,3,rep,name=valsets,proto3" json:"valsets,omitempty"`
 	DelegateKeys       []*MsgSetOrchestratorAddress `protobuf:"bytes,10,rep,name=delegate_keys,json=delegateKeys,proto3" json:"delegate_keys,omitempty"`
-	Gravitys 		   map[string]GravityData				`json:"gravitys, omitempty"`
+	Gravitys 		   map[string]GravityData		`json:"gravitys,omitempty"`
 }
 
 func (m *GenesisState) Reset()         { *m = GenesisState{} }

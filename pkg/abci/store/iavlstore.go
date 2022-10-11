@@ -20,10 +20,10 @@ import (
 )
 
 const (
-	FlagRunMode = "mode"
-	ModeSingle = "single"
-	ModeMulti = "multi"
-	ModeLight = "light"
+	FlagRunMode          = "mode"
+	ModeSingle           = "single"
+	ModeMulti            = "multi"
+	ModeLight            = "light"
 	defaultIAVLCacheSize = 10000
 )
 
@@ -47,6 +47,7 @@ func LoadIAVLStore(ldb, cdb dbm.DB, id CommitID, pruning sdk.PruningStrategy, ke
 var _ KVStore = (*IavlStore)(nil)
 var _ CommitStore = (*IavlStore)(nil)
 var _ Queryable = (*IavlStore)(nil)
+var _ StoreWithInitialVersion = (*IavlStore)(nil)
 
 // iavlStore Implements KVStore and CommitStore.
 type IavlStore struct {
@@ -69,8 +70,8 @@ type IavlStore struct {
 	// KVStore save to shared DB
 	parent CommitStore
 
-	key   sdk.StoreKey
-	lg logger.Logger
+	key sdk.StoreKey
+	lg  logger.Logger
 
 	mode string
 }
@@ -85,7 +86,7 @@ func newIAVLStore(remoteDB dbm.DB, tree *iavl.MutableTree, numRecent int64, stor
 		storeEvery: storeEvery,
 		lg:         logger,
 		key:        key,
-		mode: 		viper.GetString(FlagRunMode),
+		mode:       viper.GetString(FlagRunMode),
 	}
 	if remoteDB != nil {
 		st.parent = NewBaseKVStore(dbStoreAdapter{remoteDB}, storeEvery, numRecent, key)
@@ -96,7 +97,6 @@ func newIAVLStore(remoteDB dbm.DB, tree *iavl.MutableTree, numRecent int64, stor
 func (st *IavlStore) localMode() bool {
 	return st.mode != ModeMulti
 }
-
 
 // Implements Committer.
 func (st *IavlStore) Commit() CommitID {
@@ -178,6 +178,12 @@ func (st *IavlStore) VersionExists(version int64) bool {
 	return st.tree.VersionExists(version)
 }
 
+// SetInitialVersion sets the initial version of the IAVL tree. It is used when
+// starting a new chain at an arbitrary height.
+func (st *IavlStore) SetInitialVersion(version int64) {
+	st.tree.SetInitialVersion(uint64(version))
+}
+
 // Implements Store.
 func (st *IavlStore) GetStoreType() StoreType {
 	return sdk.StoreTypeIAVL
@@ -212,7 +218,6 @@ func (st *IavlStore) Get(key []byte) []byte {
 
 	return localValue
 }
-
 
 // Implements KVStore.
 func (st *IavlStore) Has(key []byte) (exists bool) {
@@ -367,6 +372,7 @@ func (st *IavlStore) Query(req abci.RequestQuery) (res abci.ResponseQuery) {
 
 	return
 }
+
 // Takes a MutableTree, a key, and a flag for creating existence or absence proof and returns the
 // appropriate merkle.Proof. Since this must be called after querying for the value, this function should never error
 // Thus, it will panic on error rather than returning it
@@ -395,6 +401,7 @@ func getProofFromTree(tree *iavl.MutableTree, key []byte, exists bool) *tmcrypto
 	op := NewIavlCommitmentOp(key, commitmentProof)
 	return &tmcrypto.ProofOps{Ops: []tmcrypto.ProofOp{op.ProofOp()}}
 }
+
 //----------------------------------------
 
 // Implements Iterator.

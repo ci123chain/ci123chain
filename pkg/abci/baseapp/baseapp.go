@@ -461,8 +461,8 @@ func (app *BaseApp) InitChain(req abci.RequestInitChain) (res abci.ResponseInitC
 	}
 
 	// Initialize the deliver state and check state with ChainID and run initChain
-	app.setDeliverState(types.Header{ChainID: req.ChainId})
-	app.setCheckState(types.Header{ChainID: req.ChainId})
+	app.setDeliverState(types.Header{ChainID: req.ChainId, Height: req.InitialHeight, Time: req.Time})
+	app.setCheckState(types.Header{ChainID: req.ChainId, Height: req.InitialHeight, Time: req.Time})
 
 	if req.ConsensusParams != nil {
 		app.StoreConsensusParams(app.deliverState.ctx, req.ConsensusParams)
@@ -592,6 +592,7 @@ func (app *BaseApp) createQueryContext(height int64, prove bool) (sdk.Context, e
 				"failed to load state at height %d; %s (latest height: %d)", height, err, app.LastBlockHeight(),
 			)
 	}
+	//cacheMS := app.cms.CacheMultiStore()
 
 	// branch the commit-multistore for safety
 	ctx := sdk.NewContext(

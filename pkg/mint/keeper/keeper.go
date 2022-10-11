@@ -10,19 +10,18 @@ import (
 )
 
 type MinterKeeper struct {
-	cdc     		   *codec.Codec
-	storeKey  		   sdk.StoreKey
-	paramSpace  	   params.Subspace
-	sk      		   sk.StakingKeeper
-	supplyKeeper 	   supply.Keeper
-	feeCollectorName   string
+	cdc              *codec.Codec
+	storeKey         sdk.StoreKey
+	paramSpace       params.Subspace
+	sk               sk.StakingKeeper
+	supplyKeeper     supply.Keeper
+	feeCollectorName string
 }
-
 
 func NewMinterKeeper(
 	cdc *codec.Codec, key sdk.StoreKey, paramSpace params.Subspace,
 	sk sk.StakingKeeper, supplyKeeper supply.Keeper, feeCollectorName string,
-	) MinterKeeper {
+) MinterKeeper {
 
 	// ensure mint module account is set
 	if addr := supplyKeeper.GetModuleAddress(types.ModuleName); addr.Empty() {
@@ -92,6 +91,9 @@ func (k MinterKeeper) MintCoins(ctx sdk.Context, newCoins sdk.Coins) error {
 		// skip as no coins need to be minted
 		return nil
 	}*/
+	//if ctx.BlockHeight() > 3853640 {
+	//	newCoins = newCoins.Add(newCoins)
+	//}
 
 	return k.supplyKeeper.MintCoins(ctx, types.ModuleName, newCoins)
 }
