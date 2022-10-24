@@ -393,30 +393,7 @@ func (m *OutgoingTransferTx) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.Erc20Fee != nil {
-		{
-			size, err := m.Erc20Fee.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintBatch(dAtA, i, uint64(size))
-		}
-		i--
-		dAtA[i] = 0x2a
-	}
-	if m.Erc20Token != nil {
-		{
-			size, err := m.Erc20Token.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintBatch(dAtA, i, uint64(size))
-		}
-		i--
-		dAtA[i] = 0x22
-	}
+
 	if len(m.DestAddress) > 0 {
 		i -= len(m.DestAddress)
 		copy(dAtA[i:], m.DestAddress)
@@ -490,34 +467,7 @@ func (m *OutgoingLogicCall) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x1a
 	}
-	if len(m.Fees) > 0 {
-		for iNdEx := len(m.Fees) - 1; iNdEx >= 0; iNdEx-- {
-			{
-				size, err := m.Fees[iNdEx].MarshalToSizedBuffer(dAtA[:i])
-				if err != nil {
-					return 0, err
-				}
-				i -= size
-				i = encodeVarintBatch(dAtA, i, uint64(size))
-			}
-			i--
-			dAtA[i] = 0x12
-		}
-	}
-	if len(m.Transfers) > 0 {
-		for iNdEx := len(m.Transfers) - 1; iNdEx >= 0; iNdEx-- {
-			{
-				size, err := m.Transfers[iNdEx].MarshalToSizedBuffer(dAtA[:i])
-				if err != nil {
-					return 0, err
-				}
-				i -= size
-				i = encodeVarintBatch(dAtA, i, uint64(size))
-			}
-			i--
-			dAtA[i] = 0xa
-		}
-	}
+
 	return len(dAtA) - i, nil
 }
 
@@ -577,14 +527,7 @@ func (m *OutgoingTransferTx) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovBatch(uint64(l))
 	}
-	if m.Erc20Token != nil {
-		l = m.Erc20Token.Size()
-		n += 1 + l + sovBatch(uint64(l))
-	}
-	if m.Erc20Fee != nil {
-		l = m.Erc20Fee.Size()
-		n += 1 + l + sovBatch(uint64(l))
-	}
+
 	return n
 }
 
@@ -594,18 +537,7 @@ func (m *OutgoingLogicCall) Size() (n int) {
 	}
 	var l int
 	_ = l
-	if len(m.Transfers) > 0 {
-		for _, e := range m.Transfers {
-			l = e.Size()
-			n += 1 + l + sovBatch(uint64(l))
-		}
-	}
-	if len(m.Fees) > 0 {
-		for _, e := range m.Fees {
-			l = e.Size()
-			n += 1 + l + sovBatch(uint64(l))
-		}
-	}
+
 	l = len(m.LogicContractAddress)
 	if l > 0 {
 		n += 1 + l + sovBatch(uint64(l))
@@ -921,78 +853,8 @@ func (m *OutgoingTransferTx) Unmarshal(dAtA []byte) error {
 			}
 			m.DestAddress = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 4:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Erc20Token", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowBatch
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthBatch
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthBatch
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Erc20Token == nil {
-				m.Erc20Token = &ERC20Token{}
-			}
-			if err := m.Erc20Token.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 5:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Erc20Fee", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowBatch
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthBatch
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthBatch
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Erc20Fee == nil {
-				m.Erc20Fee = &ERC20Token{}
-			}
-			if err := m.Erc20Fee.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
+
+
 		default:
 			iNdEx = preIndex
 			skippy, err := skipBatch(dAtA[iNdEx:])
@@ -1046,74 +908,7 @@ func (m *OutgoingLogicCall) Unmarshal(dAtA []byte) error {
 			return fmt.Errorf("proto: OutgoingLogicCall: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Transfers", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowBatch
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthBatch
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthBatch
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Transfers = append(m.Transfers, &ERC20Token{})
-			if err := m.Transfers[len(m.Transfers)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Fees", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowBatch
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthBatch
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthBatch
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Fees = append(m.Fees, &ERC20Token{})
-			if err := m.Fees[len(m.Fees)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
+
 		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field LogicContractAddress", wireType)

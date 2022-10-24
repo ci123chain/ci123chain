@@ -1,31 +1,20 @@
 version: "3"
 services:
 
-  raftleveldb:
-    image: harbor.oneitfarm.com/itfarm-test/sal20000ad4588ae210811eaen9l27v4:0.0.9
-    hostname: raftleveldb_dev
-    container_name: raftleveldb_dev
-    networks:
-      - bootstrap-node-single
-
   ci1:
     image: cichain:v0.0.1
 #    image: harbor.oneitfarm.com/itfarm-test/sal20000ad4588ae210602eaemgr48er:1.5.1.1
     container_name: ci1
     hostname: ci1
-    depends_on:
-      - raftleveldb
     environment:
-      CI_MASTER_DOMAIN: 192.168.31.179
-      CI_MASTER_PORT: 1317
+#      CI_MASTER_DOMAIN: 192.168.1.113
+#      CI_MASTER_PORT: 1317
 
       CI_CHAIN_ID: weelink
       CI_ETH_CHAIN_ID: 444900
       IDG_HOST_26657: ci1
       IDG_HOST_8546: ci1
       IDG_HOST_80: ci1
-      CI_STATEDB_HOST: raftleveldb_dev
-      CI_STATEDB_PORT: 80
       CI_STATEDB_TLS: "false"
       CI_HOME: /root/cid
       CI_TOKENNAME: WLK
@@ -36,26 +25,8 @@ services:
     ports:
       - 26456:26656
       - 26457:26657
+      - 1318:80
     networks:
       - bootstrap-node-single
-
-  gateway:
-    image: gateway:v0.0.1
-    container_name: cproxy
-    depends_on:
-      - raftleveldb
-      - ci1
-    environment:
-      CI_STATEDB_HOST: raftleveldb_dev
-      CI_STATEDB_PORT: 80
-      CI_STATEDB_TLS: "false"
-      CI_PORT_TM: 26657
-      CI_PORT_ETH: 8546
-      CI_PORT_SHARD: 80
-    ports:
-      - 3030:80
-    networks:
-      - bootstrap-node-single
-
 networks: ##定义网络组
   bootstrap-node-single: ## 网络组名称

@@ -10,10 +10,9 @@ import (
 	"math/big"
 )
 
-
 var _ types.Keeper = (*Keeper)(nil)
 
-func (k Keeper) EvmTxExec(ctx sdk.Context,m sdk.Msg) (types.VMResult, error) {
+func (k Keeper) EvmTxExec(ctx sdk.Context, m sdk.Msg) (types.VMResult, error) {
 	msg, ok := m.(evm.MsgEvmTx)
 	if !ok {
 		return nil, evm.ErrContractMsgInvalid
@@ -58,7 +57,7 @@ func (k Keeper) EvmTxExec(ctx sdk.Context,m sdk.Msg) (types.VMResult, error) {
 
 	executionResult, err := st.TransitionDb(ctx, config)
 	if err != nil {
-		return nil,  evm.ErrExecTransactionInvalid.Wrap(err.Error())
+		return nil, evm.ErrExecTransactionInvalid.Wrap(err.Error())
 	}
 
 	if !st.Simulate {
@@ -66,10 +65,10 @@ func (k Keeper) EvmTxExec(ctx sdk.Context,m sdk.Msg) (types.VMResult, error) {
 		k.Bloom.Or(k.Bloom, executionResult.Bloom)
 
 		// update transaction logs in KVStore
-		err = k.SetLogs(ctx, common.BytesToHash(txHash), executionResult.Logs)
-		if err != nil {
-			panic(err)
-		}
+		//err = k.SetLogs(ctx, common.BytesToHash(txHash), executionResult.Logs)
+		//if err != nil {
+		//	panic(err)
+		//}
 	}
 	// log successful execution
 	k.Logger(ctx).Info(executionResult.Result.Log)

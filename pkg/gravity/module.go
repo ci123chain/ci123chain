@@ -2,7 +2,6 @@ package gravity
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/ci123chain/ci123chain/pkg/abci/types/module"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	tmtypes "github.com/tendermint/tendermint/types"
@@ -46,7 +45,7 @@ func (am AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux
 
 // DefaultGenesis implements app module basic
 func (AppModuleBasic) DefaultGenesis(validators []tmtypes.GenesisValidator) json.RawMessage {
-	bz, _ := json.Marshal(types.DefaultGenesisState())
+	bz, _ := types.GravityCodec.MarshalJSON(types.DefaultGenesisState())
 	return bz
 }
 
@@ -55,7 +54,7 @@ func (AppModuleBasic) DefaultGenesis(validators []tmtypes.GenesisValidator) json
 // AppModule object for module implementation
 type AppModule struct {
 	AppModuleBasic
-	Keeper     keeper.Keeper
+	Keeper    keeper.Keeper
 	AccKeeper account.AccountKeeper
 }
 
@@ -64,7 +63,7 @@ func NewAppModule(k keeper.Keeper, accKeeper account.AccountKeeper) AppModule {
 	return AppModule{
 		AppModuleBasic: AppModuleBasic{},
 		Keeper:         k,
-		AccKeeper:     	accKeeper,
+		AccKeeper:      accKeeper,
 	}
 }
 
@@ -76,9 +75,12 @@ func (AppModule) Name() string {
 // InitGenesis initializes the genesis state for this module and implements app module.
 func (am AppModule) InitGenesis(ctx sdk.Context, bz json.RawMessage) []abci.ValidatorUpdate {
 	var genesisState types.GenesisState
-	err := json.Unmarshal(bz, &genesisState)
+	err := am.Keeper.Cdc().UnmarshalJSON(bz, &genesisState)
+	//err := json.Unmarshal(bz, &genesisState)
 	if err != nil {
-		panic(fmt.Sprintf("failed to unmarshal %s genesis state: %s", types.ModuleName, err))
+		am.Keeper.Logger(ctx).Warn("Gravity module Init Genesis error, use default")
+		genesisState = *types.DefaultGenesisState()
+		//panic(fmt.Sprintf("failed to unmarshal %s genesis state: %s", types.ModuleName, err))
 	}
 	keeper.InitGenesis(ctx, am.Keeper, genesisState)
 	return []abci.ValidatorUpdate{}
@@ -88,7 +90,8 @@ func (am AppModule) InitGenesis(ctx sdk.Context, bz json.RawMessage) []abci.Vali
 // todo gogo protobuf encoding
 func (am AppModule) ExportGenesis(ctx sdk.Context) json.RawMessage {
 	gs := keeper.ExportGenesis(ctx, am.Keeper)
-	by, err := json.Marshal(gs)
+	by, err := am.Keeper.Cdc().MarshalJSON(gs)
+	//by, err := json.Marshal(gs)
 	if err != nil {
 		panic(err)
 	}

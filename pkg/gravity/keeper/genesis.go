@@ -33,7 +33,6 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 			k.SetBatchConfirmWithGID(ctx, &conf)
 		}
 
-
 		// reset pool transactions in state
 		for _, tx := range data.UnbatchedTransfers {
 			k.setPoolEntry(ctx, tx)
@@ -61,7 +60,7 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 			}
 
 			for _, vote := range att.Votes {
-				val:= sdk.HexToAddress(vote)
+				val := sdk.HexToAddress(vote)
 				last := k.GetLastEventNonceByValidator(ctx, val)
 				if claim.GetEventNonce() > last {
 					k.setLastEventNonceByValidator(ctx, val, claim.GetEventNonce())
@@ -77,25 +76,24 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 		k.SetCurrentGid("")
 	}
 
-
 }
 
 // ExportGenesis exports all the state needed to restart the chain
 // from the current state of the chain
 func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 	var (
-		p                   = k.GetParams(ctx)
+		p = k.GetParams(ctx)
 		//calls               = k.GetOutgoingLogicCalls(ctx)
 
-		valsets             = k.GetValsets(ctx)
-		vsconfs             = []*types.MsgValsetConfirm{}
-		batchconfs          = []types.MsgConfirmBatch{}
-		attestations        = []types.Attestation{}
-		delegates           = k.GetDelegateKeys(ctx)
+		valsets      = k.GetValsets(ctx)
+		vsconfs      = []*types.MsgValsetConfirm{}
+		batchconfs   = []types.MsgConfirmBatch{}
+		attestations = []types.Attestation{}
+		delegates    = k.GetDelegateKeys(ctx)
 
-		erc20ToDenoms       = []*types.ERC20ToDenom{}
+		erc20ToDenoms = []*types.ERC20ToDenom{}
 
-		gravityDatas		= map[string]types.GravityData{}
+		gravityDatas = map[string]types.GravityData{}
 	)
 	gids := k.GetAllGravityIDs(ctx)
 	for _, gid := range gids {
@@ -146,9 +144,9 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 	}
 
 	return types.GenesisState{
-		Params:             &p,
-		Valsets:            valsets,
-		DelegateKeys:       delegates,
-		Gravitys: 			gravityDatas,
+		Params:       &p,
+		Valsets:      valsets,
+		DelegateKeys: delegates,
+		Gravitys:     gravityDatas,
 	}
 }

@@ -43,6 +43,14 @@ type CommitStore interface {
 	Store
 }
 
+// StoreWithInitialVersion is a store that can have an arbitrary initial
+// version.
+type StoreWithInitialVersion interface {
+	// SetInitialVersion sets the initial version of the IAVL tree. It is used when
+	// starting a new chain at an arbitrary height.
+	SetInitialVersion(version int64)
+}
+
 // Queryable allows a Store to expose internal state to the abci.Query
 // interface. Multistore can route requests to the proper Store.
 //
@@ -62,7 +70,7 @@ type MultiStore interface { //nolint
 	// call CacheMultiStore.Write().
 	CacheMultiStore() CacheMultiStore
 
-	CacheMultiStoreWithVersion(version int64) (CacheMultiStore,error)
+	CacheMultiStoreWithVersion(version int64) (CacheMultiStore, error)
 
 	// Convenience for fetching substores.
 	GetStore(StoreKey) Store
@@ -404,7 +412,6 @@ func NewTransientStoreKeys(names ...string) map[string]*TransientStoreKey {
 	return keys
 }
 
-
 // Implements StoreKey
 func (key *TransientStoreKey) Name() string {
 	return key.name
@@ -426,10 +433,10 @@ func NewMemoryStoreKeys(names ...string) map[string]*MemoryStoreKey {
 	return keys
 }
 
-
 func NewMemoryStoreKey(name string) *MemoryStoreKey {
 	return &MemoryStoreKey{name: name}
 }
+
 // MemoryStoreKey defines a typed key to be used with an in-memory KVStore.
 type MemoryStoreKey struct {
 	name string
