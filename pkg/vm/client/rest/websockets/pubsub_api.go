@@ -215,6 +215,7 @@ func (api *PubSubAPI) subscribeLogs(conn *websocket.Conn, extra interface{}) (rp
 	}
 
 	sub, _, err := api.events.SubscribeLogs(crit)
+	api.logger.Info("subscribe logs:", "address", crit.Addresses)
 	if err != nil {
 		return rpc.ID(""), err
 	}
@@ -243,11 +244,13 @@ func (api *PubSubAPI) subscribeLogs(conn *websocket.Conn, extra interface{}) (rp
 				if err != nil {
 					return
 				}
+				api.logger.Info("get events:", "data", resultData)
 
 				logs := rpcfilters.FilterLogs(resultData.Logs, crit.FromBlock, crit.ToBlock, crit.Addresses, crit.Topics)
 				if logs == nil {
 					continue
 				}
+				api.logger.Info("get logs:", "logs", logs)
 
 				api.filtersMu.Lock()
 				if f, found := api.filters[sub.ID()]; found {
@@ -262,6 +265,7 @@ func (api *PubSubAPI) subscribeLogs(conn *websocket.Conn, extra interface{}) (rp
 							},
 						}
 						err = f.conn.WriteJSON(res)
+						api.logger.Info("write logs:", "logs", logs[i])
 						if err != nil {
 							api.logger.Warn("failed to write header", "Error", err.Error())
 							api.unsubscribe(sub.ID())
