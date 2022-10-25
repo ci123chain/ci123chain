@@ -31,6 +31,48 @@ func NewKeeper(skipUpgradeHeights map[int64]bool, storeKey sdk.StoreKey, cdc *co
 		GravityKeeper:      gravityKeeper,
 	}
 	// registe some upgrade here
+	k.SetUpgradeHandler("UpgradeV1.6.54", func(ctx sdk.Context, info []byte) {
+		k.Logger(ctx).Info("Upgrade successful:", "proposal", "upgrade v1.6.54")
+	})
+	k.SetUpgradeHandler("UpgradeV1.6.55", func(ctx sdk.Context, info []byte) {
+		k.Logger(ctx).Info("Upgrade successful:", "proposal", "upgrade v1.6.55")
+	})
+	k.SetUpgradeHandler("UpgradeV1.6.56", func(ctx sdk.Context, info []byte) {
+		k.Logger(ctx).Info("Upgrade successful:", "proposal", "upgrade v1.6.56")
+	})
+	k.SetUpgradeHandler("UpgradeV1.6.57", func(ctx sdk.Context, info []byte) {
+		k.Logger(ctx).Info("Upgrade successful:", "proposal", "upgrade v1.6.57")
+	})
+	k.SetUpgradeHandler("UpgradeV1.6.59", func(ctx sdk.Context, info []byte) {
+		k.Logger(ctx).Info("Upgrade successful:", "proposal", "upgrade v1.6.59")
+	})
+	k.SetUpgradeHandler("UpgradeV1.6.60", func(ctx sdk.Context, info []byte) {
+		k.Logger(ctx).Info("Upgrade successful:", "proposal", "upgrade v1.6.60")
+	})
+	k.SetUpgradeHandler("UpgradeV1.6.61", func(ctx sdk.Context, info []byte) {
+		k.Logger(ctx).Info("Upgrade successful:", "proposal", "upgrade v1.6.61")
+	})
+	k.SetUpgradeHandler("UpgradeV1.6.63", func(ctx sdk.Context, info []byte) {
+		k.Logger(ctx).Info("Upgrade successful:", "proposal", "upgrade v1.6.63")
+	})
+	k.SetUpgradeHandler("UpgradeV1.6.66", func(ctx sdk.Context, info []byte) {
+		k.Logger(ctx).Info("Upgrade successful:", "proposal", "upgrade v1.6.66")
+	})
+	k.SetUpgradeHandler("UpgradeV1.6.69", func(ctx sdk.Context, info []byte) {
+		k.Logger(ctx).Info("Upgrade successful:", "proposal", "upgrade v1.6.69")
+	})
+	k.SetUpgradeHandler("UpgradeV1.6.70", func(ctx sdk.Context, info []byte) {
+		k.Logger(ctx).Info("Upgrade successful:", "proposal", "upgrade v1.6.70")
+	})
+	k.SetUpgradeHandler("UpgradeV1.6.71", func(ctx sdk.Context, info []byte) {
+		k.Logger(ctx).Info("Upgrade successful:", "proposal", "upgrade v1.6.71")
+	})
+	k.SetUpgradeHandler("UpgradeV1.7.0", func(ctx sdk.Context, info []byte) {
+		k.Logger(ctx).Info("Upgrade successful:", "proposal", "upgrade v1.7.0")
+	})
+	k.SetUpgradeHandler("UpgradeV1.7.1", func(ctx sdk.Context, info []byte) {
+		k.Logger(ctx).Info("Upgrade successful:", "proposal", "upgrade v1.7.1")
+	})
 	return k
 }
 
