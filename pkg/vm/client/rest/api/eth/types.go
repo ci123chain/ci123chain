@@ -107,7 +107,7 @@ func EthHeaderFromTendermint(header tmtypes.Header) *ethtypes.Header {
 		Root:        common.BytesToHash(header.AppHash),
 		TxHash:      common.BytesToHash(header.DataHash),
 		ReceiptHash: common.Hash{},
-		Difficulty:  nil,
+		Difficulty:  big.NewInt(0),
 		Number:      big.NewInt(header.Height),
 		Time:        uint64(header.Time.Unix()),
 		Extra:       nil,
