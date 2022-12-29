@@ -16,8 +16,8 @@ var MAX_UINT, _ = new(big.Int).SetString("11579208923731619542357098500868790785
 
 // AttestationHandler processes `observed` Attestations
 type AttestationHandler struct {
-	keeper     Keeper
-	supplyKeeper supply.Keeper
+	keeper        Keeper
+	supplyKeeper  supply.Keeper
 	accountKeeper account.AccountKeeper
 }
 
@@ -72,10 +72,11 @@ func (a AttestationHandler) Handle(ctx sdk.Context, gravityID string, att types.
 				return sdkerrors.Wrap(err, "invalid reciever address")
 			}
 
-			metaData := a.keeper.GetTokenMetaData(ctx, wlkToken)
-			if metaData.Symbol == "" {
-				return types.ErrNoContractMetaData
-			}
+			// uncheck metadata
+			//metaData := a.keeper.GetTokenMetaData(ctx, wlkToken)
+			//if metaData.Symbol == "" {
+			//	return types.ErrNoContractMetaData
+			//}
 
 			//err = a.supplyKeeper.MintCoinsFromModuleToEvmAccount(ctx, receiverAddr, wlkToken, claim.Amount.BigInt())
 			err = a.supplyKeeper.TransferFromModuleToEvmAccount(ctx, receiverAddr, wlkToken, claim.Amount.BigInt())
@@ -93,8 +94,8 @@ func (a AttestationHandler) Handle(ctx sdk.Context, gravityID string, att types.
 			wlkToken = tokenAddres.String()
 			a.keeper.setERC721Map(ctx, wlkToken, claim.TokenContract)
 			a.keeper.SetTokenMetaData(ctx, wlkToken, types.MetaData{
-				Symbol:   claim.TokenSymbol,
-				Name:     claim.TokenName,
+				Symbol: claim.TokenSymbol,
+				Name:   claim.TokenName,
 			})
 		}
 		var err error
@@ -104,10 +105,11 @@ func (a AttestationHandler) Handle(ctx sdk.Context, gravityID string, att types.
 			return sdkerrors.Wrap(err, "invalid reciever address")
 		}
 
-		metaData := a.keeper.GetTokenMetaData(ctx, wlkToken)
-		if metaData.Symbol == "" {
-			return types.ErrNoContractMetaData
-		}
+		// uncheck metadata
+		//metaData := a.keeper.GetTokenMetaData(ctx, wlkToken)
+		//if metaData.Symbol == "" {
+		//	return types.ErrNoContractMetaData
+		//}
 
 		//err = a.supplyKeeper.MintCoinsFromModuleToEvmAccount(ctx, receiverAddr, wlkToken, claim.Amount.BigInt())
 		err = a.supplyKeeper.Transfer721FromModuleToEvmAccount(ctx, receiverAddr, wlkToken, claim.TokenID.BigInt())
@@ -174,7 +176,7 @@ func (a AttestationHandler) Handle(ctx sdk.Context, gravityID string, att types.
 
 func (a AttestationHandler) validateAndSetWRC20(ctx sdk.Context, denom, name, symbol string, decimals uint64) error {
 	// todo validate denom from erc20
-	if a.keeper.IsWlkToken(denom){
+	if a.keeper.IsWlkToken(denom) {
 		// chain coin
 		if decimals != 18 {
 			return types.ErrDenomDecimal.Wrapf("decimals for weelink expect 18, got %d", decimals)
@@ -249,8 +251,8 @@ func (a AttestationHandler) validateAndSetWRC721(ctx sdk.Context, denom, name, s
 	}
 
 	a.keeper.SetTokenMetaData(ctx, denom, types.MetaData{
-		Symbol:   symbol,
-		Name:     name,
+		Symbol: symbol,
+		Name:   name,
 	})
 	return nil
 }
