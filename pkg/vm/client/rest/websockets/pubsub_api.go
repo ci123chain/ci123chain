@@ -249,7 +249,6 @@ func (api *PubSubAPI) subscribeLogs(conn *websocket.Conn, extra interface{}) (rp
 					continue
 				}
 
-				api.filtersMu.Lock()
 				if f, found := api.filters[sub.ID()]; found {
 					// write to ws conn
 					for i := range logs {
@@ -261,7 +260,9 @@ func (api *PubSubAPI) subscribeLogs(conn *websocket.Conn, extra interface{}) (rp
 								Result:       logs[i],
 							},
 						}
+						api.filtersMu.Lock()
 						err = f.conn.WriteJSON(res)
+						api.filtersMu.Unlock()
 						if err != nil {
 							api.logger.Warn("failed to write header", "Error", err.Error())
 							api.unsubscribe(sub.ID())
@@ -269,7 +270,7 @@ func (api *PubSubAPI) subscribeLogs(conn *websocket.Conn, extra interface{}) (rp
 						}
 					}
 				}
-				api.filtersMu.Unlock()
+
 			case <-errCh:
 				api.unsubscribe(sub.ID())
 				return
