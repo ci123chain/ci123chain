@@ -268,6 +268,7 @@ func (s *Server) httpGetAndSendResponse(conn *websocket.Conn, mb []byte) error {
 
 	prefix := util.SchemaPrefix()
 	if strings.Contains(prefix, "localhost") ||
+		strings.Contains(prefix, "0.0.0.0") ||
 		strings.Contains(prefix, "127.0.0.1") {
 		prefix = "http://"
 	}
