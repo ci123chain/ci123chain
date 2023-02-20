@@ -273,6 +273,8 @@ func (s *Server) httpGetAndSendResponse(conn *websocket.Conn, mb []byte) error {
 		prefix = "http://"
 	}
 
+	s.logger.Info("ws redirect to: ", "urls", prefix+addr[1])
+
 	req, err := http.NewRequest("POST", prefix+addr[1], buf)
 	if err != nil {
 		return fmt.Errorf("failed to request; %s", err)
