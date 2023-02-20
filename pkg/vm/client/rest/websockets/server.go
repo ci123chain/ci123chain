@@ -272,6 +272,7 @@ func (s *Server) httpGetAndSendResponse(conn *websocket.Conn, mb []byte) error {
 		strings.Contains(prefix, "127.0.0.1") {
 		prefix = "http://"
 	}
+	s.logger.Info("ws redirect to: ", "url", prefix+addr[1])
 
 	req, err := http.NewRequest("POST", prefix+addr[1], buf)
 	if err != nil {
