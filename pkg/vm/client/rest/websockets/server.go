@@ -267,12 +267,12 @@ func (s *Server) httpGetAndSendResponse(conn *websocket.Conn, mb []byte) error {
 	}
 
 	prefix := util.SchemaPrefix()
-	if strings.Contains(prefix, "localhost") ||
-		strings.Contains(prefix, "0.0.0.0") ||
-		strings.Contains(prefix, "127.0.0.1") {
+	if strings.Contains(addr[1], "localhost") ||
+		strings.Contains(addr[1], "0.0.0.0") ||
+		strings.Contains(addr[1], "127.0.0.1") {
 		prefix = "http://"
 	}
-	
+
 	s.logger.Info("ws redirect to: ", "urls", prefix+addr[1])
 
 	req, err := http.NewRequest("POST", prefix+addr[1], buf)
