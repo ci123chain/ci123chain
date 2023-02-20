@@ -95,7 +95,7 @@ func (s *Server) readLoop(wsConn *websocket.Conn) {
 			continue
 		}
 		if err != nil {
-			s.logger.Warn("failed to read message;","error", err.Error())
+			s.logger.Warn("failed to read message;", "error", err.Error())
 			return
 		}
 		var msg map[string]interface{}
@@ -148,8 +148,8 @@ func (s *Server) readLoop(wsConn *websocket.Conn) {
 			ID := msg["id"].(float64)
 			res := &SubscriptionResponseJSON{
 				Jsonrpc: "2.0",
-				ID:  ID,
-				Result: id,
+				ID:      ID,
+				Result:  id,
 			}
 
 			err = wsConn.WriteJSON(res)
@@ -267,8 +267,12 @@ func (s *Server) httpGetAndSendResponse(conn *websocket.Conn, mb []byte) error {
 	}
 
 	prefix := util.SchemaPrefix()
+	if strings.Contains(prefix, "localhost") ||
+		strings.Contains(prefix, "127.0.0.1") {
+		prefix = "http://"
+	}
 
-	req, err := http.NewRequest("POST", prefix + addr[1], buf)
+	req, err := http.NewRequest("POST", prefix+addr[1], buf)
 	if err != nil {
 		return fmt.Errorf("failed to request; %s", err)
 	}
