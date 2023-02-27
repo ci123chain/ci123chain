@@ -124,8 +124,8 @@ func (api *PubSubAPI) subscribeNewHeads(conn *websocket.Conn) (rpc.ID, error) {
 							Result:       header,
 						},
 					}
-
-					err = f.conn.WriteJSON(res)
+					err = syncWriteWSMessage(f.conn, res)
+					//err = f.conn.WriteJSON(res)
 				}
 				api.filtersMu.Unlock()
 				if err != nil {
@@ -261,7 +261,8 @@ func (api *PubSubAPI) subscribeLogs(conn *websocket.Conn, extra interface{}) (rp
 							},
 						}
 						api.filtersMu.Lock()
-						err = f.conn.WriteJSON(res)
+						err = syncWriteWSMessage(f.conn, res)
+						//err = f.conn.WriteJSON(res)
 						api.filtersMu.Unlock()
 						if err != nil {
 							api.logger.Warn("failed to write header", "Error", err.Error())
@@ -316,8 +317,8 @@ func (api *PubSubAPI) subscribePendingTransactions(conn *websocket.Conn) (rpc.ID
 							Result:       txHash,
 						},
 					}
-
-					err = f.conn.WriteJSON(res)
+					//err = f.conn.WriteJSON(res)
+					err = syncWriteWSMessage(f.conn, res)
 				}
 				api.filtersMu.Unlock()
 
@@ -333,6 +334,15 @@ func (api *PubSubAPI) subscribePendingTransactions(conn *websocket.Conn) (rpc.ID
 	}(sub.Event(), sub.Err())
 
 	return sub.ID(), nil
+}
+
+var Mux sync.RWMutex
+
+func syncWriteWSMessage(conn *websocket.Conn, data interface{}) error {
+	Mux.Lock()
+	err := conn.WriteJSON(data)
+	Mux.Unlock()
+	return err
 }
 
 func (api *PubSubAPI) subscribeSyncing(conn *websocket.Conn) (rpc.ID, error) {

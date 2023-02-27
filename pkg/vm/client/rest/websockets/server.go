@@ -80,7 +80,7 @@ func (s *Server) sendErrResponse(conn *websocket.Conn, msg string) {
 		},
 		ID: nil,
 	}
-	err := conn.WriteJSON(res)
+	err := syncWriteWSMessage(conn, res)
 	if err != nil {
 		s.logger.Error("websocket failed write message", "error", err)
 	}
@@ -91,7 +91,9 @@ func (s *Server) readLoop(wsConn *websocket.Conn) {
 	for {
 		mt, mb, err := wsConn.ReadMessage()
 		if mt == websocket.PingMessage {
+			Mux.Lock()
 			_ = wsConn.WriteMessage(websocket.PongMessage, nil)
+			Mux.Unlock()
 			continue
 		}
 		if err != nil {
@@ -152,7 +154,8 @@ func (s *Server) readLoop(wsConn *websocket.Conn) {
 				Result:  id,
 			}
 
-			err = wsConn.WriteJSON(res)
+			err = syncWriteWSMessage(wsConn, res)
+			//err = wsConn.WriteJSON(res)
 			if err != nil {
 				s.logger.Warn("eth_subscribe failed to write json response", err)
 				continue
@@ -173,7 +176,8 @@ func (s *Server) readLoop(wsConn *websocket.Conn) {
 				Result:  ok,
 			}
 
-			err = wsConn.WriteJSON(res)
+			err = syncWriteWSMessage(wsConn, res)
+			//err = wsConn.WriteJSON(res)
 			if err != nil {
 				s.logger.Warn("eth_unsubscribe failed to write json response", err)
 				continue
@@ -249,7 +253,8 @@ func (s *Server) tcpGetAndSendResponse(conn *websocket.Conn, mb []byte) error {
 		return fmt.Errorf("failed to unmarshal rest-server response; %s", err)
 	}
 
-	return conn.WriteJSON(wsSend)
+	return syncWriteWSMessage(conn, wsSend)
+	//return conn.WriteJSON(wsSend)
 }
 
 // httpGetAndSendResponse connects to the rest-server over http, posts a JSON-RPC request, and sends the response
@@ -273,7 +278,7 @@ func (s *Server) httpGetAndSendResponse(conn *websocket.Conn, mb []byte) error {
 		prefix = "http://"
 	}
 
-	s.logger.Info("ws redirect to: ", "urls", prefix+addr[1])
+	s.logger.Debug("ws redirect to: ", "urls", prefix+addr[1])
 
 	req, err := http.NewRequest("POST", prefix+addr[1], buf)
 	if err != nil {
@@ -295,5 +300,6 @@ func (s *Server) httpGetAndSendResponse(conn *websocket.Conn, mb []byte) error {
 		return fmt.Errorf("failed to unmarshal rest-server response; %s", err)
 	}
 
-	return conn.WriteJSON(wsSend)
+	return syncWriteWSMessage(conn, wsSend)
+	//return conn.WriteJSON(wsSend)
 }
